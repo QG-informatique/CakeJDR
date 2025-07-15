@@ -6,8 +6,7 @@ import DiceRoller from '@/components/DiceRoller'
 import ChatBox from '@/components/ChatBox'
 import PopupResult from '@/components/PopupResult'
 import Head from 'next/head'
-
-
+import InteractiveCanvas from '@/components/InteractiveCanvas'
 
 export default function HomePage() {
   const [perso, setPerso] = useState({
@@ -32,21 +31,7 @@ export default function HomePage() {
   const [diceResult, setDiceResult] = useState<number | null>(null)
   const [diceDisabled, setDiceDisabled] = useState(false)
 
-  const chatBoxRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>
-
-  const levelUp = () => {
-    setPerso((prev) => ({
-      ...prev,
-      niveau: prev.niveau + 1,
-      pv: prev.pv + 10,
-      force: prev.force + 1,
-      dexterite: prev.dexterite + 1,
-      constitution: prev.constitution + 1,
-      intelligence: prev.intelligence + 1,
-      sagesse: prev.sagesse + 1,
-      charisme: prev.charisme + 1,
-    }))
-  }
+  const chatBoxRef = useRef<HTMLDivElement>(null)
 
   const rollDice = () => {
     setDiceDisabled(true)
@@ -72,11 +57,12 @@ export default function HomePage() {
       <Head>
         <title>CakeJDR</title>
       </Head>
-      <CharacterSheet perso={perso} onLevelUp={levelUp} />
+
+      <CharacterSheet perso={perso} onUpdate={setPerso} />
 
       <main className="flex-1 bg-white dark:bg-gray-950 flex flex-col">
         <div className="flex-1 border m-4 bg-gray-50 dark:bg-gray-900 flex flex-col justify-center items-center relative">
-          <p className="mb-4">Zone carte interactive / dessin / musique</p>
+          <InteractiveCanvas />
           <PopupResult show={showPopup} result={diceResult} diceType={diceType} />
         </div>
 
