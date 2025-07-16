@@ -1,6 +1,7 @@
 'use client'
 
 import { FC, useState, useEffect } from 'react'
+import ParamMenu from './ParamMenu' // ← Assure-toi d'importer ton fichier ParamMenu ici !
 
 const STATS = [
   { key: 'force', label: 'Force' },
@@ -133,7 +134,7 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
   }
 
   return (
-    <aside className="w-1/5 bg-gray-900 p-3 overflow-y-auto text-[15px] text-white">
+    <aside className="w-1/5 bg-gray-900 p-3 overflow-y-auto text-[15px] text-white relative">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-bold mb-2">Personnage</h2>
         <button onClick={() => { if (edit) save(); else setEdit(true); }} className="text-xs px-2 py-1 rounded bg-blue-500 hover:bg-blue-600 text-white">
@@ -382,6 +383,10 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
           </div>
         </div>
       )}
+
+      {/* BOUTON PARAMÈTRES CENTRÉ EN BAS */}
+      <ParamMenu perso={edit ? localPerso : perso} onUpdate={onUpdate} />
+
       {edit && (
         <button onClick={save} className="mt-3 w-full bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm">Sauver</button>
       )}
