@@ -2,6 +2,7 @@
 
 import { FC, useState, useEffect } from 'react'
 import ParamMenu from './ParamMenu'
+import AddCompetenceModal from './AddCompetenceModal'
 
 const STATS = [
   { key: 'force', label: 'Force' },
@@ -41,7 +42,7 @@ type CustomField = { label: string, value: string }
 type Props = {
   perso: any,
   onUpdate: (perso: any) => void,
-  chatBoxRef?: React.RefObject<HTMLDivElement>
+  chatBoxRef?: React.RefObject<HTMLDivElement | null>
 }
 
 const TABS = [
@@ -122,6 +123,7 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
   const [newComp, setNewComp] = useState<Partial<Competence>>({})
   const [newObj, setNewObj] = useState<Partial<Objet>>({})
   const [newCustom, setNewCustom] = useState<Partial<CustomField>>({})
+  const [showCompModal, setShowCompModal] = useState(false)
 
   // Pour éviter les décalages : référence centrale
   const cFiche = edit ? localPerso : (Object.keys(perso||{}).length ? perso : defaultPerso)
@@ -207,6 +209,14 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
       await new Promise((resolve) => setTimeout(resolve, 1200))
     }
     setProcessing(false)
+  }
+
+  function addCompModal(comp: Competence) {
+    setLocalPerso({ 
+      ...localPerso, 
+      competences: [...(localPerso.competences || []), comp] 
+    })
+    setShowCompModal(false)
   }
 
   // --- RENDER ---
@@ -339,43 +349,44 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
             </div>
           </div>
           {/* Compétences */}
-          <div className="mt-4">
+            <div className="mt-4">
             <div className="font-semibold text-base mb-1">Compétences</div>
             {edit ? (
               <>
-                <div className="flex flex-col gap-2 mb-2">
-                  {(localPerso.competences || []).map((c: Competence, i: number) => (
-                    <div key={i} className="bg-gray-800 rounded px-2 py-1 flex flex-col relative">
-                      <div className="font-semibold">{c.nom} <span className="text-xs italic text-gray-300">({c.type})</span></div>
-                      <div className="text-xs">Effets : {c.effets} {c.degats && <span>- Dégâts : {c.degats}</span>}</div>
-                      <button className="absolute top-1 right-2 text-xs text-red-400 hover:underline" onClick={() => delComp(i)}>Suppr</button>
-                    </div>
-                  ))}
+              <div className="flex flex-col gap-2 mb-2">
+                {(localPerso.competences || []).map((c: Competence, i: number) => (
+                <div key={i} className="bg-gray-800 rounded px-2 py-1 flex flex-col relative">
+                  <div className="font-semibold">{c.nom} <span className="text-xs italic text-gray-300">({c.type})</span></div>
+                  <div className="text-xs">Effets : {c.effets} {c.degats && <span>- Dégâts : {c.degats}</span>}</div>
+                  <button className="absolute top-1 right-2 text-xs text-red-400 hover:underline" onClick={() => delComp(i)}>Suppr</button>
                 </div>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  <input className="p-1 rounded bg-white text-black text-sm flex-1 min-w-[90px]" placeholder="Nom" value={newComp.nom||''} onChange={e => setNewComp({...newComp, nom:e.target.value})} />
-                  <select className="p-1 rounded bg-white text-black text-sm" value={newComp.type||''} onChange={e => setNewComp({...newComp, type:e.target.value})}>
-                    <option value="">Type</option>
-                    <option value="active">Active</option>
-                    <option value="passive">Passive</option>
-                  </select>
-                  <input className="p-1 rounded bg-white text-black text-sm flex-1 min-w-[130px]" placeholder="Effets" value={newComp.effets||''} onChange={e => setNewComp({...newComp, effets:e.target.value})} />
-                  <input className="p-1 rounded bg-white text-black text-sm w-16" placeholder="Dégâts" value={newComp.degats||''} onChange={e => setNewComp({...newComp, degats:e.target.value})} />
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white text-sm rounded px-2 py-1" onClick={addComp}>Ajouter</button>
-                </div>
+                ))}
+              </div>
+              {/* Modal logic */}
+              <AddCompetenceModal
+                open={showCompModal}
+                onClose={() => setShowCompModal(false)}
+                onAdd={comp => { setNewComp({}); addCompModal(comp); }}
+              />
+              <button
+                className="bg-blue-600 hover:bg-blue-700 text-white text-sm rounded px-2 py-1"
+                onClick={() => setShowCompModal(true)}
+              >
+                Ajouter une compétence
+              </button>
               </>
             ) : (
               <div className="flex flex-col gap-1">
-                {(cFiche.competences || []).map((c: Competence, i: number) => (
-                  <div key={i} className="bg-gray-800 rounded px-2 py-1">
-                    <div className="font-semibold">{c.nom} <span className="text-xs italic text-gray-300">({c.type})</span></div>
-                    <div className="text-xs">Effets : {c.effets} {c.degats && <span>- Dégâts : {c.degats}</span>}</div>
-                  </div>
-                ))}
-                {(cFiche.competences || []).length === 0 && <span className="text-gray-400 text-xs">Aucune compétence.</span>}
+              {(cFiche.competences || []).map((c: Competence, i: number) => (
+                <div key={i} className="bg-gray-800 rounded px-2 py-1">
+                <div className="font-semibold">{c.nom} <span className="text-xs italic text-gray-300">({c.type})</span></div>
+                <div className="text-xs">Effets : {c.effets} {c.degats && <span>- Dégâts : {c.degats}</span>}</div>
+                </div>
+              ))}
+              {(cFiche.competences || []).length === 0 && <span className="text-gray-400 text-xs">Aucune compétence.</span>}
               </div>
             )}
-          </div>
+            </div>
           {/* Level Up */}
           <div className="mt-5">
             <label className="block mb-1">Type de dé :</label>
@@ -438,7 +449,7 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
               </div>
               <div className="flex gap-1 mb-2">
                 <input className="p-1 rounded bg-white text-black text-sm flex-1" placeholder="Nom de l'objet" value={newObj.nom||''} onChange={e => setNewObj({...newObj, nom:e.target.value})} />
-                <input className="p-1 rounded bg-white text-black text-sm w-16" placeholder="Qté" type="number" min="1" value={newObj.quantite||''} onChange={e => setNewObj({...newObj, quantite:e.target.value})} />
+                <input className="p-1 rounded bg-white text-black text-sm w-16" placeholder="Qté" type="number" min="1" value={newObj.quantite||''} onChange={e => setNewObj({...newObj, quantite:Number(e.target.value)})} />
                 <button className="bg-blue-600 hover:bg-blue-700 text-white text-sm rounded p-1" onClick={addObj}>Ajouter</button>
               </div>
             </>
