@@ -7,6 +7,7 @@ import ChatBox from '@/components/ChatBox'
 import PopupResult from '@/components/PopupResult'
 import Head from 'next/head'
 import InteractiveCanvas from '@/components/InteractiveCanvas'
+import ParamMenu from '@/components/ParamMenu' // ← AJOUT ICI
 
 export default function HomePage() {
   const [perso, setPerso] = useState({
@@ -33,9 +34,6 @@ export default function HomePage() {
 
   const chatBoxRef = useRef<HTMLDivElement>(null)
 
-  // Cette fonction peut être supprimée si tu ne l'utilises pas directement
-  // const levelUp = () => { ... }
-
   const rollDice = () => {
     setDiceDisabled(true)
     const result = Math.floor(Math.random() * diceType) + 1
@@ -61,7 +59,6 @@ export default function HomePage() {
         <title>CakeJDR</title>
       </Head>
 
-      {/* CORRECTION ICI : */}
       <CharacterSheet perso={perso} onUpdate={setPerso} chatBoxRef={chatBoxRef} />
 
       <main className="flex-1 bg-white dark:bg-gray-950 flex flex-col">
@@ -79,6 +76,9 @@ export default function HomePage() {
       </main>
 
       <ChatBox chatBoxRef={chatBoxRef} />
+
+
+
     </div>
   )
 }
