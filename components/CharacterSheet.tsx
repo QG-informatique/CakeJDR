@@ -306,7 +306,7 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
               <div className="font-semibold text-base mb-1">Caractéristiques</div>
               {STATS.map(stat =>
                 <div key={stat.key} className="flex gap-3 items-center mb-1">
-                  <strong className="w-20">{stat.label} :</strong>
+                  <strong className="w-20">{stat.label} </strong>
                   {edit
                     ? <>
                         <input type="text" value={localPerso[stat.key] ?? ''} onChange={e => handleChange(stat.key, e.target.value)} className="ml-2 px-1 py-0.5 rounded bg-white border w-10 text-sm text-black" />
@@ -396,7 +396,7 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
         <div className="text-[1.07rem]">
           <div className="font-semibold mb-2 text-lg">Armes & Armures</div>
           <div className="mb-1 flex items-center">
-            <strong className="w-32">Armes équipées :</strong>
+            <strong className="w-32">Armes :</strong>
             {edit
               ? <input value={localPerso.armes || ''} onChange={e => handleChange('armes', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-28 text-sm text-black" />
               : <span className="ml-1">{cFiche.armes}</span>
@@ -410,7 +410,7 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
             }
           </div>
           <div className="mb-1 flex items-center">
-            <strong className="w-32">Armure équipée :</strong>
+            <strong className="w-32">Armure :</strong>
             {edit
               ? <input value={localPerso.armure || ''} onChange={e => handleChange('armure', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-28 text-sm text-black" />
               : <span className="ml-1">{cFiche.armure}</span>
