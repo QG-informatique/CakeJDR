@@ -1,7 +1,7 @@
 'use client'
 
 import { FC, useState, useEffect } from 'react'
-import ParamMenu from './ParamMenu' // ← Assure-toi d'importer ton fichier ParamMenu ici !
+import ParamMenu from './ParamMenu'
 
 const STATS = [
   { key: 'force', label: 'Force' },
@@ -33,6 +33,11 @@ const getPvColor = (pv: number, pvMax: number) => {
   return 'bg-red-500 text-white'
 }
 
+// Types pour les tableaux dynamiques
+type Competence = { nom: string, type: string, effets: string, degats?: string }
+type Objet = { nom: string, quantite: number }
+type CustomField = { label: string, value: string }
+
 type Props = {
   perso: any,
   onUpdate: (perso: any) => void,
@@ -58,36 +63,123 @@ const rollDice = (dice: string): number => {
   return Math.floor(Math.random() * sides) + 1
 }
 
+// Valeurs par défaut si fiche vide
+const defaultPerso = {
+  nom: 'Gustave',
+  niveau: 2,
+  chance: 3,
+  defense: 13,
+  initiative: 12,
+  pv: 24,
+  pv_max: 30,
+  force: 13, force_mod: 1,
+  dexterite: 14, dexterite_mod: 2,
+  constitution: 12, constitution_mod: 1,
+  intelligence: 8, intelligence_mod: -1,
+  sagesse: 10, sagesse_mod: 0,
+  charisme: 11, charisme_mod: 0,
+  mod_contact: 2,
+  mod_distance: 1,
+  mod_magique: 0,
+  competences: [
+    { nom: 'Cri sauvage', type: 'active', effets: 'Provoque la peur', degats: '1d4' },
+    { nom: 'Résistance', type: 'passive', effets: 'Réduit les dégâts physiques' }
+  ],
+  armes: 'Épée rouillée',
+  degats_armes: '1d6+1',
+  armure: 'Armure en cuir',
+  modif_armure: 2,
+  race: 'Cake',
+  profil: 'Guerrier loyal',
+  sexe: 'M',
+  age: 25,
+  taille: "1m70",
+  poids: "80kg",
+  capacite_raciale: "Peut se régénérer en mangeant du sucre, même sous forme solide. Peut se séparer en deux morceaux pour esquiver.",
+  bourse: 30,
+  traits: "Optimiste, téméraire",
+  ideal: "Liberté",
+  obligations: "Protéger les plus faibles",
+  failles: "Avide, parfois naïf",
+  avantages: "Endurance surnaturelle",
+  background: "Né dans une boulangerie, Gustave parcourt le monde pour retrouver la recette de son ancêtre.",
+  champs_perso: [
+    { label: "Amorce", value: "6 cm de moins que la moyenne" }
+  ],
+  objets: [
+    { nom: "Potion de soin", quantite: 3 },
+    { nom: "Torchon magique", quantite: 1 }
+  ]
+}
+
 const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
+  // --- États ---
   const [edit, setEdit] = useState(false)
   const [tab, setTab] = useState('main')
-  const [localPerso, setLocalPerso] = useState({ ...perso })
+  const [localPerso, setLocalPerso] = useState<any>({ ...(Object.keys(perso||{}).length ? perso : defaultPerso) })
   const [dice, setDice] = useState('d6')
   const [processing, setProcessing] = useState(false)
+  const [newComp, setNewComp] = useState<Partial<Competence>>({})
+  const [newObj, setNewObj] = useState<Partial<Objet>>({})
+  const [newCustom, setNewCustom] = useState<Partial<CustomField>>({})
 
+  // Pour éviter les décalages : référence centrale
+  const cFiche = edit ? localPerso : (Object.keys(perso||{}).length ? perso : defaultPerso)
   // Pour compatibilité: pv_max ou pvMax (si jamais)
-  const pvActuel = Number(edit ? localPerso.pv : perso.pv) || 0
-  const pvMax = Number(edit ? (localPerso.pv_max ?? localPerso.pvMax ?? localPerso.pv) : (perso.pv_max ?? perso.pvMax ?? perso.pv)) || pvActuel
+  const pvActuel = Number(cFiche.pv) || 0
+  const pvMax = Number(cFiche.pv_max ?? cFiche.pvMax ?? cFiche.pv) || pvActuel
 
   useEffect(() => {
-    if (edit) setLocalPerso({ ...perso })
-  }, [edit, perso])
+    if (edit) setLocalPerso({ ...cFiche })
+  // eslint-disable-next-line
+  }, [edit])
 
-  const handleChange = (field: string, value: any) => {
-    setLocalPerso({ ...localPerso, [field]: value })
-  }
-
+  // Sauvegarde
   const save = () => {
     setEdit(false)
     onUpdate(localPerso)
   }
 
-  // Fonction Level Up avec gestion pv_max/pv
+  // --- Handlers Compétences/Objets/Champs persos (édition dynamique) ---
+  const addComp = () => {
+    if (!newComp.nom) return
+    setLocalPerso({ ...localPerso, competences: [...(localPerso.competences||[]), {...newComp}] })
+    setNewComp({})
+  }
+  const delComp = (idx: number) => {
+    const arr = [...(localPerso.competences||[])]
+    arr.splice(idx,1)
+    setLocalPerso({ ...localPerso, competences: arr })
+  }
+  const addObj = () => {
+    if (!newObj.nom || !newObj.quantite) return
+    setLocalPerso({ ...localPerso, objets: [...(localPerso.objets||[]), {...newObj, quantite: Number(newObj.quantite)}] })
+    setNewObj({})
+  }
+  const delObj = (idx: number) => {
+    const arr = [...(localPerso.objets||[])]
+    arr.splice(idx,1)
+    setLocalPerso({ ...localPerso, objets: arr })
+  }
+  const addCustom = () => {
+    if (!newCustom.label || !newCustom.value) return
+    setLocalPerso({ ...localPerso, champs_perso: [...(localPerso.champs_perso||[]), {...newCustom}] })
+    setNewCustom({})
+  }
+  const delCustom = (idx: number) => {
+    const arr = [...(localPerso.champs_perso||[])]
+    arr.splice(idx,1)
+    setLocalPerso({ ...localPerso, champs_perso: arr })
+  }
+  const handleChange = (field: string, value: any) => {
+    setLocalPerso({ ...localPerso, [field]: value })
+  }
+
+  // --- LEVEL UP ---
   const handleLevelUp = async () => {
     if (processing) return
     setProcessing(true)
-    let updatedPerso = { ...perso, niveau: Number(perso.niveau) + 1 }
-    // Prend la clé utilisée pour le max (pv_max ou pvMax ou rien)
+    let updatedPerso = { ...cFiche, niveau: Number(cFiche.niveau) + 1 }
     const pvMaxKey =
       updatedPerso.pv_max !== undefined ? 'pv_max'
       : updatedPerso.pvMax !== undefined ? 'pvMax'
@@ -95,46 +187,31 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
 
     for (const stat of ['pv', ...STATS.map(s => s.key)]) {
       const gain = rollDice(dice)
-      // Pop-up event
-      const event = new CustomEvent('dice-roll', {
-        detail: {
-          diceType: dice,
-          result: gain,
-          label: `Level up - ${stat.charAt(0).toUpperCase() + stat.slice(1)} (${dice.toUpperCase()})`
-        }
-      })
-      window.dispatchEvent(event)
       // Ajout au chat
       if (chatBoxRef?.current) {
         const message = document.createElement('p')
-        message.innerHTML = `<strong>🎲 ${perso.nom} - ${dice.toUpperCase()} - ${stat} :</strong> ${gain}`
+        message.innerHTML = `<strong>🎲 ${cFiche.nom} - ${dice.toUpperCase()} - ${stat} :</strong> ${gain}`
         chatBoxRef.current.appendChild(message)
         chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight
       }
-
       if (stat === 'pv') {
-        // Gère augmentation du max ET des PV actuels
         const currentMax = Number(updatedPerso[pvMaxKey] ?? updatedPerso.pv ?? 0)
         const newPvMax = currentMax + gain
         const currentPv = Number(updatedPerso.pv ?? 0)
-        // Le joueur récupère exactement ce qu'il gagne en pv_max, sans dépasser le nouveau max
         const newPv = Math.min(currentPv + gain, newPvMax)
-        updatedPerso = {
-          ...updatedPerso,
-          [pvMaxKey]: newPvMax,
-          pv: newPv
-        }
+        updatedPerso = { ...updatedPerso, [pvMaxKey]: newPvMax, pv: newPv }
       } else {
         updatedPerso = { ...updatedPerso, [stat]: Number(updatedPerso[stat] ?? 0) + gain }
       }
       onUpdate(updatedPerso)
-      await new Promise((resolve) => setTimeout(resolve, 1300))
+      await new Promise((resolve) => setTimeout(resolve, 1200))
     }
     setProcessing(false)
   }
 
+  // --- RENDER ---
   return (
-    <aside className="w-1/5 bg-gray-900 p-3 overflow-y-auto text-[15px] text-white relative">
+    <aside className="w-1/5 bg-gray-900 p-3 overflow-y-auto text-[15px] text-white relative select-none">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-bold mb-2">Personnage</h2>
         <button onClick={() => { if (edit) save(); else setEdit(true); }} className="text-xs px-2 py-1 rounded bg-blue-500 hover:bg-blue-600 text-white">
@@ -152,55 +229,51 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
           </button>
         ))}
       </nav>
+
+      {/* Onglet Statistiques */}
       {tab === 'main' && (
         <div>
-          {/* Infos principales */}
-          <div className="mb-1 flex items-center">
-            <strong className="w-24">Nom :</strong>
-            {edit
-              ? <input value={localPerso.nom || ''} onChange={e => handleChange('nom', e.target.value)} className="ml-1 px-1 py-0.5 rounded text-sm font-semibold bg-white border text-black" />
-              : <span className="ml-1 text-sm font-semibold">{perso.nom}</span>
-            }
-          </div>
-          <div className="mb-1 flex items-center">
-            <strong className="w-24">Niveau :</strong>
-            {edit
-              ? <input type="text" value={localPerso.niveau || ''} onChange={e => handleChange('niveau', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-12 text-sm text-black" />
-              : <span className="ml-1 text-sm">{perso.niveau}</span>
-            }
-          </div>
-
-          {/* PV Badge à droite */}
-          <div className="mb-2 flex items-start justify-between">
-            <div className="flex flex-col flex-1">
-              <div className="mb-1 flex items-center">
-                <strong className="w-32">Points de chance :</strong>
+          {/* Nom en haut à droite au-dessus des PV */}
+          <div className="flex justify-between items-start mb-2">
+            <div className="flex flex-col gap-2 flex-1">
+              <div className="flex items-center">
+                <strong className="w-20">Niveau :</strong>
                 {edit
-                  ? <input type="text" value={localPerso.points_chance || ''} onChange={e => handleChange('points_chance', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-14 text-sm text-black" />
-                  : <span className="ml-1 text-sm">{perso.points_chance}</span>
+                  ? <input type="text" value={localPerso.niveau || ''} onChange={e => handleChange('niveau', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-14 text-sm text-black" />
+                  : <span className="ml-1 text-sm">{cFiche.niveau}</span>
                 }
               </div>
-              <div className="mb-1 flex items-center">
-                <strong className="w-24">Défense :</strong>
+              <div className="flex items-center">
+                <strong className="w-20">Défense :</strong>
                 {edit
                   ? <input type="text" value={localPerso.defense || ''} onChange={e => handleChange('defense', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-14 text-sm text-black" />
-                  : <span className="ml-1 text-sm">{perso.defense}</span>
+                  : <span className="ml-1 text-sm">{cFiche.defense}</span>
                 }
               </div>
-              <div className="mb-1 flex items-center">
-                <strong className="w-24">Initiative :</strong>
+              <div className="flex items-center">
+                <strong className="w-20">Chance :</strong>
+                {edit
+                  ? <input type="text" value={localPerso.chance || ''} onChange={e => handleChange('chance', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-14 text-sm text-black" />
+                  : <span className="ml-1 text-sm">{cFiche.chance}</span>
+                }
+              </div>
+              <div className="flex items-center">
+                <strong className="w-20">Initiative :</strong>
                 {edit
                   ? <input type="text" value={localPerso.initiative || ''} onChange={e => handleChange('initiative', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-14 text-sm text-black" />
-                  : <span className="ml-1 text-sm">{perso.initiative}</span>
+                  : <span className="ml-1 text-sm">{cFiche.initiative}</span>
                 }
               </div>
             </div>
-            {/* PV Badge à droite */}
-            <div className="flex flex-col items-center ml-4 min-w-[90px]">
-              <span
-                className={`flex items-center justify-center text-2xl font-bold rounded-full h-16 w-16 border-4 ${getPvColor(pvActuel, pvMax)}`}
-                style={{ boxShadow: '0 0 8px #222' }}
-              >
+            <div className="flex flex-col items-center ml-4">
+              <div className="flex items-center mb-1">
+                <span className="text-sm text-gray-400 mr-2">Nom :</span>
+                {edit
+                  ? <input value={localPerso.nom || ''} onChange={e => handleChange('nom', e.target.value)} className="px-1 py-0.5 rounded text-sm font-semibold bg-white border text-black w-[90px]" />
+                  : <span className="text-sm font-semibold">{cFiche.nom}</span>
+                }
+              </div>
+              <span className={`flex items-center justify-center text-2xl font-bold rounded-full h-14 w-14 border-4 ${getPvColor(pvActuel, pvMax)}`} style={{ boxShadow: '0 0 8px #222' }}>
                 {pvActuel}
               </span>
               <span className="mt-1 text-xs text-gray-300">PV / {pvMax}</span>
@@ -228,164 +301,257 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
             </div>
           </div>
           {/* Stats + attaques alignées */}
-          <div className="mt-3 flex gap-0">
+          <div className="mt-2 flex gap-0">
             <div className="flex-1">
               <div className="font-semibold text-base mb-1">Caractéristiques</div>
               {STATS.map(stat =>
-                <div key={stat.key} className="flex gap-5 items-center mb-1">
-                  <strong className="w-20">{stat.label}</strong>
+                <div key={stat.key} className="flex gap-3 items-center mb-1">
+                  <strong className="w-20">{stat.label} :</strong>
                   {edit
                     ? <>
-                        <input type="text" value={localPerso[stat.key] ?? ''} onChange={e => handleChange(stat.key, e.target.value)} className="ml-3 px-1 py-0.5 rounded bg-white border w-12 text-sm text-black" />
+                        <input type="text" value={localPerso[stat.key] ?? ''} onChange={e => handleChange(stat.key, e.target.value)} className="ml-2 px-1 py-0.5 rounded bg-white border w-10 text-sm text-black" />
                         <span className="mx-1">/</span>
-                        <input type="text" value={localPerso[`${stat.key}_mod`] ?? ''} onChange={e => handleChange(`${stat.key}_mod`, e.target.value)} className="px-1 py-0.5 rounded bg-white border w-12 text-sm text-black" placeholder="mod" />
+                        <input type="text" value={localPerso[`${stat.key}_mod`] ?? ''} onChange={e => handleChange(`${stat.key}_mod`, e.target.value)} className="px-1 py-0.5 rounded bg-white border w-10 text-sm text-black" placeholder="mod" />
                       </>
                     : <>
-                        <span className={`ml-6 px-2 py-0.5 rounded text-base font-bold ${getStatColor(Number(perso[stat.key]))} bg-opacity-80`}>
-                          {perso[stat.key]}
+                        <span className={`ml-4 px-2 py-0.5 rounded text-base font-bold ${getStatColor(Number(cFiche[stat.key]))} bg-opacity-80`}>
+                          {cFiche[stat.key]}
                         </span>
                         <span className="ml-2 text-gray-300 text-base font-semibold">
-                          ({perso[`${stat.key}_mod`] >= 0 ? '+' : ''}{perso[`${stat.key}_mod`]})
+                          ({cFiche[`${stat.key}_mod`] >= 0 ? '+' : ''}{cFiche[`${stat.key}_mod`]})
                         </span>
                       </>
                   }
                 </div>
               )}
             </div>
-            <div className="flex flex-col items-end justify-between ml-8 min-w-[120px]">
+            <div className="flex flex-col items-end justify-between ml-4 min-w-[120px]">
               <div className="font-semibold text-base mb-1">Mod. Attaques</div>
               {ATTACKS.map(att =>
                 <div key={att.key} className="flex items-center mb-2 w-full justify-end">
                   <strong className="w-16 text-right">{att.label}</strong>
                   {edit
-                    ? <input type="text" value={localPerso[att.key] ?? ''} onChange={e => handleChange(att.key, e.target.value)} className="ml-2 px-1 py-0.5 rounded bg-white border w-12 text-sm text-black text-right" />
-                    : <span className="ml-3 px-2 py-0.5 rounded text-base font-bold bg-gray-700 text-white text-right">{perso[att.key] ?? 0}</span>
+                    ? <input type="text" value={localPerso[att.key] ?? ''} onChange={e => handleChange(att.key, e.target.value)} className="ml-2 px-1 py-0.5 rounded bg-white border w-10 text-sm text-black text-right" />
+                    : <span className="ml-3 px-2 py-0.5 rounded text-base font-bold bg-gray-700 text-white text-right">{cFiche[att.key] ?? 0}</span>
                   }
                 </div>
               )}
             </div>
           </div>
-          {/* Compétences seulement ici */}
+          {/* Compétences */}
           <div className="mt-4">
-            <div className="font-semibold text-base">Compétences</div>
-            {edit
-              ? <textarea value={localPerso.competences || ''} onChange={e => handleChange('competences', e.target.value)} className="w-full p-1 rounded bg-white text-black dark:bg-gray-700 dark:text-white text-sm" rows={3} />
-              : <div className="whitespace-pre-line text-sm">{perso.competences}</div>
-            }
+            <div className="font-semibold text-base mb-1">Compétences</div>
+            {edit ? (
+              <>
+                <div className="flex flex-col gap-2 mb-2">
+                  {(localPerso.competences || []).map((c: Competence, i: number) => (
+                    <div key={i} className="bg-gray-800 rounded px-2 py-1 flex flex-col relative">
+                      <div className="font-semibold">{c.nom} <span className="text-xs italic text-gray-300">({c.type})</span></div>
+                      <div className="text-xs">Effets : {c.effets} {c.degats && <span>- Dégâts : {c.degats}</span>}</div>
+                      <button className="absolute top-1 right-2 text-xs text-red-400 hover:underline" onClick={() => delComp(i)}>Suppr</button>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  <input className="p-1 rounded bg-white text-black text-sm flex-1 min-w-[90px]" placeholder="Nom" value={newComp.nom||''} onChange={e => setNewComp({...newComp, nom:e.target.value})} />
+                  <select className="p-1 rounded bg-white text-black text-sm" value={newComp.type||''} onChange={e => setNewComp({...newComp, type:e.target.value})}>
+                    <option value="">Type</option>
+                    <option value="active">Active</option>
+                    <option value="passive">Passive</option>
+                  </select>
+                  <input className="p-1 rounded bg-white text-black text-sm flex-1 min-w-[130px]" placeholder="Effets" value={newComp.effets||''} onChange={e => setNewComp({...newComp, effets:e.target.value})} />
+                  <input className="p-1 rounded bg-white text-black text-sm w-16" placeholder="Dégâts" value={newComp.degats||''} onChange={e => setNewComp({...newComp, degats:e.target.value})} />
+                  <button className="bg-blue-600 hover:bg-blue-700 text-white text-sm rounded px-2 py-1" onClick={addComp}>Ajouter</button>
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col gap-1">
+                {(cFiche.competences || []).map((c: Competence, i: number) => (
+                  <div key={i} className="bg-gray-800 rounded px-2 py-1">
+                    <div className="font-semibold">{c.nom} <span className="text-xs italic text-gray-300">({c.type})</span></div>
+                    <div className="text-xs">Effets : {c.effets} {c.degats && <span>- Dégâts : {c.degats}</span>}</div>
+                  </div>
+                ))}
+                {(cFiche.competences || []).length === 0 && <span className="text-gray-400 text-xs">Aucune compétence.</span>}
+              </div>
+            )}
           </div>
-
           {/* Level Up */}
-          <div className="mt-6">
+          <div className="mt-5">
             <label className="block mb-1">Type de dé :</label>
-            <select
-              value={dice}
-              onChange={e => setDice(e.target.value)}
-              className="w-full mb-2 p-1 border rounded bg-white text-black dark:bg-gray-700 dark:text-white"
-            >
+            <select value={dice} onChange={e => setDice(e.target.value)} className="w-full mb-2 p-1 border rounded bg-white text-black dark:bg-gray-700 dark:text-white">
               {DICE_OPTIONS.map(d => (
                 <option key={d.value} value={d.value}>{d.label}</option>
               ))}
             </select>
-            <button
-              onClick={handleLevelUp}
-              disabled={processing}
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
-            >
+            <button onClick={handleLevelUp} disabled={processing} className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50">
               Lancer Level Up
             </button>
           </div>
         </div>
       )}
 
-      {/* ...les onglets équipement/description restent inchangés... */}
-
+      {/* Onglet Équipement */}
       {tab === 'equip' && (
-        <div>
-          <div className="font-semibold mb-2 text-base">Armes & Armures</div>
+        <div className="text-[1.07rem]">
+          <div className="font-semibold mb-2 text-lg">Armes & Armures</div>
           <div className="mb-1 flex items-center">
             <strong className="w-32">Armes équipées :</strong>
             {edit
-              ? <input value={localPerso.armes || ''} onChange={e => handleChange('armes', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-24 text-sm text-black" />
-              : <span className="ml-1 text-sm">{perso.armes}</span>
+              ? <input value={localPerso.armes || ''} onChange={e => handleChange('armes', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-28 text-sm text-black" />
+              : <span className="ml-1">{cFiche.armes}</span>
             }
           </div>
           <div className="mb-1 flex items-center">
             <strong className="w-32">Dégâts armes :</strong>
             {edit
               ? <input value={localPerso.degats_armes || ''} onChange={e => handleChange('degats_armes', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-20 text-sm text-black" />
-              : <span className="ml-1 text-sm">{perso.degats_armes}</span>
+              : <span className="ml-1">{cFiche.degats_armes}</span>
             }
           </div>
           <div className="mb-1 flex items-center">
             <strong className="w-32">Armure équipée :</strong>
             {edit
-              ? <input value={localPerso.armure || ''} onChange={e => handleChange('armure', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-24 text-sm text-black" />
-              : <span className="ml-1 text-sm">{perso.armure}</span>
+              ? <input value={localPerso.armure || ''} onChange={e => handleChange('armure', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-28 text-sm text-black" />
+              : <span className="ml-1">{cFiche.armure}</span>
             }
           </div>
-          <div className="mb-1 flex items-center">
+          <div className="mb-3 flex items-center">
             <strong className="w-32">Modif armure :</strong>
             {edit
               ? <input type="text" value={localPerso.modif_armure || ''} onChange={e => handleChange('modif_armure', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-12 text-sm text-black" />
-              : <span className="ml-1 text-sm">{perso.modif_armure}</span>
+              : <span className="ml-1">{cFiche.modif_armure}</span>
             }
           </div>
+          <div className="font-semibold text-lg mb-1 mt-3">Objets</div>
+          {/* Création/édition d’objets */}
+          {edit ? (
+            <>
+              <div className="flex flex-col gap-1 mb-2">
+                {(localPerso.objets || []).map((o: Objet, i: number) => (
+                  <div key={i} className="flex items-center gap-2 bg-gray-800 rounded px-2 py-1">
+                    <span className="text-base">{o.nom}</span>
+                    <span className="text-xs text-gray-300">x{o.quantite}</span>
+                    <button className="text-xs text-red-400 hover:underline ml-2" onClick={() => delObj(i)}>Suppr</button>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-1 mb-2">
+                <input className="p-1 rounded bg-white text-black text-sm flex-1" placeholder="Nom de l'objet" value={newObj.nom||''} onChange={e => setNewObj({...newObj, nom:e.target.value})} />
+                <input className="p-1 rounded bg-white text-black text-sm w-16" placeholder="Qté" type="number" min="1" value={newObj.quantite||''} onChange={e => setNewObj({...newObj, quantite:e.target.value})} />
+                <button className="bg-blue-600 hover:bg-blue-700 text-white text-sm rounded p-1" onClick={addObj}>Ajouter</button>
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col gap-1">
+              {(cFiche.objets || []).map((o: Objet, i: number) => (
+                <div key={i} className="flex items-center gap-2 bg-gray-800 rounded px-2 py-1">
+                  <span className="text-base">{o.nom}</span>
+                  <span className="text-xs text-gray-300">x{o.quantite}</span>
+                </div>
+              ))}
+              {(cFiche.objets || []).length === 0 && <span className="text-gray-400 text-xs">Aucun objet.</span>}
+            </div>
+          )}
         </div>
       )}
 
+      {/* Onglet Description */}
       {tab === 'desc' && (
         <div>
           <div className="font-semibold mb-2 text-base">Description</div>
-          <div className="mb-1 flex items-center">
-            <strong className="w-24">Race :</strong> {edit
-              ? <input value={localPerso.race || ''} onChange={e => handleChange('race', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border text-sm text-black" />
-              : <span className="ml-1 text-sm">{perso.race}</span>}
+          {/* Champs standards */}
+          {[
+            { key: 'race', label: 'Race' },
+            { key: 'profil', label: 'Profil' },
+            { key: 'sexe', label: 'Sexe' },
+            { key: 'age', label: 'Âge' },
+            { key: 'taille', label: 'Taille' },
+            { key: 'poids', label: 'Poids' }
+          ].map(({key,label}) => (
+            <div key={key} className="mb-1 flex items-center">
+              <strong className="min-w-[80px]">{label} :</strong>
+              {edit
+                ? <input value={localPerso[key] || ''} onChange={e => handleChange(key, e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border text-sm text-black flex-1" />
+                : <span className="ml-1 text-sm">{cFiche[key]}</span>}
+            </div>
+          ))}
+          {/* Capacité raciale AVEC deux points juste derrière */}
+          <div className="mb-1 flex items-start">
+            <strong className="min-w-[120px] mt-1">Capacité raciale :</strong>
+            {edit
+              ? <textarea value={localPerso.capacite_raciale || ''} onChange={e => handleChange('capacite_raciale', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border text-sm text-black flex-1 min-h-[48px] max-h-[130px] resize-y" />
+              : <span className="ml-1 text-sm whitespace-pre-line">{cFiche.capacite_raciale}</span>}
           </div>
           <div className="mb-1 flex items-center">
-            <strong className="w-24">Profil :</strong> {edit
-              ? <input value={localPerso.profil || ''} onChange={e => handleChange('profil', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border text-sm text-black" />
-              : <span className="ml-1 text-sm">{perso.profil}</span>}
-          </div>
-          <div className="mb-1 flex items-center">
-            <strong className="w-24">Sexe :</strong> {edit
-              ? <input value={localPerso.sexe || ''} onChange={e => handleChange('sexe', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border text-sm text-black" />
-              : <span className="ml-1 text-sm">{perso.sexe}</span>}
-          </div>
-          <div className="mb-1 flex items-center">
-            <strong className="w-24">Âge :</strong> {edit
-              ? <input type="text" value={localPerso.age || ''} onChange={e => handleChange('age', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-12 text-sm text-black" />
-              : <span className="ml-1 text-sm">{perso.age}</span>}
-          </div>
-          <div className="mb-1 flex items-center">
-            <strong className="w-24">Taille :</strong> {edit
-              ? <input value={localPerso.taille || ''} onChange={e => handleChange('taille', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-12 text-sm text-black" />
-              : <span className="ml-1 text-sm">{perso.taille}</span>}
-          </div>
-          <div className="mb-1 flex items-center">
-            <strong className="w-24">Poids :</strong> {edit
-              ? <input value={localPerso.poids || ''} onChange={e => handleChange('poids', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-12 text-sm text-black" />
-              : <span className="ml-1 text-sm">{perso.poids}</span>}
-          </div>
-          <div className="mb-1 flex items-center">
-            <strong className="w-32">Capacité raciale :</strong> {edit
-              ? <textarea value={localPerso.capacite_raciale || ''} onChange={e => handleChange('capacite_raciale', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border text-sm text-black w-full" />
-              : <span className="ml-1 text-sm">{perso.capacite_raciale}</span>}
-          </div>
-          <div className="mb-1 flex items-center">
-            <strong className="w-24">Bourse (PA) :</strong> {edit
+            <strong className="min-w-[100px]">Bourse (PA) :</strong>
+            {edit
               ? <input type="text" value={localPerso.bourse || ''} onChange={e => handleChange('bourse', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-14 text-sm text-black" />
-              : <span className="ml-1 text-sm">{perso.bourse}</span>}
+              : <span className="ml-1 text-sm">{cFiche.bourse}</span>}
           </div>
-          <div className="mb-1 flex items-center">
-            <strong className="w-24">Équipement :</strong> {edit
-              ? <textarea value={localPerso.equipement || ''} onChange={e => handleChange('equipement', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border text-sm text-black w-full" />
-              : <span className="ml-1 text-sm">{perso.equipement}</span>}
+          {/* Ajouts demandés */}
+          {[
+            { key: 'traits', label: 'Trait perso' },
+            { key: 'ideal', label: 'Idéal' },
+            { key: 'obligations', label: 'Obligations' },
+            { key: 'failles', label: 'Failles' },
+            { key: 'avantages', label: 'Avantages' },
+            { key: 'background', label: 'Background' }
+          ].map(({key,label}) => (
+            <div key={key} className="mb-1 flex items-center">
+              <strong className="min-w-[100px]">{label} :</strong>
+              {edit
+                ? <input value={localPerso[key] || ''} onChange={e => handleChange(key, e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border text-sm text-black flex-1" />
+                : <span className="ml-1 text-sm whitespace-pre-line">{cFiche[key]}</span>}
+            </div>
+          ))}
+          {/* Champs persos dynamiques */}
+          <div className="mt-2">
+            <div className="font-semibold text-base mb-1">Autres champs</div>
+            {edit ? (
+              <>
+                <div className="flex flex-col gap-1 mb-1">
+                  {(localPerso.champs_perso || []).map((f: CustomField, i: number) => (
+                    <div key={i} className="flex gap-2 items-center">
+                      <input className="p-1 rounded bg-white text-black text-sm w-32" value={f.label} onChange={e => {
+                        const arr = [...localPerso.champs_perso]
+                        arr[i].label = e.target.value
+                        setLocalPerso({ ...localPerso, champs_perso: arr })
+                      }} />
+                      <span>:</span>
+                      <input className="p-1 rounded bg-white text-black text-sm flex-1" value={f.value} onChange={e => {
+                        const arr = [...localPerso.champs_perso]
+                        arr[i].value = e.target.value
+                        setLocalPerso({ ...localPerso, champs_perso: arr })
+                      }} />
+                      <button className="text-xs text-red-400 hover:underline" onClick={() => delCustom(i)}>Suppr</button>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-1 mb-2">
+                  <input className="p-1 rounded bg-white text-black text-sm w-32" placeholder="Nom du champ" value={newCustom.label||''} onChange={e => setNewCustom({...newCustom, label:e.target.value})} />
+                  <span>:</span>
+                  <input className="p-1 rounded bg-white text-black text-sm flex-1" placeholder="Valeur" value={newCustom.value||''} onChange={e => setNewCustom({...newCustom, value:e.target.value})} />
+                  <button className="bg-blue-600 hover:bg-blue-700 text-white text-sm rounded p-1" onClick={addCustom}>Ajouter</button>
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col gap-1">
+                {(cFiche.champs_perso || []).map((f: CustomField, i: number) => (
+                  <div key={i} className="flex gap-2 items-center">
+                    <span className="font-semibold">{f.label} :</span>
+                    <span className="">{f.value}</span>
+                  </div>
+                ))}
+                {(cFiche.champs_perso || []).length === 0 && <span className="text-gray-400 text-xs">Aucun champ perso.</span>}
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* BOUTON PARAMÈTRES CENTRÉ EN BAS */}
-      <ParamMenu perso={edit ? localPerso : perso} onUpdate={onUpdate} />
+      {/* Bouton paramètre centré en bas */}
+      <ParamMenu perso={edit ? localPerso : cFiche} onUpdate={onUpdate} />
 
       {edit && (
         <button onClick={save} className="mt-3 w-full bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm">Sauver</button>
