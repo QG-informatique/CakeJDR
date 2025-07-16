@@ -18,6 +18,9 @@ const competenceTypes = [
     "Magique",
     "Sociale",
     "Technique",
+    "Spéciale",
+    "Passive",
+    "Active",
     // Ajoute d'autres types si besoin
 ];
 
@@ -49,7 +52,7 @@ export const AddCompetenceModal: React.FC<AddCompetenceModalProps> = ({
     if (!open) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.2)" }}>
             <div className="bg-gray-900 rounded-lg shadow-lg p-6 w-full max-w-md relative">
                 <button
                     className="absolute top-2 right-2 text-gray-400 hover:text-white"
