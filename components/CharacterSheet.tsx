@@ -2,7 +2,7 @@
 
 import { FC, useState, useEffect } from 'react'
 import ParamMenu from './ParamMenu'
-import AddCompetenceModal, { NewCompetence } from './AddCompetenceModal'
+import AddCompetenceModal from './AddCompetenceModal'
 
 const STATS = [
   { key: 'force', label: 'Force' },
@@ -42,7 +42,7 @@ type CustomField = { label: string, value: string }
 type Props = {
   perso: any,
   onUpdate: (perso: any) => void,
-  chatBoxRef?: React.RefObject<HTMLDivElement>
+  chatBoxRef?: React.RefObject<HTMLDivElement | null>
 }
 
 const TABS = [
@@ -449,7 +449,7 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
               </div>
               <div className="flex gap-1 mb-2">
                 <input className="p-1 rounded bg-white text-black text-sm flex-1" placeholder="Nom de l'objet" value={newObj.nom||''} onChange={e => setNewObj({...newObj, nom:e.target.value})} />
-                <input className="p-1 rounded bg-white text-black text-sm w-16" placeholder="Qté" type="number" min="1" value={newObj.quantite||''} onChange={e => setNewObj({...newObj, quantite:e.target.value})} />
+                <input className="p-1 rounded bg-white text-black text-sm w-16" placeholder="Qté" type="number" min="1" value={newObj.quantite||''} onChange={e => setNewObj({...newObj, quantite:Number(e.target.value)})} />
                 <button className="bg-blue-600 hover:bg-blue-700 text-white text-sm rounded p-1" onClick={addObj}>Ajouter</button>
               </div>
             </>
