@@ -2,7 +2,7 @@
 import { FC, RefObject, useRef, useState, useEffect } from 'react'
 
 type Props = {
-  chatBoxRef: RefObject<HTMLDivElement>
+  chatBoxRef: RefObject<HTMLDivElement | null>
 }
 
 const ChatBox: FC<Props> = ({ chatBoxRef }) => {
