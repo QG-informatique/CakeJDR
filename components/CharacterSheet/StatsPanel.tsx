@@ -116,7 +116,7 @@ const StatsPanel: FC<Props> = ({ edit, perso, onChange }) => {
           <div className="font-semibold text-base mb-1">Caractéristiques</div>
           {STATS.map(stat =>
             <div key={stat.key} className="flex gap-3 items-center mb-1">
-              <strong className="w-20">{stat.label} :</strong>
+              <strong className="w-20">{stat.label}</strong>
               {edit
                 ? <>
                     <input type="text" value={perso[stat.key] ?? ''} onChange={e => onChange(stat.key, e.target.value)} className="ml-2 px-1 py-0.5 rounded bg-white border w-10 text-sm text-black" />

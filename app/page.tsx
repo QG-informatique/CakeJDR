@@ -1,13 +1,13 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import CharacterSheet from '@/components/CharacterSheet'
+import CharacterSheet from '@/components/CharacterSheet/CharacterSheet'
 import DiceRoller from '@/components/DiceRoller'
 import ChatBox from '@/components/ChatBox'
 import PopupResult from '@/components/PopupResult'
 import Head from 'next/head'
-import InteractiveCanvas from '@/components/InteractiveCanvas'
-import ParamMenu from '@/components/ImportExportMenu' // ← AJOUT ICI
+import InteractiveCanvas from '@/components/Canvas/InteractiveCanvas'
+import ParamMenu from '@/components/CharacterSheet/ImportExportMenu' // ← AJOUT ICI
 
 export default function HomePage() {
   const [perso, setPerso] = useState({
