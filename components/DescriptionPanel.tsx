@@ -8,7 +8,7 @@ type DescriptionPanelProps = {
   edit: boolean,
   values: {
     race: string,
-    profil: string,
+    classe: string,
     sexe: string,
     age: string | number,
     taille: string,
@@ -30,82 +30,144 @@ type DescriptionPanelProps = {
   onUpdateChamp: (index: number, champ: CustomField) => void,
 }
 
+// Voir plus...
+const LimiteChamp: FC<{ value: string }> = ({ value }) => {
+  const [open, setOpen] = useState(false)
+  const LMAX = 130
+  if (!value) return null
+  if (value.length <= LMAX || open) return (
+    <span className="text-sm whitespace-pre-line break-words">
+      {value}
+      {value.length > LMAX && (
+        <button className="text-blue-400 underline ml-1 text-xs" onClick={() => setOpen(false)}>
+          Fermer
+        </button>
+      )}
+    </span>
+  )
+  return (
+    <span className="text-sm whitespace-pre-line break-words">
+      {value.slice(0, LMAX) + '...'}
+      <button className="text-blue-400 underline ml-1 text-xs" onClick={() => setOpen(true)}>
+        Voir plus
+      </button>
+    </span>
+  )
+}
+
+const LABEL_WIDTH = "120px"
+const COLON_WIDTH = "18px"
+
 const DescriptionPanel: FC<DescriptionPanelProps> = ({
   edit,
   values,
   onChange,
-  champsPerso = [],   // <-- Ajoute ceci comme valeur par défaut !  
+  champsPerso = [],
   onAddChamp,
   onDelChamp,
   onUpdateChamp,
 }) => {
   const [newChamp, setNewChamp] = useState<Partial<CustomField>>({})
 
+  // Champs standards
+  const shortFields = [
+    { key: 'race', label: 'Race' },
+    { key: 'classe', label: 'Classe' },
+    { key: 'sexe', label: 'Sexe' },
+    { key: 'age', label: 'Âge' },
+    { key: 'taille', label: 'Taille' },
+    { key: 'poids', label: 'Poids' },
+    { key: 'bourse', label: 'Bourse (PA)' },
+  ]
+  const longFields = [
+    { key: 'traits', label: 'Trait perso' },
+    { key: 'ideal', label: 'Idéal' },
+    { key: 'obligations', label: 'Obligations' },
+    { key: 'failles', label: 'Failles' },
+    { key: 'avantages', label: 'Avantages' },
+    { key: 'background', label: 'Background' }
+  ]
+
   return (
-    <div>
+    <div
+      className="h-[calc(100vh-120px)] overflow-y-auto pr-1"
+      style={{ minHeight: 0, overflowX: 'hidden' }}
+    >
       <div className="font-semibold mb-2 text-base">Description</div>
-      {/* Champs standards */}
-      {[
-        { key: 'race', label: 'Race' },
-        { key: 'profil', label: 'Profil' },
-        { key: 'sexe', label: 'Sexe' },
-        { key: 'age', label: 'Âge' },
-        { key: 'taille', label: 'Taille' },
-        { key: 'poids', label: 'Poids' }
-      ].map(({ key, label }) => (
-        <div key={key} className="mb-1 flex items-center">
-          <strong className="min-w-[80px]">{label} :</strong>
-          {edit
-            ? <input
+
+      {/* Champs courts alignés */}
+      {shortFields.map(({ key, label }) => (
+        <div key={key} className="grid grid-cols-[120px_18px_1fr] mb-2 items-start">
+          <label
+            className="font-semibold text-right select-none"
+            style={{ minWidth: LABEL_WIDTH }}
+          >
+            {label}
+          </label>
+          <span className="text-right font-bold">:</span>
+          <div className="flex-1 min-w-0 break-words pl-3">
+            {edit ? (
+              <input
                 value={values[key] || ''}
                 onChange={e => onChange(key, e.target.value)}
-                className="ml-1 px-1 py-0.5 rounded bg-white border text-sm text-black flex-1"
+                className="px-1 py-0.5 rounded bg-white border text-sm text-black w-full"
+                style={{ minWidth: 0 }}
               />
-            : <span className="ml-1 text-sm">{values[key]}</span>}
+            ) : (
+              <span className="text-sm whitespace-pre-line break-words w-full">{values[key]}</span>
+            )}
+          </div>
         </div>
       ))}
-      {/* Capacité raciale AVEC deux points juste derrière */}
-      <div className="mb-1 flex items-start">
-        <strong className="min-w-[120px] mt-1">Capacité raciale :</strong>
-        {edit
-          ? <textarea
+
+      {/* Capacité raciale alignée */}
+      <div className="grid grid-cols-[120px_18px_1fr] mb-2 items-start">
+        <label
+          className="font-semibold text-right select-none"
+          style={{ minWidth: LABEL_WIDTH }}
+        >
+          Capacité raciale
+        </label>
+        <span className="text-right font-bold">:</span>
+        <div className="flex-1 min-w-0 break-words pl-3">
+          {edit ? (
+            <textarea
               value={values.capacite_raciale || ''}
               onChange={e => onChange('capacite_raciale', e.target.value)}
-              className="ml-1 px-1 py-0.5 rounded bg-white border text-sm text-black flex-1 min-h-[48px] max-h-[130px] resize-y"
+              className="px-1 py-0.5 rounded bg-white border text-sm text-black w-full min-h-[38px] max-h-[130px] resize-y"
+              style={{ minWidth: 0, overflowWrap: 'break-word' }}
             />
-          : <span className="ml-1 text-sm whitespace-pre-line">{values.capacite_raciale}</span>}
+          ) : (
+            <span className="text-sm whitespace-pre-line break-words w-full">{values.capacite_raciale}</span>
+          )}
+        </div>
       </div>
-      <div className="mb-1 flex items-center">
-        <strong className="min-w-[100px]">Bourse (PA) :</strong>
-        {edit
-          ? <input
-              type="text"
-              value={values.bourse || ''}
-              onChange={e => onChange('bourse', e.target.value)}
-              className="ml-1 px-1 py-0.5 rounded bg-white border w-14 text-sm text-black"
-            />
-          : <span className="ml-1 text-sm">{values.bourse}</span>}
-      </div>
-      {/* Ajouts demandés */}
-      {[
-        { key: 'traits', label: 'Trait perso' },
-        { key: 'ideal', label: 'Idéal' },
-        { key: 'obligations', label: 'Obligations' },
-        { key: 'failles', label: 'Failles' },
-        { key: 'avantages', label: 'Avantages' },
-        { key: 'background', label: 'Background' }
-      ].map(({ key, label }) => (
-        <div key={key} className="mb-1 flex items-center">
-          <strong className="min-w-[100px]">{label} :</strong>
-          {edit
-            ? <input
+
+      {/* Champs longs (voir plus) alignés */}
+      {longFields.map(({ key, label }) => (
+        <div key={key} className="grid grid-cols-[120px_18px_1fr] mb-2 items-start">
+          <label
+            className="font-semibold text-right select-none"
+            style={{ minWidth: LABEL_WIDTH }}
+          >
+            {label}
+          </label>
+          <span className="text-right font-bold">:</span>
+          <div className="flex-1 min-w-0 break-words pl-3">
+            {edit ? (
+              <textarea
                 value={values[key] || ''}
                 onChange={e => onChange(key, e.target.value)}
-                className="ml-1 px-1 py-0.5 rounded bg-white border text-sm text-black flex-1"
+                className="px-1 py-0.5 rounded bg-white border text-sm text-black w-full min-h-[34px] max-h-[130px] resize-y"
+                style={{ minWidth: 0, overflowWrap: 'break-word' }}
               />
-            : <span className="ml-1 text-sm whitespace-pre-line">{values[key]}</span>}
+            ) : (
+              <LimiteChamp value={values[key] || ''} />
+            )}
+          </div>
         </div>
       ))}
+
       {/* Champs persos dynamiques */}
       <div className="mt-2">
         <div className="font-semibold text-base mb-1">Autres champs</div>
@@ -113,42 +175,47 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
           <>
             <div className="flex flex-col gap-1 mb-1">
               {champsPerso.map((f, i) => (
-                <div key={i} className="flex gap-2 items-center">
+                <div key={i} className="grid grid-cols-[120px_18px_1fr_80px] gap-1 mb-1 items-start w-full">
                   <input
-                    className="p-1 rounded bg-white text-black text-sm w-32"
+                    className="p-1 rounded bg-white text-black text-sm w-full text-right"
                     value={f.label}
                     onChange={e => {
                       onUpdateChamp(i, { ...f, label: e.target.value })
                     }}
                   />
-                  <span>:</span>
-                  <input
-                    className="p-1 rounded bg-white text-black text-sm flex-1"
+                  <span className="text-right font-bold">:</span>
+                  <textarea
+                    className="p-1 rounded bg-white text-black text-sm flex-1 min-h-[28px] resize-y w-full pl-3"
                     value={f.value}
                     onChange={e => {
                       onUpdateChamp(i, { ...f, value: e.target.value })
                     }}
+                    style={{ overflowWrap: 'break-word', minWidth: 0 }}
                   />
-                  <button className="text-xs text-red-400 hover:underline" onClick={() => onDelChamp(i)}>Suppr</button>
+                  <button className="text-xs text-red-400 hover:underline col-span-1 justify-self-end" onClick={() => onDelChamp(i)}>Suppr</button>
                 </div>
               ))}
             </div>
-            <div className="flex gap-1 mb-2">
-              <input
-                className="p-1 rounded bg-white text-black text-sm w-32"
-                placeholder="Nom du champ"
-                value={newChamp.label || ''}
-                onChange={e => setNewChamp({ ...newChamp, label: e.target.value })}
-              />
-              <span>:</span>
-              <input
-                className="p-1 rounded bg-white text-black text-sm flex-1"
-                placeholder="Valeur"
-                value={newChamp.value || ''}
-                onChange={e => setNewChamp({ ...newChamp, value: e.target.value })}
-              />
+            <div className="flex flex-col gap-1 mb-2">
+              <div className="grid grid-cols-[120px_18px_1fr_80px] gap-1 w-full">
+                <input
+                  className="p-1 rounded bg-white text-black text-sm w-full text-right"
+                  placeholder="Nom du champ"
+                  value={newChamp.label || ''}
+                  onChange={e => setNewChamp({ ...newChamp, label: e.target.value })}
+                />
+                <span className="text-right font-bold">:</span>
+                <textarea
+                  className="p-1 rounded bg-white text-black text-sm flex-1 min-h-[28px] resize-y w-full pl-3"
+                  placeholder="Valeur"
+                  value={newChamp.value || ''}
+                  onChange={e => setNewChamp({ ...newChamp, value: e.target.value })}
+                  style={{ overflowWrap: 'break-word', minWidth: 0 }}
+                />
+                <span />
+              </div>
               <button
-                className="bg-blue-600 hover:bg-blue-700 text-white text-sm rounded p-1"
+                className="bg-blue-600 hover:bg-blue-700 text-white text-sm rounded p-1 mt-1 w-fit self-end"
                 onClick={() => {
                   if (!newChamp.label || !newChamp.value) return
                   onAddChamp({ label: newChamp.label, value: newChamp.value })
@@ -162,9 +229,10 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
         ) : (
           <div className="flex flex-col gap-1">
             {champsPerso.map((f, i) => (
-              <div key={i} className="flex gap-2 items-center">
-                <span className="font-semibold">{f.label} :</span>
-                <span className="">{f.value}</span>
+              <div key={i} className="grid grid-cols-[120px_18px_1fr] items-start w-full">
+                <span className="font-semibold text-right">{f.label}</span>
+                <span className="text-right font-bold">:</span>
+                <span className="break-words flex-1 pl-3">{f.value}</span>
               </div>
             ))}
             {champsPerso.length === 0 && <span className="text-gray-400 text-xs">Aucun champ perso.</span>}

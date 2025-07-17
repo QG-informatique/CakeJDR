@@ -34,24 +34,25 @@ export default function HomePage() {
 
   const chatBoxRef = useRef<HTMLDivElement>(null)
 
-  const rollDice = () => {
-    setDiceDisabled(true)
-    const result = Math.floor(Math.random() * diceType) + 1
-    setDiceResult(result)
-    setShowPopup(true)
+ const rollDice = () => {
+  setDiceDisabled(true)
+  const result = Math.floor(Math.random() * diceType) + 1
+  setDiceResult(result)
+  setShowPopup(true)
 
-    setTimeout(() => {
-      setShowPopup(false)
-      setDiceDisabled(false)
-    }, 3000)
+  setTimeout(() => {
+    setShowPopup(false)
+    setDiceDisabled(false)
+  }, 3000)
 
-    if (chatBoxRef.current) {
-      const message = document.createElement("p")
-      message.innerHTML = `<strong>🎲 Jet :</strong> D${diceType} → <strong>${result}</strong>`
-      chatBoxRef.current.appendChild(message)
-      chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight
-    }
+  if (chatBoxRef.current) {
+    const message = document.createElement("p")
+    message.innerHTML = `<strong>🎲 ${perso.nom || "?"} :</strong> D${diceType} → <strong>${result}</strong>`
+    chatBoxRef.current.appendChild(message)
+    chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight
   }
+}
+
 
   return (
     <div className="flex h-[calc(100vh-10px)] m-[5px] font-sans overflow-hidden bg-white text-black dark:bg-gray-900 dark:text-white">
