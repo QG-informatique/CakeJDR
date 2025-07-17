@@ -114,26 +114,33 @@ const StatsPanel: FC<Props> = ({ edit, perso, onChange }) => {
       <div className="mt-2 flex gap-0">
         <div className="flex-1">
           <div className="font-semibold text-base mb-1">Caractéristiques</div>
-          {STATS.map(stat =>
-            <div key={stat.key} className="flex gap-3 items-center mb-1">
-              <strong className="w-20">{stat.label} :</strong>
-              {edit
-                ? <>
-                    <input type="text" value={perso[stat.key] ?? ''} onChange={e => onChange(stat.key, e.target.value)} className="ml-2 px-1 py-0.5 rounded bg-white border w-10 text-sm text-black" />
-                    <span className="mx-1">/</span>
-                    <input type="text" value={perso[`${stat.key}_mod`] ?? ''} onChange={e => onChange(`${stat.key}_mod`, e.target.value)} className="px-1 py-0.5 rounded bg-white border w-10 text-sm text-black" placeholder="mod" />
-                  </>
-                : <>
-                    <span className={`ml-4 px-2 py-0.5 rounded text-base font-bold ${getStatColor(Number(perso[stat.key]))} bg-opacity-80`}>
-                      {perso[stat.key]}
-                    </span>
-                    <span className="ml-2 text-gray-300 text-base font-semibold">
-                      ({perso[`${stat.key}_mod`] >= 0 ? '+' : ''}{perso[`${stat.key}_mod`]})
-                    </span>
-                  </>
-              }
-            </div>
-          )}
+{STATS.map(stat =>
+  <div key={stat.key} className="flex gap-3 items-center mb-1">
+    <strong className="w-28 text-right">{stat.label} :</strong>
+    {edit
+      ? <>
+          <input type="text" value={perso[stat.key] ?? ''} onChange={e => onChange(stat.key, e.target.value)} className="ml-2 px-1 py-0.5 rounded bg-white border w-10 text-sm text-black" />
+          <span className="mx-1">/</span>
+          <input type="text" value={perso[`${stat.key}_mod`] ?? ''} onChange={e => onChange(`${stat.key}_mod`, e.target.value)} className="px-1 py-0.5 rounded bg-white border w-10 text-sm text-black" placeholder="mod" />
+        </>
+      : <>
+          <span
+            className={`ml-2 px-2 py-0.5 rounded text-base font-bold ${getStatColor(Number(perso[stat.key]))} bg-opacity-80`}
+            style={{ display: 'inline-block', width: '36px', textAlign: 'center' }} // largeur fixée ici
+          >
+            {perso[stat.key]}
+          </span>
+          <span
+            className="ml-2 text-gray-300 text-base font-semibold"
+            style={{ display: 'inline-block', width: '50px', textAlign: 'left' }} // largeur fixée pour tous les mods
+          >
+            ({perso[`${stat.key}_mod`] >= 0 ? '+' : ''}{perso[`${stat.key}_mod`]})
+          </span>
+        </>
+    }
+  </div>
+)}
+
         </div>
         <div className="flex flex-col items-end justify-between ml-4 min-w-[120px]">
           <div className="font-semibold text-base mb-1">Mod. Attaques</div>
