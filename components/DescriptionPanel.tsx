@@ -1,28 +1,33 @@
 'use client'
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { FC, useState } from 'react'
 
 type CustomField = { label: string, value: string }
 
+type DescriptionValues = {
+  race: string,
+  classe: string,
+  sexe: string,
+  age: string | number,
+  taille: string,
+  poids: string,
+  capacite_raciale: string,
+  bourse: string | number,
+  traits: string,
+  ideal: string,
+  obligations: string,
+  failles: string,
+  avantages: string,
+  background: string,
+  champs_perso: CustomField[],
+  [key: string]: any
+}
+
 type DescriptionPanelProps = {
   edit: boolean,
-  values: {
-    race: string,
-    classe: string,
-    sexe: string,
-    age: string | number,
-    taille: string,
-    poids: string,
-    capacite_raciale: string,
-    bourse: string | number,
-    traits: string,
-    ideal: string,
-    obligations: string,
-    failles: string,
-    avantages: string,
-    background: string,
-    champs_perso: CustomField[]
-  },
+  values: DescriptionValues,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onChange: (field: string, value: any) => void,
   champsPerso: CustomField[],
   onAddChamp: (champ: CustomField) => void,
@@ -56,7 +61,6 @@ const LimiteChamp: FC<{ value: string }> = ({ value }) => {
 }
 
 const LABEL_WIDTH = "120px"
-const COLON_WIDTH = "18px"
 
 const DescriptionPanel: FC<DescriptionPanelProps> = ({
   edit,
@@ -106,16 +110,18 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
           </label>
           <span className="text-right font-bold">:</span>
           <div className="flex-1 min-w-0 break-words pl-3">
-            {edit ? (
-              <input
-                value={values[key] || ''}
-                onChange={e => onChange(key, e.target.value)}
-                className="px-1 py-0.5 rounded bg-white border text-sm text-black w-full"
-                style={{ minWidth: 0 }}
-              />
-            ) : (
-              <span className="text-sm whitespace-pre-line break-words w-full">{values[key]}</span>
-            )}
+              {edit ? (
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                <input
+                  value={(values as any)[key] || ''}
+                  onChange={e => onChange(key, e.target.value)}
+                  className="px-1 py-0.5 rounded bg-white border text-sm text-black w-full"
+                  style={{ minWidth: 0 }}
+                />
+              ) : (
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                <span className="text-sm whitespace-pre-line break-words w-full">{(values as any)[key]}</span>
+              )}
           </div>
         </div>
       ))}
@@ -154,16 +160,18 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
           </label>
           <span className="text-right font-bold">:</span>
           <div className="flex-1 min-w-0 break-words pl-3">
-            {edit ? (
-              <textarea
-                value={values[key] || ''}
-                onChange={e => onChange(key, e.target.value)}
-                className="px-1 py-0.5 rounded bg-white border text-sm text-black w-full min-h-[34px] max-h-[130px] resize-y"
-                style={{ minWidth: 0, overflowWrap: 'break-word' }}
-              />
-            ) : (
-              <LimiteChamp value={values[key] || ''} />
-            )}
+              {edit ? (
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                <textarea
+                  value={(values as any)[key] || ''}
+                  onChange={e => onChange(key, e.target.value)}
+                  className="px-1 py-0.5 rounded bg-white border text-sm text-black w-full min-h-[34px] max-h-[130px] resize-y"
+                  style={{ minWidth: 0, overflowWrap: 'break-word' }}
+                />
+              ) : (
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              <LimiteChamp value={(values as any)[key] || ''} />
+              )}
           </div>
         </div>
       ))}
