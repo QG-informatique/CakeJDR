@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { FC, useState } from 'react'
 
@@ -13,6 +14,7 @@ type Props = {
   objets: Objet[],
   onAddObj: (obj: Objet) => void,
   onDelObj: (idx: number) => void,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onChange: (field: string, value: any) => void,
 }
 
