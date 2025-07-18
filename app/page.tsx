@@ -31,28 +31,32 @@ export default function HomePage() {
   const [diceType, setDiceType] = useState(6)
   const [diceResult, setDiceResult] = useState<number | null>(null)
   const [diceDisabled, setDiceDisabled] = useState(false)
+  const [pendingRoll, setPendingRoll] = useState<{ result: number, dice: number, nom: string } | null>(null)
 
   const chatBoxRef = useRef<HTMLDivElement>(null)
 
- const rollDice = () => {
-  setDiceDisabled(true)
-  const result = Math.floor(Math.random() * diceType) + 1
-  setDiceResult(result)
-  setShowPopup(true)
+  // ⚡ Quand on lance le dé, on ne met PAS le résultat tout de suite dans le chat
+  const rollDice = () => {
+    setDiceDisabled(true)
+    const result = Math.floor(Math.random() * diceType) + 1
+    setDiceResult(result)
+    setShowPopup(true)
+    setPendingRoll({ result, dice: diceType, nom: perso.nom || "?" })
+    // Pas d'ajout dans le chat ici !
+  }
 
-  setTimeout(() => {
+  // ➡️ Quand l'animation est finie (appelé par PopupResult)
+  const handlePopupFinish = () => {
     setShowPopup(false)
     setDiceDisabled(false)
-  }, 3000)
-
-  if (chatBoxRef.current) {
-    const message = document.createElement("p")
-    message.innerHTML = `<strong>🎲 ${perso.nom || "?"} :</strong> D${diceType} → <strong>${result}</strong>`
-    chatBoxRef.current.appendChild(message)
-    chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight
+    if (pendingRoll && chatBoxRef.current) {
+      const message = document.createElement("p")
+      message.innerHTML = `<strong>🎲 ${pendingRoll.nom} :</strong> D${pendingRoll.dice} → <strong>${pendingRoll.result}</strong>`
+      chatBoxRef.current.appendChild(message)
+      chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight
+      setPendingRoll(null)
+    }
   }
-}
-
 
   return (
     <div className="flex h-[calc(100vh-10px)] m-[5px] font-sans overflow-hidden bg-white text-black dark:bg-gray-900 dark:text-white">
@@ -65,7 +69,12 @@ export default function HomePage() {
       <main className="flex-1 bg-white dark:bg-gray-950 flex flex-col">
         <div className="flex-1 border m-4 bg-gray-50 dark:bg-gray-900 flex flex-col justify-center items-center relative">
           <InteractiveCanvas />
-          <PopupResult show={showPopup} result={diceResult} diceType={diceType} />
+          <PopupResult
+            show={showPopup}
+            result={diceResult}
+            diceType={diceType}
+            onFinish={handlePopupFinish} // 👈 Animation terminée = affiche dans le chat
+          />
         </div>
 
         <DiceRoller
@@ -77,9 +86,6 @@ export default function HomePage() {
       </main>
 
       <ChatBox chatBoxRef={chatBoxRef} />
-
-
-
     </div>
   )
 }
