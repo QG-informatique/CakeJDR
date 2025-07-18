@@ -23,6 +23,7 @@ type DescriptionPanelProps = {
     background: string,
     champs_perso: CustomField[]
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onChange: (field: string, value: any) => void,
   champsPerso: CustomField[],
   onAddChamp: (champ: CustomField) => void,

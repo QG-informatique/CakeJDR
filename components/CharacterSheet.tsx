@@ -22,7 +22,9 @@ type Objet = { nom: string, quantite: number }
 type CustomField = { label: string, value: string }
 
 type Props = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   perso: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onUpdate: (perso: any) => void,
   chatBoxRef?: React.RefObject<HTMLDivElement | null>
 }
@@ -64,6 +66,7 @@ export const defaultPerso = {
 const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
   const [edit, setEdit] = useState(false)
   const [tab, setTab] = useState('main')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [localPerso, setLocalPerso] = useState<any>(
     { ...(Object.keys(perso || {}).length ? perso : defaultPerso) }
   )
@@ -80,6 +83,7 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
   }, [perso])
 
   // Fonctions utilitaires pour les champs dynamiques
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleChange = (field: string, value: any) => {
     setLocalPerso({ ...localPerso, [field]: value })
   }
@@ -219,7 +223,7 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
               objets: [...(localPerso.objets || []), obj]
             })
           }
-          onDeleteObj={idx =>
+          onDelObj={idx =>
             setLocalPerso({
               ...localPerso,
               objets: (localPerso.objets || []).filter((_, i) => i !== idx)

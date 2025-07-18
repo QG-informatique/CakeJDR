@@ -44,7 +44,9 @@ const LevelUpPanel: FC<Props> = ({
   let shadow = '0 0 48px 20px #34d399, 0 0 200px 120px #34d39977'
   let stroke = '#fff'
   let pulse = 'animate-pulse'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let extraEffect: any = {}
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let motionTransition: any = { duration: 0.85, type: 'tween' }
 
   if (isMax) {

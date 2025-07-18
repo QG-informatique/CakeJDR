@@ -7,7 +7,6 @@ import ChatBox from '@/components/ChatBox'
 import PopupResult from '@/components/PopupResult'
 import Head from 'next/head'
 import InteractiveCanvas from '@/components/InteractiveCanvas'
-import ParamMenu from '@/components/ImportExportMenu' // ← AJOUT ICI
 
 export default function HomePage() {
   const [perso, setPerso] = useState({

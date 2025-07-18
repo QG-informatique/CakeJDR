@@ -4,7 +4,9 @@ import { FC, useRef, useState } from 'react'
 import { defaultPerso } from './CharacterSheet' // <-- AJOUT
 
 type Props = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   perso: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onUpdate: (perso: any) => void
 }
 
