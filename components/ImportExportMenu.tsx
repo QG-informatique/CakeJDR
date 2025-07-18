@@ -1,10 +1,13 @@
 'use client'
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { FC, useRef, useState } from 'react'
 import { defaultPerso } from './CharacterSheet' // <-- AJOUT
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Props = {
   perso: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onUpdate: (perso: any) => void
 }
 
