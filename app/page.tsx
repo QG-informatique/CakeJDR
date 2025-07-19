@@ -65,7 +65,7 @@ export default function HomePage() {
     if (typeof window === 'undefined') return
     if (!sessionStorage.getItem('visitedMenu')) {
       sessionStorage.setItem('visitedMenu', 'true')
-      router.push('/menu')
+      router.push('/menu/menuacceuil')
     }
   }, [])
 
@@ -189,7 +189,7 @@ export default function HomePage() {
         chatBoxRef={chatBoxRef}
       >
         <Link
-          href="/menu"
+          href="/menu/menuacceuil"
           className="bg-gray-800 hover:bg-gray-900 text-white px-2 py-1 rounded text-xs"
           style={{ minWidth: 70 }}
         >

@@ -72,7 +72,7 @@ export default function Login({ onLogin }: Props) {
       setError(null)
       window.dispatchEvent(new Event('jdr_profile_change'))
       onLogin(trimmedPseudo)
-      router.push('/menu')
+      router.push('/menu/menuacceuil')
       return
     }
 
@@ -96,7 +96,7 @@ export default function Login({ onLogin }: Props) {
     window.dispatchEvent(new Event('jdr_profile_change'))
     setError(null)
     onLogin(trimmedPseudo)
-    router.push('/menu')
+    router.push('/menu/menuacceuil')
   }
 
   /* ---------- UI ---------- */
