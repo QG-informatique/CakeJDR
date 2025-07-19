@@ -25,13 +25,19 @@ import CharacterSheet, { defaultPerso } from './CharacterSheet';
 /**
  * Helpers localStorage – isolés pour être réutilisés / testés.
  */
-const loadProfile = () => JSON.parse(localStorage.getItem('jdr_profile') || '{"pseudo":"","color":"#ff0000"}');
+const loadProfile = () => JSON.parse(localStorage.getItem('jdr_profile') || '{"pseudo":"","color":"#ff0000","isMJ":false}');
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const saveProfile = (profile: any) => localStorage.setItem('jdr_profile', JSON.stringify(profile));
+const saveProfile = (profile: any) => {
+  localStorage.setItem('jdr_profile', JSON.stringify(profile));
+  window.dispatchEvent(new Event('jdr_profile_change'));
+};
 
 const loadCharacters = () => JSON.parse(localStorage.getItem('jdr_characters') || '[]');
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const saveCharacters = (chars: any) => localStorage.setItem('jdr_characters', JSON.stringify(chars));
+const saveCharacters = (chars: any) => {
+  localStorage.setItem('jdr_characters', JSON.stringify(chars));
+  window.dispatchEvent(new Event('jdr_characters_change'));
+};
 
 const COLORS = ['#e11d48', '#1d4ed8', '#16a34a', '#f59e0b', '#d946ef', '#0d9488', '#f97316', '#a3a3a3', '#ffffff', '#000000'];
 
@@ -39,7 +45,7 @@ export default function MenuAccueil() {
   /* ---------------------------------------------------------------------
    * ÉTATS
    * -------------------------------------------------------------------*/
-  const [profile, setProfile] = useState({ pseudo: '', color: '#ff0000' });
+  const [profile, setProfile] = useState({ pseudo: '', color: '#ff0000', isMJ: false });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [characters, setCharacters] = useState<any[]>([]); // liste des fiches
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null); // index de la fiche affichée
@@ -61,9 +67,10 @@ export default function MenuAccueil() {
   /* ---------------------------------------------------------------------
    * Handlers Profil
    * -------------------------------------------------------------------*/
-  const handleProfileChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setProfile((prev) => ({ ...prev, [field]: e.target.value }));
-  };
+const handleProfileChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value
+  setProfile((prev) => ({ ...prev, [field]: value }));
+};
 
   const handleSaveProfile = () => {
     saveProfile(profile);
@@ -83,7 +90,8 @@ export default function MenuAccueil() {
   };
 
   const handleSaveDraft = () => {
-    const updated = [...characters, draftChar];
+    const toSave = { ...draftChar, name: draftChar.name || draftChar.nom };
+    const updated = [...characters, toSave];
     setCharacters(updated);
     saveCharacters(updated);
     setModalOpen(false);
@@ -108,7 +116,8 @@ export default function MenuAccueil() {
     reader.onload = (evt: ProgressEvent<FileReader>) => {
       try {
         const imported = JSON.parse(evt.target?.result as string);
-        const updated = [...characters, imported];
+        const toSave = { ...imported, name: imported.name || imported.nom };
+        const updated = [...characters, toSave];
         setCharacters(updated);
         saveCharacters(updated);
         alert('Fiche importée !');
@@ -168,6 +177,16 @@ export default function MenuAccueil() {
                 />
               ))}
             </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              id="mjCheck"
+              type="checkbox"
+              checked={profile.isMJ}
+              onChange={handleProfileChange('isMJ')}
+              className="form-checkbox"
+            />
+            <label htmlFor="mjCheck" className="font-semibold">Je suis MJ</label>
           </div>
           <button
             onClick={handleSaveProfile}

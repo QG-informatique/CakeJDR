@@ -3,21 +3,34 @@ import { useState, useEffect } from 'react'
 
 interface Props { onLogin: (name: string) => void }
 
-const STORAGE_KEY = 'cakejdr_user'
+const PROFILE_KEY = 'jdr_profile'
 
 export default function Login({ onLogin }: Props) {
   const [name, setName] = useState('')
 
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (saved) onLogin(saved)
+    try {
+      const saved = localStorage.getItem(PROFILE_KEY)
+      if (saved) {
+        const prof = JSON.parse(saved)
+        if (prof.pseudo) onLogin(prof.pseudo)
+        setName(prof.pseudo || '')
+      }
+    } catch {
+      /* empty */
+    }
   }, [onLogin])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const trimmed = name.trim()
     if (!trimmed) return
-    localStorage.setItem(STORAGE_KEY, trimmed)
+    const existing = (() => {
+      try { return JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}') } catch { return {} }
+    })()
+    const updated = { ...existing, pseudo: trimmed }
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(updated))
+    window.dispatchEvent(new Event('jdr_profile_change'))
     onLogin(trimmed)
   }
 
