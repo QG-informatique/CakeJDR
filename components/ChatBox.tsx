@@ -18,6 +18,8 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
   const endRef = useRef<HTMLDivElement>(null)
   const [showSummary, setShowSummary] = useState(false)
   const [showStats, setShowStats] = useState(false)
+  // mémorise la taille précédente de l'historique pour ajouter uniquement les nouveaux jets
+  const prevHist = useRef(0)
   // Les actes peuvent aussi être stockés plus globalement si besoin
 
   const sendMessage = () => {
@@ -29,6 +31,18 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // Quand l'historique s'allonge, on ajoute les nouveaux résultats au chat
+  useEffect(() => {
+    if (history.length > prevHist.current) {
+      const toAdd = history.slice(prevHist.current)
+      setMessages(m => [
+        ...m,
+        ...toAdd.map(r => ({ author: '🎲', text: `${r.player} : D${r.dice} → ${r.result}` }))
+      ])
+      prevHist.current = history.length
+    }
+  }, [history])
 
   return (
     <aside className="w-1/5 bg-gray-200 dark:bg-gray-800 p-4 flex flex-col relative">
