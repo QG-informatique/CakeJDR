@@ -2,18 +2,28 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import CharacterSheet, { defaultPerso } from '@/components/CharacterSheet'
-import DiceRoller from '@/components/DiceRoller'
-import ChatBox from '@/components/ChatBox'
-import PopupResult from '@/components/PopupResult'
+// Déplacement fichier pour organisation
+import CharacterSheet, { defaultPerso } from '@/components/character/CharacterSheet'
+// Déplacement fichier pour organisation
+import DiceRoller from '@/components/dice/DiceRoller'
+// Déplacement fichier pour organisation
+import ChatBox from '@/components/chat/ChatBox'
+// Déplacement fichier pour organisation
+import PopupResult from '@/components/dice/PopupResult'
 import Head from 'next/head'
-import InteractiveCanvas from '@/components/InteractiveCanvas'
-import OnlineProfiles from '@/components/OnlineProfiles'
-import SideNotes from '@/components/SideNotes'
+// Déplacement fichier pour organisation
+import InteractiveCanvas from '@/components/canvas/InteractiveCanvas'
+// Déplacement fichier pour organisation
+import OnlineProfiles from '@/components/chat/OnlineProfiles'
+// Déplacement fichier pour organisation
+import SideNotes from '@/components/misc/SideNotes'
 
-import Login from '@/components/Login'
-import GMCharacterSelector from '@/components/GMCharacterSelector'
-import ImportExportMenu from '@/components/ImportExportMenu'
+// Déplacement fichier pour organisation
+import Login from '@/components/login/Login'
+// Déplacement fichier pour organisation
+import GMCharacterSelector from '@/components/misc/GMCharacterSelector'
+// Déplacement fichier pour organisation
+import ImportExportMenu from '@/components/character/ImportExportMenu'
 import Link from 'next/link'
 
 export default function HomePage() {

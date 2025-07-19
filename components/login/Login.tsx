@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import DiceBackground from '@/components/DiceBackground'   // ← nouveau composant
+// Déplacement fichier pour organisation
+import DiceBackground from './DiceBackground'
 
 interface Props {
   onLogin: (pseudo: string) => void
