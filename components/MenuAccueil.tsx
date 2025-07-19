@@ -186,7 +186,7 @@ const handleProfileChange = (field: string) => (e: React.ChangeEvent<HTMLInputEl
               onChange={handleProfileChange('isMJ')}
               className="form-checkbox"
             />
-            <label htmlFor="mjCheck" className="font-semibold">Je suis MJ</label>
+            <label htmlFor="mjCheck" className="font-semibold">MJ</label>
           </div>
           <button
             onClick={handleSaveProfile}
@@ -258,7 +258,7 @@ const handleProfileChange = (field: string) => (e: React.ChangeEvent<HTMLInputEl
     {modalOpen && (
       <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
         <div className="bg-gray-800 p-4 rounded overflow-y-auto max-h-full">
-          <CharacterSheet perso={draftChar} onUpdate={setDraftChar} />
+          <CharacterSheet perso={draftChar} onUpdate={setDraftChar} creation />
           <div className="flex justify-end gap-2 mt-2">
             <button
               onClick={() => setModalOpen(false)}

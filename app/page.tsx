@@ -7,13 +7,15 @@ import ChatBox from '@/components/ChatBox'
 import PopupResult from '@/components/PopupResult'
 import Head from 'next/head'
 import InteractiveCanvas from '@/components/InteractiveCanvas'
+import OnlineProfiles from '@/components/OnlineProfiles'
+import SideNotes from '@/components/SideNotes'
 import Login from '@/components/Login'
 import GMCharacterSelector from '@/components/GMCharacterSelector'
 import Link from 'next/link'
 
 export default function HomePage() {
   const [user, setUser] = useState<string | null>(null)
-  const [profile, setProfile] = useState<{ pseudo: string, color: string }>({ pseudo: '', color: '#ffffff' })
+  const [profile, setProfile] = useState<{ pseudo: string, color: string, isMJ: boolean }>({ pseudo: '', color: '#ffffff', isMJ: false })
   const [perso, setPerso] = useState({
     nom: 'Gustave',
     race: 'Cake',
@@ -80,7 +82,7 @@ export default function HomePage() {
         const p = JSON.parse(saved)
         if (p.pseudo) {
           setUser(p.pseudo)
-          setProfile({ pseudo: p.pseudo, color: p.color || '#ffffff' })
+          setProfile({ pseudo: p.pseudo, color: p.color || '#ffffff', isMJ: !!p.isMJ })
         }
       }
     } catch {
@@ -95,7 +97,7 @@ export default function HomePage() {
         const saved = localStorage.getItem('jdr_profile')
         if (saved) {
           const p = JSON.parse(saved)
-          setProfile({ pseudo: p.pseudo || '', color: p.color || '#ffffff' })
+          setProfile({ pseudo: p.pseudo || '', color: p.color || '#ffffff', isMJ: !!p.isMJ })
         }
       } catch {
         /* empty */
@@ -142,12 +144,17 @@ export default function HomePage() {
       <Head>
         <title>CakeJDR</title>
       </Head>
-      <div className="absolute top-2 left-2 z-50 flex gap-2">
-        <Link href="/menu" className="bg-gray-800 text-white px-2 py-1 rounded text-sm">Menu</Link>
-        <GMCharacterSelector onSelect={setPerso} />
-      </div>
-
-      <CharacterSheet perso={perso} onUpdate={setPerso} chatBoxRef={chatBoxRef} />
+      <CharacterSheet
+        perso={perso}
+        onUpdate={setPerso}
+        chatBoxRef={chatBoxRef}
+        headerExtras={(
+          <>
+            <Link href="/menu" className="bg-gray-800 text-white px-2 py-1 rounded text-xs">Menu</Link>
+            {profile.isMJ && <GMCharacterSelector onSelect={setPerso} />}
+          </>
+        )}
+      />
 
       <main className="flex-1 bg-white dark:bg-gray-950 flex flex-col">
         <div className="flex-1 border m-4 bg-gray-50 dark:bg-gray-900 flex flex-col justify-center items-center relative">
@@ -159,16 +166,18 @@ export default function HomePage() {
             onFinish={handlePopupFinish} // 👈 Animation terminée = affiche dans le chat
           />
         </div>
-
         <DiceRoller
           diceType={diceType}
           onChange={setDiceType}
           onRoll={rollDice}
           disabled={diceDisabled}
-        />
+        >
+          <OnlineProfiles />
+        </DiceRoller>
       </main>
 
       <ChatBox chatBoxRef={chatBoxRef} history={history} />
+      <SideNotes />
     </div>
   )
 }
