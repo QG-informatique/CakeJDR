@@ -44,21 +44,11 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
           className="bg-gray-700 text-white px-2 py-1 rounded text-sm"
           onClick={() => setShowStats(s => !s)}
         >
-          {showStats ? '▶' : '📊'}
+          {showStats ? 'Chat' : '📊'}
         </button>
       </div>
 
-      {/* Panel stats */}
-      <div
-        className={`absolute top-0 left-full h-full w-64 bg-gray-100 dark:bg-gray-900 shadow-lg transition-transform ${showStats ? 'translate-x-0' : 'translate-x-full'}`}
-      >
-        <div className="p-2 flex justify-end">
-          <button className="text-sm" onClick={() => setShowStats(false)}>✖</button>
-        </div>
-        <DiceStats history={history} />
-      </div>
-
-      {!showSummary && (
+      {!showSummary && !showStats && (
         <>
           <h2 className="text-xl font-bold mb-4 text-center">Chat</h2>
 
@@ -94,6 +84,12 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
             </button>
           </div>
         </>
+      )}
+
+      {showStats && (
+        <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-700 p-2 rounded shadow">
+          <DiceStats history={history} />
+        </div>
       )}
 
       {showSummary && (
