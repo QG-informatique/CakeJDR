@@ -1,7 +1,9 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import Login from './Login'
-import CharacterSheet, { defaultPerso } from './CharacterSheet'
+// Déplacement fichier pour organisation
+import Login from '../login/Login'
+// Déplacement fichier pour organisation
+import CharacterSheet, { defaultPerso } from '../character/CharacterSheet'
 
 const PROFILE_KEY = 'jdr_profile'
 
