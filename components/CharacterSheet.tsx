@@ -20,11 +20,12 @@ type Objet = { nom: string, quantite: number }
 type CustomField = { label: string, value: string }
 
 type Props = {
-  perso: any,
+  perso: any, // Fiche perso initiale
   onUpdate: (perso: any) => void,
   chatBoxRef?: React.RefObject<HTMLDivElement | null>,
   creation?: boolean,
-  children?: React.ReactNode // Permet d’injecter tous les boutons du header !
+  children?: React.ReactNode,
+  allCharacters?: any[], // facultatif, si tu veux passer la liste complète
 }
 
 export const defaultPerso = {
@@ -62,30 +63,44 @@ export const defaultPerso = {
   notes: ''
 }
 
-// ---- Composant principal ----
+// Fonction utilitaire pour récupérer l’ID sélectionné en localStorage
+const loadSelectedCharacterId = (): string | null => {
+  return typeof window !== 'undefined' ? localStorage.getItem('selectedCharacterId') : null
+}
+
 const CharacterSheet: FC<Props> = ({
   perso,
   onUpdate,
   chatBoxRef,
   creation = false,
-  children, // <- Pour injecter les boutons/headerExtras
+  children,
+  allCharacters = []
 }) => {
   const [edit, setEdit] = useState(creation)
   const [tab, setTab] = useState('main')
-  const [localPerso, setLocalPerso] = useState<any>(
-    { ...(Object.keys(perso || {}).length ? perso : defaultPerso) }
-  )
-  const [processing, setProcessing] = useState(false)
-  const [dice, setDice] = useState('d6')
-  const [lastStat, setLastStat] = useState<string | null>(null)
-  const [lastGain, setLastGain] = useState<number | null>(null)
-  const [animKey, setAnimKey] = useState(0)
-
-  const cFiche = edit ? localPerso : (Object.keys(perso || {}).length ? perso : defaultPerso)
+  const [localPerso, setLocalPerso] = useState<any>(defaultPerso)
 
   useEffect(() => {
-    if (!edit) setLocalPerso({ ...(Object.keys(perso || {}).length ? perso : defaultPerso) })
-  }, [perso])
+    // Au montage, on tente de récupérer la fiche sélectionnée
+    const selectedId = loadSelectedCharacterId()
+    if (selectedId && allCharacters.length > 0) {
+      const found = allCharacters.find(c => c.id?.toString() === selectedId)
+      if (found) {
+        setLocalPerso(found)
+        setEdit(false)
+        return
+      }
+    }
+    // Sinon on charge la fiche passée en props
+    setLocalPerso(Object.keys(perso || {}).length ? perso : defaultPerso)
+  }, [perso, allCharacters])
+
+  useEffect(() => {
+    // Si on désactive l'édition, on remet localPerso à jour depuis props perso
+    if (!edit) {
+      setLocalPerso(Object.keys(perso || {}).length ? perso : defaultPerso)
+    }
+  }, [edit, perso])
 
   const handleChange = (field: string, value: any) => {
     setLocalPerso({ ...localPerso, [field]: value })
@@ -97,6 +112,14 @@ const CharacterSheet: FC<Props> = ({
     const sides = parseInt(match[1])
     return Math.floor(Math.random() * sides) + 1
   }
+
+  const [processing, setProcessing] = useState(false)
+  const [dice, setDice] = useState('d6')
+  const [lastStat, setLastStat] = useState<string | null>(null)
+  const [lastGain, setLastGain] = useState<number | null>(null)
+  const [animKey, setAnimKey] = useState(0)
+
+  const cFiche = edit ? localPerso : (Object.keys(perso || {}).length ? perso : defaultPerso)
 
   const handleLevelUp = async () => {
     if (processing) return
@@ -169,7 +192,7 @@ const CharacterSheet: FC<Props> = ({
           setTab={setTab}
           TABS={TABS}
         >
-          {children /* <-- Permet à la page de passer TOUS les boutons (import, MJ, menu, etc) */}
+          {children}
         </CharacterSheetHeader>
       )}
 
