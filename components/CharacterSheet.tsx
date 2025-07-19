@@ -9,15 +9,13 @@ import DescriptionPanel from './DescriptionPanel'
 import LevelUpPanel from './LevelUpPanel'
 import ImportExportMenu from './ImportExportMenu'
 import CharacterSheetHeader from './CharacterSheetHeader'
-import NotesPanel from './NotesPanel'
 
 // (ImportExportMenu ici plus tard)
 
 const TABS = [
   { key: 'main', label: 'Statistiques' },
   { key: 'equip', label: 'Équipement' },
-  { key: 'desc', label: 'Description' },
-  { key: 'notes', label: 'Notes' }
+  { key: 'desc', label: 'Description' }
 ]
 
 type Competence = { nom: string, type: string, effets: string, degats?: string }
@@ -29,7 +27,9 @@ type Props = {
   perso: any,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onUpdate: (perso: any) => void,
-  chatBoxRef?: React.RefObject<HTMLDivElement | null>
+  chatBoxRef?: React.RefObject<HTMLDivElement | null>,
+  creation?: boolean,
+  headerExtras?: React.ReactNode
 }
 
 export const defaultPerso = {
@@ -67,8 +67,8 @@ export const defaultPerso = {
   notes: ''
 }
 
-const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
-  const [edit, setEdit] = useState(false)
+const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef, creation = false, headerExtras }) => {
+  const [edit, setEdit] = useState(creation)
   const [tab, setTab] = useState('main')
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [localPerso, setLocalPerso] = useState<any>(
@@ -156,26 +156,29 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
     <aside
       className="bg-gray-900 pt-0 pb-3 px-3 overflow-y-auto text-[15px] text-white relative select-none"
       style={{
-        width: '420px',       // Largeur fixe (cohérent partout)
-        minWidth: '420px',
-        maxWidth: '420px',
+        width: creation ? 'auto' : '420px',
+        minWidth: creation ? '600px' : '420px',
+        maxWidth: creation ? '100%' : '420px',
         boxSizing: 'border-box',
         overflowX: 'hidden'
       }}
     >
 
-      <CharacterSheetHeader
-        edit={edit}
-        onToggleEdit={() => setEdit(true)}
-        onSave={save}
-        tab={tab}
-        setTab={setTab}
-        TABS={TABS}
-      >
-        <ImportExportMenu perso={edit ? localPerso : cFiche} onUpdate={onUpdate} />
-      </CharacterSheetHeader>
+      {!creation && (
+        <CharacterSheetHeader
+          edit={edit}
+          onToggleEdit={() => setEdit(true)}
+          onSave={save}
+          tab={tab}
+          setTab={setTab}
+          TABS={TABS}
+        >
+          {headerExtras}
+          <ImportExportMenu perso={edit ? localPerso : cFiche} onUpdate={onUpdate} />
+        </CharacterSheetHeader>
+      )}
 
-      {tab === 'main' && (
+      {(creation || tab === 'main') && (
         <>
           <StatsPanel
             edit={edit}
@@ -209,8 +212,7 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
           />
         </>
       )}
-
-      {tab === 'equip' && (
+      {(creation || tab === 'equip') && (
         <EquipPanel
           edit={edit}
           armes={localPerso.armes}
@@ -234,7 +236,7 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
         />
       )}
 
-      {tab === 'desc' && (
+      {(creation || tab === 'desc') && (
         <DescriptionPanel
           edit={edit}
           values={{
@@ -275,13 +277,6 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
         />
       )}
 
-      {tab === 'notes' && (
-        <NotesPanel
-          edit={edit}
-          value={localPerso.notes || ''}
-          onChange={txt => handleChange('notes', txt)}
-        />
-      )}
 
       {edit && (
         <button onClick={save} className="mt-3 w-full bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm">Sauver</button>
