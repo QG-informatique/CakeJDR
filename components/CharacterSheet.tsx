@@ -9,13 +9,15 @@ import DescriptionPanel from './DescriptionPanel'
 import LevelUpPanel from './LevelUpPanel'
 import ImportExportMenu from './ImportExportMenu'
 import CharacterSheetHeader from './CharacterSheetHeader'
+import NotesPanel from './NotesPanel'
 
 // (ImportExportMenu ici plus tard)
 
 const TABS = [
   { key: 'main', label: 'Statistiques' },
   { key: 'equip', label: 'Équipement' },
-  { key: 'desc', label: 'Description' }
+  { key: 'desc', label: 'Description' },
+  { key: 'notes', label: 'Notes' }
 ]
 
 type Competence = { nom: string, type: string, effets: string, degats?: string }
@@ -62,6 +64,7 @@ export const defaultPerso = {
   avantages: '',
   background: '',
   champs_perso: [],
+  notes: ''
 }
 
 const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
@@ -269,6 +272,14 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
             arr[idx] = champ
             setLocalPerso({ ...localPerso, champs_perso: arr })
           }}
+        />
+      )}
+
+      {tab === 'notes' && (
+        <NotesPanel
+          edit={edit}
+          value={localPerso.notes || ''}
+          onChange={txt => handleChange('notes', txt)}
         />
       )}
 
