@@ -16,9 +16,16 @@ export default function GMCharacterSelector({ onSelect }: Props) {
   const [open, setOpen] = useState(false)
   const [selectedId, setSelectedId] = useState<number | null>(null)
 
-  // Chargement initial
+  // Chargement initial + écoute des modifications
   useEffect(() => {
-    setChars(loadCharacters())
+    const update = () => setChars(loadCharacters())
+    update()
+    window.addEventListener('storage', update)
+    window.addEventListener('jdr_characters_change', update as EventListener)
+    return () => {
+      window.removeEventListener('storage', update)
+      window.removeEventListener('jdr_characters_change', update as EventListener)
+    }
   }, [])
 
   // Rafraîchissement périodique

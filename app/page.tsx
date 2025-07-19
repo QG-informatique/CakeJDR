@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import CharacterSheet from '@/components/CharacterSheet'
 import DiceRoller from '@/components/DiceRoller'
 import ChatBox from '@/components/ChatBox'
@@ -13,6 +13,7 @@ import Link from 'next/link'
 
 export default function HomePage() {
   const [user, setUser] = useState<string | null>(null)
+  const [profile, setProfile] = useState<{ pseudo: string, color: string }>({ pseudo: '', color: '#ffffff' })
   const [perso, setPerso] = useState({
     nom: 'Gustave',
     race: 'Cake',
@@ -38,8 +39,78 @@ export default function HomePage() {
   const [history, setHistory] = useState<{ player: string, dice: number, result: number }[]>([])
   const chatBoxRef = useRef<HTMLDivElement>(null)
 
+  // Gestion de la présence en ligne
+  useEffect(() => {
+    if (!user) return
+    const id = localStorage.getItem('jdr_profile_id') || String(Date.now())
+    localStorage.setItem('jdr_profile_id', id)
+    const updateOnline = () => {
+      try {
+        const list = JSON.parse(localStorage.getItem('jdr_online') || '{}')
+        list[id] = { pseudo: user, color: profile.color }
+        localStorage.setItem('jdr_online', JSON.stringify(list))
+        window.dispatchEvent(new Event('jdr_online_change'))
+      } catch {
+        /* empty */
+      }
+    }
+    updateOnline()
+    const handleUnload = () => {
+      try {
+        const list = JSON.parse(localStorage.getItem('jdr_online') || '{}')
+        delete list[id]
+        localStorage.setItem('jdr_online', JSON.stringify(list))
+        window.dispatchEvent(new Event('jdr_online_change'))
+      } catch {
+        /* empty */
+      }
+    }
+    window.addEventListener('beforeunload', handleUnload)
+    return () => {
+      handleUnload()
+      window.removeEventListener('beforeunload', handleUnload)
+    }
+  }, [user, profile.color])
+
+  // Chargement du profil depuis localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('jdr_profile')
+      if (saved) {
+        const p = JSON.parse(saved)
+        if (p.pseudo) {
+          setUser(p.pseudo)
+          setProfile({ pseudo: p.pseudo, color: p.color || '#ffffff' })
+        }
+      }
+    } catch {
+      /* empty */
+    }
+  }, [])
+
+  // Mise à jour si profil changé ailleurs
+  useEffect(() => {
+    const update = () => {
+      try {
+        const saved = localStorage.getItem('jdr_profile')
+        if (saved) {
+          const p = JSON.parse(saved)
+          setProfile({ pseudo: p.pseudo || '', color: p.color || '#ffffff' })
+        }
+      } catch {
+        /* empty */
+      }
+    }
+    window.addEventListener('storage', update)
+    window.addEventListener('jdr_profile_change', update as EventListener)
+    return () => {
+      window.removeEventListener('storage', update)
+      window.removeEventListener('jdr_profile_change', update as EventListener)
+    }
+  }, [])
+
   if (!user) {
-    return <Login onLogin={setUser} />
+    return <Login onLogin={(name) => { setUser(name); }} />
   }
 
   // ⚡ Quand on lance le dé, on ne met PAS le résultat tout de suite dans le chat
