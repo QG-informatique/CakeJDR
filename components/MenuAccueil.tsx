@@ -132,7 +132,8 @@ export default function MenuAccueil() {
    * Rendu JSX – Tailwind pour layout simple.
    * -------------------------------------------------------------------*/
   return (
-    <div className="mx-auto max-w-2xl p-4 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-purple-800 to-blue-800 p-4 text-white">
+      <div className="mx-auto max-w-2xl space-y-6">
       {/* ---------------- Profil ---------------- */}
       <section className="bg-white rounded-2xl shadow p-6">
         <h2 className="text-xl font-bold mb-4">Profil</h2>
@@ -222,6 +223,7 @@ export default function MenuAccueil() {
           </pre>
         </section>
       )}
+      </div>
     </div>
   );
 }

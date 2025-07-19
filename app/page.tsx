@@ -7,9 +7,12 @@ import ChatBox from '@/components/ChatBox'
 import PopupResult from '@/components/PopupResult'
 import Head from 'next/head'
 import InteractiveCanvas from '@/components/InteractiveCanvas'
-import ParamMenu from '@/components/ImportExportMenu' // ← AJOUT ICI
+import Login from '@/components/Login'
+import GMCharacterSelector from '@/components/GMCharacterSelector'
+import DiceStats from '@/components/DiceStats'
 
 export default function HomePage() {
+  const [user, setUser] = useState<string | null>(null)
   const [perso, setPerso] = useState({
     nom: 'Gustave',
     race: 'Cake',
@@ -32,8 +35,12 @@ export default function HomePage() {
   const [diceResult, setDiceResult] = useState<number | null>(null)
   const [diceDisabled, setDiceDisabled] = useState(false)
   const [pendingRoll, setPendingRoll] = useState<{ result: number, dice: number, nom: string } | null>(null)
-
+  const [history, setHistory] = useState<{ player: string, dice: number, result: number }[]>([])
   const chatBoxRef = useRef<HTMLDivElement>(null)
+
+  if (!user) {
+    return <Login onLogin={setUser} />
+  }
 
   // ⚡ Quand on lance le dé, on ne met PAS le résultat tout de suite dans le chat
   const rollDice = () => {
@@ -54,6 +61,7 @@ export default function HomePage() {
       message.innerHTML = `<strong>🎲 ${pendingRoll.nom} :</strong> D${pendingRoll.dice} → <strong>${pendingRoll.result}</strong>`
       chatBoxRef.current.appendChild(message)
       chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight
+      setHistory(h => [...h, { player: user || pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result }])
       setPendingRoll(null)
     }
   }
@@ -63,6 +71,9 @@ export default function HomePage() {
       <Head>
         <title>CakeJDR</title>
       </Head>
+      <div className="absolute top-2 left-2 z-50">
+        <GMCharacterSelector onSelect={setPerso} />
+      </div>
 
       <CharacterSheet perso={perso} onUpdate={setPerso} chatBoxRef={chatBoxRef} />
 
@@ -86,6 +97,9 @@ export default function HomePage() {
       </main>
 
       <ChatBox chatBoxRef={chatBoxRef} />
+      <aside className="w-1/5 bg-gray-100 dark:bg-gray-800 overflow-y-auto">
+        <DiceStats history={history} />
+      </aside>
     </div>
   )
 }
