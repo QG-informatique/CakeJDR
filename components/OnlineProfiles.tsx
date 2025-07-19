@@ -31,7 +31,7 @@ export default function OnlineProfiles() {
   if (entries.length === 0) return null
 
   return (
-
+    <div className="flex gap-2">
       {entries.map(([id, p]) => (
         <div
           key={id}

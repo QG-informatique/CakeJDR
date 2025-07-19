@@ -10,8 +10,6 @@ import LevelUpPanel from './LevelUpPanel'
 import ImportExportMenu from './ImportExportMenu'
 import CharacterSheetHeader from './CharacterSheetHeader'
 
-// (ImportExportMenu ici plus tard)
-
 const TABS = [
   { key: 'main', label: 'Statistiques' },
   { key: 'equip', label: 'Équipement' },
@@ -25,10 +23,8 @@ type CustomField = { label: string, value: string }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Props = {
   perso: any,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onUpdate: (perso: any) => void,
   chatBoxRef?: React.RefObject<HTMLDivElement | null>,
-
 }
 
 export const defaultPerso = {
@@ -66,9 +62,15 @@ export const defaultPerso = {
   notes: ''
 }
 
+// ---- ICI débute la fonction composant ! ----
+const CharacterSheet: FC<Props> = ({
+  perso,
+  onUpdate,
+  chatBoxRef,
+  creation = false, // Ajoute une valeur par défaut pour creation si besoin
+}) => {
   const [edit, setEdit] = useState(creation)
   const [tab, setTab] = useState('main')
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [localPerso, setLocalPerso] = useState<any>(
     { ...(Object.keys(perso || {}).length ? perso : defaultPerso) }
   )
@@ -76,7 +78,7 @@ export const defaultPerso = {
   const [dice, setDice] = useState('d6')
   const [lastStat, setLastStat] = useState<string | null>(null)
   const [lastGain, setLastGain] = useState<number | null>(null)
-  const [animKey, setAnimKey] = useState(0) // AJOUT
+  const [animKey, setAnimKey] = useState(0)
 
   const cFiche = edit ? localPerso : (Object.keys(perso || {}).length ? perso : defaultPerso)
 
@@ -84,12 +86,10 @@ export const defaultPerso = {
     if (!edit) setLocalPerso({ ...(Object.keys(perso || {}).length ? perso : defaultPerso) })
   }, [perso])
 
-  // Fonctions utilitaires pour les champs dynamiques
   const handleChange = (field: string, value: any) => {
     setLocalPerso({ ...localPerso, [field]: value })
   }
 
-  // Pour la gestion de Level Up
   const rollDice = (dice: string): number => {
     const match = dice.match(/d(\d+)/i)
     if (!match) return 0
@@ -109,7 +109,6 @@ export const defaultPerso = {
     for (const stat of ['pv', 'force', 'dexterite', 'constitution', 'intelligence', 'sagesse', 'charisme']) {
       const gain = rollDice(dice)
 
-      // Ajout au chat
       if (chatBoxRef?.current) {
         const message = document.createElement('p')
         message.innerHTML = `<strong>🎲 ${cFiche.nom} - ${dice.toUpperCase()} - ${stat} :</strong> ${gain}`
@@ -117,10 +116,9 @@ export const defaultPerso = {
         chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight
       }
 
-      // Ici : animation LevelUp avec animKey unique à chaque stat, même si chiffre identique
       setLastStat(stat)
       setLastGain(gain)
-      setAnimKey(k => k + 1) // INCRÉMENTATION À CHAQUE LEVELUP
+      setAnimKey(k => k + 1)
 
       setTimeout(() => {
         setLastStat(null)
@@ -134,7 +132,6 @@ export const defaultPerso = {
         const newPv = Math.min(currentPv + gain, newPvMax)
         updatedPerso = { ...updatedPerso, [pvMaxKey]: newPvMax, pv: newPv }
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         updatedPerso = { ...updatedPerso, [stat]: Number((updatedPerso as any)[stat] ?? 0) + gain }
       }
 
@@ -171,7 +168,6 @@ export const defaultPerso = {
           setTab={setTab}
           TABS={TABS}
         >
-
           <ImportExportMenu perso={edit ? localPerso : cFiche} onUpdate={onUpdate} />
         </CharacterSheetHeader>
       )}
@@ -206,7 +202,7 @@ export const defaultPerso = {
             processing={processing}
             lastStat={lastStat}
             lastGain={lastGain}
-            animKey={animKey} // PASSAGE DE LA PROP animKey !!
+            animKey={animKey}
           />
         </>
       )}
@@ -274,8 +270,6 @@ export const defaultPerso = {
           }}
         />
       )}
-
-
 
       {edit && (
         <button onClick={save} className="mt-3 w-full bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm">Sauver</button>
