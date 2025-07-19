@@ -13,6 +13,7 @@ import SideNotes from '@/components/SideNotes'
 
 import Login from '@/components/Login'
 import GMCharacterSelector from '@/components/GMCharacterSelector'
+import ImportExportMenu from '@/components/ImportExportMenu'
 import Link from 'next/link'
 
 export default function HomePage() {
@@ -44,9 +45,7 @@ export default function HomePage() {
   const [history, setHistory] = useState<{ player: string, dice: number, result: number }[]>([])
   const chatBoxRef = useRef<HTMLDivElement>(null)
 
-  // Au premier chargement, on redirige vers le menu pour forcer le passage
-  // par l'écran d'accueil. Un indicateur en session permet d'éviter une
-  // boucle de redirection quand on revient au jeu.
+  // Redirection menu au premier chargement
   useEffect(() => {
     if (typeof window === 'undefined') return
     if (!sessionStorage.getItem('visitedMenu')) {
@@ -55,7 +54,7 @@ export default function HomePage() {
     }
   }, [])
 
-  // Gestion de la présence en ligne
+  // Présence en ligne
   useEffect(() => {
     if (!user) return
     const id = localStorage.getItem('jdr_profile_id') || String(Date.now())
@@ -66,9 +65,7 @@ export default function HomePage() {
         list[id] = { pseudo: user, color: profile.color }
         localStorage.setItem('jdr_online', JSON.stringify(list))
         window.dispatchEvent(new Event('jdr_online_change'))
-      } catch {
-        /* empty */
-      }
+      } catch {/* empty */}
     }
     updateOnline()
     const handleUnload = () => {
@@ -77,9 +74,7 @@ export default function HomePage() {
         delete list[id]
         localStorage.setItem('jdr_online', JSON.stringify(list))
         window.dispatchEvent(new Event('jdr_online_change'))
-      } catch {
-        /* empty */
-      }
+      } catch {/* empty */}
     }
     window.addEventListener('beforeunload', handleUnload)
     return () => {
@@ -88,7 +83,7 @@ export default function HomePage() {
     }
   }, [user, profile.color])
 
-  // Chargement du profil depuis localStorage
+  // Chargement profil depuis localStorage
   useEffect(() => {
     try {
       const saved = localStorage.getItem('jdr_profile')
@@ -99,12 +94,10 @@ export default function HomePage() {
           setProfile({ pseudo: p.pseudo, color: p.color || '#ffffff', isMJ: !!p.isMJ })
         }
       }
-    } catch {
-      /* empty */
-    }
+    } catch {/* empty */}
   }, [])
 
-  // Mise à jour si profil changé ailleurs
+  // Synchronisation profil MJ si changement ailleurs
   useEffect(() => {
     const update = () => {
       try {
@@ -113,9 +106,7 @@ export default function HomePage() {
           const p = JSON.parse(saved)
           setProfile({ pseudo: p.pseudo || '', color: p.color || '#ffffff', isMJ: !!p.isMJ })
         }
-      } catch {
-        /* empty */
-      }
+      } catch {/* empty */}
     }
     window.addEventListener('storage', update)
     window.addEventListener('jdr_profile_change', update as EventListener)
@@ -126,36 +117,25 @@ export default function HomePage() {
   }, [])
 
   if (!user) {
-    return <Login onLogin={(name) => { setUser(name); }} />
+    return <Login onLogin={setUser} />
   }
 
-  // ⚡ Quand on lance le dé, on ne met PAS le résultat tout de suite dans le chat
+  // Lancer de dé
   const rollDice = () => {
     setDiceDisabled(true)
     const result = Math.floor(Math.random() * diceType) + 1
     setDiceResult(result)
     setShowPopup(true)
     setPendingRoll({ result, dice: diceType, nom: perso.nom || "?" })
-    // Pas d'ajout dans le chat ici !
   }
 
-  // ➡️ Quand l'animation est finie (appelé par PopupResult)
+  // Fin de l’animation de popup : ajoute dans l’historique seulement
   const handlePopupFinish = () => {
     setShowPopup(false)
     setDiceDisabled(false)
     if (!pendingRoll) return
 
-    // Mise à jour de l'historique pour DiceStats (toujours, même si le chat n'est pas visible)
-    setHistory(h => [...h, { player: user || pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result }])
-
-    // Affichage direct dans le chat si la zone est montée
-    if (chatBoxRef.current) {
-      const message = document.createElement('p')
-      message.innerHTML = `<strong>🎲 ${pendingRoll.nom} :</strong> D${pendingRoll.dice} → <strong>${pendingRoll.result}</strong>`
-      chatBoxRef.current.appendChild(message)
-      chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight
-    }
-
+    setHistory(h => [...h, { player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result }])
     setPendingRoll(null)
   }
 
@@ -168,13 +148,31 @@ export default function HomePage() {
         perso={perso}
         onUpdate={setPerso}
         chatBoxRef={chatBoxRef}
-        headerExtras={(
-          <>
-            <Link href="/menu" className="bg-gray-800 text-white px-2 py-1 rounded text-xs">Menu</Link>
-            {profile.isMJ && <GMCharacterSelector onSelect={setPerso} />}
-          </>
+      >
+        {/* ----------- BOUTONS DANS L'ORDRE ----------- */}
+        {/* MENU */}
+        <Link
+          href="/menu"
+          className="bg-gray-800 hover:bg-gray-900 text-white px-2 py-1 rounded text-xs"
+          style={{ minWidth: 70 }}
+        >
+          Menu
+        </Link>
+
+        {/* IMPORT/EXPORT */}
+        <ImportExportMenu perso={perso} onUpdate={setPerso} />
+
+        {/* CHANGEMENT DE PERSONNAGE - MJ */}
+        {profile.isMJ && (
+          <span className="ml-2">
+            <GMCharacterSelector
+              onSelect={setPerso}
+              buttonLabel="Personnage"
+              className="bg-purple-700 hover:bg-purple-800 text-white px-2 py-1 rounded text-xs border border-purple-500"
+            />
+          </span>
         )}
-      />
+      </CharacterSheet>
 
       <main className="flex-1 bg-white dark:bg-gray-950 flex flex-col">
         <div className="flex-1 border m-4 bg-gray-50 dark:bg-gray-900 flex flex-col justify-center items-center relative">
@@ -183,7 +181,7 @@ export default function HomePage() {
             show={showPopup}
             result={diceResult}
             diceType={diceType}
-            onFinish={handlePopupFinish} // 👈 Animation terminée = affiche dans le chat
+            onFinish={handlePopupFinish}
           />
         </div>
         <DiceRoller
