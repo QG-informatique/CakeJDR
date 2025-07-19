@@ -7,7 +7,6 @@ import CompetencesPanel from './CompetencesPanel'
 import EquipPanel from './EquipPanel'
 import DescriptionPanel from './DescriptionPanel'
 import LevelUpPanel from './LevelUpPanel'
-import ImportExportMenu from './ImportExportMenu'
 import CharacterSheetHeader from './CharacterSheetHeader'
 
 const TABS = [
@@ -20,11 +19,12 @@ type Competence = { nom: string, type: string, effets: string, degats?: string }
 type Objet = { nom: string, quantite: number }
 type CustomField = { label: string, value: string }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Props = {
   perso: any,
   onUpdate: (perso: any) => void,
   chatBoxRef?: React.RefObject<HTMLDivElement | null>,
+  creation?: boolean,
+  children?: React.ReactNode // Permet d’injecter tous les boutons du header !
 }
 
 export const defaultPerso = {
@@ -62,12 +62,13 @@ export const defaultPerso = {
   notes: ''
 }
 
-// ---- ICI débute la fonction composant ! ----
+// ---- Composant principal ----
 const CharacterSheet: FC<Props> = ({
   perso,
   onUpdate,
   chatBoxRef,
-  creation = false, // Ajoute une valeur par défaut pour creation si besoin
+  creation = false,
+  children, // <- Pour injecter les boutons/headerExtras
 }) => {
   const [edit, setEdit] = useState(creation)
   const [tab, setTab] = useState('main')
@@ -168,7 +169,7 @@ const CharacterSheet: FC<Props> = ({
           setTab={setTab}
           TABS={TABS}
         >
-          <ImportExportMenu perso={edit ? localPerso : cFiche} onUpdate={onUpdate} />
+          {children /* <-- Permet à la page de passer TOUS les boutons (import, MJ, menu, etc) */}
         </CharacterSheetHeader>
       )}
 
@@ -272,7 +273,12 @@ const CharacterSheet: FC<Props> = ({
       )}
 
       {edit && (
-        <button onClick={save} className="mt-3 w-full bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm">Sauver</button>
+        <button
+          onClick={save}
+          className="mt-3 w-full bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm"
+        >
+          Sauver
+        </button>
       )}
     </aside>
   )
