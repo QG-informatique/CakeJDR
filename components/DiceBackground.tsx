@@ -1,10 +1,13 @@
 'use client'
 import { useEffect, useState } from 'react'
+import useClientHydrated from '@/hooks/useClientHydrated'
 
 export default function DiceBackground() {
+  const hydrated = useClientHydrated()
   const [rects, setRects] = useState<JSX.Element[]>([])
 
   useEffect(() => {
+    if (!hydrated) return
     setRects(
       [...Array(20)].map((_, i) => {
         const x = Math.random() * 100
@@ -27,7 +30,11 @@ export default function DiceBackground() {
         )
       })
     )
-  }, [])
+  }, [hydrated])
+
+  if (!hydrated) {
+    return <svg className="w-full h-full opacity-10" />
+  }
 
   return (
     <svg

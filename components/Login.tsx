@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import DiceBackground from '@/components/DiceBackground'   // ← nouveau composant
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
 const PROFILE_KEY = 'jdr_profile'
 
 export default function Login({ onLogin }: Props) {
+  const router = useRouter()
   const [pseudo, setPseudo] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -20,12 +22,15 @@ export default function Login({ onLogin }: Props) {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(PROFILE_KEY)
-      if (saved) {
-        const prof = JSON.parse(saved)
-        if (prof.pseudo) onLogin(prof.pseudo)
-        setPseudo(prof.pseudo || '')
+      if (!saved) return
+      const prof = JSON.parse(saved)
+      if (prof.pseudo) {
+        onLogin(prof.pseudo)
+        setPseudo(prof.pseudo)
       }
-    } catch {/* ignore */}
+    } catch {
+      localStorage.removeItem(PROFILE_KEY)
+    }
   }, [onLogin])
 
   /* ---------- Soumission ---------- */
@@ -36,7 +41,6 @@ export default function Login({ onLogin }: Props) {
     const trimmedPass  = password.trim()
     const trimmedConfirm = confirmPassword.trim()
 
-    /* validations */
     if (!trimmedPseudo || !trimmedPass) {
       setError('Pseudo et mot de passe requis')
       return
@@ -46,35 +50,53 @@ export default function Login({ onLogin }: Props) {
       return
     }
 
+    let existing: any = null
     try {
-      const existing = JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}')
-
-      if (mode === 'login') {
-        if (existing.pseudo !== trimmedPseudo) {
-          setError('Pseudo inconnu, créez un compte')
-          return
-        }
-        if (existing.password && existing.password !== trimmedPass) {
-          setError('Mot de passe incorrect')
-          return
-        }
-        setError(null)
-        onLogin(trimmedPseudo)
-      } else {
-        /* register */
-        if (existing.pseudo === trimmedPseudo) {
-          setError('Ce pseudo est déjà utilisé')
-          return
-        }
-        const updated = { pseudo: trimmedPseudo, password: trimmedPass }
-        localStorage.setItem(PROFILE_KEY, JSON.stringify(updated))
-        window.dispatchEvent(new Event('jdr_profile_change'))
-        setError(null)
-        onLogin(trimmedPseudo)
-      }
+      const raw = localStorage.getItem(PROFILE_KEY)
+      if (raw) existing = JSON.parse(raw)
     } catch {
-      setError('Erreur interne, réessayez')
+      setError('Données utilisateur corrompues')
+      localStorage.removeItem(PROFILE_KEY)
+      return
     }
+
+    if (mode === 'login') {
+      if (!existing || existing.pseudo !== trimmedPseudo) {
+        setError('Pseudo inconnu, créez un compte')
+        return
+      }
+      if (existing.password && existing.password !== trimmedPass) {
+        setError('Mot de passe incorrect')
+        return
+      }
+      setError(null)
+      window.dispatchEvent(new Event('jdr_profile_change'))
+      onLogin(trimmedPseudo)
+      router.push('/menu')
+      return
+    }
+
+    // register
+    if (existing && existing.pseudo === trimmedPseudo) {
+      setError('Ce pseudo est déjà utilisé')
+      return
+    }
+    const profile = {
+      pseudo: trimmedPseudo,
+      password: trimmedPass,
+      isMJ: false,
+      color: '#1d4ed8',
+    }
+    try {
+      localStorage.setItem(PROFILE_KEY, JSON.stringify(profile))
+    } catch {
+      setError("Impossible d'enregistrer le profil")
+      return
+    }
+    window.dispatchEvent(new Event('jdr_profile_change'))
+    setError(null)
+    onLogin(trimmedPseudo)
+    router.push('/menu')
   }
 
   /* ---------- UI ---------- */
