@@ -28,8 +28,7 @@ type Props = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onUpdate: (perso: any) => void,
   chatBoxRef?: React.RefObject<HTMLDivElement | null>,
-  creation?: boolean,
-  headerExtras?: React.ReactNode
+
 }
 
 export const defaultPerso = {
@@ -67,7 +66,6 @@ export const defaultPerso = {
   notes: ''
 }
 
-const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef, creation = false, headerExtras }) => {
   const [edit, setEdit] = useState(creation)
   const [tab, setTab] = useState('main')
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -173,7 +171,7 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef, creation = fal
           setTab={setTab}
           TABS={TABS}
         >
-          {headerExtras}
+
           <ImportExportMenu perso={edit ? localPerso : cFiche} onUpdate={onUpdate} />
         </CharacterSheetHeader>
       )}
@@ -276,6 +274,7 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef, creation = fal
           }}
         />
       )}
+
 
 
       {edit && (
