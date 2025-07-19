@@ -30,8 +30,9 @@ export default function OnlineProfiles() {
   const entries = Object.entries(profiles)
   if (entries.length === 0) return null
 
+  // flex-row-reverse : le dernier connecté apparaît à gauche de la liste
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-row-reverse gap-2">
       {entries.map(([id, p]) => (
         <div
           key={id}
