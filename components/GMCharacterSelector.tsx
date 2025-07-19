@@ -7,7 +7,8 @@ const STORAGE_KEY = 'jdr_characters'
 type Character = { id: number, name: string }
 
 type Props = {
-  onSelect: (char: Character) => void
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onSelect: (char: any) => void
 }
 
 export default function GMCharacterSelector({ onSelect }: Props) {
@@ -25,7 +26,8 @@ export default function GMCharacterSelector({ onSelect }: Props) {
     if (selectedId === null) return
     const interval = setInterval(() => {
       const list = loadCharacters()
-      const found = list.find(c => c.id === selectedId)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const found = list.find((c: any) => c.id === selectedId)
       if (found) onSelect(found)
     }, 5000)
     return () => clearInterval(interval)
@@ -46,7 +48,8 @@ export default function GMCharacterSelector({ onSelect }: Props) {
   const handleSelect = (id: number) => {
     setSelectedId(id)
     const list = loadCharacters()
-    const found = list.find(c => c.id === id)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const found = list.find((c: any) => c.id === id)
     if (found) onSelect(found)
     setOpen(false)
   }
