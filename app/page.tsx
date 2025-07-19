@@ -8,6 +8,7 @@ import PopupResult from '@/components/PopupResult'
 import Head from 'next/head'
 import InteractiveCanvas from '@/components/InteractiveCanvas'
 import OnlineProfiles from '@/components/OnlineProfiles'
+import SideNotes from '@/components/SideNotes'
 
 import Login from '@/components/Login'
 import GMCharacterSelector from '@/components/GMCharacterSelector'
