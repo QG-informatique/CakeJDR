@@ -2,6 +2,7 @@
 import { FC, RefObject, useRef, useState, useEffect } from 'react'
 import SummaryPanel from './SummaryPanel'
 import DiceStats from './DiceStats'
+import OnlineProfiles from './OnlineProfiles'
 
 type Roll = { player: string, dice: number, result: number }
 
@@ -65,7 +66,8 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
             <div ref={endRef} />
           </div>
 
-          <div className="mt-4 flex">
+          <div className="mt-4 flex items-center">
+            <OnlineProfiles />
             <input
               type="text"
               placeholder="Votre message..."

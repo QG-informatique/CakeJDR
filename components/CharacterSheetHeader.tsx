@@ -43,11 +43,11 @@ const CharacterSheetHeader: FC<Props> = ({
           </button>
         </div>
       </div>
-      <nav className="flex gap-1 mt-2">
+      <nav className="flex gap-2 mt-2">
         {TABS.map(t => (
           <button
             key={t.key}
-            className={`px-2 py-1 rounded-t text-sm font-semibold ${tab === t.key ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-200'}`}
+            className={`px-3 py-2 rounded-t text-base font-semibold ${tab === t.key ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-200'}`}
             onClick={() => setTab(t.key)}
           >
             {t.label}

@@ -12,6 +12,22 @@ type Props = {
 }
 
 const LOCAL_KEY = 'cakejdr_perso'
+const CHAR_LIST_KEY = 'jdr_characters'
+
+const addToList = (char: any) => {
+  try {
+    const list = JSON.parse(localStorage.getItem(CHAR_LIST_KEY) || '[]')
+    const withName = { ...char, name: char.name || char.nom }
+    const exists = list.find((c: any) => c.id === withName.id)
+    const updated = exists
+      ? list.map((c: any) => c.id === withName.id ? withName : c)
+      : [...list, withName]
+    localStorage.setItem(CHAR_LIST_KEY, JSON.stringify(updated))
+    window.dispatchEvent(new Event('jdr_characters_change'))
+  } catch {
+    /* empty */
+  }
+}
 
 const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
   const [open, setOpen] = useState(false)
@@ -41,6 +57,7 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
         const data = JSON.parse(txt)
         if (!data || typeof data !== "object") throw new Error()
         onUpdate(data)
+        addToList({ ...data, id: data.id || Date.now() })
         alert('Fiche importée avec succès !')
       } catch {
         alert('Erreur lors de l\'import : le fichier doit être un fichier texte au format JSON.')
@@ -66,6 +83,7 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
         const obj = JSON.parse(data)
         if (!obj || typeof obj !== "object") throw new Error()
         onUpdate(obj)
+        addToList({ ...obj, id: obj.id || Date.now() })
         alert('Fiche chargée depuis la sauvegarde locale !')
       } catch {
         alert('Erreur lors du chargement local.')
