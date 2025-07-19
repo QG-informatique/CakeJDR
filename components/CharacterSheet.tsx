@@ -29,7 +29,8 @@ type Props = {
   perso: any,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onUpdate: (perso: any) => void,
-  chatBoxRef?: React.RefObject<HTMLDivElement | null>
+  chatBoxRef?: React.RefObject<HTMLDivElement | null>,
+  creation?: boolean
 }
 
 export const defaultPerso = {
@@ -67,8 +68,8 @@ export const defaultPerso = {
   notes: ''
 }
 
-const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
-  const [edit, setEdit] = useState(false)
+const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef, creation = false }) => {
+  const [edit, setEdit] = useState(creation)
   const [tab, setTab] = useState('main')
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [localPerso, setLocalPerso] = useState<any>(
@@ -156,26 +157,28 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
     <aside
       className="bg-gray-900 pt-0 pb-3 px-3 overflow-y-auto text-[15px] text-white relative select-none"
       style={{
-        width: '420px',       // Largeur fixe (cohérent partout)
-        minWidth: '420px',
-        maxWidth: '420px',
+        width: creation ? 'auto' : '420px',
+        minWidth: creation ? '600px' : '420px',
+        maxWidth: creation ? '100%' : '420px',
         boxSizing: 'border-box',
         overflowX: 'hidden'
       }}
     >
 
-      <CharacterSheetHeader
-        edit={edit}
-        onToggleEdit={() => setEdit(true)}
-        onSave={save}
-        tab={tab}
-        setTab={setTab}
-        TABS={TABS}
-      >
-        <ImportExportMenu perso={edit ? localPerso : cFiche} onUpdate={onUpdate} />
-      </CharacterSheetHeader>
+      {!creation && (
+        <CharacterSheetHeader
+          edit={edit}
+          onToggleEdit={() => setEdit(true)}
+          onSave={save}
+          tab={tab}
+          setTab={setTab}
+          TABS={TABS}
+        >
+          <ImportExportMenu perso={edit ? localPerso : cFiche} onUpdate={onUpdate} />
+        </CharacterSheetHeader>
+      )}
 
-      {tab === 'main' && (
+      {(creation || tab === 'main') && (
         <>
           <StatsPanel
             edit={edit}
@@ -209,8 +212,7 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
           />
         </>
       )}
-
-      {tab === 'equip' && (
+      {(creation || tab === 'equip') && (
         <EquipPanel
           edit={edit}
           armes={localPerso.armes}
@@ -234,7 +236,7 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
         />
       )}
 
-      {tab === 'desc' && (
+      {(creation || tab === 'desc') && (
         <DescriptionPanel
           edit={edit}
           values={{
@@ -275,7 +277,7 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
         />
       )}
 
-      {tab === 'notes' && (
+      {(creation || tab === 'notes') && (
         <NotesPanel
           edit={edit}
           value={localPerso.notes || ''}

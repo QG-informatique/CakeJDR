@@ -7,6 +7,7 @@ import ChatBox from '@/components/ChatBox'
 import PopupResult from '@/components/PopupResult'
 import Head from 'next/head'
 import InteractiveCanvas from '@/components/InteractiveCanvas'
+import OnlineProfiles from '@/components/OnlineProfiles'
 import Login from '@/components/Login'
 import GMCharacterSelector from '@/components/GMCharacterSelector'
 import Link from 'next/link'
@@ -151,6 +152,9 @@ export default function HomePage() {
 
       <main className="flex-1 bg-white dark:bg-gray-950 flex flex-col">
         <div className="flex-1 border m-4 bg-gray-50 dark:bg-gray-900 flex flex-col justify-center items-center relative">
+          <div className="absolute left-2 bottom-2 flex gap-1 z-40">
+            <OnlineProfiles />
+          </div>
           <InteractiveCanvas />
           <PopupResult
             show={showPopup}
