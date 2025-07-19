@@ -1,18 +1,23 @@
 'use client'
 import { FC, RefObject, useRef, useState, useEffect } from 'react'
 import SummaryPanel from './SummaryPanel'
+import DiceStats from './DiceStats'
+
+type Roll = { player: string, dice: number, result: number }
 
 type Props = {
   chatBoxRef: RefObject<HTMLDivElement | null>
+  history: Roll[]
 }
 
-const ChatBox: FC<Props> = ({ chatBoxRef }) => {
+const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
   const [messages, setMessages] = useState([
     { author: 'MJ', text: 'Bienvenue !' }
   ])
   const [inputValue, setInputValue] = useState('')
   const endRef = useRef<HTMLDivElement>(null)
   const [showSummary, setShowSummary] = useState(false)
+  const [showStats, setShowStats] = useState(false)
   // Les actes peuvent aussi être stockés plus globalement si besoin
 
   const sendMessage = () => {
@@ -27,17 +32,23 @@ const ChatBox: FC<Props> = ({ chatBoxRef }) => {
 
   return (
     <aside className="w-1/5 bg-gray-200 dark:bg-gray-800 p-4 flex flex-col relative">
-      {/* Bouton résumé */}
-      <div className="flex justify-center items-center mb-2">
+      {/* Boutons en-tête */}
+      <div className="flex justify-center items-center mb-2 gap-2">
         <button
           className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 px-4 py-1 rounded shadow font-bold text-sm"
           onClick={() => setShowSummary(true)}
         >
           Résumé de la partie
         </button>
+        <button
+          className="bg-gray-700 text-white px-2 py-1 rounded text-sm"
+          onClick={() => setShowStats(s => !s)}
+        >
+          {showStats ? 'Chat' : '📊'}
+        </button>
       </div>
 
-      {!showSummary && (
+      {!showSummary && !showStats && (
         <>
           <h2 className="text-xl font-bold mb-4 text-center">Chat</h2>
 
@@ -73,6 +84,12 @@ const ChatBox: FC<Props> = ({ chatBoxRef }) => {
             </button>
           </div>
         </>
+      )}
+
+      {showStats && (
+        <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-700 p-2 rounded shadow">
+          <DiceStats history={history} />
+        </div>
       )}
 
       {showSummary && (
