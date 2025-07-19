@@ -1,13 +1,13 @@
 'use client'
-import { useEffect, useState } from 'react'
 
-// Liste des fiches dans localStorage utilisée par MenuAccueil
+import { useEffect, useState, useRef } from 'react'
+import { User2 } from 'lucide-react'
+
 const STORAGE_KEY = 'jdr_characters'
 
-type Character = { id: number, name: string }
+type Character = { id: number, name?: string, nom?: string }
 
 type Props = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSelect: (char: any) => void
 }
 
@@ -15,18 +15,34 @@ export default function GMCharacterSelector({ onSelect }: Props) {
   const [chars, setChars] = useState<Character[]>([])
   const [open, setOpen] = useState(false)
   const [selectedId, setSelectedId] = useState<number | null>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
-  // Chargement initial
   useEffect(() => {
-    setChars(loadCharacters())
+    const update = () => setChars(loadCharacters())
+    update()
+    window.addEventListener('storage', update)
+    window.addEventListener('jdr_characters_change', update as EventListener)
+    return () => {
+      window.removeEventListener('storage', update)
+      window.removeEventListener('jdr_characters_change', update as EventListener)
+    }
   }, [])
 
-  // Rafraîchissement périodique
+  // Fermer le menu si on clique ailleurs
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (!dropdownRef.current?.contains(e.target as Node)) setOpen(false)
+    }
+    window.addEventListener('mousedown', handler)
+    return () => window.removeEventListener('mousedown', handler)
+  }, [open])
+
+  // Rafraîchir la fiche sélectionnée toutes les 5s si besoin
   useEffect(() => {
     if (selectedId === null) return
     const interval = setInterval(() => {
       const list = loadCharacters()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const found = list.find((c: any) => c.id === selectedId)
       if (found) onSelect(found)
     }, 5000)
@@ -41,34 +57,41 @@ export default function GMCharacterSelector({ onSelect }: Props) {
     }
   }
 
-  const refreshList = () => {
-    setChars(loadCharacters())
-  }
-
   const handleSelect = (id: number) => {
     setSelectedId(id)
     const list = loadCharacters()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const found = list.find((c: any) => c.id === id)
     if (found) onSelect(found)
     setOpen(false)
   }
 
   return (
-    <div className="relative inline-block ml-2">
+    <div ref={dropdownRef} className="relative">
       <button
-        onClick={() => { refreshList(); setOpen(o => !o) }}
-        className="px-2 py-1 bg-gray-800 text-white rounded text-xs"
-      >Changer de perso</button>
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-1 px-3 py-1 rounded bg-purple-700 hover:bg-purple-800 text-white text-xs border border-purple-500"
+        style={{ minWidth: 0 }}
+        tabIndex={0}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <User2 size={16} className="mr-1" />
+        Personnage
+      </button>
       {open && (
-        <div className="absolute right-0 mt-2 bg-gray-900 text-white rounded shadow-xl p-2 z-50">
-          {chars.length === 0 && <div className="px-2">Aucun perso</div>}
-          {chars.map(c => (
+        <div className="absolute left-0 mt-1 w-48 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded shadow-lg border border-purple-500 z-50 py-1">
+          {chars.length === 0 && (
+            <div className="px-4 py-2 text-sm text-gray-400">Aucun perso</div>
+          )}
+          {chars.map((c, idx) => (
             <button
               key={c.id}
               onClick={() => handleSelect(c.id)}
-              className="block text-left w-full px-3 py-1 hover:bg-gray-700 rounded"
-            >{c.name}</button>
+              className={`block w-full text-left px-4 py-2 text-sm
+                ${selectedId === c.id ? 'bg-purple-100 dark:bg-purple-900 font-semibold' : 'hover:bg-purple-50 dark:hover:bg-purple-800'}`}
+            >
+              {c.nom || c.name || `Fiche #${idx + 1}`}
+            </button>
           ))}
         </div>
       )}

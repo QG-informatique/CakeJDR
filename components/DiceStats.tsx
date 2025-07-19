@@ -1,5 +1,5 @@
 'use client'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 type Roll = { player: string, dice: number, result: number }
 
@@ -20,7 +20,7 @@ function computeStats(history: Roll[]) {
 
 export default function DiceStats({ history }: Props) {
   const [selected, setSelected] = useState<string>('all')
-  const stats = useMemo(() => computeStats(history), [history])
+  const stats = computeStats(history)
   const players = Object.keys(stats)
 
   const renderRow = (player: string) => {
