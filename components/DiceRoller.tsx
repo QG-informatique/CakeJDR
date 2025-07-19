@@ -6,10 +6,12 @@ type Props = {
   onChange: (value: number) => void
   onRoll: () => void
   disabled: boolean
+  children?: React.ReactNode
 }
 
-const DiceRoller: FC<Props> = ({ diceType, onChange, onRoll, disabled }) => (
-  <div className="p-4 bg-gray-200 dark:bg-gray-800 flex items-center gap-2">
+const DiceRoller: FC<Props> = ({ diceType, onChange, onRoll, disabled, children }) => (
+  // Justify-between pour coller l'indicateur des joueurs en ligne complètement à droite
+  <div className="p-4 bg-gray-200 dark:bg-gray-800 flex items-center gap-2 justify-between">
     <label htmlFor="diceType" className="mr-2 font-semibold">Type de dé :</label>
     <select
       id="diceType"
@@ -29,6 +31,7 @@ const DiceRoller: FC<Props> = ({ diceType, onChange, onRoll, disabled }) => (
     >
       Lancer
     </button>
+    {children && <div className="ml-auto flex gap-1">{children}</div>}
   </div>
 )
 

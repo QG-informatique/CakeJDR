@@ -7,29 +7,24 @@ import CompetencesPanel from './CompetencesPanel'
 import EquipPanel from './EquipPanel'
 import DescriptionPanel from './DescriptionPanel'
 import LevelUpPanel from './LevelUpPanel'
-import ImportExportMenu from './ImportExportMenu'
 import CharacterSheetHeader from './CharacterSheetHeader'
-import NotesPanel from './NotesPanel'
-
-// (ImportExportMenu ici plus tard)
 
 const TABS = [
   { key: 'main', label: 'Statistiques' },
   { key: 'equip', label: 'Équipement' },
-  { key: 'desc', label: 'Description' },
-  { key: 'notes', label: 'Notes' }
+  { key: 'desc', label: 'Description' }
 ]
 
 type Competence = { nom: string, type: string, effets: string, degats?: string }
 type Objet = { nom: string, quantite: number }
 type CustomField = { label: string, value: string }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Props = {
   perso: any,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onUpdate: (perso: any) => void,
-  chatBoxRef?: React.RefObject<HTMLDivElement | null>
+  chatBoxRef?: React.RefObject<HTMLDivElement | null>,
+  creation?: boolean,
+  children?: React.ReactNode // Permet d’injecter tous les boutons du header !
 }
 
 export const defaultPerso = {
@@ -67,10 +62,16 @@ export const defaultPerso = {
   notes: ''
 }
 
-const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
-  const [edit, setEdit] = useState(false)
+// ---- Composant principal ----
+const CharacterSheet: FC<Props> = ({
+  perso,
+  onUpdate,
+  chatBoxRef,
+  creation = false,
+  children, // <- Pour injecter les boutons/headerExtras
+}) => {
+  const [edit, setEdit] = useState(creation)
   const [tab, setTab] = useState('main')
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [localPerso, setLocalPerso] = useState<any>(
     { ...(Object.keys(perso || {}).length ? perso : defaultPerso) }
   )
@@ -78,7 +79,7 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
   const [dice, setDice] = useState('d6')
   const [lastStat, setLastStat] = useState<string | null>(null)
   const [lastGain, setLastGain] = useState<number | null>(null)
-  const [animKey, setAnimKey] = useState(0) // AJOUT
+  const [animKey, setAnimKey] = useState(0)
 
   const cFiche = edit ? localPerso : (Object.keys(perso || {}).length ? perso : defaultPerso)
 
@@ -86,12 +87,10 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
     if (!edit) setLocalPerso({ ...(Object.keys(perso || {}).length ? perso : defaultPerso) })
   }, [perso])
 
-  // Fonctions utilitaires pour les champs dynamiques
   const handleChange = (field: string, value: any) => {
     setLocalPerso({ ...localPerso, [field]: value })
   }
 
-  // Pour la gestion de Level Up
   const rollDice = (dice: string): number => {
     const match = dice.match(/d(\d+)/i)
     if (!match) return 0
@@ -111,7 +110,6 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
     for (const stat of ['pv', 'force', 'dexterite', 'constitution', 'intelligence', 'sagesse', 'charisme']) {
       const gain = rollDice(dice)
 
-      // Ajout au chat
       if (chatBoxRef?.current) {
         const message = document.createElement('p')
         message.innerHTML = `<strong>🎲 ${cFiche.nom} - ${dice.toUpperCase()} - ${stat} :</strong> ${gain}`
@@ -119,10 +117,9 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
         chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight
       }
 
-      // Ici : animation LevelUp avec animKey unique à chaque stat, même si chiffre identique
       setLastStat(stat)
       setLastGain(gain)
-      setAnimKey(k => k + 1) // INCRÉMENTATION À CHAQUE LEVELUP
+      setAnimKey(k => k + 1)
 
       setTimeout(() => {
         setLastStat(null)
@@ -136,7 +133,6 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
         const newPv = Math.min(currentPv + gain, newPvMax)
         updatedPerso = { ...updatedPerso, [pvMaxKey]: newPvMax, pv: newPv }
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         updatedPerso = { ...updatedPerso, [stat]: Number((updatedPerso as any)[stat] ?? 0) + gain }
       }
 
@@ -156,26 +152,28 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
     <aside
       className="bg-gray-900 pt-0 pb-3 px-3 overflow-y-auto text-[15px] text-white relative select-none"
       style={{
-        width: '420px',       // Largeur fixe (cohérent partout)
-        minWidth: '420px',
-        maxWidth: '420px',
+        width: creation ? 'auto' : '420px',
+        minWidth: creation ? '600px' : '420px',
+        maxWidth: creation ? '100%' : '420px',
         boxSizing: 'border-box',
         overflowX: 'hidden'
       }}
     >
 
-      <CharacterSheetHeader
-        edit={edit}
-        onToggleEdit={() => setEdit(true)}
-        onSave={save}
-        tab={tab}
-        setTab={setTab}
-        TABS={TABS}
-      >
-        <ImportExportMenu perso={edit ? localPerso : cFiche} onUpdate={onUpdate} />
-      </CharacterSheetHeader>
+      {!creation && (
+        <CharacterSheetHeader
+          edit={edit}
+          onToggleEdit={() => setEdit(true)}
+          onSave={save}
+          tab={tab}
+          setTab={setTab}
+          TABS={TABS}
+        >
+          {children /* <-- Permet à la page de passer TOUS les boutons (import, MJ, menu, etc) */}
+        </CharacterSheetHeader>
+      )}
 
-      {tab === 'main' && (
+      {(creation || tab === 'main') && (
         <>
           <StatsPanel
             edit={edit}
@@ -205,12 +203,11 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
             processing={processing}
             lastStat={lastStat}
             lastGain={lastGain}
-            animKey={animKey} // PASSAGE DE LA PROP animKey !!
+            animKey={animKey}
           />
         </>
       )}
-
-      {tab === 'equip' && (
+      {(creation || tab === 'equip') && (
         <EquipPanel
           edit={edit}
           armes={localPerso.armes}
@@ -234,7 +231,7 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
         />
       )}
 
-      {tab === 'desc' && (
+      {(creation || tab === 'desc') && (
         <DescriptionPanel
           edit={edit}
           values={{
@@ -275,16 +272,13 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, chatBoxRef }) => {
         />
       )}
 
-      {tab === 'notes' && (
-        <NotesPanel
-          edit={edit}
-          value={localPerso.notes || ''}
-          onChange={txt => handleChange('notes', txt)}
-        />
-      )}
-
       {edit && (
-        <button onClick={save} className="mt-3 w-full bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm">Sauver</button>
+        <button
+          onClick={save}
+          className="mt-3 w-full bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm"
+        >
+          Sauver
+        </button>
       )}
     </aside>
   )
