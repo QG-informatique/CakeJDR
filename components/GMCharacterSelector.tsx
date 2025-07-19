@@ -15,6 +15,7 @@ export default function GMCharacterSelector({ onSelect }: Props) {
   const [chars, setChars] = useState<Character[]>([])
   const [open, setOpen] = useState(false)
   const [selectedId, setSelectedId] = useState<number | null>(null)
+  const selectedName = chars.find(c => c.id === selectedId)?.name || ''
 
   // Chargement initial + écoute des modifications
   useEffect(() => {
@@ -62,11 +63,12 @@ export default function GMCharacterSelector({ onSelect }: Props) {
   }
 
   return (
-    <div className="relative inline-block ml-2">
+    <div className="relative inline-flex items-center ml-2 text-white bg-gray-800 rounded px-2 py-1 gap-2">
       <button
         onClick={() => { refreshList(); setOpen(o => !o) }}
-        className="px-2 py-1 bg-gray-800 text-white rounded text-xs"
-      >Changer de perso</button>
+        className="px-2 py-1 bg-gray-700 text-white rounded text-xs"
+      >Changer</button>
+      {selectedName && <span className="text-sm">{selectedName}</span>}
       {open && (
         <div className="absolute right-0 mt-2 bg-gray-900 text-white rounded shadow-xl p-2 z-50">
           {chars.length === 0 && <div className="px-2">Aucun perso</div>}
