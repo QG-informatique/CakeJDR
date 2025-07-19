@@ -1,18 +1,23 @@
 'use client'
 import { FC, RefObject, useRef, useState, useEffect } from 'react'
 import SummaryPanel from './SummaryPanel'
+import DiceStats from './DiceStats'
+
+type Roll = { player: string, dice: number, result: number }
 
 type Props = {
   chatBoxRef: RefObject<HTMLDivElement | null>
+  history: Roll[]
 }
 
-const ChatBox: FC<Props> = ({ chatBoxRef }) => {
+const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
   const [messages, setMessages] = useState([
     { author: 'MJ', text: 'Bienvenue !' }
   ])
   const [inputValue, setInputValue] = useState('')
   const endRef = useRef<HTMLDivElement>(null)
   const [showSummary, setShowSummary] = useState(false)
+  const [showStats, setShowStats] = useState(false)
   // Les actes peuvent aussi être stockés plus globalement si besoin
 
   const sendMessage = () => {
@@ -27,14 +32,30 @@ const ChatBox: FC<Props> = ({ chatBoxRef }) => {
 
   return (
     <aside className="w-1/5 bg-gray-200 dark:bg-gray-800 p-4 flex flex-col relative">
-      {/* Bouton résumé */}
-      <div className="flex justify-center items-center mb-2">
+      {/* Boutons en-tête */}
+      <div className="flex justify-center items-center mb-2 gap-2">
         <button
           className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 px-4 py-1 rounded shadow font-bold text-sm"
           onClick={() => setShowSummary(true)}
         >
           Résumé de la partie
         </button>
+        <button
+          className="bg-gray-700 text-white px-2 py-1 rounded text-sm"
+          onClick={() => setShowStats(s => !s)}
+        >
+          {showStats ? '▶' : '📊'}
+        </button>
+      </div>
+
+      {/* Panel stats */}
+      <div
+        className={`absolute top-0 left-full h-full w-64 bg-gray-100 dark:bg-gray-900 shadow-lg transition-transform ${showStats ? 'translate-x-0' : 'translate-x-full'}`}
+      >
+        <div className="p-2 flex justify-end">
+          <button className="text-sm" onClick={() => setShowStats(false)}>✖</button>
+        </div>
+        <DiceStats history={history} />
       </div>
 
       {!showSummary && (
