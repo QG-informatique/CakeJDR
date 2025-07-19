@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import CharacterSheet from '@/components/CharacterSheet'
 import DiceRoller from '@/components/DiceRoller'
 import ChatBox from '@/components/ChatBox'
@@ -15,6 +16,7 @@ import GMCharacterSelector from '@/components/GMCharacterSelector'
 import Link from 'next/link'
 
 export default function HomePage() {
+  const router = useRouter()
   const [user, setUser] = useState<string | null>(null)
   const [profile, setProfile] = useState<{ pseudo: string, color: string, isMJ: boolean }>({ pseudo: '', color: '#ffffff', isMJ: false })
   const [perso, setPerso] = useState({
@@ -41,6 +43,17 @@ export default function HomePage() {
   const [pendingRoll, setPendingRoll] = useState<{ result: number, dice: number, nom: string } | null>(null)
   const [history, setHistory] = useState<{ player: string, dice: number, result: number }[]>([])
   const chatBoxRef = useRef<HTMLDivElement>(null)
+
+  // Au premier chargement, on redirige vers le menu pour forcer le passage
+  // par l'écran d'accueil. Un indicateur en session permet d'éviter une
+  // boucle de redirection quand on revient au jeu.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (!sessionStorage.getItem('visitedMenu')) {
+      sessionStorage.setItem('visitedMenu', 'true')
+      router.push('/menu')
+    }
+  }, [])
 
   // Gestion de la présence en ligne
   useEffect(() => {
@@ -130,14 +143,20 @@ export default function HomePage() {
   const handlePopupFinish = () => {
     setShowPopup(false)
     setDiceDisabled(false)
-    if (pendingRoll && chatBoxRef.current) {
-      const message = document.createElement("p")
+    if (!pendingRoll) return
+
+    // Mise à jour de l'historique pour DiceStats (toujours, même si le chat n'est pas visible)
+    setHistory(h => [...h, { player: user || pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result }])
+
+    // Affichage direct dans le chat si la zone est montée
+    if (chatBoxRef.current) {
+      const message = document.createElement('p')
       message.innerHTML = `<strong>🎲 ${pendingRoll.nom} :</strong> D${pendingRoll.dice} → <strong>${pendingRoll.result}</strong>`
       chatBoxRef.current.appendChild(message)
       chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight
-      setHistory(h => [...h, { player: user || pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result }])
-      setPendingRoll(null)
     }
+
+    setPendingRoll(null)
   }
 
   return (
@@ -159,9 +178,6 @@ export default function HomePage() {
 
       <main className="flex-1 bg-white dark:bg-gray-950 flex flex-col">
         <div className="flex-1 border m-4 bg-gray-50 dark:bg-gray-900 flex flex-col justify-center items-center relative">
-          <div className="absolute left-2 bottom-2 flex gap-1 z-40">
-            <OnlineProfiles />
-          </div>
           <InteractiveCanvas />
           <PopupResult
             show={showPopup}
