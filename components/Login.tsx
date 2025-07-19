@@ -17,16 +17,21 @@ export default function Login({ onLogin }: Props) {
   const [mode, setMode] = useState<'login' | 'register'>('login')
 
   /* ---------- Pré‑remplit le pseudo si déjà stocké ---------- */
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(PROFILE_KEY)
-      if (saved) {
-        const prof = JSON.parse(saved)
-        if (prof.pseudo) onLogin(prof.pseudo)
-        setPseudo(prof.pseudo || '')
-      }
-    } catch {/* ignore */}
-  }, [onLogin])
+ useEffect(() => {
+  try {
+    const saved = localStorage.getItem(PROFILE_KEY)
+    if (saved) {
+      const prof = JSON.parse(saved)
+      if (prof.pseudo) onLogin(prof.pseudo)
+      setPseudo(prof.pseudo || '')
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : JSON.stringify(err)
+    setError('Erreur lors de la lecture du profil : ' + msg)
+    console.error("Erreur lecture profil localStorage :", err)
+  }
+}, [onLogin])
+
 
   /* ---------- Soumission ---------- */
   const handleSubmit = (e: React.FormEvent) => {
@@ -46,35 +51,44 @@ export default function Login({ onLogin }: Props) {
       return
     }
 
-    try {
-      const existing = JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}')
+try {
+  const existing = JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}')
 
-      if (mode === 'login') {
-        if (existing.pseudo !== trimmedPseudo) {
-          setError('Pseudo inconnu, créez un compte')
-          return
-        }
-        if (existing.password && existing.password !== trimmedPass) {
-          setError('Mot de passe incorrect')
-          return
-        }
-        setError(null)
-        onLogin(trimmedPseudo)
-      } else {
-        /* register */
-        if (existing.pseudo === trimmedPseudo) {
-          setError('Ce pseudo est déjà utilisé')
-          return
-        }
-        const updated = { pseudo: trimmedPseudo, password: trimmedPass }
-        localStorage.setItem(PROFILE_KEY, JSON.stringify(updated))
-        window.dispatchEvent(new Event('jdr_profile_change'))
-        setError(null)
-        onLogin(trimmedPseudo)
-      }
-    } catch {
-      setError('Erreur interne, réessayez')
+  if (mode === 'login') {
+    if (existing.pseudo !== trimmedPseudo) {
+      setError('Pseudo inconnu, créez un compte')
+      return
     }
+    if (existing.password && existing.password !== trimmedPass) {
+      setError('Mot de passe incorrect')
+      return
+    }
+    setError(null)
+    onLogin(trimmedPseudo)
+  } else {
+    /* register */
+    if (existing.pseudo === trimmedPseudo) {
+      setError('Ce pseudo est déjà utilisé')
+      return
+    }
+    const updated = { pseudo: trimmedPseudo, password: trimmedPass }
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(updated))
+    window.dispatchEvent(new Event('jdr_profile_change'))
+    setError(null)
+    onLogin(trimmedPseudo)
+  }
+} catch (err) {
+  // Message dynamique en fonction de l'erreur
+  const message =
+    err instanceof Error
+      ? err.message
+      : typeof err === "string"
+        ? err
+        : JSON.stringify(err);
+  setError('Erreur : ' + message)
+  console.error("Erreur lors de la connexion/inscription :", err)
+}
+
   }
 
   /* ---------- UI ---------- */
