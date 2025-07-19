@@ -20,26 +20,35 @@
  * ---------------------------------------------------------------------------*/
 
 import React, { useState, useEffect, useRef } from 'react';
+import CharacterSheet, { defaultPerso } from './CharacterSheet';
 
 /**
  * Helpers localStorage – isolés pour être réutilisés / testés.
  */
 const loadProfile = () => JSON.parse(localStorage.getItem('jdr_profile') || '{"pseudo":"","color":"#ff0000"}');
-const saveProfile = (profile) => localStorage.setItem('jdr_profile', JSON.stringify(profile));
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const saveProfile = (profile: any) => localStorage.setItem('jdr_profile', JSON.stringify(profile));
 
 const loadCharacters = () => JSON.parse(localStorage.getItem('jdr_characters') || '[]');
-const saveCharacters = (chars) => localStorage.setItem('jdr_characters', JSON.stringify(chars));
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const saveCharacters = (chars: any) => localStorage.setItem('jdr_characters', JSON.stringify(chars));
+
+const COLORS = ['#e11d48', '#1d4ed8', '#16a34a', '#f59e0b', '#d946ef', '#0d9488', '#f97316', '#a3a3a3', '#ffffff', '#000000'];
 
 export default function MenuAccueil() {
   /* ---------------------------------------------------------------------
    * ÉTATS
    * -------------------------------------------------------------------*/
   const [profile, setProfile] = useState({ pseudo: '', color: '#ff0000' });
-  const [characters, setCharacters] = useState([]); // liste des fiches
-  const [selectedIdx, setSelectedIdx] = useState(null); // index de la fiche affichée
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [characters, setCharacters] = useState<any[]>([]); // liste des fiches
+  const [selectedIdx, setSelectedIdx] = useState<number | null>(null); // index de la fiche affichée
+  const [modalOpen, setModalOpen] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [draftChar, setDraftChar] = useState<any>(defaultPerso);
 
   // Réf pour l’input hidden (import JSON)
-  const fileInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   /* ---------------------------------------------------------------------
    * CHARGEMENT INIT.
@@ -52,7 +61,7 @@ export default function MenuAccueil() {
   /* ---------------------------------------------------------------------
    * Handlers Profil
    * -------------------------------------------------------------------*/
-  const handleProfileChange = (field) => (e) => {
+  const handleProfileChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setProfile((prev) => ({ ...prev, [field]: e.target.value }));
   };
 
@@ -65,26 +74,23 @@ export default function MenuAccueil() {
    * Handlers Fiches Personnage
    * -------------------------------------------------------------------*/
   const handleNewCharacter = () => {
-    const name = prompt('Nom du personnage ?');
-    if (!name) return;
-
-    const newChar = {
-      id: Date.now(),
-      name,
-      stats: { force: 0, agilite: 0, intelligence: 0 },
-      createdAt: new Date().toISOString()
-    };
-
-    const updated = [...characters, newChar];
-    setCharacters(updated);
-    saveCharacters(updated);
+    setDraftChar({ ...defaultPerso, id: Date.now() });
+    setModalOpen(true);
   };
 
-  const handleSelectChar = (idx) => {
+  const handleSelectChar = (idx: number) => {
     setSelectedIdx(idx);
   };
 
-  const handleDeleteChar = (idx) => {
+  const handleSaveDraft = () => {
+    const updated = [...characters, draftChar];
+    setCharacters(updated);
+    saveCharacters(updated);
+    setModalOpen(false);
+    setSelectedIdx(updated.length - 1);
+  };
+
+  const handleDeleteChar = (idx: number) => {
     if (!window.confirm('Supprimer cette fiche ?')) return;
     const updated = characters.filter((_, i) => i !== idx);
     setCharacters(updated);
@@ -95,18 +101,18 @@ export default function MenuAccueil() {
   /* ------------------ Import / Export ------------------ */
   const handleImportClick = () => fileInputRef.current?.click();
 
-  const handleImportFile = (e) => {
-    const file = e.target.files[0];
+  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files && e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (evt) => {
+    reader.onload = (evt: ProgressEvent<FileReader>) => {
       try {
-        const imported = JSON.parse(evt.target.result);
+        const imported = JSON.parse(evt.target?.result as string);
         const updated = [...characters, imported];
         setCharacters(updated);
         saveCharacters(updated);
         alert('Fiche importée !');
-      } catch (err) {
+      } catch {
         alert('Erreur : fichier invalide.');
       }
     };
@@ -132,6 +138,7 @@ export default function MenuAccueil() {
    * Rendu JSX – Tailwind pour layout simple.
    * -------------------------------------------------------------------*/
   return (
+    <>
     <div className="min-h-screen bg-gradient-to-br from-purple-800 to-blue-800 p-4 text-white">
       <div className="mx-auto max-w-2xl space-y-6">
       {/* ---------------- Profil ---------------- */}
@@ -139,24 +146,28 @@ export default function MenuAccueil() {
         <h2 className="text-xl font-bold mb-4">Profil</h2>
         <div className="space-y-4">
           <div>
-            <label className="block font-semibold" htmlFor="pseudoInput">Pseudo :</label>
+            <label className="block font-semibold mb-1" htmlFor="pseudoInput">Pseudo :</label>
             <input
               id="pseudoInput"
               type="text"
               value={profile.pseudo}
               onChange={handleProfileChange('pseudo')}
-              className="w-full border rounded p-2"
+              className="w-full border-2 border-gray-300 rounded p-2 text-black"
             />
           </div>
           <div>
-            <label className="block font-semibold" htmlFor="colorInput">Couleur préférée :</label>
-            <input
-              id="colorInput"
-              type="color"
-              value={profile.color}
-              onChange={handleProfileChange('color')}
-              className="h-10 w-full p-1"
-            />
+            <label className="block font-semibold mb-1">Couleur préférée :</label>
+            <div className="flex flex-wrap gap-2">
+              {COLORS.map(c => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setProfile(prev => ({ ...prev, color: c }))}
+                  className={`w-6 h-6 rounded-full border-2 ${profile.color === c ? 'border-white' : 'border-gray-400'}`}
+                  style={{ backgroundColor: c }}
+                />
+              ))}
+            </div>
           </div>
           <button
             onClick={handleSaveProfile}
@@ -225,5 +236,23 @@ export default function MenuAccueil() {
       )}
       </div>
     </div>
+    {modalOpen && (
+      <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+        <div className="bg-gray-800 p-4 rounded overflow-y-auto max-h-full">
+          <CharacterSheet perso={draftChar} onUpdate={setDraftChar} />
+          <div className="flex justify-end gap-2 mt-2">
+            <button
+              onClick={() => setModalOpen(false)}
+              className="px-3 py-1 bg-gray-600 rounded text-white"
+            >Annuler</button>
+            <button
+              onClick={handleSaveDraft}
+              className="px-3 py-1 bg-blue-600 rounded text-white"
+            >Sauvegarder</button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
