@@ -9,7 +9,7 @@ import Head from 'next/head'
 import InteractiveCanvas from '@/components/InteractiveCanvas'
 import Login from '@/components/Login'
 import GMCharacterSelector from '@/components/GMCharacterSelector'
-import DiceStats from '@/components/DiceStats'
+import Link from 'next/link'
 
 export default function HomePage() {
   const [user, setUser] = useState<string | null>(null)
@@ -71,7 +71,8 @@ export default function HomePage() {
       <Head>
         <title>CakeJDR</title>
       </Head>
-      <div className="absolute top-2 left-2 z-50">
+      <div className="absolute top-2 left-2 z-50 flex gap-2">
+        <Link href="/menu" className="bg-gray-800 text-white px-2 py-1 rounded text-sm">Menu</Link>
         <GMCharacterSelector onSelect={setPerso} />
       </div>
 
@@ -96,10 +97,7 @@ export default function HomePage() {
         />
       </main>
 
-      <ChatBox chatBoxRef={chatBoxRef} />
-      <aside className="w-1/5 bg-gray-100 dark:bg-gray-800 overflow-y-auto">
-        <DiceStats history={history} />
-      </aside>
+      <ChatBox chatBoxRef={chatBoxRef} history={history} />
     </div>
   )
 }
