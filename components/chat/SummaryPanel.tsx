@@ -1,6 +1,98 @@
 'use client'
 import { FC, useState, useRef, useEffect, ChangeEvent } from 'react'
 
+// --------- Custom Select DA Import/Export ---------
+type CustomActSelectProps = {
+  value: number
+  onChange: (v: number) => void
+  options: { value: number; label: string }[]
+  disabled?: boolean
+}
+const CustomActSelect: FC<CustomActSelectProps> = ({ value, onChange, options, disabled }) => {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    if (open) window.addEventListener("mousedown", handleClick)
+    return () => window.removeEventListener("mousedown", handleClick)
+  }, [open])
+
+  return (
+    <div ref={ref} className="relative w-[200px] max-w-[220px] select-none">
+      <button
+        type="button"
+        disabled={disabled}
+        className={`
+          w-full px-3 py-2 rounded-xl font-semibold text-white/85 shadow
+          bg-black/35 border border-white/10 transition
+          hover:bg-black/50 hover:border-white/20
+          disabled:opacity-60 backdrop-blur-md
+          flex items-center justify-between
+        `}
+        style={{
+          boxShadow: '0 2px 14px 0 #0007, 0 0 0 1px #fff1 inset',
+          background: 'linear-gradient(120deg,rgba(18,28,54,0.35) 60%,rgba(16,18,33,0.23) 100%)'
+        }}
+        onClick={() => !disabled && setOpen(v => !v)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <span className="truncate">{options.find(o => o.value === value)?.label || "[Sans titre]"}</span>
+        <svg width="18" height="18" className="ml-2 opacity-70" viewBox="0 0 20 20" fill="none"><path d="M6 8l4 4 4-4" stroke="#fff" strokeWidth="2" strokeLinecap="round"/></svg>
+      </button>
+      {open && (
+        <div
+          className="absolute z-30 left-0 w-full mt-1 rounded-xl bg-black/80 border border-white/10 shadow-2xl py-1 animate-fadeIn backdrop-blur-md"
+          style={{
+            background: 'linear-gradient(120deg,rgba(18,28,54,0.91) 60%,rgba(16,18,33,0.77) 100%)'
+          }}
+          role="listbox"
+        >
+          {options.map(opt => (
+            <button
+              type="button"
+              key={opt.value}
+              disabled={disabled}
+              className={`
+                w-full px-4 py-2 text-left text-md font-semibold rounded
+                text-white transition
+                hover:bg-gray-800/80
+                ${value === opt.value ? 'bg-gray-700/80' : ''}
+              `}
+              style={{
+                background: value === opt.value
+                  ? "linear-gradient(120deg,#23364aBB 60%,#131b2455 100%)"
+                  : undefined
+              }}
+              onClick={() => {
+                setOpen(false)
+                onChange(opt.value)
+              }}
+              role="option"
+              aria-selected={value === opt.value}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+      <style jsx>{`
+        .animate-fadeIn {
+          animation: fadeInMenu .18s;
+        }
+        @keyframes fadeInMenu {
+          from { opacity: 0; transform: translateY(12px);}
+          to   { opacity: 1; transform: translateY(0);}
+        }
+      `}</style>
+    </div>
+  )
+}
+// --------- /Custom Select ---------
+
 type Act = {
   id: number
   title: string
@@ -61,7 +153,6 @@ const SummaryPanel: FC<Props> = ({ onClose }) => {
     setDraftContent(selectedAct?.content || '')
     setDraftTitle(selectedAct?.title || '')
     if (contentRef.current) contentRef.current.scrollTop = 0
-    // Focus sur le champ titre en création d’acte
     if (editMode && titleInputRef.current) {
       titleInputRef.current.focus()
     }
@@ -82,7 +173,6 @@ const SummaryPanel: FC<Props> = ({ onClose }) => {
     setEditMode(false)
   }
   const handleAddAct = () => {
-    // ID unique (toujours +1 du max)
     const nextId = (Math.max(...acts.map(a => a.id), 0) + 1)
     const newAct = { id: nextId, title: '', content: '' }
     setActs([...acts, newAct])
@@ -134,30 +224,18 @@ const SummaryPanel: FC<Props> = ({ onClose }) => {
       className="absolute inset-0 bg-black/35 backdrop-blur-[3px] border border-white/10 rounded-2xl shadow-2xl flex flex-col h-full w-full z-20 animate-fadeIn"
       style={{ minHeight: 0, minWidth: 0 }}
     >
-      {/* Barre du haut : Select + Ajouter + Editer (à droite) */}
+      {/* Barre du haut : Select custom + Ajouter + Editer (à droite) */}
       <div className="flex justify-between items-center mb-3 px-2 pt-1 gap-2">
         <div className="flex items-center gap-2 flex-wrap">
-          <select
-            className="
-              px-3 py-2 rounded-xl font-semibold shadow
-              bg-black/35 border border-white/10 text-white/85
-              focus:outline-none focus:ring-2 focus:ring-blue-400/30
-              transition
-            "
-            style={{ maxWidth: 220 }}
+          <CustomActSelect
             value={selectedId}
-            onChange={e => handleSelectAct(Number(e.target.value))}
-          >
-            {acts.map(act => (
-              <option
-                key={act.id}
-                value={act.id}
-                className="bg-black/90 text-white/90"
-              >
-                {act.title ? act.title : `[Sans titre]`}
-              </option>
-            ))}
-          </select>
+            onChange={handleSelectAct}
+            options={acts.map(act => ({
+              value: act.id,
+              label: act.title ? act.title : "[Sans titre]"
+            }))}
+            disabled={acts.length < 1}
+          />
           <button
             onClick={handleAddAct}
             className="

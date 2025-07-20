@@ -24,3 +24,40 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+:root {
+  --scrollbar-bg: transparent;
+  --scrollbar-thumb: rgba(30, 60, 120, 0.20);
+  --scrollbar-thumb-hover: rgba(30, 60, 120, 0.38);
+}
+
+/* Chrome, Edge, Opera */
+body::-webkit-scrollbar,
+.scrollable::-webkit-scrollbar {
+  width: 4px;        /* largeur super fine */
+  height: 4px;
+  background: var(--scrollbar-bg);
+}
+
+body::-webkit-scrollbar-thumb,
+.scrollable::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+body::-webkit-scrollbar-thumb:hover,
+.scrollable::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* Pour masquer la piste sauf au hover (optionnel) */
+body::-webkit-scrollbar-track,
+.scrollable::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Firefox */
+body, .scrollable {
+  scrollbar-width: thin;   /* "thin" c'est 4-6px selon le navigateur, mais c'est le plus fin possible */
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-bg);
+}

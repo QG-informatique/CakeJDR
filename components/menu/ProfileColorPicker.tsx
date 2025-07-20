@@ -2,16 +2,25 @@
 import { FC, useState, useRef, useEffect } from 'react'
 
 const COLORS = [
-  '#e11d48','#1d4ed8','#16a34a','#f59e0b','#d946ef',
-  '#0d9488','#f97316','#a3a3a3','#ffffff','#000000'
+  '#f472b6', // Rose cake
+  '#b6fcd5', // Vert pastel
+  '#a2d8fa', // Bleu ciel
+  '#b4c5e4', // Bleu lavande
+  '#ffeabf', // Jaune pastel
+  '#7ee4e6', // Turquoise pastel (nouveau)
+  '#fab7b7', // Rouge pastel (nouveau)
+  '#e0bbff', // Violet pastel
+  '#d3d3d3', // Gris pastel
+  '#202124', // Noir mat
 ]
+
+
+
+
 
 interface Props {
   color: string
   onChange: (c: string) => void
-  /**
-   * Optionnel : taille du bouton déclencheur (par défaut 28)
-   */
   size?: number
 }
 
@@ -20,7 +29,6 @@ const ProfileColorPicker: FC<Props> = ({ color, onChange, size = 28 }) => {
   const wrapRef = useRef<HTMLDivElement | null>(null)
   const inputRef = useRef<HTMLInputElement | null>(null)
 
-  // Fermer si clic en dehors
   useEffect(() => {
     if (!open) return
     const close = (e: MouseEvent) => {
@@ -62,14 +70,13 @@ const ProfileColorPicker: FC<Props> = ({ color, onChange, size = 28 }) => {
         }}
         title="Changer la couleur du profil"
       >
-        {/* Petit chevron / indicateur */}
         <span
           className={`
-            absolute -bottom-1 left-1/2 -translate-x-1/2
-            text-[9px] leading-none font-semibold text-white
-            opacity-75 group-hover:opacity-100
-            transition
-            select-none
+            absolute left-1/2 top-1/2 
+            -translate-x-1/2 -translate-y-1/2
+            text-[14px] leading-none font-semibold text-white
+            opacity-80 group-hover:opacity-100
+            transition select-none pointer-events-none
           `}
           style={{ textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}
         >
@@ -91,7 +98,7 @@ const ProfileColorPicker: FC<Props> = ({ color, onChange, size = 28 }) => {
         style={{
           padding: open ? '6px 10px' : 0,
           background: open ? 'rgba(25,30,45,0.55)' : 'transparent',
-            backdropFilter: open ? 'blur(6px)' : 'none',
+          backdropFilter: open ? 'blur(6px)' : 'none',
           border: open ? '1px solid rgba(180,200,255,0.18)' : '1px solid transparent',
           borderRadius: 9999,
           boxShadow: open ? '0 4px 18px -6px rgba(0,0,0,0.55)' : 'none'

@@ -285,22 +285,22 @@ export default function MenuAccueil() {
 
             {/* Droite : bouton MJ compact */}
             <div className="shrink-0 flex items-center justify-end w-[120px]">
-              <button
-                onClick={handleToggleMJ}
-                title={user.isMJ ? 'Mode MJ (clique pour repasser joueur)' : 'Activer mode MJ'}
-                className={`
-                  relative inline-flex items-center justify-center
-                  w-14 h-10 rounded-md font-semibold text-sm
-                  transition border
-                  ${user.isMJ
-                    ? 'bg-fuchsia-600/80 hover:bg-fuchsia-500 border-fuchsia-300/40'
-                    : 'bg-gray-700/70 hover:bg-gray-600/70 border-gray-400/30'}
-                `}
-                style={{
-                  boxShadow: user.isMJ
-                    ? '0 0 0 1px rgba(255,255,255,0.08), 0 0 12px -2px rgba(217,70,239,0.55)'
-                    : '0 0 0 1px rgba(255,255,255,0.05), 0 2px 8px -2px rgba(0,0,0,0.55)'
-                }}
+  <button
+    onClick={handleToggleMJ}
+    title={user.isMJ ? 'Mode MJ (clique pour repasser joueur)' : 'Activer mode MJ'}
+    className={`
+      relative inline-flex items-center justify-center
+      w-14 h-10 rounded-md font-semibold text-sm
+      transition border
+      ${user.isMJ
+        ? 'bg-[#f472b6]/20 hover:bg-[#f472b6]/35 border-[#f472b6]/40'
+        : 'bg-gray-700/70 hover:bg-gray-600/70 border-gray-400/30'}
+    `}
+    style={{
+      boxShadow: user.isMJ
+        ? '0 0 0 1px rgba(244,114,182,0.14), 0 0 12px -2px #f472b630'
+        : '0 0 0 1px rgba(255,255,255,0.05), 0 2px 8px -2px rgba(0,0,0,0.55)'
+    }}
               >
                 <span className="flex items-center gap-1">
                   <Crown size={18} className="text-pink-400" />

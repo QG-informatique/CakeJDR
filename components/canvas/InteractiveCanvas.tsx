@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react'
 import YouTube from 'react-youtube'
+import { Trash2 } from 'lucide-react'
 
 type ImageData = {
   id: number
@@ -190,6 +191,10 @@ export default function InteractiveCanvas() {
     }
   }
 
+  const handleDeleteImage = (id: number) => {
+    setImages((prev) => prev.filter((img) => img.id !== id))
+  }
+
   const handleYtSubmit = () => {
     const match = ytUrl.match(/(?:youtube\.com.*v=|youtu\.be\/)([^&\n?#]+)/)
     if (match) {
@@ -371,9 +376,21 @@ export default function InteractiveCanvas() {
         {images.map((img) => (
           <div
             key={img.id}
-            className="absolute border border-white/20 rounded-2xl shadow-md"
+            className="absolute border border-white/20 rounded-2xl shadow-md group"
             style={{ top: img.y, left: img.x, width: img.width, height: img.height, zIndex: 1 }}
           >
+            {/* Bouton corbeille individuel visible en mode images */}
+            {drawMode === 'images' && (
+              <button
+                onClick={() => handleDeleteImage(img.id)}
+                className="absolute top-1 left-1 z-20 p-1 rounded-full bg-black/60 hover:bg-red-600 transition text-white opacity-80 group-hover:opacity-100"
+                title="Supprimer l'image"
+                style={{ cursor: 'pointer' }}
+              >
+                <Trash2 size={18} />
+              </button>
+            )}
+
             <img
               src={img.src}
               alt="Dropped"
