@@ -1,5 +1,5 @@
-'use client'
 /* eslint-disable @typescript-eslint/no-explicit-any */
+'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
@@ -10,9 +10,6 @@ import CharacterList from './CharacterList'
 import CharacterModal from './CharacterModal'
 import ProfileColorPicker from './ProfileColorPicker'
 
-/* ------------------------------------------------------------------------- */
-/*  Constantes & Types                                                       */
-/* ------------------------------------------------------------------------- */
 const PROFILE_KEY = 'jdr_profile'
 
 type Character = {
@@ -22,25 +19,24 @@ type Character = {
   [key: string]: any
 }
 
-/* ------------------------------------------------------------------------- */
-/*  Composant Menu Accueil                                                   */
-/* ------------------------------------------------------------------------- */
 export default function MenuAccueil() {
   const router = useRouter()
+
   const [user, setUser] = useState<{ pseudo:string; isMJ:boolean; color:string } | null>(null)
   const [characters, setCharacters]   = useState<Character[]>([])
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
   const [modalOpen, setModalOpen]     = useState(false)
   const [draftChar, setDraftChar]     = useState<Character>(defaultPerso as unknown as Character)
   const [hydrated, setHydrated]       = useState(false)
+
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-  /* ----------------------------------------------------------------------- */
-  /*  Hydratation initiale (localStorage → état React)                       */
-  /* ----------------------------------------------------------------------- */
+  /** Nouvel état pour masquer instantanément l’UI lors du logout */
+  const [loggingOut, setLoggingOut] = useState(false)
+
+  /* ---------------- Hydratation ---------------- */
   useEffect(() => {
     setHydrated(true)
-
     try {
       const raw = localStorage.getItem(PROFILE_KEY)
       if (raw) {
@@ -54,10 +50,9 @@ export default function MenuAccueil() {
     } catch {}
   }, [])
 
-  /* ----------------------------------------------------------------------- */
-  /*  Synchronisation inter‑onglets                                          */
-  /* ----------------------------------------------------------------------- */
+  /* --------- Sync inter‑onglets --------- */
   useEffect(() => {
+    if (loggingOut) return
     const update = () => {
       try {
         const raw = localStorage.getItem(PROFILE_KEY)
@@ -74,21 +69,20 @@ export default function MenuAccueil() {
       window.removeEventListener('storage', update)
       window.removeEventListener('jdr_profile_change', update as EventListener)
     }
-  }, [])
+  }, [loggingOut])
 
-  /* ----------------------------------------------------------------------- */
-  /*  Helpers persistance                                                    */
-  /* ----------------------------------------------------------------------- */
+  /* --------- Persistence --------- */
   const saveCharacters = (chars: Character[]) => {
     localStorage.setItem('jdr_characters', JSON.stringify(chars))
     setCharacters(chars)
   }
 
-  /* ----------------------------------------------------------------------- */
-  /*  Gestion utilisateur                                                    */
-  /* ----------------------------------------------------------------------- */
+  /* --------- Logout (Option B) --------- */
   const handleLogout = () => {
-    // ➜ on NE supprime PLUS la clé, on met juste loggedIn=false
+    if (loggingOut) return
+    setLoggingOut(true)
+
+    // Invalider le profil dans le storage
     try {
       const raw = localStorage.getItem(PROFILE_KEY)
       if (raw) {
@@ -98,14 +92,18 @@ export default function MenuAccueil() {
         window.dispatchEvent(new Event('jdr_profile_change'))
       }
     } catch {}
+
+    // Masquer immédiatement toute l’UI dépendante de user
     setUser(null)
     setSelectedIdx(null)
-    router.push('/menu')
+
+    // Navigation au tick suivant (évite le double logo)
+    requestAnimationFrame(() => {
+      router.replace('/menu')
+    })
   }
 
-  /* ----------------------------------------------------------------------- */
-  /*  Divers handlers personnages                                            */
-  /* ----------------------------------------------------------------------- */
+  /* --------- Characters CRUD --------- */
   const handleSelectChar   = (idx:number) => setSelectedIdx(idx)
   const handleNewCharacter = () => {
     if (!user) return
@@ -131,7 +129,7 @@ export default function MenuAccueil() {
     setSelectedIdx(null)
   }
 
-  /*  Import / Export ------------------------------------------------------- */
+  /* --------- Import / Export --------- */
   const handleImportClick = () => fileInputRef.current?.click()
   const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -161,9 +159,7 @@ export default function MenuAccueil() {
     document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url)
   }
 
-  /* ----------------------------------------------------------------------- */
-  /*  Couleurs profil                                                        */
-  /* ----------------------------------------------------------------------- */
+  /* --------- Profile helpers --------- */
   const handleChangeColor = (color:string) => {
     if (!user) return
     setUser({ ...user, color })
@@ -191,29 +187,28 @@ export default function MenuAccueil() {
     } catch {}
   }
 
-  /* ----------------------------------------------------------------------- */
-  /*  Rendu conditionnel avant hydratation                                   */
-  /* ----------------------------------------------------------------------- */
-  if (!hydrated) {
-    return <div className="w-full h-full" />
-  }
+  if (!hydrated) return <div className="w-full h-full" />
 
-  /* ----------------------------------------------------------------------- */
-  /*  Render                                                                 */
-  /* ----------------------------------------------------------------------- */
   const filteredCharacters = user
     ? user.isMJ ? characters : characters.filter(c => c.owner === user.pseudo)
     : []
 
+  /* Pendant logout : écran neutre (rien de l'ancien UI ne reste) */
+  if (loggingOut) {
+    return <div className="w-full min-h-screen bg-transparent" />
+  }
+
   return (
-    <div className="w-full h-full relative text-white p-4 flex flex-col max-w-6xl mx-auto overflow-hidden">
+    <div className="w-full min-h-screen relative text-white px-6 pb-8 flex flex-col max-w-7xl mx-auto bg-transparent overflow-hidden">
+      {user && (
+        <MenuHeader
+          user={user}
+          onLogout={handleLogout}
+          tableRoute="/table"
+        />
+      )}
 
-      {/* ------------------------------- HEADER ----------------------------- */}
-      <MenuHeader user={user} onLogout={handleLogout} />
-
-      {/* -------------------------- CONTENU PRINCIPAL ----------------------- */}
       {!user ? (
-        /* ---------------- LOGIN (pas connecté) --------------------------- */
         <div className="flex-grow flex items-center justify-center">
           <Login onLogin={() => {
             try {
@@ -223,44 +218,93 @@ export default function MenuAccueil() {
           }} />
         </div>
       ) : (
-        /* ---------------- MENU (connecté) -------------------------------- */
         <>
-          {/* Profil utilisateur */}
-          <section className="mb-8 bg-gray-800 bg-opacity-40 rounded-lg p-4 flex items-center justify-between" style={{ overflow:'hidden' }}>
-            <p className="text-lg font-semibold flex items-center gap-2">
-              Connecté en tant que <span style={{ color: user.color }}>{user.pseudo}</span>
-            </p>
-            <div className="flex items-center gap-4">
-              <ProfileColorPicker color={user.color} onChange={handleChangeColor} />
+          {/* Barre profil : pseudo centré + color picker ; bouton MJ compact à droite */}
+          <section
+            className="
+              mt-4 mb-6
+              rounded-xl backdrop-blur-md
+              bg-black/35
+              px-6 py-4
+              flex items-center w-full
+            "
+          >
+            {/* Spacer gauche pour équilibrer la largeur du bloc MJ à droite */}
+            <div className="w-[120px] shrink-0" />
+
+            {/* Centre : pseudo + color picker */}
+            <div className="flex-1 flex items-center justify-center">
+              <span
+                className="font-bold text-xl tracking-wide select-none"
+                style={{ color: user.color, textShadow:'0 1px 2px rgba(0,0,0,0.5)' }}
+              >
+                {user.pseudo}
+              </span>
+              <span className="ml-4">
+                <ProfileColorPicker
+                  color={user.color}
+                  onChange={handleChangeColor}
+                />
+              </span>
+            </div>
+
+            {/* Droite : bouton MJ compact */}
+            <div className="shrink-0 flex items-center justify-end w-[120px]">
               <button
                 onClick={handleToggleMJ}
-                className={`px-3 py-1 rounded font-semibold text-sm text-white ${user.isMJ ? 'bg-purple-700 hover:bg-purple-800' : 'bg-gray-600 hover:bg-gray-700'}`}
+                title={user.isMJ ? 'Mode MJ (clique pour repasser joueur)' : 'Activer mode MJ'}
+                className={`
+                  relative inline-flex items-center justify-center
+                  w-14 h-10 rounded-md font-semibold text-sm
+                  transition border
+                  ${user.isMJ
+                    ? 'bg-fuchsia-600/80 hover:bg-fuchsia-500 border-fuchsia-300/40'
+                    : 'bg-gray-700/70 hover:bg-gray-600/70 border-gray-400/30'}
+                `}
+                style={{
+                  boxShadow: user.isMJ
+                    ? '0 0 0 1px rgba(255,255,255,0.08), 0 0 12px -2px rgba(217,70,239,0.55)'
+                    : '0 0 0 1px rgba(255,255,255,0.05), 0 2px 8px -2px rgba(0,0,0,0.55)'
+                }}
               >
-                {user.isMJ ? 'Mode MJ activé' : 'Activer le mode MJ'}
+                <span className="flex items-center gap-1">
+                  <span className="text-xs tracking-wide">MJ</span>
+                  <span
+                    className={`
+                      block w-2.5 h-2.5 rounded-full transition
+                      ${user.isMJ
+                        ? 'bg-fuchsia-300 shadow-[0_0_6px_2px_rgba(217,70,239,0.5)]'
+                        : 'bg-gray-300/80'}
+                    `}
+                  />
+                </span>
               </button>
             </div>
           </section>
 
-          <CharacterList
-            filtered={filteredCharacters}
-            selectedIdx={selectedIdx}
-            onSelect={handleSelectChar}
-            onEdit={handleEditCharacter}
-            onDelete={handleDeleteChar}
-            onNew={handleNewCharacter}
-            onImportClick={handleImportClick}
-            onExport={handleExportChar}
-            fileInputRef={fileInputRef}
-            onImportFile={handleImportFile}
-          />
+          {/* Liste des personnages */}
+          <div className="flex-1 min-h-0 rounded-xl backdrop-blur-md bg-black/20 p-5 overflow-auto">
+            <CharacterList
+              filtered={filteredCharacters}
+              selectedIdx={selectedIdx}
+              onSelect={handleSelectChar}
+              onEdit={handleEditCharacter}
+              onDelete={handleDeleteChar}
+              onNew={handleNewCharacter}
+              onImportClick={handleImportClick}
+              onExport={handleExportChar}
+              fileInputRef={fileInputRef}
+              onImportFile={handleImportFile}
+            />
+          </div>
 
-          <CharacterModal
-            open={modalOpen}
-            character={draftChar}
-            onUpdate={setDraftChar}
-            onSave={handleSaveDraft}
-            onClose={() => setModalOpen(false)}
-          />
+            <CharacterModal
+              open={modalOpen}
+              character={draftChar}
+              onUpdate={setDraftChar}
+              onSave={handleSaveDraft}
+              onClose={() => setModalOpen(false)}
+            />
         </>
       )}
     </div>
