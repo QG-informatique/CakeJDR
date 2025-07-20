@@ -199,7 +199,7 @@ export default function HomePage() {
         chatBoxRef={chatBoxRef}
       >
         <Link
-          href="/menu"
+           href="/menu-accueil"
           className="bg-gray-800 hover:bg-gray-900 text-white px-2 py-1 rounded text-xs"
           style={{ minWidth: 70 }}
         >
