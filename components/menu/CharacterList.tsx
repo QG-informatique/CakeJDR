@@ -41,7 +41,7 @@ const CharacterList: FC<Props> = ({
       <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {filtered.map((ch, idx) => (
           <li
-            key={ch.id}
+            key={`${ch.id}-${idx}`}
             className={`bg-gray-700 rounded p-4 flex flex-col justify-between cursor-pointer ${
               selectedIdx !== null && filtered[selectedIdx]?.id === ch.id
                 ? 'ring-4 ring-green-400'
