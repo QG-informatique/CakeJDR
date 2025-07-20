@@ -11,7 +11,7 @@ import React from 'react'
  *  • Décalage initial négatif sur toute la durée  // ★
  *    ⇒ flux continu : pas d’écran « vide ».
  */
-export default function AnimatedDiceBackground() {
+export default function RpgBackground() {
   const icons = [Dice1, Dice2, Dice3, Dice4, Dice5, Dice6]
 
   // ★  nombre de dés augmenté
