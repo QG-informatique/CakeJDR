@@ -26,6 +26,8 @@ import GMCharacterSelector from '@/components/misc/GMCharacterSelector'
 // Déplacement fichier pour organisation
 import ImportExportMenu from '@/components/character/ImportExportMenu'
 import Link from 'next/link'
+import RpgBackground from '@/components/ui/RpgBackground'
+import CakeLogo from '@/components/ui/CakeLogo'
 
 export default function HomePage() {
   const router = useRouter()
@@ -190,7 +192,8 @@ export default function HomePage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-10px)] m-[5px] font-sans overflow-hidden bg-white text-black dark:bg-gray-900 dark:text-white">
+    <div className="relative w-screen h-screen font-sans overflow-hidden flex bg-white text-black dark:bg-gray-900 dark:text-white">
+      <RpgBackground />
       <Head>
         <title>CakeJDR</title>
       </Head>
