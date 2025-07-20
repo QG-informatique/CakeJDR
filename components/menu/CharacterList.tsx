@@ -68,7 +68,7 @@ const CharacterList: FC<Props> = ({
                   flex flex-col gap-2 min-h-[120px] 
                   transition
                   ${isSelected
-                    ? 'ring-2 ring-emerald-400/70'
+                    ? 'ring-2 ring-emerald-400/90 shadow-[0_0_12px_2px_rgba(16,185,129,0.6)]'
                     : 'hover:ring-2 hover:ring-emerald-300/40'}
                 `}
                 style={{

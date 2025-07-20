@@ -409,7 +409,9 @@ export default function InteractiveCanvas() {
           />
         )}
 
-        <p className="absolute bottom-4 left-5 text-xs text-white/70 z-10">Glisse une image ici</p>
+        {images.length === 0 && (
+          <p className="absolute bottom-4 left-5 text-xs text-white/70 z-10">Glisse une image ici</p>
+        )}
       </div>
     </div>
   )

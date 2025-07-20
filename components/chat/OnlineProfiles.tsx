@@ -31,15 +31,25 @@ export default function OnlineProfiles() {
   if (entries.length === 0) return null
 
   // flex-row-reverse : le dernier connecté apparaît à gauche de la liste
+  const getTextColor = (hex: string) => {
+    const c = hex.replace('#', '')
+    const r = parseInt(c.substring(0, 2), 16)
+    const g = parseInt(c.substring(2, 4), 16)
+    const b = parseInt(c.substring(4, 6), 16)
+    const yiq = (r * 299 + g * 587 + b * 114) / 1000
+    return yiq >= 128 ? '#000' : '#fff'
+  }
+
   return (
     <div className="flex flex-row-reverse gap-2">
       {entries.map(([id, p]) => (
         <div
           key={id}
-          className="w-4 h-4 rounded-full border border-white"
-          style={{ backgroundColor: p.color }}
-          title={p.pseudo}
-        />
+          className="w-6 h-6 rounded-full border border-white flex items-center justify-center text-[10px] font-bold"
+          style={{ backgroundColor: p.color, color: getTextColor(p.color) }}
+        >
+          {p.pseudo.charAt(0).toUpperCase()}
+        </div>
       ))}
     </div>
   )

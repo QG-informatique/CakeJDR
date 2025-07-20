@@ -1,5 +1,6 @@
 import { FC } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import CakeLogo from '../ui/CakeLogo'
 
 type Tab = { key: string, label: string }
@@ -46,7 +47,12 @@ const CharacterSheetHeader: FC<Props> = ({
     >
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <CakeLogo className="mr-2" showText={!logoOnly} />
+          <Link
+            href="/menu-accueil"
+            className="bg-gray-800 hover:bg-gray-900 text-white rounded p-1"
+          >
+            <CakeLogo className="mr-0" showText={false} />
+          </Link>
           {childrenArray.map((child, i) => (
             <span key={i} className="flex items-center">{child}</span>
           ))}
