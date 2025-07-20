@@ -1,5 +1,6 @@
 import { FC } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import CakeLogo from '../ui/CakeLogo'
 
 type Tab = { key: string, label: string }
@@ -25,31 +26,48 @@ const CharacterSheetHeader: FC<Props> = ({
   children,
   logoOnly = false
 }) => {
-  const router = useRouter();
+  const router = useRouter()
 
-  // Pour gérer plusieurs children bien ordonnés (Menu, ImportExport, GMSelector...)
-  const childrenArray = Array.isArray(children) ? children : [children];
+  const childrenArray = Array.isArray(children) ? children : [children]
 
   return (
     <div
-      className="sticky top-0 left-0 right-0 z-40 bg-gray-900 pb-2 pt-1 -mx-3 px-3 flex flex-col"
+      className="
+        sticky top-0 left-0 right-0 z-40
+        rounded-xl
+        border-b border-white/10
+        bg-black/30
+        backdrop-blur-[2px]
+        shadow-lg shadow-black/20
+        pb-2 pt-1 -mx-3 px-3 flex flex-col
+      "
       style={{
-        boxShadow: '0 4px 14px #0007',
-        borderBottom: '1px solid #222'
+        boxShadow: '0 4px 18px -6px rgba(0,0,0,0.30), 0 0 0 1px rgba(255,255,255,0.05)'
       }}
     >
       <div className="flex justify-between items-center">
-        {/* --- TOUS LES BOUTONS À GAUCHE --- */}
         <div className="flex items-center gap-2">
-          <CakeLogo className="mr-2" showText={!logoOnly} />
+          <Link
+            href="/menu-accueil"
+            className="bg-gray-800 hover:bg-gray-900 text-white rounded p-1"
+          >
+            <CakeLogo className="mr-0" showText={false} />
+          </Link>
           {childrenArray.map((child, i) => (
             <span key={i} className="flex items-center">{child}</span>
           ))}
         </div>
-        {/* --- BOUTON EDITER/SAUVER SEUL À DROITE --- */}
         <button
           onClick={edit ? onSave : onToggleEdit}
-          className="text-xs px-2 py-1 rounded bg-blue-500 hover:bg-blue-600 text-white"
+          className={`
+            rounded-xl px-5 py-2 text-sm font-semibold shadow border-none
+            bg-black/30 text-white/90
+            hover:bg-emerald-600 hover:text-white
+            transition duration-100
+            flex items-center justify-center
+            min-h-[38px]
+          `}
+          style={{ minHeight: 38 }}
         >
           {edit ? 'Sauver' : 'Éditer'}
         </button>
@@ -58,7 +76,18 @@ const CharacterSheetHeader: FC<Props> = ({
         {TABS.map(t => (
           <button
             key={t.key}
-            className={`px-3 py-2 rounded-t text-base font-semibold ${tab === t.key ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-200'}`}
+            className={`
+              px-2 py-1 rounded-lg text-xs font-semibold shadow border
+              border-white/10
+              transition duration-100
+              ${tab === t.key
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-black/20 text-blue-100/85 hover:bg-blue-900/30 hover:text-white/80'}
+            `}
+            style={{
+              opacity: tab === t.key ? 1 : 0.82,
+              borderBottom: tab === t.key ? '2px solid #4f9ddf' : '2px solid transparent'
+            }}
             onClick={() => setTab(t.key)}
           >
             {t.label}

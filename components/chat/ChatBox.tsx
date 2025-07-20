@@ -1,3 +1,4 @@
+'use client'
 import { FC, RefObject, useRef, useState, useEffect } from 'react'
 import SummaryPanel from './SummaryPanel'
 import DiceStats from './DiceStats'
@@ -43,24 +44,72 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
   // --- NOUVEL AFFICHAGE VERTICAL ---
   if (showSummary) {
     return (
-      <aside className="w-1/5 bg-gray-200 dark:bg-gray-800 p-4 flex flex-col relative">
+      <aside
+        className="
+          w-1/5
+          p-4
+          flex flex-col relative
+          rounded-xl
+          border border-white/10
+          bg-black/15
+          backdrop-blur-[2px]
+          shadow-lg shadow-black/10
+          transition
+        "
+        style={{
+          boxShadow: '0 4px 18px -8px rgba(0,0,0,0.24), 0 0 0 1px rgba(255,255,255,0.05)'
+        }}
+      >
         <SummaryPanel onClose={() => setShowSummary(false)} />
       </aside>
     )
   }
 
   return (
-    <aside className="w-1/5 bg-gray-200 dark:bg-gray-800 p-4 flex flex-col relative h-full min-h-0">
+    <aside
+      className="
+        w-1/5
+        p-4
+        flex flex-col relative h-full min-h-0
+        rounded-xl
+        border border-white/10
+        bg-black/15
+        backdrop-blur-[2px]
+        shadow-lg shadow-black/10
+        transition
+      "
+      style={{
+        boxShadow: '0 4px 18px -8px rgba(0,0,0,0.24), 0 0 0 1px rgba(255,255,255,0.05)'
+      }}
+    >
       {/* Boutons en-tête */}
       <div className="flex justify-center items-center mb-2 gap-2">
         <button
-          className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 px-4 py-1 rounded shadow font-bold text-sm"
+          className="
+            px-5 py-2 rounded-xl font-semibold shadow border-none
+            bg-black/30 text-white/90
+            hover:bg-yellow-400 hover:text-black
+            transition
+            duration-100
+            flex items-center justify-center
+            min-h-[44px]
+          "
+          style={{ minHeight: 44 }}
           onClick={() => setShowSummary(true)}
         >
           Résumé de la partie
         </button>
         <button
-          className="bg-gray-700 text-white px-2 py-1 rounded text-sm"
+          className="
+            px-5 py-2 rounded-xl font-semibold shadow border-none
+            bg-black/30 text-white/90
+            hover:bg-blue-600 hover:text-white
+            transition
+            duration-100
+            flex items-center justify-center
+            min-h-[44px]
+          "
+          style={{ minHeight: 44 }}
           onClick={() => setShowStats(s => !s)}
           title="Stats DD"
         >
@@ -73,7 +122,16 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
         {showStats && (
           <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
             <div className="text-center font-bold mb-2">Statistiques DD</div>
-            <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-700 p-2 rounded shadow">
+            <div className="
+              flex-1 overflow-y-auto
+              rounded-xl
+              border border-white/10
+              bg-black/15
+              backdrop-blur-[2px]
+              shadow
+              p-2
+              min-h-0
+            ">
               <DiceStats history={history} />
             </div>
           </div>
@@ -82,8 +140,16 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
           <h2 className="text-xl font-bold mb-2 text-center">Chat</h2>
           <div
             ref={chatBoxRef}
-            className="flex-1 overflow-y-auto bg-white dark:bg-gray-700 p-2 rounded shadow"
-            style={{ minHeight: 0 }}
+            className="
+              flex-1 overflow-y-auto
+              rounded-xl
+              border border-white/10
+              bg-black/15
+              backdrop-blur-[2px]
+              shadow
+              p-2
+              min-h-0
+            "
           >
             {messages.map((msg, idx) => (
               <p key={idx}>
@@ -101,11 +167,40 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
               onKeyDown={e => {
                 if (e.key === 'Enter') sendMessage()
               }}
-              className="flex-1 border p-2 rounded-l text-white bg-gray-700 dark:bg-gray-600"
+              className="
+                flex-1
+                border-none
+                px-3 py-2
+                rounded-l-xl
+                text-white
+                bg-black/30
+                backdrop-blur-[2px]
+                focus:outline-none
+                transition
+                shadow
+                placeholder:text-white/50
+                text-base
+              "
+              style={{ minHeight: 44 }}
             />
             <button
               onClick={sendMessage}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 rounded-r"
+              className="
+                rounded-r-xl
+                px-5 py-2
+                text-base
+                font-semibold
+                shadow
+                border-none
+                bg-black/30
+                text-white/90
+                hover:bg-emerald-600 hover:text-white
+                transition
+                duration-100
+                flex items-center justify-center
+                min-h-[44px]
+              "
+              style={{ minHeight: 44 }}
             >
               Envoyer
             </button>

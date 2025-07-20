@@ -1,5 +1,6 @@
 'use client'
 import { FC } from 'react'
+import { Dice3 } from 'lucide-react'
 
 type Props = {
   diceType: number
@@ -10,12 +11,25 @@ type Props = {
 }
 
 const DiceRoller: FC<Props> = ({ diceType, onChange, onRoll, disabled, children }) => (
-  // Justify-between pour coller l'indicateur des joueurs en ligne complètement à droite
-  <div className="p-4 bg-gray-200 dark:bg-gray-800 flex items-center gap-2 justify-between">
-    <label htmlFor="diceType" className="mr-2 font-semibold">Type de dé :</label>
+  <div
+    className="
+      p-4
+      flex items-center gap-2 justify-between
+      rounded-xl
+      border border-white/10
+      bg-black/15
+      backdrop-blur-[2px]
+      shadow-lg shadow-black/10
+      transition
+    "
+    style={{
+      boxShadow: '0 4px 18px -8px rgba(0,0,0,0.24), 0 0 0 1px rgba(255,255,255,0.05)'
+    }}
+  >
+    <label htmlFor="diceType" className="mr-2 font-semibold text-white/85">Type de dé :</label>
     <select
       id="diceType"
-      className="border p-1 rounded text-white bg-gray-700 dark:bg-gray-600"
+      className="border p-1 rounded text-white bg-gray-800/70"
       value={diceType}
       onChange={(e) => onChange(Number(e.target.value))}
       disabled={disabled}
@@ -26,9 +40,26 @@ const DiceRoller: FC<Props> = ({ diceType, onChange, onRoll, disabled, children 
     </select>
     <button
       onClick={onRoll}
-      className={`ml-4 bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+      className={`
+        ml-4 flex items-center gap-2
+        px-7 py-2 rounded-2xl
+        font-bold text-base
+        text-white
+        shadow
+        border border-white/10
+        bg-[#253053]/60
+        hover:bg-[#253053]/80
+        active:scale-95
+        transition
+        backdrop-blur-sm
+        ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+      `}
+      style={{
+        boxShadow: '0 2px 12px 0 #1115'
+      }}
       disabled={disabled}
     >
+      <Dice3 className="inline -mt-0.5 text-white/80" size={20} />
       Lancer
     </button>
     {children && <div className="ml-auto flex gap-1">{children}</div>}
