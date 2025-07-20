@@ -1,9 +1,10 @@
 'use client'
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 // Déplacement fichier pour organisation
-import CharacterSheet, { defaultPerso } from '@/components/character/CharacterSheet'
+import CharacterSheet, { defaultPerso } from '@/components/sheet/CharacterSheet'
 // Déplacement fichier pour organisation
 import DiceRoller from '@/components/dice/DiceRoller'
 // Déplacement fichier pour organisation
@@ -82,7 +83,7 @@ export default function HomePage() {
   // Présence en ligne
   useEffect(() => {
     if (!user) return
-    const id = localStorage.getItem('jdr_profile_id') || String(Date.now())
+    const id = localStorage.getItem('jdr_profile_id') || crypto.randomUUID()
     localStorage.setItem('jdr_profile_id', id)
     const updateOnline = () => {
       try {
@@ -155,7 +156,7 @@ export default function HomePage() {
     // Charger le perso sélectionné
     const selectedId = localStorage.getItem('selectedCharacterId')
     if (selectedId && chars.length) {
-      const found = chars.find(c => c.id?.toString() === selectedId)
+      const found = chars.find((c: any) => c.id?.toString() === selectedId)
       if (found) {
         setPerso(found)
       } else {
