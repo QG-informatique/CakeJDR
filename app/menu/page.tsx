@@ -9,10 +9,8 @@ export default function MenuPage() {
   const router = useRouter()
   const [leaving, setLeaving] = useState(false)
 
-  // Lance la transition de sortie après login
   const handleLogin = () => setLeaving(true)
 
-  // Si l’utilisateur est déjà loggé, on saute l’écran de connexion
   useEffect(() => {
     try {
       const raw = localStorage.getItem('jdr_profile')
@@ -27,12 +25,14 @@ export default function MenuPage() {
       onAnimationComplete={() => {
         if (leaving) router.push('/menu-accueil')
       }}
-      className="relative min-h-screen w-full overflow-hidden flex items-start justify-center pt-16"
+      className="relative h-screen w-full overflow-hidden"
     >
-      {/* Fond animé de dés */}
-      <AnimatedDiceBackground />
+      {/* Fond animé (ne doit pas influer sur la hauteur) */}
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        <AnimatedDiceBackground />
+      </div>
 
-      {/* Formulaire de connexion + logo */}
+      {/* Centre absolu */}
       <Login onLogin={handleLogin} />
     </motion.div>
   )
