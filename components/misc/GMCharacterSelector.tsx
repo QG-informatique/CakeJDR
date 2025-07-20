@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useState, useRef } from 'react'
 import { User2 } from 'lucide-react'
@@ -9,9 +10,11 @@ type Character = { id: number, name?: string, nom?: string }
 
 type Props = {
   onSelect: (char: any) => void
+  buttonLabel?: string
+  className?: string
 }
 
-export default function GMCharacterSelector({ onSelect }: Props) {
+export default function GMCharacterSelector({ onSelect, buttonLabel = 'Personnage', className = 'flex items-center gap-1 px-3 py-1 rounded bg-purple-700 hover:bg-purple-800 text-white text-xs border border-purple-500' }: Props) {
   const [chars, setChars] = useState<Character[]>([])
   const [open, setOpen] = useState(false)
   const [selectedId, setSelectedId] = useState<number | null>(null)
@@ -69,14 +72,14 @@ export default function GMCharacterSelector({ onSelect }: Props) {
     <div ref={dropdownRef} className="relative">
       <button
         onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-1 px-3 py-1 rounded bg-purple-700 hover:bg-purple-800 text-white text-xs border border-purple-500"
+        className={className}
         style={{ minWidth: 0 }}
         tabIndex={0}
         aria-haspopup="listbox"
         aria-expanded={open}
       >
         <User2 size={16} className="mr-1" />
-        Personnage
+        {buttonLabel}
       </button>
       {open && (
         <div className="absolute left-0 mt-1 w-48 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded shadow-lg border border-purple-500 z-50 py-1">
