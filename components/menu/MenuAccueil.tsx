@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import Login from '../login/Login'
 import { defaultPerso } from '../sheet/CharacterSheet'
 import MenuHeader from './MenuHeader'
@@ -25,6 +26,7 @@ type Character = {
 /*  Composant Menu Accueil                                                   */
 /* ------------------------------------------------------------------------- */
 export default function MenuAccueil() {
+  const router = useRouter()
   const [user, setUser] = useState<{ pseudo:string; isMJ:boolean; color:string } | null>(null)
   const [characters, setCharacters]   = useState<Character[]>([])
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
@@ -43,7 +45,7 @@ export default function MenuAccueil() {
       const raw = localStorage.getItem(PROFILE_KEY)
       if (raw) {
         const prof = JSON.parse(raw)
-        if (prof.pseudo) {
+        if (prof.pseudo && prof.loggedIn) {
           setUser({ pseudo: prof.pseudo, isMJ: !!prof.isMJ, color: prof.color || '#1d4ed8' })
         }
       }
@@ -61,7 +63,7 @@ export default function MenuAccueil() {
         const raw = localStorage.getItem(PROFILE_KEY)
         if (!raw) { setUser(null); return }
         const prof = JSON.parse(raw)
-        if (prof.pseudo) {
+        if (prof.pseudo && prof.loggedIn) {
           setUser({ pseudo: prof.pseudo, isMJ: !!prof.isMJ, color: prof.color || '#1d4ed8' })
         } else setUser(null)
       } catch { setUser(null) }
@@ -98,6 +100,7 @@ export default function MenuAccueil() {
     } catch {}
     setUser(null)
     setSelectedIdx(null)
+    router.push('/menu')
   }
 
   /* ----------------------------------------------------------------------- */
