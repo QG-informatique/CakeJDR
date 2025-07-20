@@ -5,6 +5,7 @@ import { useEffect, useState, useRef } from 'react'
 import { User2 } from 'lucide-react'
 
 const STORAGE_KEY = 'jdr_characters'
+const SELECTED_KEY = 'selected_character'
 
 type Character = { id: number, name?: string, nom?: string }
 
@@ -20,14 +21,40 @@ export default function GMCharacterSelector({ onSelect, buttonLabel = 'Personnag
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
+  // Lecture initiale de la sélection
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SELECTED_KEY)
+      if (raw) {
+        const obj = JSON.parse(raw)
+        if (obj?.id !== undefined) setSelectedId(obj.id)
+      }
+    } catch {}
+  }, [])
+
   useEffect(() => {
     const update = () => setChars(loadCharacters())
     update()
     window.addEventListener('storage', update)
     window.addEventListener('jdr_characters_change', update as EventListener)
+    const updateSel = () => {
+      try {
+        const raw = localStorage.getItem(SELECTED_KEY)
+        if (raw) {
+          const obj = JSON.parse(raw)
+          if (obj?.id !== undefined) setSelectedId(obj.id)
+        } else {
+          setSelectedId(null)
+        }
+      } catch {}
+    }
+    window.addEventListener('selected_character_change', updateSel as EventListener)
+    window.addEventListener('storage', updateSel)
     return () => {
       window.removeEventListener('storage', update)
       window.removeEventListener('jdr_characters_change', update as EventListener)
+      window.removeEventListener('selected_character_change', updateSel as EventListener)
+      window.removeEventListener('storage', updateSel)
     }
   }, [])
 
@@ -64,7 +91,13 @@ export default function GMCharacterSelector({ onSelect, buttonLabel = 'Personnag
     setSelectedId(id)
     const list = loadCharacters()
     const found = list.find((c: any) => c.id === id)
-    if (found) onSelect(found)
+    if (found) {
+      try {
+        localStorage.setItem(SELECTED_KEY, JSON.stringify(found))
+        window.dispatchEvent(new Event('selected_character_change'))
+      } catch {}
+      onSelect(found)
+    }
     setOpen(false)
   }
 

@@ -11,6 +11,7 @@ import CharacterModal from './CharacterModal'
 import ProfileColorPicker from './ProfileColorPicker'
 
 const PROFILE_KEY = 'jdr_profile'
+const SELECTED_KEY = 'selected_character'
 
 type Character = {
   id: string | number
@@ -46,7 +47,17 @@ export default function MenuAccueil() {
         }
       }
       const savedChars = JSON.parse(localStorage.getItem('jdr_characters') || '[]')
-      if (Array.isArray(savedChars)) setCharacters(savedChars)
+      if (Array.isArray(savedChars)) {
+        setCharacters(savedChars)
+        try {
+          const selRaw = localStorage.getItem(SELECTED_KEY)
+          if (selRaw) {
+            const sel = JSON.parse(selRaw)
+            const idx = savedChars.findIndex((c:any) => c.id === sel.id)
+            if (idx !== -1) setSelectedIdx(idx)
+          }
+        } catch {}
+      }
     } catch {}
   }, [])
 
@@ -70,6 +81,28 @@ export default function MenuAccueil() {
       window.removeEventListener('jdr_profile_change', update as EventListener)
     }
   }, [loggingOut])
+
+  // Mise à jour de l'index sélectionné si la sélection change ailleurs
+  useEffect(() => {
+    const update = () => {
+      try {
+        const raw = localStorage.getItem(SELECTED_KEY)
+        if (raw) {
+          const obj = JSON.parse(raw)
+          const idx = characters.findIndex(c => c.id === obj.id)
+          setSelectedIdx(idx !== -1 ? idx : null)
+        } else {
+          setSelectedIdx(null)
+        }
+      } catch {}
+    }
+    window.addEventListener('storage', update)
+    window.addEventListener('selected_character_change', update as EventListener)
+    return () => {
+      window.removeEventListener('storage', update)
+      window.removeEventListener('selected_character_change', update as EventListener)
+    }
+  }, [characters])
 
   /* --------- Persistence --------- */
   const saveCharacters = (chars: Character[]) => {
@@ -104,7 +137,16 @@ export default function MenuAccueil() {
   }
 
   /* --------- Characters CRUD --------- */
-  const handleSelectChar   = (idx:number) => setSelectedIdx(idx)
+  const handleSelectChar   = (idx:number) => {
+    setSelectedIdx(idx)
+    const char = filteredCharacters[idx]
+    if (char) {
+      try {
+        localStorage.setItem(SELECTED_KEY, JSON.stringify(char))
+        window.dispatchEvent(new Event('selected_character_change'))
+      } catch {}
+    }
+  }
   const handleNewCharacter = () => {
     if (!user) return
     setDraftChar({ ...defaultPerso, id: crypto.randomUUID(), owner: user.pseudo })

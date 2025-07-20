@@ -29,6 +29,8 @@ import Link from 'next/link'
 import RpgBackground from '@/components/ui/RpgBackground'
 import CakeLogo from '@/components/ui/CakeLogo'
 
+const SELECTED_KEY = 'selected_character'
+
 export default function HomePage() {
   const router = useRouter()
   const pathname = usePathname()
@@ -146,28 +148,42 @@ export default function HomePage() {
     }
   }, [])
 
-  // --- NOUVEAU : Charger les persos + selectionné ---
+  // Charger les fiches et la fiche sélectionnée
   useEffect(() => {
-    // Charger tous les persos depuis localStorage
     const savedChars = localStorage.getItem('jdr_characters')
-    let chars = []
+    let chars: any[] = []
     if (savedChars) {
       try {
         chars = JSON.parse(savedChars)
         setCharacters(chars)
       } catch {}
     }
-    // Charger le perso sélectionné
-    const selectedId = localStorage.getItem('selectedCharacterId')
-    if (selectedId && chars.length) {
-      const found = chars.find((c: any) => c.id?.toString() === selectedId)
-      if (found) {
-        setPerso(found)
-      } else {
+
+    const selRaw = localStorage.getItem(SELECTED_KEY)
+    if (selRaw) {
+      try {
+        setPerso(JSON.parse(selRaw))
+      } catch {
         setPerso(defaultPerso)
       }
     } else {
       setPerso(defaultPerso)
+    }
+  }, [])
+
+  // Mise à jour si la sélection change ailleurs
+  useEffect(() => {
+    const update = () => {
+      try {
+        const raw = localStorage.getItem(SELECTED_KEY)
+        if (raw) setPerso(JSON.parse(raw))
+      } catch {}
+    }
+    window.addEventListener('storage', update)
+    window.addEventListener('selected_character_change', update as EventListener)
+    return () => {
+      window.removeEventListener('storage', update)
+      window.removeEventListener('selected_character_change', update as EventListener)
     }
   }, [])
 
@@ -193,6 +209,14 @@ export default function HomePage() {
     setPendingRoll(null)
   }
 
+  const handleSelectPerso = (char: any) => {
+    setPerso(char)
+    try {
+      localStorage.setItem(SELECTED_KEY, JSON.stringify(char))
+      window.dispatchEvent(new Event('selected_character_change'))
+    } catch {}
+  }
+
   return (
     <div className="relative w-screen h-screen font-sans overflow-hidden flex bg-white text-black dark:bg-gray-900 dark:text-white">
       <RpgBackground />
@@ -216,7 +240,7 @@ export default function HomePage() {
         {profile.isMJ && (
           <span className="ml-2">
             <GMCharacterSelector
-              onSelect={setPerso}
+              onSelect={handleSelectPerso}
               buttonLabel="Personnage"
               className="bg-purple-700 hover:bg-purple-800 text-white px-2 py-1 rounded text-xs border border-purple-500"
             />

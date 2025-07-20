@@ -59,9 +59,15 @@ export const defaultPerso = {
   notes: ''
 }
 
-// Fonction utilitaire pour récupérer l’ID sélectionné en localStorage
-const loadSelectedCharacterId = (): string | null => {
-  return typeof window !== 'undefined' ? localStorage.getItem('selectedCharacterId') : null
+// Lecture de la fiche sélectionnée dans le localStorage
+const loadSelectedCharacter = (): any | null => {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem('selected_character')
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
 }
 
 const CharacterSheet: FC<Props> = ({
@@ -79,14 +85,11 @@ const CharacterSheet: FC<Props> = ({
 
   useEffect(() => {
     // Au montage, on tente de récupérer la fiche sélectionnée
-    const selectedId = loadSelectedCharacterId()
-    if (selectedId && allCharacters.length > 0) {
-      const found = allCharacters.find(c => c.id?.toString() === selectedId)
-      if (found) {
-        setLocalPerso(found)
-        setEdit(false)
-        return
-      }
+    const selected = loadSelectedCharacter()
+    if (selected) {
+      setLocalPerso(selected)
+      setEdit(false)
+      return
     }
     // Sinon on charge la fiche passée en props
     setLocalPerso(Object.keys(perso || {}).length ? perso : defaultPerso)
