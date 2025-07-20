@@ -1,19 +1,30 @@
 'use client'
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import CharacterSheet, { defaultPerso } from '@/components/CharacterSheet'
-import DiceRoller from '@/components/DiceRoller'
-import ChatBox from '@/components/ChatBox'
-import PopupResult from '@/components/PopupResult'
+// Déplacement fichier pour organisation
+import CharacterSheet, { defaultPerso } from '@/components/sheet/CharacterSheet'
+// Déplacement fichier pour organisation
+import DiceRoller from '@/components/dice/DiceRoller'
+// Déplacement fichier pour organisation
+import ChatBox from '@/components/chat/ChatBox'
+// Déplacement fichier pour organisation
+import PopupResult from '@/components/dice/PopupResult'
 import Head from 'next/head'
-import InteractiveCanvas from '@/components/InteractiveCanvas'
-import OnlineProfiles from '@/components/OnlineProfiles'
-import SideNotes from '@/components/SideNotes'
+// Déplacement fichier pour organisation
+import InteractiveCanvas from '@/components/canvas/InteractiveCanvas'
+// Déplacement fichier pour organisation
+import OnlineProfiles from '@/components/chat/OnlineProfiles'
+// Déplacement fichier pour organisation
+import SideNotes from '@/components/misc/SideNotes'
 
-import Login from '@/components/Login'
-import GMCharacterSelector from '@/components/GMCharacterSelector'
-import ImportExportMenu from '@/components/ImportExportMenu'
+// Déplacement fichier pour organisation
+import Login from '@/components/login/Login'
+// Déplacement fichier pour organisation
+import GMCharacterSelector from '@/components/misc/GMCharacterSelector'
+// Déplacement fichier pour organisation
+import ImportExportMenu from '@/components/character/ImportExportMenu'
 import Link from 'next/link'
 
 export default function HomePage() {
@@ -72,7 +83,7 @@ export default function HomePage() {
   // Présence en ligne
   useEffect(() => {
     if (!user) return
-    const id = localStorage.getItem('jdr_profile_id') || String(Date.now())
+    const id = localStorage.getItem('jdr_profile_id') || crypto.randomUUID()
     localStorage.setItem('jdr_profile_id', id)
     const updateOnline = () => {
       try {
@@ -145,7 +156,7 @@ export default function HomePage() {
     // Charger le perso sélectionné
     const selectedId = localStorage.getItem('selectedCharacterId')
     if (selectedId && chars.length) {
-      const found = chars.find(c => c.id?.toString() === selectedId)
+      const found = chars.find((c: any) => c.id?.toString() === selectedId)
       if (found) {
         setPerso(found)
       } else {
@@ -189,7 +200,7 @@ export default function HomePage() {
         chatBoxRef={chatBoxRef}
       >
         <Link
-          href="/menu"
+           href="/menu-accueil"
           className="bg-gray-800 hover:bg-gray-900 text-white px-2 py-1 rounded text-xs"
           style={{ minWidth: 70 }}
         >
