@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import CakeLogo from '../ui/CakeLogo'
 const PROFILE_KEY = 'jdr_profile'
 
 export default function Login({ onLogin }:{ onLogin:(pseudo:string)=>void }) {
@@ -8,7 +9,6 @@ export default function Login({ onLogin }:{ onLogin:(pseudo:string)=>void }) {
   /*  État local                                                             */
   /* ----------------------------------------------------------------------- */
   const [pseudo, setPseudo] = useState('')
-  const [pass,   setPass]   = useState('')
   const [error,  setError]  = useState<string | null>(null)
 
   /* ----------------------------------------------------------------------- */
@@ -20,7 +20,6 @@ export default function Login({ onLogin }:{ onLogin:(pseudo:string)=>void }) {
       if (!raw) return
       const prof = JSON.parse(raw)
       setPseudo(prof.pseudo || '')
-      if (prof.loggedIn) onLogin(prof.pseudo)  // auto‑login seulement si flag
     } catch {}
   }, [])
 
@@ -30,15 +29,13 @@ export default function Login({ onLogin }:{ onLogin:(pseudo:string)=>void }) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const trimmedPseudo = pseudo.trim()
-    const trimmedPass   = pass.trim()
-    if (!trimmedPseudo || !trimmedPass) { setError('Remplis tous les champs'); return }
+    if (!trimmedPseudo) { setError('Choisis un pseudo'); return }
 
     const saved = JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}')
 
     /* ---------- Connexion ---------- */
     if (saved.pseudo) {
       if (saved.pseudo !== trimmedPseudo) { setError('Pseudo inconnu, créez un compte'); return }
-      if (saved.password !== trimmedPass) { setError('Mot de passe incorrect'); return }
 
       localStorage.setItem(PROFILE_KEY, JSON.stringify({ ...saved, loggedIn: true }))
       window.dispatchEvent(new Event('jdr_profile_change'))
@@ -50,7 +47,6 @@ export default function Login({ onLogin }:{ onLogin:(pseudo:string)=>void }) {
     /* ---------- Création ---------- */
     const newProf = {
       pseudo: trimmedPseudo,
-      password: trimmedPass,
       color: '#1d4ed8',
       isMJ: false,
       loggedIn: true
@@ -69,7 +65,9 @@ export default function Login({ onLogin }:{ onLogin:(pseudo:string)=>void }) {
       onSubmit={handleSubmit}
       className="bg-gray-800 p-6 rounded-lg flex flex-col gap-4 w-72 shadow-lg"
     >
-      <h2 className="text-xl font-bold text-white text-center">Connexion</h2>
+      <div className="flex justify-center">
+        <CakeLogo />
+      </div>
 
       {error && <p className="text-red-400 text-sm">{error}</p>}
 
@@ -77,13 +75,6 @@ export default function Login({ onLogin }:{ onLogin:(pseudo:string)=>void }) {
         value={pseudo}
         onChange={e => setPseudo(e.target.value)}
         placeholder="Pseudo"
-        className="px-3 py-2 rounded bg-gray-700 text-white placeholder-gray-400"
-      />
-      <input
-        type="password"
-        value={pass}
-        onChange={e => setPass(e.target.value)}
-        placeholder="Mot de passe"
         className="px-3 py-2 rounded bg-gray-700 text-white placeholder-gray-400"
       />
 
