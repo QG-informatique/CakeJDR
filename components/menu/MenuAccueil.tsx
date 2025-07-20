@@ -2,11 +2,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import Login from '../login/Login'
 import { defaultPerso } from '../sheet/CharacterSheet'
 import MenuHeader from './MenuHeader'
 import CharacterList from './CharacterList'
 import CharacterModal from './CharacterModal'
+import ProfileColorPicker from './ProfileColorPicker'
 
 /* ------------------------------------------------------------------------- */
 /*  Constantes & Types                                                       */
@@ -24,6 +26,7 @@ type Character = {
 /*  Composant Menu Accueil                                                   */
 /* ------------------------------------------------------------------------- */
 export default function MenuAccueil() {
+  const router = useRouter()
   const [user, setUser] = useState<{ pseudo:string; isMJ:boolean; color:string } | null>(null)
   const [characters, setCharacters]   = useState<Character[]>([])
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
@@ -42,7 +45,7 @@ export default function MenuAccueil() {
       const raw = localStorage.getItem(PROFILE_KEY)
       if (raw) {
         const prof = JSON.parse(raw)
-        if (prof.pseudo) {
+        if (prof.pseudo && prof.loggedIn) {
           setUser({ pseudo: prof.pseudo, isMJ: !!prof.isMJ, color: prof.color || '#1d4ed8' })
         }
       }
@@ -60,7 +63,7 @@ export default function MenuAccueil() {
         const raw = localStorage.getItem(PROFILE_KEY)
         if (!raw) { setUser(null); return }
         const prof = JSON.parse(raw)
-        if (prof.pseudo) {
+        if (prof.pseudo && prof.loggedIn) {
           setUser({ pseudo: prof.pseudo, isMJ: !!prof.isMJ, color: prof.color || '#1d4ed8' })
         } else setUser(null)
       } catch { setUser(null) }
@@ -97,6 +100,7 @@ export default function MenuAccueil() {
     } catch {}
     setUser(null)
     setSelectedIdx(null)
+    router.push('/menu')
   }
 
   /* ----------------------------------------------------------------------- */
@@ -173,11 +177,25 @@ export default function MenuAccueil() {
     } catch {}
   }
 
+  const handleToggleMJ = () => {
+    if (!user) return
+    const newIsMJ = !user.isMJ
+    setUser({ ...user, isMJ: newIsMJ })
+    try {
+      const raw = localStorage.getItem(PROFILE_KEY)
+      if (!raw) return
+      const prof = JSON.parse(raw)
+      prof.isMJ = newIsMJ
+      localStorage.setItem(PROFILE_KEY, JSON.stringify(prof))
+      window.dispatchEvent(new Event('jdr_profile_change'))
+    } catch {}
+  }
+
   /* ----------------------------------------------------------------------- */
   /*  Rendu conditionnel avant hydratation                                   */
   /* ----------------------------------------------------------------------- */
   if (!hydrated) {
-    return <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900" />
+    return <div className="w-full h-full" />
   }
 
   /* ----------------------------------------------------------------------- */
@@ -188,38 +206,10 @@ export default function MenuAccueil() {
     : []
 
   return (
-    <div
-      className="min-h-screen relative bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900 text-white p-4 flex flex-col max-w-6xl mx-auto"
-      style={{ height:'100vh', overflow:'hidden' }}
-    >
-      {/* ------------------------------- FOND DÉS --------------------------- */}
-      <div className="absolute inset-0 pointer-events-none -z-10 select-none">
-        <svg className="w-full h-full opacity-10" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
-          {[...Array(20)].map((_, i) => (
-            <rect key={i} x={(i*5)%100} y={(i*10)%100} width={5} height={5} fill="white" opacity="0.15" rx="0.5" ry="0.5" />
-          ))}
-        </svg>
-      </div>
+    <div className="w-full h-full relative text-white p-4 flex flex-col max-w-6xl mx-auto overflow-hidden">
 
       {/* ------------------------------- HEADER ----------------------------- */}
-      <MenuHeader
-        user={user}
-        onLogout={handleLogout}
-        onToggleMJ={() => {
-          if (!user) return
-          const newIsMJ = !user.isMJ
-          setUser(prev => (prev ? { ...prev, isMJ: newIsMJ } : null))
-          try {
-            const raw = localStorage.getItem(PROFILE_KEY)
-            if (!raw) return
-            const prof = JSON.parse(raw)
-            prof.isMJ = newIsMJ
-            localStorage.setItem(PROFILE_KEY, JSON.stringify(prof))
-            window.dispatchEvent(new Event('jdr_profile_change'))
-          } catch {}
-        }}
-        onChangeColor={handleChangeColor}
-      />
+      <MenuHeader user={user} onLogout={handleLogout} />
 
       {/* -------------------------- CONTENU PRINCIPAL ----------------------- */}
       {!user ? (
@@ -236,10 +226,19 @@ export default function MenuAccueil() {
         /* ---------------- MENU (connecté) -------------------------------- */
         <>
           {/* Profil utilisateur */}
-          <section className="mb-8 bg-gray-800 bg-opacity-40 rounded-lg p-4" style={{ overflow:'hidden' }}>
-            <p className="mb-2 text-lg font-semibold">
+          <section className="mb-8 bg-gray-800 bg-opacity-40 rounded-lg p-4 flex items-center justify-between" style={{ overflow:'hidden' }}>
+            <p className="text-lg font-semibold flex items-center gap-2">
               Connecté en tant que <span style={{ color: user.color }}>{user.pseudo}</span>
             </p>
+            <div className="flex items-center gap-4">
+              <ProfileColorPicker color={user.color} onChange={handleChangeColor} />
+              <button
+                onClick={handleToggleMJ}
+                className={`px-3 py-1 rounded font-semibold text-sm text-white ${user.isMJ ? 'bg-purple-700 hover:bg-purple-800' : 'bg-gray-600 hover:bg-gray-700'}`}
+              >
+                {user.isMJ ? 'Mode MJ activé' : 'Activer le mode MJ'}
+              </button>
+            </div>
           </section>
 
           <CharacterList
