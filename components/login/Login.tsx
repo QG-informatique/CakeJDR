@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import CakeLogo from '../ui/CakeLogo'
 const PROFILE_KEY = 'jdr_profile'
 
 export default function Login({ onLogin }:{ onLogin:(pseudo:string)=>void }) {
@@ -10,6 +9,7 @@ export default function Login({ onLogin }:{ onLogin:(pseudo:string)=>void }) {
   /* ----------------------------------------------------------------------- */
   const [pseudo, setPseudo] = useState('')
   const [error,  setError]  = useState<string | null>(null)
+  const [registerMode, setRegisterMode] = useState(false)
 
   /* ----------------------------------------------------------------------- */
   /*  Pré‑remplissage si profil déjà présent                                 */
@@ -33,28 +33,28 @@ export default function Login({ onLogin }:{ onLogin:(pseudo:string)=>void }) {
 
     const saved = JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}')
 
-    /* ---------- Connexion ---------- */
-    if (saved.pseudo) {
-      if (saved.pseudo !== trimmedPseudo) { setError('Pseudo inconnu, créez un compte'); return }
+    if (registerMode) {
+      /* ---------- Création ---------- */
+      const newProf = {
+        pseudo: trimmedPseudo,
+        color: '#1d4ed8',
+        isMJ: false,
+        loggedIn: true
+      }
+      localStorage.setItem(PROFILE_KEY, JSON.stringify(newProf))
+      window.dispatchEvent(new Event('jdr_profile_change'))
+      setError(null)
+      onLogin(trimmedPseudo)
+    } else {
+      /* ---------- Connexion ---------- */
+      if (!saved.pseudo) { setError('Aucun compte, créez-en un'); return }
+      if (saved.pseudo !== trimmedPseudo) { setError('Pseudo inconnu'); return }
 
       localStorage.setItem(PROFILE_KEY, JSON.stringify({ ...saved, loggedIn: true }))
       window.dispatchEvent(new Event('jdr_profile_change'))
       setError(null)
       onLogin(trimmedPseudo)
-      return
     }
-
-    /* ---------- Création ---------- */
-    const newProf = {
-      pseudo: trimmedPseudo,
-      color: '#1d4ed8',
-      isMJ: false,
-      loggedIn: true
-    }
-    localStorage.setItem(PROFILE_KEY, JSON.stringify(newProf))
-    window.dispatchEvent(new Event('jdr_profile_change'))
-    setError(null)
-    onLogin(trimmedPseudo)
   }
 
   /* ----------------------------------------------------------------------- */
@@ -65,9 +65,6 @@ export default function Login({ onLogin }:{ onLogin:(pseudo:string)=>void }) {
       onSubmit={handleSubmit}
       className="bg-gray-800 p-6 rounded-lg flex flex-col gap-4 w-72 shadow-lg"
     >
-      <div className="flex justify-center">
-        <CakeLogo />
-      </div>
 
       {error && <p className="text-red-400 text-sm">{error}</p>}
 
@@ -83,6 +80,13 @@ export default function Login({ onLogin }:{ onLogin:(pseudo:string)=>void }) {
         className="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-semibold"
       >
         Valider
+      </button>
+      <button
+        type="button"
+        onClick={() => { setRegisterMode(m => !m); setError(null) }}
+        className="text-sm text-blue-300 hover:underline self-center"
+      >
+        {registerMode ? 'Déjà inscrit ?' : 'Pas encore de compte ? S\’inscrire'}
       </button>
     </form>
   )

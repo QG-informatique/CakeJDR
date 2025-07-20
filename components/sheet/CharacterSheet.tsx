@@ -21,6 +21,7 @@ type Props = {
   creation?: boolean,
   children?: React.ReactNode,
   allCharacters?: any[], // facultatif, si tu veux passer la liste complète
+  logoOnly?: boolean
 }
 
 export const defaultPerso = {
@@ -69,7 +70,8 @@ const CharacterSheet: FC<Props> = ({
   chatBoxRef,
   creation = false,
   children,
-  allCharacters = []
+  allCharacters = [],
+  logoOnly = false
 }) => {
   const [edit, setEdit] = useState(creation)
   const [tab, setTab] = useState('main')
@@ -186,6 +188,7 @@ const CharacterSheet: FC<Props> = ({
           tab={tab}
           setTab={setTab}
           TABS={TABS}
+          logoOnly={logoOnly}
         >
           {children}
         </CharacterSheetHeader>
