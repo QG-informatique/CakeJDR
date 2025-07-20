@@ -73,7 +73,7 @@ const ProfileColorPicker: FC<Props> = ({ color, onChange, size = 28 }) => {
           `}
           style={{ textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}
         >
-          {open ? '–' : '▸'}
+          {open ? '-' : '+'}
         </span>
       </button>
 

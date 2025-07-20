@@ -81,13 +81,15 @@ const LevelUpPanel: FC<Props> = ({
           <option key={d.value} value={d.value}>{d.label}</option>
         ))}
       </select>
-      <button
-        onClick={onLevelUp}
-        disabled={processing}
-        className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
-      >
-        {processing ? "Lancement..." : "Lancer Level Up"}
-      </button>
+      <div className="flex justify-center mt-2">
+        <button
+          onClick={onLevelUp}
+          disabled={processing}
+          className="bg-blue-600/80 hover:bg-blue-600 text-white font-semibold px-4 py-1.5 rounded-md shadow disabled:opacity-50"
+        >
+          {processing ? 'Lancement...' : 'Lancer Level Up'}
+        </button>
+      </div>
 
       <AnimatePresence>
         {lastGain !== null && (
