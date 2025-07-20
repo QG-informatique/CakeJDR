@@ -114,7 +114,7 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
         <Folder size={16} />
       </button>
       {open && (
-        <div className="absolute right-0 mt-2 z-50 w-56 bg-[#18181b] border border-gray-700 rounded-xl shadow-2xl py-2 flex flex-col gap-1 animate-fadeIn">
+        <div className="absolute top-full left-full mt-2 ml-2 z-50 w-56 bg-black/35 backdrop-blur-md border border-white/10 rounded-xl shadow-2xl py-2 flex flex-col gap-1 animate-fadeIn">
           <button onClick={handleExport} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">📤 Exporter la fiche</button>
           <label className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm cursor-pointer">
             📥 Importer une fiche
