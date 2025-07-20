@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { FC, useRef, useState } from 'react'
-import { defaultPerso } from './CharacterSheet' // <-- AJOUT
+import { defaultPerso } from '../sheet/CharacterSheet' // <-- AJOUT
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Props = {
@@ -57,7 +57,7 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
         const data = JSON.parse(txt)
         if (!data || typeof data !== "object") throw new Error()
         onUpdate(data)
-        addToList({ ...data, id: data.id || Date.now() })
+        addToList({ ...data, id: data.id || crypto.randomUUID() })
         alert('Fiche importée avec succès !')
       } catch {
         alert('Erreur lors de l\'import : le fichier doit être un fichier texte au format JSON.')
@@ -83,7 +83,7 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
         const obj = JSON.parse(data)
         if (!obj || typeof obj !== "object") throw new Error()
         onUpdate(obj)
-        addToList({ ...obj, id: obj.id || Date.now() })
+        addToList({ ...obj, id: obj.id || crypto.randomUUID() })
         alert('Fiche chargée depuis la sauvegarde locale !')
       } catch {
         alert('Erreur lors du chargement local.')
