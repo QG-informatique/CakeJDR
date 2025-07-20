@@ -10,11 +10,13 @@ type Character = { id: number, name?: string, nom?: string }
 
 type Props = {
   onSelect: (char: any) => void
-  buttonLabel?: string
   className?: string
 }
 
-export default function GMCharacterSelector({ onSelect, buttonLabel = 'Personnage', className = 'flex items-center gap-1 px-3 py-1 rounded bg-purple-700 hover:bg-purple-800 text-white text-xs border border-purple-500' }: Props) {
+export default function GMCharacterSelector({
+  onSelect,
+  className = '',
+}: Props) {
   const [chars, setChars] = useState<Character[]>([])
   const [open, setOpen] = useState(false)
   const [selectedId, setSelectedId] = useState<number | null>(null)
@@ -31,7 +33,6 @@ export default function GMCharacterSelector({ onSelect, buttonLabel = 'Personnag
     }
   }, [])
 
-  // Fermer le menu si on clique ailleurs
   useEffect(() => {
     if (!open) return
     const handler = (e: MouseEvent) => {
@@ -41,7 +42,6 @@ export default function GMCharacterSelector({ onSelect, buttonLabel = 'Personnag
     return () => window.removeEventListener('mousedown', handler)
   }, [open])
 
-  // Rafraîchir la fiche sélectionnée toutes les 5s si besoin
   useEffect(() => {
     if (selectedId === null) return
     const interval = setInterval(() => {
@@ -69,29 +69,58 @@ export default function GMCharacterSelector({ onSelect, buttonLabel = 'Personnag
   }
 
   return (
-    <div ref={dropdownRef} className="relative">
+    <div ref={dropdownRef} className="relative z-50">
       <button
         onClick={() => setOpen(o => !o)}
-        className={className}
+        className={`
+          flex items-center justify-center
+          rounded-xl shadow border-none
+          bg-black/30
+          text-pink-400
+          hover:bg-pink-200/10
+          focus-visible:outline-pink-400
+          transition duration-100
+          p-2
+          ${className}
+        `}
         style={{ minWidth: 0 }}
         tabIndex={0}
         aria-haspopup="listbox"
         aria-expanded={open}
       >
-        <User2 size={16} className={buttonLabel ? 'mr-1' : ''} />
-        {buttonLabel && buttonLabel}
+        <User2 size={20} className="text-pink-400" />
       </button>
       {open && (
-        <div className="absolute left-0 mt-1 w-48 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded shadow-lg border border-purple-500 z-50 py-1">
+        <div
+          className="
+            absolute left-0 mt-2 w-56
+            bg-black/80
+            rounded-2xl
+            shadow-2xl
+            py-1
+            flex flex-col
+            animate-fadeIn
+            backdrop-blur-[2px]
+          "
+        >
           {chars.length === 0 && (
-            <div className="px-4 py-2 text-sm text-gray-400">Aucun perso</div>
+            <div className="px-4 py-3 text-sm text-gray-400 text-center">
+              Aucun personnage
+            </div>
           )}
           {chars.map((c, idx) => (
             <button
               key={`${c.id}-${idx}`}
               onClick={() => handleSelect(c.id)}
-              className={`block w-full text-left px-4 py-2 text-sm
-                ${selectedId === c.id ? 'bg-purple-100 dark:bg-purple-900 font-semibold' : 'hover:bg-purple-50 dark:hover:bg-purple-800'}`}
+              className={`
+                w-full text-left px-4 py-2 rounded-xl text-base
+                font-semibold transition
+                ${
+                  selectedId === c.id
+                    ? 'bg-pink-400/20 text-pink-200'
+                    : 'hover:bg-pink-400/10 text-white/90'
+                }
+              `}
             >
               {c.nom || c.name || `Fiche #${idx + 1}`}
             </button>

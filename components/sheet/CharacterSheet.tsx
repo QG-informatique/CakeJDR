@@ -261,15 +261,6 @@ const CharacterSheet: FC<Props> = ({
           }}
         />
       )}
-
-      {edit && (
-        <button
-          onClick={save}
-          className="mt-3 w-full bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm"
-        >
-          Sauver
-        </button>
-      )}
     </aside>
   )
 }

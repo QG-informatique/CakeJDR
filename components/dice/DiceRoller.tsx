@@ -1,5 +1,6 @@
 'use client'
 import { FC } from 'react'
+import { Dice3 } from 'lucide-react'
 
 type Props = {
   diceType: number
@@ -39,9 +40,26 @@ const DiceRoller: FC<Props> = ({ diceType, onChange, onRoll, disabled, children 
     </select>
     <button
       onClick={onRoll}
-      className={`ml-4 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-1 rounded shadow ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+      className={`
+        ml-4 flex items-center gap-2
+        px-7 py-2 rounded-2xl
+        font-bold text-base
+        text-white
+        shadow
+        border border-white/10
+        bg-[#253053]/60
+        hover:bg-[#253053]/80
+        active:scale-95
+        transition
+        backdrop-blur-sm
+        ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+      `}
+      style={{
+        boxShadow: '0 2px 12px 0 #1115'
+      }}
       disabled={disabled}
     >
+      <Dice3 className="inline -mt-0.5 text-white/80" size={20} />
       Lancer
     </button>
     {children && <div className="ml-auto flex gap-1">{children}</div>}

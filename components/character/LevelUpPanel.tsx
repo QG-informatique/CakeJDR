@@ -1,7 +1,102 @@
-import { FC } from 'react'
+import { FC, useRef, useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+// --- CustomSelect maison, DA Import/Export ---
+type CustomSelectProps = {
+  value: string
+  onChange: (v: string) => void
+  disabled?: boolean
+  options: { value: string; label: string }[]
+}
+const CustomSelect: FC<CustomSelectProps> = ({ value, onChange, disabled, options }) => {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  // Fermer le menu si clic hors composant
+  useEffect(() => {
+    function onClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    if (open) window.addEventListener("mousedown", onClick)
+    return () => window.removeEventListener("mousedown", onClick)
+  }, [open])
+
+  return (
+    <div ref={ref} className="relative w-[158px] max-w-[158px] select-none">
+      <button
+        type="button"
+        disabled={disabled}
+        className={`
+          w-full px-4 py-1.5 text-md rounded-xl font-semibold text-white
+          bg-black/35 border border-white/10 shadow-2xl
+          transition hover:bg-black/50 hover:border-white/20
+          disabled:opacity-60 backdrop-blur-md
+          flex items-center justify-between
+        `}
+        style={{
+          boxShadow: '0 2px 16px 0 #0007, 0 0 0 1px #fff1 inset',
+          background: 'linear-gradient(120deg,rgba(18,28,54,0.35) 60%,rgba(16,18,33,0.23) 100%)'
+        }}
+        onClick={() => !disabled && setOpen(v => !v)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <span>
+          {options.find(o => o.value === value)?.label || ""}
+        </span>
+        <svg width="18" height="18" className="ml-2 opacity-70" viewBox="0 0 20 20" fill="none"><path d="M6 8l4 4 4-4" stroke="#fff" strokeWidth="2" strokeLinecap="round"/></svg>
+      </button>
+      {open && (
+        <div
+          className="absolute z-30 left-0 w-full mt-1 rounded-xl bg-black/80 border border-white/10 shadow-2xl py-1 animate-fadeIn backdrop-blur-md"
+          style={{
+            background: 'linear-gradient(120deg,rgba(18,28,54,0.91) 60%,rgba(16,18,33,0.77) 100%)'
+          }}
+          role="listbox"
+        >
+          {options.map((opt) => (
+            <button
+              type="button"
+              key={opt.value}
+              disabled={disabled}
+              className={`
+                w-full px-4 py-1.5 text-left text-md font-semibold rounded
+                text-white transition
+                hover:bg-gray-800/80
+                ${value === opt.value ? 'bg-gray-700/80' : ''}
+              `}
+              style={{
+                background: value === opt.value
+                  ? "linear-gradient(120deg,#23364aBB 60%,#131b2455 100%)"
+                  : undefined
+              }}
+              onClick={() => {
+                setOpen(false)
+                onChange(opt.value)
+              }}
+              role="option"
+              aria-selected={value === opt.value}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+      <style jsx>{`
+        .animate-fadeIn {
+          animation: fadeInMenu .18s;
+        }
+        @keyframes fadeInMenu {
+          from { opacity: 0; transform: translateY(12px);}
+          to   { opacity: 1; transform: translateY(0);}
+        }
+      `}</style>
+    </div>
+  )
+}
+
+// --- Ton LevelUpPanel ---
 type Props = {
   dice: string
   setDice: (dice: string) => void
@@ -9,7 +104,7 @@ type Props = {
   processing?: boolean
   lastStat?: string | null
   lastGain?: number | null
-  animKey?: number   // <= AJOUT
+  animKey?: number
 }
 
 const DICE_OPTIONS = [
@@ -18,7 +113,6 @@ const DICE_OPTIONS = [
   { value: 'd20', label: 'D20' }
 ]
 
-// Helper pour trouver la valeur max du dé
 function getDiceMax(dice: string) {
   const m = dice.match(/d(\d+)/i)
   if (m) return parseInt(m[1])
@@ -33,21 +127,19 @@ const LevelUpPanel: FC<Props> = ({
   onLevelUp,
   processing,
   lastGain,
-  animKey,    // <= AJOUT
+  animKey,
 }) => {
   const diceMax = getDiceMax(dice)
   const isMin = lastGain === 1
   const isMax = lastGain === diceMax
 
-  // Styles dynamiques (inchangé)
+  // -- Styles dynamiques inchangés pour l'animation du gain
   let textColor = 'text-green-300'
   let bgGlow = 'bg-green-400'
   let shadow = '0 0 48px 20px #34d399, 0 0 200px 120px #34d39977'
   let stroke = '#fff'
   let pulse = 'animate-pulse'
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let extraEffect: any = {}
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let motionTransition: any = { duration: 0.85, type: 'tween' }
 
   if (isMax) {
@@ -70,22 +162,28 @@ const LevelUpPanel: FC<Props> = ({
 
   return (
     <div className="mt-5 relative">
-      <label className="block mb-1">Type de dé :</label>
-      <select
-        value={dice}
-        onChange={e => setDice(e.target.value)}
-        className="w-full mb-2 p-1 border rounded bg-white text-black dark:bg-gray-700 dark:text-white"
-        disabled={processing}
-      >
-        {DICE_OPTIONS.map(d => (
-          <option key={d.value} value={d.value}>{d.label}</option>
-        ))}
-      </select>
-      <div className="flex justify-center mt-2">
+      <div className="flex justify-center gap-2 mt-2">
+        <CustomSelect
+          value={dice}
+          onChange={setDice}
+          disabled={processing}
+          options={DICE_OPTIONS}
+        />
         <button
           onClick={onLevelUp}
           disabled={processing}
-          className="bg-blue-600/80 hover:bg-blue-600 text-white font-semibold px-4 py-1.5 rounded-md shadow disabled:opacity-50"
+          className="
+            w-[158px] max-w-[158px] px-4 py-1.5 rounded-xl
+            font-semibold text-white bg-black/35
+            border border-white/10 shadow-2xl transition
+            hover:bg-gray-800 hover:border-white/20
+            disabled:opacity-60 backdrop-blur-md
+            focus:ring-2 focus:ring-blue-400/30
+          "
+          style={{
+            boxShadow: '0 2px 16px 0 #0007, 0 0 0 1px #fff1 inset',
+            background: 'linear-gradient(120deg,rgba(18,28,54,0.35) 60%,rgba(16,18,33,0.23) 100%)'
+          }}
         >
           {processing ? 'Lancement...' : 'Lancer Level Up'}
         </button>
@@ -94,7 +192,7 @@ const LevelUpPanel: FC<Props> = ({
       <AnimatePresence>
         {lastGain !== null && (
           <motion.div
-            key={animKey}  // <= C'EST ICI QUE ÇA CHANGE TOUT !
+            key={animKey}
             initial={{ opacity: 0, y: 44, scale: 0.72 }}
             animate={{
               opacity: 1,
