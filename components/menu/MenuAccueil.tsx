@@ -2,6 +2,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { Crown } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Login from '../login/Login'
 import { defaultPerso } from '../sheet/CharacterSheet'
@@ -11,6 +12,7 @@ import CharacterModal from './CharacterModal'
 import ProfileColorPicker from './ProfileColorPicker'
 
 const PROFILE_KEY = 'jdr_profile'
+const SELECTED_KEY = 'selectedCharacterId'
 
 type Character = {
   id: string | number
@@ -46,7 +48,14 @@ export default function MenuAccueil() {
         }
       }
       const savedChars = JSON.parse(localStorage.getItem('jdr_characters') || '[]')
-      if (Array.isArray(savedChars)) setCharacters(savedChars)
+      if (Array.isArray(savedChars)) {
+        setCharacters(savedChars)
+        const selId = localStorage.getItem(SELECTED_KEY)
+        if (selId) {
+          const idx = savedChars.findIndex((c: any) => c.id?.toString() === selId)
+          if (idx !== -1) setSelectedIdx(idx)
+        }
+      }
     } catch {}
   }, [])
 
@@ -104,7 +113,6 @@ export default function MenuAccueil() {
   }
 
   /* --------- Characters CRUD --------- */
-  const handleSelectChar   = (idx:number) => setSelectedIdx(idx)
   const handleNewCharacter = () => {
     if (!user) return
     setDraftChar({ ...defaultPerso, id: crypto.randomUUID(), owner: user.pseudo })
@@ -114,19 +122,34 @@ export default function MenuAccueil() {
 
   const handleSaveDraft = () => {
     if (!user) return
-    const toSave = { ...draftChar, nom: draftChar.nom || 'Sans nom', owner: user.pseudo }
-    const updated = draftChar.id && characters.find(c => c.id === draftChar.id)
-      ? characters.map(c => (c.id === draftChar.id ? toSave : c))
+    const id = draftChar.id || crypto.randomUUID()
+    const toSave = { ...draftChar, id, nom: draftChar.nom || 'Sans nom', owner: user.pseudo }
+    const updated = characters.find(c => c.id === id)
+      ? characters.map(c => (c.id === id ? toSave : c))
       : [...characters, toSave]
     saveCharacters(updated)
+    localStorage.setItem(SELECTED_KEY, String(id))
     setModalOpen(false)
-    setSelectedIdx(updated.findIndex(c => c.id === toSave.id))
+    setSelectedIdx(updated.findIndex(c => c.id === id))
   }
 
   const handleDeleteChar = (idx:number) => {
     if (!window.confirm('Supprimer cette fiche ?')) return
-    saveCharacters(characters.filter((_, i) => i !== idx))
-    setSelectedIdx(null)
+    const toDelete = characters[idx]
+    const remaining = characters.filter((_, i) => i !== idx)
+    saveCharacters(remaining)
+    if (toDelete?.id && localStorage.getItem(SELECTED_KEY) === String(toDelete.id)) {
+      localStorage.removeItem(SELECTED_KEY)
+      setSelectedIdx(null)
+    } else {
+      const id = localStorage.getItem(SELECTED_KEY)
+      if (id) {
+        const newIdx = remaining.findIndex(c => String(c.id) === id)
+        setSelectedIdx(newIdx !== -1 ? newIdx : null)
+      } else {
+        setSelectedIdx(null)
+      }
+    }
   }
 
   /* --------- Import / Export --------- */
@@ -138,8 +161,12 @@ export default function MenuAccueil() {
     reader.onload = evt => {
       try {
         const imported = JSON.parse(evt.target?.result as string)
+        const id = imported.id || crypto.randomUUID()
         if (!imported.owner && user) imported.owner = user.pseudo
-        saveCharacters([...characters, imported])
+        const withId = { ...imported, id }
+        saveCharacters([...characters, withId])
+        localStorage.setItem(SELECTED_KEY, String(id))
+        setSelectedIdx(characters.length)
         alert('Fiche importée !')
       } catch { alert('Erreur : fichier invalide.') }
     }
@@ -192,6 +219,14 @@ export default function MenuAccueil() {
   const filteredCharacters = user
     ? user.isMJ ? characters : characters.filter(c => c.owner === user.pseudo)
     : []
+
+  const handleSelectChar = (idx: number) => {
+    setSelectedIdx(idx)
+    const ch = filteredCharacters[idx]
+    if (ch?.id !== undefined) {
+      localStorage.setItem(SELECTED_KEY, String(ch.id))
+    }
+  }
 
   /* Pendant logout : écran neutre (rien de l'ancien UI ne reste) */
   if (loggingOut) {
@@ -250,25 +285,25 @@ export default function MenuAccueil() {
 
             {/* Droite : bouton MJ compact */}
             <div className="shrink-0 flex items-center justify-end w-[120px]">
-              <button
-                onClick={handleToggleMJ}
-                title={user.isMJ ? 'Mode MJ (clique pour repasser joueur)' : 'Activer mode MJ'}
-                className={`
-                  relative inline-flex items-center justify-center
-                  w-14 h-10 rounded-md font-semibold text-sm
-                  transition border
-                  ${user.isMJ
-                    ? 'bg-fuchsia-600/80 hover:bg-fuchsia-500 border-fuchsia-300/40'
-                    : 'bg-gray-700/70 hover:bg-gray-600/70 border-gray-400/30'}
-                `}
-                style={{
-                  boxShadow: user.isMJ
-                    ? '0 0 0 1px rgba(255,255,255,0.08), 0 0 12px -2px rgba(217,70,239,0.55)'
-                    : '0 0 0 1px rgba(255,255,255,0.05), 0 2px 8px -2px rgba(0,0,0,0.55)'
-                }}
+  <button
+    onClick={handleToggleMJ}
+    title={user.isMJ ? 'Mode MJ (clique pour repasser joueur)' : 'Activer mode MJ'}
+    className={`
+      relative inline-flex items-center justify-center
+      w-14 h-10 rounded-md font-semibold text-sm
+      transition border
+      ${user.isMJ
+        ? 'bg-[#f472b6]/20 hover:bg-[#f472b6]/35 border-[#f472b6]/40'
+        : 'bg-gray-700/70 hover:bg-gray-600/70 border-gray-400/30'}
+    `}
+    style={{
+      boxShadow: user.isMJ
+        ? '0 0 0 1px rgba(244,114,182,0.14), 0 0 12px -2px #f472b630'
+        : '0 0 0 1px rgba(255,255,255,0.05), 0 2px 8px -2px rgba(0,0,0,0.55)'
+    }}
               >
                 <span className="flex items-center gap-1">
-                  <span className="text-xs tracking-wide">MJ</span>
+                  <Crown size={18} className="text-pink-400" />
                   <span
                     className={`
                       block w-2.5 h-2.5 rounded-full transition

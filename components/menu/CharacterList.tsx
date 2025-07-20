@@ -1,4 +1,5 @@
 import { FC, RefObject } from 'react'
+import { Edit2, Trash2, Plus, Upload, Download } from 'lucide-react'
 
 export type Character = {
   id: string | number
@@ -23,6 +24,12 @@ interface Props {
   fileInputRef: RefObject<HTMLInputElement | null>
   onImportFile: (e: React.ChangeEvent<HTMLInputElement>) => void
 }
+
+const btnBase =
+  "inline-flex items-center justify-center gap-2 px-2.5 py-1.5 rounded-lg " +
+  "bg-blue-900/30 hover:bg-blue-800/60 active:bg-blue-900/70 border border-blue-200/10 " +
+  "transition-all shadow-sm text-blue-100 font-semibold text-sm backdrop-blur-[2px] " +
+  "disabled:opacity-40 disabled:cursor-not-allowed";
 
 const CharacterList: FC<Props> = ({
   filtered,
@@ -68,7 +75,7 @@ const CharacterList: FC<Props> = ({
                   flex flex-col gap-2 min-h-[120px] 
                   transition
                   ${isSelected
-                    ? 'ring-2 ring-emerald-400/70'
+                    ? 'ring-2 ring-emerald-400/90 shadow-[0_0_12px_2px_rgba(16,185,129,0.6)]'
                     : 'hover:ring-2 hover:ring-emerald-300/40'}
                 `}
                 style={{
@@ -95,32 +102,20 @@ const CharacterList: FC<Props> = ({
                         e.stopPropagation()
                         onEdit(idx)
                       }}
-                      className="
-                        w-6 h-6 rounded
-                        flex items-center justify-center
-                        bg-amber-600/80 hover:bg-amber-500
-                        text-[11px] font-bold text-white
-                        transition
-                      "
+                      className={btnBase + " hover:bg-yellow-500/90 text-yellow-100 w-8 h-8"}
                       title="Modifier"
                     >
-                      ✎
+                      <Edit2 size={16} />
                     </button>
                     <button
                       onClick={e => {
                         e.stopPropagation()
                         onDelete(idx)
                       }}
-                      className="
-                        w-6 h-6 rounded
-                        flex items-center justify-center
-                        bg-red-600/85 hover:bg-red-500
-                        text-[12px] font-bold text-white
-                        transition
-                      "
+                      className={btnBase + " hover:bg-red-600/90 text-red-100 w-8 h-8"}
                       title="Supprimer"
                     >
-                      ✕
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 </div>
@@ -155,40 +150,28 @@ const CharacterList: FC<Props> = ({
       <div className="mt-6 flex flex-wrap gap-3 text-sm">
         <button
           onClick={onNew}
-          className="
-            bg-emerald-600/80 hover:bg-emerald-500
-            text-white font-semibold
-            px-4 py-1.5 rounded-md
-            transition shadow
-            shadow-emerald-900/40
-          "
+          className={btnBase + " hover:bg-emerald-600/80 text-emerald-100"}
         >
-          Nouvelle fiche
+          <Plus size={17} /> Nouvelle fiche
         </button>
         <button
           onClick={onImportClick}
-          className="
-            bg-slate-600/70 hover:bg-slate-500/70
-            text-white font-semibold
-            px-4 py-1.5 rounded-md
-            transition shadow shadow-black/40
-          "
+          className={btnBase + " hover:bg-purple-700/80 text-purple-100"}
         >
-          Importer
+          <Upload size={17} /> Importer
         </button>
         <button
           onClick={onExport}
           disabled={selectedIdx === null}
-          className={`
-            font-semibold px-4 py-1.5 rounded-md transition
-            ${
-              selectedIdx === null
-                ? 'bg-slate-500/30 text-white/45 cursor-not-allowed'
-                : 'bg-slate-600/70 hover:bg-slate-500/70 text-white shadow shadow-black/40'
-            }
-          `}
+          className={
+            btnBase +
+            " hover:bg-emerald-600/80 text-emerald-100" +
+            (selectedIdx === null
+              ? " opacity-50 pointer-events-none"
+              : "")
+          }
         >
-          Exporter
+          <Download size={17} /> Exporter
         </button>
         <input
           type="file"

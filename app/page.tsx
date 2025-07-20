@@ -3,27 +3,16 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-// Déplacement fichier pour organisation
 import CharacterSheet, { defaultPerso } from '@/components/sheet/CharacterSheet'
-// Déplacement fichier pour organisation
 import DiceRoller from '@/components/dice/DiceRoller'
-// Déplacement fichier pour organisation
 import ChatBox from '@/components/chat/ChatBox'
-// Déplacement fichier pour organisation
 import PopupResult from '@/components/dice/PopupResult'
 import Head from 'next/head'
-// Déplacement fichier pour organisation
 import InteractiveCanvas from '@/components/canvas/InteractiveCanvas'
-// Déplacement fichier pour organisation
 import OnlineProfiles from '@/components/chat/OnlineProfiles'
-// Déplacement fichier pour organisation
 import SideNotes from '@/components/misc/SideNotes'
-
-// Déplacement fichier pour organisation
 import Login from '@/components/login/Login'
-// Déplacement fichier pour organisation
 import GMCharacterSelector from '@/components/misc/GMCharacterSelector'
-// Déplacement fichier pour organisation
 import ImportExportMenu from '@/components/character/ImportExportMenu'
 import Link from 'next/link'
 import RpgBackground from '@/components/ui/RpgBackground'
@@ -73,7 +62,6 @@ export default function HomePage() {
   }, [history])
   // ------------------------------------------------------
 
-  // Redirection menu au premier chargement
   useEffect(() => {
     if (typeof window === 'undefined') return
     if (!sessionStorage.getItem('visitedMenu')) {
@@ -82,7 +70,6 @@ export default function HomePage() {
     }
   }, [])
 
-  // Présence en ligne
   useEffect(() => {
     if (!user) return
     const id = localStorage.getItem('jdr_profile_id') || crypto.randomUUID()
@@ -111,7 +98,6 @@ export default function HomePage() {
     }
   }, [user, profile.color])
 
-  // Chargement profil depuis localStorage
   useEffect(() => {
     try {
       const saved = localStorage.getItem('jdr_profile')
@@ -125,7 +111,6 @@ export default function HomePage() {
     } catch {}
   }, [])
 
-  // Synchronisation profil MJ si changement ailleurs
   useEffect(() => {
     const update = () => {
       try {
@@ -146,9 +131,8 @@ export default function HomePage() {
     }
   }, [])
 
-  // --- NOUVEAU : Charger les persos + selectionné ---
+  // ----------- Synchronisation des personnages --------------
   useEffect(() => {
-    // Charger tous les persos depuis localStorage
     const savedChars = localStorage.getItem('jdr_characters')
     let chars = []
     if (savedChars) {
@@ -157,7 +141,6 @@ export default function HomePage() {
         setCharacters(chars)
       } catch {}
     }
-    // Charger le perso sélectionné
     const selectedId = localStorage.getItem('selectedCharacterId')
     if (selectedId && chars.length) {
       const found = chars.find((c: any) => c.id?.toString() === selectedId)
@@ -171,11 +154,36 @@ export default function HomePage() {
     }
   }, [])
 
+  // ----------- Handler MAJ fiche perso + stockage -----------
+  const handleUpdatePerso = (newPerso: any) => {
+    // Assigner un id si besoin
+    let id = newPerso.id
+    if (!id) {
+      id = crypto.randomUUID()
+      newPerso = { ...newPerso, id }
+    }
+    setPerso(newPerso)
+    setCharacters(prevChars => {
+      let found = false
+      const next = prevChars.map(c => {
+        if (c.id === id) {
+          found = true
+          return { ...c, ...newPerso }
+        }
+        return c
+      })
+      if (!found) next.push(newPerso)
+      localStorage.setItem('jdr_characters', JSON.stringify(next))
+      localStorage.setItem('selectedCharacterId', id)
+      return next
+    })
+  }
+  // ----------------------------------------------------------
+
   if (!user) {
     return <Login onLogin={setUser} />
   }
 
-  // Lancer de dé
   const rollDice = () => {
     setDiceDisabled(true)
     const result = Math.floor(Math.random() * diceType) + 1
@@ -193,59 +201,62 @@ export default function HomePage() {
     setPendingRoll(null)
   }
 
+  // --- STRUCTURE MODIFIÉE POUR UN VRAI FOND RPG + panels en overlay ---
   return (
-    <div className="relative w-screen h-screen font-sans overflow-hidden flex bg-white text-black dark:bg-gray-900 dark:text-white">
-      <RpgBackground />
+    <div className="relative w-screen h-screen font-sans overflow-hidden bg-transparent">
+      {/* RPG BACKGROUND animé EN FOND */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <RpgBackground />
+      </div>
+      {/* Contenu principal en overlay */}
+      <div className="relative z-10 flex w-full h-full">
+        {/* Barre latérale personnage (gauche) */}
+        <CharacterSheet
+          perso={perso}
+          onUpdate={handleUpdatePerso}
+          chatBoxRef={chatBoxRef}
+          allCharacters={characters}
+          logoOnly
+        >
+          <ImportExportMenu perso={perso} onUpdate={handleUpdatePerso} />
+          {profile.isMJ && (
+            <span className="ml-2">
+              <GMCharacterSelector
+                onSelect={handleUpdatePerso}
+                className="bg-gray-800 hover:bg-gray-700 text-white p-2 rounded shadow"
+              />
+            </span>
+          )}
+        </CharacterSheet>
+
+        {/* Zone de jeu centrale */}
+        <main className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 m-4 flex flex-col justify-center items-center relative min-h-0">
+            <InteractiveCanvas />
+            <PopupResult
+              show={showPopup}
+              result={diceResult}
+              diceType={diceType}
+              onFinish={handlePopupFinish}
+            />
+          </div>
+          <DiceRoller
+            diceType={diceType}
+            onChange={setDiceType}
+            onRoll={rollDice}
+            disabled={diceDisabled}
+          >
+            <OnlineProfiles />
+          </DiceRoller>
+        </main>
+
+        {/* Chat à droite */}
+        <ChatBox chatBoxRef={chatBoxRef} history={history} />
+        <SideNotes />
+      </div>
       <Head>
         <title>CakeJDR</title>
       </Head>
-      <CharacterSheet
-        perso={perso}
-        onUpdate={setPerso}
-        chatBoxRef={chatBoxRef}
-        logoOnly
-      >
-        <Link
-           href="/menu-accueil"
-          className="bg-gray-800 hover:bg-gray-900 text-white px-2 py-1 rounded text-xs"
-          style={{ minWidth: 70 }}
-        >
-          Menu
-        </Link>
-        <ImportExportMenu perso={perso} onUpdate={setPerso} />
-        {profile.isMJ && (
-          <span className="ml-2">
-            <GMCharacterSelector
-              onSelect={setPerso}
-              buttonLabel="Personnage"
-              className="bg-purple-700 hover:bg-purple-800 text-white px-2 py-1 rounded text-xs border border-purple-500"
-            />
-          </span>
-        )}
-      </CharacterSheet>
-
-      <main className="flex-1 bg-white dark:bg-gray-950 flex flex-col">
-        <div className="flex-1 border m-4 bg-gray-50 dark:bg-gray-900 flex flex-col justify-center items-center relative">
-          <InteractiveCanvas />
-          <PopupResult
-            show={showPopup}
-            result={diceResult}
-            diceType={diceType}
-            onFinish={handlePopupFinish}
-          />
-        </div>
-        <DiceRoller
-          diceType={diceType}
-          onChange={setDiceType}
-          onRoll={rollDice}
-          disabled={diceDisabled}
-        >
-          <OnlineProfiles />
-        </DiceRoller>
-      </main>
-
-      <ChatBox chatBoxRef={chatBoxRef} history={history} />
-      <SideNotes />
     </div>
   )
 }

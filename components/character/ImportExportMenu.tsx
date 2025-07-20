@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { FC, useRef, useState } from 'react'
+import { Folder } from 'lucide-react'
 import { defaultPerso } from '../sheet/CharacterSheet' // <-- AJOUT
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -106,13 +107,14 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
   return (
     <div className="relative inline-block ml-2">
       <button
-        className="bg-gray-800 hover:bg-gray-700 text-white text-xs px-2 py-1 rounded shadow transition-all"
+        className="bg-gray-800 hover:bg-gray-700 text-white p-2 rounded shadow transition-all"
         onClick={() => setOpen(v => !v)}
+        aria-label="Import / Export"
       >
-        Import/Export
+        <Folder size={16} />
       </button>
       {open && (
-        <div className="absolute right-0 mt-2 z-50 w-56 bg-[#18181b] border border-gray-700 rounded-xl shadow-2xl py-2 flex flex-col gap-1 animate-fadeIn">
+        <div className="absolute top-full left-full mt-2 ml-2 z-50 w-56 bg-black/35 backdrop-blur-md border border-white/10 rounded-xl shadow-2xl py-2 flex flex-col gap-1 animate-fadeIn">
           <button onClick={handleExport} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">📤 Exporter la fiche</button>
           <label className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm cursor-pointer">
             📥 Importer une fiche

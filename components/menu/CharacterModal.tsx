@@ -1,9 +1,10 @@
-"use client"
+'use client'
 import { FC } from "react"
 import { Character } from "./CharacterList"
 import StatsPanel from "../character/StatsPanel"
 import EquipPanel from "../character/EquipPanel"
 import DescriptionPanel from "../character/DescriptionPanel"
+import CompetencesPanel from "../character/CompetencesPanel" // ← Le bon nom !
 
 interface Props {
   open: boolean
@@ -44,7 +45,6 @@ const CharacterModal: FC<Props> = ({
           bg-black/40 border border-white/10 backdrop-blur-md
           px-3 sm:px-8 py-7 h-[94vh] max-h-[98vh] min-h-[480px]
         "
-        style={{ }}
       >
         <h2 className="text-2xl font-bold mb-5 tracking-wide text-white text-center">
           Édition du personnage
@@ -53,7 +53,6 @@ const CharacterModal: FC<Props> = ({
         <div className="flex flex-col flex-1 min-h-0">
           <div
             className="flex flex-col lg:flex-row gap-5 flex-1 w-full min-h-0"
-            style={{ }}
           >
             {/* Statistiques */}
             <div
@@ -65,15 +64,52 @@ const CharacterModal: FC<Props> = ({
               </h3>
               <StatsPanel perso={character} edit={true} onChange={handlePanelChange} />
             </div>
-            {/* Equipement */}
+            {/* Équipement + Compétences dans la même colonne */}
             <div
-              className="flex-1 min-w-[260px] bg-white/5 rounded-xl p-4 flex flex-col"
-              style={{ minWidth: 320, minHeight: 0, height: "100%", overflowY: "auto" }}
+              className="flex-1 min-w-[260px] bg-white/5 rounded-xl p-0 flex flex-col gap-3"
+              style={{ minWidth: 320, minHeight: 0, height: "100%" }}
             >
-              <h3 className="font-semibold text-lg mb-2 text-yellow-200">
-                Équipement
-              </h3>
-              <EquipPanel perso={character} edit={true} onChange={handlePanelChange} />
+              {/* Équipement (moitié hauteur) */}
+              <div className="flex-1 flex flex-col min-h-0 p-4 pb-2">
+                <h3 className="font-semibold text-lg mb-2 text-yellow-200">
+                  Équipement
+                </h3>
+                <EquipPanel
+                  edit={true}
+                  armes={character.armes || ""}
+                  degats_armes={character.degats_armes || ""}
+                  armure={character.armure || ""}
+                  modif_armure={character.modif_armure ?? 0}
+                  objets={character.objets || []}
+                  onChange={handlePanelChange}
+                  onAddObj={(obj) => {
+                    const objets = [...(character.objets || []), obj]
+                    handlePanelChange("objets", objets)
+                  }}
+                  onDelObj={(idx) => {
+                    const objets = (character.objets || []).filter((_, i) => i !== idx)
+                    handlePanelChange("objets", objets)
+                  }}
+                />
+              </div>
+              {/* Compétences (moitié hauteur) */}
+              <div className="flex-1 flex flex-col min-h-0 p-4 pt-0">
+                <h3 className="font-semibold text-lg mb-2 text-fuchsia-200">
+                  Compétences
+                </h3>
+                <CompetencesPanel
+                  competences={character.competences || []}
+                  edit={true}
+                  onAdd={(comp) => {
+                    const nv = [...(character.competences || []), comp]
+                    handlePanelChange("competences", nv)
+                  }}
+                  onDelete={(idx) => {
+                    const nv = (character.competences || []).filter((_, i) => i !== idx)
+                    handlePanelChange("competences", nv)
+                  }}
+                />
+              </div>
             </div>
             {/* Description */}
             <div
@@ -111,17 +147,39 @@ const CharacterModal: FC<Props> = ({
               />
             </div>
           </div>
-          {/* BOUTONS fixes EN BAS */}
-          <div className="flex-shrink-0 flex justify-end gap-6 w-full pt-7 pb-1 mt-2">
+          {/* BOUTONS fixes EN BAS - nouvelle DA */}
+          <div className="flex-shrink-0 flex justify-end gap-5 w-full pt-7 pb-1 mt-2">
             <button
               onClick={onClose}
-              className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2.5 rounded-xl font-semibold shadow"
+              className="
+                inline-flex items-center justify-center
+                px-6 py-2.5 rounded-lg font-semibold
+                bg-gray-800/70 hover:bg-gray-700/80
+                text-gray-200 hover:text-white
+                shadow-md transition
+                border border-white/10
+                backdrop-blur-[2px]
+              "
+              style={{
+                boxShadow: '0 2px 10px -2px #0006, 0 0 0 1px #fff2 inset'
+              }}
             >
               Annuler
             </button>
             <button
               onClick={onSave}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-7 py-2.5 rounded-xl font-semibold shadow"
+              className="
+                inline-flex items-center justify-center
+                px-7 py-2.5 rounded-lg font-semibold
+                bg-blue-900/80 hover:bg-blue-700/80
+                text-blue-100 hover:text-white
+                shadow-lg transition
+                border border-blue-200/15
+                backdrop-blur-[2px]
+              "
+              style={{
+                boxShadow: '0 2px 16px 0 #1e3a8a22, 0 0 0 1.5px #27408155 inset'
+              }}
             >
               Sauvegarder
             </button>
