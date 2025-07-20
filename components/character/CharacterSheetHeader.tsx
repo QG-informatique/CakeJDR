@@ -11,7 +11,8 @@ type Props = {
   tab: string,
   setTab: (tabKey: string) => void,
   TABS: Tab[],
-  children?: React.ReactNode
+  children?: React.ReactNode,
+  logoOnly?: boolean
 }
 
 const CharacterSheetHeader: FC<Props> = ({
@@ -21,7 +22,8 @@ const CharacterSheetHeader: FC<Props> = ({
   tab,
   setTab,
   TABS,
-  children
+  children,
+  logoOnly = false
 }) => {
   const router = useRouter();
 
@@ -39,7 +41,7 @@ const CharacterSheetHeader: FC<Props> = ({
       <div className="flex justify-between items-center">
         {/* --- TOUS LES BOUTONS À GAUCHE --- */}
         <div className="flex items-center gap-2">
-          <CakeLogo className="mr-2" />
+          <CakeLogo className="mr-2" showText={!logoOnly} />
           {childrenArray.map((child, i) => (
             <span key={i} className="flex items-center">{child}</span>
           ))}

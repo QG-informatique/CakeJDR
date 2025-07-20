@@ -117,7 +117,7 @@ export default function HomePage() {
       const saved = localStorage.getItem('jdr_profile')
       if (saved) {
         const p = JSON.parse(saved)
-        if (p.pseudo) {
+        if (p.pseudo && p.loggedIn) {
           setUser(p.pseudo)
           setProfile({ pseudo: p.pseudo, color: p.color || '#ffffff', isMJ: !!p.isMJ })
         }
@@ -132,7 +132,9 @@ export default function HomePage() {
         const saved = localStorage.getItem('jdr_profile')
         if (saved) {
           const p = JSON.parse(saved)
-          setProfile({ pseudo: p.pseudo || '', color: p.color || '#ffffff', isMJ: !!p.isMJ })
+          if (p.loggedIn) {
+            setProfile({ pseudo: p.pseudo || '', color: p.color || '#ffffff', isMJ: !!p.isMJ })
+          }
         }
       } catch {}
     }
@@ -201,6 +203,7 @@ export default function HomePage() {
         perso={perso}
         onUpdate={setPerso}
         chatBoxRef={chatBoxRef}
+        logoOnly
       >
         <Link
            href="/menu-accueil"
