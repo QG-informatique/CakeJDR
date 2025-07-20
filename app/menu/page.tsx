@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Login from '@/components/login/Login'
 import RpgBackground from '@/components/ui/RpgBackground'
@@ -13,6 +13,15 @@ export default function MenuPage() {
   const handleLogin = () => {
     setLeaving(true)
   }
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('jdr_profile')
+      if (!raw) return
+      const prof = JSON.parse(raw)
+      if (prof.loggedIn) handleLogin()
+    } catch {}
+  }, [])
 
   return (
     <motion.div

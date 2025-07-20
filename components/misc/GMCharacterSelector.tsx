@@ -88,7 +88,7 @@ export default function GMCharacterSelector({ onSelect, buttonLabel = 'Personnag
           )}
           {chars.map((c, idx) => (
             <button
-              key={c.id}
+              key={`${c.id}-${idx}`}
               onClick={() => handleSelect(c.id)}
               className={`block w-full text-left px-4 py-2 text-sm
                 ${selectedId === c.id ? 'bg-purple-100 dark:bg-purple-900 font-semibold' : 'hover:bg-purple-50 dark:hover:bg-purple-800'}`}
