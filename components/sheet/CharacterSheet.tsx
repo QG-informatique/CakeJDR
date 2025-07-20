@@ -13,9 +13,8 @@ const TABS = [
   { key: 'desc', label: 'Description' }
 ]
 
-
 type Props = {
-  perso: any, // Fiche perso initiale
+  perso: any // Fiche perso initiale
   onUpdate: (perso: any) => void,
   chatBoxRef?: React.RefObject<HTMLDivElement | null>,
   creation?: boolean,
@@ -73,27 +72,26 @@ const CharacterSheet: FC<Props> = ({
   allCharacters = [],
   logoOnly = false
 }) => {
-  const [edit, setEdit] = useState(creation)
+  // NE PAS relier edit à creation sauf à l'init
+  const [edit, setEdit] = useState(!!creation)
   const [tab, setTab] = useState('main')
   const [localPerso, setLocalPerso] = useState<any>(defaultPerso)
 
+  // On met à jour la fiche sélectionnée au chargement/changement
   useEffect(() => {
-    // Au montage, on tente de récupérer la fiche sélectionnée
     const selectedId = loadSelectedCharacterId()
     if (selectedId && allCharacters.length > 0) {
       const found = allCharacters.find(c => c.id?.toString() === selectedId)
       if (found) {
         setLocalPerso(found)
-        setEdit(false)
         return
       }
     }
-    // Sinon on charge la fiche passée en props
     setLocalPerso(Object.keys(perso || {}).length ? perso : defaultPerso)
   }, [perso, allCharacters])
 
+  // Quand on QUITTE le mode édition, on recharge depuis les props
   useEffect(() => {
-    // Si on désactive l'édition, on remet localPerso à jour depuis props perso
     if (!edit) {
       setLocalPerso(Object.keys(perso || {}).length ? perso : defaultPerso)
     }
@@ -170,7 +168,12 @@ const CharacterSheet: FC<Props> = ({
 
   return (
     <aside
-      className="bg-gray-900 pt-0 pb-3 px-3 overflow-y-auto text-[15px] text-white relative select-none"
+      className="
+        bg-black/10 border border-white/10 backdrop-blur-[2px]
+        shadow shadow-black/5 rounded-2xl p-5
+        pt-0 pb-3 px-3 overflow-y-auto text-[15px] text-white
+        relative select-none
+      "
       style={{
         width: creation ? 'auto' : '420px',
         minWidth: creation ? '600px' : '420px',
@@ -179,11 +182,10 @@ const CharacterSheet: FC<Props> = ({
         overflowX: 'hidden'
       }}
     >
-
       {!creation && (
         <CharacterSheetHeader
           edit={edit}
-          onToggleEdit={() => setEdit(true)}
+          onToggleEdit={() => setEdit(v => !v)}
           onSave={save}
           tab={tab}
           setTab={setTab}

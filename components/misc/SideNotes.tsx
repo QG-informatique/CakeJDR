@@ -41,10 +41,16 @@ export default function SideNotes() {
       style={{ left: 430 }}
     >
       {open ? (
-        <div className="relative bg-gray-900 text-white p-2 rounded-r w-72">
+        <div
+          className="
+            relative rounded-r-2xl border border-white/10
+            bg-black/10 backdrop-blur-[2px] shadow shadow-black/10
+            text-white p-2 w-72
+          "
+        >
           <textarea
             ref={textareaRef}
-            className="w-full bg-gray-800 p-1 text-sm rounded resize-y"
+            className="w-full bg-black/20 rounded p-1 text-sm resize-y border border-white/10"
             style={{ height }}
             value={notes}
             onChange={e => setNotes(e.target.value)}
@@ -57,7 +63,7 @@ export default function SideNotes() {
               onClick={() => localStorage.setItem(STORAGE_KEY, notes)}
             >Sauver</button>
             <button
-              className="absolute -right-4 top-1/2 -translate-y-1/2 bg-gray-800 text-white px-1 rounded-r"
+              className="absolute -right-4 top-1/2 -translate-y-1/2 bg-black/40 text-white px-1 rounded-r border border-white/10"
               onClick={() => {
                 handleResize() // Sauvegarde hauteur avant de fermer
                 setOpen(false)
@@ -76,7 +82,11 @@ export default function SideNotes() {
         </div>
       ) : (
         <button
-          className="bg-gray-800 text-white rounded-r shadow-lg flex items-center justify-center"
+          className="
+            bg-black/25 backdrop-blur-[2px]
+            text-white rounded-r-2xl shadow-lg border border-white/10
+            flex items-center justify-center
+          "
           onClick={() => setOpen(true)}
           title="Notes"
           style={{
