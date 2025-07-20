@@ -223,7 +223,7 @@ export default function HomePage() {
             <span className="ml-2">
               <GMCharacterSelector
                 onSelect={handleUpdatePerso}
-                className="bg-purple-700 hover:bg-purple-800 text-white px-2 py-1 rounded text-xs border border-purple-500"
+                className="bg-gray-800 hover:bg-gray-700 text-white p-2 rounded shadow"
               />
             </span>
           )}
