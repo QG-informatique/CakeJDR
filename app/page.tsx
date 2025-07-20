@@ -218,19 +218,11 @@ export default function HomePage() {
           allCharacters={characters}
           logoOnly
         >
-          <Link
-            href="/menu-accueil"
-            className="bg-gray-800 hover:bg-gray-900 text-white px-2 py-1 rounded text-xs"
-            style={{ minWidth: 70 }}
-          >
-            Menu
-          </Link>
           <ImportExportMenu perso={perso} onUpdate={handleUpdatePerso} />
           {profile.isMJ && (
             <span className="ml-2">
               <GMCharacterSelector
                 onSelect={handleUpdatePerso}
-                buttonLabel="Personnage"
                 className="bg-purple-700 hover:bg-purple-800 text-white px-2 py-1 rounded text-xs border border-purple-500"
               />
             </span>

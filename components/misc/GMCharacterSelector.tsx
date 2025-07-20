@@ -78,8 +78,8 @@ export default function GMCharacterSelector({ onSelect, buttonLabel = 'Personnag
         aria-haspopup="listbox"
         aria-expanded={open}
       >
-        <User2 size={16} className="mr-1" />
-        {buttonLabel}
+        <User2 size={16} className={buttonLabel ? 'mr-1' : ''} />
+        {buttonLabel && buttonLabel}
       </button>
       {open && (
         <div className="absolute left-0 mt-1 w-48 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded shadow-lg border border-purple-500 z-50 py-1">
