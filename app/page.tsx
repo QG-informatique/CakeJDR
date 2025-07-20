@@ -1,41 +1,41 @@
 'use client'
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import CharacterSheet from '@/components/CharacterSheet'
-import DiceRoller from '@/components/DiceRoller'
-import ChatBox from '@/components/ChatBox'
-import PopupResult from '@/components/PopupResult'
+import { useRouter, usePathname } from 'next/navigation'
+// Déplacement fichier pour organisation
+import CharacterSheet, { defaultPerso } from '@/components/sheet/CharacterSheet'
+// Déplacement fichier pour organisation
+import DiceRoller from '@/components/dice/DiceRoller'
+// Déplacement fichier pour organisation
+import ChatBox from '@/components/chat/ChatBox'
+// Déplacement fichier pour organisation
+import PopupResult from '@/components/dice/PopupResult'
 import Head from 'next/head'
-import InteractiveCanvas from '@/components/InteractiveCanvas'
-import OnlineProfiles from '@/components/OnlineProfiles'
-import SideNotes from '@/components/SideNotes'
+// Déplacement fichier pour organisation
+import InteractiveCanvas from '@/components/canvas/InteractiveCanvas'
+// Déplacement fichier pour organisation
+import OnlineProfiles from '@/components/chat/OnlineProfiles'
+// Déplacement fichier pour organisation
+import SideNotes from '@/components/misc/SideNotes'
 
-import Login from '@/components/Login'
-import GMCharacterSelector from '@/components/GMCharacterSelector'
-import ImportExportMenu from '@/components/ImportExportMenu'
+// Déplacement fichier pour organisation
+import Login from '@/components/login/Login'
+// Déplacement fichier pour organisation
+import GMCharacterSelector from '@/components/misc/GMCharacterSelector'
+// Déplacement fichier pour organisation
+import ImportExportMenu from '@/components/character/ImportExportMenu'
 import Link from 'next/link'
+import RpgBackground from '@/components/ui/RpgBackground'
+import CakeLogo from '@/components/ui/CakeLogo'
 
 export default function HomePage() {
   const router = useRouter()
+  const pathname = usePathname()
   const [user, setUser] = useState<string | null>(null)
   const [profile, setProfile] = useState<{ pseudo: string, color: string, isMJ: boolean }>({ pseudo: '', color: '#ffffff', isMJ: false })
-  const [perso, setPerso] = useState({
-    nom: 'Gustave',
-    race: 'Cake',
-    classe: 'Barbare',
-    niveau: 2,
-    pv: 13,
-    force: 13,
-    dexterite: 4,
-    constitution: 4,
-    intelligence: 2,
-    sagesse: 2,
-    charisme: 4,
-    arme: 'Épée rouillée',
-    armure: 'Armure en miettes',
-    competence: ['Cri sauvage', 'Coup puissant']
-  })
+  const [perso, setPerso] = useState(defaultPerso)
+  const [characters, setCharacters] = useState<any[]>([])
 
   const [showPopup, setShowPopup] = useState(false)
   const [diceType, setDiceType] = useState(6)
@@ -44,6 +44,34 @@ export default function HomePage() {
   const [pendingRoll, setPendingRoll] = useState<{ result: number, dice: number, nom: string } | null>(null)
   const [history, setHistory] = useState<{ player: string, dice: number, result: number }[]>([])
   const chatBoxRef = useRef<HTMLDivElement>(null)
+
+  // --------- PERSISTANCE DE L'HISTORIQUE DE DÉS ---------
+  const HISTORY_KEY = 'jdr_dice_history'
+  const lastLength = useRef(0)
+
+  const restoreHistory = () => {
+    try {
+      const saved = localStorage.getItem(HISTORY_KEY)
+      if (saved) {
+        const arr = JSON.parse(saved)
+        if (!Array.isArray(arr)) return
+        if (arr.length !== lastLength.current) {
+          setHistory(arr)
+          lastLength.current = arr.length
+        }
+      }
+    } catch {}
+  }
+
+  useEffect(() => {
+    restoreHistory()
+  }, [pathname])
+
+  useEffect(() => {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history))
+    lastLength.current = history.length
+  }, [history])
+  // ------------------------------------------------------
 
   // Redirection menu au premier chargement
   useEffect(() => {
@@ -57,7 +85,7 @@ export default function HomePage() {
   // Présence en ligne
   useEffect(() => {
     if (!user) return
-    const id = localStorage.getItem('jdr_profile_id') || String(Date.now())
+    const id = localStorage.getItem('jdr_profile_id') || crypto.randomUUID()
     localStorage.setItem('jdr_profile_id', id)
     const updateOnline = () => {
       try {
@@ -65,7 +93,7 @@ export default function HomePage() {
         list[id] = { pseudo: user, color: profile.color }
         localStorage.setItem('jdr_online', JSON.stringify(list))
         window.dispatchEvent(new Event('jdr_online_change'))
-      } catch {/* empty */}
+      } catch {}
     }
     updateOnline()
     const handleUnload = () => {
@@ -74,7 +102,7 @@ export default function HomePage() {
         delete list[id]
         localStorage.setItem('jdr_online', JSON.stringify(list))
         window.dispatchEvent(new Event('jdr_online_change'))
-      } catch {/* empty */}
+      } catch {}
     }
     window.addEventListener('beforeunload', handleUnload)
     return () => {
@@ -89,12 +117,12 @@ export default function HomePage() {
       const saved = localStorage.getItem('jdr_profile')
       if (saved) {
         const p = JSON.parse(saved)
-        if (p.pseudo) {
+        if (p.pseudo && p.loggedIn) {
           setUser(p.pseudo)
           setProfile({ pseudo: p.pseudo, color: p.color || '#ffffff', isMJ: !!p.isMJ })
         }
       }
-    } catch {/* empty */}
+    } catch {}
   }, [])
 
   // Synchronisation profil MJ si changement ailleurs
@@ -104,15 +132,42 @@ export default function HomePage() {
         const saved = localStorage.getItem('jdr_profile')
         if (saved) {
           const p = JSON.parse(saved)
-          setProfile({ pseudo: p.pseudo || '', color: p.color || '#ffffff', isMJ: !!p.isMJ })
+          if (p.loggedIn) {
+            setProfile({ pseudo: p.pseudo || '', color: p.color || '#ffffff', isMJ: !!p.isMJ })
+          }
         }
-      } catch {/* empty */}
+      } catch {}
     }
     window.addEventListener('storage', update)
     window.addEventListener('jdr_profile_change', update as EventListener)
     return () => {
       window.removeEventListener('storage', update)
       window.removeEventListener('jdr_profile_change', update as EventListener)
+    }
+  }, [])
+
+  // --- NOUVEAU : Charger les persos + selectionné ---
+  useEffect(() => {
+    // Charger tous les persos depuis localStorage
+    const savedChars = localStorage.getItem('jdr_characters')
+    let chars = []
+    if (savedChars) {
+      try {
+        chars = JSON.parse(savedChars)
+        setCharacters(chars)
+      } catch {}
+    }
+    // Charger le perso sélectionné
+    const selectedId = localStorage.getItem('selectedCharacterId')
+    if (selectedId && chars.length) {
+      const found = chars.find((c: any) => c.id?.toString() === selectedId)
+      if (found) {
+        setPerso(found)
+      } else {
+        setPerso(defaultPerso)
+      }
+    } else {
+      setPerso(defaultPerso)
     }
   }, [])
 
@@ -129,7 +184,6 @@ export default function HomePage() {
     setPendingRoll({ result, dice: diceType, nom: perso.nom || "?" })
   }
 
-  // Fin de l’animation de popup : ajoute dans l’historique seulement
   const handlePopupFinish = () => {
     setShowPopup(false)
     setDiceDisabled(false)
@@ -140,7 +194,8 @@ export default function HomePage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-10px)] m-[5px] font-sans overflow-hidden bg-white text-black dark:bg-gray-900 dark:text-white">
+    <div className="relative w-screen h-screen font-sans overflow-hidden flex bg-white text-black dark:bg-gray-900 dark:text-white">
+      <RpgBackground />
       <Head>
         <title>CakeJDR</title>
       </Head>
@@ -148,21 +203,16 @@ export default function HomePage() {
         perso={perso}
         onUpdate={setPerso}
         chatBoxRef={chatBoxRef}
+        logoOnly
       >
-        {/* ----------- BOUTONS DANS L'ORDRE ----------- */}
-        {/* MENU */}
         <Link
-          href="/menu"
+           href="/menu-accueil"
           className="bg-gray-800 hover:bg-gray-900 text-white px-2 py-1 rounded text-xs"
           style={{ minWidth: 70 }}
         >
           Menu
         </Link>
-
-        {/* IMPORT/EXPORT */}
         <ImportExportMenu perso={perso} onUpdate={setPerso} />
-
-        {/* CHANGEMENT DE PERSONNAGE - MJ */}
         {profile.isMJ && (
           <span className="ml-2">
             <GMCharacterSelector

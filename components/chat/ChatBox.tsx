@@ -1,4 +1,3 @@
-'use client'
 import { FC, RefObject, useRef, useState, useEffect } from 'react'
 import SummaryPanel from './SummaryPanel'
 import DiceStats from './DiceStats'
@@ -18,9 +17,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
   const endRef = useRef<HTMLDivElement>(null)
   const [showSummary, setShowSummary] = useState(false)
   const [showStats, setShowStats] = useState(false)
-  // mémorise la taille précédente de l'historique pour ajouter uniquement les nouveaux jets
   const prevHist = useRef(0)
-  // Les actes peuvent aussi être stockés plus globalement si besoin
 
   const sendMessage = () => {
     if (inputValue.trim() === '') return
@@ -32,7 +29,6 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Quand l'historique s'allonge, on ajoute les nouveaux résultats au chat
   useEffect(() => {
     if (history.length > prevHist.current) {
       const toAdd = history.slice(prevHist.current)
@@ -44,8 +40,17 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
     }
   }, [history])
 
+  // --- NOUVEL AFFICHAGE VERTICAL ---
+  if (showSummary) {
+    return (
+      <aside className="w-1/5 bg-gray-200 dark:bg-gray-800 p-4 flex flex-col relative">
+        <SummaryPanel onClose={() => setShowSummary(false)} />
+      </aside>
+    )
+  }
+
   return (
-    <aside className="w-1/5 bg-gray-200 dark:bg-gray-800 p-4 flex flex-col relative">
+    <aside className="w-1/5 bg-gray-200 dark:bg-gray-800 p-4 flex flex-col relative h-full min-h-0">
       {/* Boutons en-tête */}
       <div className="flex justify-center items-center mb-2 gap-2">
         <button
@@ -57,15 +62,24 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
         <button
           className="bg-gray-700 text-white px-2 py-1 rounded text-sm"
           onClick={() => setShowStats(s => !s)}
+          title="Stats DD"
         >
           {showStats ? 'Chat' : '📊'}
         </button>
       </div>
 
-      {!showSummary && !showStats && (
-        <>
-          <h2 className="text-xl font-bold mb-4 text-center">Chat</h2>
-
+      {/* --- Affichage vertical : stats en haut, chat en bas --- */}
+      <div className="flex flex-col flex-1 min-h-0 gap-2">
+        {showStats && (
+          <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+            <div className="text-center font-bold mb-2">Statistiques DD</div>
+            <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-700 p-2 rounded shadow">
+              <DiceStats history={history} />
+            </div>
+          </div>
+        )}
+        <div className={`flex-1 min-h-0 flex flex-col ${showStats ? '' : 'h-full'}`}>
+          <h2 className="text-xl font-bold mb-2 text-center">Chat</h2>
           <div
             ref={chatBoxRef}
             className="flex-1 overflow-y-auto bg-white dark:bg-gray-700 p-2 rounded shadow"
@@ -78,8 +92,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
             ))}
             <div ref={endRef} />
           </div>
-
-          <div className="mt-4 flex items-center">
+          <div className="mt-2 flex items-center">
             <input
               type="text"
               placeholder="Votre message..."
@@ -97,18 +110,8 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
               Envoyer
             </button>
           </div>
-        </>
-      )}
-
-      {showStats && (
-        <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-700 p-2 rounded shadow">
-          <DiceStats history={history} />
         </div>
-      )}
-
-      {showSummary && (
-        <SummaryPanel onClose={() => setShowSummary(false)} />
-      )}
+      </div>
     </aside>
   )
 }

@@ -2,12 +2,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { FC, useState, useEffect } from 'react'
-import StatsPanel from './StatsPanel'
-import CompetencesPanel from './CompetencesPanel'
-import EquipPanel from './EquipPanel'
-import DescriptionPanel from './DescriptionPanel'
-import LevelUpPanel from './LevelUpPanel'
-import CharacterSheetHeader from './CharacterSheetHeader'
+import StatsTab from './StatsTab'
+import EquipTab from './EquipTab'
+import DescriptionPanel from '../character/DescriptionPanel'
+import CharacterSheetHeader from '../character/CharacterSheetHeader'
 
 const TABS = [
   { key: 'main', label: 'Statistiques' },
@@ -15,16 +13,15 @@ const TABS = [
   { key: 'desc', label: 'Description' }
 ]
 
-type Competence = { nom: string, type: string, effets: string, degats?: string }
-type Objet = { nom: string, quantite: number }
-type CustomField = { label: string, value: string }
 
 type Props = {
-  perso: any,
+  perso: any, // Fiche perso initiale
   onUpdate: (perso: any) => void,
   chatBoxRef?: React.RefObject<HTMLDivElement | null>,
   creation?: boolean,
-  children?: React.ReactNode // Permet d’injecter tous les boutons du header !
+  children?: React.ReactNode,
+  allCharacters?: any[], // facultatif, si tu veux passer la liste complète
+  logoOnly?: boolean
 }
 
 export const defaultPerso = {
@@ -62,30 +59,45 @@ export const defaultPerso = {
   notes: ''
 }
 
-// ---- Composant principal ----
+// Fonction utilitaire pour récupérer l’ID sélectionné en localStorage
+const loadSelectedCharacterId = (): string | null => {
+  return typeof window !== 'undefined' ? localStorage.getItem('selectedCharacterId') : null
+}
+
 const CharacterSheet: FC<Props> = ({
   perso,
   onUpdate,
   chatBoxRef,
   creation = false,
-  children, // <- Pour injecter les boutons/headerExtras
+  children,
+  allCharacters = [],
+  logoOnly = false
 }) => {
   const [edit, setEdit] = useState(creation)
   const [tab, setTab] = useState('main')
-  const [localPerso, setLocalPerso] = useState<any>(
-    { ...(Object.keys(perso || {}).length ? perso : defaultPerso) }
-  )
-  const [processing, setProcessing] = useState(false)
-  const [dice, setDice] = useState('d6')
-  const [lastStat, setLastStat] = useState<string | null>(null)
-  const [lastGain, setLastGain] = useState<number | null>(null)
-  const [animKey, setAnimKey] = useState(0)
-
-  const cFiche = edit ? localPerso : (Object.keys(perso || {}).length ? perso : defaultPerso)
+  const [localPerso, setLocalPerso] = useState<any>(defaultPerso)
 
   useEffect(() => {
-    if (!edit) setLocalPerso({ ...(Object.keys(perso || {}).length ? perso : defaultPerso) })
-  }, [perso])
+    // Au montage, on tente de récupérer la fiche sélectionnée
+    const selectedId = loadSelectedCharacterId()
+    if (selectedId && allCharacters.length > 0) {
+      const found = allCharacters.find(c => c.id?.toString() === selectedId)
+      if (found) {
+        setLocalPerso(found)
+        setEdit(false)
+        return
+      }
+    }
+    // Sinon on charge la fiche passée en props
+    setLocalPerso(Object.keys(perso || {}).length ? perso : defaultPerso)
+  }, [perso, allCharacters])
+
+  useEffect(() => {
+    // Si on désactive l'édition, on remet localPerso à jour depuis props perso
+    if (!edit) {
+      setLocalPerso(Object.keys(perso || {}).length ? perso : defaultPerso)
+    }
+  }, [edit, perso])
 
   const handleChange = (field: string, value: any) => {
     setLocalPerso({ ...localPerso, [field]: value })
@@ -97,6 +109,14 @@ const CharacterSheet: FC<Props> = ({
     const sides = parseInt(match[1])
     return Math.floor(Math.random() * sides) + 1
   }
+
+  const [processing, setProcessing] = useState(false)
+  const [dice, setDice] = useState('d6')
+  const [lastStat, setLastStat] = useState<string | null>(null)
+  const [lastGain, setLastGain] = useState<number | null>(null)
+  const [animKey, setAnimKey] = useState(0)
+
+  const cFiche = edit ? localPerso : (Object.keys(perso || {}).length ? perso : defaultPerso)
 
   const handleLevelUp = async () => {
     if (processing) return
@@ -168,65 +188,33 @@ const CharacterSheet: FC<Props> = ({
           tab={tab}
           setTab={setTab}
           TABS={TABS}
+          logoOnly={logoOnly}
         >
-          {children /* <-- Permet à la page de passer TOUS les boutons (import, MJ, menu, etc) */}
+          {children}
         </CharacterSheetHeader>
       )}
 
       {(creation || tab === 'main') && (
-        <>
-          <StatsPanel
-            edit={edit}
-            perso={localPerso}
-            onChange={handleChange}
-          />
-          <CompetencesPanel
-            edit={edit}
-            competences={localPerso.competences || []}
-            onAdd={(comp: Competence) =>
-              setLocalPerso({
-                ...localPerso,
-                competences: [...(localPerso.competences || []), comp]
-              })
-            }
-            onDelete={(idx: number) =>
-              setLocalPerso({
-                ...localPerso,
-                competences: (localPerso.competences || []).filter((_: unknown, i: number) => i !== idx)
-              })
-            }
-          />
-          <LevelUpPanel
-            dice={dice}
-            setDice={setDice}
-            onLevelUp={handleLevelUp}
-            processing={processing}
-            lastStat={lastStat}
-            lastGain={lastGain}
-            animKey={animKey}
-          />
-        </>
+        <StatsTab
+          edit={edit}
+          perso={localPerso}
+          onChange={handleChange}
+          setLocalPerso={setLocalPerso}
+          localPerso={localPerso}
+          dice={dice}
+          setDice={setDice}
+          onLevelUp={handleLevelUp}
+          processing={processing}
+          lastStat={lastStat}
+          lastGain={lastGain}
+          animKey={animKey}
+        />
       )}
       {(creation || tab === 'equip') && (
-        <EquipPanel
+        <EquipTab
           edit={edit}
-          armes={localPerso.armes}
-          armure={localPerso.armure}
-          degats_armes={localPerso.degats_armes}
-          modif_armure={localPerso.modif_armure}
-          objets={localPerso.objets || []}
-          onAddObj={(obj: Objet) =>
-            setLocalPerso({
-              ...localPerso,
-              objets: [...(localPerso.objets || []), obj]
-            })
-          }
-          onDelObj={(idx: number) =>
-            setLocalPerso({
-              ...localPerso,
-              objets: (localPerso.objets || []).filter((_: unknown, i: number) => i !== idx)
-            })
-          }
+          localPerso={localPerso}
+          setLocalPerso={setLocalPerso}
           onChange={handleChange}
         />
       )}

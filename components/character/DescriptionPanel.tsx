@@ -71,7 +71,7 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
   onDelChamp,
   onUpdateChamp,
 }) => {
-  const [newChamp, setNewChamp] = useState<Partial<CustomField>>({})
+  const [newChamp, setNewChamp] = useState<Partial<CustomField>>({}) // <-- Ajout ici
 
   // Champs standards
   const shortFields = [
