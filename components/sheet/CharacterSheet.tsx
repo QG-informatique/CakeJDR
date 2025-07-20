@@ -2,12 +2,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { FC, useState, useEffect } from 'react'
-import StatsPanel from './StatsPanel'
-import CompetencesPanel from './CompetencesPanel'
-import EquipPanel from './EquipPanel'
-import DescriptionPanel from './DescriptionPanel'
-import LevelUpPanel from './LevelUpPanel'
-import CharacterSheetHeader from './CharacterSheetHeader'
+import StatsTab from './StatsTab'
+import EquipTab from './EquipTab'
+import DescriptionPanel from '../character/DescriptionPanel'
+import CharacterSheetHeader from '../character/CharacterSheetHeader'
 
 const TABS = [
   { key: 'main', label: 'Statistiques' },
@@ -15,9 +13,6 @@ const TABS = [
   { key: 'desc', label: 'Description' }
 ]
 
-type Competence = { nom: string, type: string, effets: string, degats?: string }
-type Objet = { nom: string, quantite: number }
-type CustomField = { label: string, value: string }
 
 type Props = {
   perso: any, // Fiche perso initiale
@@ -197,59 +192,26 @@ const CharacterSheet: FC<Props> = ({
       )}
 
       {(creation || tab === 'main') && (
-        <>
-          <StatsPanel
-            edit={edit}
-            perso={localPerso}
-            onChange={handleChange}
-          />
-          <CompetencesPanel
-            edit={edit}
-            competences={localPerso.competences || []}
-            onAdd={(comp: Competence) =>
-              setLocalPerso({
-                ...localPerso,
-                competences: [...(localPerso.competences || []), comp]
-              })
-            }
-            onDelete={(idx: number) =>
-              setLocalPerso({
-                ...localPerso,
-                competences: (localPerso.competences || []).filter((_: unknown, i: number) => i !== idx)
-              })
-            }
-          />
-          <LevelUpPanel
-            dice={dice}
-            setDice={setDice}
-            onLevelUp={handleLevelUp}
-            processing={processing}
-            lastStat={lastStat}
-            lastGain={lastGain}
-            animKey={animKey}
-          />
-        </>
+        <StatsTab
+          edit={edit}
+          perso={localPerso}
+          onChange={handleChange}
+          setLocalPerso={setLocalPerso}
+          localPerso={localPerso}
+          dice={dice}
+          setDice={setDice}
+          onLevelUp={handleLevelUp}
+          processing={processing}
+          lastStat={lastStat}
+          lastGain={lastGain}
+          animKey={animKey}
+        />
       )}
       {(creation || tab === 'equip') && (
-        <EquipPanel
+        <EquipTab
           edit={edit}
-          armes={localPerso.armes}
-          armure={localPerso.armure}
-          degats_armes={localPerso.degats_armes}
-          modif_armure={localPerso.modif_armure}
-          objets={localPerso.objets || []}
-          onAddObj={(obj: Objet) =>
-            setLocalPerso({
-              ...localPerso,
-              objets: [...(localPerso.objets || []), obj]
-            })
-          }
-          onDelObj={(idx: number) =>
-            setLocalPerso({
-              ...localPerso,
-              objets: (localPerso.objets || []).filter((_: unknown, i: number) => i !== idx)
-            })
-          }
+          localPerso={localPerso}
+          setLocalPerso={setLocalPerso}
           onChange={handleChange}
         />
       )}
