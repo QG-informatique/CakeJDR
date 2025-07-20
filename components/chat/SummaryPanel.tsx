@@ -131,55 +131,99 @@ const SummaryPanel: FC<Props> = ({ onClose }) => {
 
   return (
     <div
-      className="absolute inset-0 bg-gray-100 dark:bg-gray-900 bg-opacity-95 rounded shadow-xl flex flex-col h-full w-full z-20 animate-fadeIn"
+      className="absolute inset-0 bg-black/35 backdrop-blur-[3px] border border-white/10 rounded-2xl shadow-2xl flex flex-col h-full w-full z-20 animate-fadeIn"
       style={{ minHeight: 0, minWidth: 0 }}
     >
-      {/* Barre du haut compacte, select déroulant + boutons */}
+      {/* Barre du haut : Select + Ajouter + Editer (à droite) */}
       <div className="flex justify-between items-center mb-3 px-2 pt-1 gap-2">
         <div className="flex items-center gap-2 flex-wrap">
           <select
-            className="px-2 py-1 rounded text-sm font-semibold border bg-white dark:bg-gray-700 dark:text-white"
+            className="
+              px-3 py-2 rounded-xl font-semibold shadow
+              bg-black/35 border border-white/10 text-white/85
+              focus:outline-none focus:ring-2 focus:ring-blue-400/30
+              transition
+            "
             style={{ maxWidth: 220 }}
             value={selectedId}
             onChange={e => handleSelectAct(Number(e.target.value))}
           >
             {acts.map(act => (
-              <option key={act.id} value={act.id}>
+              <option
+                key={act.id}
+                value={act.id}
+                className="bg-black/90 text-white/90"
+              >
                 {act.title ? act.title : `[Sans titre]`}
               </option>
             ))}
           </select>
           <button
             onClick={handleAddAct}
-            className="px-2 py-1 rounded text-xs bg-green-500 hover:bg-green-600 text-white ml-1"
+            className="
+              px-4 py-2 rounded-xl font-semibold shadow
+              bg-black/35 border border-white/10 text-white/85
+              hover:bg-emerald-600/90 hover:text-white
+              transition
+            "
             title="Ajouter un acte"
           >+ acte</button>
-          <button
-            onClick={handleExport}
-            className="px-2 py-1 rounded text-xs bg-blue-600 hover:bg-blue-700 text-white ml-1"
-            title="Exporter tout"
-          >Exporter</button>
-          <button
-            onClick={handleImportClick}
-            className="px-2 py-1 rounded text-xs bg-purple-600 hover:bg-purple-700 text-white ml-1"
-            title="Importer fichier"
-          >Importer</button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".txt"
-            className="hidden"
-            onChange={handleImport}
-          />
         </div>
         <button
+          onClick={() => setEditMode(true)}
+          className="
+            px-4 py-2 rounded-xl font-semibold shadow
+            bg-black/35 border border-white/10 text-white/85
+            hover:bg-yellow-400/90 hover:text-black
+            transition
+          "
+        >
+          Éditer
+        </button>
+        <button
           onClick={onClose}
-          className="text-gray-800 dark:text-gray-200 hover:text-red-500 font-bold px-2"
+          className="text-white/80 hover:text-red-500 font-bold px-2 text-xl"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            borderRadius: '6px',
+            padding: '4px 7px',
+            transition: 'color 0.15s'
+          }}
         >
           ✕
         </button>
       </div>
-
+      {/* Ligne suivante : Import/Export */}
+      <div className="flex gap-2 mb-2 px-2">
+        <button
+          onClick={handleImportClick}
+          className="
+            px-4 py-2 rounded-xl font-semibold shadow
+            bg-black/35 border border-white/10 text-white/85
+            hover:bg-purple-600/90 hover:text-white
+            transition
+          "
+          title="Importer fichier"
+        >Importer</button>
+        <button
+          onClick={handleExport}
+          className="
+            px-4 py-2 rounded-xl font-semibold shadow
+            bg-black/35 border border-white/10 text-white/85
+            hover:bg-blue-600/90 hover:text-white
+            transition
+          "
+          title="Exporter tout"
+        >Exporter</button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".txt"
+          className="hidden"
+          onChange={handleImport}
+        />
+      </div>
       <div className="flex-1 flex flex-col px-2 pb-2 min-h-0">
         {editMode ? (
           <>
@@ -188,34 +232,34 @@ const SummaryPanel: FC<Props> = ({ onClose }) => {
               type="text"
               value={draftTitle}
               onChange={e => setDraftTitle(e.target.value)}
-              className="w-full rounded border p-2 mb-2 font-semibold text-lg text-black dark:text-white dark:bg-gray-800"
+              className="w-full rounded border p-2 mb-2 font-semibold text-lg text-white bg-black/35 border-white/10"
               maxLength={48}
               placeholder="Titre de l'acte (laisser vide si besoin)"
             />
             <textarea
               value={draftContent}
               onChange={e => setDraftContent(e.target.value)}
-              className="w-full flex-1 rounded border p-2 text-black dark:text-white dark:bg-gray-800 resize-y"
+              className="w-full flex-1 rounded border p-2 text-white bg-black/35 border-white/10 resize-y"
               style={{ minHeight: 180, maxHeight: '100%', height: '100%' }}
               autoFocus
             />
             <div className="flex gap-2 mt-2">
               <button
                 onClick={handleSave}
-                className="bg-blue-600 text-white px-3 py-1 rounded"
+                className="px-4 py-2 rounded-xl font-semibold shadow bg-black/35 border border-white/10 text-white/85 hover:bg-blue-600/90 hover:text-white transition"
               >
                 Sauver
               </button>
               <button
                 onClick={() => setEditMode(false)}
-                className="bg-gray-300 text-gray-800 px-3 py-1 rounded"
+                className="px-4 py-2 rounded-xl font-semibold shadow bg-black/35 border border-white/10 text-white/85 hover:bg-yellow-400/90 hover:text-black transition"
               >
                 Annuler
               </button>
               {acts.length > 1 && (
                 <button
                   onClick={() => handleDeleteAct(selectedId)}
-                  className="bg-red-600 text-white px-3 py-1 rounded ml-auto"
+                  className="px-4 py-2 rounded-xl font-semibold shadow bg-black/35 border border-white/10 text-white/85 hover:bg-red-600/90 hover:text-white transition ml-auto"
                   title="Supprimer cet acte"
                 >
                   Supprimer
@@ -226,21 +270,11 @@ const SummaryPanel: FC<Props> = ({ onClose }) => {
         ) : (
           <div
             ref={contentRef}
-            className="whitespace-pre-line break-words text-[15px] bg-gray-200 dark:bg-gray-700 rounded p-2 flex-1 overflow-y-auto"
+            className="whitespace-pre-line break-words text-[15px] bg-black/20 border border-white/10 rounded-xl p-3 flex-1 overflow-y-auto"
             style={{ wordBreak: 'break-word', minHeight: 0 }}
           >
             <div className="font-semibold text-lg mb-2">{selectedAct?.title || <span className="italic text-gray-400">[Sans titre]</span>}</div>
             {selectedAct?.content || <span className="text-gray-400">Aucun résumé pour cet acte.</span>}
-          </div>
-        )}
-        {!editMode && (
-          <div className="mt-2">
-            <button
-              onClick={() => setEditMode(true)}
-              className="bg-yellow-500 text-white px-3 py-1 rounded mr-2"
-            >
-              Éditer
-            </button>
           </div>
         )}
       </div>

@@ -3,7 +3,6 @@
 import { useRef, useState, useEffect } from 'react'
 import YouTube from 'react-youtube'
 
-// Définition du type pour les images
 type ImageData = {
   id: number
   src: string
@@ -12,7 +11,6 @@ type ImageData = {
   width: number
   height: number
 }
-
 
 export default function InteractiveCanvas() {
   const [images, setImages] = useState<ImageData[]>([])
@@ -32,7 +30,6 @@ export default function InteractiveCanvas() {
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null)
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null)
   const idCounter = useRef(0)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null)
 
   const dragState = useRef({
@@ -40,17 +37,13 @@ export default function InteractiveCanvas() {
     type: null as 'move' | 'resize' | null,
     offsetX: 0,
     offsetY: 0,
-
-    
   })
 
-  // Constantes pour les tailles de pinceau/gomme
   const DRAW_MIN = 2
   const DRAW_MAX = 50
-  const ERASE_MIN = DRAW_MIN * 4    // 8
-  const ERASE_MAX = DRAW_MAX * 4    // 200
+  const ERASE_MIN = DRAW_MIN * 4
+  const ERASE_MAX = DRAW_MAX * 4
 
-  // Initialise le canvas de dessin
   useEffect(() => {
     const canvas = drawingCanvasRef.current
     if (canvas) {
@@ -65,7 +58,6 @@ export default function InteractiveCanvas() {
     }
   }, [])
 
-  // Gestion du z-index et des pointer-events selon le mode
   useEffect(() => {
     const canvas = drawingCanvasRef.current
     if (!canvas) return
@@ -79,14 +71,12 @@ export default function InteractiveCanvas() {
     }
   }, [drawMode])
 
-  // Clamp de brushSize quand on change de mode (pour rester dans les bornes)
   useEffect(() => {
     const min = drawMode === 'erase' ? ERASE_MIN : DRAW_MIN
     const max = drawMode === 'erase' ? ERASE_MAX : DRAW_MAX
     setBrushSize((bs) => Math.min(Math.max(bs, min), max))
   }, [drawMode])
 
-  // Met à jour le volume sur le player YouTube
   useEffect(() => {
     if (playerRef.current) {
       playerRef.current.setVolume(volume)
@@ -222,47 +212,55 @@ export default function InteractiveCanvas() {
   ]
 
   return (
-    <div className="relative w-full h-full">
-      {/* Bouton outils */}
-      <div className="absolute top-2 left-2 z-30 pointer-events-auto">
+    <div className="relative w-full h-full select-none">
+      {/* BOUTON OUTILS */}
+      <div className="absolute top-3 left-3 z-30 pointer-events-auto">
         <button
           onClick={() => setToolsVisible(!toolsVisible)}
-          className="bg-gray-300 dark:bg-gray-700 rounded px-2 py-1 text-sm shadow flex items-center"
+          className={`
+            rounded-xl px-5 py-2 text-base font-semibold shadow border-none
+            bg-black/30 text-white/90
+            hover:bg-emerald-600 hover:text-white
+            transition duration-100 flex items-center justify-center min-h-[38px]
+          `}
         >
-          🛠️ {toolsVisible ? '◀' : '▶'}
+          <span className="mr-1">🛠️</span> <span className="text-sm">{toolsVisible ? 'Outils' : ''}</span>
         </button>
       </div>
 
-      {/* Barre outils */}
+      {/* BARRE OUTILS FLOTTANTE */}
       <div
         className={`
-          absolute top-2 left-24 z-20 transition-all duration-300
-          ${toolsVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}
+          absolute top-3 left-36 z-30 transition-all duration-300
+          ${toolsVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-0 pointer-events-none'}
           origin-top-left pointer-events-auto
         `}
       >
-        <div className="flex gap-2 flex-wrap items-center p-2 bg-white/90 dark:bg-gray-800 rounded shadow-lg">
+        <div className="flex gap-2 flex-wrap items-center p-3 bg-black/60 backdrop-blur-xl rounded-2xl shadow-lg border border-white/10">
           <button
             onClick={() => setDrawMode('images')}
-            className={`px-3 py-1 rounded ${
-              drawMode === 'images' ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700'
-            }`}
+            className={`rounded-xl px-3 py-2 text-xs font-semibold shadow border border-white/10 transition duration-100
+              ${drawMode === 'images'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-black/20 text-blue-100/85 hover:bg-blue-900/30 hover:text-white/80'}`}
           >
             🖼️ Images
           </button>
           <button
             onClick={() => setDrawMode('draw')}
-            className={`px-3 py-1 rounded ${
-              drawMode === 'draw' ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700'
-            }`}
+            className={`rounded-xl px-3 py-2 text-xs font-semibold shadow border border-white/10 transition duration-100
+              ${drawMode === 'draw'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-black/20 text-blue-100/85 hover:bg-blue-900/30 hover:text-white/80'}`}
           >
             ✏️ Dessin
           </button>
           <button
             onClick={() => setDrawMode('erase')}
-            className={`px-3 py-1 rounded ${
-              drawMode === 'erase' ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700'
-            }`}
+            className={`rounded-xl px-3 py-2 text-xs font-semibold shadow border border-white/10 transition duration-100
+              ${drawMode === 'erase'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-black/20 text-blue-100/85 hover:bg-blue-900/30 hover:text-white/80'}`}
           >
             🧹 Gomme
           </button>
@@ -272,63 +270,76 @@ export default function InteractiveCanvas() {
             max={drawMode === 'erase' ? ERASE_MAX : DRAW_MAX}
             value={brushSize}
             onChange={(e) => setBrushSize(parseInt(e.target.value, 10))}
-            className="w-24"
+            className="w-24 mx-2"
           />
           {COLORS.map((c) => (
             <button
               key={c}
               onClick={() => setColor(c)}
-              className="w-6 h-6 rounded-full border-2"
-              style={{ backgroundColor: c, borderColor: color === c ? 'black' : 'white' }}
+              className="w-6 h-6 rounded-full border-2 mx-1"
+              style={{ backgroundColor: c, borderColor: color === c ? '#4f9ddf' : 'white', boxShadow: color === c ? '0 0 0 2px #4f9ddf' : 'none' }}
             />
           ))}
           <button
             onClick={clearCanvas}
-            className="ml-4 bg-red-500 text-white px-3 py-1 rounded shadow hover:bg-red-600"
+            className="rounded-xl px-3 py-2 text-xs font-semibold shadow border-none
+              bg-red-600 text-white hover:bg-red-700 ml-4"
           >
-            Clear
+            Effacer tout
           </button>
         </div>
       </div>
 
-      {/* Bouton musique */}
-      <div className="absolute bottom-2 right-2 z-30 pointer-events-auto">
+      {/* BOUTON MUSIQUE */}
+      <div className="absolute bottom-3 right-3 z-30 pointer-events-auto">
         <button
           onClick={() => setAudioVisible(!audioVisible)}
-          className="bg-gray-300 dark:bg-gray-700 px-2 py-1 rounded shadow"
+          className={`
+            rounded-xl px-5 py-2 text-base font-semibold shadow border-none
+            bg-black/30 text-white/90
+            hover:bg-purple-600 hover:text-white
+            transition duration-100 flex items-center justify-center min-h-[38px]
+          `}
         >
-          🎵
+          <span>🎵</span>
         </button>
       </div>
 
-      {/* Barre musique */}
+      {/* PANEL MUSIQUE FLOTTANT */}
       {audioVisible && (
-        <div className="absolute bottom-2 right-14 z-30 bg-white/90 dark:bg-gray-800 p-3 rounded shadow-md w-64 pointer-events-auto">
-          <input
-            type="text"
-            placeholder="Lien YouTube"
-            value={ytUrl}
-            onChange={(e) => setYtUrl(e.target.value)}
-            className="w-full px-2 py-1 rounded border text-black"
-          />
-          <button
-            onClick={handleYtSubmit}
-            className="w-full bg-blue-500 text-white px-2 py-1 mt-2 rounded"
-          >
-            Charger
-          </button>
-          <div className="flex items-center justify-between mt-2">
-            <button onClick={handlePlayPause} className="bg-gray-600 text-white px-3 py-1 rounded">
-              {isPlaying ? '⏸️' : '▶️'}
-            </button>
+        <div className="absolute bottom-3 right-40 z-40 bg-black/70 border border-white/10 rounded-2xl shadow-lg p-4 min-w-[250px] max-w-[340px] backdrop-blur-xl">
+          <div className="flex flex-col gap-3">
             <input
-              type="range"
-              min={0}
-              max={100}
-              value={volume}
-              onChange={(e) => setVolume(parseInt(e.target.value, 10))}
-              className="ml-2 flex-1"
+              type="text"
+              placeholder="Lien YouTube"
+              value={ytUrl}
+              onChange={(e) => setYtUrl(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg bg-black/40 text-white border border-white/20 placeholder:text-white/40"
             />
+            <button
+              onClick={handleYtSubmit}
+              className="rounded-xl px-3 py-2 text-xs font-semibold shadow border-none
+                bg-blue-600 text-white hover:bg-blue-700"
+            >
+              Charger la musique
+            </button>
+            <div className="flex items-center justify-between mt-1">
+              <button
+                onClick={handlePlayPause}
+                className="rounded-xl px-3 py-2 text-xs font-semibold shadow border-none
+                  bg-black/30 text-white/90 hover:bg-purple-600 hover:text-white"
+              >
+                {isPlaying ? '⏸️ Pause' : '▶️ Lecture'}
+              </button>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={volume}
+                onChange={(e) => setVolume(parseInt(e.target.value, 10))}
+                className="ml-2 flex-1"
+              />
+            </div>
           </div>
         </div>
       )}
@@ -344,7 +355,7 @@ export default function InteractiveCanvas() {
         />
       )}
 
-      {/* Zone de dessin + images */}
+      {/* Zone de dessin + images - sans fond, ni border, ni rien */}
       <div
         ref={canvasRef}
         onDrop={handleDrop}
@@ -352,20 +363,21 @@ export default function InteractiveCanvas() {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        className="w-full h-full bg-gray-100 relative overflow-hidden border rounded z-0"
+        className="w-full h-full relative overflow-hidden z-0"
+        style={{ background: 'none', border: 'none', borderRadius: 0 }}
       >
         <canvas ref={drawingCanvasRef} className="absolute top-0 left-0 w-full h-full" />
 
         {images.map((img) => (
           <div
             key={img.id}
-            className="absolute border border-gray-500 shadow-md"
+            className="absolute border border-white/20 rounded-2xl shadow-md"
             style={{ top: img.y, left: img.x, width: img.width, height: img.height, zIndex: 1 }}
           >
             <img
               src={img.src}
               alt="Dropped"
-              className="w-full h-full object-contain pointer-events-none"
+              className="w-full h-full object-contain pointer-events-none select-none rounded-2xl"
             />
             {drawMode === 'images' && (
               <>
@@ -376,7 +388,7 @@ export default function InteractiveCanvas() {
                 />
                 <div
                   onMouseDown={(e) => handleMouseDown(e, img.id, 'resize')}
-                  className="absolute bottom-0 right-0 w-4 h-4 bg-white/30 border border-gray-400 rounded-sm cursor-se-resize"
+                  className="absolute bottom-0 right-0 w-4 h-4 bg-white/40 border border-white rounded-full cursor-se-resize"
                   style={{ zIndex: 4 }}
                 />
               </>
@@ -386,7 +398,7 @@ export default function InteractiveCanvas() {
 
         {(drawMode === 'draw' || drawMode === 'erase') && !dragState.current.id && (
           <div
-            className="absolute rounded-full border border-black pointer-events-none"
+            className="absolute rounded-full border border-emerald-500 pointer-events-none"
             style={{
               top: mousePos.y - brushSize / 2,
               left: mousePos.x - brushSize / 2,
@@ -397,7 +409,7 @@ export default function InteractiveCanvas() {
           />
         )}
 
-        <p className="absolute bottom-2 left-2 text-sm text-gray-600 z-10">Glisse une image ici</p>
+        <p className="absolute bottom-4 left-5 text-xs text-white/70 z-10">Glisse une image ici</p>
       </div>
     </div>
   )
