@@ -53,7 +53,7 @@ export default function Login({ onLogin }: { onLogin:(p:string)=>void }) {
   const draggingRef = useRef(false)
   const origin = useRef({ x:0, y:0 })
   const velocity = useRef({ x:0, y:0 })
-  const frame = useRef<number>()
+  const frame = useRef<number | null>(null)
 
   useEffect(()=>{
     try {

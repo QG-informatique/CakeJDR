@@ -1,12 +1,13 @@
 'use client'
-import BackgroundWrapper from "@/components/ui/BackgroundWrapper";
+import BackgroundWrapper from '@/components/ui/BackgroundWrapper'
+import { BackgroundProvider } from '@/components/context/BackgroundContext'
 
-export default function ClientLayout({ children }) {
-  // Plus de state ici, juste le fond de base
+export default function ClientLayout({ children }: { children: React.ReactNode }) {
+  // Provider global pour le fond de l'application
   return (
-    <>
-      <BackgroundWrapper isCakeBackground={false} />
+    <BackgroundProvider>
+      <BackgroundWrapper />
       <main className="relative z-10">{children}</main>
-    </>
-  );
+    </BackgroundProvider>
+  )
 }

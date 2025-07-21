@@ -34,3 +34,16 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Backgrounds
+
+Backgrounds are managed through a global React context. To add a new background:
+
+1. Create a component under `components/ui` rendering the animated SVG.
+2. Register the new type in `components/context/BackgroundContext.tsx` by
+   extending `BackgroundType` and the `cycleOrder` array.
+3. Update `BackgroundWrapper.tsx` to return your component when the context value
+   matches.
+
+The background switch button in the menu will automatically cycle through all
+registered backgrounds.
