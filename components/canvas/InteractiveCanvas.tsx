@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react'
 import YouTube from 'react-youtube'
+import type { YouTubePlayer } from 'youtube-player/dist/types'
 import { Trash2 } from 'lucide-react'
 
 type ImageData = {
@@ -31,7 +32,7 @@ export default function InteractiveCanvas() {
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null)
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null)
   const idCounter = useRef(0)
-  const playerRef = useRef<any>(null)
+  const playerRef = useRef<YouTubePlayer | null>(null)
 
   const dragState = useRef({
     id: null as number | null,
