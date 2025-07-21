@@ -225,7 +225,7 @@ const SummaryPanel: FC<Props> = ({ onClose }) => {
       style={{ minHeight: 0, minWidth: 0 }}
     >
       {/* Barre du haut : Select custom + Ajouter + Editer (à droite) */}
-      <div className="relative mb-3 px-2 pt-1 flex items-center gap-2 pr-12">
+      <div className="relative mb-3 px-2 pt-1 pr-12 flex flex-col gap-2">
         <div className="flex items-center gap-2 flex-wrap">
           <CustomActSelect
             value={selectedId}
@@ -246,18 +246,47 @@ const SummaryPanel: FC<Props> = ({ onClose }) => {
             "
             title="Ajouter un acte"
           >+ acte</button>
+          <button
+            onClick={() => setEditMode(true)}
+            className="
+              px-4 py-2 rounded-xl font-semibold shadow
+              bg-black/35 border border-white/10 text-white/85
+              hover:bg-yellow-400/90 hover:text-black
+              transition
+            "
+          >
+            Éditer
+          </button>
         </div>
-        <button
-          onClick={() => setEditMode(true)}
-          className="
-            px-4 py-2 rounded-xl font-semibold shadow
-            bg-black/35 border border-white/10 text-white/85
-            hover:bg-yellow-400/90 hover:text-black
-            transition
-          "
-        >
-          Éditer
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleImportClick}
+            className="
+              px-4 py-2 rounded-xl font-semibold shadow
+              bg-black/35 border border-white/10 text-white/85
+              hover:bg-purple-600/90 hover:text-white
+              transition
+            "
+            title="Importer fichier"
+          >Importer</button>
+          <button
+            onClick={handleExport}
+            className="
+              px-4 py-2 rounded-xl font-semibold shadow
+              bg-black/35 border border-white/10 text-white/85
+              hover:bg-blue-600/90 hover:text-white
+              transition
+            "
+            title="Exporter tout"
+          >Exporter</button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".txt"
+            className="hidden"
+            onChange={handleImport}
+          />
+        </div>
         <button
           onClick={onClose}
           className="absolute top-1 right-2 text-white/80 hover:text-red-500 font-bold text-xl"
@@ -271,36 +300,6 @@ const SummaryPanel: FC<Props> = ({ onClose }) => {
         >
           ✕
         </button>
-      </div>
-      {/* Ligne suivante : Import/Export */}
-      <div className="flex gap-2 mb-2 px-2">
-        <button
-          onClick={handleImportClick}
-          className="
-            px-4 py-2 rounded-xl font-semibold shadow
-            bg-black/35 border border-white/10 text-white/85
-            hover:bg-purple-600/90 hover:text-white
-            transition
-          "
-          title="Importer fichier"
-        >Importer</button>
-        <button
-          onClick={handleExport}
-          className="
-            px-4 py-2 rounded-xl font-semibold shadow
-            bg-black/35 border border-white/10 text-white/85
-            hover:bg-blue-600/90 hover:text-white
-            transition
-          "
-          title="Exporter tout"
-        >Exporter</button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".txt"
-          className="hidden"
-          onChange={handleImport}
-        />
       </div>
       <div className="flex-1 flex flex-col px-2 pb-2 min-h-0">
         {editMode ? (
