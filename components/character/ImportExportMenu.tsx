@@ -5,10 +5,8 @@ import { FC, useRef, useState } from 'react'
 import { Folder } from 'lucide-react'
 import { defaultPerso } from '../sheet/CharacterSheet' // <-- AJOUT
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Props = {
   perso: any,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onUpdate: (perso: any) => void
 }
 

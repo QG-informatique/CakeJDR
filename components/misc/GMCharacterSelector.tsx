@@ -50,7 +50,7 @@ export default function GMCharacterSelector({
       if (found) onSelect(found)
     }, 5000)
     return () => clearInterval(interval)
-  }, [selectedId])
+  }, [selectedId, onSelect])
 
   const loadCharacters = () => {
     try {

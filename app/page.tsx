@@ -14,8 +14,6 @@ import SideNotes from '@/components/misc/SideNotes'
 import Login from '@/components/login/Login'
 import GMCharacterSelector from '@/components/misc/GMCharacterSelector'
 import ImportExportMenu from '@/components/character/ImportExportMenu'
-import Link from 'next/link'
-import CakeLogo from '@/components/ui/CakeLogo'
 
 export default function HomePage() {
   const router = useRouter()
@@ -66,7 +64,7 @@ export default function HomePage() {
       sessionStorage.setItem('visitedMenu', 'true')
       router.push('/menu')
     }
-  }, [])
+  }, [router])
 
   useEffect(() => {
     if (!user) return

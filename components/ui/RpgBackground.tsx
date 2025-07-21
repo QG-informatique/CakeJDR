@@ -7,7 +7,7 @@ import React, { useEffect, useState } from 'react'
  * Fond animé – dés ascendants (40) – SAFE POUR NEXT/SSR !
  */
 export default function RpgBackground() {
-  const icons = [Dice1, Dice2, Dice3, Dice4, Dice5, Dice6]
+  const icons = React.useMemo(() => [Dice1, Dice2, Dice3, Dice4, Dice5, Dice6], [])
   const [dice, setDice] = useState<React.ReactElement[]>([])
 
   useEffect(() => {
@@ -35,7 +35,7 @@ export default function RpgBackground() {
       )
     }
     setDice(arr)
-  }, []) // ← Random/JSX généré **seulement** après le mount client
+  }, [icons]) // ← Random/JSX généré **seulement** après le mount client
 
   return (
     <div className="absolute inset-0 overflow-hidden -z-10">
