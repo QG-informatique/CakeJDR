@@ -8,11 +8,11 @@ import React, { useEffect, useState } from 'react'
  */
 export default function RpgBackground() {
   const icons = [Dice1, Dice2, Dice3, Dice4, Dice5, Dice6]
-  const [dice, setDice] = useState<JSX.Element[]>([])
+  const [dice, setDice] = useState<React.ReactElement[]>([])
 
   useEffect(() => {
     // ⚠️ Tout le random ici, jamais dans le render !
-    const arr: JSX.Element[] = []
+    const arr: React.ReactElement[] = []
     for (let i = 0; i < 40; ++i) {
       const Icon = icons[i % icons.length]
       const size = Math.random() * 40 + 24

@@ -1,10 +1,11 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useBackground } from '@/components/context/BackgroundContext'
+import { motion, AnimatePresence, type Variants } from 'framer-motion'
 import Login from '@/components/login/Login'
 
-const containerVariants = {
+const containerVariants: Variants = {
   enter: {
     opacity: 0,
     scale: 0.975,
@@ -32,7 +33,7 @@ const containerVariants = {
   }
 }
 
-const radialVariants = {
+const radialVariants: Variants = {
   enter: { opacity: 0 },
   visible: { opacity: 0, transition: { duration: 0.4 } },
   exit: {
@@ -43,6 +44,7 @@ const radialVariants = {
 
 export default function MenuPage() {
   const router = useRouter()
+  const { setBackground } = useBackground()
   const [leaving, setLeaving] = useState(false)
   const [mounted, setMounted] = useState(false)
 
@@ -53,6 +55,7 @@ export default function MenuPage() {
 
   useEffect(() => {
     setMounted(true)
+    setBackground('rpg')
     try {
       const raw = localStorage.getItem('jdr_profile')
       if (raw && JSON.parse(raw).loggedIn) {
