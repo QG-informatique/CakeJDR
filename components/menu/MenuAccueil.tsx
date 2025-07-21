@@ -10,7 +10,6 @@ import MenuHeader from './MenuHeader'
 import CharacterList from './CharacterList'
 import CharacterModal from './CharacterModal'
 import ProfileColorPicker from './ProfileColorPicker'
-import BackgroundWrapper from '@/components/ui/BackgroundWrapper'
 
 const PROFILE_KEY = 'jdr_profile'
 const SELECTED_KEY = 'selectedCharacterId'
@@ -32,9 +31,6 @@ export default function MenuAccueil() {
   const [draftChar, setDraftChar]     = useState<Character>(defaultPerso as unknown as Character)
   const [hydrated, setHydrated]       = useState(false)
   const [loggingOut, setLoggingOut]   = useState(false)
-
-  // STATE POUR LE FOND
-  const [isCakeBackground, setIsCakeBackground] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -225,16 +221,11 @@ export default function MenuAccueil() {
 
   return (
     <>
-      {/* 1. BackgroundWrapper au plus haut niveau */}
-      <BackgroundWrapper isCakeBackground={isCakeBackground} />
-      {/* 2. Header avec le bouton qui toggle le fond */}
+      {/* Header avec le bouton qui change de fond */}
       {user && (
         <MenuHeader
           user={user}
           onLogout={handleLogout}
-          onToggleBackground={setIsCakeBackground}
-          isCakeBackground={isCakeBackground}
-          tableRoute="/table"
         />
       )}
 

@@ -1,10 +1,10 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, type Variants } from 'framer-motion'
 import Login from '@/components/login/Login'
 
-const containerVariants = {
+const containerVariants: Variants = {
   enter: {
     opacity: 0,
     scale: 0.975,
@@ -32,7 +32,7 @@ const containerVariants = {
   }
 }
 
-const radialVariants = {
+const radialVariants: Variants = {
   enter: { opacity: 0 },
   visible: { opacity: 0, transition: { duration: 0.4 } },
   exit: {
