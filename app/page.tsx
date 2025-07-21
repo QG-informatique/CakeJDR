@@ -15,7 +15,6 @@ import Login from '@/components/login/Login'
 import GMCharacterSelector from '@/components/misc/GMCharacterSelector'
 import ImportExportMenu from '@/components/character/ImportExportMenu'
 import Link from 'next/link'
-import RpgBackground from '@/components/ui/RpgBackground'
 import CakeLogo from '@/components/ui/CakeLogo'
 
 export default function HomePage() {
@@ -60,7 +59,6 @@ export default function HomePage() {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(history))
     lastLength.current = history.length
   }, [history])
-  // ------------------------------------------------------
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -178,7 +176,6 @@ export default function HomePage() {
       return next
     })
   }
-  // ----------------------------------------------------------
 
   if (!user) {
     return <Login onLogin={setUser} />
@@ -204,10 +201,8 @@ export default function HomePage() {
   // --- STRUCTURE MODIFIÉE POUR UN VRAI FOND RPG + panels en overlay ---
   return (
     <div className="relative w-screen h-screen font-sans overflow-hidden bg-transparent">
-      {/* RPG BACKGROUND animé EN FOND */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <RpgBackground />
-      </div>
+      {/* PLUS DE BackgroundWrapper ICI ! */}
+
       {/* Contenu principal en overlay */}
       <div className="relative z-10 flex w-full h-full">
         {/* Barre latérale personnage (gauche) */}
