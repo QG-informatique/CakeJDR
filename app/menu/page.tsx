@@ -2,6 +2,10 @@
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { useBackground } from '@/components/context/BackgroundContext'
+
+
+
+
 import { motion, AnimatePresence, type Variants } from 'framer-motion'
 import Login from '@/components/login/Login'
 
