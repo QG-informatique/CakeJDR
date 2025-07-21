@@ -21,7 +21,7 @@ const CustomActSelect: FC<CustomActSelectProps> = ({ value, onChange, options, d
   }, [open])
 
   return (
-    <div ref={ref} className="relative w-[200px] max-w-[220px] select-none">
+    <div ref={ref} className="relative flex-1 min-w-[140px] max-w-[180px] select-none">
       <button
         type="button"
         disabled={disabled}
@@ -226,7 +226,8 @@ const SummaryPanel: FC<Props> = ({ onClose }) => {
     >
       {/* Barre du haut : Select custom + Ajouter + Editer (à droite) */}
       <div className="relative mb-3 px-2 pt-1 pr-12 flex flex-col gap-2">
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-nowrap overflow-x-auto">
+
           <CustomActSelect
             value={selectedId}
             onChange={handleSelectAct}
