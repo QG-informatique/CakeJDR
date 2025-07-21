@@ -41,7 +41,7 @@ const CustomActSelect: FC<CustomActSelectProps> = ({ value, onChange, options, d
         aria-expanded={open}
       >
         <span className="truncate">{options.find(o => o.value === value)?.label || "[Sans titre]"}</span>
-        <svg width="18" height="18" className="ml-2 opacity-70" viewBox="0 0 20 20" fill="none"><path d="M6 8l4 4 4-4" stroke="#fff" strokeWidth="2" strokeLinecap="round"/></svg>
+        <svg width="18" height="18" className="ml-2 opacity-70" viewBox="0 0 20 20" fill="none"><path d="M6 8l4 4 4-4" stroke="#fff" strokeWidth="2" strokeLinecap="round" /></svg>
       </button>
       {open && (
         <div
@@ -225,7 +225,7 @@ const SummaryPanel: FC<Props> = ({ onClose }) => {
       style={{ minHeight: 0, minWidth: 0 }}
     >
       {/* Barre du haut : Select custom + Ajouter + Editer (à droite) */}
-      <div className="flex justify-between items-center mb-3 px-2 pt-1 gap-2">
+      <div className="relative mb-3 px-2 pt-1 flex items-center gap-2 pr-12">
         <div className="flex items-center gap-2 flex-wrap">
           <CustomActSelect
             value={selectedId}
@@ -260,7 +260,7 @@ const SummaryPanel: FC<Props> = ({ onClose }) => {
         </button>
         <button
           onClick={onClose}
-          className="text-white/80 hover:text-red-500 font-bold px-2 text-xl"
+          className="absolute top-1 right-2 text-white/80 hover:text-red-500 font-bold text-xl"
           style={{
             background: 'transparent',
             border: 'none',
