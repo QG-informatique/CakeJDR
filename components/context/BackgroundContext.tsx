@@ -12,6 +12,10 @@ type BackgroundContextValue = {
   setBackground: (bg: BackgroundType) => void
 
 
+  setBackground: (bg: BackgroundType) => void
+
+
+
 }
 
 const BackgroundContext = createContext<BackgroundContextValue | undefined>(undefined)
@@ -30,7 +34,11 @@ export function BackgroundProvider({ children }: { children: ReactNode }) {
 
     <BackgroundContext.Provider value={{ background, cycleBackground, setBackground }}>
 
+
+    <BackgroundContext.Provider value={{ background, cycleBackground, setBackground }}>
+
     <BackgroundContext.Provider value={{ background, cycleBackground }}>
+
 
       {children}
     </BackgroundContext.Provider>

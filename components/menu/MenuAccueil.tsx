@@ -2,7 +2,11 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+
+import { Crown, LogOut } from 'lucide-react'
+
 import { Crown, LogOut, Dice6 } from 'lucide-react'
+
 import { useBackground } from '../context/BackgroundContext'
 import { useRouter } from 'next/navigation'
 import Login from '../login/Login'
@@ -241,7 +245,6 @@ export default function MenuAccueil() {
 
         <MenuHeader
           user={user}
-          onLogout={handleLogout}
         />
 
       )}
