@@ -1,21 +1,14 @@
 'use client'
-import { createContext, useContext, useState, ReactNode } from 'react'
+import { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction } from 'react'
 
-export type BackgroundType = 'rpg' | 'cake' | 'banana'
+export type BackgroundType = 'rpg' | 'cake' | 'banana' | 'unicorn' | 'special'
 
-const cycleOrder: BackgroundType[] = ['rpg', 'cake', 'banana']
+const cycleOrder: BackgroundType[] = ['rpg', 'cake', 'banana', 'unicorn', 'special']
 
 type BackgroundContextValue = {
   background: BackgroundType
+  setBackground: Dispatch<SetStateAction<BackgroundType>>
   cycleBackground: () => void
-
-  setBackground: (bg: BackgroundType) => void
-
-
-  setBackground: (bg: BackgroundType) => void
-
-
-
 }
 
 const BackgroundContext = createContext<BackgroundContextValue | undefined>(undefined)
@@ -31,15 +24,7 @@ export function BackgroundProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-
-    <BackgroundContext.Provider value={{ background, cycleBackground, setBackground }}>
-
-
-    <BackgroundContext.Provider value={{ background, cycleBackground, setBackground }}>
-
-    <BackgroundContext.Provider value={{ background, cycleBackground }}>
-
-
+    <BackgroundContext.Provider value={{ background, setBackground, cycleBackground }}>
       {children}
     </BackgroundContext.Provider>
   )
