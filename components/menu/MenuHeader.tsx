@@ -3,6 +3,7 @@ import { FC, useState, useRef, useLayoutEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Dice6, LogOut } from 'lucide-react'
 import CakeLogo from '../ui/CakeLogo'
+import { motion, useAnimation } from 'framer-motion'
 
 export type User = {
   pseudo: string
@@ -16,24 +17,63 @@ interface MenuHeaderProps {
   scale?: number
   topPadding?: number
   bottomPadding?: number
+  onToggleBackground?: (toCake: boolean) => void
+  isCakeBackground?: boolean
 }
 
-/* Ajuste ces constantes pour caler précisément */
-const SIDE_WIDTH  = 120         // largeur réservée à gauche et à droite
-const HEADER_PAD  = 16          // padding horizontal global (0 pour coller)
-const DICE_SIZE   = 112         // (w-28 h-28) => 112px, tu peux ajuster
-const BUTTON_H    = 56          // hauteur bouton déconnexion (h-14 => 56px)
+const SIDE_WIDTH  = 120
+const HEADER_PAD  = 16
+const DICE_SIZE   = 112
+const BUTTON_H    = 56
+
+const LOGO_SIZE = 160 // ← ajuste ici pour la taille finale du CakeLogo
 
 const MenuHeader: FC<MenuHeaderProps> = ({
   user,
   onLogout,
   scale = 1,
   topPadding = 48,
-  bottomPadding = 32
+  bottomPadding = 32,
+  onToggleBackground,
+  isCakeBackground = false,
 }) => {
   const router = useRouter()
   const [phase, setPhase] = useState<'idle' | 'spin'>('idle')
   const btnRef = useRef<HTMLButtonElement | null>(null)
+
+  // --- Animation gâteau ---
+  const [cakeAnim, setCakeAnim] = useState<'idle'|'walking'>('idle')
+  const cakeControls = useAnimation()
+
+  const handleCakeClick = async () => {
+    if (cakeAnim === 'walking') return
+    setCakeAnim('walking')
+    await cakeControls.start('walking')
+    setCakeAnim('idle')
+    cakeControls.start('idle')
+    if (onToggleBackground) onToggleBackground(!isCakeBackground)
+  }
+
+  // Animation CakeLogo : centre -> gauche -> droite -> centre
+  const cakeVariants = {
+    idle: {
+      x: 0,
+      y: 0,
+      rotate: 0,
+      scale: 1.0,
+      transition: { duration: 0.4, type: 'spring' }
+    },
+    walking: {
+      scale: 1.0,
+      x: [0, -LOGO_SIZE * 0.7, LOGO_SIZE * 0.7, 0],
+      y: [0, -LOGO_SIZE * 0.28, -LOGO_SIZE * 0.24, 0],
+      rotate: [0, -16, 18, 0],
+      transition: { duration: 1.35, times: [0, 0.28, 0.65, 1], ease: "easeInOut" }
+    }
+  }
+
+  // --- Animation bouton dé ---
+  const [diceHover, setDiceHover] = useState(false)
 
   const handleClickPlay = () => {
     if (!user || phase !== 'idle') return
@@ -56,12 +96,35 @@ const MenuHeader: FC<MenuHeaderProps> = ({
         transformOrigin: 'top center'
       }}
     >
-      {/* Logo parfaitement centré (ignore colonnes grâce à inset-0) */}
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <CakeLogo xl showText={false} className="scale-[2]" />
+      {/* Logo Cake animé, centré, taille personnalisable */}
+      <div className="pointer-events-auto absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-20">
+        <motion.div
+          animate={cakeControls}
+          initial="idle"
+          variants={cakeVariants}
+          onClick={handleCakeClick}
+          className="inline-flex items-center justify-center overflow-visible"
+          style={{
+            cursor: 'pointer',
+            userSelect: 'none'
+          }}
+          title={isCakeBackground ? "Remettre les dés" : "Mettre les gâteaux en fond"}
+        >
+          <CakeLogo
+            xl
+            showText={false}
+            className="pointer-events-none"
+            style={{
+              background: 'transparent',
+              display: 'block',
+              width: LOGO_SIZE,
+              height: LOGO_SIZE,
+            }}
+          />
+        </motion.div>
       </div>
 
-      {/* Ligne principale sans padding interne parasite */}
+      {/* Ligne principale */}
       <div className="relative z-10 flex items-center w-full">
         {/* Colonne gauche */}
         <div
@@ -69,56 +132,54 @@ const MenuHeader: FC<MenuHeaderProps> = ({
           style={{ width: SIDE_WIDTH, minWidth: SIDE_WIDTH }}
         >
           {user && (
-            <button
+            <motion.button
               ref={btnRef}
               type="button"
               aria-label="Aller à la table de jeu"
               disabled={phase !== 'idle'}
               onClick={handleClickPlay}
+              onHoverStart={() => setDiceHover(true)}
+              onHoverEnd={() => setDiceHover(false)}
               className={`
                 group relative inline-flex items-center justify-center
-                rounded-2xl
+                rounded-2xl border-2 border-pink-300/40
+                shadow-md shadow-pink-200/20
                 transition
-                focus:outline-none focus:ring-2 focus:ring-slate-400/30 focus:ring-offset-2 focus:ring-offset-black
-                overflow-hidden
-                ${phase === 'spin' ? 'animate-diceSpin' : ''}
-                ${phase !== 'idle' ? 'cursor-wait' : 'cursor-pointer'}
+                focus:outline-none focus:ring-2 focus:ring-pink-200/40 focus:ring-offset-2 focus:ring-offset-black
+                overflow-visible
+                ${phase === 'spin' ? 'cursor-wait' : ''}
+                ${phase === 'idle' ? 'cursor-pointer' : ''}
               `}
               style={{
                 width: DICE_SIZE,
                 height: DICE_SIZE,
-                background: 'rgba(20,26,40,0.18)',
-                backdropFilter: 'blur(6px)',
-                WebkitBackdropFilter: 'blur(6px)',
-                boxShadow:
-                  '0 0 0 1px rgba(180,200,255,0.10), 0 4px 20px -4px rgba(0,0,0,0.55), 0 0 22px -6px rgba(80,120,200,0.25)',
-                border: '1px solid rgba(160,190,255,0.18)'
+                background: diceHover || phase !== 'idle'
+                  ? 'radial-gradient(circle at 60% 35%, #ffe0f1 40%, #fff7 80%, #ffe2 100%)'
+                  : 'rgba(38,16,56,0.14)',
+                transition: "background 0.22s cubic-bezier(.77,.2,.56,1)",
+                boxShadow: diceHover
+                  ? "0 0 12px 2px #ffb0e366, 0 2px 20px 8px #fff2"
+                  : "0 0 4px 1px #ffe5fa44, 0 2px 8px 2px #fff2",
+                borderColor: diceHover ? "#ff90cc" : "#f7bbf7"
               }}
+              animate={diceHover ? { scale: 1.08, y: -3 }
+                                 : { scale: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 28 }}
             >
               <Dice6
                 className={`
-                  w-16 h-16 text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.7)]
+                  w-16 h-16 text-white drop-shadow-[0_2px_5px_rgba(255,70,190,0.45)]
                   transition-transform duration-400
-                  ${phase === 'idle' ? 'group-hover:scale-[1.12]' : ''}
                 `}
               />
-              {phase === 'idle' && (
-                <div
-                  className="absolute inset-0 rounded-2xl pointer-events-none opacity-0 group-hover:opacity-100 transition duration-400"
-                  style={{
-                    background:
-                      'radial-gradient(circle at 50% 50%, rgba(180,200,255,0.10), rgba(60,90,140,0.05) 55%, rgba(40,55,90,0.02) 75%, transparent 90%)'
-                  }}
-                />
-              )}
-            </button>
+            </motion.button>
           )}
         </div>
 
-        {/* Centre flexible (logo déjà centré en absolu, ceci absorbe l'espace) */}
+        {/* Centre flexible */}
         <div className="flex-1" />
 
-        {/* Colonne droite : bouton déconnexion calé à l'extrême droite */}
+        {/* Colonne droite */}
         <div
           className="flex items-center justify-end"
           style={{ width: SIDE_WIDTH, minWidth: SIDE_WIDTH }}
@@ -162,7 +223,6 @@ const MenuHeader: FC<MenuHeaderProps> = ({
   )
 }
 
-/* Hook conservé */
 function useLockBodyScroll(lock: boolean) {
   useLayoutEffect(() => {
     if (!lock) return

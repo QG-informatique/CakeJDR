@@ -10,6 +10,7 @@ import MenuHeader from './MenuHeader'
 import CharacterList from './CharacterList'
 import CharacterModal from './CharacterModal'
 import ProfileColorPicker from './ProfileColorPicker'
+import BackgroundWrapper from '@/components/ui/BackgroundWrapper'
 
 const PROFILE_KEY = 'jdr_profile'
 const SELECTED_KEY = 'selectedCharacterId'
@@ -30,13 +31,13 @@ export default function MenuAccueil() {
   const [modalOpen, setModalOpen]     = useState(false)
   const [draftChar, setDraftChar]     = useState<Character>(defaultPerso as unknown as Character)
   const [hydrated, setHydrated]       = useState(false)
+  const [loggingOut, setLoggingOut]   = useState(false)
+
+  // STATE POUR LE FOND
+  const [isCakeBackground, setIsCakeBackground] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-  /** Nouvel état pour masquer instantanément l’UI lors du logout */
-  const [loggingOut, setLoggingOut] = useState(false)
-
-  /* ---------------- Hydratation ---------------- */
   useEffect(() => {
     setHydrated(true)
     try {
@@ -59,7 +60,6 @@ export default function MenuAccueil() {
     } catch {}
   }, [])
 
-  /* --------- Sync inter‑onglets --------- */
   useEffect(() => {
     if (loggingOut) return
     const update = () => {
@@ -80,18 +80,15 @@ export default function MenuAccueil() {
     }
   }, [loggingOut])
 
-  /* --------- Persistence --------- */
   const saveCharacters = (chars: Character[]) => {
     localStorage.setItem('jdr_characters', JSON.stringify(chars))
     setCharacters(chars)
   }
 
-  /* --------- Logout (Option B) --------- */
   const handleLogout = () => {
     if (loggingOut) return
     setLoggingOut(true)
 
-    // Invalider le profil dans le storage
     try {
       const raw = localStorage.getItem(PROFILE_KEY)
       if (raw) {
@@ -102,17 +99,13 @@ export default function MenuAccueil() {
       }
     } catch {}
 
-    // Masquer immédiatement toute l’UI dépendante de user
     setUser(null)
     setSelectedIdx(null)
-
-    // Navigation au tick suivant (évite le double logo)
     requestAnimationFrame(() => {
       router.replace('/menu')
     })
   }
 
-  /* --------- Characters CRUD --------- */
   const handleNewCharacter = () => {
     if (!user) return
     setDraftChar({ ...defaultPerso, id: crypto.randomUUID(), owner: user.pseudo })
@@ -152,7 +145,6 @@ export default function MenuAccueil() {
     }
   }
 
-  /* --------- Import / Export --------- */
   const handleImportClick = () => fileInputRef.current?.click()
   const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -186,7 +178,6 @@ export default function MenuAccueil() {
     document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url)
   }
 
-  /* --------- Profile helpers --------- */
   const handleChangeColor = (color:string) => {
     if (!user) return
     setUser({ ...user, color })
@@ -228,110 +219,112 @@ export default function MenuAccueil() {
     }
   }
 
-  /* Pendant logout : écran neutre (rien de l'ancien UI ne reste) */
   if (loggingOut) {
     return <div className="w-full min-h-screen bg-transparent" />
   }
 
   return (
-    <div className="w-full min-h-screen relative text-white px-6 pb-8 flex flex-col max-w-7xl mx-auto bg-transparent overflow-hidden">
+    <>
+      {/* 1. BackgroundWrapper au plus haut niveau */}
+      <BackgroundWrapper isCakeBackground={isCakeBackground} />
+      {/* 2. Header avec le bouton qui toggle le fond */}
       {user && (
         <MenuHeader
           user={user}
           onLogout={handleLogout}
+          onToggleBackground={setIsCakeBackground}
+          isCakeBackground={isCakeBackground}
           tableRoute="/table"
         />
       )}
 
-      {!user ? (
-        <div className="flex-grow flex items-center justify-center">
-          <Login onLogin={() => {
-            try {
-              const prof = JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}')
-              setUser({ pseudo: prof.pseudo, isMJ: !!prof.isMJ, color: prof.color || '#1d4ed8' })
-            } catch {}
-          }} />
-        </div>
-      ) : (
-        <>
-          {/* Barre profil : pseudo centré + color picker ; bouton MJ compact à droite */}
-          <section
-            className="
-              mt-4 mb-6
-              rounded-xl backdrop-blur-md
-              bg-black/35
-              px-6 py-4
-              flex items-center w-full
-            "
-          >
-            {/* Spacer gauche pour équilibrer la largeur du bloc MJ à droite */}
-            <div className="w-[120px] shrink-0" />
+      <div className="w-full min-h-screen relative text-white px-6 pb-8 flex flex-col max-w-7xl mx-auto bg-transparent overflow-hidden">
+        {!user ? (
+          <div className="flex-grow flex items-center justify-center">
+            <Login onLogin={() => {
+              try {
+                const prof = JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}')
+                setUser({ pseudo: prof.pseudo, isMJ: !!prof.isMJ, color: prof.color || '#1d4ed8' })
+              } catch {}
+            }} />
+          </div>
+        ) : (
+          <>
+            {/* Barre profil */}
+            <section
+              className="
+                mt-4 mb-6
+                rounded-xl backdrop-blur-md
+                bg-black/35
+                px-6 py-4
+                flex items-center w-full
+              "
+            >
+              <div className="w-[120px] shrink-0" />
 
-            {/* Centre : pseudo + color picker */}
-            <div className="flex-1 flex items-center justify-center">
-              <span
-                className="font-bold text-xl tracking-wide select-none"
-                style={{ color: user.color, textShadow:'0 1px 2px rgba(0,0,0,0.5)' }}
-              >
-                {user.pseudo}
-              </span>
-              <span className="ml-4">
-                <ProfileColorPicker
-                  color={user.color}
-                  onChange={handleChangeColor}
-                />
-              </span>
-            </div>
-
-            {/* Droite : bouton MJ compact */}
-            <div className="shrink-0 flex items-center justify-end w-[120px]">
-  <button
-    onClick={handleToggleMJ}
-    title={user.isMJ ? 'Mode MJ (clique pour repasser joueur)' : 'Activer mode MJ'}
-    className={`
-      relative inline-flex items-center justify-center
-      w-14 h-10 rounded-md font-semibold text-sm
-      transition border
-      ${user.isMJ
-        ? 'bg-[#f472b6]/20 hover:bg-[#f472b6]/35 border-[#f472b6]/40'
-        : 'bg-gray-700/70 hover:bg-gray-600/70 border-gray-400/30'}
-    `}
-    style={{
-      boxShadow: user.isMJ
-        ? '0 0 0 1px rgba(244,114,182,0.14), 0 0 12px -2px #f472b630'
-        : '0 0 0 1px rgba(255,255,255,0.05), 0 2px 8px -2px rgba(0,0,0,0.55)'
-    }}
-              >
-                <span className="flex items-center gap-1">
-                  <Crown size={18} className="text-pink-400" />
-                  <span
-                    className={`
-                      block w-2.5 h-2.5 rounded-full transition
-                      ${user.isMJ
-                        ? 'bg-fuchsia-300 shadow-[0_0_6px_2px_rgba(217,70,239,0.5)]'
-                        : 'bg-gray-300/80'}
-                    `}
+              <div className="flex-1 flex items-center justify-center">
+                <span
+                  className="font-bold text-xl tracking-wide select-none"
+                  style={{ color: user.color, textShadow:'0 1px 2px rgba(0,0,0,0.5)' }}
+                >
+                  {user.pseudo}
+                </span>
+                <span className="ml-4">
+                  <ProfileColorPicker
+                    color={user.color}
+                    onChange={handleChangeColor}
                   />
                 </span>
-              </button>
-            </div>
-          </section>
+              </div>
 
-          {/* Liste des personnages */}
-          <div className="flex-1 min-h-0 rounded-xl backdrop-blur-md bg-black/20 p-5 overflow-auto">
-            <CharacterList
-              filtered={filteredCharacters}
-              selectedIdx={selectedIdx}
-              onSelect={handleSelectChar}
-              onEdit={handleEditCharacter}
-              onDelete={handleDeleteChar}
-              onNew={handleNewCharacter}
-              onImportClick={handleImportClick}
-              onExport={handleExportChar}
-              fileInputRef={fileInputRef}
-              onImportFile={handleImportFile}
-            />
-          </div>
+              <div className="shrink-0 flex items-center justify-end w-[120px]">
+                <button
+                  onClick={handleToggleMJ}
+                  title={user.isMJ ? 'Mode MJ (clique pour repasser joueur)' : 'Activer mode MJ'}
+                  className={`
+                    relative inline-flex items-center justify-center
+                    w-14 h-10 rounded-md font-semibold text-sm
+                    transition border
+                    ${user.isMJ
+                      ? 'bg-[#f472b6]/20 hover:bg-[#f472b6]/35 border-[#f472b6]/40'
+                      : 'bg-gray-700/70 hover:bg-gray-600/70 border-gray-400/30'}
+                  `}
+                  style={{
+                    boxShadow: user.isMJ
+                      ? '0 0 0 1px rgba(244,114,182,0.14), 0 0 12px -2px #f472b630'
+                      : '0 0 0 1px rgba(255,255,255,0.05), 0 2px 8px -2px rgba(0,0,0,0.55)'
+                  }}
+                >
+                  <span className="flex items-center gap-1">
+                    <Crown size={18} className="text-pink-400" />
+                    <span
+                      className={`
+                        block w-2.5 h-2.5 rounded-full transition
+                        ${user.isMJ
+                          ? 'bg-fuchsia-300 shadow-[0_0_6px_2px_rgba(217,70,239,0.5)]'
+                          : 'bg-gray-300/80'}
+                      `}
+                    />
+                  </span>
+                </button>
+              </div>
+            </section>
+
+            {/* Liste des personnages */}
+            <div className="flex-1 min-h-0 rounded-xl backdrop-blur-md bg-black/20 p-5 overflow-auto">
+              <CharacterList
+                filtered={filteredCharacters}
+                selectedIdx={selectedIdx}
+                onSelect={handleSelectChar}
+                onEdit={handleEditCharacter}
+                onDelete={handleDeleteChar}
+                onNew={handleNewCharacter}
+                onImportClick={handleImportClick}
+                onExport={handleExportChar}
+                fileInputRef={fileInputRef}
+                onImportFile={handleImportFile}
+              />
+            </div>
 
             <CharacterModal
               open={modalOpen}
@@ -340,8 +333,9 @@ export default function MenuAccueil() {
               onSave={handleSaveDraft}
               onClose={() => setModalOpen(false)}
             />
-        </>
-      )}
-    </div>
+          </>
+        )}
+      </div>
+    </>
   )
 }
