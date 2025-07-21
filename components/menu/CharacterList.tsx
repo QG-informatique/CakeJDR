@@ -9,7 +9,7 @@ export type Character = {
   classe?: string
   sexe?: string
   race?: string
-  [key: string]: any
+  [key: string]: unknown
 }
 
 interface Props {
