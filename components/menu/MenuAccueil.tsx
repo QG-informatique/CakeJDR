@@ -2,11 +2,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-
-import { Crown, LogOut } from 'lucide-react'
-
 import { Crown, LogOut, Dice6 } from 'lucide-react'
-
 import { useBackground } from '../context/BackgroundContext'
 import { useRouter } from 'next/navigation'
 import Login from '../login/Login'
@@ -29,7 +25,7 @@ type Character = {
 
 export default function MenuAccueil() {
   const router = useRouter()
-  const { setBackground } = useBackground()
+  const { background, cycleBackground } = useBackground() // <-- correction ici
 
   const [user, setUser] = useState<{ pseudo:string; isMJ:boolean; color:string } | null>(null)
   const [characters, setCharacters]   = useState<Character[]>([])
@@ -38,10 +34,7 @@ export default function MenuAccueil() {
   const [draftChar, setDraftChar]     = useState<Character>(defaultPerso as unknown as Character)
   const [hydrated, setHydrated]       = useState(false)
   const [loggingOut, setLoggingOut]   = useState(false)
-
   const [diceHover, setDiceHover]     = useState(false)
-
-
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -108,7 +101,7 @@ export default function MenuAccueil() {
 
     setUser(null)
     setSelectedIdx(null)
-    setBackground('rpg') // Reset to default background on logout
+    // Pour forcer le background à 'rpg', il faut modifier ton contexte pour exposer setBackground (voir remarque)
     requestAnimationFrame(() => {
       router.replace('/menu')
     })
@@ -240,13 +233,7 @@ export default function MenuAccueil() {
     <>
       {/* Header avec le bouton qui change de fond */}
       {user && (
-
-        <MenuHeader />
-
-        <MenuHeader
-          user={user}
-        />
-
+        <MenuHeader user={user} />
       )}
 
       <div className="w-full min-h-screen relative text-white px-6 pb-8 flex flex-col max-w-7xl mx-auto bg-transparent overflow-hidden">

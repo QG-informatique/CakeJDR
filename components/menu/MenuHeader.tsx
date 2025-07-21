@@ -1,11 +1,7 @@
 'use client'
 
-import { FC, useState, useRef, useLayoutEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { Dice6 } from 'lucide-react'
-
 import { FC, useState } from 'react'
-
+import { Dice6 } from 'lucide-react'
 import CakeLogo from '../ui/CakeLogo'
 import { motion, useAnimation, type Variants } from 'framer-motion'
 import { useBackground } from '../context/BackgroundContext'
@@ -17,10 +13,7 @@ export type User = {
 }
 
 interface MenuHeaderProps {
-
   user: User | null
-
-
   scale?: number
   topPadding?: number
   bottomPadding?: number
@@ -28,45 +21,22 @@ interface MenuHeaderProps {
 
 const SIDE_WIDTH  = 120
 const HEADER_PAD  = 16
-
-const DICE_SIZE   = 112
-
-
-
-const LOGO_SIZE = 160 // ← ajuste ici pour la taille finale du CakeLogo
+const LOGO_SIZE   = 160
 
 const MenuHeader: FC<MenuHeaderProps> = ({
-
   user,
-
   scale = 1,
   topPadding = 48,
   bottomPadding = 32,
-
-
-
-
-
-  
-
-
 }) => {
-  // Pas besoin de routeur ici, le bouton dés est déplacé ailleurs
-
-  // --- Animation gâteau ---
+  // Animation gâteau
   const [cakeAnim, setCakeAnim] = useState<'idle'|'walking'>('idle')
   const cakeControls = useAnimation()
 
-  const { cycleBackground } = useBackground()
-
-
-  const { cycleBackground } = useBackground()
-
+  // --- CORRECTION ICI : UN SEUL HOOK ---
   const { background, cycleBackground } = useBackground()
   const order = ['rpg', 'cake', 'banana'] as const
   const nextBackground = order[(order.indexOf(background) + 1) % order.length]
-
-
 
   const handleCakeClick = async () => {
     if (cakeAnim === 'walking') return
@@ -77,7 +47,7 @@ const MenuHeader: FC<MenuHeaderProps> = ({
     cycleBackground()
   }
 
-  // Animation CakeLogo : centre -> gauche -> droite -> centre
+  // Animation CakeLogo
   const cakeVariants: Variants = {
     idle: {
       x: 0,
@@ -94,7 +64,6 @@ const MenuHeader: FC<MenuHeaderProps> = ({
       transition: { duration: 1.35, times: [0, 0.28, 0.65, 1], ease: "easeInOut" }
     }
   }
-
 
   return (
     <header
@@ -139,7 +108,6 @@ const MenuHeader: FC<MenuHeaderProps> = ({
         {/* Centre flexible */}
         <div className="flex-1" />
       </div>
-
     </header>
   )
 }
