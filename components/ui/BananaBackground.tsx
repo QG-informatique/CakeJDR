@@ -7,81 +7,15 @@ import React, { useEffect, useState } from 'react'
  */
 function BananaIcon({ size = 60, rotate = 0 }: { size?: number; rotate?: number }) {
   return (
-    <svg
-      viewBox="0 0 70 48"
-      width={size}
-      height={(size * 48) / 70}
-      style={{ display: 'block', transform: `rotate(${rotate}deg)` }}
-    >
-      <defs>
-        {/* Dégradé principal jaune */}
-        <linearGradient id="bananaYellow" x1="12" y1="35" x2="60" y2="6" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#ffe87a" />
-          <stop offset="0.6" stopColor="#ffd93a" />
-          <stop offset="1" stopColor="#ffbe00" />
-        </linearGradient>
-      </defs>
-      {/* Corps de la banane, silhouette fine et courbée */}
-      <path
-        d="
-          M13 41 
-          Q8 31 16 23
-          Q30 8 53 11
-          Q63 13 62 24
-          Q61 33 50 36
-          Q34 41 22 43
-          Q16 44 13 41
-          Z"
-        fill="url(#bananaYellow)"
-        stroke="#b68916"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-      {/* Reflet blanc */}
-      <path
-        d="
-          M19 32 
-          Q31 19 54 17"
-        stroke="#fffde9"
-        strokeWidth="2"
-        strokeLinecap="round"
-        opacity="0.48"
-        fill="none"
-      />
-      {/* Ombre douce sous la banane */}
-      <path
-        d="
-          M19 42
-          Q28 41 48 37
-          Q55 35 59 29"
-        stroke="#eab308"
-        strokeWidth="2.6"
-        strokeLinecap="round"
-        opacity="0.32"
-        fill="none"
-      />
-      {/* Bout marron à gauche */}
-      <ellipse
-        cx="13"
-        cy="41"
-        rx="2.2"
-        ry="1.3"
-        fill="#965A1B"
-        stroke="#62411a"
-        strokeWidth="1"
-      />
-      {/* Tige à droite */}
-      <rect
-        x="61"
-        y="20"
-        width="4"
-        height="9"
-        rx="1.5"
-        fill="#A07C3B"
-        stroke="#62411a"
-        strokeWidth="1"
-      />
-    </svg>
+    <svg width="60px" height="60px" viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg">
+  <path d="M23.86,22.77C-1.41,43.27.53,91.37,18.94,115.59c21.9,28.81,80.15,48.65,124.37,0,4.08-4.49,0-9.31-4.2-7.5C82,132.69,30.84,62.59,36.52,27.94,38.63,15.11,44,5.77,33,5.77S23.86,22.77,23.86,22.77Z"
+        fill="#FFD700" stroke="#5C3B0B" strokeWidth="2"/>
+  <path d="M31.38,22.69a11.85,11.85,0,0,1-5.62-1.23c-.13-2.51,0-8.57,2.49-11.53a5.71,5.71,0,0,1,4.27-2.19c2,0,3.79.2,4.59,1.19,1.2,1.47.13,6.22-.95,10.84-.18.76-.35,1.66-.53,2.45A15.27,15.27,0,0,1,31.38,22.69Z"
+        fill="#FFE066" stroke="#5C3B0B" strokeWidth="1.5"/>
+  <path d="M24.31,21.66c2.31,2.28,11,1.91,12.84,1.25" fill="none" stroke="#5C3B0B" strokeWidth="1.5"/>
+  <path d="M36.67,23.92C18.59,20,16.67,72.13,34.5,95.17c24.71,31.92,69.5,40.83,109,14.1-1.17-1.34-2-3.06-4.24-2.24-13.63,5-46.42,14.64-79.4-21.55C34.29,57.43,36.67,32.83,36.67,23.92Z"
+        fill="#FFC700" stroke="#5C3B0B" strokeWidth="2"/>
+</svg>
   )
 }
 
