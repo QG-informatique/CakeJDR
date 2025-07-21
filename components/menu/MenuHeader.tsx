@@ -3,7 +3,8 @@ import { FC, useState, useRef, useLayoutEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Dice6, LogOut } from 'lucide-react'
 import CakeLogo from '../ui/CakeLogo'
-import { motion, useAnimation } from 'framer-motion'
+import { motion, useAnimation, type Variants } from 'framer-motion'
+import { useBackground } from '../context/BackgroundContext'
 
 export type User = {
   pseudo: string
@@ -17,8 +18,6 @@ interface MenuHeaderProps {
   scale?: number
   topPadding?: number
   bottomPadding?: number
-  onToggleBackground?: (toCake: boolean) => void
-  isCakeBackground?: boolean
 }
 
 const SIDE_WIDTH  = 120
@@ -34,8 +33,7 @@ const MenuHeader: FC<MenuHeaderProps> = ({
   scale = 1,
   topPadding = 48,
   bottomPadding = 32,
-  onToggleBackground,
-  isCakeBackground = false,
+  
 }) => {
   const router = useRouter()
   const [phase, setPhase] = useState<'idle' | 'spin'>('idle')
@@ -44,6 +42,9 @@ const MenuHeader: FC<MenuHeaderProps> = ({
   // --- Animation gâteau ---
   const [cakeAnim, setCakeAnim] = useState<'idle'|'walking'>('idle')
   const cakeControls = useAnimation()
+  const { background, cycleBackground } = useBackground()
+  const order = ['rpg', 'cake', 'banana'] as const
+  const nextBackground = order[(order.indexOf(background) + 1) % order.length]
 
   const handleCakeClick = async () => {
     if (cakeAnim === 'walking') return
@@ -51,11 +52,11 @@ const MenuHeader: FC<MenuHeaderProps> = ({
     await cakeControls.start('walking')
     setCakeAnim('idle')
     cakeControls.start('idle')
-    if (onToggleBackground) onToggleBackground(!isCakeBackground)
+    cycleBackground()
   }
 
   // Animation CakeLogo : centre -> gauche -> droite -> centre
-  const cakeVariants = {
+  const cakeVariants: Variants = {
     idle: {
       x: 0,
       y: 0,
@@ -108,18 +109,11 @@ const MenuHeader: FC<MenuHeaderProps> = ({
             cursor: 'pointer',
             userSelect: 'none'
           }}
-          title={isCakeBackground ? "Remettre les dés" : "Mettre les gâteaux en fond"}
         >
           <CakeLogo
             xl
             showText={false}
             className="pointer-events-none"
-            style={{
-              background: 'transparent',
-              display: 'block',
-              width: LOGO_SIZE,
-              height: LOGO_SIZE,
-            }}
           />
         </motion.div>
       </div>
