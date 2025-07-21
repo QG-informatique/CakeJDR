@@ -1,9 +1,9 @@
 'use client'
 import { createContext, useContext, useState, ReactNode } from 'react'
 
-export type BackgroundType = 'rpg' | 'cake' | 'banana'
+export type BackgroundType = 'rpg' | 'cake' | 'banana' | 'unicorn' | 'special' // ← Ajout "special"
 
-const cycleOrder: BackgroundType[] = ['rpg', 'cake', 'banana']
+const cycleOrder: BackgroundType[] = ['rpg', 'cake', 'banana', 'unicorn', 'special'] // ← Ajout "special" à la liste
 
 type BackgroundContextValue = {
   background: BackgroundType
