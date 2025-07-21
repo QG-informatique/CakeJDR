@@ -2,7 +2,8 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Crown } from 'lucide-react'
+import { Crown, LogOut } from 'lucide-react'
+import { useBackground } from '../context/BackgroundContext'
 import { useRouter } from 'next/navigation'
 import Login from '../login/Login'
 import { defaultPerso } from '../sheet/CharacterSheet'
@@ -23,6 +24,7 @@ type Character = {
 
 export default function MenuAccueil() {
   const router = useRouter()
+  const { setBackground } = useBackground()
 
   const [user, setUser] = useState<{ pseudo:string; isMJ:boolean; color:string } | null>(null)
   const [characters, setCharacters]   = useState<Character[]>([])
@@ -97,6 +99,7 @@ export default function MenuAccueil() {
 
     setUser(null)
     setSelectedIdx(null)
+    setBackground('rpg') // Reset to default background on logout
     requestAnimationFrame(() => {
       router.replace('/menu')
     })
@@ -225,7 +228,6 @@ export default function MenuAccueil() {
       {user && (
         <MenuHeader
           user={user}
-          onLogout={handleLogout}
         />
       )}
 
@@ -268,7 +270,7 @@ export default function MenuAccueil() {
                 </span>
               </div>
 
-              <div className="shrink-0 flex items-center justify-end w-[120px]">
+              <div className="shrink-0 flex items-center justify-end w-[120px] gap-3">
                 <button
                   onClick={handleToggleMJ}
                   title={user.isMJ ? 'Mode MJ (clique pour repasser joueur)' : 'Activer mode MJ'}
@@ -297,6 +299,13 @@ export default function MenuAccueil() {
                       `}
                     />
                   </span>
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="inline-flex items-center justify-center px-3 h-10 rounded-md bg-gradient-to-br from-slate-700/80 to-slate-800/80 hover:from-slate-600/80 hover:to-slate-700/80 font-semibold text-sm text-white shadow-lg shadow-black/40 transition focus:outline-none focus:ring-2 focus:ring-slate-400/30 focus:ring-offset-2 focus:ring-offset-black"
+                >
+                  <LogOut size={18} className="mr-1" />
+                  Déconnexion
                 </button>
               </div>
             </section>

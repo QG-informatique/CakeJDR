@@ -1,7 +1,7 @@
 'use client'
 import { FC, useState, useRef, useLayoutEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Dice6, LogOut } from 'lucide-react'
+import { Dice6 } from 'lucide-react'
 import CakeLogo from '../ui/CakeLogo'
 import { motion, useAnimation, type Variants } from 'framer-motion'
 import { useBackground } from '../context/BackgroundContext'
@@ -14,7 +14,6 @@ export type User = {
 
 interface MenuHeaderProps {
   user: User | null
-  onLogout?: () => void
   scale?: number
   topPadding?: number
   bottomPadding?: number
@@ -23,17 +22,15 @@ interface MenuHeaderProps {
 const SIDE_WIDTH  = 120
 const HEADER_PAD  = 16
 const DICE_SIZE   = 112
-const BUTTON_H    = 56
 
 const LOGO_SIZE = 160 // ← ajuste ici pour la taille finale du CakeLogo
 
 const MenuHeader: FC<MenuHeaderProps> = ({
   user,
-  onLogout,
   scale = 1,
   topPadding = 48,
   bottomPadding = 32,
-  
+
 }) => {
   const router = useRouter()
   const [phase, setPhase] = useState<'idle' | 'spin'>('idle')
@@ -42,9 +39,7 @@ const MenuHeader: FC<MenuHeaderProps> = ({
   // --- Animation gâteau ---
   const [cakeAnim, setCakeAnim] = useState<'idle'|'walking'>('idle')
   const cakeControls = useAnimation()
-  const { background, cycleBackground } = useBackground()
-  const order = ['rpg', 'cake', 'banana'] as const
-  const nextBackground = order[(order.indexOf(background) + 1) % order.length]
+  const { cycleBackground } = useBackground()
 
   const handleCakeClick = async () => {
     if (cakeAnim === 'walking') return
@@ -122,7 +117,7 @@ const MenuHeader: FC<MenuHeaderProps> = ({
       <div className="relative z-10 flex items-center w-full">
         {/* Colonne gauche */}
         <div
-          className="flex items-center justify-start"
+          className="flex items-center justify-start ml-4"
           style={{ width: SIDE_WIDTH, minWidth: SIDE_WIDTH }}
         >
           {user && (
@@ -172,34 +167,6 @@ const MenuHeader: FC<MenuHeaderProps> = ({
 
         {/* Centre flexible */}
         <div className="flex-1" />
-
-        {/* Colonne droite */}
-        <div
-          className="flex items-center justify-end"
-          style={{ width: SIDE_WIDTH, minWidth: SIDE_WIDTH }}
-        >
-          {user && onLogout && (
-            <button
-              onClick={onLogout}
-              disabled={phase !== 'idle'}
-              className={`
-                inline-flex items-center justify-center
-                px-6 rounded-md
-                bg-gradient-to-br from-slate-700/80 to-slate-800/80
-                hover:from-slate-600/80 hover:to-slate-700/80
-                font-semibold text-sm text-white
-                shadow-lg shadow-black/40
-                transition
-                focus:outline-none focus:ring-2 focus:ring-slate-400/30 focus:ring-offset-2 focus:ring-offset-black
-                ${phase !== 'idle' ? 'opacity-60 cursor-not-allowed' : ''}
-              `}
-              style={{ height: BUTTON_H }}
-            >
-              <LogOut size={18} className="mr-2" />
-              Déconnexion
-            </button>
-          )}
-        </div>
       </div>
 
       <style jsx>{`
