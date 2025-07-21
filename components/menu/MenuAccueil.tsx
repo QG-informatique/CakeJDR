@@ -3,7 +3,6 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Crown, LogOut, Dice6 } from 'lucide-react'
-import { useBackground } from '../context/BackgroundContext'
 import { useRouter } from 'next/navigation'
 import Login from '../login/Login'
 import { defaultPerso } from '../sheet/CharacterSheet'
@@ -25,8 +24,6 @@ type Character = {
 
 export default function MenuAccueil() {
   const router = useRouter()
-  const { background, cycleBackground } = useBackground() // <-- correction ici
-
   const [user, setUser] = useState<{ pseudo:string; isMJ:boolean; color:string } | null>(null)
   const [characters, setCharacters]   = useState<Character[]>([])
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null)

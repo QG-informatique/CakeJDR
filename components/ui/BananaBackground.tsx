@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react'
 /**
  * SVG d'une banane lisse et bien courbée, silhouette inspirée du pixel art fourni.
  */
-function BananaIcon({ size = 60, rotate = 0 }: { size?: number; rotate?: number }) {
+function BananaIcon() {
   return (
     <svg width="60px" height="60px" viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg">
   <path d="M23.86,22.77C-1.41,43.27.53,91.37,18.94,115.59c21.9,28.81,80.15,48.65,124.37,0,4.08-4.49,0-9.31-4.2-7.5C82,132.69,30.84,62.59,36.52,27.94,38.63,15.11,44,5.77,33,5.77S23.86,22.77,23.86,22.77Z"
@@ -25,11 +25,9 @@ export default function BananaBackground() {
   useEffect(() => {
     const arr: React.ReactElement[] = []
     for (let i = 0; i < 36; ++i) {
-      const size = Math.random() * 30 + 42 // tailles variées
       const left = Math.random() * 100
       const duration = 16 + Math.random() * 11
       const delay = -Math.random() * duration
-      const rotate = Math.random() * 28 - 14 // petite inclinaison aléatoire
       arr.push(
         <motion.div
           key={i}
@@ -42,7 +40,7 @@ export default function BananaBackground() {
             pointerEvents: 'none',
           }}
         >
-          <BananaIcon size={size} rotate={rotate} />
+          <BananaIcon />
         </motion.div>
       )
     }

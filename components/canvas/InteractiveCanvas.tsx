@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
+import Image from 'next/image'
 import YouTube from 'react-youtube'
 import type { YouTubePlayer } from 'youtube-player/dist/types'
 import { Trash2 } from 'lucide-react'
@@ -77,7 +78,7 @@ export default function InteractiveCanvas() {
     const min = drawMode === 'erase' ? ERASE_MIN : DRAW_MIN
     const max = drawMode === 'erase' ? ERASE_MAX : DRAW_MAX
     setBrushSize((bs) => Math.min(Math.max(bs, min), max))
-  }, [drawMode])
+  }, [ERASE_MAX, ERASE_MIN, drawMode])
 
   useEffect(() => {
     if (playerRef.current) {
@@ -391,11 +392,14 @@ export default function InteractiveCanvas() {
                 <Trash2 size={18} />
               </button>
             )}
-
-            <img
+            <Image
               src={img.src}
               alt="Dropped"
+              width={img.width}
+              height={img.height}
               className="w-full h-full object-contain pointer-events-none select-none rounded-2xl"
+              style={{ borderRadius: '1rem' }}
+              unoptimized
             />
             {drawMode === 'images' && (
               <>

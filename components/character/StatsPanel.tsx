@@ -33,9 +33,7 @@ const getPvColor = (pv: number, pvMax: number) => {
 
 type Props = {
   edit: boolean
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   perso: any
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onChange: (field: string, value: any) => void
 }
 
