@@ -96,8 +96,6 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
       className="h-[calc(100vh-120px)] overflow-y-auto pr-1"
       style={{ minHeight: 0, overflowX: 'hidden' }}
     >
-      <div className="font-semibold mb-2 text-base">Description</div>
-
       {/* Champs courts alignés */}
       {shortFields.map(({ key, label }) => (
         <div key={key} className="grid grid-cols-[120px_18px_1fr] mb-2 items-start">
