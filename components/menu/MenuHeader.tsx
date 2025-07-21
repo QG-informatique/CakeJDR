@@ -1,9 +1,8 @@
 'use client'
-import { FC, useState, useRef, useLayoutEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { Dice6, LogOut } from 'lucide-react'
+import { FC, useState } from 'react'
 import CakeLogo from '../ui/CakeLogo'
-import { motion, useAnimation } from 'framer-motion'
+import { motion, useAnimation, type Variants } from 'framer-motion'
+import { useBackground } from '../context/BackgroundContext'
 
 export type User = {
   pseudo: string
@@ -12,38 +11,38 @@ export type User = {
 }
 
 interface MenuHeaderProps {
-  user: User | null
-  onLogout?: () => void
   scale?: number
   topPadding?: number
   bottomPadding?: number
-  onToggleBackground?: (toCake: boolean) => void
-  isCakeBackground?: boolean
 }
 
 const SIDE_WIDTH  = 120
 const HEADER_PAD  = 16
-const DICE_SIZE   = 112
-const BUTTON_H    = 56
 
 const LOGO_SIZE = 160 // ← ajuste ici pour la taille finale du CakeLogo
 
 const MenuHeader: FC<MenuHeaderProps> = ({
-  user,
-  onLogout,
   scale = 1,
   topPadding = 48,
   bottomPadding = 32,
-  onToggleBackground,
-  isCakeBackground = false,
+
+
+
+  
+
 }) => {
-  const router = useRouter()
-  const [phase, setPhase] = useState<'idle' | 'spin'>('idle')
-  const btnRef = useRef<HTMLButtonElement | null>(null)
+  // Pas besoin de routeur ici, le bouton dés est déplacé ailleurs
 
   // --- Animation gâteau ---
   const [cakeAnim, setCakeAnim] = useState<'idle'|'walking'>('idle')
   const cakeControls = useAnimation()
+
+  const { cycleBackground } = useBackground()
+
+  const { background, cycleBackground } = useBackground()
+  const order = ['rpg', 'cake', 'banana'] as const
+  const nextBackground = order[(order.indexOf(background) + 1) % order.length]
+
 
   const handleCakeClick = async () => {
     if (cakeAnim === 'walking') return
@@ -51,11 +50,11 @@ const MenuHeader: FC<MenuHeaderProps> = ({
     await cakeControls.start('walking')
     setCakeAnim('idle')
     cakeControls.start('idle')
-    if (onToggleBackground) onToggleBackground(!isCakeBackground)
+    cycleBackground()
   }
 
   // Animation CakeLogo : centre -> gauche -> droite -> centre
-  const cakeVariants = {
+  const cakeVariants: Variants = {
     idle: {
       x: 0,
       y: 0,
@@ -72,18 +71,6 @@ const MenuHeader: FC<MenuHeaderProps> = ({
     }
   }
 
-  // --- Animation bouton dé ---
-  const [diceHover, setDiceHover] = useState(false)
-
-  const handleClickPlay = () => {
-    if (!user || phase !== 'idle') return
-    setPhase('spin')
-    setTimeout(() => {
-      router.push('/')
-    }, 260)
-  }
-
-  useLockBodyScroll(false)
 
   return (
     <header
@@ -108,18 +95,11 @@ const MenuHeader: FC<MenuHeaderProps> = ({
             cursor: 'pointer',
             userSelect: 'none'
           }}
-          title={isCakeBackground ? "Remettre les dés" : "Mettre les gâteaux en fond"}
         >
           <CakeLogo
             xl
             showText={false}
             className="pointer-events-none"
-            style={{
-              background: 'transparent',
-              display: 'block',
-              width: LOGO_SIZE,
-              height: LOGO_SIZE,
-            }}
           />
         </motion.div>
       </div>
@@ -128,108 +108,16 @@ const MenuHeader: FC<MenuHeaderProps> = ({
       <div className="relative z-10 flex items-center w-full">
         {/* Colonne gauche */}
         <div
-          className="flex items-center justify-start"
+          className="flex items-center justify-start ml-4"
           style={{ width: SIDE_WIDTH, minWidth: SIDE_WIDTH }}
-        >
-          {user && (
-            <motion.button
-              ref={btnRef}
-              type="button"
-              aria-label="Aller à la table de jeu"
-              disabled={phase !== 'idle'}
-              onClick={handleClickPlay}
-              onHoverStart={() => setDiceHover(true)}
-              onHoverEnd={() => setDiceHover(false)}
-              className={`
-                group relative inline-flex items-center justify-center
-                rounded-2xl border-2 border-pink-300/40
-                shadow-md shadow-pink-200/20
-                transition
-                focus:outline-none focus:ring-2 focus:ring-pink-200/40 focus:ring-offset-2 focus:ring-offset-black
-                overflow-visible
-                ${phase === 'spin' ? 'cursor-wait' : ''}
-                ${phase === 'idle' ? 'cursor-pointer' : ''}
-              `}
-              style={{
-                width: DICE_SIZE,
-                height: DICE_SIZE,
-                background: diceHover || phase !== 'idle'
-                  ? 'radial-gradient(circle at 60% 35%, #ffe0f1 40%, #fff7 80%, #ffe2 100%)'
-                  : 'rgba(38,16,56,0.14)',
-                transition: "background 0.22s cubic-bezier(.77,.2,.56,1)",
-                boxShadow: diceHover
-                  ? "0 0 12px 2px #ffb0e366, 0 2px 20px 8px #fff2"
-                  : "0 0 4px 1px #ffe5fa44, 0 2px 8px 2px #fff2",
-                borderColor: diceHover ? "#ff90cc" : "#f7bbf7"
-              }}
-              animate={diceHover ? { scale: 1.08, y: -3 }
-                                 : { scale: 1, y: 0 }}
-              transition={{ type: 'spring', stiffness: 320, damping: 28 }}
-            >
-              <Dice6
-                className={`
-                  w-16 h-16 text-white drop-shadow-[0_2px_5px_rgba(255,70,190,0.45)]
-                  transition-transform duration-400
-                `}
-              />
-            </motion.button>
-          )}
-        </div>
+        />
 
         {/* Centre flexible */}
         <div className="flex-1" />
-
-        {/* Colonne droite */}
-        <div
-          className="flex items-center justify-end"
-          style={{ width: SIDE_WIDTH, minWidth: SIDE_WIDTH }}
-        >
-          {user && onLogout && (
-            <button
-              onClick={onLogout}
-              disabled={phase !== 'idle'}
-              className={`
-                inline-flex items-center justify-center
-                px-6 rounded-md
-                bg-gradient-to-br from-slate-700/80 to-slate-800/80
-                hover:from-slate-600/80 hover:to-slate-700/80
-                font-semibold text-sm text-white
-                shadow-lg shadow-black/40
-                transition
-                focus:outline-none focus:ring-2 focus:ring-slate-400/30 focus:ring-offset-2 focus:ring-offset-black
-                ${phase !== 'idle' ? 'opacity-60 cursor-not-allowed' : ''}
-              `}
-              style={{ height: BUTTON_H }}
-            >
-              <LogOut size={18} className="mr-2" />
-              Déconnexion
-            </button>
-          )}
-        </div>
       </div>
 
-      <style jsx>{`
-        @keyframes diceSpin {
-          0% { transform: rotate3d(1,1,0,0deg) scale(1); }
-          40% { transform: rotate3d(.6,1,.2,200deg) scale(.9); }
-          70% { transform: rotate3d(.4,1,.3,310deg) scale(1.08); }
-          100% { transform: rotate3d(.3,1,.4,360deg) scale(1.03); }
-        }
-        .animate-diceSpin {
-          animation: diceSpin 0.55s cubic-bezier(.55,.3,.3,1);
-        }
-      `}</style>
     </header>
   )
-}
-
-function useLockBodyScroll(lock: boolean) {
-  useLayoutEffect(() => {
-    if (!lock) return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = prev }
-  }, [lock])
 }
 
 export default MenuHeader

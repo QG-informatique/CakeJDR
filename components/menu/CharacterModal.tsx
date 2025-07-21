@@ -5,6 +5,26 @@ import StatsPanel from "../character/StatsPanel"
 import EquipPanel from "../character/EquipPanel"
 import DescriptionPanel from "../character/DescriptionPanel"
 import CompetencesPanel from "../character/CompetencesPanel" // ← Le bon nom !
+type Competence = { nom: string; type: string; effets: string; degats?: string }
+type Objet = { nom: string; quantite: number }
+type DescriptionValues = {
+  race: string
+  classe: string
+  sexe: string
+  age: string | number
+  taille: string
+  poids: string
+  capacite_raciale: string
+  bourse: string | number
+  traits: string
+  ideal: string
+  obligations: string
+  failles: string
+  avantages: string
+  background: string
+  champs_perso: { label: string; value: string }[]
+  [key: string]: unknown
+}
 
 interface Props {
   open: boolean
@@ -23,7 +43,7 @@ const CharacterModal: FC<Props> = ({
 }) => {
   if (!open || !character) return null
 
-  const handlePanelChange = (field: string, value: any) => {
+  const handlePanelChange = (field: string, value: unknown) => {
     onUpdate({ ...character, [field]: value })
   }
 
@@ -76,18 +96,18 @@ const CharacterModal: FC<Props> = ({
                 </h3>
                 <EquipPanel
                   edit={true}
-                  armes={character.armes || ""}
-                  degats_armes={character.degats_armes || ""}
-                  armure={character.armure || ""}
-                  modif_armure={character.modif_armure ?? 0}
-                  objets={character.objets || []}
+                  armes={(character.armes as string) || ''}
+                  degats_armes={(character.degats_armes as string) || ''}
+                  armure={(character.armure as string) || ''}
+                  modif_armure={(character.modif_armure as number) ?? 0}
+                  objets={(character.objets as Objet[]) || []}
                   onChange={handlePanelChange}
                   onAddObj={(obj) => {
-                    const objets = [...(character.objets || []), obj]
+                    const objets = [...((character.objets as Objet[]) || []), obj]
                     handlePanelChange("objets", objets)
                   }}
                   onDelObj={(idx) => {
-                    const objets = (character.objets || []).filter((_, i) => i !== idx)
+                    const objets = ((character.objets as Objet[]) || []).filter((_, i) => i !== idx)
                     handlePanelChange("objets", objets)
                   }}
                 />
@@ -98,14 +118,14 @@ const CharacterModal: FC<Props> = ({
                   Compétences
                 </h3>
                 <CompetencesPanel
-                  competences={character.competences || []}
+                  competences={(character.competences as Competence[]) || []}
                   edit={true}
                   onAdd={(comp) => {
-                    const nv = [...(character.competences || []), comp]
+                    const nv = [...((character.competences as Competence[]) || []), comp]
                     handlePanelChange("competences", nv)
                   }}
                   onDelete={(idx) => {
-                    const nv = (character.competences || []).filter((_, i) => i !== idx)
+                    const nv = ((character.competences as Competence[]) || []).filter((_, i) => i !== idx)
                     handlePanelChange("competences", nv)
                   }}
                 />
@@ -120,26 +140,26 @@ const CharacterModal: FC<Props> = ({
                 Description
               </h3>
               <DescriptionPanel
-                values={character}
+                values={character as unknown as DescriptionValues}
                 edit={true}
                 onChange={handlePanelChange}
-                champsPerso={character.champs_perso ?? []}
+                champsPerso={(character.champs_perso as { label: string; value: string }[]) ?? []}
                 onAddChamp={champ =>
                   handlePanelChange(
                     "champs_perso",
-                    [...(character.champs_perso ?? []), champ]
+                    [...((character.champs_perso as { label: string; value: string }[]) ?? []), champ]
                   )
                 }
                 onDelChamp={i =>
                   handlePanelChange(
                     "champs_perso",
-                    (character.champs_perso ?? []).filter((_, idx) => idx !== i)
+                    ((character.champs_perso as { label: string; value: string }[]) ?? []).filter((_, idx) => idx !== i)
                   )
                 }
                 onUpdateChamp={(i, champ) =>
                   handlePanelChange(
                     "champs_perso",
-                    (character.champs_perso ?? []).map((c, idx) =>
+                    ((character.champs_perso as { label: string; value: string }[]) ?? []).map((c, idx) =>
                       idx === i ? champ : c
                     )
                   )
