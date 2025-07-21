@@ -1,7 +1,6 @@
 'use client'
 
 import { FC, useState } from 'react'
-import { Dice6 } from 'lucide-react'
 import CakeLogo from '../ui/CakeLogo'
 import { motion, useAnimation, type Variants } from 'framer-motion'
 import { useBackground } from '../context/BackgroundContext'
@@ -24,7 +23,6 @@ const HEADER_PAD  = 16
 const LOGO_SIZE   = 160
 
 const MenuHeader: FC<MenuHeaderProps> = ({
-  user,
   scale = 1,
   topPadding = 48,
   bottomPadding = 32,
@@ -34,10 +32,8 @@ const MenuHeader: FC<MenuHeaderProps> = ({
   const cakeControls = useAnimation()
 
   // --- CORRECTION ICI : UN SEUL HOOK ---
-  const { background, cycleBackground } = useBackground()
-  const order = ['rpg', 'cake', 'banana'] as const
-  const nextBackground = order[(order.indexOf(background) + 1) % order.length]
-
+  const { cycleBackground } = useBackground()
+  
   const handleCakeClick = async () => {
     if (cakeAnim === 'walking') return
     setCakeAnim('walking')

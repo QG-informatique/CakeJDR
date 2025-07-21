@@ -27,7 +27,6 @@ type DescriptionValues = {
 type DescriptionPanelProps = {
   edit: boolean,
   values: DescriptionValues,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onChange: (field: string, value: any) => void,
   champsPerso: CustomField[],
   onAddChamp: (champ: CustomField) => void,
@@ -111,7 +110,6 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
           <span className="text-right font-bold">:</span>
           <div className="flex-1 min-w-0 break-words pl-3">
               {edit ? (
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 <input
                   value={(values as any)[key] || ''}
                   onChange={e => onChange(key, e.target.value)}
@@ -119,7 +117,6 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
                   style={{ minWidth: 0 }}
                 />
               ) : (
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 <span className="text-sm whitespace-pre-line break-words w-full">{(values as any)[key]}</span>
               )}
           </div>
@@ -161,7 +158,6 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
           <span className="text-right font-bold">:</span>
           <div className="flex-1 min-w-0 break-words pl-3">
               {edit ? (
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 <textarea
                   value={(values as any)[key] || ''}
                   onChange={e => onChange(key, e.target.value)}
@@ -169,7 +165,6 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
                   style={{ minWidth: 0, overflowWrap: 'break-word' }}
                 />
               ) : (
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               <LimiteChamp value={(values as any)[key] || ''} />
               )}
           </div>

@@ -1,5 +1,4 @@
 import { FC } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import CakeLogo from '../ui/CakeLogo'
 
@@ -24,9 +23,7 @@ const CharacterSheetHeader: FC<Props> = ({
   setTab,
   TABS,
   children,
-  logoOnly = false
 }) => {
-  const router = useRouter()
 
   const childrenArray = Array.isArray(children) ? children : [children]
 
