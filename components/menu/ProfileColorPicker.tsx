@@ -1,22 +1,12 @@
 'use client'
 import { FC, useState, useRef, useEffect } from 'react'
+import CustomColorPicker from './CustomColorPicker' // <- ajuste le chemin selon ton projet
+import Portal from '../Portal'
 
 const COLORS = [
-  '#f472b6', // Rose cake
-  '#b6fcd5', // Vert pastel
-  '#a2d8fa', // Bleu ciel
-  '#b4c5e4', // Bleu lavande
-  '#ffeabf', // Jaune pastel
-  '#7ee4e6', // Turquoise pastel (nouveau)
-  '#fab7b7', // Rouge pastel (nouveau)
-  '#e0bbff', // Violet pastel
-  '#d3d3d3', // Gris pastel
-  '#202124', // Noir mat
+  '#f472b6', '#b6fcd5', '#a2d8fa', '#b4c5e4', '#ffeabf',
+  '#7ee4e6', '#fab7b7', '#e0bbff', '#d3d3d3', '#202124',
 ]
-
-
-
-
 
 interface Props {
   color: string
@@ -26,14 +16,19 @@ interface Props {
 
 const ProfileColorPicker: FC<Props> = ({ color, onChange, size = 28 }) => {
   const [open, setOpen] = useState(false)
+  const [customMode, setCustomMode] = useState(false)
   const wrapRef = useRef<HTMLDivElement | null>(null)
-  const inputRef = useRef<HTMLInputElement | null>(null)
+  const [showModal, setShowModal] = useState(false)
+
 
   useEffect(() => {
     if (!open) return
     const close = (e: MouseEvent) => {
       if (!wrapRef.current) return
-      if (!wrapRef.current.contains(e.target as Node)) setOpen(false)
+      if (!wrapRef.current.contains(e.target as Node)) {
+        setOpen(false)
+        setCustomMode(false)
+      }
     }
     window.addEventListener('mousedown', close)
     return () => window.removeEventListener('mousedown', close)
@@ -44,6 +39,7 @@ const ProfileColorPicker: FC<Props> = ({ color, onChange, size = 28 }) => {
   const handlePick = (c: string) => {
     onChange(c)
     setOpen(false)
+    setCustomMode(false)
   }
 
   return (
@@ -89,8 +85,7 @@ const ProfileColorPicker: FC<Props> = ({ color, onChange, size = 28 }) => {
         className={`
           absolute top-1/2 left-full
           -translate-y-1/2 ml-2
-          flex items-center gap-2
-          transition-all duration-250
+          transition-all duration-250 z-50
           ${open
             ? 'opacity-100 translate-x-0 pointer-events-auto'
             : 'opacity-0 -translate-x-2 pointer-events-none'}
@@ -100,11 +95,14 @@ const ProfileColorPicker: FC<Props> = ({ color, onChange, size = 28 }) => {
           background: open ? 'rgba(25,30,45,0.55)' : 'transparent',
           backdropFilter: open ? 'blur(6px)' : 'none',
           border: open ? '1px solid rgba(180,200,255,0.18)' : '1px solid transparent',
-          borderRadius: 9999,
-          boxShadow: open ? '0 4px 18px -6px rgba(0,0,0,0.55)' : 'none'
+          borderRadius: 16,
+          boxShadow: open ? '0 4px 18px -6px rgba(0,0,0,0.55)' : 'none',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px'
         }}
       >
-        {COLORS.map(c => {
+        {!customMode && COLORS.map(c => {
           const active = color.toLowerCase() === c.toLowerCase()
           return (
             <button
@@ -123,28 +121,49 @@ const ProfileColorPicker: FC<Props> = ({ color, onChange, size = 28 }) => {
           )
         })}
 
-        {/* Bouton couleur personnalisée */}
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          className="
-            w-6 h-6 rounded-full border border-dashed border-white/40
-            text-[11px] font-bold text-white/70
-            hover:border-white/70 hover:text-white
-            flex items-center justify-center
-            transition
-          "
-          title="Couleur personnalisée"
-        >
-          +
-        </button>
-        <input
-          ref={inputRef}
-          type="color"
-          value={color}
-          onChange={e => handlePick(e.target.value)}
-          className="hidden"
-        />
+        {!customMode && (
+          <button
+            type="button"
+            onClick={() => setShowModal(true)}
+            className="
+    w-6 h-6 rounded-full border border-dashed border-white/40
+    text-[11px] font-bold text-white/70
+    hover:border-white/70 hover:text-white
+    flex items-center justify-center transition
+  "
+            title="Couleur personnalisée"
+          >
+            +
+          </button>
+
+        )}
+
+        {showModal && (
+          <Portal>
+            <div
+              className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            >
+              <div className="relative z-[100000]">
+                <CustomColorPicker
+                  color={color}
+                  onChange={(hex) => {
+                    handlePick(hex)
+                    setShowModal(false)
+                  }}
+                />
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="absolute -top-3 -right-3 bg-white text-black rounded-full w-6 h-6 font-bold shadow"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          </Portal>
+        )}
+
+
+
       </div>
     </div>
   )
