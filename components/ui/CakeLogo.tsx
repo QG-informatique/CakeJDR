@@ -34,10 +34,11 @@ export default function CakeLogo({
   const textSize = xl ? 'text-5xl' : huge ? 'text-4xl' : 'text-3xl'
 
   return (
-    <span className={`inline-flex items-center gap-3 ${className}`}>
-      <Cake className={`${size} text-pink-400`} />
+    <span className={`inline-flex items-center gap-3 bg-transparent ${className}`}>
+      {/* On force le fond transparent de l’icône */}
+      <Cake className={`${size} text-pink-400 bg-transparent`} />
       {showText && (
-        <span className={`${titan.className} text-white drop-shadow ${textSize}`}>
+        <span className={`${titan.className} text-white drop-shadow bg-transparent ${textSize}`}>
           Cake&nbsp;JDR
         </span>
       )}

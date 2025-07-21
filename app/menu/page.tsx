@@ -3,11 +3,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Login from '@/components/login/Login'
-import RpgBackground from '@/components/ui/RpgBackground'
 
-/**
- * Variants framer-motion pour la scène globale
- */
 const containerVariants = {
   enter: {
     opacity: 0,
@@ -36,10 +32,6 @@ const containerVariants = {
   }
 }
 
-/**
- * Overlay radial optionnel pendant la sortie (donne une sensation de "focalisation").
- * Tu peux le désactiver en retirant <motion.div ...> plus bas.
- */
 const radialVariants = {
   enter: { opacity: 0 },
   visible: { opacity: 0, transition: { duration: 0.4 } },
@@ -59,31 +51,25 @@ export default function MenuPage() {
     setLeaving(true)
   }
 
-  // Lecture éventuelle du profil
   useEffect(() => {
-    setMounted(true)                // déclenche l'animation d'entrée
+    setMounted(true)
     try {
       const raw = localStorage.getItem('jdr_profile')
       if (raw && JSON.parse(raw).loggedIn) {
-        // On joue malgré tout la petite anim avant de partir
         setTimeout(() => {
           handleLogin()
-        }, 120) // petit délai pour voir le fondu initial
+        }, 120)
       }
     } catch {}
   }, []) // eslint-disable-line
 
   return (
     <div className="relative h-screen w-full overflow-hidden">
-      {/* Fond animé */}
-      <div className="absolute inset-0 -z-20">
-        <RpgBackground />
-      </div>
+      {/* Plus de BackgroundWrapper ici */}
 
       {/* Overlay de bruit/grain subtil (optionnel) */}
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-[0.15] mix-blend-overlay bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.08),transparent_60%)]" />
 
-      {/* AnimatePresence pour gérer entrée & sortie */}
       <AnimatePresence mode="wait">
         {!leaving && mounted && (
           <motion.div
@@ -104,7 +90,6 @@ export default function MenuPage() {
         )}
       </AnimatePresence>
 
-      {/* Radial overlay pendant la sortie (facultatif) */}
       <AnimatePresence>
         {leaving && (
           <motion.div
@@ -112,7 +97,7 @@ export default function MenuPage() {
             className="pointer-events-none absolute inset-0"
             variants={radialVariants}
             initial="enter"
-            animate="exit"      // on saute directement à 'exit' pour qu'il apparaisse pendant la sortie
+            animate="exit"
             exit="exit"
             style={{
               background:
