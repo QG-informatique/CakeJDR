@@ -26,13 +26,23 @@ const MenuHeader: FC<MenuHeaderProps> = ({
   topPadding = 48,
   bottomPadding = 32,
 
+
+
+  
+
 }) => {
   // Pas besoin de routeur ici, le bouton dés est déplacé ailleurs
 
   // --- Animation gâteau ---
   const [cakeAnim, setCakeAnim] = useState<'idle'|'walking'>('idle')
   const cakeControls = useAnimation()
+
   const { cycleBackground } = useBackground()
+
+  const { background, cycleBackground } = useBackground()
+  const order = ['rpg', 'cake', 'banana'] as const
+  const nextBackground = order[(order.indexOf(background) + 1) % order.length]
+
 
   const handleCakeClick = async () => {
     if (cakeAnim === 'walking') return

@@ -34,7 +34,10 @@ export default function MenuAccueil() {
   const [draftChar, setDraftChar]     = useState<Character>(defaultPerso as unknown as Character)
   const [hydrated, setHydrated]       = useState(false)
   const [loggingOut, setLoggingOut]   = useState(false)
+
   const [diceHover, setDiceHover]     = useState(false)
+
+
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -233,7 +236,14 @@ export default function MenuAccueil() {
     <>
       {/* Header avec le bouton qui change de fond */}
       {user && (
+
         <MenuHeader />
+
+        <MenuHeader
+          user={user}
+          onLogout={handleLogout}
+        />
+
       )}
 
       <div className="w-full min-h-screen relative text-white px-6 pb-8 flex flex-col max-w-7xl mx-auto bg-transparent overflow-hidden">
