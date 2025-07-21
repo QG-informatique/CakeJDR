@@ -5,7 +5,7 @@ import Portal from '../Portal'
 
 const COLORS = [
   '#f472b6', '#b6fcd5', '#a2d8fa', '#b4c5e4', '#ffeabf',
-  '#7ee4e6', '#fab7b7', '#e0bbff', '#d3d3d3', '#202124',
+  '#7ee4e6', '#fab7b7', '#e0bbff',
 ]
 
 interface Props {
