@@ -4,10 +4,10 @@ import CakeLogo from '../ui/CakeLogo'
 import React, { useEffect, useState } from 'react'
 
 export default function CakeBackground() {
-  const [cakes, setCakes] = useState<JSX.Element[]>([])
+  const [cakes, setCakes] = useState<React.ReactElement[]>([])
 
   useEffect(() => {
-    const arr: JSX.Element[] = []
+    const arr: React.ReactElement[] = []
     for (let i = 0; i < 40; ++i) {
       const size = Math.random() * 38 + 30
       const left = Math.random() * 100
@@ -21,12 +21,9 @@ export default function CakeBackground() {
           transition={{ duration, repeat: Infinity, delay, ease: 'linear' }}
           style={{ position: 'absolute', left: `${left}vw` }}
         >
-          <CakeLogo
-            xl
-            showText={false}
-            className="text-pink-300"
-            style={{ width: size, height: size, opacity: 0.85, filter: "drop-shadow(0 2px 8px #fff4)" }}
-          />
+          <div style={{ width: size, height: size, opacity: 0.85, filter: 'drop-shadow(0 2px 8px #fff4)' }}>
+            <CakeLogo xl showText={false} className="text-pink-300" />
+          </div>
         </motion.div>
       )
     }
