@@ -158,53 +158,56 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
             ))}
             <div ref={endRef} />
           </div>
-          <div className="mt-2 flex items-center">
+            <div className="mt-2 flex items-center w-full max-w-full overflow-hidden">
             <input
               type="text"
               placeholder="Votre message..."
               value={inputValue}
               onChange={e => setInputValue(e.target.value)}
               onKeyDown={e => {
-                if (e.key === 'Enter') sendMessage()
+              if (e.key === 'Enter') sendMessage()
               }}
               className="
-                flex-1
-                border-none
-                px-3 py-2
-                rounded-l-xl
-                text-white
-                bg-black/30
-                backdrop-blur-[2px]
-                focus:outline-none
-                transition
-                shadow
-                placeholder:text-white/50
-                text-base
+              flex-1
+              border-none
+              px-3 py-2
+              rounded-l-xl
+              text-white
+              bg-black/30
+              backdrop-blur-[2px]
+              focus:outline-none
+              transition
+              shadow
+              placeholder:text-white/50
+              text-base
+              min-w-0
               "
               style={{ minHeight: 44 }}
             />
             <button
               onClick={sendMessage}
               className="
-                rounded-r-xl
-                px-5 py-2
-                text-base
-                font-semibold
-                shadow
-                border-none
-                bg-black/30
-                text-white/90
-                hover:bg-emerald-600 hover:text-white
-                transition
-                duration-100
-                flex items-center justify-center
-                min-h-[44px]
+              rounded-r-xl
+              px-5 py-2
+              text-base
+              font-semibold
+              shadow
+              border-none
+              bg-black/30
+              text-white/90
+              hover:bg-emerald-600 hover:text-white
+              transition
+              duration-100
+              flex items-center justify-center
+              min-h-[44px]
+              max-w-[120px]
+              truncate
               "
               style={{ minHeight: 44 }}
             >
               Envoyer
             </button>
-          </div>
+            </div>
         </div>
       </div>
     </aside>
