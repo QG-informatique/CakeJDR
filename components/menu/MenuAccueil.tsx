@@ -2,7 +2,11 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+
 import { Crown, LogOut } from 'lucide-react'
+
+import { Crown, LogOut, Dice6 } from 'lucide-react'
+
 import { useBackground } from '../context/BackgroundContext'
 import { useRouter } from 'next/navigation'
 import Login from '../login/Login'
@@ -14,6 +18,7 @@ import ProfileColorPicker from './ProfileColorPicker'
 
 const PROFILE_KEY = 'jdr_profile'
 const SELECTED_KEY = 'selectedCharacterId'
+const DICE_SIZE = 44
 
 type Character = {
   id: string | number
@@ -33,6 +38,10 @@ export default function MenuAccueil() {
   const [draftChar, setDraftChar]     = useState<Character>(defaultPerso as unknown as Character)
   const [hydrated, setHydrated]       = useState(false)
   const [loggingOut, setLoggingOut]   = useState(false)
+
+  const [diceHover, setDiceHover]     = useState(false)
+
+
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -103,6 +112,11 @@ export default function MenuAccueil() {
     requestAnimationFrame(() => {
       router.replace('/menu')
     })
+  }
+
+  // Accès rapide à la table de jeu depuis la barre profil
+  const handlePlay = () => {
+    router.push('/')
   }
 
   const handleNewCharacter = () => {
@@ -226,9 +240,13 @@ export default function MenuAccueil() {
     <>
       {/* Header avec le bouton qui change de fond */}
       {user && (
+
+        <MenuHeader />
+
         <MenuHeader
           user={user}
         />
+
       )}
 
       <div className="w-full min-h-screen relative text-white px-6 pb-8 flex flex-col max-w-7xl mx-auto bg-transparent overflow-hidden">
@@ -253,7 +271,30 @@ export default function MenuAccueil() {
                 flex items-center w-full
               "
             >
-              <div className="w-[120px] shrink-0" />
+              <div className="shrink-0 flex items-center justify-start w-[120px]">
+                <button
+                  type="button"
+                  aria-label="Aller à la table de jeu"
+                  onClick={handlePlay}
+                  onMouseEnter={() => setDiceHover(true)}
+                  onMouseLeave={() => setDiceHover(false)}
+                  className="relative inline-flex items-center justify-center rounded-md border-2 border-pink-300/40 shadow-md shadow-pink-200/20 transition focus:outline-none focus:ring-2 focus:ring-pink-200/40 focus:ring-offset-2 focus:ring-offset-black"
+                  style={{
+                    width: DICE_SIZE,
+                    height: DICE_SIZE,
+                    background: diceHover
+                      ? 'radial-gradient(circle at 60% 35%, #ffe0f1 40%, #fff7 80%, #ffe2 100%)'
+                      : 'rgba(38,16,56,0.14)',
+                    boxShadow: diceHover
+                      ? '0 0 12px 2px #ffb0e366, 0 2px 20px 8px #fff2'
+                      : '0 0 4px 1px #ffe5fa44, 0 2px 8px 2px #fff2',
+                    borderColor: diceHover ? '#ff90cc' : '#f7bbf7',
+                    transition: 'background 0.22s cubic-bezier(.77,.2,.56,1)'
+                  }}
+                >
+                  <Dice6 className="w-5 h-5 text-white drop-shadow-[0_2px_5px_rgba(255,70,190,0.45)]" />
+                </button>
+              </div>
 
               <div className="flex-1 flex items-center justify-center">
                 <span

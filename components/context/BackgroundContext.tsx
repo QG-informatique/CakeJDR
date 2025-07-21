@@ -8,7 +8,14 @@ const cycleOrder: BackgroundType[] = ['rpg', 'cake', 'banana']
 type BackgroundContextValue = {
   background: BackgroundType
   cycleBackground: () => void
+
   setBackground: (bg: BackgroundType) => void
+
+
+  setBackground: (bg: BackgroundType) => void
+
+
+
 }
 
 const BackgroundContext = createContext<BackgroundContextValue | undefined>(undefined)
@@ -24,7 +31,15 @@ export function BackgroundProvider({ children }: { children: ReactNode }) {
   }
 
   return (
+
     <BackgroundContext.Provider value={{ background, cycleBackground, setBackground }}>
+
+
+    <BackgroundContext.Provider value={{ background, cycleBackground, setBackground }}>
+
+    <BackgroundContext.Provider value={{ background, cycleBackground }}>
+
+
       {children}
     </BackgroundContext.Provider>
   )
