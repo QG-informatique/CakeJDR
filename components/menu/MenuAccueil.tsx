@@ -32,11 +32,13 @@ export default function MenuAccueil() {
   const [hydrated, setHydrated]       = useState(false)
   const [loggingOut, setLoggingOut]   = useState(false)
   const [diceHover, setDiceHover]     = useState(false)
+  const [showDice, setShowDice]       = useState(false) // hide play button until hydrated
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     setHydrated(true)
+    setShowDice(true) // show play button only after initial mount
     try {
       const raw = localStorage.getItem(PROFILE_KEY)
       if (raw) {
@@ -104,7 +106,7 @@ export default function MenuAccueil() {
   }
 
   const handlePlay = () => {
-    router.push('/')
+    router.push('/rooms') // redirect to rooms list before entering a table
   }
 
   const handleNewCharacter = () => {
@@ -254,28 +256,30 @@ export default function MenuAccueil() {
               "
             >
               <div className="shrink-0 flex items-center justify-start w-[120px]">
-                {/* MODIF bouton Dé : hover = scale + rotate (moins de rose flashy) */}
-                <button
-                  type="button"
-                  aria-label="Aller à la table de jeu"
-                  onClick={handlePlay}
-                  onMouseEnter={() => setDiceHover(true)}
-                  onMouseLeave={() => setDiceHover(false)}
-                  className="relative inline-flex items-center justify-center rounded-md border-2 border-pink-300/40 shadow-md shadow-pink-200/20 transition focus:outline-none focus:ring-2 focus:ring-pink-200/40 focus:ring-offset-2 focus:ring-offset-black"
-                  style={{
-                    width: DICE_SIZE,
-                    height: DICE_SIZE,
-                    background: 'rgba(38,16,56,0.14)',
-                    borderColor: diceHover ? '#ff90cc' : '#f7bbf7',
-                    boxShadow: diceHover
-                      ? '0 0 12px 2px #ffb0e366, 0 2px 20px 8px #fff2'
-                      : '0 0 4px 1px #ffe5fa44, 0 2px 8px 2px #fff2',
-                    transition: 'transform 0.18s cubic-bezier(.77,.2,.56,1), box-shadow 0.18s cubic-bezier(.77,.2,.56,1)',
-                    transform: diceHover ? 'scale(1.15) rotate(-7deg)' : 'scale(1) rotate(0deg)'
-                  }}
-                >
-                  <Dice6 className="w-5 h-5 text-white drop-shadow-[0_2px_5px_rgba(255,70,190,0.45)]" />
-                </button>
+                {/* Bouton pour accéder à la liste des salles. Caché lors du premier rendu */}
+                {showDice && (
+                  <button
+                    type="button"
+                    aria-label="Aller à la table de jeu"
+                    onClick={handlePlay}
+                    onMouseEnter={() => setDiceHover(true)}
+                    onMouseLeave={() => setDiceHover(false)}
+                    className="relative inline-flex items-center justify-center rounded-md border-2 border-pink-300/40 shadow-md shadow-pink-200/20 transition focus:outline-none focus:ring-2 focus:ring-pink-200/40 focus:ring-offset-2 focus:ring-offset-black"
+                    style={{
+                      width: DICE_SIZE,
+                      height: DICE_SIZE,
+                      background: 'rgba(38,16,56,0.14)',
+                      borderColor: diceHover ? '#ff90cc' : '#f7bbf7',
+                      boxShadow: diceHover
+                        ? '0 0 12px 2px #ffb0e366, 0 2px 20px 8px #fff2'
+                        : '0 0 4px 1px #ffe5fa44, 0 2px 8px 2px #fff2',
+                      transition: 'transform 0.18s cubic-bezier(.77,.2,.56,1), box-shadow 0.18s cubic-bezier(.77,.2,.56,1)',
+                      transform: diceHover ? 'scale(1.15) rotate(-7deg)' : 'scale(1) rotate(0deg)'
+                    }}
+                  >
+                    <Dice6 className="w-5 h-5 text-white drop-shadow-[0_2px_5px_rgba(255,70,190,0.45)]" />
+                  </button>
+                )}
               </div>
 
               <div className="flex-1 flex items-center justify-center">
