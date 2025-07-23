@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Crown, LogOut, Dice6 } from 'lucide-react'
-import RoomsDropdown from '../rooms/RoomsDropdown'
+import RoomsPanel from '../rooms/RoomsPanel'
 import { useRouter } from 'next/navigation'
 import Login from '../login/Login'
 import { defaultPerso } from '../sheet/CharacterSheet'
@@ -34,6 +34,9 @@ export default function MenuAccueil() {
   const [loggingOut, setLoggingOut]   = useState(false)
   const [diceHover, setDiceHover]     = useState(false)
   const [roomsOpen, setRoomsOpen]     = useState(false)
+  const [panelPos, setPanelPos]       = useState<{left:number;top:number}|null>(null)
+
+  const diceRef = useRef<HTMLButtonElement | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -122,6 +125,15 @@ export default function MenuAccueil() {
   }
 
   const handlePlay = () => {
+    if (!roomsOpen) {
+      const rect = diceRef.current?.getBoundingClientRect()
+      if (rect) {
+        setPanelPos({
+          left: rect.right + 8 + window.scrollX,
+          top: rect.top + window.scrollY,
+        })
+      }
+    }
     setRoomsOpen(v => !v)
   }
 
@@ -274,6 +286,7 @@ export default function MenuAccueil() {
               <div className="shrink-0 flex items-center justify-start w-[120px]">
                 {/* Bouton pour accéder à la liste des salles */}
                 <button
+                  ref={diceRef}
                   type="button"
                   aria-label="Aller à la table de jeu"
                   onClick={handlePlay}
@@ -361,7 +374,12 @@ export default function MenuAccueil() {
                 </button>
               </div>
             </section>
-            {roomsOpen && <RoomsDropdown onClose={() => setRoomsOpen(false)} />}
+            {roomsOpen && panelPos && (
+              <RoomsPanel
+                onClose={() => setRoomsOpen(false)}
+                style={{ left: panelPos.left, top: panelPos.top }}
+              />
+            )}
 
             {/* Liste des personnages */}
             <div className="flex-1 min-h-0 rounded-xl backdrop-blur-md bg-black/20 p-5 overflow-auto">
