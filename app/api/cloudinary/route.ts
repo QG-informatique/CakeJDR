@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
   const buffer = Buffer.from(arrayBuffer)
 
   try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const uploadResult = await new Promise<any>((resolve, reject) => {
       cloudinary.uploader.upload_stream(
         { folder: 'cakejdr' },
@@ -33,6 +34,7 @@ export async function POST(req: NextRequest) {
     })
 
     return NextResponse.json({ url: uploadResult.secure_url })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
