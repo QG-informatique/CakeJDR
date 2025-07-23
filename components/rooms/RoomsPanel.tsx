@@ -73,7 +73,7 @@ export default function RoomsPanel({ onClose, style }: Props) {
       </div>
       <div className="border-t border-white/20 pt-3">
         <input
-          className="w-full mb-2 px-2 py-1 rounded text-black"
+          className="w-full mb-2 px-2 py-1 rounded bg-white border text-black"
           placeholder="Nom de la salle"
           value={name}
           onChange={e => setName(e.target.value)}
@@ -89,7 +89,7 @@ export default function RoomsPanel({ onClose, style }: Props) {
         {withPassword && (
           <input
             type="password"
-            className="w-full mb-2 px-2 py-1 rounded text-black"
+            className="w-full mb-2 px-2 py-1 rounded bg-white border text-black"
             placeholder="Mot de passe"
             value={password}
             onChange={e => setPassword(e.target.value)}
