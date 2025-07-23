@@ -1,5 +1,16 @@
-import { FC, RefObject } from 'react'
-import { Edit2, Trash2, Plus, Upload, Download } from 'lucide-react'
+import { FC, RefObject, useState } from 'react'
+import { Edit2, Trash2, Plus, Upload, Download, CloudUpload } from 'lucide-react'
+
+// Utilitaire pour un nom de fichier lisible et safe
+function slugify(str: string) {
+  return str
+    .normalize('NFD')                   // Enlève accents
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9-_ ]/g, '')    // Caractères safe
+    .trim()
+    .replace(/\s+/g, '_')
+    .toLowerCase()
+}
 
 export type Character = {
   id: string | number
@@ -43,6 +54,60 @@ const CharacterList: FC<Props> = ({
   fileInputRef,
   onImportFile
 }) => {
+  const [syncing, setSyncing] = useState(false)
+  const [syncSuccess, setSyncSuccess] = useState(false)
+  const [syncError, setSyncError] = useState(false)
+
+  // Fonction pour générer le nom de fichier avec nom lisible + id
+  const getFilename = (character: Character) => {
+    const namePart = character.nom ? slugify(character.nom as string) : 'sans-nom'
+    return `FichePerso/${character.id}-${namePart}.json`
+  }
+
+  async function syncAllToCloud() {
+    setSyncing(true)
+    setSyncSuccess(false)
+    setSyncError(false)
+    try {
+      // 1. Liste tous les fichiers déjà présents sur Blob (FichePerso/)
+      const resList = await fetch('/api/blob?prefix=FichePerso/')
+      const { files } = await resList.json() as { files: { pathname: string }[] }
+
+      // 2. Liste locale des fichiers attendus (uploadés) selon ta liste
+      const localFilenames = filtered.map(getFilename)
+
+      // 3. Pour chaque fichier existant sur Blob mais absent en local → on supprime
+      const deletes = files
+        .filter(f => !localFilenames.includes(f.pathname))
+        .map(f =>
+          fetch(`/api/blob?filename=${encodeURIComponent(f.pathname)}`, { method: 'DELETE' })
+        )
+      await Promise.all(deletes)
+
+      // 4. Upload toutes les fiches locales
+      const uploads = filtered.map(character => {
+        const filename = getFilename(character)
+        const blob = new Blob([JSON.stringify(character)], { type: 'application/json' })
+        return fetch(`/api/blob?filename=${encodeURIComponent(filename)}`, {
+          method: 'POST',
+          body: blob,
+        }).then(res => res.json())
+      })
+      const results = await Promise.all(uploads)
+      if (results.every(r => r.url)) {
+        setSyncSuccess(true)
+        setTimeout(() => setSyncSuccess(false), 2000)
+      } else {
+        setSyncError(true)
+        setTimeout(() => setSyncError(false), 2000)
+      }
+    } catch (e) {
+      setSyncError(true)
+      setTimeout(() => setSyncError(false), 2000)
+    }
+    setSyncing(false)
+  }
+
   return (
     <section
       className="
@@ -147,7 +212,7 @@ const CharacterList: FC<Props> = ({
         </ul>
       )}
 
-      <div className="mt-6 flex flex-wrap gap-3 text-sm">
+      <div className="mt-6 flex flex-wrap gap-3 text-sm items-center">
         <button
           onClick={onNew}
           className={btnBase + " hover:bg-emerald-600/80 text-emerald-100"}
@@ -172,6 +237,23 @@ const CharacterList: FC<Props> = ({
           }
         >
           <Download size={17} /> Exporter
+        </button>
+        {/* === Bouton Sync cloud pour toutes les fiches, dossier FichePerso/ === */}
+        <button
+          onClick={syncAllToCloud}
+          className={
+            btnBase +
+            " hover:bg-pink-600/80 text-pink-100 font-bold flex items-center gap-2" +
+            (syncing ? " opacity-60 cursor-wait" : "")
+          }
+          disabled={filtered.length === 0 || syncing}
+          title="Synchroniser toutes les fiches sur le cloud (FichePerso/)"
+        >
+          <CloudUpload size={18} />
+          Sync cloud
+          {syncing && <span className="ml-1 animate-pulse">...</span>}
+          {syncSuccess && <span className="ml-1 text-emerald-400">✓</span>}
+          {syncError && <span className="ml-1 text-red-400">✗</span>}
         </button>
         <input
           type="file"
