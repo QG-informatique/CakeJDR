@@ -1,74 +1,10 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { LiveblocksProvider, RoomProvider, useRoom, useBroadcastEvent } from '@liveblocks/react'
+import { LiveblocksProvider, RoomProvider } from '@liveblocks/react'
 import HomePageInner from '@/components/app/HomePageInner'
-
-function JoinAnnouncer() {
-  const broadcast = useBroadcastEvent()
-  useEffect(() => {
-    try {
-      const prof = JSON.parse(localStorage.getItem('jdr_profile') || '{}')
-      if (prof.pseudo) {
-        broadcast({
-          type: 'chat',
-          author: 'Système',
-          text: `${prof.pseudo} a rejoint la partie`
-        })
-      }
-    } catch {}
-  }, [broadcast])
-  return null
-}
-
-function RoomSaver({ roomName, roomId }: { roomName: string; roomId: string }) {
-  const room = useRoom()
-
-  useEffect(() => {
-    const compress = async (txt: string) => {
-      if (typeof CompressionStream === 'undefined') {
-        return new TextEncoder().encode(txt)
-      }
-      const cs = new CompressionStream('gzip')
-      const writer = cs.writable.getWriter()
-      writer.write(new TextEncoder().encode(txt))
-      writer.close()
-      const buf = await new Response(cs.readable).arrayBuffer()
-      return new Uint8Array(buf)
-    }
-
-    const updateStatus = async (empty: boolean) => {
-      await fetch('/api/rooms', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: roomId, empty }),
-        keepalive: true,
-      })
-    }
-
-    const handleUnload = async () => {
-      if (room.getOthers().length === 0) {
-        const history = localStorage.getItem('jdr_dice_history')
-        if (history) {
-          const data = await compress(history)
-          navigator.sendBeacon(
-            `/api/blob?filename=RoomData/${roomName}.json.gz`,
-            data
-          )
-        }
-        await updateStatus(true)
-      }
-    }
-    updateStatus(false)
-    window.addEventListener('beforeunload', handleUnload)
-    return () => {
-      handleUnload()
-      window.removeEventListener('beforeunload', handleUnload)
-    }
-  }, [room, roomName, roomId])
-
-  return null
-}
+import JoinAnnouncer from '@/components/rooms/JoinAnnouncer'
+import RoomSaver from '@/components/rooms/RoomSaver'
 
 export default function RoomPage() {
   const { id } = useParams<{ id: string }>()

@@ -1,24 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { put, list } from '@vercel/blob'
+import { put } from '@vercel/blob'
 import { NextResponse } from 'next/server'
+import { readRooms } from '@/lib/rooms'
 
 const FILE = 'rooms.json'
-
-async function readRooms(): Promise<any[]> {
-  const { blobs } = await list({ prefix: FILE })
-  if (blobs.length === 0) return []
-  const url = blobs[0].downloadUrl || blobs[0].url
-  const res = await fetch(url)
-  const data = await res.json().catch(() => [])
-  if (!Array.isArray(data)) return []
-  const now = Date.now()
-  // On conserve les salles pendant 2 minutes après le départ du dernier joueur
-  const valid = data.filter((r: any) => !(r.emptySince && now - r.emptySince > 120000))
-  if (valid.length !== data.length) {
-    await put(FILE, JSON.stringify(valid), { access: 'public', addRandomSuffix: false, allowOverwrite: true })
-  }
-  return valid
-}
 
 export async function GET() {
   try {
