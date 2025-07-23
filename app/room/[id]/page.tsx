@@ -1,8 +1,25 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { LiveblocksProvider, RoomProvider, useRoom } from '@liveblocks/react'
+import { LiveblocksProvider, RoomProvider, useRoom, useBroadcastEvent } from '@liveblocks/react'
 import HomePageInner from '@/components/app/HomePageInner'
+
+function JoinAnnouncer() {
+  const broadcast = useBroadcastEvent()
+  useEffect(() => {
+    try {
+      const prof = JSON.parse(localStorage.getItem('jdr_profile') || '{}')
+      if (prof.pseudo) {
+        broadcast({
+          type: 'chat',
+          author: 'Système',
+          text: `${prof.pseudo} a rejoint la partie`
+        })
+      }
+    } catch {}
+  }, [broadcast])
+  return null
+}
 
 function RoomSaver({ roomName, roomId }: { roomName: string; roomId: string }) {
   const room = useRoom()
@@ -71,6 +88,7 @@ export default function RoomPage() {
     <LiveblocksProvider publicApiKey={key}>
       <RoomProvider id={id} initialPresence={{}}>
         <RoomSaver roomName={name} roomId={id} />
+        <JoinAnnouncer />
         <HomePageInner />
       </RoomProvider>
     </LiveblocksProvider>
