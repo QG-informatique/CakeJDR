@@ -125,8 +125,10 @@ export default function Login({ onLogin }: { onLogin:(p:string)=>void }) {
   return (
     // [NOTE] Ce composant ne génère PAS de "ronds transparents" !
     <div
-      className="absolute top-1/2 left-1/2"
+      className="absolute"
       style={{
+        top: '50%',
+        left: '50%',
         transform: 'translate(-50%, -50%)',
         pointerEvents: 'none'
       }}
