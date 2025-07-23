@@ -94,6 +94,39 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
     setOpen(false)
   }
 
+  // Sauvegarde Cloud
+  const handleCloudSave = async () => {
+    const slug = (perso.nom || 'sans_nom').replace(/[^a-zA-Z0-9-_]/g, '_')
+    const filename = `FichePerso/${slug}.json`
+    await fetch(`/api/blob?filename=${encodeURIComponent(filename)}`, {
+      method: 'POST',
+      body: JSON.stringify(perso),
+    })
+    alert('Fiche sauvegardée sur le cloud !')
+    setOpen(false)
+  }
+
+  // Chargement Cloud
+  const handleCloudLoad = async () => {
+    const res = await fetch('/api/blob')
+    const data = await res.json()
+    const files: string[] = data.files?.blobs?.map((b:any)=>b.pathname) || []
+    const name = window.prompt('Nom du perso à restaurer?\n'+files.join('\n'))
+    if (!name) return
+    const item = data.files.blobs.find((b:any)=>b.pathname===name)
+    if (!item) return
+    const txt = await fetch(item.downloadUrl || item.url).then(r=>r.text())
+    try {
+      const obj = JSON.parse(txt)
+      onUpdate(obj)
+      addToList({ ...obj, id: obj.id || crypto.randomUUID() })
+      alert('Fiche chargée !')
+    } catch {
+      alert('Erreur lors du chargement cloud.')
+    }
+    setOpen(false)
+  }
+
   // Reset fiche
   const handleReset = () => {
     if (window.confirm("Vraiment réinitialiser la fiche ? (Suppression irréversible)")) {
@@ -120,6 +153,8 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
           </label>
           <button onClick={handleLocalSave} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">💾 Sauver localement</button>
           <button onClick={handleLocalLoad} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">📂 Charger la sauvegarde</button>
+          <button onClick={handleCloudSave} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">☁️ Sauver sur le cloud</button>
+          <button onClick={handleCloudLoad} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">☁️ Charger depuis le cloud</button>
           <hr className="my-1 border-gray-600" />
           <button onClick={handleReset} className="w-full px-3 py-1 rounded hover:bg-red-700 bg-red-600 text-white text-left text-sm">🗑 Réinitialiser fiche</button>
         </div>
