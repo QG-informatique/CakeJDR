@@ -50,7 +50,7 @@ const CompetencesPanel: FC<Props> = ({ competences = [], edit, onAdd, onDelete }
               <div className="text-xs">Effets : {c.effets} {c.degats && <span>- Dégâts : {c.degats}</span>}</div>
             </div>
           ))}
-          {competences.length === 0 && <span className="text-gray-400 text-xs">Aucune compétence.</span>}
+          {competences.length === 0 && <span className="text-gray-400 text-xs">No skill.</span>}
         </div>
       )}
     </div>

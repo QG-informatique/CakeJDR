@@ -54,9 +54,11 @@ const CharacterList: FC<Props> = ({
   fileInputRef,
   onImportFile
 }) => {
+  // Etat de synchronisation Cloud
   const [syncing, setSyncing] = useState(false)
   const [syncSuccess, setSyncSuccess] = useState(false)
   const [syncError, setSyncError] = useState(false)
+  const [showCloud, setShowCloud] = useState(false)
 
   // Fonction pour générer le nom de fichier avec nom lisible + id
   const getFilename = (character: Character) => {
@@ -101,11 +103,44 @@ const CharacterList: FC<Props> = ({
         setSyncError(true)
         setTimeout(() => setSyncError(false), 2000)
       }
-    } catch (e) {
+    } catch {
       setSyncError(true)
       setTimeout(() => setSyncError(false), 2000)
     }
     setSyncing(false)
+  }
+
+  async function importFromCloud() {
+    try {
+      const res = await fetch('/api/blob?prefix=FichePerso/')
+      const { files } = await res.json() as { files: { pathname: string, downloadUrl?: string, url?: string }[] }
+      const names = files.map(f => f.pathname)
+      const choice = window.prompt('Choisir un fichier à importer:\n' + names.join('\n'))
+      if (!choice) return
+      const file = files.find(f => f.pathname === choice)
+      if (!file) return
+      const url = file.downloadUrl || file.url
+      if (!url) return
+      const text = await fetch(url).then(r => r.text())
+      const data = JSON.parse(text)
+      const stored = JSON.parse(localStorage.getItem('jdr_characters') || '[]') as Character[]
+      const withId = { ...data, id: data.id || crypto.randomUUID() }
+      localStorage.setItem('jdr_characters', JSON.stringify([...stored, withId]))
+      window.dispatchEvent(new Event('jdr_characters_change'))
+      alert('Fiche importée !')
+    } catch {
+      alert('Import échoué')
+    }
+  }
+
+  const handleCloudExport = async () => {
+    await syncAllToCloud()
+    setShowCloud(false)
+  }
+
+  const handleCloudImport = async () => {
+    await importFromCloud()
+    setShowCloud(false)
   }
 
   return (
@@ -119,12 +154,12 @@ const CharacterList: FC<Props> = ({
       }}
     >
       <h2 className="text-lg font-semibold mb-2 select-none tracking-wide">
-        Fiches de personnage
+        Character sheets
       </h2>
 
       {filtered.length === 0 ? (
         <p className="text-xs text-white/65 italic">
-          Aucune fiche enregistrée.
+          No sheets stored.
         </p>
       ) : (
         <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
@@ -152,14 +187,14 @@ const CharacterList: FC<Props> = ({
                     ? '0 0 0 1px rgba(255,255,255,0.06), 0 0 18px -6px rgba(16,185,129,0.45)'
                     : '0 0 0 1px rgba(255,255,255,0.03), 0 2px 6px -4px rgba(0,0,0,0.50)'
                 }}
-                title={ch.nom || 'Sans nom'}
+                    title={ch.nom || 'No name'}
               >
                 <div className="flex items-start justify-between gap-2">
                   <span
                     className="font-semibold text-sm leading-tight truncate max-w-[110px]"
                     style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
                   >
-                    {ch.nom || 'Sans nom'}
+                    {ch.nom || 'No name'}
                   </span>
                   <div className="flex items-center gap-1 shrink-0">
                     <button
@@ -168,7 +203,7 @@ const CharacterList: FC<Props> = ({
                         onEdit(idx)
                       }}
                       className={btnBase + " hover:bg-yellow-500/90 text-yellow-100 w-8 h-8"}
-                      title="Modifier"
+                      title="Edit"
                     >
                       <Edit2 size={16} />
                     </button>
@@ -178,7 +213,7 @@ const CharacterList: FC<Props> = ({
                         onDelete(idx)
                       }}
                       className={btnBase + " hover:bg-red-600/90 text-red-100 w-8 h-8"}
-                      title="Supprimer"
+                      title="Delete"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -217,13 +252,13 @@ const CharacterList: FC<Props> = ({
           onClick={onNew}
           className={btnBase + " hover:bg-emerald-600/80 text-emerald-100"}
         >
-          <Plus size={17} /> Nouvelle fiche
+          <Plus size={17} /> New sheet
         </button>
         <button
           onClick={onImportClick}
           className={btnBase + " hover:bg-purple-700/80 text-purple-100"}
         >
-          <Upload size={17} /> Importer
+          <Upload size={17} /> Import
         </button>
         <button
           onClick={onExport}
@@ -236,25 +271,30 @@ const CharacterList: FC<Props> = ({
               : "")
           }
         >
-          <Download size={17} /> Exporter
+          <Download size={17} /> Export
         </button>
-        {/* === Bouton Sync cloud pour toutes les fiches, dossier FichePerso/ === */}
+        {/* Bouton Cloud ouvrant un petit menu */}
         <button
-          onClick={syncAllToCloud}
+          onClick={() => setShowCloud(v => !v)}
           className={
             btnBase +
-            " hover:bg-pink-600/80 text-pink-100 font-bold flex items-center gap-2" +
-            (syncing ? " opacity-60 cursor-wait" : "")
+            " hover:bg-pink-600/80 text-pink-100 font-bold flex items-center gap-2"
           }
-          disabled={filtered.length === 0 || syncing}
-          title="Synchroniser toutes les fiches sur le cloud (FichePerso/)"
+          title="Cloud options"
         >
           <CloudUpload size={18} />
-          Sync cloud
-          {syncing && <span className="ml-1 animate-pulse">...</span>}
-          {syncSuccess && <span className="ml-1 text-emerald-400">✓</span>}
-          {syncError && <span className="ml-1 text-red-400">✗</span>}
+          Cloud
         </button>
+        {/* Indicateur de synchronisation */}
+        {syncing && <span className="ml-1 animate-pulse">⏳</span>}
+        {syncSuccess && <span className="ml-1 text-emerald-400">✔</span>}
+        {syncError && <span className="ml-1 text-red-400">✖</span>}
+        {showCloud && (
+          <div className="absolute z-50 mt-2 right-0 bg-black/80 border border-white/20 rounded-xl p-2 flex flex-col gap-1">
+            <button onClick={handleCloudImport} className="px-3 py-1 text-left hover:bg-gray-800 rounded">Import from Cloud</button>
+            <button onClick={handleCloudExport} className="px-3 py-1 text-left hover:bg-gray-800 rounded">Export to Cloud</button>
+          </div>
+        )}
         <input
           type="file"
           accept="text/plain,application/json"
