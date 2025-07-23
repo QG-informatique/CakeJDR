@@ -54,6 +54,7 @@ const CharacterList: FC<Props> = ({
   fileInputRef,
   onImportFile
 }) => {
+  // Etat de synchronisation Cloud
   const [syncing, setSyncing] = useState(false)
   const [syncSuccess, setSyncSuccess] = useState(false)
   const [syncError, setSyncError] = useState(false)
@@ -284,6 +285,10 @@ const CharacterList: FC<Props> = ({
           <CloudUpload size={18} />
           Cloud
         </button>
+        {/* Indicateur de synchronisation */}
+        {syncing && <span className="ml-1 animate-pulse">⏳</span>}
+        {syncSuccess && <span className="ml-1 text-emerald-400">✔</span>}
+        {syncError && <span className="ml-1 text-red-400">✖</span>}
         {showCloud && (
           <div className="absolute z-50 mt-2 right-0 bg-black/80 border border-white/20 rounded-xl p-2 flex flex-col gap-1">
             <button onClick={handleCloudImport} className="px-3 py-1 text-left hover:bg-gray-800 rounded">Importer depuis le Cloud</button>

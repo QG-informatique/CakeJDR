@@ -57,6 +57,22 @@ export default function MenuAccueil() {
     } catch {}
   }, [])
 
+  // Met à jour la liste quand une fiche est importée depuis un autre onglet
+  useEffect(() => {
+    const update = () => {
+      try {
+        const list = JSON.parse(localStorage.getItem('jdr_characters') || '[]')
+        if (Array.isArray(list)) setCharacters(list)
+      } catch {}
+    }
+    window.addEventListener('jdr_characters_change', update as EventListener)
+    window.addEventListener('storage', update)
+    return () => {
+      window.removeEventListener('jdr_characters_change', update as EventListener)
+      window.removeEventListener('storage', update)
+    }
+  }, [])
+
   useEffect(() => {
     if (loggingOut) return
     const update = () => {
