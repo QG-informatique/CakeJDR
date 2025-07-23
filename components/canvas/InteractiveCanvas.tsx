@@ -31,6 +31,8 @@ export default function InteractiveCanvas() {
   const [volume, setVolume] = useState(50)
 
   const broadcast = useBroadcastEvent()
+  const lastSend = useRef(0)
+  const THROTTLE = 30
 
   const canvasRef = useRef<HTMLDivElement>(null)
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null)
@@ -187,7 +189,11 @@ export default function InteractiveCanvas() {
       ctxRef.current.lineTo(x, y)
       ctxRef.current.stroke()
       const { x: px, y: py } = mousePos
-      broadcast({ type: 'draw-line', x1: px, y1: py, x2: x, y2: y, color, width: brushSize, mode: drawMode })
+      const now = Date.now()
+      if (now - lastSend.current > THROTTLE) {
+        lastSend.current = now
+        broadcast({ type: 'draw-line', x1: px, y1: py, x2: x, y2: y, color, width: brushSize, mode: drawMode })
+      }
     }
 
     const { id, type, offsetX, offsetY } = dragState.current

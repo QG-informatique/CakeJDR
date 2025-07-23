@@ -41,7 +41,8 @@ function RoomSaver({ roomName, roomId }: { roomName: string; roomId: string }) {
       await fetch('/api/rooms', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: roomId, empty })
+        body: JSON.stringify({ id: roomId, empty }),
+        keepalive: true,
       })
     }
 
@@ -50,10 +51,10 @@ function RoomSaver({ roomName, roomId }: { roomName: string; roomId: string }) {
         const history = localStorage.getItem('jdr_dice_history')
         if (history) {
           const data = await compress(history)
-          await fetch(`/api/blob?filename=RoomData/${roomName}.json.gz`, {
-            method: 'POST',
-            body: data
-          })
+          navigator.sendBeacon(
+            `/api/blob?filename=RoomData/${roomName}.json.gz`,
+            data
+          )
         }
         await updateStatus(true)
       }
