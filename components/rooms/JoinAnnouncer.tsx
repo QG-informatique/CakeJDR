@@ -10,9 +10,10 @@ export default function JoinAnnouncer() {
       if (prof.pseudo) {
         broadcast({
           type: 'chat',
-          author: 'Système',
-          text: `${prof.pseudo} a rejoint la partie`
-        })
+
+          author: 'System',
+          text: `${prof.pseudo} joined the game`
+
       }
     } catch {}
   }, [broadcast])

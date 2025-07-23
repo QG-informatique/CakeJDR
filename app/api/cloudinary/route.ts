@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   const file = formData.get('file') as File
 
   if (!file) {
-    return NextResponse.json({ error: 'Aucun fichier reçu' }, { status: 400 })
+    return NextResponse.json({ error: 'No file received' }, { status: 400 })
   }
 
   // Transformer le fichier en buffer

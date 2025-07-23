@@ -57,9 +57,9 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
         if (!data || typeof data !== "object") throw new Error()
         onUpdate(data)
         addToList({ ...data, id: data.id || crypto.randomUUID() })
-        alert('Fiche importée avec succès !')
+        alert('Sheet imported successfully!')
       } catch {
-        alert('Erreur lors de l\'import : le fichier doit être un fichier texte au format JSON.')
+        alert('Import failed: file must be a JSON text file.')
         // onUpdate({ ...defaultPerso }) // Optionnel : reset fiche si import KO
       }
     }
@@ -70,7 +70,7 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
   // Sauvegarde locale
   const handleLocalSave = () => {
     localStorage.setItem(LOCAL_KEY, JSON.stringify(perso))
-    alert('Fiche sauvegardée localement !')
+    alert('Sheet saved locally!')
     setOpen(false)
   }
 
@@ -83,13 +83,46 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
         if (!obj || typeof obj !== "object") throw new Error()
         onUpdate(obj)
         addToList({ ...obj, id: obj.id || crypto.randomUUID() })
-        alert('Fiche chargée depuis la sauvegarde locale !')
+        alert('Sheet loaded from local save!')
       } catch {
-        alert('Erreur lors du chargement local.')
+        alert('Failed to load local save.')
         // onUpdate({ ...defaultPerso }) // Optionnel : reset si load KO
       }
     } else {
-      alert('Aucune sauvegarde trouvée.')
+      alert('No save found.')
+    }
+    setOpen(false)
+  }
+
+  // Sauvegarde Cloud
+  const handleCloudSave = async () => {
+    const slug = (perso.nom || 'sans_nom').replace(/[^a-zA-Z0-9-_]/g, '_')
+    const filename = `FichePerso/${slug}.json`
+    await fetch(`/api/blob?filename=${encodeURIComponent(filename)}`, {
+      method: 'POST',
+      body: JSON.stringify(perso),
+    })
+    alert('Sheet saved to cloud!')
+    setOpen(false)
+  }
+
+  // Chargement Cloud
+  const handleCloudLoad = async () => {
+    const res = await fetch('/api/blob')
+    const data = await res.json()
+    const files: string[] = data.files?.blobs?.map((b:any)=>b.pathname) || []
+    const name = window.prompt('Nom du perso à restaurer?\n'+files.join('\n'))
+    if (!name) return
+    const item = data.files.blobs.find((b:any)=>b.pathname===name)
+    if (!item) return
+    const txt = await fetch(item.downloadUrl || item.url).then(r=>r.text())
+    try {
+      const obj = JSON.parse(txt)
+      onUpdate(obj)
+      addToList({ ...obj, id: obj.id || crypto.randomUUID() })
+      alert('Sheet loaded!')
+    } catch {
+      alert('Cloud load failed.')
     }
     setOpen(false)
   }
@@ -146,17 +179,19 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
       </button>
       {open && (
         <div className="absolute top-full left-full mt-2 ml-2 z-50 w-56 bg-black/35 backdrop-blur-md border border-white/10 rounded-xl shadow-2xl py-2 flex flex-col gap-1 animate-fadeIn">
-          <button onClick={handleExport} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">📤 Exporter la fiche</button>
+          <button onClick={handleExport} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">📤 Export sheet</button>
           <label className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm cursor-pointer">
-            📥 Importer une fiche
+            📥 Import sheet
             <input type="file" ref={inputRef} accept=".txt,.json" style={{ display: 'none' }} onChange={handleImport} />
           </label>
-          <button onClick={handleLocalSave} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">💾 Sauver localement</button>
-          <button onClick={handleLocalLoad} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">📂 Charger la sauvegarde</button>
-          <button onClick={handleCloudSave} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">☁️ Sauver sur le cloud</button>
-          <button onClick={handleCloudLoad} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">☁️ Charger depuis le cloud</button>
+
+          <button onClick={handleLocalSave} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">💾 Save locally</button>
+          <button onClick={handleLocalLoad} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">📂 Load local save</button>
+          <button onClick={handleCloudSave} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">☁️ Save to cloud</button>
+          <button onClick={handleCloudLoad} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">☁️ Load from cloud</button>
+
           <hr className="my-1 border-gray-600" />
-          <button onClick={handleReset} className="w-full px-3 py-1 rounded hover:bg-red-700 bg-red-600 text-white text-left text-sm">🗑 Réinitialiser fiche</button>
+          <button onClick={handleReset} className="w-full px-3 py-1 rounded hover:bg-red-700 bg-red-600 text-white text-left text-sm">🗑 Reset sheet</button>
         </div>
       )}
       <style jsx>{`

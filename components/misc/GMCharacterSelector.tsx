@@ -105,7 +105,7 @@ export default function GMCharacterSelector({
         >
           {chars.length === 0 && (
             <div className="px-4 py-3 text-sm text-gray-400 text-center">
-              Aucun personnage
+              No character
             </div>
           )}
           {chars.map((c, idx) => (
