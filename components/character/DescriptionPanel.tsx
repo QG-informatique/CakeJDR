@@ -236,7 +236,7 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
                 <span className="break-words flex-1 pl-3">{f.value}</span>
               </div>
             ))}
-            {champsPerso.length === 0 && <span className="text-gray-400 text-xs">Aucun champ perso.</span>}
+            {champsPerso.length === 0 && <span className="text-gray-400 text-xs">No custom field.</span>}
           </div>
         )}
       </div>
