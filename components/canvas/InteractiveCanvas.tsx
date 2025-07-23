@@ -48,7 +48,8 @@ export default function InteractiveCanvas() {
     } else if (event.type === 'delete-image') {
       setImages((prev) => prev.filter(img => img.id !== event.id))
     } else if (event.type === 'clear-canvas') {
-      clearCanvas()
+      // On efface localement sans re-broadcaster pour éviter une boucle
+      clearCanvas(false)
     } else if (event.type === 'draw-line' && ctxRef.current) {
       const { x1, y1, x2, y2, color: c, width, mode } = event
       ctxRef.current.strokeStyle = mode === 'erase' ? 'rgba(0,0,0,1)' : c
@@ -218,13 +219,18 @@ export default function InteractiveCanvas() {
     dragState.current = { id: null, type: null, offsetX: 0, offsetY: 0 }
   }
 
-  const clearCanvas = () => {
+  // Efface tout le canvas. Si broadcastChange=false, on ne renvoie pas
+  // l'événement Liveblocks pour éviter une boucle infinie lorsque
+  // l'on reçoit justement cet événement depuis un autre client.
+  const clearCanvas = (broadcastChange = true) => {
     setImages([])
     const ctx = ctxRef.current
     if (ctx && drawingCanvasRef.current) {
       ctx.clearRect(0, 0, drawingCanvasRef.current.width, drawingCanvasRef.current.height)
     }
-    broadcast({ type: 'clear-canvas' })
+    if (broadcastChange) {
+      broadcast({ type: 'clear-canvas' })
+    }
   }
 
   const handleDeleteImage = (id: number) => {
@@ -323,7 +329,7 @@ export default function InteractiveCanvas() {
             />
           ))}
           <button
-            onClick={clearCanvas}
+            onClick={() => clearCanvas()}
             className="rounded-xl px-3 py-2 text-xs font-semibold shadow border-none
               bg-red-600 text-white hover:bg-red-700 ml-4"
           >
