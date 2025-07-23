@@ -428,12 +428,12 @@ export default function InteractiveCanvas() {
             className="absolute border border-white/20 rounded-2xl shadow-md group"
             style={{ top: img.y, left: img.x, width: img.width, height: img.height, zIndex: 1 }}
           >
-            {/* Bouton corbeille individuel visible en mode images */}
+            {/* Trash button visible in image mode */}
             {drawMode === 'images' && (
               <button
                 onClick={() => handleDeleteImage(img.id)}
                 className="absolute top-1 left-1 z-20 p-1 rounded-full bg-black/60 hover:bg-red-600 transition text-white opacity-80 group-hover:opacity-100"
-                title="Supprimer l'image"
+                title="Delete image"
                 style={{ cursor: 'pointer' }}
               >
                 <Trash2 size={18} />

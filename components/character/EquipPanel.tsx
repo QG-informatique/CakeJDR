@@ -113,7 +113,7 @@ const EquipPanel: FC<Props> = ({
               <span className="text-xs text-gray-300">x{o.quantite}</span>
             </div>
           ))}
-          {objets.length === 0 && <span className="text-gray-400 text-xs">Aucun objet.</span>}
+          {objets.length === 0 && <span className="text-gray-400 text-xs">No items.</span>}
         </div>
       )}
     </div>

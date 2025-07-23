@@ -13,7 +13,10 @@ export default function RoomsPanel({ onClose, style }: Props) {
   const panelRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
-  // Fermer si clic à l'extérieur
+
+  // Close the panel when clicking outside of it
+
+
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (!panelRef.current) return
@@ -23,7 +26,10 @@ export default function RoomsPanel({ onClose, style }: Props) {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [onClose])
 
-  // Récupère la liste des salles
+
+  // Fetch the list of existing rooms
+
+
   useEffect(() => {
     fetch('/api/rooms')
       .then(res => res.json())
@@ -53,7 +59,9 @@ export default function RoomsPanel({ onClose, style }: Props) {
       className="absolute z-50 bg-black/80 text-white rounded-xl shadow-lg backdrop-blur p-4 w-64"
       style={style}
     >
-      <h2 className="text-lg font-semibold mb-2">Salles disponibles</h2>
+
+      <h2 className="text-lg font-semibold mb-2">Available Rooms</h2>
+
       <div className="max-h-48 overflow-y-auto mb-3 pr-1">
         <ul className="space-y-1">
           {rooms.map(r => (
@@ -65,7 +73,9 @@ export default function RoomsPanel({ onClose, style }: Props) {
                 className="px-2 py-1 bg-pink-700/50 hover:bg-pink-700/70 rounded text-sm"
                 onClick={() => joinRoom(r.id)}
               >
-                Rejoindre
+
+                Join
+
               </button>
             </li>
           ))}
@@ -74,7 +84,9 @@ export default function RoomsPanel({ onClose, style }: Props) {
       <div className="border-t border-white/20 pt-3">
         <input
           className="w-full mb-2 px-2 py-1 rounded bg-white border text-black"
-          placeholder="Nom de la salle"
+
+          placeholder="Room name"
+
           value={name}
           onChange={e => setName(e.target.value)}
         />
@@ -84,13 +96,17 @@ export default function RoomsPanel({ onClose, style }: Props) {
             checked={withPassword}
             onChange={e => { setWithPassword(e.target.checked); if(!e.target.checked) setPassword('') }}
           />
-          Mot de passe ?
+
+          Password?
+
         </label>
         {withPassword && (
           <input
             type="password"
             className="w-full mb-2 px-2 py-1 rounded bg-white border text-black"
-            placeholder="Mot de passe"
+
+            placeholder="Password"
+
             value={password}
             onChange={e => setPassword(e.target.value)}
           />
@@ -99,7 +115,9 @@ export default function RoomsPanel({ onClose, style }: Props) {
           className="w-full px-3 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white"
           onClick={createRoom}
         >
-          Créer
+
+          Create
+
         </button>
       </div>
     </div>

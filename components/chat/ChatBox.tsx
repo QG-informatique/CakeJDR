@@ -13,7 +13,7 @@ type Props = {
 
 const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
   const [messages, setMessages] = useState([
-    { author: 'MJ', text: 'Bienvenue !' }
+    { author: 'GM', text: 'Welcome!' }
   ])
   const [inputValue, setInputValue] = useState('')
   const endRef = useRef<HTMLDivElement>(null)
@@ -32,7 +32,11 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
 
   const sendMessage = () => {
     if (inputValue.trim() === '') return
-    const msg = { author: 'Vous', text: inputValue.trim() }
+
+    const msg = { author: 'You', text: inputValue.trim() }
+
+
+
     setMessages(prev => [...prev, msg])
     broadcast({ type: 'chat', author: msg.author, text: msg.text })
     setInputValue('')
@@ -109,7 +113,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
           style={{ minHeight: 44 }}
           onClick={() => setShowSummary(true)}
         >
-          Résumé de la partie
+          Session summary
         </button>
         <button
           className="
@@ -133,7 +137,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
       <div className="flex flex-col flex-1 min-h-0 gap-2">
         {showStats && (
           <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-            <div className="text-center font-bold mb-2">Statistiques DD</div>
+            <div className="text-center font-bold mb-2">Dice statistics</div>
             <div className="
               flex-1 overflow-y-auto
               rounded-xl
@@ -173,7 +177,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
             <div className="mt-2 flex items-center w-full max-w-full overflow-hidden">
             <input
               type="text"
-              placeholder="Votre message..."
+              placeholder="Your message..."
               value={inputValue}
               onChange={e => setInputValue(e.target.value)}
               onKeyDown={e => {
@@ -217,7 +221,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
               "
               style={{ minHeight: 44 }}
             >
-              Envoyer
+              Send
             </button>
             </div>
         </div>
