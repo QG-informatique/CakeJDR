@@ -157,7 +157,6 @@ export default function Login({ onLogin }: { onLogin:(p:string)=>void }) {
               height:CUBE_SIZE,
               transformStyle:'preserve-3d',
               transform:`rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
-              transition: draggingRef.current ? 'none' : 'transform 0.3s ease-out',
               cursor: draggingRef.current ? 'grabbing' : 'grab',
               position:'relative',
               userSelect:'none',
