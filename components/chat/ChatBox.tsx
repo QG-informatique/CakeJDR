@@ -1,5 +1,6 @@
 'use client'
 import { FC, RefObject, useRef, useState, useEffect } from 'react'
+import { useBroadcastEvent, useEventListener } from '@liveblocks/react'
 import SummaryPanel from './SummaryPanel'
 import DiceStats from './DiceStats'
 
@@ -19,10 +20,21 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
   const [showSummary, setShowSummary] = useState(false)
   const [showStats, setShowStats] = useState(false)
   const prevHist = useRef(0)
+  const broadcast = useBroadcastEvent()
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  useEventListener((payload: any) => {
+    const { event } = payload
+    if (event.type === 'chat') {
+      setMessages(m => [...m, { author: event.author, text: event.text }])
+    }
+  })
 
   const sendMessage = () => {
     if (inputValue.trim() === '') return
-    setMessages(prev => [...prev, { author: 'Vous', text: inputValue.trim() }])
+    const msg = { author: 'Vous', text: inputValue.trim() }
+    setMessages(prev => [...prev, msg])
+    broadcast({ type: 'chat', author: msg.author, text: msg.text })
     setInputValue('')
   }
 

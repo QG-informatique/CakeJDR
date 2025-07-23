@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useRef, useState } from 'react'
+import { useBroadcastEvent, useEventListener, LiveblocksProvider, RoomProvider } from '@liveblocks/react'
 import { useRouter, usePathname } from 'next/navigation'
 import CharacterSheet, { defaultPerso } from '@/components/sheet/CharacterSheet'
 import DiceRoller from '@/components/dice/DiceRoller'
@@ -15,7 +16,7 @@ import Login from '@/components/login/Login'
 import GMCharacterSelector from '@/components/misc/GMCharacterSelector'
 import ImportExportMenu from '@/components/character/ImportExportMenu'
 
-export default function HomePage() {
+function HomePageInner() {
   const router = useRouter()
   const pathname = usePathname()
   const [user, setUser] = useState<string | null>(null)
@@ -30,6 +31,16 @@ export default function HomePage() {
   const [pendingRoll, setPendingRoll] = useState<{ result: number, dice: number, nom: string } | null>(null)
   const [history, setHistory] = useState<{ player: string, dice: number, result: number }[]>([])
   const chatBoxRef = useRef<HTMLDivElement>(null)
+
+  const broadcast = useBroadcastEvent()
+
+  // listen for remote dice rolls
+  useEventListener((payload: any) => {
+    const { event } = payload
+    if (event.type === 'dice-roll') {
+      setHistory(h => [...h, { player: event.player, dice: event.dice, result: event.result }])
+    }
+  })
 
   // --------- PERSISTANCE DE L'HISTORIQUE DE DÉS ---------
   const HISTORY_KEY = 'jdr_dice_history'
@@ -193,6 +204,7 @@ export default function HomePage() {
     if (!pendingRoll) return
 
     setHistory(h => [...h, { player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result }])
+    broadcast({ type: 'dice-roll', player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result })
     setPendingRoll(null)
   }
 
@@ -251,5 +263,16 @@ export default function HomePage() {
         <title>CakeJDR</title>
       </Head>
     </div>
+  )
+}
+
+export default function HomePage() {
+  const key = process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY || 'pk_demo'
+  return (
+    <LiveblocksProvider publicApiKey={key}>
+      <RoomProvider id="lobby" initialPresence={{}}>
+        <HomePageInner />
+      </RoomProvider>
+    </LiveblocksProvider>
   )
 }

@@ -101,7 +101,7 @@ const CharacterList: FC<Props> = ({
         setSyncError(true)
         setTimeout(() => setSyncError(false), 2000)
       }
-    } catch (e) {
+    } catch {
       setSyncError(true)
       setTimeout(() => setSyncError(false), 2000)
     }
