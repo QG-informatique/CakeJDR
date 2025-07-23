@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { LiveblocksProvider, RoomProvider, useRoom } from '@liveblocks/react'
-import HomePage from '../../page'
+import HomePageInner from '@/components/app/HomePageInner'
 
 function RoomSaver({ roomName }: { roomName: string }) {
   const room = useRoom()
@@ -60,7 +60,7 @@ export default function RoomPage() {
     <LiveblocksProvider publicApiKey={process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!}>
       <RoomProvider id={id} initialPresence={{}}>
         <RoomSaver roomName={name} />
-        <HomePage />
+        <HomePageInner />
       </RoomProvider>
     </LiveblocksProvider>
   )
