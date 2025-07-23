@@ -284,7 +284,9 @@ export default function MenuAccueil() {
               "
             >
               <div className="shrink-0 flex items-center justify-start w-[120px]">
+
                 {/* Button to open the room list */}
+
                 <button
                   ref={diceRef}
                   type="button"
