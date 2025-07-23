@@ -9,7 +9,7 @@ const LOGO_GAP = 56 // distance (px) entre le bas du logo et le HAUT du cube
 type FaceType = 'input' | 'button' | 'pips'
 interface FaceDef { rotX: number; rotY: number; type: FaceType; value?: number }
 
-/* --- Helpers pips --- */
+// --- Helpers pips ---
 function pipPattern(v: number) {
   const c = { r:1, c:1 }
   const corners = [{r:0,c:0},{r:0,c:2},{r:2,c:0},{r:2,c:2}]
@@ -47,6 +47,12 @@ function DicePips({ value, size }: { value:number; size:number }) {
 }
 
 export default function Login({ onLogin }: { onLogin:(p:string)=>void }) {
+  // -- Ajout d'un état mounted pour éviter le flash du cube --
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   const [pseudo, setPseudo] = useState('')
   const [error, setError] = useState<string|null>(null)
   const [rotation, setRotation] = useState({ x:0, y:0 })
@@ -117,21 +123,20 @@ export default function Login({ onLogin }: { onLogin:(p:string)=>void }) {
   ]
 
   return (
+    // [NOTE] Ce composant ne génère PAS de "ronds transparents" !
     <div
       className="absolute top-1/2 left-1/2"
       style={{
         transform: 'translate(-50%, -50%)',
-        // on fixe une hauteur/largeur minime pour ne pas influencer le layout global
-        pointerEvents: 'none' // le cube re‑activera pour les inputs
+        pointerEvents: 'none'
       }}
     >
-      {/* Wrapper interne permettant de positionner le logo au-dessus sans décaler le centre du cube */}
       <div style={{ position:'relative', width: CUBE_SIZE, height: CUBE_SIZE }}>
-        {/* Logo au-dessus (absolu) */}
+        {/* Logo au-dessus */}
         <div
           style={{
             position:'absolute',
-            bottom: CUBE_SIZE + LOGO_GAP, // place le bas du logo au-dessus du cube
+            bottom: CUBE_SIZE + LOGO_GAP,
             left:'50%',
             transform:'translateX(-50%)',
             pointerEvents:'none'
@@ -140,8 +145,9 @@ export default function Login({ onLogin }: { onLogin:(p:string)=>void }) {
           <CakeLogo xl showText={false} className="scale-[1.25]" />
         </div>
 
-        {/* Cube centré géométriquement (remet les interactions) */}
+        {/* CUBE 3D */}
         <div style={{ width:CUBE_SIZE, height:CUBE_SIZE, perspective:600, pointerEvents:'auto' }}>
+          {/* Correction principale : cube caché tant que !mounted */}
           <div
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
@@ -154,7 +160,11 @@ export default function Login({ onLogin }: { onLogin:(p:string)=>void }) {
               transition: draggingRef.current ? 'none' : 'transform 0.3s ease-out',
               cursor: draggingRef.current ? 'grabbing' : 'grab',
               position:'relative',
-              userSelect:'none'
+              userSelect:'none',
+              // On masque le cube tant que mounted === false
+             opacity: mounted ? 1 : 0,
+transition: 'opacity 0.4s ease, transform 0.3s ease'
+
             }}
           >
             {faces.map(({ rotX, rotY, type, value }, idx) => (
@@ -206,7 +216,7 @@ export default function Login({ onLogin }: { onLogin:(p:string)=>void }) {
           </div>
         </div>
 
-        {/* Message d'erreur sous le cube (sans casser le centrage global du cube) */}
+        {/* Message d'erreur sous le cube */}
         {error && (
           <div
             style={{

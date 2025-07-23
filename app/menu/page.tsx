@@ -2,10 +2,6 @@
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { useBackground } from '@/components/context/BackgroundContext'
-
-
-
-
 import { motion, AnimatePresence, type Variants } from 'framer-motion'
 import Login from '@/components/login/Login'
 
@@ -72,10 +68,11 @@ export default function MenuPage() {
 
   return (
     <div className="relative h-screen w-full overflow-hidden">
-      {/* Plus de BackgroundWrapper ici */}
-
-      {/* Overlay de bruit/grain subtil (optionnel) */}
-      <div className="pointer-events-none absolute inset-0 -z-10 opacity-[0.15] mix-blend-overlay bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.08),transparent_60%)]" />
+      {/* 
+        Correction :
+        SUPPRESSION de la ligne suivante, car c'est elle qui créait l'effet de "ronds transparents" sur le fond :
+        <div className="pointer-events-none absolute inset-0 -z-10 opacity-[0.15] mix-blend-overlay bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.08),transparent_60%)]" />
+      */}
 
       <AnimatePresence mode="wait">
         {!leaving && mounted && (
