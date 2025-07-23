@@ -98,13 +98,11 @@ export default function MenuAccueil() {
 
     setUser(null)
     setSelectedIdx(null)
-    // Pour forcer le background à 'rpg', il faut modifier ton contexte pour exposer setBackground (voir remarque)
     requestAnimationFrame(() => {
       router.replace('/menu')
     })
   }
 
-  // Accès rapide à la table de jeu depuis la barre profil
   const handlePlay = () => {
     router.push('/')
   }
@@ -256,6 +254,7 @@ export default function MenuAccueil() {
               "
             >
               <div className="shrink-0 flex items-center justify-start w-[120px]">
+                {/* MODIF bouton Dé : hover = scale + rotate (moins de rose flashy) */}
                 <button
                   type="button"
                   aria-label="Aller à la table de jeu"
@@ -266,14 +265,13 @@ export default function MenuAccueil() {
                   style={{
                     width: DICE_SIZE,
                     height: DICE_SIZE,
-                    background: diceHover
-                      ? 'radial-gradient(circle at 60% 35%, #ffe0f1 40%, #fff7 80%, #ffe2 100%)'
-                      : 'rgba(38,16,56,0.14)',
+                    background: 'rgba(38,16,56,0.14)',
+                    borderColor: diceHover ? '#ff90cc' : '#f7bbf7',
                     boxShadow: diceHover
                       ? '0 0 12px 2px #ffb0e366, 0 2px 20px 8px #fff2'
                       : '0 0 4px 1px #ffe5fa44, 0 2px 8px 2px #fff2',
-                    borderColor: diceHover ? '#ff90cc' : '#f7bbf7',
-                    transition: 'background 0.22s cubic-bezier(.77,.2,.56,1)'
+                    transition: 'transform 0.18s cubic-bezier(.77,.2,.56,1), box-shadow 0.18s cubic-bezier(.77,.2,.56,1)',
+                    transform: diceHover ? 'scale(1.15) rotate(-7deg)' : 'scale(1) rotate(0deg)'
                   }}
                 >
                   <Dice6 className="w-5 h-5 text-white drop-shadow-[0_2px_5px_rgba(255,70,190,0.45)]" />
@@ -325,9 +323,20 @@ export default function MenuAccueil() {
                     />
                   </span>
                 </button>
+                {/* MODIF bouton Déconnexion : hover rouge marqué */}
                 <button
                   onClick={handleLogout}
-                  className="inline-flex items-center justify-center px-3 h-10 rounded-md bg-gradient-to-br from-slate-700/80 to-slate-800/80 hover:from-slate-600/80 hover:to-slate-700/80 font-semibold text-sm text-white shadow-lg shadow-black/40 transition focus:outline-none focus:ring-2 focus:ring-slate-400/30 focus:ring-offset-2 focus:ring-offset-black"
+                  className="
+                    inline-flex items-center justify-center px-3 h-10 rounded-md
+                    bg-gradient-to-br from-slate-700/80 to-slate-800/80
+                    hover:from-pink-600/80 hover:to-pink-700/80
+                    font-semibold text-sm text-white shadow-lg shadow-black/40 transition
+                    focus:outline-none focus:ring-2 focus:ring-pink-400/30 focus:ring-offset-2 focus:ring-offset-black
+                  "
+                  style={{
+                    transition: 'background 0.2s, box-shadow 0.2s',
+                    boxShadow: '0 2px 8px -2px #d6336c77, 0 4px 24px -6px #d6336c22'
+                  }}
                 >
                   <LogOut size={18} className="mr-1" />
                   Déconnexion
