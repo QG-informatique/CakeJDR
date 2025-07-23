@@ -274,32 +274,29 @@ const CharacterList: FC<Props> = ({
           <Download size={17} /> Export
         </button>
         {/* Bouton Cloud ouvrant un petit menu */}
-        <button
-          onClick={() => setShowCloud(v => !v)}
-          className={
-            btnBase +
-            " hover:bg-pink-600/80 text-pink-100 font-bold flex items-center gap-2"
-          }
-
-          title="Cloud options"
-
-
-        >
-          <CloudUpload size={18} />
-          Cloud
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setShowCloud(v => !v)}
+            className={
+              btnBase +
+              " hover:bg-pink-600/80 text-pink-100 font-bold flex items-center gap-2"
+            }
+            title="Cloud options"
+          >
+            <CloudUpload size={18} />
+            Cloud
+          </button>
+          {showCloud && (
+            <div className="absolute left-0 top-full mt-2 z-50 w-44 bg-black/75 border border-white/20 rounded-xl shadow-2xl backdrop-blur-md p-2 flex flex-col gap-1">
+              <button onClick={handleCloudImport} className="px-3 py-1 text-left hover:bg-gray-800 rounded">Import from Cloud</button>
+              <button onClick={handleCloudExport} className="px-3 py-1 text-left hover:bg-gray-800 rounded">Export to Cloud</button>
+            </div>
+          )}
+        </div>
         {/* Indicateur de synchronisation */}
         {syncing && <span className="ml-1 animate-pulse">⏳</span>}
         {syncSuccess && <span className="ml-1 text-emerald-400">✔</span>}
         {syncError && <span className="ml-1 text-red-400">✖</span>}
-        {showCloud && (
-          <div className="absolute z-50 mt-2 right-0 bg-black/80 border border-white/20 rounded-xl p-2 flex flex-col gap-1">
-
-            <button onClick={handleCloudImport} className="px-3 py-1 text-left hover:bg-gray-800 rounded">Import from Cloud</button>
-            <button onClick={handleCloudExport} className="px-3 py-1 text-left hover:bg-gray-800 rounded">Export to Cloud</button>
-
-          </div>
-        )}
         <input
           type="file"
           accept="text/plain,application/json"
