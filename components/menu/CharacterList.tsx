@@ -1,4 +1,5 @@
-import { FC, RefObject, useState } from 'react'
+import { FC, RefObject, useState, useRef } from 'react'
+import Portal from '../Portal'
 import { Edit2, Trash2, Plus, Upload, Download, CloudUpload } from 'lucide-react'
 
 // Utilitaire pour un nom de fichier lisible et safe
@@ -59,6 +60,8 @@ const CharacterList: FC<Props> = ({
   const [syncSuccess, setSyncSuccess] = useState(false)
   const [syncError, setSyncError] = useState(false)
   const [showCloud, setShowCloud] = useState(false)
+  const cloudBtnRef = useRef<HTMLButtonElement | null>(null)
+  const [cloudPos, setCloudPos] = useState<{left:number;top:number}|null>(null)
 
   // Fonction pour générer le nom de fichier avec nom lisible + id
   const getFilename = (character: Character) => {
@@ -274,9 +277,21 @@ const CharacterList: FC<Props> = ({
           <Download size={17} /> Export
         </button>
         {/* Bouton Cloud ouvrant un petit menu */}
-        <div className="relative">
+        <div>
           <button
-            onClick={() => setShowCloud(v => !v)}
+            ref={cloudBtnRef}
+            onClick={() => {
+              if (!showCloud) {
+                const rect = cloudBtnRef.current?.getBoundingClientRect()
+                if (rect) {
+                  setCloudPos({
+                    left: rect.left + window.scrollX,
+                    top: rect.bottom + window.scrollY,
+                  })
+                }
+              }
+              setShowCloud(v => !v)
+            }}
             className={
               btnBase +
               " hover:bg-pink-600/80 text-pink-100 font-bold flex items-center gap-2"
@@ -286,11 +301,19 @@ const CharacterList: FC<Props> = ({
             <CloudUpload size={18} />
             Cloud
           </button>
-          {showCloud && (
-            <div className="absolute left-0 top-full mt-2 z-50 w-44 bg-black/75 border border-white/20 rounded-xl shadow-2xl backdrop-blur-md p-2 flex flex-col gap-1">
-              <button onClick={handleCloudImport} className="px-3 py-1 text-left hover:bg-gray-800 rounded">Import from Cloud</button>
-              <button onClick={handleCloudExport} className="px-3 py-1 text-left hover:bg-gray-800 rounded">Export to Cloud</button>
-            </div>
+          {showCloud && cloudPos && (
+            <Portal>
+              <div className="fixed inset-0 z-[99999]" onClick={() => setShowCloud(false)}>
+                <div
+                  style={{ left: cloudPos.left, top: cloudPos.top }}
+                  className="absolute z-[100000] mt-2 w-44 bg-black/75 border border-white/20 rounded-xl shadow-2xl backdrop-blur-md p-2 flex flex-col gap-1"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <button onClick={handleCloudImport} className="px-3 py-1 text-left hover:bg-gray-800 rounded">Import from Cloud</button>
+                  <button onClick={handleCloudExport} className="px-3 py-1 text-left hover:bg-gray-800 rounded">Export to Cloud</button>
+                </div>
+              </div>
+            </Portal>
           )}
         </div>
         {/* Indicateur de synchronisation */}
