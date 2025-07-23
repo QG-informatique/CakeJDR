@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation'
 import { LiveblocksProvider, RoomProvider, useRoom } from '@liveblocks/react'
 import HomePageInner from '@/components/app/HomePageInner'
 
-function RoomSaver({ roomName }: { roomName: string }) {
+function RoomSaver({ roomName, roomId }: { roomName: string; roomId: string }) {
   const room = useRoom()
 
   useEffect(() => {
@@ -20,6 +20,14 @@ function RoomSaver({ roomName }: { roomName: string }) {
       return new Uint8Array(buf)
     }
 
+    const updateStatus = async (empty: boolean) => {
+      await fetch('/api/rooms', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: roomId, empty })
+      })
+    }
+
     const handleUnload = async () => {
       if (room.getOthers().length === 0) {
         const history = localStorage.getItem('jdr_dice_history')
@@ -30,14 +38,16 @@ function RoomSaver({ roomName }: { roomName: string }) {
             body: data
           })
         }
+        await updateStatus(true)
       }
     }
+    updateStatus(false)
     window.addEventListener('beforeunload', handleUnload)
     return () => {
       handleUnload()
       window.removeEventListener('beforeunload', handleUnload)
     }
-  }, [room, roomName])
+  }, [room, roomName, roomId])
 
   return null
 }
@@ -60,7 +70,7 @@ export default function RoomPage() {
   return (
     <LiveblocksProvider publicApiKey={key}>
       <RoomProvider id={id} initialPresence={{}}>
-        <RoomSaver roomName={name} />
+        <RoomSaver roomName={name} roomId={id} />
         <HomePageInner />
       </RoomProvider>
     </LiveblocksProvider>

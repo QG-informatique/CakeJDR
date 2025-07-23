@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Crown, LogOut, Dice6 } from 'lucide-react'
+import RoomsDropdown from '../rooms/RoomsDropdown'
 import { useRouter } from 'next/navigation'
 import Login from '../login/Login'
 import { defaultPerso } from '../sheet/CharacterSheet'
@@ -32,6 +33,7 @@ export default function MenuAccueil() {
   const [hydrated, setHydrated]       = useState(false)
   const [loggingOut, setLoggingOut]   = useState(false)
   const [diceHover, setDiceHover]     = useState(false)
+  const [roomsOpen, setRoomsOpen]     = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -120,7 +122,7 @@ export default function MenuAccueil() {
   }
 
   const handlePlay = () => {
-    router.push('/rooms') // redirect to rooms list before entering a table
+    setRoomsOpen(v => !v)
   }
 
   const handleNewCharacter = () => {
@@ -359,6 +361,7 @@ export default function MenuAccueil() {
                 </button>
               </div>
             </section>
+            {roomsOpen && <RoomsDropdown onClose={() => setRoomsOpen(false)} />}
 
             {/* Liste des personnages */}
             <div className="flex-1 min-h-0 rounded-xl backdrop-blur-md bg-black/20 p-5 overflow-auto">
