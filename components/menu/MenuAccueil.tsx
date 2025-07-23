@@ -32,11 +32,9 @@ export default function MenuAccueil() {
   const [draftChar, setDraftChar]     = useState<Character>(defaultPerso as unknown as Character)
   const [hydrated, setHydrated]       = useState(false)
   const [loggingOut, setLoggingOut]   = useState(false)
-  const [diceHover, setDiceHover]     = useState(false)
-  const [roomsOpen, setRoomsOpen]     = useState(false)
-  const [panelPos, setPanelPos]       = useState<{left:number;top:number}|null>(null)
+  const [diceHover, setDiceHover] = useState(false)
+  const [roomsOpen, setRoomsOpen] = useState(false)
 
-  const diceRef = useRef<HTMLButtonElement | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -125,15 +123,6 @@ export default function MenuAccueil() {
   }
 
   const handlePlay = () => {
-    if (!roomsOpen) {
-      const rect = diceRef.current?.getBoundingClientRect()
-      if (rect) {
-        setPanelPos({
-          left: rect.right + 8 + window.scrollX,
-          top: rect.top + window.scrollY,
-        })
-      }
-    }
     setRoomsOpen(v => !v)
   }
 
@@ -288,7 +277,6 @@ export default function MenuAccueil() {
                 {/* Button to open the room list */}
 
                 <button
-                  ref={diceRef}
                   type="button"
                   aria-label="Open game rooms"
                   onClick={handlePlay}
@@ -376,11 +364,8 @@ export default function MenuAccueil() {
                 </button>
               </div>
             </section>
-            {roomsOpen && panelPos && (
-              <RoomsPanel
-                onClose={() => setRoomsOpen(false)}
-                style={{ left: panelPos.left, top: panelPos.top }}
-              />
+            {roomsOpen && (
+              <RoomsPanel onClose={() => setRoomsOpen(false)} />
             )}
 
             {/* Liste des personnages */}
