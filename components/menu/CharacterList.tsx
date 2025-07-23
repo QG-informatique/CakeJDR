@@ -57,6 +57,7 @@ const CharacterList: FC<Props> = ({
   const [syncing, setSyncing] = useState(false)
   const [syncSuccess, setSyncSuccess] = useState(false)
   const [syncError, setSyncError] = useState(false)
+  const [showCloud, setShowCloud] = useState(false)
 
   // Fonction pour générer le nom de fichier avec nom lisible + id
   const getFilename = (character: Character) => {
@@ -106,6 +107,39 @@ const CharacterList: FC<Props> = ({
       setTimeout(() => setSyncError(false), 2000)
     }
     setSyncing(false)
+  }
+
+  async function importFromCloud() {
+    try {
+      const res = await fetch('/api/blob?prefix=FichePerso/')
+      const { files } = await res.json() as { files: { pathname: string, downloadUrl?: string, url?: string }[] }
+      const names = files.map(f => f.pathname)
+      const choice = window.prompt('Choisir un fichier à importer:\n' + names.join('\n'))
+      if (!choice) return
+      const file = files.find(f => f.pathname === choice)
+      if (!file) return
+      const url = file.downloadUrl || file.url
+      if (!url) return
+      const text = await fetch(url).then(r => r.text())
+      const data = JSON.parse(text)
+      const stored = JSON.parse(localStorage.getItem('jdr_characters') || '[]') as Character[]
+      const withId = { ...data, id: data.id || crypto.randomUUID() }
+      localStorage.setItem('jdr_characters', JSON.stringify([...stored, withId]))
+      window.dispatchEvent(new Event('jdr_characters_change'))
+      alert('Fiche importée !')
+    } catch {
+      alert('Import échoué')
+    }
+  }
+
+  const handleCloudExport = async () => {
+    await syncAllToCloud()
+    setShowCloud(false)
+  }
+
+  const handleCloudImport = async () => {
+    await importFromCloud()
+    setShowCloud(false)
   }
 
   return (
@@ -238,23 +272,24 @@ const CharacterList: FC<Props> = ({
         >
           <Download size={17} /> Exporter
         </button>
-        {/* === Bouton Sync cloud pour toutes les fiches, dossier FichePerso/ === */}
+        {/* Bouton Cloud ouvrant un petit menu */}
         <button
-          onClick={syncAllToCloud}
+          onClick={() => setShowCloud(v => !v)}
           className={
             btnBase +
-            " hover:bg-pink-600/80 text-pink-100 font-bold flex items-center gap-2" +
-            (syncing ? " opacity-60 cursor-wait" : "")
+            " hover:bg-pink-600/80 text-pink-100 font-bold flex items-center gap-2"
           }
-          disabled={filtered.length === 0 || syncing}
-          title="Synchroniser toutes les fiches sur le cloud (FichePerso/)"
+          title="Options cloud"
         >
           <CloudUpload size={18} />
-          Sync cloud
-          {syncing && <span className="ml-1 animate-pulse">...</span>}
-          {syncSuccess && <span className="ml-1 text-emerald-400">✓</span>}
-          {syncError && <span className="ml-1 text-red-400">✗</span>}
+          Cloud
         </button>
+        {showCloud && (
+          <div className="absolute z-50 mt-2 right-0 bg-black/80 border border-white/20 rounded-xl p-2 flex flex-col gap-1">
+            <button onClick={handleCloudImport} className="px-3 py-1 text-left hover:bg-gray-800 rounded">Importer depuis le Cloud</button>
+            <button onClick={handleCloudExport} className="px-3 py-1 text-left hover:bg-gray-800 rounded">Exporter vers le Cloud</button>
+          </div>
+        )}
         <input
           type="file"
           accept="text/plain,application/json"
