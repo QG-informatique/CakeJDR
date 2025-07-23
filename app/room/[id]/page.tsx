@@ -56,8 +56,9 @@ export default function RoomPage() {
       })
   }, [id])
 
+  const key = process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY || 'pk_demo'
   return (
-    <LiveblocksProvider publicApiKey={process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!}>
+    <LiveblocksProvider publicApiKey={key}>
       <RoomProvider id={id} initialPresence={{}}>
         <RoomSaver roomName={name} />
         <HomePageInner />
