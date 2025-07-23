@@ -12,7 +12,8 @@ async function readRooms(): Promise<any[]> {
   const data = await res.json().catch(() => [])
   if (!Array.isArray(data)) return []
   const now = Date.now()
-  const valid = data.filter((r: any) => !(r.emptySince && now - r.emptySince > 120000))
+  // On conserve les salles pendant 1 minute après le départ du dernier joueur
+  const valid = data.filter((r: any) => !(r.emptySince && now - r.emptySince > 60000))
   if (valid.length !== data.length) {
     await put(FILE, JSON.stringify(valid), { access: 'public', addRandomSuffix: false, allowOverwrite: true })
   }
