@@ -32,7 +32,11 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
 
   const sendMessage = () => {
     if (inputValue.trim() === '') return
+
     const msg = { author: 'You', text: inputValue.trim() }
+
+
+
     setMessages(prev => [...prev, msg])
     broadcast({ type: 'chat', author: msg.author, text: msg.text })
     setInputValue('')

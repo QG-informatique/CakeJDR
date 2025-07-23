@@ -280,7 +280,10 @@ const CharacterList: FC<Props> = ({
             btnBase +
             " hover:bg-pink-600/80 text-pink-100 font-bold flex items-center gap-2"
           }
+
           title="Cloud options"
+
+
         >
           <CloudUpload size={18} />
           Cloud
@@ -291,8 +294,10 @@ const CharacterList: FC<Props> = ({
         {syncError && <span className="ml-1 text-red-400">✖</span>}
         {showCloud && (
           <div className="absolute z-50 mt-2 right-0 bg-black/80 border border-white/20 rounded-xl p-2 flex flex-col gap-1">
+
             <button onClick={handleCloudImport} className="px-3 py-1 text-left hover:bg-gray-800 rounded">Import from Cloud</button>
             <button onClick={handleCloudExport} className="px-3 py-1 text-left hover:bg-gray-800 rounded">Export to Cloud</button>
+
           </div>
         )}
         <input
