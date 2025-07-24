@@ -4,11 +4,11 @@ import { LiveblocksProvider, RoomProvider, ClientSideSuspense } from "@liveblock
 
 export function Room({ id, children }: { id: string; children: ReactNode }) {
 
-  // LIVEBLOCKS_KEY contains the public API key for the Liveblocks project.
-  // It is exposed via next.config.ts. If it's missing we cannot connect.
-  const key = process.env.LIVEBLOCKS_KEY;
+  // NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY contains the public API key for the Liveblocks project.
+  // It is exposed via the environment. If it's missing we cannot connect.
+  const key = process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY;
   if (!key) {
-    throw new Error('LIVEBLOCKS_KEY is not defined');
+    throw new Error('NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY is not defined');
   }
 
   return (
