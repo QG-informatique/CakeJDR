@@ -119,8 +119,9 @@ export default function InteractiveCanvas() {
     const form = new FormData()
     form.append('file', file)
     const res = await fetch('/api/cloudinary', { method: 'POST', body: form })
-    const data = await res.json()
-    return data.url as string
+    if (!res.ok) return null
+    const data = await res.json().catch(() => null)
+    return (data && data.url) ? (data.url as string) : null
   }
 
   const handleDrop = (e: React.DragEvent) => {
@@ -131,6 +132,7 @@ export default function InteractiveCanvas() {
     files.forEach(async (file) => {
       if (file.type.startsWith('image/') && rect) {
         const url = await uploadImage(file)
+        if (!url) return
         const newImg = {
           id: Date.now() + Math.random(),
           src: url,
