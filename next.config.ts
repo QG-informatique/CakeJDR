@@ -9,6 +9,10 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  env: {
+    LIVEBLOCKS_KEY: process.env.LIVEBLOCKS_KEY,
+    CLOUDINARY_KEY: process.env.CLOUDINARY_KEY,
+  },
 };
 
 export default nextConfig;
