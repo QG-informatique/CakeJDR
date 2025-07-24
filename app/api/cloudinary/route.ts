@@ -1,24 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { v2 as cloudinary } from 'cloudinary'
 
-// Configure Cloudinary (mettre dans .env à la racine)
-// CLOUDINARY_* variables configure access to the Cloudinary API.
-// They must only be used server-side and should all be defined.
-const { CLOUDINARY_CLOUD_NAME, CLOUDINARY_KEY, CLOUDINARY_API_SECRET } = process.env
-if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_KEY || !CLOUDINARY_API_SECRET) {
-  console.error('Missing Cloudinary configuration environment variables')
-  throw new Error('Cloudinary configuration incomplete')
+// Configure Cloudinary.
+// The environment variables are only checked when the route is invoked so
+// builds won't fail if they are missing. A runtime error is still returned
+// when configuration is incomplete.
+function configureCloudinary(): boolean {
+  const { CLOUDINARY_CLOUD_NAME, CLOUDINARY_KEY, CLOUDINARY_API_SECRET } =
+    process.env
+
+  if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_KEY || !CLOUDINARY_API_SECRET) {
+    console.error('Missing Cloudinary configuration environment variables')
+    return false
+  }
+
+  cloudinary.config({
+    cloud_name: CLOUDINARY_CLOUD_NAME,
+    api_key: CLOUDINARY_KEY,
+    api_secret: CLOUDINARY_API_SECRET,
+  })
+  return true
 }
-cloudinary.config({
-
-  cloud_name: CLOUDINARY_CLOUD_NAME,
-  api_key: CLOUDINARY_KEY,
-  api_secret: CLOUDINARY_API_SECRET,
-
-})
 
 // L’upload POST (multipart/form-data)
 export async function POST(req: NextRequest) {
+  if (!configureCloudinary()) {
+    return NextResponse.json(
+      { error: 'Cloudinary configuration incomplete' },
+      { status: 500 }
+    )
+  }
   const formData = await req.formData()
   const file = formData.get('file') as File
 
