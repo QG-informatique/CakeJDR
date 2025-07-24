@@ -8,6 +8,7 @@ export default function RoomsPage() {
   const [password, setPassword] = useState('')
   const [showCreate, setShowCreate] = useState(false)
   const [withPassword, setWithPassword] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
   const router = useRouter()
 
   useEffect(() => {
@@ -18,12 +19,18 @@ export default function RoomsPage() {
 
   const createRoom = async () => {
     if (!name) return
+    try {
+      const prof = JSON.parse(localStorage.getItem('jdr_profile') || '{}')
+      if (!prof.isMJ) { setErrorMsg('Active MJ mode before creating a room'); return }
+      if (localStorage.getItem('jdr_my_room')) { setErrorMsg('You already created a room'); return }
+    } catch {}
     const res = await fetch('/api/rooms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, password })
     })
     const data = await res.json()
+    localStorage.setItem('jdr_my_room', data.id)
     router.push(`/room/${data.id}`)
   }
 
@@ -106,6 +113,9 @@ export default function RoomsPage() {
               Confirm
 
             </button>
+            {errorMsg && (
+              <p className="text-red-400 text-sm text-center mt-2">{errorMsg}</p>
+            )}
           </div>
         )}
       </details>
