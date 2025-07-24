@@ -14,19 +14,10 @@ async function compress(txt: string) {
   return new Uint8Array(buf)
 }
 
-export default function RoomSaver({ roomName, roomId }: { roomName: string; roomId: string }) {
+export default function RoomSaver({ roomName }: { roomName: string; roomId: string }) {
   const room = useRoom()
 
   useEffect(() => {
-    const updateStatus = async (empty: boolean) => {
-      await fetch('/api/rooms', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: roomId, empty }),
-        keepalive: true,
-      })
-    }
-
     const handleUnload = async () => {
       if (room.getOthers().length === 0) {
         const history = localStorage.getItem('jdr_dice_history')
@@ -37,16 +28,14 @@ export default function RoomSaver({ roomName, roomId }: { roomName: string; room
             data
           )
         }
-        await updateStatus(true)
       }
     }
-    updateStatus(false)
     window.addEventListener('beforeunload', handleUnload)
     return () => {
       handleUnload()
       window.removeEventListener('beforeunload', handleUnload)
     }
-  }, [room, roomName, roomId])
+  }, [room, roomName])
 
   return null
 }

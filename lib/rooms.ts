@@ -1,4 +1,4 @@
-import { put, list } from '@vercel/blob'
+import { list } from '@vercel/blob'
 
 const FILE = 'rooms.json'
 
@@ -24,17 +24,8 @@ export async function readRooms(): Promise<Room[]> {
   const res = await fetch(roomsUrl)
   const data = await res.json().catch(() => [])
   if (!Array.isArray(data)) return []
-  const valid = data.filter((r: Room) => !(r.emptySince && now - r.emptySince > 120000))
-  if (valid.length !== data.length) {
-    const uploaded = await put(FILE, JSON.stringify(valid), {
-      access: 'public',
-      addRandomSuffix: false,
-      allowOverwrite: true,
-    })
-    roomsUrl = uploaded.downloadUrl || uploaded.url
-  }
-  cached = { rooms: valid, ts: Date.now() }
-  return valid
+  cached = { rooms: data, ts: Date.now() }
+  return data
 }
 
 export function updateRoomsCache(rooms: Room[], url?: string) {

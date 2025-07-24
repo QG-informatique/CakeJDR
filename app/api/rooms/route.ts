@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     const { name, password } = await req.json()
     const id = `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now()}`
   const rooms = await readRooms()
-  rooms.push({ id, name, password, emptySince: null })
+  rooms.push({ id, name, password })
   const blob = await put(FILE, JSON.stringify(rooms), {
     access: 'public',
     addRandomSuffix: false,
