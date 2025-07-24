@@ -1,14 +1,13 @@
-'use client'
-import { LiveblocksProvider, RoomProvider } from '@liveblocks/react'
+"use client"
 import HomePageInner from '@/components/app/HomePageInner'
+import { Room } from './Room'
+import { CollaborativeApp } from './CollaborativeApp'
 
 export default function HomePage() {
-  const key = process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY || 'pk_demo'
   return (
-    <LiveblocksProvider publicApiKey={key}>
-      <RoomProvider id="lobby" initialPresence={{}}>
-        <HomePageInner />
-      </RoomProvider>
-    </LiveblocksProvider>
+    <Room id="lobby">
+      <CollaborativeApp />
+      <HomePageInner />
+    </Room>
   )
 }

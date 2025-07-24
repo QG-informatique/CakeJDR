@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { LiveblocksProvider, RoomProvider } from '@liveblocks/react'
+import { Room } from '@/app/Room'
 import HomePageInner from '@/components/app/HomePageInner'
 import JoinAnnouncer from '@/components/rooms/JoinAnnouncer'
 import RoomSaver from '@/components/rooms/RoomSaver'
@@ -20,14 +20,11 @@ export default function RoomPage() {
       })
   }, [id])
 
-  const key = process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY || 'pk_demo'
   return (
-    <LiveblocksProvider publicApiKey={key}>
-      <RoomProvider id={id} initialPresence={{}}>
-        <RoomSaver roomName={name} roomId={id} />
-        <JoinAnnouncer />
-        <HomePageInner />
-      </RoomProvider>
-    </LiveblocksProvider>
+    <Room id={id}>
+      <RoomSaver roomName={name} roomId={id} />
+      <JoinAnnouncer />
+      <HomePageInner />
+    </Room>
   )
 }
