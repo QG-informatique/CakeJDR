@@ -1,49 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CakeJDR
 
-## Getting Started
+CakeJDR is a Next.js application for playing tabletop RPGs online. It provides collaborative drawing, real‑time chat and dice tracking, along with character sheet management. Liveblocks powers the synchronization layer, Cloudinary hosts canvas images and Vercel Blob stores character sheets or room data.
 
-First, run the development server:
+> **Note**
+> This project is still in active development. Online features remain incomplete and the application currently works only when run locally.
+
+## Installation
+
+1. Clone this repository and install the dependencies:
+
+```bash
+npm install
+```
+
+2. Copy `.env.example` to `.env.local` and fill in your Cloudinary and Liveblocks keys if necessary.
+
+3. Start the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The app will then be available at [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Usage
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `npm run dev` – start the server in development mode.
+- `npm run build` – generate an optimized production build.
+- `npm start` – run the app after `npm run build`.
+- `npm run lint` – run ESLint.
 
-## Learn More
+Once running you can:
 
-To learn more about Next.js, take a look at the following resources:
+- Create or join a room using the dice button on the menu page.
+- Draw and drop images on the shared canvas.
+- Chat in real time and view dice statistics.
+- Import or export character sheets locally or from the cloud.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Technologies
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Next.js** and **React** for the frontend.
+- **Tailwind CSS** for styling.
+- **Liveblocks** for real‑time synchronization (canvas, chat, stats…).
+- **Cloudinary** for canvas image hosting.
+- **Vercel Blob** for storing character sheets and room data.
+- **Framer Motion** and **Lucide React** for animations and icons.
 
 ## Backgrounds
 
-Backgrounds are managed through a global React context. To add a new background:
+Backgrounds are handled through a global React context. To add a new animated background:
 
-1. Create a component under `components/ui` rendering the animated SVG.
-2. Register the new type in `components/context/BackgroundContext.tsx` by
-   extending `BackgroundType` and the `cycleOrder` array.
-3. Update `BackgroundWrapper.tsx` to return your component when the context value
-   matches.
+1. Create a component under `components/ui` that renders your animated SVG.
+2. Register this component in `components/context/BackgroundContext.tsx` by extending `BackgroundType` and the `cycleOrder` array.
+3. Update `BackgroundWrapper.tsx` so it returns your component when the context value matches.
 
-The background switch button in the menu will automatically cycle through all
-registered backgrounds.
+The background switch button in the menu will then cycle through all available backgrounds.
+

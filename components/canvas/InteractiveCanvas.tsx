@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
+import { useBroadcastEvent, useEventListener } from '@liveblocks/react'
 import Image from 'next/image'
 import YouTube from 'react-youtube'
 import type { YouTubePlayer } from 'youtube-player/dist/types'
@@ -29,11 +30,39 @@ export default function InteractiveCanvas() {
   const [isPlaying, setIsPlaying] = useState(true)
   const [volume, setVolume] = useState(50)
 
+  const broadcast = useBroadcastEvent()
+  const lastSend = useRef(0)
+  const THROTTLE = 30
+
   const canvasRef = useRef<HTMLDivElement>(null)
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null)
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null)
-  const idCounter = useRef(0)
   const playerRef = useRef<YouTubePlayer | null>(null)
+
+  // Listen to incoming canvas events
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  useEventListener((payload: any) => {
+    const { event } = payload
+    if (event.type === 'add-image') {
+      setImages((prev) => [...prev, event.image])
+    } else if (event.type === 'update-image') {
+      setImages((prev) => prev.map(img => img.id === event.image.id ? event.image : img))
+    } else if (event.type === 'delete-image') {
+      setImages((prev) => prev.filter(img => img.id !== event.id))
+    } else if (event.type === 'clear-canvas') {
+      // On efface localement sans re-broadcaster pour éviter une boucle
+      clearCanvas(false)
+    } else if (event.type === 'draw-line' && ctxRef.current) {
+      const { x1, y1, x2, y2, color: c, width, mode } = event
+      ctxRef.current.strokeStyle = mode === 'erase' ? 'rgba(0,0,0,1)' : c
+      ctxRef.current.lineWidth = width
+      ctxRef.current.globalCompositeOperation = mode === 'erase' ? 'destination-out' : 'source-over'
+      ctxRef.current.beginPath()
+      ctxRef.current.moveTo(x1, y1)
+      ctxRef.current.lineTo(x2, y2)
+      ctxRef.current.stroke()
+    }
+  })
 
   const dragState = useRef({
     id: null as number | null,
@@ -86,29 +115,34 @@ export default function InteractiveCanvas() {
     }
   }, [volume])
 
+  const uploadImage = async (file: File) => {
+    const form = new FormData()
+    form.append('file', file)
+    const res = await fetch('/api/cloudinary', { method: 'POST', body: form })
+    if (!res.ok) return null
+    const data = await res.json().catch(() => null)
+    return (data && data.url) ? (data.url as string) : null
+  }
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     const files = Array.from(e.dataTransfer.files)
     const rect = canvasRef.current?.getBoundingClientRect()
 
-    files.forEach((file) => {
+    files.forEach(async (file) => {
       if (file.type.startsWith('image/') && rect) {
-        const reader = new FileReader()
-        reader.onload = () => {
-          idCounter.current += 1
-          setImages((prev) => [
-            ...prev,
-            {
-              id: idCounter.current,
-              src: reader.result as string,
-              x: e.clientX - rect.left - 100,
-              y: e.clientY - rect.top - 100,
-              width: 200,
-              height: 200,
-            },
-          ])
+        const url = await uploadImage(file)
+        if (!url) return
+        const newImg = {
+          id: Date.now() + Math.random(),
+          src: url,
+          x: e.clientX - rect.left - 100,
+          y: e.clientY - rect.top - 100,
+          width: 200,
+          height: 200,
         }
-        reader.readAsDataURL(file)
+        setImages((prev) => [...prev, newImg])
+        broadcast({ type: 'add-image', image: newImg })
       }
     })
   }
@@ -121,6 +155,7 @@ export default function InteractiveCanvas() {
       setIsDrawing(true)
       const x = e.clientX - rect.left
       const y = e.clientY - rect.top
+      setMousePos({ x, y })
       const ctx = ctxRef.current
       if (ctx) {
         ctx.strokeStyle = drawMode === 'erase' ? 'rgba(0,0,0,1)' : color
@@ -155,6 +190,12 @@ export default function InteractiveCanvas() {
     if (isDrawing && (drawMode === 'draw' || drawMode === 'erase') && ctxRef.current) {
       ctxRef.current.lineTo(x, y)
       ctxRef.current.stroke()
+      const { x: px, y: py } = mousePos
+      const now = Date.now()
+      if (now - lastSend.current > THROTTLE) {
+        lastSend.current = now
+        broadcast({ type: 'draw-line', x1: px, y1: py, x2: x, y2: y, color, width: brushSize, mode: drawMode })
+      }
     }
 
     const { id, type, offsetX, offsetY } = dragState.current
@@ -163,19 +204,20 @@ export default function InteractiveCanvas() {
     setImages((prev) =>
       prev.map((img) => {
         if (img.id !== id) return img
-        if (type === 'move') {
-          return {
-            ...img,
-            x: Math.max(0, Math.min(x - offsetX, rect.width - img.width)),
-            y: Math.max(0, Math.min(y - offsetY, rect.height - img.height)),
-          }
-        } else {
-          return {
-            ...img,
-            width: Math.max(50, x - img.x),
-            height: Math.max(50, y - img.y),
-          }
-        }
+        const updated =
+          type === 'move'
+            ? {
+                ...img,
+                x: Math.max(0, Math.min(x - offsetX, rect.width - img.width)),
+                y: Math.max(0, Math.min(y - offsetY, rect.height - img.height)),
+              }
+            : {
+                ...img,
+                width: Math.max(50, x - img.x),
+                height: Math.max(50, y - img.y),
+              }
+        broadcast({ type: 'update-image', image: updated })
+        return updated
       })
     )
   }
@@ -185,16 +227,23 @@ export default function InteractiveCanvas() {
     dragState.current = { id: null, type: null, offsetX: 0, offsetY: 0 }
   }
 
-  const clearCanvas = () => {
+  // Efface tout le canvas. Si broadcastChange=false, on ne renvoie pas
+  // l'événement Liveblocks pour éviter une boucle infinie lorsque
+  // l'on reçoit justement cet événement depuis un autre client.
+  const clearCanvas = (broadcastChange = true) => {
     setImages([])
     const ctx = ctxRef.current
     if (ctx && drawingCanvasRef.current) {
       ctx.clearRect(0, 0, drawingCanvasRef.current.width, drawingCanvasRef.current.height)
     }
+    if (broadcastChange) {
+      broadcast({ type: 'clear-canvas' })
+    }
   }
 
   const handleDeleteImage = (id: number) => {
     setImages((prev) => prev.filter((img) => img.id !== id))
+    broadcast({ type: 'delete-image', id })
   }
 
   const handleYtSubmit = () => {
@@ -288,7 +337,7 @@ export default function InteractiveCanvas() {
             />
           ))}
           <button
-            onClick={clearCanvas}
+            onClick={() => clearCanvas()}
             className="rounded-xl px-3 py-2 text-xs font-semibold shadow border-none
               bg-red-600 text-white hover:bg-red-700 ml-4"
           >
@@ -381,12 +430,12 @@ export default function InteractiveCanvas() {
             className="absolute border border-white/20 rounded-2xl shadow-md group"
             style={{ top: img.y, left: img.x, width: img.width, height: img.height, zIndex: 1 }}
           >
-            {/* Bouton corbeille individuel visible en mode images */}
+            {/* Trash button visible in image mode */}
             {drawMode === 'images' && (
               <button
                 onClick={() => handleDeleteImage(img.id)}
                 className="absolute top-1 left-1 z-20 p-1 rounded-full bg-black/60 hover:bg-red-600 transition text-white opacity-80 group-hover:opacity-100"
-                title="Supprimer l'image"
+                title="Delete image"
                 style={{ cursor: 'pointer' }}
               >
                 <Trash2 size={18} />
