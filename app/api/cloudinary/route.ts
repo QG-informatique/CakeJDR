@@ -6,19 +6,15 @@ import { v2 as cloudinary } from 'cloudinary'
 // builds won't fail if they are missing. A runtime error is still returned
 // when configuration is incomplete.
 function configureCloudinary(): boolean {
-  const { CLOUDINARY_CLOUD_NAME, CLOUDINARY_KEY, CLOUDINARY_API_SECRET } =
-    process.env
+  const { CLOUDINARY_URL } = process.env
 
-  if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_KEY || !CLOUDINARY_API_SECRET) {
-    console.error('Missing Cloudinary configuration environment variables')
+  if (!CLOUDINARY_URL) {
+    console.error('Missing CLOUDINARY_URL environment variable')
     return false
   }
 
-  cloudinary.config({
-    cloud_name: CLOUDINARY_CLOUD_NAME,
-    api_key: CLOUDINARY_KEY,
-    api_secret: CLOUDINARY_API_SECRET,
-  })
+  // The Cloudinary SDK parses CLOUDINARY_URL automatically when config is called.
+  cloudinary.config({ secure: true })
   return true
 }
 
