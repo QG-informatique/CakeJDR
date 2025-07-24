@@ -1,6 +1,6 @@
 import { put } from '@vercel/blob'
 import { NextResponse } from 'next/server'
-import { readRooms } from '@/lib/rooms'
+import { readRooms, updateRoomsCache } from '@/lib/rooms'
 
 const FILE = 'rooms.json'
 
@@ -16,14 +16,15 @@ export async function POST(req: Request) {
   try {
     const { name, password } = await req.json()
     const id = `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now()}`
-    const rooms = await readRooms()
-    rooms.push({ id, name, password, emptySince: null })
-    await put(FILE, JSON.stringify(rooms), {
-      access: 'public',
-      addRandomSuffix: false,
-      allowOverwrite: true,
-    })
-    return NextResponse.json({ id })
+  const rooms = await readRooms()
+  rooms.push({ id, name, password, emptySince: null })
+  await put(FILE, JSON.stringify(rooms), {
+    access: 'public',
+    addRandomSuffix: false,
+    allowOverwrite: true,
+  })
+  updateRoomsCache(rooms)
+  return NextResponse.json({ id })
   } catch {
     return NextResponse.json({ error: 'Failed to create room' }, { status: 500 })
   }
@@ -41,6 +42,7 @@ export async function PUT(req: Request) {
         addRandomSuffix: false,
         allowOverwrite: true,
       })
+      updateRoomsCache(rooms)
     }
     return NextResponse.json({ ok: true })
   } catch {
