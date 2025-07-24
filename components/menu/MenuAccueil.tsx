@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Crown, LogOut, Dice6 } from 'lucide-react'
+import RoomsPanel from '../rooms/RoomsPanel'
 import { useRouter } from 'next/navigation'
 import Login from '../login/Login'
 import { defaultPerso } from '../sheet/CharacterSheet'
@@ -31,7 +32,9 @@ export default function MenuAccueil() {
   const [draftChar, setDraftChar]     = useState<Character>(defaultPerso as unknown as Character)
   const [hydrated, setHydrated]       = useState(false)
   const [loggingOut, setLoggingOut]   = useState(false)
-  const [diceHover, setDiceHover]     = useState(false)
+  const [diceHover, setDiceHover] = useState(false)
+  const [roomsOpen, setRoomsOpen] = useState(false)
+
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -55,6 +58,22 @@ export default function MenuAccueil() {
         }
       }
     } catch {}
+  }, [])
+
+  // Met à jour la liste quand une fiche est importée depuis un autre onglet
+  useEffect(() => {
+    const update = () => {
+      try {
+        const list = JSON.parse(localStorage.getItem('jdr_characters') || '[]')
+        if (Array.isArray(list)) setCharacters(list)
+      } catch {}
+    }
+    window.addEventListener('jdr_characters_change', update as EventListener)
+    window.addEventListener('storage', update)
+    return () => {
+      window.removeEventListener('jdr_characters_change', update as EventListener)
+      window.removeEventListener('storage', update)
+    }
   }, [])
 
   useEffect(() => {
@@ -104,7 +123,7 @@ export default function MenuAccueil() {
   }
 
   const handlePlay = () => {
-    router.push('/')
+    setRoomsOpen(v => !v)
   }
 
   const handleNewCharacter = () => {
@@ -117,7 +136,7 @@ export default function MenuAccueil() {
   const handleSaveDraft = () => {
     if (!user) return
     const id = draftChar.id || crypto.randomUUID()
-    const toSave = { ...draftChar, id, nom: draftChar.nom || 'Sans nom', owner: user.pseudo }
+    const toSave = { ...draftChar, id, nom: draftChar.nom || 'Unnamed', owner: user.pseudo }
     const updated = characters.find(c => c.id === id)
       ? characters.map(c => (c.id === id ? toSave : c))
       : [...characters, toSave]
@@ -128,7 +147,7 @@ export default function MenuAccueil() {
   }
 
   const handleDeleteChar = (idx:number) => {
-    if (!window.confirm('Supprimer cette fiche ?')) return
+    if (!window.confirm('Delete this sheet?')) return
     const toDelete = characters[idx]
     const remaining = characters.filter((_, i) => i !== idx)
     saveCharacters(remaining)
@@ -254,10 +273,12 @@ export default function MenuAccueil() {
               "
             >
               <div className="shrink-0 flex items-center justify-start w-[120px]">
-                {/* MODIF bouton Dé : hover = scale + rotate (moins de rose flashy) */}
+
+                {/* Button to open the room list */}
+
                 <button
                   type="button"
-                  aria-label="Aller à la table de jeu"
+                  aria-label="Open game rooms"
                   onClick={handlePlay}
                   onMouseEnter={() => setDiceHover(true)}
                   onMouseLeave={() => setDiceHover(false)}
@@ -296,7 +317,7 @@ export default function MenuAccueil() {
               <div className="shrink-0 flex items-center justify-end w-[120px] gap-3">
                 <button
                   onClick={handleToggleMJ}
-                  title={user.isMJ ? 'Mode MJ (clique pour repasser joueur)' : 'Activer mode MJ'}
+                  title={user.isMJ ? 'GM mode (click to revert)' : 'Enable GM mode'}
                   className={`
                     relative inline-flex items-center justify-center
                     w-14 h-10 rounded-md font-semibold text-sm
@@ -323,7 +344,7 @@ export default function MenuAccueil() {
                     />
                   </span>
                 </button>
-                {/* MODIF bouton Déconnexion : hover rouge marqué */}
+                {/* Logout button with red hover */}
                 <button
                   onClick={handleLogout}
                   className="
@@ -339,10 +360,13 @@ export default function MenuAccueil() {
                   }}
                 >
                   <LogOut size={18} className="mr-1" />
-                  Déconnexion
+                  Logout
                 </button>
               </div>
             </section>
+            {roomsOpen && (
+              <RoomsPanel onClose={() => setRoomsOpen(false)} />
+            )}
 
             {/* Liste des personnages */}
             <div className="flex-1 min-h-0 rounded-xl backdrop-blur-md bg-black/20 p-5 overflow-auto">

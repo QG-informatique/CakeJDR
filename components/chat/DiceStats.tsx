@@ -118,7 +118,7 @@ export default function DiceStats({ history }: Props) {
   const stats = computeStats(history)
   const players = Object.keys(stats)
 
-  if (players.length === 0) return <div className="p-2 text-sm">Aucun jet enregistré.</div>
+  if (players.length === 0) return <div className="p-2 text-sm">No rolls recorded.</div>
 
   let tableHead
   let tableRows
