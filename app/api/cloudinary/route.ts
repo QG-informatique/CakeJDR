@@ -2,10 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { v2 as cloudinary } from 'cloudinary'
 
 // Configure Cloudinary (mettre dans .env à la racine)
+// CLOUDINARY_* variables configure access to the Cloudinary API.
+// They must only be used server-side and should all be defined.
+const { CLOUDINARY_CLOUD_NAME, CLOUDINARY_KEY, CLOUDINARY_API_SECRET } = process.env
+if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_KEY || !CLOUDINARY_API_SECRET) {
+  console.error('Missing Cloudinary configuration environment variables')
+  throw new Error('Cloudinary configuration incomplete')
+}
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
-  api_key: process.env.CLOUDINARY_API_KEY!,
-  api_secret: process.env.CLOUDINARY_API_SECRET!,
+  cloud_name: CLOUDINARY_CLOUD_NAME,
+  api_key: CLOUDINARY_KEY,
+  api_secret: CLOUDINARY_API_SECRET,
 })
 
 // L’upload POST (multipart/form-data)
