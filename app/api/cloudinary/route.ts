@@ -10,9 +10,11 @@ if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_KEY || !CLOUDINARY_API_SECRET) {
   throw new Error('Cloudinary configuration incomplete')
 }
 cloudinary.config({
+
   cloud_name: CLOUDINARY_CLOUD_NAME,
   api_key: CLOUDINARY_KEY,
   api_secret: CLOUDINARY_API_SECRET,
+
 })
 
 // L’upload POST (multipart/form-data)
