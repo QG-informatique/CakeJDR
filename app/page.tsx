@@ -1,13 +1,12 @@
 "use client"
-import HomePageInner from '@/components/app/HomePageInner'
-import { Room } from './Room'
-import { CollaborativeApp } from './CollaborativeApp'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
+// Landing page: simply redirect to the login/menu screen.
 export default function HomePage() {
-  return (
-    <Room id="lobby">
-      <CollaborativeApp />
-      <HomePageInner />
-    </Room>
-  )
+  const router = useRouter()
+  useEffect(() => {
+    router.replace('/menu')
+  }, [router])
+  return null
 }

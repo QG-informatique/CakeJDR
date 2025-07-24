@@ -9,6 +9,10 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  env: {
+    // Expose the public Liveblocks key to client components.
+    LIVEBLOCKS_KEY: process.env.LIVEBLOCKS_KEY,
+  },
 };
 
 export default nextConfig;
