@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function RoomsPage() {
-  const [rooms, setRooms] = useState<{id:string,name:string}[]>([])
+  const [rooms, setRooms] = useState<{id:string,name:string,password?:string}[]>([])
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
   const [showCreate, setShowCreate] = useState(false)
@@ -34,8 +34,12 @@ export default function RoomsPage() {
     router.push(`/room/${data.id}`)
   }
 
-  const joinRoom = (id:string) => {
-    router.push(`/room/${id}`)
+  const joinRoom = (room:{id:string,name:string,password?:string}) => {
+    if (room.password) {
+      const pwd = prompt('Enter room password')
+      if (pwd !== room.password) { alert('Incorrect password'); return }
+    }
+    router.push(`/room/${room.id}`)
   }
 
   return (
@@ -50,7 +54,7 @@ export default function RoomsPage() {
           <li key={r.id} className="mb-2">
             {r.name}
 
-            <button onClick={() => joinRoom(r.id)} className="ml-2 underline">Join</button>
+            <button onClick={() => joinRoom(r)} className="ml-2 underline">Join</button>
 
 
 
@@ -106,6 +110,7 @@ export default function RoomsPage() {
               />
             )}
             <button
+              type="button"
               onClick={createRoom}
               className="px-4 py-2 bg-blue-600 rounded text-white w-full"
             >

@@ -33,9 +33,13 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
   const sendMessage = () => {
     if (inputValue.trim() === '') return
 
-    const msg = { author: 'You', text: inputValue.trim() }
+    let pseudo = 'You'
+    try {
+      const prof = JSON.parse(localStorage.getItem('jdr_profile') || '{}')
+      if (prof.pseudo) pseudo = prof.pseudo
+    } catch {}
 
-
+    const msg = { author: pseudo, text: inputValue.trim() }
 
     setMessages(prev => [...prev, msg])
     broadcast({ type: 'chat', author: msg.author, text: msg.text })

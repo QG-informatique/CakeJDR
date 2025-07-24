@@ -44,9 +44,13 @@ export default function RoomsPanel({ onClose }: Props) {
     router.push(`/room/${data.id}`)
   }
 
-  const joinRoom = (id: string) => {
+  const joinRoom = (room: {id:string;name:string;password?:string}) => {
+    if (room.password) {
+      const pwd = prompt('Enter room password')
+      if (pwd !== room.password) { alert('Incorrect password'); return }
+    }
     onClose?.()
-    router.push(`/room/${id}`)
+    router.push(`/room/${room.id}`)
   }
 
   return (
@@ -72,7 +76,7 @@ export default function RoomsPanel({ onClose }: Props) {
               </span>
               <button
                 className="px-2 py-1 bg-pink-700/50 hover:bg-pink-700/70 rounded text-sm"
-                onClick={() => joinRoom(r.id)}
+                onClick={() => joinRoom(r)}
               >
 
                 Join
@@ -109,6 +113,7 @@ export default function RoomsPanel({ onClose }: Props) {
           />
         )}
         <button
+          type="button"
           className="w-full px-3 py-2 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-semibold"
           onClick={createRoom}
         >
