@@ -162,7 +162,7 @@ export default function MenuAccueil() {
   const handleSaveDraft = () => {
     if (!user) return
     const id = draftChar.id || crypto.randomUUID()
-    const toSave = { ...draftChar, id, nom: draftChar.nom || 'Unnamed', owner: user.pseudo }
+    const toSave = { ...draftChar, id, nom: draftChar.nom || 'Unnamed', owner: user.pseudo, updatedAt: Date.now() }
     const updated = characters.find(c => c.id === id)
       ? characters.map(c => (c.id === id ? toSave : c))
       : [...characters, toSave]
@@ -229,13 +229,14 @@ export default function MenuAccueil() {
     await fetch('/api/roomstorage', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ roomId: selectedRoom.id, id: char.id, character: char })
+      body: JSON.stringify({ roomId: selectedRoom.id, id: char.id, character: { ...char, updatedAt: Date.now() } })
     })
-    setRemoteChars(r => ({ ...r, [String(char.id)]: char }))
+    setRemoteChars(r => ({ ...r, [String(char.id)]: { ...char, updatedAt: Date.now() } }))
   }
 
   const handleDownloadChar = (char: Character) => {
-    const updated = [...characters, char]
+    const idx = characters.findIndex(c => String(c.id) === String(char.id))
+    const updated = idx !== -1 ? characters.map((c, i) => i === idx ? char : c) : [...characters, char]
     saveCharacters(updated)
   }
 
@@ -339,18 +340,23 @@ export default function MenuAccueil() {
                   <Dice6 className="w-5 h-5 text-white drop-shadow-[0_2px_5px_rgba(255,70,190,0.45)]" />
                 </button>
                 {selectedRoom && (
-                  <button
-                    type="button"
-                    className="px-3 py-1.5 rounded-md bg-emerald-600 text-white text-sm shadow hover:bg-emerald-500"
-                    onClick={() => {
-                      if (typeof window !== 'undefined') {
-                        sessionStorage.setItem('visitedMenu', 'true')
-                      }
-                      router.push(`/room/${selectedRoom.id}`)
-                    }}
-                  >
-                    Jouer
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      className="px-3 py-1.5 rounded-md bg-emerald-600 text-white text-sm shadow hover:bg-emerald-500"
+                      onClick={() => {
+                        if (typeof window !== 'undefined') {
+                          sessionStorage.setItem('visitedMenu', 'true')
+                        }
+                        router.push(`/room/${selectedRoom.id}`)
+                      }}
+                    >
+                      Jouer
+                    </button>
+                    <span className="ml-2 text-sm text-white/80">
+                      {selectedRoom.name}
+                    </span>
+                  </>
                 )}
               </div>
 
