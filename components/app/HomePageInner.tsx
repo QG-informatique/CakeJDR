@@ -14,7 +14,6 @@ import OnlineProfiles from '@/components/chat/OnlineProfiles'
 import SideNotes from '@/components/misc/SideNotes'
 import Login from '@/components/login/Login'
 import GMCharacterSelector from '@/components/misc/GMCharacterSelector'
-import MJPanel from '@/components/misc/MJPanel'
 import useDiceHistory from './hooks/useDiceHistory'
 import useProfile from './hooks/useProfile'
 import useOnlineStatus from './hooks/useOnlineStatus'
@@ -135,7 +134,6 @@ export default function HomePageInner() {
           {profile?.isMJ && (
             <span className="ml-2">
               <GMCharacterSelector onSelect={handleUpdatePerso} className="bg-gray-800 hover:bg-gray-700 text-white p-2 rounded shadow" />
-              <MJPanel />
             </span>
           )}
         </CharacterSheet>
