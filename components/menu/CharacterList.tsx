@@ -14,6 +14,9 @@ export type Character = {
 
 interface Props {
   filtered: Character[]
+  remote: Record<string, Character>
+  onDownload: (char: Character) => void
+  onUpload: (char: Character) => void
   selectedIdx: number | null
   onSelect: (idx: number) => void
   onEdit: (idx: number) => void
@@ -33,6 +36,9 @@ const btnBase =
 
 const CharacterList: FC<Props> = ({
   filtered,
+  remote,
+  onDownload,
+  onUpload,
   selectedIdx,
   onSelect,
   onEdit,
@@ -62,22 +68,27 @@ const CharacterList: FC<Props> = ({
         Character sheets
       </h2>
 
-      {filtered.length === 0 ? (
-        <p className="text-xs text-white/65 italic">
-          No sheets stored.
-        </p>
-      ) : (
+      {(() => {
+        const remoteOnly = Object.values(remote).filter(r => !filtered.some(c => String(c.id) === String(r.id)))
+        const all = [...filtered, ...remoteOnly]
+        if (all.length === 0) {
+          return (
+            <p className="text-xs text-white/65 italic">No sheets stored.</p>
+          )
+        }
+        return (
         <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          {filtered.map((ch, idx) => {
-            const isSelected =
-              selectedIdx !== null && filtered[selectedIdx]?.id === ch.id
+          {all.map((ch, idx) => {
+            const isSelected = selectedIdx !== null && filtered[selectedIdx]?.id === ch.id
+            const local = filtered.some(c => String(c.id) === String(ch.id))
+            const cloud = !!remote[String(ch.id)]
             return (
               <li
                 key={`${ch.id}-${idx}`}
-                onClick={() => onSelect(idx)}
+                onClick={() => onSelect(local ? filtered.findIndex(c => String(c.id)===String(ch.id)) : -1)}
                 className={`
                   group relative rounded-lg p-3 cursor-pointer
-                  flex flex-col gap-2 min-h-[120px] 
+                  flex flex-col gap-2 min-h-[120px]
                   transition
                   ${isSelected
                     ? 'ring-2 ring-emerald-400/90 shadow-[0_0_12px_2px_rgba(16,185,129,0.6)]'
@@ -102,26 +113,41 @@ const CharacterList: FC<Props> = ({
                     {ch.nom || 'No name'}
                   </span>
                   <div className="flex items-center gap-1 shrink-0">
+                    {local && !cloud && (
+                      <button
+                        onClick={e => { e.stopPropagation(); onUpload(ch) }}
+                        className={btnBase + ' hover:bg-cyan-600/80 text-cyan-100 w-8 h-8'}
+                        title="Upload"
+                      >
+                        <Upload size={16} />
+                      </button>
+                    )}
+                    {!local && cloud && (
+                      <button
+                        onClick={e => { e.stopPropagation(); onDownload(ch) }}
+                        className={btnBase + ' hover:bg-emerald-600/80 text-emerald-100 w-8 h-8'}
+                        title="Download"
+                      >
+                        <Download size={16} />
+                      </button>
+                    )}
+                    {local && (
+                    <>
                     <button
-                      onClick={e => {
-                        e.stopPropagation()
-                        onEdit(idx)
-                      }}
+                      onClick={e => { e.stopPropagation(); onEdit(filtered.findIndex(c => String(c.id)===String(ch.id))) }}
                       className={btnBase + " hover:bg-yellow-500/90 text-yellow-100 w-8 h-8"}
                       title="Edit"
                     >
                       <Edit2 size={16} />
                     </button>
                     <button
-                      onClick={e => {
-                        e.stopPropagation()
-                        onDelete(idx)
-                      }}
+                      onClick={e => { e.stopPropagation(); onDelete(filtered.findIndex(c => String(c.id)===String(ch.id))) }}
                       className={btnBase + " hover:bg-red-600/90 text-red-100 w-8 h-8"}
                       title="Delete"
                     >
                       <Trash2 size={16} />
                     </button>
+                    </>) }
                   </div>
                 </div>
                 <div className="flex flex-col gap-1 text-xs text-white/85 mt-1">
@@ -150,7 +176,8 @@ const CharacterList: FC<Props> = ({
             )
           })}
         </ul>
-      )}
+        )
+      })()}
 
       <div className="mt-6 flex flex-wrap gap-3 text-sm items-center">
         <button
