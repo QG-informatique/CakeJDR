@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useState, useRef } from 'react'
+import { useBroadcastEvent } from '@liveblocks/react'
 import { User2 } from 'lucide-react'
 
 const STORAGE_KEY = 'jdr_characters'
@@ -21,6 +22,7 @@ export default function GMCharacterSelector({
   const [open, setOpen] = useState(false)
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const broadcast = useBroadcastEvent()
 
   useEffect(() => {
     const update = () => setChars(loadCharacters())
@@ -64,7 +66,10 @@ export default function GMCharacterSelector({
     setSelectedId(id)
     const list = loadCharacters()
     const found = list.find((c: any) => c.id === id)
-    if (found) onSelect(found)
+    if (found) {
+      onSelect(found)
+      broadcast({ type: 'gm-select', character: found })
+    }
     setOpen(false)
   }
 
