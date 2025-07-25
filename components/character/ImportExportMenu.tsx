@@ -3,7 +3,7 @@
 
 import { FC, useRef, useState, useEffect } from 'react'
 import { Folder } from 'lucide-react'
-import { defaultPerso } from '../sheet/CharacterSheet' // <-- AJOUT
+import { defaultPerso } from '../sheet/CharacterSheet'
 
 type Props = {
   perso: any,
@@ -151,7 +151,7 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
   // Reset fiche
   const handleReset = () => {
     if (window.confirm("Vraiment réinitialiser la fiche ? (Suppression irréversible)")) {
-      onUpdate({ ...defaultPerso }) // <-- MODIF ICI !
+      onUpdate({ ...defaultPerso })
       setOpen(false)
     }
   }
