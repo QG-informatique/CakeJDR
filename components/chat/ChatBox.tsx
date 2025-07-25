@@ -9,9 +9,10 @@ type Roll = { player: string, dice: number, result: number }
 type Props = {
   chatBoxRef: RefObject<HTMLDivElement | null>
   history: Roll[]
+  pseudo: string
 }
 
-const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
+const ChatBox: FC<Props> = ({ chatBoxRef, history, pseudo }) => {
   const [messages, setMessages] = useState([
     { author: 'GM', text: 'Welcome!' }
   ])
@@ -33,9 +34,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
   const sendMessage = () => {
     if (inputValue.trim() === '') return
 
-    const msg = { author: 'You', text: inputValue.trim() }
-
-
+    const msg = { author: pseudo || 'Anonymous', text: inputValue.trim() }
 
     setMessages(prev => [...prev, msg])
     broadcast({ type: 'chat', author: msg.author, text: msg.text })

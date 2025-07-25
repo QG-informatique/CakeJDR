@@ -32,7 +32,7 @@ export default function InteractiveCanvas() {
 
   const broadcast = useBroadcastEvent()
   const lastSend = useRef(0)
-  const THROTTLE = 30
+  const THROTTLE = 0
 
   const canvasRef = useRef<HTMLDivElement>(null)
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null)
@@ -192,7 +192,7 @@ export default function InteractiveCanvas() {
       ctxRef.current.stroke()
       const { x: px, y: py } = mousePos
       const now = Date.now()
-      if (now - lastSend.current > THROTTLE) {
+      if (THROTTLE === 0 || now - lastSend.current > THROTTLE) {
         lastSend.current = now
         broadcast({ type: 'draw-line', x1: px, y1: py, x2: x, y2: y, color, width: brushSize, mode: drawMode })
       }

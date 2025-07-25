@@ -1,7 +1,7 @@
 'use client'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { FC, useRef, useState } from 'react'
+import { FC, useRef, useState, useEffect } from 'react'
 import { Folder } from 'lucide-react'
 import { defaultPerso } from '../sheet/CharacterSheet' // <-- AJOUT
 
@@ -30,7 +30,26 @@ const addToList = (char: any) => {
 
 const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
   const [open, setOpen] = useState(false)
+  const [modal, setModal] = useState<'import' | 'export' | 'delete' | null>(null)
+  const [cloudFiles, setCloudFiles] = useState<string[]>([])
+  const [localChars, setLocalChars] = useState<any[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!modal) return
+    if (modal === 'import' || modal === 'delete') {
+      fetch('/api/blob')
+        .then(res => res.json())
+        .then(data => setCloudFiles(data.files?.blobs?.map((b:any)=>b.pathname) || []))
+        .catch(() => setCloudFiles([]))
+    }
+    if (modal === 'export') {
+      try {
+        const list = JSON.parse(localStorage.getItem(CHAR_LIST_KEY) || '[]')
+        setLocalChars(Array.isArray(list) ? list : [])
+      } catch { setLocalChars([]) }
+    }
+  }, [modal])
 
   // Export fiche
   const handleExport = () => {
@@ -94,26 +113,21 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
     setOpen(false)
   }
 
-  // Sauvegarde Cloud
-  const handleCloudSave = async () => {
-    const slug = (perso.nom || 'sans_nom').replace(/[^a-zA-Z0-9-_]/g, '_')
+  const saveToCloud = async (char: any) => {
+    const slug = (char.nom || char.name || 'sans_nom').replace(/[^a-zA-Z0-9-_]/g, '_')
     const filename = `FichePerso/${slug}.json`
     await fetch(`/api/blob?filename=${encodeURIComponent(filename)}`, {
       method: 'POST',
-      body: JSON.stringify(perso),
+      body: JSON.stringify(char),
     })
     alert('Sheet saved to cloud!')
-    setOpen(false)
+    setModal(null)
   }
 
-  // Chargement Cloud
-  const handleCloudLoad = async () => {
-    const res = await fetch('/api/blob')
+  const loadFromCloud = async (filename: string) => {
+    const res = await fetch(`/api/blob?prefix=${encodeURIComponent(filename)}`)
     const data = await res.json()
-    const files: string[] = data.files?.blobs?.map((b:any)=>b.pathname) || []
-    const name = window.prompt('Nom du perso à restaurer?\n'+files.join('\n'))
-    if (!name) return
-    const item = data.files.blobs.find((b:any)=>b.pathname===name)
+    const item = data.files?.blobs?.find((b:any)=>b.pathname===filename)
     if (!item) return
     const txt = await fetch(item.downloadUrl || item.url).then(r=>r.text())
     try {
@@ -124,7 +138,14 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
     } catch {
       alert('Cloud load failed.')
     }
-    setOpen(false)
+    setModal(null)
+  }
+
+  const deleteFromCloud = async (filename: string) => {
+    await fetch(`/api/blob?filename=${encodeURIComponent(filename)}`, { method: 'DELETE' })
+    setCloudFiles(f => f.filter(fl => fl !== filename))
+    alert('Deleted!')
+    setModal(null)
   }
 
   // Reset fiche
@@ -154,8 +175,9 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
 
           <button onClick={handleLocalSave} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">💾 Save locally</button>
           <button onClick={handleLocalLoad} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">📂 Load local save</button>
-          <button onClick={handleCloudSave} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">☁️ Save to cloud</button>
-          <button onClick={handleCloudLoad} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">☁️ Load from cloud</button>
+          <button onClick={() => { setModal('export'); setOpen(false) }} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">☁️ Export to cloud</button>
+          <button onClick={() => { setModal('import'); setOpen(false) }} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">☁️ Import from cloud</button>
+          <button onClick={() => { setModal('delete'); setOpen(false) }} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">🗑 Delete from cloud</button>
 
           <hr className="my-1 border-gray-600" />
           <button onClick={handleReset} className="w-full px-3 py-1 rounded hover:bg-red-700 bg-red-600 text-white text-left text-sm">🗑 Reset sheet</button>
@@ -170,6 +192,80 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
           to   { opacity: 1; transform: translateY(0);}
         }
       `}</style>
+      {modal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => setModal(null)}
+          style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(2px)' }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-black/80 text-white rounded-2xl border border-white/10 shadow-2xl backdrop-blur-md p-5 w-80 max-h-[70vh] overflow-auto"
+          >
+            {modal === 'import' && (
+              <>
+                <h3 className="text-lg font-semibold mb-3">Import from cloud</h3>
+                <ul className="space-y-1">
+                  {cloudFiles.map((f) => (
+                    <li key={f}>
+                      <button
+                        onClick={() => loadFromCloud(f)}
+                        className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm"
+                      >
+                        {f.replace('FichePerso/', '')}
+                      </button>
+                    </li>
+                  ))}
+                  {cloudFiles.length === 0 && (
+                    <li className="text-center text-sm text-gray-400">No file</li>
+                  )}
+                </ul>
+              </>
+            )}
+            {modal === 'export' && (
+              <>
+                <h3 className="text-lg font-semibold mb-3">Export to cloud</h3>
+                <ul className="space-y-1">
+                  {localChars.map((c) => (
+                    <li key={c.id}>
+                      <button
+                        onClick={() => saveToCloud(c)}
+                        className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm"
+                      >
+                        {c.nom || c.name || `#${c.id}`}
+                      </button>
+                    </li>
+                  ))}
+                  {localChars.length === 0 && (
+                    <li className="text-center text-sm text-gray-400">No character</li>
+                  )}
+                </ul>
+              </>
+            )}
+            {modal === 'delete' && (
+              <>
+                <h3 className="text-lg font-semibold mb-3">Delete from cloud</h3>
+                <ul className="space-y-1">
+                  {cloudFiles.map((f) => (
+                    <li key={f} className="flex justify-between items-center gap-2">
+                      <span className="truncate flex-1">{f.replace('FichePerso/', '')}</span>
+                      <button
+                        onClick={() => deleteFromCloud(f)}
+                        className="px-2 py-1 bg-red-700/50 hover:bg-red-700/80 rounded text-sm"
+                      >
+                        Delete
+                      </button>
+                    </li>
+                  ))}
+                  {cloudFiles.length === 0 && (
+                    <li className="text-center text-sm text-gray-400">No file</li>
+                  )}
+                </ul>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

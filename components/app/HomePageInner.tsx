@@ -41,6 +41,8 @@ export default function HomePageInner() {
     const { event } = payload
     if (event.type === 'dice-roll') {
       setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result }])
+    } else if (event.type === 'gm-select') {
+      setPerso(event.character)
     }
   })
 
@@ -148,7 +150,7 @@ export default function HomePageInner() {
           </DiceRoller>
         </main>
 
-        <ChatBox chatBoxRef={chatBoxRef} history={history} />
+        <ChatBox chatBoxRef={chatBoxRef} history={history} pseudo={profile?.pseudo || user || ''} />
         <SideNotes />
       </div>
       <Head>
