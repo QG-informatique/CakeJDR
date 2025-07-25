@@ -176,7 +176,7 @@ export default function InteractiveCanvas() {
           imagesRef.current = updated
           return updated
         })
-        if (!isLocal) broadcast({ type: 'add-image', image: newImg })
+        if (!isLocal) broadcast({ type: 'add-image', image: newImg } as Liveblocks['RoomEvent'])
       }
     })
   }
@@ -228,7 +228,7 @@ export default function InteractiveCanvas() {
       const now = Date.now()
       if (THROTTLE === 0 || now - lastSend.current > THROTTLE) {
         lastSend.current = now
-        broadcast({ type: 'draw-line', x1: px, y1: py, x2: x, y2: y, color, width: brushSize, mode: drawMode })
+        broadcast({ type: 'draw-line', x1: px, y1: py, x2: x, y2: y, color, width: brushSize, mode: drawMode } as Liveblocks['RoomEvent'])
       }
     }
 
@@ -250,7 +250,7 @@ export default function InteractiveCanvas() {
                 width: Math.max(50, x - img.x),
                 height: Math.max(50, y - img.y),
               }
-        if (!img.local) broadcast({ type: 'update-image', image: updated })
+        if (!img.local) broadcast({ type: 'update-image', image: updated } as Liveblocks['RoomEvent'])
         return updated
       })
       imagesRef.current = updatedList
@@ -279,7 +279,7 @@ export default function InteractiveCanvas() {
       ctx.clearRect(0, 0, drawingCanvasRef.current.width, drawingCanvasRef.current.height)
     }
     if (broadcastChange) {
-      broadcast({ type: 'clear-canvas' })
+      broadcast({ type: 'clear-canvas' } as Liveblocks['RoomEvent'])
     }
   }
 
@@ -291,7 +291,7 @@ export default function InteractiveCanvas() {
       imagesRef.current = updated
       return updated
     })
-    if (!img?.local) broadcast({ type: 'delete-image', id })
+    if (!img?.local) broadcast({ type: 'delete-image', id } as Liveblocks['RoomEvent'])
   }
 
   const handleYtSubmit = () => {
