@@ -5,6 +5,7 @@ export type Character = {
   id: string | number
   nom: string
   owner: string
+  updatedAt?: number
   niveau?: number
   classe?: string
   sexe?: string
@@ -80,8 +81,11 @@ const CharacterList: FC<Props> = ({
         <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           {all.map((ch, idx) => {
             const isSelected = selectedIdx !== null && filtered[selectedIdx]?.id === ch.id
-            const local = filtered.some(c => String(c.id) === String(ch.id))
-            const cloud = !!remote[String(ch.id)]
+            const localIdx = filtered.findIndex(c => String(c.id) === String(ch.id))
+            const local = localIdx !== -1
+            const cloudChar = remote[String(ch.id)]
+            const cloud = !!cloudChar
+            const outdated = local && cloud && (cloudChar.updatedAt || 0) > (filtered[localIdx].updatedAt || 0)
             return (
               <li
                 key={`${ch.id}-${idx}`}
@@ -122,7 +126,7 @@ const CharacterList: FC<Props> = ({
                         <Upload size={16} />
                       </button>
                     )}
-                    {!local && cloud && (
+                    {(!local && cloud) || outdated ? (
                       <button
                         onClick={e => { e.stopPropagation(); onDownload(ch) }}
                         className={btnBase + ' hover:bg-emerald-600/80 text-emerald-100 w-8 h-8'}
@@ -130,7 +134,7 @@ const CharacterList: FC<Props> = ({
                       >
                         <Download size={16} />
                       </button>
-                    )}
+                    ) : null}
                     {local && (
                     <>
                     <button

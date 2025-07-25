@@ -88,6 +88,7 @@ export default function HomePageInner() {
       id = crypto.randomUUID()
       newPerso = { ...newPerso, id }
     }
+    newPerso = { ...newPerso, updatedAt: Date.now() }
     setPerso(newPerso)
     setCharacters((prevChars) => {
       let found = false

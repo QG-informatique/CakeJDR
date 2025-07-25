@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { FC, useState, useEffect } from 'react'
+import { useParams } from 'next/navigation'
 import StatsTab from './StatsTab'
 import EquipTab from './EquipTab'
 import DescriptionPanel from '../character/DescriptionPanel'
@@ -76,6 +77,10 @@ const CharacterSheet: FC<Props> = ({
   const [edit, setEdit] = useState(!!creation)
   const [tab, setTab] = useState('main')
   const [localPerso, setLocalPerso] = useState<any>(defaultPerso)
+  const [cloudOpen, setCloudOpen] = useState(false)
+  const [cloudChars, setCloudChars] = useState<any[]>([])
+  const [localList, setLocalList] = useState<any[]>([])
+  const { id: roomId } = useParams<{ id: string }>()
 
   // On met à jour la fiche sélectionnée au chargement/changement
   useEffect(() => {
@@ -89,6 +94,20 @@ const CharacterSheet: FC<Props> = ({
     }
     setLocalPerso(Object.keys(perso || {}).length ? perso : defaultPerso)
   }, [perso, allCharacters])
+
+  useEffect(() => {
+    if (!cloudOpen || !roomId) return
+    fetch(`/api/roomstorage?roomId=${encodeURIComponent(roomId)}`)
+      .then(res => res.json())
+      .then(data => setCloudChars(Object.values(data.characters || {})))
+      .catch(() => setCloudChars([]))
+    try {
+      const list = JSON.parse(localStorage.getItem('jdr_characters') || '[]')
+      setLocalList(Array.isArray(list) ? list : [])
+    } catch {
+      setLocalList([])
+    }
+  }, [cloudOpen, roomId])
 
   // Quand on QUITTE le mode édition, on recharge depuis les props
   useEffect(() => {
@@ -115,6 +134,24 @@ const CharacterSheet: FC<Props> = ({
   const [animKey, setAnimKey] = useState(0)
 
   const cFiche = edit ? localPerso : (Object.keys(perso || {}).length ? perso : defaultPerso)
+
+  const needsDownload = (char: any) => {
+    const local = localList.find(c => String(c.id) === String(char.id))
+    if (!local) return true
+    return (char.updatedAt || 0) > (local.updatedAt || 0)
+  }
+
+  const handleDownload = (char: any) => {
+    try {
+      const list = JSON.parse(localStorage.getItem('jdr_characters') || '[]')
+      const idx = list.findIndex((c: any) => String(c.id) === String(char.id))
+      const withTime = { ...char, updatedAt: char.updatedAt || Date.now() }
+      const updated = idx !== -1 ? list.map((c: any, i: number) => i === idx ? withTime : c) : [...list, withTime]
+      localStorage.setItem('jdr_characters', JSON.stringify(updated))
+      window.dispatchEvent(new Event('jdr_characters_change'))
+      setLocalList(updated)
+    } catch {}
+  }
 
   const handleLevelUp = async () => {
     if (processing) return
@@ -166,6 +203,41 @@ const CharacterSheet: FC<Props> = ({
     onUpdate(localPerso)
   }
 
+  const CloudList = () => (
+    cloudOpen ? (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        onClick={() => setCloudOpen(false)}
+        style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(2px)' }}
+      >
+        <div
+          onClick={e => e.stopPropagation()}
+          className="bg-black/80 text-white rounded-2xl border border-white/10 shadow-2xl backdrop-blur-md p-5 w-80 max-h-[70vh] overflow-auto"
+        >
+          <h3 className="text-lg font-semibold mb-3">Cloud characters</h3>
+          <ul className="space-y-1">
+            {cloudChars.map((c, idx) => (
+              <li key={idx} className="flex justify-between items-center gap-2">
+                <span className="truncate flex-1 text-sm">{c.nom || c.name || `#${idx + 1}`}</span>
+                {needsDownload(c) && (
+                  <button
+                    onClick={() => handleDownload(c)}
+                    className="px-2 py-1 bg-emerald-600/70 hover:bg-emerald-600 rounded text-sm"
+                  >
+                    Download
+                  </button>
+                )}
+              </li>
+            ))}
+            {cloudChars.length === 0 && (
+              <li className="text-center text-sm text-gray-400">No character</li>
+            )}
+          </ul>
+        </div>
+      </div>
+    ) : null
+  )
+
   return (
     <aside
       className="
@@ -192,6 +264,13 @@ const CharacterSheet: FC<Props> = ({
           TABS={TABS}
           logoOnly={logoOnly}
         >
+          <button
+            onClick={() => setCloudOpen(true)}
+            className="ml-2 bg-gray-800 hover:bg-gray-700 text-white p-2 rounded shadow"
+            type="button"
+          >
+            ☁️
+          </button>
           {children}
         </CharacterSheetHeader>
       )}
@@ -261,6 +340,7 @@ const CharacterSheet: FC<Props> = ({
           }}
         />
       )}
+      <CloudList />
     </aside>
   )
 }

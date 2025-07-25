@@ -98,7 +98,7 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
                   <button
                     className="px-2 py-1 bg-pink-700/50 hover:bg-pink-700/70 rounded text-sm"
                     onClick={() => joinRoom(r)}
-                  >Join</button>
+                  >Select</button>
                 )}
               </div>
               {joiningId === r.id && r.password && (
