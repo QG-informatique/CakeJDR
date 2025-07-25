@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { put } from '@vercel/blob'
-import { createClient } from '@liveblocks/node'
+import { Liveblocks } from '@liveblocks/node'
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     if (!secret) {
       return NextResponse.json({ error: 'Liveblocks key missing' }, { status: 500 })
     }
-    const client = createClient({ secret })
+    const client = new Liveblocks({ secret })
     const storage = await client.getStorageDocument(roomId, 'json').catch(() => null)
     const data = storage as Record<string, unknown> | null
     const characters = data && data.characters ? data.characters : {}

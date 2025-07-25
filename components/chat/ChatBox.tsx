@@ -39,7 +39,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
 
 
     setMessages(prev => [...prev, msg])
-    broadcast({ type: 'chat', author: msg.author, text: msg.text })
+    broadcast({ type: 'chat', author: msg.author, text: msg.text } as Liveblocks['RoomEvent'])
     setInputValue('')
   }
 
