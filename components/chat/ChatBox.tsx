@@ -1,6 +1,6 @@
 'use client'
 import { FC, RefObject, useRef, useState, useEffect } from 'react'
-import { useBroadcastEvent, useEventListener } from '@liveblocks/react'
+import { useBroadcastEvent, useEventListener, useRoom } from '@liveblocks/react'
 import SummaryPanel from './SummaryPanel'
 import DiceStats from './DiceStats'
 
@@ -21,6 +21,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
   const [showStats, setShowStats] = useState(false)
   const prevHist = useRef(0)
   const broadcast = useBroadcastEvent()
+  const room = useRoom()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   useEventListener((payload: any) => {
@@ -40,6 +41,17 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
     setMessages(prev => [...prev, msg])
     broadcast({ type: 'chat', author: msg.author, text: msg.text })
     setInputValue('')
+  }
+
+  const saveSession = async () => {
+    try {
+      const historyText = messages.map(m => `${m.author}: ${m.text}`).join('\n')
+      await fetch('/api/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomId: room.id, chatHistory: historyText })
+      })
+    } catch {}
   }
 
   useEffect(() => {
@@ -130,6 +142,14 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
           title="Stats DD"
         >
           {showStats ? 'Chat' : '📊'}
+        </button>
+        <button
+          className="px-5 py-2 rounded-xl font-semibold shadow border-none bg-black/30 text-white/90 hover:bg-emerald-600 hover:text-white transition duration-100 flex items-center justify-center min-h-[44px]"
+          style={{ minHeight: 44 }}
+          onClick={saveSession}
+          title="Save session"
+        >
+          💾
         </button>
       </div>
 
