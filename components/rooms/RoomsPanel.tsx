@@ -11,6 +11,7 @@ export default function RoomsPanel({ onClose }: Props) {
   const [withPassword, setWithPassword] = useState(false)
   const [password, setPassword] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
+  const [creating, setCreating] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
@@ -32,21 +33,26 @@ export default function RoomsPanel({ onClose }: Props) {
       if (!prof.isMJ) { setErrorMsg('Active MJ mode before creating a room'); return }
       if (localStorage.getItem('jdr_my_room')) { setErrorMsg('You already created a room'); return }
     } catch {}
+    setCreating(true)
     const res = await fetch('/api/rooms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, password })
     })
-    if (!res.ok) return
+    if (!res.ok) { setCreating(false); return }
     const data = await res.json()
     localStorage.setItem('jdr_my_room', data.id)
     onClose?.()
     router.push(`/room/${data.id}`)
   }
 
-  const joinRoom = (id: string) => {
+  const joinRoom = (room: {id:string,name:string,password?:string}) => {
+    if (room.password) {
+      const pw = window.prompt('Password for ' + room.name)
+      if (pw !== room.password) return
+    }
     onClose?.()
-    router.push(`/room/${id}`)
+    router.push(`/room/${room.id}`)
   }
 
   return (
@@ -72,7 +78,7 @@ export default function RoomsPanel({ onClose }: Props) {
               </span>
               <button
                 className="px-2 py-1 bg-pink-700/50 hover:bg-pink-700/70 rounded text-sm"
-                onClick={() => joinRoom(r.id)}
+                onClick={() => joinRoom(r)}
               >
 
                 Join
@@ -88,6 +94,7 @@ export default function RoomsPanel({ onClose }: Props) {
           placeholder="Room name"
           value={name}
           onChange={e => setName(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') createRoom() }}
         />
         <label className="text-sm flex items-center gap-2 mb-2">
           <input
@@ -106,16 +113,21 @@ export default function RoomsPanel({ onClose }: Props) {
             placeholder="Password"
             value={password}
             onChange={e => setPassword(e.target.value)}
+            onKeyDown={e => { if (e.key==='Enter') createRoom() }}
           />
         )}
-        <button
-          className="w-full px-3 py-2 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-semibold"
-          onClick={createRoom}
-        >
-
-          Create
-
-        </button>
+        {creating ? (
+          <div className="w-full h-2 bg-gray-700 rounded overflow-hidden mb-2">
+            <div className="h-full bg-emerald-500 animate-pulse" style={{ width: '100%' }} />
+          </div>
+        ) : (
+          <button
+            className="w-full px-3 py-2 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-semibold"
+            onClick={createRoom}
+          >
+            Create
+          </button>
+        )}
         {errorMsg && (
           <p className="text-red-400 text-sm mt-2 text-center">{errorMsg}</p>
         )}
