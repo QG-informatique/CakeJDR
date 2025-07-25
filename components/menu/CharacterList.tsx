@@ -1,5 +1,5 @@
-import { FC, RefObject } from 'react'
-import { Edit2, Trash2, Plus, Upload, Download } from 'lucide-react'
+import { FC, RefObject, useState, useEffect } from 'react'
+import { Edit2, Trash2, Plus, Upload, Download, CloudUpload } from 'lucide-react'
 
 export type Character = {
   id: string | number
@@ -50,10 +50,60 @@ const CharacterList: FC<Props> = ({
   fileInputRef,
   onImportFile
 }) => {
-  // Etat de synchronisation Cloud
-  // Cloud features removed
+  // Cloud import dialog state
+  const [cloudOpen, setCloudOpen] = useState(false)
+  const [localList, setLocalList] = useState<Character[]>([])
 
-  // Cloud import/export removed
+  useEffect(() => {
+    if (!cloudOpen) return
+    try {
+      const list = JSON.parse(localStorage.getItem('jdr_characters') || '[]')
+      setLocalList(Array.isArray(list) ? list : [])
+    } catch {
+      setLocalList([])
+    }
+  }, [cloudOpen])
+
+  const needsDownload = (char: Character) => {
+    const local = localList.find(c => String(c.id) === String(char.id))
+    if (!local) return true
+    return (char.updatedAt || 0) > (local.updatedAt || 0)
+  }
+
+  const CloudList = () => (
+    cloudOpen ? (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        onClick={() => setCloudOpen(false)}
+        style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(2px)' }}
+      >
+        <div
+          onClick={e => e.stopPropagation()}
+          className="bg-black/80 text-white rounded-2xl border border-white/10 shadow-2xl backdrop-blur-md p-5 w-80 max-h-[70vh] overflow-auto"
+        >
+          <h3 className="text-lg font-semibold mb-3">Cloud characters</h3>
+          <ul className="space-y-1">
+            {Object.values(remote).map((c, idx) => (
+              <li key={idx} className="flex justify-between items-center gap-2">
+                <span className="truncate flex-1 text-sm">{String(c.nom || (c as { name?: string }).name || `#${idx + 1}`)}</span>
+                {needsDownload(c) && (
+                  <button
+                    onClick={() => onDownload(c)}
+                    className="px-2 py-1 bg-emerald-600/70 hover:bg-emerald-600 rounded text-sm"
+                  >
+                    Download
+                  </button>
+                )}
+              </li>
+            ))}
+            {Object.keys(remote).length === 0 && (
+              <li className="text-center text-sm text-gray-400">No character</li>
+            )}
+          </ul>
+        </div>
+      </div>
+    ) : null
+  )
 
   return (
     <section
@@ -209,7 +259,12 @@ const CharacterList: FC<Props> = ({
         >
           <Download size={17} /> Export
         </button>
-        {/* Cloud options removed */}
+        <button
+          onClick={() => setCloudOpen(true)}
+          className={btnBase + ' hover:bg-pink-600/80 text-pink-100'}
+        >
+          <CloudUpload size={17} /> Cloud
+        </button>
         <input
           type="file"
           accept="text/plain,application/json"
@@ -218,6 +273,7 @@ const CharacterList: FC<Props> = ({
           className="hidden"
         />
       </div>
+      <CloudList />
     </section>
   )
 }
