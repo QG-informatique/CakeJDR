@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Crown, LogOut, Dice6 } from 'lucide-react'
-import RoomsPanel from '../rooms/RoomsPanel'
+import RoomSelector, { RoomInfo } from '../rooms/RoomSelector'
 import { useRouter } from 'next/navigation'
 import Login from '../login/Login'
 import { defaultPerso } from '../sheet/CharacterSheet'
@@ -14,7 +14,10 @@ import ProfileColorPicker from './ProfileColorPicker'
 
 const PROFILE_KEY = 'jdr_profile'
 const SELECTED_KEY = 'selectedCharacterId'
+// Dice button size consistent with main repo
 const DICE_SIZE = 44
+
+const ROOM_KEY = 'jdr_selected_room'
 
 type Character = {
   id: string | number
@@ -34,6 +37,8 @@ export default function MenuAccueil() {
   const [loggingOut, setLoggingOut]   = useState(false)
   const [diceHover, setDiceHover] = useState(false)
   const [roomsOpen, setRoomsOpen] = useState(false)
+  const [selectedRoom, setSelectedRoom] = useState<RoomInfo | null>(null)
+  const [remoteChars, setRemoteChars] = useState<Record<string, Character>>({})
 
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -56,6 +61,19 @@ export default function MenuAccueil() {
           const idx = savedChars.findIndex((c: any) => c.id?.toString() === selId)
           if (idx !== -1) setSelectedIdx(idx)
         }
+      }
+      const roomRaw = localStorage.getItem(ROOM_KEY)
+      if (roomRaw) {
+        try {
+          const r = JSON.parse(roomRaw)
+          if (r?.id) {
+            setSelectedRoom(r)
+            fetch(`/api/roomstorage?roomId=${encodeURIComponent(r.id)}`)
+              .then(res => res.json())
+              .then(data => setRemoteChars(data.characters || {}))
+              .catch(() => setRemoteChars({}))
+          }
+        } catch {}
       }
     } catch {}
   }, [])
@@ -126,6 +144,15 @@ export default function MenuAccueil() {
     setRoomsOpen(v => !v)
   }
 
+  const handleRoomSelect = (room: RoomInfo) => {
+    setSelectedRoom(room)
+    localStorage.setItem(ROOM_KEY, JSON.stringify(room))
+    fetch(`/api/roomstorage?roomId=${encodeURIComponent(room.id)}`)
+      .then(res => res.json())
+      .then(data => setRemoteChars(data.characters || {}))
+      .catch(() => setRemoteChars({}))
+  }
+
   const handleNewCharacter = () => {
     if (!user) return
     setDraftChar({ ...defaultPerso, id: crypto.randomUUID(), owner: user.pseudo })
@@ -136,7 +163,7 @@ export default function MenuAccueil() {
   const handleSaveDraft = () => {
     if (!user) return
     const id = draftChar.id || crypto.randomUUID()
-    const toSave = { ...draftChar, id, nom: draftChar.nom || 'Unnamed', owner: user.pseudo }
+    const toSave = { ...draftChar, id, nom: draftChar.nom || 'Unnamed', owner: user.pseudo, updatedAt: Date.now() }
     const updated = characters.find(c => c.id === id)
       ? characters.map(c => (c.id === id ? toSave : c))
       : [...characters, toSave]
@@ -196,6 +223,22 @@ export default function MenuAccueil() {
       download: `${(char.nom || 'fiche').replace(/\s+/g, '_')}.txt`
     })
     document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url)
+  }
+
+  const handleUploadChar = async (char: Character) => {
+    if (!selectedRoom) return
+    await fetch('/api/roomstorage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ roomId: selectedRoom.id, id: char.id, character: { ...char, updatedAt: Date.now() } })
+    })
+    setRemoteChars(r => ({ ...r, [String(char.id)]: { ...char, updatedAt: Date.now() } }))
+  }
+
+  const handleDownloadChar = (char: Character) => {
+    const idx = characters.findIndex(c => String(c.id) === String(char.id))
+    const updated = idx !== -1 ? characters.map((c, i) => i === idx ? char : c) : [...characters, char]
+    saveCharacters(updated)
   }
 
   const handleChangeColor = (color:string) => {
@@ -272,7 +315,7 @@ export default function MenuAccueil() {
                 flex items-center w-full
               "
             >
-              <div className="shrink-0 flex items-center justify-start w-[120px]">
+              <div className="shrink-0 flex items-center justify-start min-w-[150px] gap-2">
 
                 {/* Button to open the room list */}
 
@@ -297,7 +340,29 @@ export default function MenuAccueil() {
                 >
                   <Dice6 className="w-5 h-5 text-white drop-shadow-[0_2px_5px_rgba(255,70,190,0.45)]" />
                 </button>
+                <button
+                  type="button"
+                  disabled={!selectedRoom}
+                  className={`px-3 py-1.5 rounded-md text-sm shadow transition-colors
+                    ${selectedRoom
+                      ? 'bg-emerald-600 text-white hover:bg-emerald-500'
+                      : 'bg-gray-600 text-gray-300 cursor-not-allowed'}`}
+                  onClick={() => {
+                    if (!selectedRoom) return
+                    if (typeof window !== 'undefined') {
+                      sessionStorage.setItem('visitedMenu', 'true')
+                    }
+                    router.push(`/room/${selectedRoom.id}`)
+                  }}
+                >
+                  Jouer
+                </button>
               </div>
+              {selectedRoom && (
+                <span className="ml-2 text-sm text-white/80">
+                  {selectedRoom.name}
+                </span>
+              )}
 
               <div className="flex-1 flex items-center justify-center">
                 <span
@@ -365,13 +430,19 @@ export default function MenuAccueil() {
               </div>
             </section>
             {roomsOpen && (
-              <RoomsPanel onClose={() => setRoomsOpen(false)} />
+              <RoomSelector
+                onClose={() => setRoomsOpen(false)}
+                onSelect={handleRoomSelect}
+              />
             )}
 
             {/* Liste des personnages */}
             <div className="flex-1 min-h-0 rounded-xl backdrop-blur-md bg-black/20 p-5 overflow-auto">
               <CharacterList
                 filtered={filteredCharacters}
+                remote={remoteChars}
+                onDownload={handleDownloadChar}
+                onUpload={handleUploadChar}
                 selectedIdx={selectedIdx}
                 onSelect={handleSelectChar}
                 onEdit={handleEditCharacter}
