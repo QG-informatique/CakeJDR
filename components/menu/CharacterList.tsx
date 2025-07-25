@@ -1,17 +1,5 @@
-import { FC, RefObject, useState, useRef } from 'react'
-import Portal from '../Portal'
-import { Edit2, Trash2, Plus, Upload, Download, CloudUpload } from 'lucide-react'
-
-// Utilitaire pour un nom de fichier lisible et safe
-function slugify(str: string) {
-  return str
-    .normalize('NFD')                   // Enlève accents
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-zA-Z0-9-_ ]/g, '')    // Caractères safe
-    .trim()
-    .replace(/\s+/g, '_')
-    .toLowerCase()
-}
+import { FC, RefObject } from 'react'
+import { Edit2, Trash2, Plus, Upload, Download } from 'lucide-react'
 
 export type Character = {
   id: string | number
@@ -56,102 +44,9 @@ const CharacterList: FC<Props> = ({
   onImportFile
 }) => {
   // Etat de synchronisation Cloud
-  const [syncing, setSyncing] = useState(false)
-  const [syncSuccess, setSyncSuccess] = useState(false)
-  const [syncError, setSyncError] = useState(false)
-  const [showCloud, setShowCloud] = useState(false)
-  const cloudBtnRef = useRef<HTMLButtonElement | null>(null)
-  const [cloudPos, setCloudPos] = useState<{left:number;top:number}|null>(null)
-  const [importFiles, setImportFiles] = useState<Array<{pathname:string,downloadUrl?:string,url?:string}>>([])
-  const [showImport, setShowImport] = useState(false)
+  // Cloud features removed
 
-  // Fonction pour générer le nom de fichier avec nom lisible + id
-  const getFilename = (character: Character) => {
-    const namePart = character.nom ? slugify(character.nom as string) : 'sans-nom'
-    return `FichePerso/${character.id}-${namePart}.json`
-  }
-
-  async function syncAllToCloud() {
-    setSyncing(true)
-    setSyncSuccess(false)
-    setSyncError(false)
-    try {
-      // 1. Liste tous les fichiers déjà présents sur Blob (FichePerso/)
-      const resList = await fetch('/api/blob?prefix=FichePerso/')
-      const { files } = await resList.json() as { files: { pathname: string }[] }
-
-      // 2. Liste locale des fichiers attendus (uploadés) selon ta liste
-      const localFilenames = filtered.map(getFilename)
-
-      // 3. Pour chaque fichier existant sur Blob mais absent en local → on supprime
-      const deletes = files
-        .filter(f => !localFilenames.includes(f.pathname))
-        .map(f =>
-          fetch(`/api/blob?filename=${encodeURIComponent(f.pathname)}`, { method: 'DELETE' })
-        )
-      await Promise.all(deletes)
-
-      // 4. Upload toutes les fiches locales
-      const uploads = filtered.map(character => {
-        const filename = getFilename(character)
-        const blob = new Blob([JSON.stringify(character)], { type: 'application/json' })
-        return fetch(`/api/blob?filename=${encodeURIComponent(filename)}`, {
-          method: 'POST',
-          body: blob,
-        }).then(res => res.json())
-      })
-      const results = await Promise.all(uploads)
-      if (results.every(r => r.url)) {
-        setSyncSuccess(true)
-        setTimeout(() => setSyncSuccess(false), 2000)
-      } else {
-        setSyncError(true)
-        setTimeout(() => setSyncError(false), 2000)
-      }
-    } catch {
-      setSyncError(true)
-      setTimeout(() => setSyncError(false), 2000)
-    }
-    setSyncing(false)
-  }
-
-  async function fetchImportList() {
-    try {
-      const res = await fetch('/api/blob?prefix=FichePerso/')
-      const { files } = await res.json() as { files: Array<{ pathname: string; downloadUrl?: string; url?: string }> }
-      setImportFiles(files)
-      setShowImport(true)
-    } catch {
-      setImportFiles([])
-      setShowImport(true)
-    }
-  }
-
-  async function importFile(file: { pathname:string; downloadUrl?: string; url?: string }) {
-    try {
-      const url = file.downloadUrl || file.url
-      if (!url) return
-      const text = await fetch(url).then(r => r.text())
-      const data = JSON.parse(text)
-      const stored = JSON.parse(localStorage.getItem('jdr_characters') || '[]') as Character[]
-      const withId = { ...data, id: data.id || crypto.randomUUID() }
-      localStorage.setItem('jdr_characters', JSON.stringify([...stored, withId]))
-      window.dispatchEvent(new Event('jdr_characters_change'))
-      setShowImport(false)
-    } catch {
-      setShowImport(false)
-    }
-  }
-
-  const handleCloudExport = async () => {
-    await syncAllToCloud()
-    setShowCloud(false)
-  }
-
-  const handleCloudImport = async () => {
-    setShowCloud(false)
-    await fetchImportList()
-  }
+  // Cloud import/export removed
 
   return (
     <section
@@ -283,50 +178,7 @@ const CharacterList: FC<Props> = ({
         >
           <Download size={17} /> Export
         </button>
-        {/* Bouton Cloud ouvrant un petit menu */}
-        <div>
-          <button
-            ref={cloudBtnRef}
-            onClick={() => {
-              if (!showCloud) {
-                const rect = cloudBtnRef.current?.getBoundingClientRect()
-                if (rect) {
-                  setCloudPos({
-                    left: rect.left + window.scrollX,
-                    top: rect.bottom + window.scrollY,
-                  })
-                }
-              }
-              setShowCloud(v => !v)
-            }}
-            className={
-              btnBase +
-              " hover:bg-pink-600/80 text-pink-100 font-bold flex items-center gap-2"
-            }
-            title="Cloud options"
-          >
-            <CloudUpload size={18} />
-            Cloud
-          </button>
-          {showCloud && cloudPos && (
-            <Portal>
-              <div className="fixed inset-0 z-[99999]" onClick={() => setShowCloud(false)}>
-                <div
-                  style={{ left: cloudPos.left, top: cloudPos.top }}
-                  className="absolute z-[100000] mt-2 w-44 bg-black/75 border border-white/20 rounded-xl shadow-2xl backdrop-blur-md p-2 flex flex-col gap-1"
-                  onClick={e => e.stopPropagation()}
-                >
-                  <button onClick={handleCloudImport} className="px-3 py-1 text-left hover:bg-gray-800 rounded">Import from Cloud</button>
-                  <button onClick={handleCloudExport} className="px-3 py-1 text-left hover:bg-gray-800 rounded">Export to Cloud</button>
-                </div>
-              </div>
-            </Portal>
-          )}
-        </div>
-        {/* Indicateur de synchronisation */}
-        {syncing && <span className="ml-1 animate-pulse">⏳</span>}
-        {syncSuccess && <span className="ml-1 text-emerald-400">✔</span>}
-        {syncError && <span className="ml-1 text-red-400">✖</span>}
+        {/* Cloud options removed */}
         <input
           type="file"
           accept="text/plain,application/json"
@@ -335,28 +187,6 @@ const CharacterList: FC<Props> = ({
           className="hidden"
         />
       </div>
-      {showImport && (
-        <Portal>
-          <div className="fixed inset-0 z-[99999] flex items-center justify-center" onClick={() => setShowImport(false)} style={{ background:'rgba(0,0,0,0.5)' }}>
-            <div className="bg-black/80 p-4 rounded-xl border border-white/20 backdrop-blur-md" onClick={e=>e.stopPropagation()}>
-              <h3 className="mb-2 font-semibold text-white">Import from Cloud</h3>
-              {importFiles.length === 0 ? (
-                <p className="text-sm text-white/70">No files available</p>
-              ) : (
-                <ul className="space-y-1 max-h-60 overflow-y-auto">
-                  {importFiles.map(f => (
-                    <li key={f.pathname}>
-                      <button className="text-left w-full px-3 py-1 hover:bg-gray-800 rounded text-sm" onClick={() => importFile(f)}>
-                        {f.pathname}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-        </Portal>
-      )}
     </section>
   )
 }

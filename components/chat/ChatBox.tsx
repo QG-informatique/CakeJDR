@@ -6,12 +6,13 @@ import DiceStats from './DiceStats'
 
 type Roll = { player: string, dice: number, result: number }
 
-type Props = {
+interface Props {
   chatBoxRef: RefObject<HTMLDivElement | null>
   history: Roll[]
+  author: string
 }
 
-const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
+const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
   const [messages, setMessages] = useState([
     { author: 'GM', text: 'Welcome!' }
   ])
@@ -34,7 +35,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
   const sendMessage = () => {
     if (inputValue.trim() === '') return
 
-    const msg = { author: 'You', text: inputValue.trim() }
+    const msg = { author, text: inputValue.trim() }
 
 
 
