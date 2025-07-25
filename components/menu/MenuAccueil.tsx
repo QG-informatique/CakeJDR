@@ -341,24 +341,27 @@ export default function MenuAccueil() {
                 >
                   <Dice6 className="w-5 h-5 text-white drop-shadow-[0_2px_5px_rgba(255,70,190,0.45)]" />
                 </button>
+                <button
+                  type="button"
+                  disabled={!selectedRoom}
+                  className={`px-3 py-1.5 rounded-md text-sm shadow transition-colors
+                    ${selectedRoom
+                      ? 'bg-emerald-600 text-white hover:bg-emerald-500'
+                      : 'bg-gray-600 text-gray-300 cursor-not-allowed'}`}
+                  onClick={() => {
+                    if (!selectedRoom) return
+                    if (typeof window !== 'undefined') {
+                      sessionStorage.setItem('visitedMenu', 'true')
+                    }
+                    router.push(`/room/${selectedRoom.id}`)
+                  }}
+                >
+                  Jouer
+                </button>
                 {selectedRoom && (
-                  <>
-                    <button
-                      type="button"
-                      className="px-3 py-1.5 rounded-md bg-emerald-600 text-white text-sm shadow hover:bg-emerald-500"
-                      onClick={() => {
-                        if (typeof window !== 'undefined') {
-                          sessionStorage.setItem('visitedMenu', 'true')
-                        }
-                        router.push(`/room/${selectedRoom.id}`)
-                      }}
-                    >
-                      Jouer
-                    </button>
-                    <span className="ml-2 text-sm text-white/80">
-                      {selectedRoom.name}
-                    </span>
-                  </>
+                  <span className="ml-2 text-sm text-white/80">
+                    {selectedRoom.name}
+                  </span>
                 )}
               </div>
 
