@@ -316,7 +316,7 @@ export default function MenuAccueil() {
                 flex items-center w-full
               "
             >
-              <div className="shrink-0 flex items-center justify-start w-[120px] gap-2">
+              <div className="shrink-0 flex items-center justify-start min-w-[150px] gap-2">
 
                 {/* Button to open the room list */}
 
@@ -358,12 +358,12 @@ export default function MenuAccueil() {
                 >
                   Jouer
                 </button>
-                {selectedRoom && (
-                  <span className="ml-2 text-sm text-white/80">
-                    {selectedRoom.name}
-                  </span>
-                )}
               </div>
+              {selectedRoom && (
+                <span className="ml-2 text-sm text-white/80">
+                  {selectedRoom.name}
+                </span>
+              )}
 
               <div className="flex-1 flex items-center justify-center">
                 <span
