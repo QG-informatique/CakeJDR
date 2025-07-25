@@ -68,7 +68,7 @@ export default function GMCharacterSelector({
     const found = list.find((c: any) => c.id === id)
     if (found) {
       onSelect(found)
-      broadcast({ type: 'gm-select', character: found })
+      broadcast({ type: 'gm-select', character: found } as Liveblocks['RoomEvent'])
     }
     setOpen(false)
   }

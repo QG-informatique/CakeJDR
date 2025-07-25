@@ -1,6 +1,7 @@
 "use client";
 import { ReactNode } from "react";
 import { LiveblocksProvider, RoomProvider, ClientSideSuspense } from "@liveblocks/react/suspense";
+import { LiveMap } from '@liveblocks/client'
 
 export function Room({ id, children }: { id: string; children: ReactNode }) {
 
@@ -13,7 +14,11 @@ export function Room({ id, children }: { id: string; children: ReactNode }) {
 
   return (
     <LiveblocksProvider publicApiKey={key}>
-      <RoomProvider id={id} initialPresence={{}}>
+      <RoomProvider
+        id={id}
+        initialPresence={{}}
+        initialStorage={{ characters: new LiveMap(), images: new LiveMap() }}
+      >
         <ClientSideSuspense fallback={<div>Loading…</div>}>
           {children}
         </ClientSideSuspense>
