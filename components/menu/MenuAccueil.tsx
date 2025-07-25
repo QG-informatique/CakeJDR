@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Crown, LogOut, Dice6 } from 'lucide-react'
-import RoomsPanel, { RoomInfo } from '../rooms/RoomsPanel'
+import RoomSelector, { RoomInfo } from '../rooms/RoomSelector'
 import { useRouter } from 'next/navigation'
 import Login from '../login/Login'
 import { defaultPerso } from '../sheet/CharacterSheet'
@@ -37,6 +37,7 @@ export default function MenuAccueil() {
   const [diceHover, setDiceHover] = useState(false)
   const [roomsOpen, setRoomsOpen] = useState(false)
   const [selectedRoom, setSelectedRoom] = useState<RoomInfo | null>(null)
+  const [remoteChars, setRemoteChars] = useState<Record<string, Character>>({})
 
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -64,7 +65,13 @@ export default function MenuAccueil() {
       if (roomRaw) {
         try {
           const r = JSON.parse(roomRaw)
-          if (r?.id) setSelectedRoom(r)
+          if (r?.id) {
+            setSelectedRoom(r)
+            fetch(`/api/roomstorage?roomId=${encodeURIComponent(r.id)}`)
+              .then(res => res.json())
+              .then(data => setRemoteChars(data.characters || {}))
+              .catch(() => setRemoteChars({}))
+          }
         } catch {}
       }
     } catch {}
@@ -139,6 +146,10 @@ export default function MenuAccueil() {
   const handleRoomSelect = (room: RoomInfo) => {
     setSelectedRoom(room)
     localStorage.setItem(ROOM_KEY, JSON.stringify(room))
+    fetch(`/api/roomstorage?roomId=${encodeURIComponent(room.id)}`)
+      .then(res => res.json())
+      .then(data => setRemoteChars(data.characters || {}))
+      .catch(() => setRemoteChars({}))
   }
 
   const handleNewCharacter = () => {
@@ -211,6 +222,21 @@ export default function MenuAccueil() {
       download: `${(char.nom || 'fiche').replace(/\s+/g, '_')}.txt`
     })
     document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url)
+  }
+
+  const handleUploadChar = async (char: Character) => {
+    if (!selectedRoom) return
+    await fetch('/api/roomstorage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ roomId: selectedRoom.id, id: char.id, character: char })
+    })
+    setRemoteChars(r => ({ ...r, [String(char.id)]: char }))
+  }
+
+  const handleDownloadChar = (char: Character) => {
+    const updated = [...characters, char]
+    saveCharacters(updated)
   }
 
   const handleChangeColor = (color:string) => {
@@ -316,7 +342,12 @@ export default function MenuAccueil() {
                   <button
                     type="button"
                     className="px-3 py-1.5 rounded-md bg-emerald-600 text-white text-sm shadow hover:bg-emerald-500"
-                    onClick={() => router.push(`/room/${selectedRoom.id}`)}
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        sessionStorage.setItem('visitedMenu', 'true')
+                      }
+                      router.push(`/room/${selectedRoom.id}`)
+                    }}
                   >
                     Jouer
                   </button>
@@ -389,7 +420,7 @@ export default function MenuAccueil() {
               </div>
             </section>
             {roomsOpen && (
-              <RoomsPanel
+              <RoomSelector
                 onClose={() => setRoomsOpen(false)}
                 onSelect={handleRoomSelect}
               />
@@ -399,6 +430,9 @@ export default function MenuAccueil() {
             <div className="flex-1 min-h-0 rounded-xl backdrop-blur-md bg-black/20 p-5 overflow-auto">
               <CharacterList
                 filtered={filteredCharacters}
+                remote={remoteChars}
+                onDownload={handleDownloadChar}
+                onUpload={handleUploadChar}
                 selectedIdx={selectedIdx}
                 onSelect={handleSelectChar}
                 onEdit={handleEditCharacter}
