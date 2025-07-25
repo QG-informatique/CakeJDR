@@ -62,6 +62,8 @@ const CharacterList: FC<Props> = ({
   const [showCloud, setShowCloud] = useState(false)
   const cloudBtnRef = useRef<HTMLButtonElement | null>(null)
   const [cloudPos, setCloudPos] = useState<{left:number;top:number}|null>(null)
+  const [importFiles, setImportFiles] = useState<Array<{pathname:string,downloadUrl?:string,url?:string}>>([])
+  const [showImport, setShowImport] = useState(false)
 
   // Fonction pour générer le nom de fichier avec nom lisible + id
   const getFilename = (character: Character) => {
@@ -113,15 +115,20 @@ const CharacterList: FC<Props> = ({
     setSyncing(false)
   }
 
-  async function importFromCloud() {
+  async function fetchImportList() {
     try {
       const res = await fetch('/api/blob?prefix=FichePerso/')
-      const { files } = await res.json() as { files: { pathname: string, downloadUrl?: string, url?: string }[] }
-      const names = files.map(f => f.pathname)
-      const choice = window.prompt('Choisir un fichier à importer:\n' + names.join('\n'))
-      if (!choice) return
-      const file = files.find(f => f.pathname === choice)
-      if (!file) return
+      const { files } = await res.json() as { files: Array<{ pathname: string; downloadUrl?: string; url?: string }> }
+      setImportFiles(files)
+      setShowImport(true)
+    } catch {
+      setImportFiles([])
+      setShowImport(true)
+    }
+  }
+
+  async function importFile(file: { pathname:string; downloadUrl?: string; url?: string }) {
+    try {
       const url = file.downloadUrl || file.url
       if (!url) return
       const text = await fetch(url).then(r => r.text())
@@ -130,9 +137,9 @@ const CharacterList: FC<Props> = ({
       const withId = { ...data, id: data.id || crypto.randomUUID() }
       localStorage.setItem('jdr_characters', JSON.stringify([...stored, withId]))
       window.dispatchEvent(new Event('jdr_characters_change'))
-      alert('Fiche importée !')
+      setShowImport(false)
     } catch {
-      alert('Import échoué')
+      setShowImport(false)
     }
   }
 
@@ -142,8 +149,8 @@ const CharacterList: FC<Props> = ({
   }
 
   const handleCloudImport = async () => {
-    await importFromCloud()
     setShowCloud(false)
+    await fetchImportList()
   }
 
   return (
@@ -328,6 +335,28 @@ const CharacterList: FC<Props> = ({
           className="hidden"
         />
       </div>
+      {showImport && (
+        <Portal>
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center" onClick={() => setShowImport(false)} style={{ background:'rgba(0,0,0,0.5)' }}>
+            <div className="bg-black/80 p-4 rounded-xl border border-white/20 backdrop-blur-md" onClick={e=>e.stopPropagation()}>
+              <h3 className="mb-2 font-semibold text-white">Import from Cloud</h3>
+              {importFiles.length === 0 ? (
+                <p className="text-sm text-white/70">No files available</p>
+              ) : (
+                <ul className="space-y-1 max-h-60 overflow-y-auto">
+                  {importFiles.map(f => (
+                    <li key={f.pathname}>
+                      <button className="text-left w-full px-3 py-1 hover:bg-gray-800 rounded text-sm" onClick={() => importFile(f)}>
+                        {f.pathname}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </Portal>
+      )}
     </section>
   )
 }
