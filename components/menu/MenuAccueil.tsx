@@ -15,7 +15,8 @@ import ProfileColorPicker from './ProfileColorPicker'
 const PROFILE_KEY = 'jdr_profile'
 const SELECTED_KEY = 'selectedCharacterId'
 // Restore previous dice button size
-const DICE_SIZE = 60
+// Adjust dice button size for better visibility
+const DICE_SIZE = 80
 
 const ROOM_KEY = 'jdr_selected_room'
 
