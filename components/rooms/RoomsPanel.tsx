@@ -1,11 +1,15 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { Lock } from 'lucide-react'
 
-interface Props { onClose?: () => void }
+export type RoomInfo = { id: string; name: string; password?: string }
 
-export default function RoomsPanel({ onClose }: Props) {
+interface Props {
+  onClose?: () => void
+  onSelect?: (room: RoomInfo) => void
+}
+
+export default function RoomsPanel({ onClose, onSelect }: Props) {
   const [rooms, setRooms] = useState<Array<{id:string,name:string,password?:string}>>([])
   const [name, setName] = useState('')
   const [withPassword, setWithPassword] = useState(false)
@@ -13,7 +17,6 @@ export default function RoomsPanel({ onClose }: Props) {
   const [errorMsg, setErrorMsg] = useState('')
   const [creating, setCreating] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
-  const router = useRouter()
 
 
   // Fetch the list of existing rooms
@@ -43,7 +46,7 @@ export default function RoomsPanel({ onClose }: Props) {
     const data = await res.json()
     localStorage.setItem('jdr_my_room', data.id)
     onClose?.()
-    router.push(`/room/${data.id}`)
+    onSelect?.({ id: data.id, name, password: password || undefined })
   }
 
   const joinRoom = (room: {id:string,name:string,password?:string}) => {
@@ -52,7 +55,7 @@ export default function RoomsPanel({ onClose }: Props) {
       if (pw !== room.password) return
     }
     onClose?.()
-    router.push(`/room/${room.id}`)
+    onSelect?.(room)
   }
 
   return (

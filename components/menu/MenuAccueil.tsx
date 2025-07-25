@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Crown, LogOut, Dice6 } from 'lucide-react'
-import RoomsPanel from '../rooms/RoomsPanel'
+import RoomsPanel, { RoomInfo } from '../rooms/RoomsPanel'
 import { useRouter } from 'next/navigation'
 import Login from '../login/Login'
 import { defaultPerso } from '../sheet/CharacterSheet'
@@ -15,6 +15,8 @@ import ProfileColorPicker from './ProfileColorPicker'
 const PROFILE_KEY = 'jdr_profile'
 const SELECTED_KEY = 'selectedCharacterId'
 const DICE_SIZE = 44
+
+const ROOM_KEY = 'jdr_selected_room'
 
 type Character = {
   id: string | number
@@ -34,6 +36,7 @@ export default function MenuAccueil() {
   const [loggingOut, setLoggingOut]   = useState(false)
   const [diceHover, setDiceHover] = useState(false)
   const [roomsOpen, setRoomsOpen] = useState(false)
+  const [selectedRoom, setSelectedRoom] = useState<RoomInfo | null>(null)
 
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -56,6 +59,13 @@ export default function MenuAccueil() {
           const idx = savedChars.findIndex((c: any) => c.id?.toString() === selId)
           if (idx !== -1) setSelectedIdx(idx)
         }
+      }
+      const roomRaw = localStorage.getItem(ROOM_KEY)
+      if (roomRaw) {
+        try {
+          const r = JSON.parse(roomRaw)
+          if (r?.id) setSelectedRoom(r)
+        } catch {}
       }
     } catch {}
   }, [])
@@ -124,6 +134,11 @@ export default function MenuAccueil() {
 
   const handlePlay = () => {
     setRoomsOpen(v => !v)
+  }
+
+  const handleRoomSelect = (room: RoomInfo) => {
+    setSelectedRoom(room)
+    localStorage.setItem(ROOM_KEY, JSON.stringify(room))
   }
 
   const handleNewCharacter = () => {
@@ -272,7 +287,7 @@ export default function MenuAccueil() {
                 flex items-center w-full
               "
             >
-              <div className="shrink-0 flex items-center justify-start w-[120px]">
+              <div className="shrink-0 flex items-center justify-start w-[120px] gap-2">
 
                 {/* Button to open the room list */}
 
@@ -297,6 +312,15 @@ export default function MenuAccueil() {
                 >
                   <Dice6 className="w-5 h-5 text-white drop-shadow-[0_2px_5px_rgba(255,70,190,0.45)]" />
                 </button>
+                {selectedRoom && (
+                  <button
+                    type="button"
+                    className="px-3 py-1.5 rounded-md bg-emerald-600 text-white text-sm shadow hover:bg-emerald-500"
+                    onClick={() => router.push(`/room/${selectedRoom.id}`)}
+                  >
+                    Jouer
+                  </button>
+                )}
               </div>
 
               <div className="flex-1 flex items-center justify-center">
@@ -365,7 +389,10 @@ export default function MenuAccueil() {
               </div>
             </section>
             {roomsOpen && (
-              <RoomsPanel onClose={() => setRoomsOpen(false)} />
+              <RoomsPanel
+                onClose={() => setRoomsOpen(false)}
+                onSelect={handleRoomSelect}
+              />
             )}
 
             {/* Liste des personnages */}
