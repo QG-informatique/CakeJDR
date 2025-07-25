@@ -150,7 +150,7 @@ export default function HomePageInner() {
           </DiceRoller>
         </main>
 
-        <ChatBox chatBoxRef={chatBoxRef} history={history} pseudo={profile?.pseudo || user || ''} />
+        <ChatBox chatBoxRef={chatBoxRef} history={history} />
         <SideNotes />
       </div>
       <Head>
