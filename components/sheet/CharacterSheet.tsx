@@ -90,6 +90,7 @@ const CharacterSheet: FC<Props> = ({
     setLocalPerso(Object.keys(perso || {}).length ? perso : defaultPerso)
   }, [perso, allCharacters])
 
+
   // Quand on QUITTE le mode édition, on recharge depuis les props
   useEffect(() => {
     if (!edit) {
@@ -115,6 +116,7 @@ const CharacterSheet: FC<Props> = ({
   const [animKey, setAnimKey] = useState(0)
 
   const cFiche = edit ? localPerso : (Object.keys(perso || {}).length ? perso : defaultPerso)
+
 
   const handleLevelUp = async () => {
     if (processing) return
@@ -165,6 +167,7 @@ const CharacterSheet: FC<Props> = ({
     setEdit(false)
     onUpdate(localPerso)
   }
+
 
   return (
     <aside

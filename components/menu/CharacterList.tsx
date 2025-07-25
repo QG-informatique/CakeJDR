@@ -1,22 +1,11 @@
-import { FC, RefObject, useState, useRef } from 'react'
-import Portal from '../Portal'
+import { FC, RefObject, useState, useEffect } from 'react'
 import { Edit2, Trash2, Plus, Upload, Download, CloudUpload } from 'lucide-react'
-
-// Utilitaire pour un nom de fichier lisible et safe
-function slugify(str: string) {
-  return str
-    .normalize('NFD')                   // Enlève accents
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-zA-Z0-9-_ ]/g, '')    // Caractères safe
-    .trim()
-    .replace(/\s+/g, '_')
-    .toLowerCase()
-}
 
 export type Character = {
   id: string | number
   nom: string
   owner: string
+  updatedAt?: number
   niveau?: number
   classe?: string
   sexe?: string
@@ -26,6 +15,9 @@ export type Character = {
 
 interface Props {
   filtered: Character[]
+  remote: Record<string, Character>
+  onDownload: (char: Character) => void
+  onUpload: (char: Character) => void
   selectedIdx: number | null
   onSelect: (idx: number) => void
   onEdit: (idx: number) => void
@@ -45,6 +37,9 @@ const btnBase =
 
 const CharacterList: FC<Props> = ({
   filtered,
+  remote,
+  onDownload,
+  onUpload,
   selectedIdx,
   onSelect,
   onEdit,
@@ -55,96 +50,60 @@ const CharacterList: FC<Props> = ({
   fileInputRef,
   onImportFile
 }) => {
-  // Etat de synchronisation Cloud
-  const [syncing, setSyncing] = useState(false)
-  const [syncSuccess, setSyncSuccess] = useState(false)
-  const [syncError, setSyncError] = useState(false)
-  const [showCloud, setShowCloud] = useState(false)
-  const cloudBtnRef = useRef<HTMLButtonElement | null>(null)
-  const [cloudPos, setCloudPos] = useState<{left:number;top:number}|null>(null)
+  // Cloud import dialog state
+  const [cloudOpen, setCloudOpen] = useState(false)
+  const [localList, setLocalList] = useState<Character[]>([])
 
-  // Fonction pour générer le nom de fichier avec nom lisible + id
-  const getFilename = (character: Character) => {
-    const namePart = character.nom ? slugify(character.nom as string) : 'sans-nom'
-    return `FichePerso/${character.id}-${namePart}.json`
-  }
-
-  async function syncAllToCloud() {
-    setSyncing(true)
-    setSyncSuccess(false)
-    setSyncError(false)
+  useEffect(() => {
+    if (!cloudOpen) return
     try {
-      // 1. Liste tous les fichiers déjà présents sur Blob (FichePerso/)
-      const resList = await fetch('/api/blob?prefix=FichePerso/')
-      const { files } = await resList.json() as { files: { pathname: string }[] }
-
-      // 2. Liste locale des fichiers attendus (uploadés) selon ta liste
-      const localFilenames = filtered.map(getFilename)
-
-      // 3. Pour chaque fichier existant sur Blob mais absent en local → on supprime
-      const deletes = files
-        .filter(f => !localFilenames.includes(f.pathname))
-        .map(f =>
-          fetch(`/api/blob?filename=${encodeURIComponent(f.pathname)}`, { method: 'DELETE' })
-        )
-      await Promise.all(deletes)
-
-      // 4. Upload toutes les fiches locales
-      const uploads = filtered.map(character => {
-        const filename = getFilename(character)
-        const blob = new Blob([JSON.stringify(character)], { type: 'application/json' })
-        return fetch(`/api/blob?filename=${encodeURIComponent(filename)}`, {
-          method: 'POST',
-          body: blob,
-        }).then(res => res.json())
-      })
-      const results = await Promise.all(uploads)
-      if (results.every(r => r.url)) {
-        setSyncSuccess(true)
-        setTimeout(() => setSyncSuccess(false), 2000)
-      } else {
-        setSyncError(true)
-        setTimeout(() => setSyncError(false), 2000)
-      }
+      const list = JSON.parse(localStorage.getItem('jdr_characters') || '[]')
+      setLocalList(Array.isArray(list) ? list : [])
     } catch {
-      setSyncError(true)
-      setTimeout(() => setSyncError(false), 2000)
+      setLocalList([])
     }
-    setSyncing(false)
+  }, [cloudOpen])
+
+  const needsDownload = (char: Character) => {
+    const local = localList.find(c => String(c.id) === String(char.id))
+    if (!local) return true
+    return (char.updatedAt || 0) > (local.updatedAt || 0)
   }
 
-  async function importFromCloud() {
-    try {
-      const res = await fetch('/api/blob?prefix=FichePerso/')
-      const { files } = await res.json() as { files: { pathname: string, downloadUrl?: string, url?: string }[] }
-      const names = files.map(f => f.pathname)
-      const choice = window.prompt('Choisir un fichier à importer:\n' + names.join('\n'))
-      if (!choice) return
-      const file = files.find(f => f.pathname === choice)
-      if (!file) return
-      const url = file.downloadUrl || file.url
-      if (!url) return
-      const text = await fetch(url).then(r => r.text())
-      const data = JSON.parse(text)
-      const stored = JSON.parse(localStorage.getItem('jdr_characters') || '[]') as Character[]
-      const withId = { ...data, id: data.id || crypto.randomUUID() }
-      localStorage.setItem('jdr_characters', JSON.stringify([...stored, withId]))
-      window.dispatchEvent(new Event('jdr_characters_change'))
-      alert('Fiche importée !')
-    } catch {
-      alert('Import échoué')
-    }
-  }
-
-  const handleCloudExport = async () => {
-    await syncAllToCloud()
-    setShowCloud(false)
-  }
-
-  const handleCloudImport = async () => {
-    await importFromCloud()
-    setShowCloud(false)
-  }
+  const CloudList = () => (
+    cloudOpen ? (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        onClick={() => setCloudOpen(false)}
+        style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(2px)' }}
+      >
+        <div
+          onClick={e => e.stopPropagation()}
+          className="bg-black/80 text-white rounded-2xl border border-white/10 shadow-2xl backdrop-blur-md p-5 w-80 max-h-[70vh] overflow-auto"
+        >
+          <h3 className="text-lg font-semibold mb-3">Cloud characters</h3>
+          <ul className="space-y-1">
+            {Object.values(remote).map((c, idx) => (
+              <li key={idx} className="flex justify-between items-center gap-2">
+                <span className="truncate flex-1 text-sm">{String(c.nom || (c as { name?: string }).name || `#${idx + 1}`)}</span>
+                {needsDownload(c) && (
+                  <button
+                    onClick={() => onDownload(c)}
+                    className="px-2 py-1 bg-emerald-600/70 hover:bg-emerald-600 rounded text-sm"
+                  >
+                    Download
+                  </button>
+                )}
+              </li>
+            ))}
+            {Object.keys(remote).length === 0 && (
+              <li className="text-center text-sm text-gray-400">No character</li>
+            )}
+          </ul>
+        </div>
+      </div>
+    ) : null
+  )
 
   return (
     <section
@@ -160,22 +119,30 @@ const CharacterList: FC<Props> = ({
         Character sheets
       </h2>
 
-      {filtered.length === 0 ? (
-        <p className="text-xs text-white/65 italic">
-          No sheets stored.
-        </p>
-      ) : (
+      {(() => {
+        const remoteOnly = Object.values(remote).filter(r => !filtered.some(c => String(c.id) === String(r.id)))
+        const all = [...filtered, ...remoteOnly]
+        if (all.length === 0) {
+          return (
+            <p className="text-xs text-white/65 italic">No sheets stored.</p>
+          )
+        }
+        return (
         <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          {filtered.map((ch, idx) => {
-            const isSelected =
-              selectedIdx !== null && filtered[selectedIdx]?.id === ch.id
+          {all.map((ch, idx) => {
+            const isSelected = selectedIdx !== null && filtered[selectedIdx]?.id === ch.id
+            const localIdx = filtered.findIndex(c => String(c.id) === String(ch.id))
+            const local = localIdx !== -1
+            const cloudChar = remote[String(ch.id)]
+            const cloud = !!cloudChar
+            const outdated = local && cloud && (cloudChar.updatedAt || 0) > (filtered[localIdx].updatedAt || 0)
             return (
               <li
                 key={`${ch.id}-${idx}`}
-                onClick={() => onSelect(idx)}
+                onClick={() => onSelect(local ? filtered.findIndex(c => String(c.id)===String(ch.id)) : -1)}
                 className={`
                   group relative rounded-lg p-3 cursor-pointer
-                  flex flex-col gap-2 min-h-[120px] 
+                  flex flex-col gap-2 min-h-[120px]
                   transition
                   ${isSelected
                     ? 'ring-2 ring-emerald-400/90 shadow-[0_0_12px_2px_rgba(16,185,129,0.6)]'
@@ -200,26 +167,41 @@ const CharacterList: FC<Props> = ({
                     {ch.nom || 'No name'}
                   </span>
                   <div className="flex items-center gap-1 shrink-0">
+                    {local && !cloud && (
+                      <button
+                        onClick={e => { e.stopPropagation(); onUpload(ch) }}
+                        className={btnBase + ' hover:bg-cyan-600/80 text-cyan-100 w-8 h-8'}
+                        title="Upload"
+                      >
+                        <Upload size={16} />
+                      </button>
+                    )}
+                    {(!local && cloud) || outdated ? (
+                      <button
+                        onClick={e => { e.stopPropagation(); onDownload(ch) }}
+                        className={btnBase + ' hover:bg-emerald-600/80 text-emerald-100 w-8 h-8'}
+                        title="Download"
+                      >
+                        <Download size={16} />
+                      </button>
+                    ) : null}
+                    {local && (
+                    <>
                     <button
-                      onClick={e => {
-                        e.stopPropagation()
-                        onEdit(idx)
-                      }}
+                      onClick={e => { e.stopPropagation(); onEdit(filtered.findIndex(c => String(c.id)===String(ch.id))) }}
                       className={btnBase + " hover:bg-yellow-500/90 text-yellow-100 w-8 h-8"}
                       title="Edit"
                     >
                       <Edit2 size={16} />
                     </button>
                     <button
-                      onClick={e => {
-                        e.stopPropagation()
-                        onDelete(idx)
-                      }}
+                      onClick={e => { e.stopPropagation(); onDelete(filtered.findIndex(c => String(c.id)===String(ch.id))) }}
                       className={btnBase + " hover:bg-red-600/90 text-red-100 w-8 h-8"}
                       title="Delete"
                     >
                       <Trash2 size={16} />
                     </button>
+                    </>) }
                   </div>
                 </div>
                 <div className="flex flex-col gap-1 text-xs text-white/85 mt-1">
@@ -248,7 +230,8 @@ const CharacterList: FC<Props> = ({
             )
           })}
         </ul>
-      )}
+        )
+      })()}
 
       <div className="mt-6 flex flex-wrap gap-3 text-sm items-center">
         <button
@@ -276,50 +259,12 @@ const CharacterList: FC<Props> = ({
         >
           <Download size={17} /> Export
         </button>
-        {/* Bouton Cloud ouvrant un petit menu */}
-        <div>
-          <button
-            ref={cloudBtnRef}
-            onClick={() => {
-              if (!showCloud) {
-                const rect = cloudBtnRef.current?.getBoundingClientRect()
-                if (rect) {
-                  setCloudPos({
-                    left: rect.left + window.scrollX,
-                    top: rect.bottom + window.scrollY,
-                  })
-                }
-              }
-              setShowCloud(v => !v)
-            }}
-            className={
-              btnBase +
-              " hover:bg-pink-600/80 text-pink-100 font-bold flex items-center gap-2"
-            }
-            title="Cloud options"
-          >
-            <CloudUpload size={18} />
-            Cloud
-          </button>
-          {showCloud && cloudPos && (
-            <Portal>
-              <div className="fixed inset-0 z-[99999]" onClick={() => setShowCloud(false)}>
-                <div
-                  style={{ left: cloudPos.left, top: cloudPos.top }}
-                  className="absolute z-[100000] mt-2 w-44 bg-black/75 border border-white/20 rounded-xl shadow-2xl backdrop-blur-md p-2 flex flex-col gap-1"
-                  onClick={e => e.stopPropagation()}
-                >
-                  <button onClick={handleCloudImport} className="px-3 py-1 text-left hover:bg-gray-800 rounded">Import from Cloud</button>
-                  <button onClick={handleCloudExport} className="px-3 py-1 text-left hover:bg-gray-800 rounded">Export to Cloud</button>
-                </div>
-              </div>
-            </Portal>
-          )}
-        </div>
-        {/* Indicateur de synchronisation */}
-        {syncing && <span className="ml-1 animate-pulse">⏳</span>}
-        {syncSuccess && <span className="ml-1 text-emerald-400">✔</span>}
-        {syncError && <span className="ml-1 text-red-400">✖</span>}
+        <button
+          onClick={() => setCloudOpen(true)}
+          className={btnBase + ' hover:bg-pink-600/80 text-pink-100'}
+        >
+          <CloudUpload size={17} /> Cloud
+        </button>
         <input
           type="file"
           accept="text/plain,application/json"
@@ -328,6 +273,7 @@ const CharacterList: FC<Props> = ({
           className="hidden"
         />
       </div>
+      <CloudList />
     </section>
   )
 }

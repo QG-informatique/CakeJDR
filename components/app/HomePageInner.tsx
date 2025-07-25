@@ -14,7 +14,6 @@ import OnlineProfiles from '@/components/chat/OnlineProfiles'
 import SideNotes from '@/components/misc/SideNotes'
 import Login from '@/components/login/Login'
 import GMCharacterSelector from '@/components/misc/GMCharacterSelector'
-import ImportExportMenu from '@/components/character/ImportExportMenu'
 import useDiceHistory from './hooks/useDiceHistory'
 import useProfile from './hooks/useProfile'
 import useOnlineStatus from './hooks/useOnlineStatus'
@@ -41,6 +40,8 @@ export default function HomePageInner() {
     const { event } = payload
     if (event.type === 'dice-roll') {
       setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result }])
+    } else if (event.type === 'gm-select') {
+      setPerso(event.character)
     }
   })
 
@@ -87,6 +88,7 @@ export default function HomePageInner() {
       id = crypto.randomUUID()
       newPerso = { ...newPerso, id }
     }
+    newPerso = { ...newPerso, updatedAt: Date.now() }
     setPerso(newPerso)
     setCharacters((prevChars) => {
       let found = false
@@ -122,7 +124,7 @@ export default function HomePageInner() {
     if (!pendingRoll) return
 
     setHistory((h) => [...h, { player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result }])
-    broadcast({ type: 'dice-roll', player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result })
+    broadcast({ type: 'dice-roll', player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result } as Liveblocks['RoomEvent'])
     setPendingRoll(null)
   }
 
@@ -130,7 +132,6 @@ export default function HomePageInner() {
     <div className="relative w-screen h-screen font-sans overflow-hidden bg-transparent">
       <div className="relative z-10 flex w-full h-full">
         <CharacterSheet perso={perso} onUpdate={handleUpdatePerso} chatBoxRef={chatBoxRef} allCharacters={characters} logoOnly>
-          <ImportExportMenu perso={perso} onUpdate={handleUpdatePerso} />
           {profile?.isMJ && (
             <span className="ml-2">
               <GMCharacterSelector onSelect={handleUpdatePerso} className="bg-gray-800 hover:bg-gray-700 text-white p-2 rounded shadow" />
@@ -148,7 +149,11 @@ export default function HomePageInner() {
           </DiceRoller>
         </main>
 
-        <ChatBox chatBoxRef={chatBoxRef} history={history} />
+        <ChatBox
+          chatBoxRef={chatBoxRef}
+          history={history}
+          author={perso.nom || profile?.pseudo || 'Anonymous'}
+        />
         <SideNotes />
       </div>
       <Head>
