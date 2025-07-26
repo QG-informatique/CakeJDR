@@ -18,9 +18,9 @@ type ImageData = {
 }
 
 export default function InteractiveCanvas() {
-  // `images` map is initialized in RoomProvider so it's safe to assert
-  const imagesMap = useStorage(root => root.images)!
-  const images = Array.from(imagesMap.values()) as ImageData[]
+  // `images` map is created by RoomProvider but may be null until ready
+  const imagesMap = useStorage(root => root.images)
+  const images = imagesMap ? (Array.from(imagesMap.values()) as ImageData[]) : []
   const [isDrawing, setIsDrawing] = useState(false)
   const [drawMode, setDrawMode] = useState<'images' | 'draw' | 'erase'>('images')
   const [color, setColor] = useState('#000000')
