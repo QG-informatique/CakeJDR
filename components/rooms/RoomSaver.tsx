@@ -31,10 +31,21 @@ export default function RoomSaver({ roomId }: Props) {
     const handleBeforeUnload = () => save(true)
     const interval = setInterval(() => save(false), 1800000)
     window.addEventListener('beforeunload', handleBeforeUnload)
+
+    let prevCount = room.getOthers().length
+    const unsubscribe = room.events.others.subscribe(() => {
+      const count = room.getOthers().length
+      if (count === 0 && prevCount > 0) {
+        save(true)
+      }
+      prevCount = count
+    })
+
     return () => {
       handleBeforeUnload()
       clearInterval(interval)
       window.removeEventListener('beforeunload', handleBeforeUnload)
+      unsubscribe()
     }
   }, [room, roomId])
 
