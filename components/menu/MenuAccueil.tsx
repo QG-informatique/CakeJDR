@@ -3,7 +3,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Crown, LogOut, Dice6 } from 'lucide-react'
-import RoomSelector, { RoomInfo } from '../rooms/RoomSelector'
+import RoomList, { RoomInfo } from '../rooms/RoomList'
+import RoomCreateModal from '../rooms/RoomCreateModal'
 import { useRouter } from 'next/navigation'
 import Login from '../login/Login'
 import { defaultPerso } from '../sheet/CharacterSheet'
@@ -37,6 +38,7 @@ export default function MenuAccueil() {
   const [loggingOut, setLoggingOut]   = useState(false)
   const [diceHover, setDiceHover] = useState(false)
   const [roomsOpen, setRoomsOpen] = useState(false)
+  const [createRoomOpen, setCreateRoomOpen] = useState(false)
   const [selectedRoom, setSelectedRoom] = useState<RoomInfo | null>(null)
   const [remoteChars, setRemoteChars] = useState<Record<string, Character>>({})
 
@@ -151,6 +153,7 @@ export default function MenuAccueil() {
       .then(res => res.json())
       .then(data => setRemoteChars(data.characters || {}))
       .catch(() => setRemoteChars({}))
+    setRoomsOpen(false)
   }
 
   const handleNewCharacter = () => {
@@ -438,11 +441,19 @@ export default function MenuAccueil() {
               </div>
             </section>
             {roomsOpen && (
-              <RoomSelector
-                onClose={() => setRoomsOpen(false)}
-                onSelect={handleRoomSelect}
-              />
+              <div className="mt-2 mb-4">
+                <RoomList
+                  selectedId={selectedRoom?.id || null}
+                  onSelect={handleRoomSelect}
+                  onCreateClick={() => setCreateRoomOpen(true)}
+                />
+              </div>
             )}
+            <RoomCreateModal
+              open={createRoomOpen}
+              onClose={() => setCreateRoomOpen(false)}
+              onCreated={handleRoomSelect}
+            />
 
             {/* Liste des personnages */}
             <div className="flex-1 min-h-0 rounded-xl backdrop-blur-md bg-black/20 p-5 overflow-auto">
