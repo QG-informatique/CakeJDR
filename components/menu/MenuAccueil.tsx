@@ -268,6 +268,17 @@ export default function MenuAccueil() {
     saveCharacters(updated)
   }
 
+  const handleDeleteCloudChar = async (id: string | number) => {
+    if (!window.confirm('Delete from cloud?')) return
+    const filename = `FichePerso/${id}.json`
+    await fetch(`/api/blop/delete?filename=${encodeURIComponent(filename)}`)
+    setRemoteChars(r => {
+      const next = { ...r }
+      delete next[String(id)]
+      return next
+    })
+  }
+
   const handleChangeColor = (color:string) => {
     if (!user) return
     setUser({ ...user, color })
@@ -488,6 +499,7 @@ export default function MenuAccueil() {
                 onSelect={handleSelectChar}
                 onEdit={handleEditCharacter}
                 onDelete={handleDeleteChar}
+                onDeleteCloud={handleDeleteCloudChar}
                 onNew={handleNewCharacter}
                 onImportClick={handleImportClick}
                 onExport={handleExportChar}

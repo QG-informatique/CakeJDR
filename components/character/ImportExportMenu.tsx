@@ -142,7 +142,7 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
   }
 
   const deleteFromCloud = async (filename: string) => {
-    await fetch(`/api/blob?filename=${encodeURIComponent(filename)}`, { method: 'DELETE' })
+    await fetch(`/api/blop/delete?filename=${encodeURIComponent(filename)}`)
     setCloudFiles(f => f.filter(fl => fl !== filename))
     alert('Deleted!')
     setModal(null)

@@ -44,6 +44,14 @@ export default function HomePageInner() {
       setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result, ts: Date.now() }])
     } else if (event.type === 'gm-select') {
       setPerso(event.character)
+      updateMyPresence({ character: event.character })
+      setCharacters((prev) => {
+        const idx = prev.findIndex(c => String(c.id) === String(event.character.id))
+        const next = idx !== -1 ? prev.map((c,i)=> i===idx ? event.character : c) : [...prev, event.character]
+        localStorage.setItem('jdr_characters', JSON.stringify(next))
+        if (event.character.id) localStorage.setItem('selectedCharacterId', String(event.character.id))
+        return next
+      })
     }
   })
 
