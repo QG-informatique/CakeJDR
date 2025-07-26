@@ -20,7 +20,8 @@ export function Room({ id, children }: { id: string; children: ReactNode }) {
         initialStorage={{
           characters: new LiveMap(),
           images: new LiveMap(),
-          music: new LiveObject({ id: '', playing: false })
+          music: new LiveObject({ id: '', playing: false }),
+          summary: new LiveObject({ acts: [] })
         }}
       >
         <ClientSideSuspense fallback={<div>Loading…</div>}>
