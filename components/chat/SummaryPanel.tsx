@@ -151,15 +151,25 @@ const SummaryPanel: FC<Props> = ({ onClose }) => {
   // Sync from Liveblocks storage
   useEffect(() => {
     if (summaryObj && Array.isArray(summaryObj.acts)) {
-      setActs(summaryObj.acts.length ? summaryObj.acts : [{ id: 1, title: '', content: '' }])
+      const nextActs = summaryObj.acts.length
+        ? summaryObj.acts
+        : [{ id: 1, title: '', content: '' }]
+      setActs(prev =>
+        JSON.stringify(prev) === JSON.stringify(nextActs) ? prev : nextActs
+      )
     }
   }, [summaryObj])
 
   // Persist locally and in Liveblocks
   useEffect(() => {
     localStorage.setItem(LOCAL_KEY, JSON.stringify(acts))
-    updateSummary(acts)
-  }, [acts, updateSummary])
+    if (
+      summaryObj &&
+      JSON.stringify(summaryObj.acts) !== JSON.stringify(acts)
+    ) {
+      updateSummary(acts)
+    }
+  }, [acts, summaryObj, updateSummary])
 
   useEffect(() => {
     const selectedAct = acts.find(a => a.id === selectedId)
