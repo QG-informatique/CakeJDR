@@ -43,7 +43,17 @@ export default function HomePageInner() {
     if (event.type === 'dice-roll') {
       setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result, ts: Date.now() }])
     } else if (event.type === 'gm-select') {
-      setPerso(event.character)
+      const char = event.character || defaultPerso
+      if (!char.id) char.id = crypto.randomUUID()
+      setPerso(char)
+      updateMyPresence({ character: char })
+      setCharacters(prev => {
+        const idx = prev.findIndex(c => String(c.id) === String(char.id))
+        const next = idx !== -1 ? prev.map((c,i)=> i===idx ? char : c) : [...prev, char]
+        localStorage.setItem('jdr_characters', JSON.stringify(next))
+        localStorage.setItem('selectedCharacterId', String(char.id))
+        return next
+      })
     }
   })
 
