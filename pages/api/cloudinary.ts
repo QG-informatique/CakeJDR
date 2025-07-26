@@ -37,7 +37,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
-      const preset = process.env.CLOUDINARY_UPLOAD_PRESET || 'cakejdr-images'
+      const preset = process.env.CLOUDINARY_UPLOAD_PRESET || 'cakejdr-image'
       const result = await cloudinary.uploader.unsigned_upload(
         file.filepath,
         preset,
