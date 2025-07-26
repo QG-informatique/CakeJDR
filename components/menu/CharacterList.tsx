@@ -1,5 +1,5 @@
-import { FC, RefObject, useState, useEffect } from 'react'
-import { Edit2, Trash2, Plus, Upload, Download, CloudUpload } from 'lucide-react'
+import { FC, RefObject } from 'react'
+import { Edit2, Trash2, Plus, Upload, Download } from 'lucide-react'
 
 export type Character = {
   id: string | number
@@ -20,8 +20,8 @@ interface Props {
   onUpload: (char: Character) => void
   selectedIdx: number | null
   onSelect: (idx: number) => void
-  onEdit: (idx: number) => void
-  onDelete: (idx: number) => void
+  onEdit: (id: string | number) => void
+  onDelete: (id: string | number) => void
   onNew: () => void
   onImportClick: () => void
   onExport: () => void
@@ -50,60 +50,6 @@ const CharacterList: FC<Props> = ({
   fileInputRef,
   onImportFile
 }) => {
-  // Cloud import dialog state
-  const [cloudOpen, setCloudOpen] = useState(false)
-  const [localList, setLocalList] = useState<Character[]>([])
-
-  useEffect(() => {
-    if (!cloudOpen) return
-    try {
-      const list = JSON.parse(localStorage.getItem('jdr_characters') || '[]')
-      setLocalList(Array.isArray(list) ? list : [])
-    } catch {
-      setLocalList([])
-    }
-  }, [cloudOpen])
-
-  const needsDownload = (char: Character) => {
-    const local = localList.find(c => String(c.id) === String(char.id))
-    if (!local) return true
-    return (char.updatedAt || 0) > (local.updatedAt || 0)
-  }
-
-  const CloudList = () => (
-    cloudOpen ? (
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4"
-        onClick={() => setCloudOpen(false)}
-        style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(2px)' }}
-      >
-        <div
-          onClick={e => e.stopPropagation()}
-          className="bg-black/80 text-white rounded-2xl border border-white/10 shadow-2xl backdrop-blur-md p-5 w-80 max-h-[70vh] overflow-auto"
-        >
-          <h3 className="text-lg font-semibold mb-3">Cloud characters</h3>
-          <ul className="space-y-1">
-            {Object.values(remote).map((c, idx) => (
-              <li key={idx} className="flex justify-between items-center gap-2">
-                <span className="truncate flex-1 text-sm">{String(c.nom || (c as { name?: string }).name || `#${idx + 1}`)}</span>
-                {needsDownload(c) && (
-                  <button
-                    onClick={() => onDownload(c)}
-                    className="px-2 py-1 bg-emerald-600/70 hover:bg-emerald-600 rounded text-sm"
-                  >
-                    Download
-                  </button>
-                )}
-              </li>
-            ))}
-            {Object.keys(remote).length === 0 && (
-              <li className="text-center text-sm text-gray-400">No character</li>
-            )}
-          </ul>
-        </div>
-      </div>
-    ) : null
-  )
 
   return (
     <section
@@ -133,9 +79,11 @@ const CharacterList: FC<Props> = ({
             const isSelected = selectedIdx !== null && filtered[selectedIdx]?.id === ch.id
             const localIdx = filtered.findIndex(c => String(c.id) === String(ch.id))
             const local = localIdx !== -1
+            const localChar = local ? filtered[localIdx] : null
             const cloudChar = remote[String(ch.id)]
             const cloud = !!cloudChar
-            const outdated = local && cloud && (cloudChar.updatedAt || 0) > (filtered[localIdx].updatedAt || 0)
+            const needsDownload = (!local && cloud) || (local && cloud && (cloudChar.updatedAt || 0) > (localChar?.updatedAt || 0))
+            const needsUpload = local && (!cloud || (localChar?.updatedAt || 0) > (cloudChar?.updatedAt || 0))
             return (
               <li
                 key={`${ch.id}-${idx}`}
@@ -167,18 +115,18 @@ const CharacterList: FC<Props> = ({
                     {ch.nom || 'No name'}
                   </span>
                   <div className="flex items-center gap-1 shrink-0">
-                    {local && !cloud && (
+                    {needsUpload && (
                       <button
-                        onClick={e => { e.stopPropagation(); onUpload(ch) }}
+                        onClick={e => { e.stopPropagation(); onUpload(local ? filtered[localIdx] : ch) }}
                         className={btnBase + ' hover:bg-cyan-600/80 text-cyan-100 w-8 h-8'}
-                        title="Upload"
+                        title={cloud ? 'Update cloud' : 'Upload'}
                       >
                         <Upload size={16} />
                       </button>
                     )}
-                    {(!local && cloud) || outdated ? (
+                    {needsDownload ? (
                       <button
-                        onClick={e => { e.stopPropagation(); onDownload(ch) }}
+                        onClick={e => { e.stopPropagation(); onDownload(cloudChar || ch) }}
                         className={btnBase + ' hover:bg-emerald-600/80 text-emerald-100 w-8 h-8'}
                         title="Download"
                       >
@@ -188,14 +136,14 @@ const CharacterList: FC<Props> = ({
                     {local && (
                     <>
                     <button
-                      onClick={e => { e.stopPropagation(); onEdit(filtered.findIndex(c => String(c.id)===String(ch.id))) }}
+                      onClick={e => { e.stopPropagation(); onEdit(ch.id) }}
                       className={btnBase + " hover:bg-yellow-500/90 text-yellow-100 w-8 h-8"}
                       title="Edit"
                     >
                       <Edit2 size={16} />
                     </button>
                     <button
-                      onClick={e => { e.stopPropagation(); onDelete(filtered.findIndex(c => String(c.id)===String(ch.id))) }}
+                      onClick={e => { e.stopPropagation(); onDelete(ch.id) }}
                       className={btnBase + " hover:bg-red-600/90 text-red-100 w-8 h-8"}
                       title="Delete"
                     >
@@ -259,12 +207,6 @@ const CharacterList: FC<Props> = ({
         >
           <Download size={17} /> Export
         </button>
-        <button
-          onClick={() => setCloudOpen(true)}
-          className={btnBase + ' hover:bg-pink-600/80 text-pink-100'}
-        >
-          <CloudUpload size={17} /> Cloud
-        </button>
         <input
           type="file"
           accept="text/plain,application/json"
@@ -273,7 +215,6 @@ const CharacterList: FC<Props> = ({
           className="hidden"
         />
       </div>
-      <CloudList />
     </section>
   )
 }

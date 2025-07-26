@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 
-export type DiceEntry = { player: string; dice: number; result: number }
+export type DiceEntry = { player: string; dice: number; result: number; ts: number }
 
-const HISTORY_KEY = 'jdr_dice_history'
-
-export default function useDiceHistory() {
+export default function useDiceHistory(roomId: string) {
+  const HISTORY_KEY = `jdr_dice_${roomId}`
   const [history, setHistory] = useState<DiceEntry[]>([])
   const lastLen = useRef(0)
 
@@ -19,12 +18,12 @@ export default function useDiceHistory() {
         }
       }
     } catch {}
-  }, [])
+  }, [HISTORY_KEY])
 
   useEffect(() => {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(history))
     lastLen.current = history.length
-  }, [history])
+  }, [history, HISTORY_KEY])
 
   return [history, setHistory] as const
 }
