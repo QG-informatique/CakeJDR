@@ -1,6 +1,6 @@
 // Define Liveblocks types for your application
 // https://liveblocks.io/docs/api-reference/liveblocks-react#Typing-your-data
-import type { LiveMap, LiveObject } from '@liveblocks/client'
+import type { LiveMap, LiveObject, LiveList } from '@liveblocks/client'
 
 type CanvasImage = {
   id: number
@@ -10,6 +10,17 @@ type CanvasImage = {
   width: number
   height: number
   local?: boolean
+}
+
+type SessionEvent = {
+  id: string
+  kind: 'chat' | 'dice'
+  author?: string
+  text?: string
+  player?: string
+  dice?: number
+  result?: number
+  ts: number
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -28,6 +39,7 @@ declare global {
       images: LiveMap<string, CanvasImage>;
       music: LiveObject<{ id: string; playing: boolean }>;
       summary: LiveObject<{ acts: Array<{ id: number; title: string; content: string }> }>;
+      events: LiveList<SessionEvent>;
     };
 
     // Custom user info set when authenticating with a secret key

@@ -3,6 +3,7 @@ import { FC, RefObject, useRef, useState, useEffect } from 'react'
 import { useBroadcastEvent, useEventListener, useRoom } from '@liveblocks/react'
 import SummaryPanel from './SummaryPanel'
 import DiceStats from './DiceStats'
+import useEventLog from '../app/hooks/useEventLog'
 
 type Roll = { player: string, dice: number, result: number }
 
@@ -14,6 +15,7 @@ interface Props {
 
 const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
   const room = useRoom()
+  const { addEvent } = useEventLog(room.id)
   const STORAGE_KEY = `jdr_chat_${room.id}`
   const [messages, setMessages] = useState<{author:string; text:string}[]>(() => {
     try {
@@ -34,6 +36,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
     const { event } = payload
     if (event.type === 'chat') {
       setMessages((m: Array<{author:string; text:string}>) => [...m, { author: event.author, text: event.text }])
+      addEvent({ id: crypto.randomUUID(), kind: 'chat', author: event.author, text: event.text, ts: Date.now() })
     }
   })
 
@@ -42,10 +45,9 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
 
     const msg = { author, text: inputValue.trim() }
 
-
-
     setMessages(prev => [...prev, msg])
     broadcast({ type: 'chat', author: msg.author, text: msg.text } as Liveblocks['RoomEvent'])
+    addEvent({ id: crypto.randomUUID(), kind: 'chat', author: msg.author, text: msg.text, ts: Date.now() })
     setInputValue('')
   }
 

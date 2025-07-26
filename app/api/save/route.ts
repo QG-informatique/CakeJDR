@@ -4,7 +4,7 @@ import { Liveblocks } from '@liveblocks/node'
 
 export async function POST(req: NextRequest) {
   try {
-    const { roomId, chatHistory = '[]', diceHistory = '[]', summary = '[]' } = await req.json()
+    const { roomId, chatHistory = '[]', diceHistory = '[]', summary = '[]', events = '[]' } = await req.json()
     if (!roomId) {
       return NextResponse.json({ error: 'roomId missing' }, { status: 400 })
     }
@@ -20,7 +20,8 @@ export async function POST(req: NextRequest) {
       characters,
       chat: JSON.parse(chatHistory),
       dice: JSON.parse(diceHistory),
-      summary: JSON.parse(summary)
+      summary: JSON.parse(summary),
+      events: JSON.parse(events)
     }
     const blob = await put(`RoomData/${roomId}.json`, JSON.stringify(data), {
       access: 'public',
