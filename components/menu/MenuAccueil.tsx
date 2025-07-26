@@ -3,7 +3,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Crown, LogOut, Dice6 } from 'lucide-react'
-import RoomSelector, { RoomInfo } from '../rooms/RoomSelector'
+import RoomList, { RoomInfo } from '../rooms/RoomList'
+import RoomCreateModal from '../rooms/RoomCreateModal'
 import { useRouter } from 'next/navigation'
 import Login from '../login/Login'
 import { defaultPerso } from '../sheet/CharacterSheet'
@@ -37,6 +38,7 @@ export default function MenuAccueil() {
   const [loggingOut, setLoggingOut]   = useState(false)
   const [diceHover, setDiceHover] = useState(false)
   const [roomsOpen, setRoomsOpen] = useState(false)
+  const [createRoomOpen, setCreateRoomOpen] = useState(false)
   const [selectedRoom, setSelectedRoom] = useState<RoomInfo | null>(null)
   const [remoteChars, setRemoteChars] = useState<Record<string, Character>>({})
 
@@ -151,6 +153,23 @@ export default function MenuAccueil() {
       .then(res => res.json())
       .then(data => setRemoteChars(data.characters || {}))
       .catch(() => setRemoteChars({}))
+    fetch(`/api/roomdata?roomId=${encodeURIComponent(room.id)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (!data?.data) return
+        const { chat, dice, summary } = data.data
+        if (chat && !localStorage.getItem(`jdr_chat_${room.id}`)) {
+          localStorage.setItem(`jdr_chat_${room.id}`, JSON.stringify(chat))
+        }
+        if (dice && !localStorage.getItem(`jdr_dice_${room.id}`)) {
+          localStorage.setItem(`jdr_dice_${room.id}`, JSON.stringify(dice))
+        }
+        if (summary && !localStorage.getItem('summaryPanel_acts_v1')) {
+          localStorage.setItem('summaryPanel_acts_v1', JSON.stringify(summary))
+        }
+      })
+      .catch(() => {})
+    setRoomsOpen(false)
   }
 
   const handleNewCharacter = () => {
@@ -158,7 +177,13 @@ export default function MenuAccueil() {
     setDraftChar({ ...defaultPerso, id: crypto.randomUUID(), owner: user.pseudo })
     setModalOpen(true)
   }
-  const handleEditCharacter = (idx:number) => { setDraftChar(characters[idx]); setModalOpen(true) }
+  const handleEditCharacter = (id: string | number) => {
+    const idx = characters.findIndex(c => String(c.id) === String(id))
+    if (idx !== -1) {
+      setDraftChar(characters[idx])
+      setModalOpen(true)
+    }
+  }
 
   const handleSaveDraft = () => {
     if (!user) return
@@ -173,8 +198,10 @@ export default function MenuAccueil() {
     setSelectedIdx(updated.findIndex(c => c.id === id))
   }
 
-  const handleDeleteChar = (idx:number) => {
+  const handleDeleteChar = (id: string | number) => {
     if (!window.confirm('Delete this sheet?')) return
+    const idx = characters.findIndex(c => String(c.id) === String(id))
+    if (idx === -1) return
     const toDelete = characters[idx]
     const remaining = characters.filter((_, i) => i !== idx)
     saveCharacters(remaining)
@@ -430,11 +457,25 @@ export default function MenuAccueil() {
               </div>
             </section>
             {roomsOpen && (
-              <RoomSelector
-                onClose={() => setRoomsOpen(false)}
-                onSelect={handleRoomSelect}
-              />
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                onClick={() => setRoomsOpen(false)}
+                style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(2px)' }}
+              >
+                <div onClick={e => e.stopPropagation()}>
+                  <RoomList
+                    selectedId={selectedRoom?.id || null}
+                    onSelect={handleRoomSelect}
+                    onCreateClick={() => setCreateRoomOpen(true)}
+                  />
+                </div>
+              </div>
             )}
+            <RoomCreateModal
+              open={createRoomOpen}
+              onClose={() => setCreateRoomOpen(false)}
+              onCreated={handleRoomSelect}
+            />
 
             {/* Liste des personnages */}
             <div className="flex-1 min-h-0 rounded-xl backdrop-blur-md bg-black/20 p-5 overflow-auto">

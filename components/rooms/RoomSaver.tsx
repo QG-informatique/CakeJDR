@@ -2,40 +2,35 @@
 import { useEffect } from 'react'
 import { useRoom } from '@liveblocks/react'
 
-async function compress(txt: string) {
-  if (typeof CompressionStream === 'undefined') {
-    return new TextEncoder().encode(txt)
-  }
-  const cs = new CompressionStream('gzip')
-  const writer = cs.writable.getWriter()
-  writer.write(new TextEncoder().encode(txt))
-  writer.close()
-  const buf = await new Response(cs.readable).arrayBuffer()
-  return new Uint8Array(buf)
-}
+interface Props { roomId: string }
 
-export default function RoomSaver({ roomName }: { roomName: string; roomId: string }) {
+export default function RoomSaver({ roomId }: Props) {
   const room = useRoom()
 
   useEffect(() => {
-    const handleUnload = async () => {
-      if (room.getOthers().length === 0) {
-        const history = localStorage.getItem('jdr_dice_history')
-        if (history) {
-          const data = await compress(history)
-          navigator.sendBeacon(
-            `/api/blob?filename=RoomData/${roomName}.json.gz`,
-            data
-          )
-        }
+    async function save() {
+      if (!room) return
+      try {
+        const chat = localStorage.getItem(`jdr_chat_${roomId}`) || '[]'
+        const dice = localStorage.getItem(`jdr_dice_${roomId}`) || '[]'
+        const summary = localStorage.getItem('summaryPanel_acts_v1') || '[]'
+        await fetch('/api/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ roomId, chatHistory: chat, diceHistory: dice, summary })
+        })
+      } catch {
+        // ignore
       }
     }
-    window.addEventListener('beforeunload', handleUnload)
+    const interval = setInterval(save, 600000)
+    window.addEventListener('beforeunload', save)
     return () => {
-      handleUnload()
-      window.removeEventListener('beforeunload', handleUnload)
+      save()
+      clearInterval(interval)
+      window.removeEventListener('beforeunload', save)
     }
-  }, [room, roomName])
+  }, [room, roomId])
 
   return null
 }

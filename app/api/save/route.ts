@@ -4,7 +4,7 @@ import { Liveblocks } from '@liveblocks/node'
 
 export async function POST(req: NextRequest) {
   try {
-    const { roomId, chatHistory = '' } = await req.json()
+    const { roomId, chatHistory = '[]', diceHistory = '[]', summary = '[]' } = await req.json()
     if (!roomId) {
       return NextResponse.json({ error: 'roomId missing' }, { status: 400 })
     }
@@ -14,19 +14,20 @@ export async function POST(req: NextRequest) {
     }
     const client = new Liveblocks({ secret })
     const storage = await client.getStorageDocument(roomId, 'json').catch(() => null)
-    const data = storage as Record<string, unknown> | null
-    const characters = data && data.characters ? data.characters : {}
-    const ts = Date.now()
-    const charPath = `FichesSauvegardes/${roomId}-${ts}.json`
-    const chatPath = `HistoriqueChat/${roomId}-${ts}.txt`
-    const [charBlob, chatBlob] = await Promise.all([
-      put(charPath, JSON.stringify(characters), { access: 'public' }),
-      put(chatPath, chatHistory, { access: 'public' })
-    ])
-    return NextResponse.json({
-      characters: charBlob.url || charBlob.downloadUrl,
-      chat: chatBlob.url || chatBlob.downloadUrl,
+    const storageData = storage as Record<string, unknown> | null
+    const characters = storageData && storageData.characters ? storageData.characters : {}
+    const data = {
+      characters,
+      chat: JSON.parse(chatHistory),
+      dice: JSON.parse(diceHistory),
+      summary: JSON.parse(summary)
+    }
+    const blob = await put(`RoomData/${roomId}.json`, JSON.stringify(data), {
+      access: 'public',
+      addRandomSuffix: false,
+      allowOverwrite: true
     })
+    return NextResponse.json({ url: blob.url || blob.downloadUrl })
   } catch {
     return NextResponse.json({ error: 'save failed' }, { status: 500 })
   }
