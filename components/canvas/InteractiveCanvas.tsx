@@ -161,7 +161,6 @@ export default function InteractiveCanvas() {
   const uploadImage = async (file: File) => {
     const form = new FormData()
     form.append('file', file)
-    form.append('upload_preset', 'cakejdr-images')
     try {
       const res = await fetch('/api/cloudinary', { method: 'POST', body: form })
       if (res.ok) {

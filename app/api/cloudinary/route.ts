@@ -82,8 +82,14 @@ export async function POST(req: NextRequest) {
   const text = await resCloud.text()
 
   if (!resCloud.ok) {
-    console.error('Cloudinary error:', text)
-    return NextResponse.json({ error: 'Upload failed', details: text }, { status: 500 })
+    let msg = text
+    try {
+      msg = JSON.parse(text).error?.message || text
+    } catch {
+      // ignore json parse errors
+    }
+    console.error('Cloudinary error:', resCloud.status, msg)
+    return NextResponse.json({ error: 'Upload failed', details: msg }, { status: 500 })
   }
 
   try {
