@@ -16,13 +16,16 @@ export default function RoomSaver({ roomId }: Props) {
         const chat = localStorage.getItem(`jdr_chat_${roomId}`) || '[]'
         const dice = localStorage.getItem(`jdr_dice_${roomId}`) || '[]'
         const summary = localStorage.getItem('summaryPanel_acts_v1') || '[]'
-        const combined = `${chat}|${dice}|${summary}`
+
+        const events = localStorage.getItem(`jdr_events_${roomId}`) || '[]'
+        const combined = `${chat}|${dice}|${summary}|${events}`
+
         if (!force && combined === lastData.current) return
         lastData.current = combined
         await fetch('/api/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ roomId, chatHistory: chat, diceHistory: dice, summary })
+          body: JSON.stringify({ roomId, chatHistory: chat, diceHistory: dice, summary, events })
         })
       } catch {
         // ignore

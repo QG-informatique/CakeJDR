@@ -157,7 +157,7 @@ export default function MenuAccueil() {
       .then(res => res.json())
       .then(data => {
         if (!data?.data) return
-        const { chat, dice, summary } = data.data
+        const { chat, dice, summary, events } = data.data
         if (chat && !localStorage.getItem(`jdr_chat_${room.id}`)) {
           localStorage.setItem(`jdr_chat_${room.id}`, JSON.stringify(chat))
         }
@@ -166,6 +166,9 @@ export default function MenuAccueil() {
         }
         if (summary && !localStorage.getItem('summaryPanel_acts_v1')) {
           localStorage.setItem('summaryPanel_acts_v1', JSON.stringify(summary))
+        }
+        if (events && !localStorage.getItem(`jdr_events_${room.id}`)) {
+          localStorage.setItem(`jdr_events_${room.id}`, JSON.stringify(events))
         }
       })
       .catch(() => {})
