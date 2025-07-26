@@ -1,6 +1,6 @@
 // Define Liveblocks types for your application
 // https://liveblocks.io/docs/api-reference/liveblocks-react#Typing-your-data
-import type { LiveMap } from '@liveblocks/client'
+import type { LiveMap, LiveObject } from '@liveblocks/client'
 
 type CanvasImage = {
   id: number
@@ -23,6 +23,7 @@ declare global {
     Storage: {
       characters: LiveMap<string, CharacterData>;
       images: LiveMap<string, CanvasImage>;
+      music: LiveObject<{ id: string; playing: boolean }>;
     };
 
     // Custom user info set when authenticating with a secret key

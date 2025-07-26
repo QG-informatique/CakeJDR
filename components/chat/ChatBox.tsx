@@ -13,22 +13,27 @@ interface Props {
 }
 
 const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
-  const [messages, setMessages] = useState([
-    { author: 'GM', text: 'Welcome!' }
-  ])
+  const room = useRoom()
+  const STORAGE_KEY = `jdr_chat_${room.id}`
+  const [messages, setMessages] = useState<{author:string; text:string}[]>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY)
+      if (raw) return JSON.parse(raw)
+    } catch {}
+    return [{ author: 'GM', text: 'Welcome!' }]
+  })
   const [inputValue, setInputValue] = useState('')
   const endRef = useRef<HTMLDivElement>(null)
   const [showSummary, setShowSummary] = useState(false)
   const [showStats, setShowStats] = useState(false)
   const prevHist = useRef(0)
   const broadcast = useBroadcastEvent()
-  const room = useRoom()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   useEventListener((payload: any) => {
     const { event } = payload
     if (event.type === 'chat') {
-      setMessages(m => [...m, { author: event.author, text: event.text }])
+      setMessages((m: Array<{author:string; text:string}>) => [...m, { author: event.author, text: event.text }])
     }
   })
 
@@ -44,20 +49,16 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
     setInputValue('')
   }
 
-  const saveSession = async () => {
-    try {
-      const historyText = messages.map(m => `${m.author}: ${m.text}`).join('\n')
-      await fetch('/api/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roomId: room.id, chatHistory: historyText })
-      })
-    } catch {}
-  }
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages))
+    } catch {}
+  }, [messages, STORAGE_KEY])
 
   useEffect(() => {
     if (history.length > prevHist.current) {
@@ -143,14 +144,6 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
           title="Stats DD"
         >
           {showStats ? 'Chat' : '📊'}
-        </button>
-        <button
-          className="px-5 py-2 rounded-xl font-semibold shadow border-none bg-black/30 text-white/90 hover:bg-emerald-600 hover:text-white transition duration-100 flex items-center justify-center min-h-[44px]"
-          style={{ minHeight: 44 }}
-          onClick={saveSession}
-          title="Save session"
-        >
-          💾
         </button>
       </div>
 
