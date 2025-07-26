@@ -171,11 +171,7 @@ export default function InteractiveCanvas() {
     }
   }, [musicObj])
 
-  useEffect(() => {
-    return () => {
-      /* no-op cleanup */
-    }
-  }, [])
+
 
   const uploadImage = async (file: File) => {
     const form = new FormData()
