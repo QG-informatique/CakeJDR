@@ -1,20 +1,27 @@
 'use client'
 import { FC, RefObject, useRef, useState, useEffect } from 'react'
-import { useBroadcastEvent, useEventListener } from '@liveblocks/react'
+import { useBroadcastEvent, useEventListener, useRoom } from '@liveblocks/react'
 import SummaryPanel from './SummaryPanel'
 import DiceStats from './DiceStats'
 
 type Roll = { player: string, dice: number, result: number }
 
-type Props = {
+interface Props {
   chatBoxRef: RefObject<HTMLDivElement | null>
   history: Roll[]
+  author: string
 }
 
-const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
-  const [messages, setMessages] = useState([
-    { author: 'GM', text: 'Welcome!' }
-  ])
+const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
+  const room = useRoom()
+  const STORAGE_KEY = `jdr_chat_${room.id}`
+  const [messages, setMessages] = useState<{author:string; text:string}[]>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY)
+      if (raw) return JSON.parse(raw)
+    } catch {}
+    return [{ author: 'GM', text: 'Welcome!' }]
+  })
   const [inputValue, setInputValue] = useState('')
   const endRef = useRef<HTMLDivElement>(null)
   const [showSummary, setShowSummary] = useState(false)
@@ -26,25 +33,32 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history }) => {
   useEventListener((payload: any) => {
     const { event } = payload
     if (event.type === 'chat') {
-      setMessages(m => [...m, { author: event.author, text: event.text }])
+      setMessages((m: Array<{author:string; text:string}>) => [...m, { author: event.author, text: event.text }])
     }
   })
 
   const sendMessage = () => {
     if (inputValue.trim() === '') return
 
-    const msg = { author: 'You', text: inputValue.trim() }
+    const msg = { author, text: inputValue.trim() }
 
 
 
     setMessages(prev => [...prev, msg])
-    broadcast({ type: 'chat', author: msg.author, text: msg.text })
+    broadcast({ type: 'chat', author: msg.author, text: msg.text } as Liveblocks['RoomEvent'])
     setInputValue('')
   }
+
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages))
+    } catch {}
+  }, [messages, STORAGE_KEY])
 
   useEffect(() => {
     if (history.length > prevHist.current) {

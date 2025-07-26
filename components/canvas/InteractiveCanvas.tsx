@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
-import { useBroadcastEvent, useEventListener } from '@liveblocks/react'
+import { useBroadcastEvent, useEventListener, useStorage, useMutation } from '@liveblocks/react'
 import Image from 'next/image'
 import YouTube from 'react-youtube'
 import type { YouTubePlayer } from 'youtube-player/dist/types'
@@ -18,8 +18,9 @@ type ImageData = {
 }
 
 export default function InteractiveCanvas() {
-  const [images, setImages] = useState<ImageData[]>([])
-  const imagesRef = useRef<ImageData[]>([])
+  // `images` map is created by RoomProvider but may be null until ready
+  const imagesMap = useStorage(root => root.images)
+  const images = imagesMap ? (Array.from(imagesMap.values()) as ImageData[]) : []
   const [isDrawing, setIsDrawing] = useState(false)
   const [drawMode, setDrawMode] = useState<'images' | 'draw' | 'erase'>('images')
   const [color, setColor] = useState('#000000')
@@ -27,9 +28,10 @@ export default function InteractiveCanvas() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
   const [toolsVisible, setToolsVisible] = useState(false)
   const [audioVisible, setAudioVisible] = useState(false)
+  const musicObj = useStorage(root => root.music)
   const [ytUrl, setYtUrl] = useState('')
   const [ytId, setYtId] = useState('')
-  const [isPlaying, setIsPlaying] = useState(true)
+  const [isPlaying, setIsPlaying] = useState(false)
   const [volume, setVolume] = useState(50)
 
   const broadcast = useBroadcastEvent()
@@ -40,30 +42,37 @@ export default function InteractiveCanvas() {
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null)
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null)
   const playerRef = useRef<YouTubePlayer | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const addImage = useMutation(({ storage }, img: ImageData) => {
+    storage.get('images').set(String(img.id), img)
+  }, [])
+
+  const updateImage = useMutation(({ storage }, img: ImageData) => {
+    storage.get('images').set(String(img.id), img)
+  }, [])
+
+  const deleteImage = useMutation(({ storage }, id: number) => {
+    storage.get('images').delete(String(id))
+  }, [])
+
+  const clearImages = useMutation(({ storage }) => {
+    const map = storage.get('images')
+    map.forEach((_v, key) => {
+      map.delete(key)
+    })
+  }, [])
+
+  const updateMusic = useMutation(({ storage }, updates: { id?: string; playing?: boolean }) => {
+    const m = storage.get('music')
+    m.update(updates)
+  }, [])
 
   // Listen to incoming canvas events
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   useEventListener((payload: any) => {
     const { event } = payload
-    if (event.type === 'add-image') {
-      setImages((prev) => {
-        const updated = [...prev, event.image]
-        imagesRef.current = updated
-        return updated
-      })
-    } else if (event.type === 'update-image') {
-      setImages((prev) => {
-        const updated = prev.map(img => img.id === event.image.id ? event.image : img)
-        imagesRef.current = updated
-        return updated
-      })
-    } else if (event.type === 'delete-image') {
-      setImages((prev) => {
-        const updated = prev.filter(img => img.id !== event.id)
-        imagesRef.current = updated
-        return updated
-      })
-    } else if (event.type === 'clear-canvas') {
+    if (event.type === 'clear-canvas') {
       // On efface localement sans re-broadcaster pour éviter une boucle
       clearCanvas(false)
     } else if (event.type === 'draw-line' && ctxRef.current) {
@@ -130,16 +139,29 @@ export default function InteractiveCanvas() {
   }, [volume])
 
   useEffect(() => {
+    const player = playerRef.current
+    if (!player) return
+    if (isPlaying) player.playVideo()
+    else player.pauseVideo()
+  }, [isPlaying])
+
+  useEffect(() => {
+    if (musicObj) {
+      setYtId(musicObj.id)
+      setIsPlaying(musicObj.playing)
+    }
+  }, [musicObj])
+
+  useEffect(() => {
     return () => {
-      imagesRef.current.forEach(img => {
-        if (img.local) URL.revokeObjectURL(img.src)
-      })
+      /* no-op cleanup */
     }
   }, [])
 
   const uploadImage = async (file: File) => {
     const form = new FormData()
     form.append('file', file)
+    form.append('upload_preset', 'cakejdr-images')
     try {
       const res = await fetch('/api/cloudinary', { method: 'POST', body: form })
       if (res.ok) {
@@ -149,36 +171,55 @@ export default function InteractiveCanvas() {
     } catch {
       // ignore
     }
-    return URL.createObjectURL(file)
+    return null
   }
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault()
     const files = Array.from(e.dataTransfer.files)
     const rect = canvasRef.current?.getBoundingClientRect()
+    if (!rect) return
 
-    files.forEach(async (file) => {
-      if (file.type.startsWith('image/') && rect) {
-        const url = await uploadImage(file)
-        if (!url) return
-        const isLocal = url.startsWith('blob:')
-        const newImg: ImageData = {
-          id: Date.now() + Math.random(),
-          src: url,
-          x: e.clientX - rect.left - 100,
-          y: e.clientY - rect.top - 100,
-          width: 200,
-          height: 200,
-          local: isLocal,
-        }
-        setImages((prev) => {
-          const updated = [...prev, newImg]
-          imagesRef.current = updated
-          return updated
-        })
-        if (!isLocal) broadcast({ type: 'add-image', image: newImg })
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) continue
+      const url = await uploadImage(file)
+      if (!url) {
+        console.error('Image upload failed')
+        continue
       }
-    })
+      const newImg: ImageData = {
+        id: Date.now() + Math.random(),
+        src: url,
+        x: e.clientX - rect.left - 100,
+        y: e.clientY - rect.top - 100,
+        width: 200,
+        height: 200,
+      }
+      addImage(newImg)
+    }
+  }
+
+  const handleInputFiles = async (files: FileList | null) => {
+    if (!files) return
+    const rect = canvasRef.current?.getBoundingClientRect()
+    if (!rect) return
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith('image/')) continue
+      const url = await uploadImage(file)
+      if (!url) {
+        console.error('Image upload failed')
+        continue
+      }
+      const newImg: ImageData = {
+        id: Date.now() + Math.random(),
+        src: url,
+        x: rect.width / 2 - 100,
+        y: rect.height / 2 - 100,
+        width: 200,
+        height: 200,
+      }
+      addImage(newImg)
+    }
   }
 
   const handleMouseDown = (e: React.MouseEvent, id?: number, type?: 'move' | 'resize') => {
@@ -228,34 +269,27 @@ export default function InteractiveCanvas() {
       const now = Date.now()
       if (THROTTLE === 0 || now - lastSend.current > THROTTLE) {
         lastSend.current = now
-        broadcast({ type: 'draw-line', x1: px, y1: py, x2: x, y2: y, color, width: brushSize, mode: drawMode })
+        broadcast({ type: 'draw-line', x1: px, y1: py, x2: x, y2: y, color, width: brushSize, mode: drawMode } as Liveblocks['RoomEvent'])
       }
     }
 
     const { id, type, offsetX, offsetY } = dragState.current
     if (!id || !type) return
-
-    setImages((prev) => {
-      const updatedList = prev.map((img) => {
-        if (img.id !== id) return img
-        const updated =
-          type === 'move'
-            ? {
-                ...img,
-                x: Math.max(0, Math.min(x - offsetX, rect.width - img.width)),
-                y: Math.max(0, Math.min(y - offsetY, rect.height - img.height)),
-              }
-            : {
-                ...img,
-                width: Math.max(50, x - img.x),
-                height: Math.max(50, y - img.y),
-              }
-        if (!img.local) broadcast({ type: 'update-image', image: updated })
-        return updated
-      })
-      imagesRef.current = updatedList
-      return updatedList
-    })
+    const img = images.find((i) => i.id === id)
+    if (!img) return
+    const updated =
+      type === 'move'
+        ? {
+            ...img,
+            x: Math.max(0, Math.min(x - offsetX, rect.width - img.width)),
+            y: Math.max(0, Math.min(y - offsetY, rect.height - img.height)),
+          }
+        : {
+            ...img,
+            width: Math.max(50, x - img.x),
+            height: Math.max(50, y - img.y),
+          }
+    updateImage(updated)
   }
 
   const handleMouseUp = () => {
@@ -267,38 +301,24 @@ export default function InteractiveCanvas() {
   // l'événement Liveblocks pour éviter une boucle infinie lorsque
   // l'on reçoit justement cet événement depuis un autre client.
   const clearCanvas = (broadcastChange = true) => {
-    images.forEach(img => {
-      if (img.local) URL.revokeObjectURL(img.src)
-    })
-    setImages(() => {
-      imagesRef.current = []
-      return []
-    })
+    clearImages()
     const ctx = ctxRef.current
     if (ctx && drawingCanvasRef.current) {
       ctx.clearRect(0, 0, drawingCanvasRef.current.width, drawingCanvasRef.current.height)
     }
     if (broadcastChange) {
-      broadcast({ type: 'clear-canvas' })
+      broadcast({ type: 'clear-canvas' } as Liveblocks['RoomEvent'])
     }
   }
 
   const handleDeleteImage = (id: number) => {
-    const img = images.find(i => i.id === id)
-    if (img?.local) URL.revokeObjectURL(img.src)
-    setImages((prev) => {
-      const updated = prev.filter((im) => im.id !== id)
-      imagesRef.current = updated
-      return updated
-    })
-    if (!img?.local) broadcast({ type: 'delete-image', id })
+    deleteImage(id)
   }
 
   const handleYtSubmit = () => {
     const match = ytUrl.match(/(?:youtube\.com.*v=|youtu\.be\/)([^&\n?#]+)/)
     if (match) {
-      setYtId(match[1])
-      setIsPlaying(true)
+      updateMusic({ id: match[1], playing: true })
     }
   }
 
@@ -307,7 +327,7 @@ export default function InteractiveCanvas() {
     if (!player) return
     if (isPlaying) player.pauseVideo()
     else player.playVideo()
-    setIsPlaying(!isPlaying)
+    updateMusic({ playing: !isPlaying })
   }
 
   const COLORS = [
@@ -531,6 +551,13 @@ export default function InteractiveCanvas() {
         {images.length === 0 && (
           <p className="absolute bottom-4 left-5 text-xs text-white/70 z-10">Glisse une image ici</p>
         )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={(e) => handleInputFiles(e.target.files)}
+          className="absolute bottom-4 right-4 text-xs"
+        />
       </div>
     </div>
   )

@@ -2,10 +2,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useState, useRef } from 'react'
-import { useBroadcastEvent } from '@liveblocks/react'
+import { useBroadcastEvent, useOthers } from '@liveblocks/react'
 import { User2 } from 'lucide-react'
-
-const STORAGE_KEY = 'jdr_characters'
 
 type Character = { id: number, name?: string, nom?: string }
 
@@ -18,6 +16,7 @@ export default function GMCharacterSelector({
   onSelect,
   className = '',
 }: Props) {
+  const others = useOthers()
   const [chars, setChars] = useState<Character[]>([])
   const [open, setOpen] = useState(false)
   const [selectedId, setSelectedId] = useState<number | null>(null)
@@ -25,15 +24,10 @@ export default function GMCharacterSelector({
   const broadcast = useBroadcastEvent()
 
   useEffect(() => {
-    const update = () => setChars(loadCharacters())
-    update()
-    window.addEventListener('storage', update)
-    window.addEventListener('jdr_characters_change', update as EventListener)
-    return () => {
-      window.removeEventListener('storage', update)
-      window.removeEventListener('jdr_characters_change', update as EventListener)
-    }
-  }, [])
+    const list = Array.from(others).map(o => o.presence.character as Character | undefined)
+      .filter((c): c is Character => !!c)
+    setChars(list)
+  }, [others])
 
   useEffect(() => {
     if (!open) return
@@ -46,29 +40,17 @@ export default function GMCharacterSelector({
 
   useEffect(() => {
     if (selectedId === null) return
-    const interval = setInterval(() => {
-      const list = loadCharacters()
-      const found = list.find((c: any) => c.id === selectedId)
-      if (found) onSelect(found)
-    }, 5000)
-    return () => clearInterval(interval)
-  }, [selectedId, onSelect])
+    const found = chars.find(c => c.id === selectedId)
+    if (found) onSelect(found)
+  }, [selectedId, chars, onSelect])
 
-  const loadCharacters = () => {
-    try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
-    } catch {
-      return []
-    }
-  }
 
   const handleSelect = (id: number) => {
     setSelectedId(id)
-    const list = loadCharacters()
-    const found = list.find((c: any) => c.id === id)
+    const found = chars.find((c: any) => c.id === id)
     if (found) {
       onSelect(found)
-      broadcast({ type: 'gm-select', character: found })
+      broadcast({ type: 'gm-select', character: found } as Liveblocks['RoomEvent'])
     }
     setOpen(false)
   }

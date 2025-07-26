@@ -2,8 +2,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useRef, useState } from 'react'
-import { useBroadcastEvent, useEventListener } from '@liveblocks/react'
-import { useRouter } from 'next/navigation'
+import { useBroadcastEvent, useEventListener, useMyPresence } from '@liveblocks/react'
+import { useRouter, useParams } from 'next/navigation'
 import CharacterSheet, { defaultPerso } from '@/components/sheet/CharacterSheet'
 import DiceRoller from '@/components/dice/DiceRoller'
 import ChatBox from '@/components/chat/ChatBox'
@@ -14,7 +14,6 @@ import OnlineProfiles from '@/components/chat/OnlineProfiles'
 import SideNotes from '@/components/misc/SideNotes'
 import Login from '@/components/login/Login'
 import GMCharacterSelector from '@/components/misc/GMCharacterSelector'
-import ImportExportMenu from '@/components/character/ImportExportMenu'
 import useDiceHistory from './hooks/useDiceHistory'
 import useProfile from './hooks/useProfile'
 import useOnlineStatus from './hooks/useOnlineStatus'
@@ -30,17 +29,19 @@ export default function HomePageInner() {
   const [diceType, setDiceType] = useState(6)
   const [diceResult, setDiceResult] = useState<number | null>(null)
   const [diceDisabled, setDiceDisabled] = useState(false)
+  const { id: roomId } = useParams<{ id: string }>()
   const [pendingRoll, setPendingRoll] = useState<{ result: number; dice: number; nom: string } | null>(null)
-  const [history, setHistory] = useDiceHistory()
+  const [history, setHistory] = useDiceHistory(roomId)
   const chatBoxRef = useRef<HTMLDivElement>(null)
 
   const broadcast = useBroadcastEvent()
+  const [, updateMyPresence] = useMyPresence()
 
   // listen for remote dice rolls
   useEventListener((payload: any) => {
     const { event } = payload
     if (event.type === 'dice-roll') {
-      setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result }])
+      setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result, ts: Date.now() }])
     } else if (event.type === 'gm-select') {
       setPerso(event.character)
     }
@@ -75,13 +76,16 @@ export default function HomePageInner() {
       const found = chars.find((c: any) => c.id?.toString() === selectedId)
       if (found) {
         setPerso(found)
+        updateMyPresence({ character: found })
       } else {
         setPerso(defaultPerso)
+        updateMyPresence({ character: defaultPerso })
       }
     } else {
       setPerso(defaultPerso)
+      updateMyPresence({ character: defaultPerso })
     }
-  }, [])
+  }, [updateMyPresence])
 
   const handleUpdatePerso = (newPerso: any) => {
     let id = newPerso.id
@@ -89,7 +93,9 @@ export default function HomePageInner() {
       id = crypto.randomUUID()
       newPerso = { ...newPerso, id }
     }
+    newPerso = { ...newPerso, updatedAt: Date.now() }
     setPerso(newPerso)
+    updateMyPresence({ character: newPerso })
     setCharacters((prevChars) => {
       let found = false
       const next = prevChars.map((c) => {
@@ -123,8 +129,8 @@ export default function HomePageInner() {
     setDiceDisabled(false)
     if (!pendingRoll) return
 
-    setHistory((h) => [...h, { player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result }])
-    broadcast({ type: 'dice-roll', player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result })
+    setHistory((h) => [...h, { player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result, ts: Date.now() }])
+    broadcast({ type: 'dice-roll', player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result } as Liveblocks['RoomEvent'])
     setPendingRoll(null)
   }
 
@@ -132,7 +138,6 @@ export default function HomePageInner() {
     <div className="relative w-screen h-screen font-sans overflow-hidden bg-transparent">
       <div className="relative z-10 flex w-full h-full">
         <CharacterSheet perso={perso} onUpdate={handleUpdatePerso} chatBoxRef={chatBoxRef} allCharacters={characters} logoOnly>
-          <ImportExportMenu perso={perso} onUpdate={handleUpdatePerso} />
           {profile?.isMJ && (
             <span className="ml-2">
               <GMCharacterSelector onSelect={handleUpdatePerso} className="bg-gray-800 hover:bg-gray-700 text-white p-2 rounded shadow" />
@@ -150,7 +155,11 @@ export default function HomePageInner() {
           </DiceRoller>
         </main>
 
-        <ChatBox chatBoxRef={chatBoxRef} history={history} />
+        <ChatBox
+          chatBoxRef={chatBoxRef}
+          history={history}
+          author={perso.nom || profile?.pseudo || 'Anonymous'}
+        />
         <SideNotes />
       </div>
       <Head>

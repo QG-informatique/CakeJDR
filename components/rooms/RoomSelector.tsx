@@ -1,19 +1,24 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { Lock } from 'lucide-react'
 
-interface Props { onClose?: () => void }
+export type RoomInfo = { id: string; name: string; password?: string }
 
-export default function RoomsPanel({ onClose }: Props) {
+interface Props {
+  onClose?: () => void
+  onSelect?: (room: RoomInfo) => void
+}
+
+export default function RoomSelector({ onClose, onSelect }: Props) {
   const [rooms, setRooms] = useState<Array<{id:string,name:string,password?:string}>>([])
   const [name, setName] = useState('')
   const [withPassword, setWithPassword] = useState(false)
   const [password, setPassword] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [creating, setCreating] = useState(false)
+  const [joiningId, setJoiningId] = useState<string | null>(null)
+  const [joinPassword, setJoinPassword] = useState('')
   const panelRef = useRef<HTMLDivElement>(null)
-  const router = useRouter()
 
 
   // Fetch the list of existing rooms
@@ -43,16 +48,23 @@ export default function RoomsPanel({ onClose }: Props) {
     const data = await res.json()
     localStorage.setItem('jdr_my_room', data.id)
     onClose?.()
-    router.push(`/room/${data.id}`)
+    onSelect?.({ id: data.id, name, password: password || undefined })
   }
 
   const joinRoom = (room: {id:string,name:string,password?:string}) => {
     if (room.password) {
-      const pw = window.prompt('Password for ' + room.name)
-      if (pw !== room.password) return
+      setJoiningId(room.id)
+      setJoinPassword('')
+      return
     }
     onClose?.()
-    router.push(`/room/${room.id}`)
+    onSelect?.(room)
+  }
+
+  const confirmJoin = (room: {id:string,name:string,password?:string}) => {
+    if (room.password && joinPassword !== room.password) return
+    onClose?.()
+    onSelect?.(room)
   }
 
   return (
@@ -72,18 +84,33 @@ export default function RoomsPanel({ onClose }: Props) {
       <div className="max-h-48 overflow-y-auto mb-3 pr-1">
         <ul className="space-y-1">
           {rooms.map(r => (
-            <li key={r.id} className="flex justify-between items-center gap-2">
-              <span className="truncate flex-1 flex items-center gap-1">
-                {r.password && <Lock size={12} className="text-pink-300" />} {r.name}
-              </span>
-              <button
-                className="px-2 py-1 bg-pink-700/50 hover:bg-pink-700/70 rounded text-sm"
-                onClick={() => joinRoom(r)}
-              >
-
-                Join
-
-              </button>
+            <li key={r.id} className="flex flex-col gap-1">
+              <div className="flex justify-between items-center gap-2">
+                <span className="truncate flex-1 flex items-center gap-1">
+                  {r.password && <Lock size={12} className="text-pink-300" />} {r.name}
+                </span>
+                {joiningId === r.id && r.password ? (
+                  <button
+                    className="px-2 py-1 bg-emerald-600/70 hover:bg-emerald-600 rounded text-sm"
+                    onClick={() => confirmJoin(r)}
+                  >Enter</button>
+                ) : (
+                  <button
+                    className="px-2 py-1 bg-pink-700/50 hover:bg-pink-700/70 rounded text-sm"
+                    onClick={() => joinRoom(r)}
+                  >Select</button>
+                )}
+              </div>
+              {joiningId === r.id && r.password && (
+                <input
+                  type="password"
+                  value={joinPassword}
+                  onChange={e => setJoinPassword(e.target.value)}
+                  className="w-full px-2 py-1 rounded bg-gray-800 text-white border border-white/20"
+                  placeholder="Password"
+                  onKeyDown={e => { if (e.key==='Enter') confirmJoin(r) }}
+                />
+              )}
             </li>
           ))}
         </ul>
