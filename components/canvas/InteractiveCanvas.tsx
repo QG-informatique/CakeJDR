@@ -28,9 +28,10 @@ export default function InteractiveCanvas() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
   const [toolsVisible, setToolsVisible] = useState(false)
   const [audioVisible, setAudioVisible] = useState(false)
+  const musicObj = useStorage(root => root.music)
   const [ytUrl, setYtUrl] = useState('')
   const [ytId, setYtId] = useState('')
-  const [isPlaying, setIsPlaying] = useState(true)
+  const [isPlaying, setIsPlaying] = useState(false)
   const [volume, setVolume] = useState(50)
 
   const broadcast = useBroadcastEvent()
@@ -59,6 +60,11 @@ export default function InteractiveCanvas() {
     map.forEach((_v, key) => {
       map.delete(key)
     })
+  }, [])
+
+  const updateMusic = useMutation(({ storage }, updates: { id?: string; playing?: boolean }) => {
+    const m = storage.get('music')
+    m.update(updates)
   }, [])
 
   // Listen to incoming canvas events
@@ -130,6 +136,20 @@ export default function InteractiveCanvas() {
       playerRef.current.setVolume(volume)
     }
   }, [volume])
+
+  useEffect(() => {
+    const player = playerRef.current
+    if (!player) return
+    if (isPlaying) player.playVideo()
+    else player.pauseVideo()
+  }, [isPlaying])
+
+  useEffect(() => {
+    if (musicObj) {
+      setYtId(musicObj.id)
+      setIsPlaying(musicObj.playing)
+    }
+  }, [musicObj])
 
   useEffect(() => {
     return () => {
@@ -273,8 +293,7 @@ export default function InteractiveCanvas() {
   const handleYtSubmit = () => {
     const match = ytUrl.match(/(?:youtube\.com.*v=|youtu\.be\/)([^&\n?#]+)/)
     if (match) {
-      setYtId(match[1])
-      setIsPlaying(true)
+      updateMusic({ id: match[1], playing: true })
     }
   }
 
@@ -283,7 +302,7 @@ export default function InteractiveCanvas() {
     if (!player) return
     if (isPlaying) player.pauseVideo()
     else player.playVideo()
-    setIsPlaying(!isPlaying)
+    updateMusic({ playing: !isPlaying })
   }
 
   const COLORS = [
