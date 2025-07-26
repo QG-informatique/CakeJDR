@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
-import { useBroadcastEvent, useEventListener } from '@liveblocks/react'
+import { useBroadcastEvent, useEventListener, useStorage, useMutation } from '@liveblocks/react'
 import Image from 'next/image'
 import YouTube from 'react-youtube'
 import type { YouTubePlayer } from 'youtube-player/dist/types'
@@ -18,8 +18,8 @@ type ImageData = {
 }
 
 export default function InteractiveCanvas() {
-  const [images, setImages] = useState<ImageData[]>([])
-  const imagesRef = useRef<ImageData[]>([])
+  const imagesMap = useStorage(root => root.images)
+  const images = Array.from(imagesMap.values()) as ImageData[]
   const [isDrawing, setIsDrawing] = useState(false)
   const [drawMode, setDrawMode] = useState<'images' | 'draw' | 'erase'>('images')
   const [color, setColor] = useState('#000000')
@@ -41,29 +41,19 @@ export default function InteractiveCanvas() {
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null)
   const playerRef = useRef<YouTubePlayer | null>(null)
 
+  const addImage = useMutation(({ storage }, img: ImageData) => {
+    storage.get('images').set(String(img.id), img)
+  }, [])
+
+  const updateImage = useMutation(({ storage }, img: ImageData) => {
+    storage.get('images').set(String(img.id), img)
+  }, [])
+
   // Listen to incoming canvas events
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   useEventListener((payload: any) => {
     const { event } = payload
-    if (event.type === 'add-image') {
-      setImages((prev) => {
-        const updated = [...prev, event.image]
-        imagesRef.current = updated
-        return updated
-      })
-    } else if (event.type === 'update-image') {
-      setImages((prev) => {
-        const updated = prev.map(img => img.id === event.image.id ? event.image : img)
-        imagesRef.current = updated
-        return updated
-      })
-    } else if (event.type === 'delete-image') {
-      setImages((prev) => {
-        const updated = prev.filter(img => img.id !== event.id)
-        imagesRef.current = updated
-        return updated
-      })
-    } else if (event.type === 'clear-canvas') {
+    if (event.type === 'clear-canvas') {
       // On efface localement sans re-broadcaster pour éviter une boucle
       clearCanvas(false)
     } else if (event.type === 'draw-line' && ctxRef.current) {
@@ -131,9 +121,7 @@ export default function InteractiveCanvas() {
 
   useEffect(() => {
     return () => {
-      imagesRef.current.forEach(img => {
-        if (img.local) URL.revokeObjectURL(img.src)
-      })
+      /* no-op cleanup */
     }
   }, [])
 
@@ -149,36 +137,32 @@ export default function InteractiveCanvas() {
     } catch {
       // ignore
     }
-    return URL.createObjectURL(file)
+    return null
   }
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault()
     const files = Array.from(e.dataTransfer.files)
     const rect = canvasRef.current?.getBoundingClientRect()
+    if (!rect) return
 
-    files.forEach(async (file) => {
-      if (file.type.startsWith('image/') && rect) {
-        const url = await uploadImage(file)
-        if (!url) return
-        const isLocal = url.startsWith('blob:')
-        const newImg: ImageData = {
-          id: Date.now() + Math.random(),
-          src: url,
-          x: e.clientX - rect.left - 100,
-          y: e.clientY - rect.top - 100,
-          width: 200,
-          height: 200,
-          local: isLocal,
-        }
-        setImages((prev) => {
-          const updated = [...prev, newImg]
-          imagesRef.current = updated
-          return updated
-        })
-        if (!isLocal) broadcast({ type: 'add-image', image: newImg } as Liveblocks['RoomEvent'])
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) continue
+      const url = await uploadImage(file)
+      if (!url) {
+        console.error('Image upload failed')
+        continue
       }
-    })
+      const newImg: ImageData = {
+        id: Date.now() + Math.random(),
+        src: url,
+        x: e.clientX - rect.left - 100,
+        y: e.clientY - rect.top - 100,
+        width: 200,
+        height: 200,
+      }
+      addImage(newImg)
+    }
   }
 
   const handleMouseDown = (e: React.MouseEvent, id?: number, type?: 'move' | 'resize') => {
@@ -234,28 +218,21 @@ export default function InteractiveCanvas() {
 
     const { id, type, offsetX, offsetY } = dragState.current
     if (!id || !type) return
-
-    setImages((prev) => {
-      const updatedList = prev.map((img) => {
-        if (img.id !== id) return img
-        const updated =
-          type === 'move'
-            ? {
-                ...img,
-                x: Math.max(0, Math.min(x - offsetX, rect.width - img.width)),
-                y: Math.max(0, Math.min(y - offsetY, rect.height - img.height)),
-              }
-            : {
-                ...img,
-                width: Math.max(50, x - img.x),
-                height: Math.max(50, y - img.y),
-              }
-        if (!img.local) broadcast({ type: 'update-image', image: updated } as Liveblocks['RoomEvent'])
-        return updated
-      })
-      imagesRef.current = updatedList
-      return updatedList
-    })
+    const img = images.find((i) => i.id === id)
+    if (!img) return
+    const updated =
+      type === 'move'
+        ? {
+            ...img,
+            x: Math.max(0, Math.min(x - offsetX, rect.width - img.width)),
+            y: Math.max(0, Math.min(y - offsetY, rect.height - img.height)),
+          }
+        : {
+            ...img,
+            width: Math.max(50, x - img.x),
+            height: Math.max(50, y - img.y),
+          }
+    updateImage(updated)
   }
 
   const handleMouseUp = () => {
@@ -267,12 +244,8 @@ export default function InteractiveCanvas() {
   // l'événement Liveblocks pour éviter une boucle infinie lorsque
   // l'on reçoit justement cet événement depuis un autre client.
   const clearCanvas = (broadcastChange = true) => {
-    images.forEach(img => {
-      if (img.local) URL.revokeObjectURL(img.src)
-    })
-    setImages(() => {
-      imagesRef.current = []
-      return []
+    imagesMap.forEach((_v, key) => {
+      imagesMap.delete(key)
     })
     const ctx = ctxRef.current
     if (ctx && drawingCanvasRef.current) {
@@ -284,14 +257,7 @@ export default function InteractiveCanvas() {
   }
 
   const handleDeleteImage = (id: number) => {
-    const img = images.find(i => i.id === id)
-    if (img?.local) URL.revokeObjectURL(img.src)
-    setImages((prev) => {
-      const updated = prev.filter((im) => im.id !== id)
-      imagesRef.current = updated
-      return updated
-    })
-    if (!img?.local) broadcast({ type: 'delete-image', id } as Liveblocks['RoomEvent'])
+    imagesMap.delete(String(id))
   }
 
   const handleYtSubmit = () => {
