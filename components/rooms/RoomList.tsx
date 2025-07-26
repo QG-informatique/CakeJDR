@@ -15,13 +15,29 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
   const [joiningId, setJoiningId] = useState<string | null>(null)
   const [joinPassword, setJoinPassword] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
+  const [myRoom, setMyRoom] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/rooms')
       .then(res => (res.ok ? res.json() : Promise.reject()))
       .then(data => setRooms(data.rooms || []))
       .catch(() => setRooms([]))
+    setMyRoom(localStorage.getItem('jdr_my_room'))
   }, [])
+
+  const deleteRoom = async (room: RoomInfo) => {
+    if (!window.confirm('Supprimer cette room ?')) return
+    await fetch('/api/rooms', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: room.id })
+    })
+    setRooms(r => r.filter(x => x.id !== room.id))
+    if (room.id === myRoom) {
+      localStorage.removeItem('jdr_my_room')
+      setMyRoom(null)
+    }
+  }
 
   const joinRoom = (room: RoomInfo) => {
     if (room.password) {
@@ -67,7 +83,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
           >
             <div className="flex justify-between items-center gap-2">
               <span className="truncate flex-1 flex items-center gap-1">
-                {r.password && <Lock size={12} className="text-pink-300" />} {r.name}
+                {r.password && <Lock size={12} className="text-pink-300" />} {r.name} {myRoom===r.id && '👑'}
               </span>
               {joiningId === r.id && r.password ? (
                 <button
@@ -82,6 +98,14 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
                   onClick={() => joinRoom(r)}
                 >
                   {selectedId === r.id ? 'Choisie' : 'Sélectionner'}
+                </button>
+              )}
+              {myRoom===r.id && (
+                <button
+                  className="px-2 py-1 bg-red-700/60 hover:bg-red-700 rounded text-sm"
+                  onClick={() => deleteRoom(r)}
+                >
+                  🗑️
                 </button>
               )}
             </div>
