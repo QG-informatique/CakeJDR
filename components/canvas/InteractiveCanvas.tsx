@@ -18,7 +18,8 @@ type ImageData = {
 }
 
 export default function InteractiveCanvas() {
-  const imagesMap = useStorage(root => root.images)
+  // `images` map is initialized in RoomProvider so it's safe to assert
+  const imagesMap = useStorage(root => root.images)!
   const images = Array.from(imagesMap.values()) as ImageData[]
   const [isDrawing, setIsDrawing] = useState(false)
   const [drawMode, setDrawMode] = useState<'images' | 'draw' | 'erase'>('images')
@@ -47,6 +48,17 @@ export default function InteractiveCanvas() {
 
   const updateImage = useMutation(({ storage }, img: ImageData) => {
     storage.get('images').set(String(img.id), img)
+  }, [])
+
+  const deleteImage = useMutation(({ storage }, id: number) => {
+    storage.get('images').delete(String(id))
+  }, [])
+
+  const clearImages = useMutation(({ storage }) => {
+    const map = storage.get('images')
+    map.forEach((_v, key) => {
+      map.delete(key)
+    })
   }, [])
 
   // Listen to incoming canvas events
@@ -244,9 +256,7 @@ export default function InteractiveCanvas() {
   // l'événement Liveblocks pour éviter une boucle infinie lorsque
   // l'on reçoit justement cet événement depuis un autre client.
   const clearCanvas = (broadcastChange = true) => {
-    imagesMap.forEach((_v, key) => {
-      imagesMap.delete(key)
-    })
+    clearImages()
     const ctx = ctxRef.current
     if (ctx && drawingCanvasRef.current) {
       ctx.clearRect(0, 0, drawingCanvasRef.current.width, drawingCanvasRef.current.height)
@@ -257,7 +267,7 @@ export default function InteractiveCanvas() {
   }
 
   const handleDeleteImage = (id: number) => {
-    imagesMap.delete(String(id))
+    deleteImage(id)
   }
 
   const handleYtSubmit = () => {
