@@ -22,6 +22,7 @@ interface Props {
   onSelect: (idx: number) => void
   onEdit: (id: string | number) => void
   onDelete: (id: string | number) => void
+  onDeleteCloud: (id: string | number) => void
   onNew: () => void
   onImportClick: () => void
   onExport: () => void
@@ -44,6 +45,7 @@ const CharacterList: FC<Props> = ({
   onSelect,
   onEdit,
   onDelete,
+  onDeleteCloud,
   onNew,
   onImportClick,
   onExport,
@@ -133,10 +135,19 @@ const CharacterList: FC<Props> = ({
                         <Download size={16} />
                       </button>
                     ) : null}
+                    {cloud && (
+                      <button
+                        onClick={e => { e.stopPropagation(); onDeleteCloud(ch.id) }}
+                        className={btnBase + ' hover:bg-red-700/80 text-red-100 w-8 h-8'}
+                        title="Delete cloud"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
                     {local && (
                     <>
-                    <button
-                      onClick={e => { e.stopPropagation(); onEdit(ch.id) }}
+                      <button
+                        onClick={e => { e.stopPropagation(); onEdit(ch.id) }}
                       className={btnBase + " hover:bg-yellow-500/90 text-yellow-100 w-8 h-8"}
                       title="Edit"
                     >

@@ -15,6 +15,7 @@ import SideNotes from '@/components/misc/SideNotes'
 import Login from '@/components/login/Login'
 import GMCharacterSelector from '@/components/misc/GMCharacterSelector'
 import useDiceHistory from './hooks/useDiceHistory'
+import useEventLog from './hooks/useEventLog'
 import useProfile from './hooks/useProfile'
 import useOnlineStatus from './hooks/useOnlineStatus'
 
@@ -32,6 +33,7 @@ export default function HomePageInner() {
   const { id: roomId } = useParams<{ id: string }>()
   const [pendingRoll, setPendingRoll] = useState<{ result: number; dice: number; nom: string } | null>(null)
   const [history, setHistory] = useDiceHistory(roomId)
+  const { addEvent } = useEventLog(roomId)
   const chatBoxRef = useRef<HTMLDivElement>(null)
 
   const broadcast = useBroadcastEvent()
@@ -42,8 +44,19 @@ export default function HomePageInner() {
     const { event } = payload
     if (event.type === 'dice-roll') {
       setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result, ts: Date.now() }])
+      addEvent({ id: crypto.randomUUID(), kind: 'dice', player: event.player, dice: event.dice, result: event.result, ts: Date.now() })
     } else if (event.type === 'gm-select') {
-      setPerso(event.character)
+      const char = event.character || defaultPerso
+      if (!char.id) char.id = crypto.randomUUID()
+      setPerso(char)
+      updateMyPresence({ character: char })
+      setCharacters(prev => {
+        const idx = prev.findIndex(c => String(c.id) === String(char.id))
+        const next = idx !== -1 ? prev.map((c,i)=> i===idx ? char : c) : [...prev, char]
+        localStorage.setItem('jdr_characters', JSON.stringify(next))
+        localStorage.setItem('selectedCharacterId', String(char.id))
+        return next
+      })
     }
   })
 
@@ -131,6 +144,7 @@ export default function HomePageInner() {
 
     setHistory((h) => [...h, { player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result, ts: Date.now() }])
     broadcast({ type: 'dice-roll', player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result } as Liveblocks['RoomEvent'])
+    addEvent({ id: crypto.randomUUID(), kind: 'dice', player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result, ts: Date.now() })
     setPendingRoll(null)
   }
 
