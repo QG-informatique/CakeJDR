@@ -1,5 +1,6 @@
 'use client'
 import { FC, useState, useRef, useEffect, ChangeEvent } from 'react'
+import { useStorage, useMutation } from '@liveblocks/react'
 
 // --------- Custom Select DA Import/Export ---------
 type CustomActSelectProps = {
@@ -129,6 +130,10 @@ function exportActsToText(acts: Act[]): string {
 const LOCAL_KEY = 'summaryPanel_acts_v1'
 
 const SummaryPanel: FC<Props> = ({ onClose }) => {
+  const summaryObj = useStorage(root => root.summary)
+  const updateSummary = useMutation(({ storage }, nextActs: Act[]) => {
+    storage.get('summary').set('acts', nextActs)
+  }, [])
   const [acts, setActs] = useState<Act[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(LOCAL_KEY)
@@ -143,10 +148,18 @@ const SummaryPanel: FC<Props> = ({ onClose }) => {
   const contentRef = useRef<HTMLDivElement>(null)
   const titleInputRef = useRef<HTMLInputElement>(null)
 
-  // Persistance localStorage
+  // Sync from Liveblocks storage
+  useEffect(() => {
+    if (summaryObj && Array.isArray(summaryObj.acts)) {
+      setActs(summaryObj.acts.length ? summaryObj.acts : [{ id: 1, title: '', content: '' }])
+    }
+  }, [summaryObj])
+
+  // Persist locally and in Liveblocks
   useEffect(() => {
     localStorage.setItem(LOCAL_KEY, JSON.stringify(acts))
-  }, [acts])
+    updateSummary(acts)
+  }, [acts, updateSummary])
 
   useEffect(() => {
     const selectedAct = acts.find(a => a.id === selectedId)
