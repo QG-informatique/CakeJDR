@@ -20,8 +20,8 @@ interface Props {
   onUpload: (char: Character) => void
   selectedIdx: number | null
   onSelect: (idx: number) => void
-  onEdit: (idx: number) => void
-  onDelete: (idx: number) => void
+  onEdit: (id: string | number) => void
+  onDelete: (id: string | number) => void
   onNew: () => void
   onImportClick: () => void
   onExport: () => void
@@ -136,14 +136,14 @@ const CharacterList: FC<Props> = ({
                     {local && (
                     <>
                     <button
-                      onClick={e => { e.stopPropagation(); onEdit(filtered.findIndex(c => String(c.id)===String(ch.id))) }}
+                      onClick={e => { e.stopPropagation(); onEdit(ch.id) }}
                       className={btnBase + " hover:bg-yellow-500/90 text-yellow-100 w-8 h-8"}
                       title="Edit"
                     >
                       <Edit2 size={16} />
                     </button>
                     <button
-                      onClick={e => { e.stopPropagation(); onDelete(filtered.findIndex(c => String(c.id)===String(ch.id))) }}
+                      onClick={e => { e.stopPropagation(); onDelete(ch.id) }}
                       className={btnBase + " hover:bg-red-600/90 text-red-100 w-8 h-8"}
                       title="Delete"
                     >

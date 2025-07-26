@@ -158,7 +158,13 @@ export default function MenuAccueil() {
     setDraftChar({ ...defaultPerso, id: crypto.randomUUID(), owner: user.pseudo })
     setModalOpen(true)
   }
-  const handleEditCharacter = (idx:number) => { setDraftChar(characters[idx]); setModalOpen(true) }
+  const handleEditCharacter = (id: string | number) => {
+    const idx = characters.findIndex(c => String(c.id) === String(id))
+    if (idx !== -1) {
+      setDraftChar(characters[idx])
+      setModalOpen(true)
+    }
+  }
 
   const handleSaveDraft = () => {
     if (!user) return
@@ -173,8 +179,10 @@ export default function MenuAccueil() {
     setSelectedIdx(updated.findIndex(c => c.id === id))
   }
 
-  const handleDeleteChar = (idx:number) => {
+  const handleDeleteChar = (id: string | number) => {
     if (!window.confirm('Delete this sheet?')) return
+    const idx = characters.findIndex(c => String(c.id) === String(id))
+    if (idx === -1) return
     const toDelete = characters[idx]
     const remaining = characters.filter((_, i) => i !== idx)
     saveCharacters(remaining)
