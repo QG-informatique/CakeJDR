@@ -7,7 +7,8 @@ import JoinAnnouncer from '@/components/rooms/JoinAnnouncer'
 import RoomSaver from '@/components/rooms/RoomSaver'
 
 export default function RoomPage() {
-  const { id } = useParams<{ id: string }>()
+  const params = useParams<{ id: string }>()
+  const id = params?.id ?? ''
 
   useEffect(() => {
     fetch('/api/rooms')
