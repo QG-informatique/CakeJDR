@@ -339,6 +339,7 @@ export default function InteractiveCanvas() {
     const match = ytUrl.match(/(?:youtube\.com.*v=|youtu\.be\/)([^&\n?#]+)/)
     if (match) {
       updateMusic({ id: match[1], playing: true })
+      setIsPlaying(true)
       if (typeof window !== 'undefined') {
         localStorage.setItem('ytPlaying', 'true')
       }
@@ -351,6 +352,7 @@ export default function InteractiveCanvas() {
     if (isPlaying) player.pauseVideo()
     else player.playVideo()
     updateMusic({ playing: !isPlaying })
+    setIsPlaying(!isPlaying)
     if (typeof window !== 'undefined') {
       localStorage.setItem('ytPlaying', String(!isPlaying))
     }
