@@ -42,7 +42,6 @@ export default function InteractiveCanvas() {
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null)
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null)
   const playerRef = useRef<YouTubePlayer | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const initializedRef = useRef(false)
 
   useEffect(() => {
@@ -219,28 +218,6 @@ export default function InteractiveCanvas() {
     }
   }
 
-  const handleInputFiles = async (files: FileList | null) => {
-    if (!files) return
-    const rect = canvasRef.current?.getBoundingClientRect()
-    if (!rect) return
-    for (const file of Array.from(files)) {
-      if (!file.type.startsWith('image/')) continue
-      const url = await uploadImage(file)
-      if (!url) {
-        console.error('Image upload failed')
-        continue
-      }
-      const newImg: ImageData = {
-        id: Date.now() + Math.random(),
-        src: url,
-        x: rect.width / 2 - 100,
-        y: rect.height / 2 - 100,
-        width: 200,
-        height: 200,
-      }
-      addImage(newImg)
-    }
-  }
 
   const handleMouseDown = (e: React.MouseEvent, id?: number, type?: 'move' | 'resize') => {
     const rect = canvasRef.current?.getBoundingClientRect()
@@ -584,13 +561,6 @@ export default function InteractiveCanvas() {
         {images.length === 0 && (
           <p className="absolute bottom-4 left-5 text-xs text-white/70 z-10">Glisse une image ici</p>
         )}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={(e) => handleInputFiles(e.target.files)}
-          className="absolute bottom-4 right-4 text-xs"
-        />
       </div>
     </div>
   )
