@@ -157,7 +157,7 @@ export default function MenuAccueil() {
       .then(res => res.json())
       .then(data => {
         if (!data?.data) return
-        const { chat, dice, summary } = data.data
+        const { chat, dice, summary, events } = data.data
         if (chat && !localStorage.getItem(`jdr_chat_${room.id}`)) {
           localStorage.setItem(`jdr_chat_${room.id}`, JSON.stringify(chat))
         }
@@ -166,6 +166,9 @@ export default function MenuAccueil() {
         }
         if (summary && !localStorage.getItem('summaryPanel_acts_v1')) {
           localStorage.setItem('summaryPanel_acts_v1', JSON.stringify(summary))
+        }
+        if (events && !localStorage.getItem(`jdr_events_${room.id}`)) {
+          localStorage.setItem(`jdr_events_${room.id}`, JSON.stringify(events))
         }
       })
       .catch(() => {})
@@ -266,6 +269,17 @@ export default function MenuAccueil() {
     const idx = characters.findIndex(c => String(c.id) === String(char.id))
     const updated = idx !== -1 ? characters.map((c, i) => i === idx ? char : c) : [...characters, char]
     saveCharacters(updated)
+  }
+
+  const handleDeleteCloudChar = async (id: string | number) => {
+    if (!window.confirm('Delete from cloud?')) return
+    const filename = `FichePerso/${id}.json`
+    await fetch(`/api/blop/delete?filename=${encodeURIComponent(filename)}`)
+    setRemoteChars(r => {
+      const next = { ...r }
+      delete next[String(id)]
+      return next
+    })
   }
 
   const handleChangeColor = (color:string) => {
@@ -488,6 +502,7 @@ export default function MenuAccueil() {
                 onSelect={handleSelectChar}
                 onEdit={handleEditCharacter}
                 onDelete={handleDeleteChar}
+                onDeleteCloud={handleDeleteCloudChar}
                 onNew={handleNewCharacter}
                 onImportClick={handleImportClick}
                 onExport={handleExportChar}
