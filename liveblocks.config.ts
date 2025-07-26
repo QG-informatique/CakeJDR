@@ -17,13 +17,17 @@ type CharacterData = any
 declare global {
   interface Liveblocks {
     // Each user's Presence, for useMyPresence, useOthers, etc.
-    Presence: Record<string, never>;
+    Presence: {
+      // Currently selected character data
+      character?: CharacterData;
+    };
 
     // The Storage tree for the room, for useMutation, useStorage, etc.
     Storage: {
       characters: LiveMap<string, CharacterData>;
       images: LiveMap<string, CanvasImage>;
       music: LiveObject<{ id: string; playing: boolean }>;
+      summary: LiveObject<{ acts: Array<{ id: number; title: string; content: string }> }>;
     };
 
     // Custom user info set when authenticating with a secret key

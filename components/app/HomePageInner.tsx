@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useRef, useState } from 'react'
-import { useBroadcastEvent, useEventListener } from '@liveblocks/react'
+import { useBroadcastEvent, useEventListener, useMyPresence } from '@liveblocks/react'
 import { useRouter, useParams } from 'next/navigation'
 import CharacterSheet, { defaultPerso } from '@/components/sheet/CharacterSheet'
 import DiceRoller from '@/components/dice/DiceRoller'
@@ -35,6 +35,7 @@ export default function HomePageInner() {
   const chatBoxRef = useRef<HTMLDivElement>(null)
 
   const broadcast = useBroadcastEvent()
+  const [, updateMyPresence] = useMyPresence()
 
   // listen for remote dice rolls
   useEventListener((payload: any) => {
@@ -75,13 +76,16 @@ export default function HomePageInner() {
       const found = chars.find((c: any) => c.id?.toString() === selectedId)
       if (found) {
         setPerso(found)
+        updateMyPresence({ character: found })
       } else {
         setPerso(defaultPerso)
+        updateMyPresence({ character: defaultPerso })
       }
     } else {
       setPerso(defaultPerso)
+      updateMyPresence({ character: defaultPerso })
     }
-  }, [])
+  }, [updateMyPresence])
 
   const handleUpdatePerso = (newPerso: any) => {
     let id = newPerso.id
@@ -91,6 +95,7 @@ export default function HomePageInner() {
     }
     newPerso = { ...newPerso, updatedAt: Date.now() }
     setPerso(newPerso)
+    updateMyPresence({ character: newPerso })
     setCharacters((prevChars) => {
       let found = false
       const next = prevChars.map((c) => {
