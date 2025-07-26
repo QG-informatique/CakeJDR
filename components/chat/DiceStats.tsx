@@ -19,7 +19,7 @@ const CustomSelect: FC<CustomSelectProps> = ({ value, onChange, options, disable
     return () => window.removeEventListener("mousedown", handleClick)
   }, [open])
   return (
-    <div ref={ref} className="relative w-[210px] select-none">
+    <div ref={ref} className="relative w-[180px] select-none">
       <button
         type="button"
         disabled={disabled}
@@ -91,7 +91,7 @@ const CustomSelect: FC<CustomSelectProps> = ({ value, onChange, options, disable
 }
 // --- /CustomSelect ---
 
-type Roll = { player: string, dice: number, result: number }
+type Roll = { player: string, dice: number, result: number, ts?: number }
 type Props = { history: Roll[] }
 
 function computeStats(history: Roll[]) {
@@ -113,9 +113,22 @@ const STAT_OPTIONS = [
   // On peut facilement en ajouter ici si besoin plus tard
 ]
 
+const TIME_OPTIONS = [
+  { value: 'all', label: 'All Time' },
+  { value: '7d', label: '7 derniers jours' },
+  { value: '24h', label: '24h' },
+]
+
 export default function DiceStats({ history }: Props) {
   const [statType, setStatType] = useState<string>('all')
-  const stats = computeStats(history)
+  const [timeRange, setTimeRange] = useState<string>('all')
+  let filtered = history
+  if (timeRange !== 'all') {
+    const now = Date.now()
+    const limit = timeRange === '7d' ? 7 * 24 * 3600 * 1000 : 24 * 3600 * 1000
+    filtered = history.filter(h => !h.ts || now - h.ts <= limit)
+  }
+  const stats = computeStats(filtered)
   const players = Object.keys(stats)
 
   if (players.length === 0) return <div className="p-2 text-sm">No rolls recorded.</div>
@@ -178,6 +191,11 @@ export default function DiceStats({ history }: Props) {
           value={statType}
           onChange={setStatType}
           options={STAT_OPTIONS}
+        />
+        <CustomSelect
+          value={timeRange}
+          onChange={setTimeRange}
+          options={TIME_OPTIONS}
         />
       </div>
       <table className="text-sm w-full text-left border-collapse">
