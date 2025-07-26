@@ -3,7 +3,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useBroadcastEvent, useEventListener } from '@liveblocks/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 import CharacterSheet, { defaultPerso } from '@/components/sheet/CharacterSheet'
 import DiceRoller from '@/components/dice/DiceRoller'
 import ChatBox from '@/components/chat/ChatBox'
@@ -29,8 +29,9 @@ export default function HomePageInner() {
   const [diceType, setDiceType] = useState(6)
   const [diceResult, setDiceResult] = useState<number | null>(null)
   const [diceDisabled, setDiceDisabled] = useState(false)
+  const { id: roomId } = useParams<{ id: string }>()
   const [pendingRoll, setPendingRoll] = useState<{ result: number; dice: number; nom: string } | null>(null)
-  const [history, setHistory] = useDiceHistory()
+  const [history, setHistory] = useDiceHistory(roomId)
   const chatBoxRef = useRef<HTMLDivElement>(null)
 
   const broadcast = useBroadcastEvent()
@@ -39,7 +40,7 @@ export default function HomePageInner() {
   useEventListener((payload: any) => {
     const { event } = payload
     if (event.type === 'dice-roll') {
-      setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result }])
+      setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result, ts: Date.now() }])
     } else if (event.type === 'gm-select') {
       setPerso(event.character)
     }
@@ -123,7 +124,7 @@ export default function HomePageInner() {
     setDiceDisabled(false)
     if (!pendingRoll) return
 
-    setHistory((h) => [...h, { player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result }])
+    setHistory((h) => [...h, { player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result, ts: Date.now() }])
     broadcast({ type: 'dice-roll', player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result } as Liveblocks['RoomEvent'])
     setPendingRoll(null)
   }

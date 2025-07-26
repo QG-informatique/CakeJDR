@@ -153,6 +153,22 @@ export default function MenuAccueil() {
       .then(res => res.json())
       .then(data => setRemoteChars(data.characters || {}))
       .catch(() => setRemoteChars({}))
+    fetch(`/api/roomdata?roomId=${encodeURIComponent(room.id)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (!data?.data) return
+        const { chat, dice, summary } = data.data
+        if (chat && !localStorage.getItem(`jdr_chat_${room.id}`)) {
+          localStorage.setItem(`jdr_chat_${room.id}`, JSON.stringify(chat))
+        }
+        if (dice && !localStorage.getItem(`jdr_dice_${room.id}`)) {
+          localStorage.setItem(`jdr_dice_${room.id}`, JSON.stringify(dice))
+        }
+        if (summary && !localStorage.getItem('summaryPanel_acts_v1')) {
+          localStorage.setItem('summaryPanel_acts_v1', JSON.stringify(summary))
+        }
+      })
+      .catch(() => {})
     setRoomsOpen(false)
   }
 
@@ -441,12 +457,18 @@ export default function MenuAccueil() {
               </div>
             </section>
             {roomsOpen && (
-              <div className="mt-2 mb-4">
-                <RoomList
-                  selectedId={selectedRoom?.id || null}
-                  onSelect={handleRoomSelect}
-                  onCreateClick={() => setCreateRoomOpen(true)}
-                />
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                onClick={() => setRoomsOpen(false)}
+                style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(2px)' }}
+              >
+                <div onClick={e => e.stopPropagation()}>
+                  <RoomList
+                    selectedId={selectedRoom?.id || null}
+                    onSelect={handleRoomSelect}
+                    onCreateClick={() => setCreateRoomOpen(true)}
+                  />
+                </div>
               </div>
             )}
             <RoomCreateModal
