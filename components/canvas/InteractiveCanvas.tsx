@@ -32,7 +32,7 @@ export default function InteractiveCanvas() {
   const [ytUrl, setYtUrl] = useState('')
   const [ytId, setYtId] = useState('')
   const [isPlaying, setIsPlaying] = useState(false)
-  const [volume, setVolume] = useState(50)
+  const [volume, setVolume] = useState(5)
 
   const broadcast = useBroadcastEvent()
   const lastSend = useRef(0)
@@ -42,7 +42,17 @@ export default function InteractiveCanvas() {
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null)
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null)
   const playerRef = useRef<YouTubePlayer | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const initializedRef = useRef(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const v = localStorage.getItem('ytVolume')
+    if (v) setVolume(parseInt(v, 10))
+    else localStorage.setItem('ytVolume', '5')
+    const p = localStorage.getItem('ytPlaying')
+    if (p === 'false') setIsPlaying(false)
+    else if (p === 'true') setIsPlaying(true)
+  }, [])
 
   const addImage = useMutation(({ storage }, img: ImageData) => {
     storage.get('images').set(String(img.id), img)
@@ -136,6 +146,9 @@ export default function InteractiveCanvas() {
     if (playerRef.current) {
       playerRef.current.setVolume(volume)
     }
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('ytVolume', String(volume))
+    }
   }, [volume])
 
   useEffect(() => {
@@ -143,20 +156,22 @@ export default function InteractiveCanvas() {
     if (!player) return
     if (isPlaying) player.playVideo()
     else player.pauseVideo()
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('ytPlaying', String(isPlaying))
+    }
   }, [isPlaying])
 
   useEffect(() => {
     if (musicObj) {
       setYtId(musicObj.id)
       setIsPlaying(musicObj.playing)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('ytPlaying', String(musicObj.playing))
+      }
     }
   }, [musicObj])
 
-  useEffect(() => {
-    return () => {
-      /* no-op cleanup */
-    }
-  }, [])
+
 
   const uploadImage = async (file: File) => {
     const form = new FormData()
@@ -199,28 +214,6 @@ export default function InteractiveCanvas() {
     }
   }
 
-  const handleInputFiles = async (files: FileList | null) => {
-    if (!files) return
-    const rect = canvasRef.current?.getBoundingClientRect()
-    if (!rect) return
-    for (const file of Array.from(files)) {
-      if (!file.type.startsWith('image/')) continue
-      const url = await uploadImage(file)
-      if (!url) {
-        console.error('Image upload failed')
-        continue
-      }
-      const newImg: ImageData = {
-        id: Date.now() + Math.random(),
-        src: url,
-        x: rect.width / 2 - 100,
-        y: rect.height / 2 - 100,
-        width: 200,
-        height: 200,
-      }
-      addImage(newImg)
-    }
-  }
 
   const handleMouseDown = (e: React.MouseEvent, id?: number, type?: 'move' | 'resize') => {
     const rect = canvasRef.current?.getBoundingClientRect()
@@ -319,6 +312,10 @@ export default function InteractiveCanvas() {
     const match = ytUrl.match(/(?:youtube\.com.*v=|youtu\.be\/)([^&\n?#]+)/)
     if (match) {
       updateMusic({ id: match[1], playing: true })
+      setIsPlaying(true)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('ytPlaying', 'true')
+      }
     }
   }
 
@@ -328,6 +325,10 @@ export default function InteractiveCanvas() {
     if (isPlaying) player.pauseVideo()
     else player.playVideo()
     updateMusic({ playing: !isPlaying })
+    setIsPlaying(!isPlaying)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('ytPlaying', String(!isPlaying))
+    }
   }
 
   const COLORS = [
@@ -475,6 +476,11 @@ export default function InteractiveCanvas() {
           opts={{ height: '0', width: '0', playerVars: { autoplay: 1 } }}
           onReady={(e) => {
             playerRef.current = e.target
+            if (!initializedRef.current) {
+              initializedRef.current = true
+              e.target.setVolume(volume)
+              if (!isPlaying) e.target.pauseVideo()
+            }
           }}
         />
       )}
@@ -551,13 +557,6 @@ export default function InteractiveCanvas() {
         {images.length === 0 && (
           <p className="absolute bottom-4 left-5 text-xs text-white/70 z-10">Glisse une image ici</p>
         )}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={(e) => handleInputFiles(e.target.files)}
-          className="absolute bottom-4 right-4 text-xs"
-        />
       </div>
     </div>
   )
