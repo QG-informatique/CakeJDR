@@ -5,10 +5,10 @@ import { useEffect, useState, useRef } from 'react'
 import { useBroadcastEvent, useOthers } from '@liveblocks/react'
 import { User2 } from 'lucide-react'
 
-type Character = { id: number, name?: string, nom?: string }
+type Character = { id: string | number; name?: string; nom?: string }
 
 type Props = {
-  onSelect: (char: any) => void
+  onSelect: (char: Character) => void
   className?: string
 }
 
@@ -19,46 +19,48 @@ export default function GMCharacterSelector({
   const others = useOthers()
   const [chars, setChars] = useState<Character[]>([])
   const [open, setOpen] = useState(false)
-  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [selectedId, setSelectedId] = useState<string | number | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const broadcast = useBroadcastEvent()
 
+  // Récupère les personnages en temps réel via les presences
   useEffect(() => {
-    const list = Array.from(others).map(o => o.presence.character as Character | undefined)
-      .filter((c): c is Character => !!c)
+    const list = Array.from(others)
+      .map((o) => o.presence?.character as Character | undefined)
+      .filter((c): c is Character => !!c && c.id !== undefined)
     setChars(list)
   }, [others])
 
+  // Ferme le menu au clic en dehors
   useEffect(() => {
     if (!open) return
     const handler = (e: MouseEvent) => {
-      if (!dropdownRef.current?.contains(e.target as Node)) setOpen(false)
+      if (!dropdownRef.current?.contains(e.target as Node)) {
+        setOpen(false)
+      }
     }
     window.addEventListener('mousedown', handler)
     return () => window.removeEventListener('mousedown', handler)
   }, [open])
 
-  useEffect(() => {
-    if (selectedId === null) return
-    const found = chars.find(c => c.id === selectedId)
-    if (found) onSelect(found)
-  }, [selectedId, chars, onSelect])
+  // Sélection du personnage
+  const handleSelect = (id: string | number) => {
+    const found = chars.find((c) => c.id === id)
+    if (!found) return
 
-
-  const handleSelect = (id: number) => {
     setSelectedId(id)
-    const found = chars.find((c: any) => c.id === id)
-    if (found) {
-      onSelect(found)
-      broadcast({ type: 'gm-select', character: found } as Liveblocks['RoomEvent'])
-    }
+    onSelect(found)
+    broadcast({
+      type: 'gm-select',
+      character: found,
+    })
     setOpen(false)
   }
 
   return (
-    <div ref={dropdownRef} className="relative z-50">
+    <div ref={dropdownRef} className={`relative z-50 ${className}`}>
       <button
-        onClick={() => setOpen(o => !o)}
+        onClick={() => setOpen((o) => !o)}
         className={`
           flex items-center justify-center
           rounded-xl shadow border-none
@@ -68,15 +70,14 @@ export default function GMCharacterSelector({
           focus-visible:outline-pink-400
           transition duration-100
           p-2
-          ${className}
         `}
-        style={{ minWidth: 0 }}
         tabIndex={0}
         aria-haspopup="listbox"
         aria-expanded={open}
       >
         <User2 size={20} className="text-pink-400" />
       </button>
+
       {open && (
         <div
           className="
@@ -92,7 +93,7 @@ export default function GMCharacterSelector({
         >
           {chars.length === 0 && (
             <div className="px-4 py-3 text-sm text-gray-400 text-center">
-              No character
+              Aucun personnage actif
             </div>
           )}
           {chars.map((c, idx) => (
