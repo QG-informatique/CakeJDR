@@ -1,4 +1,4 @@
-import { put } from '@vercel/blob'
+import { put, del } from '@vercel/blob'
 import { NextResponse } from 'next/server'
 import { readRooms, updateRoomsCache } from '@/lib/rooms'
 
@@ -47,5 +47,27 @@ export async function PUT(req: Request) {
     return NextResponse.json({ ok: true })
   } catch {
     return NextResponse.json({ error: 'Failed to update room' }, { status: 500 })
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const { id } = await req.json()
+    if (!id) return NextResponse.json({ error: 'missing id' }, { status: 400 })
+    const rooms = await readRooms()
+    const idx = rooms.findIndex(r => r.id === id)
+    if (idx !== -1) {
+      rooms.splice(idx, 1)
+      const blob = await put(FILE, JSON.stringify(rooms), {
+        access: 'public',
+        addRandomSuffix: false,
+        allowOverwrite: true,
+      })
+      updateRoomsCache(rooms, blob.downloadUrl || blob.url)
+    }
+    await del(`RoomData/${id}.json`).catch(() => {})
+    return NextResponse.json({ ok: true })
+  } catch {
+    return NextResponse.json({ error: 'Failed to delete room' }, { status: 500 })
   }
 }

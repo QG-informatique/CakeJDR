@@ -13,7 +13,13 @@ CakeJDR is a Next.js application for playing tabletop RPGs online. It provides c
 npm install
 ```
 
-2. Copy `.env.example` to `.env.local` and fill in your Cloudinary and Liveblocks keys if necessary.
+2. Copy `.env.example` to `.env.local` and provide the required secrets. The file lists
+   the following variables:
+   - `CLOUDINARY_URL`
+   - `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY`
+   - `LIVEBLOCKS_SECRET_KEY`
+   - `BLOB_READ_WRITE_TOKEN`
+   - `VERCEL_OIDC_TOKEN`
 
 3. Start the development server:
 
