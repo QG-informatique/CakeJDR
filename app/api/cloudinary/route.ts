@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { v2 as cloudinary } from 'cloudinary'
 
+// Ensure FormData is available in this Node runtime
+
 // Configure Cloudinary.
 // The environment variables are only checked when the route is invoked so
 // builds won't fail if they are missing. A runtime error is still returned
@@ -30,52 +32,42 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     )
   }
-  const formData = await req.formData()
-  const file = formData.get('file') as File
+
+  const incoming = await req.formData()
+  const file = incoming.get('file') as File | null
+  const preset =
+    (incoming.get('upload_preset') as string | null) ??
+    process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET ??
+    'cakejdr-images'
 
   if (!file) {
     return NextResponse.json({ error: 'No file received' }, { status: 400 })
   }
 
-  // Transformer le fichier en buffer
   const arrayBuffer = await file.arrayBuffer()
   const buffer = Buffer.from(arrayBuffer)
 
-  try {
-    const preset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const uploadResult = await new Promise<any>((resolve, reject) => {
-      if (!process.env.CLOUDINARY_URL && preset) {
-        cloudinary.uploader.unsigned_upload_stream(
-          preset,
-          { folder: 'cakejdr' },
-          (
-            error: unknown,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            result: any
-          ) => {
-            if (error) reject(error)
-            else resolve(result)
-          }
-        ).end(buffer)
-      } else {
-        cloudinary.uploader.upload_stream(
-          { folder: 'cakejdr' },
-          (
-            error: unknown,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            result: any
-          ) => {
-            if (error) reject(error)
-            else resolve(result)
-          }
-        ).end(buffer)
-      }
-    })
+  const data = new FormData()
+  data.append('file', new Blob([buffer], { type: file.type }), file.name)
+  data.append('upload_preset', preset)
+  data.append('folder', 'cakejdr')
 
-    return NextResponse.json({ url: uploadResult.secure_url })
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 })
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME
+  const url = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`
+
+  const resCloud = await fetch(url, { method: 'POST', body: data })
+  const text = await resCloud.text()
+
+  if (!resCloud.ok) {
+    console.error('Cloudinary error:', text)
+    return NextResponse.json({ error: 'Upload failed', details: text }, { status: 500 })
+  }
+
+  try {
+    const json = JSON.parse(text)
+    return NextResponse.json({ url: json.secure_url })
+  } catch (e) {
+    console.error('Cloudinary parsing error:', e)
+    return NextResponse.json({ error: 'Invalid response from Cloudinary' }, { status: 500 })
   }
 }
