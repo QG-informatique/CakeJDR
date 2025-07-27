@@ -496,7 +496,7 @@ export default function InteractiveCanvas() {
         className="w-full h-full relative overflow-hidden z-0"
         style={{ background: 'none', border: 'none', borderRadius: 0 }}
       >
-        <canvas ref={drawingCanvasRef} className="absolute top-0 left-0 w-full h-full" />
+        <canvas ref={drawingCanvasRef} className="absolute top-0 left-0 w-full h-full pointer-events-none" />
 
         {images.map((img) => (
           <div
