@@ -12,6 +12,7 @@ import MenuHeader from './MenuHeader'
 import CharacterList from './CharacterList'
 import CharacterModal from './CharacterModal'
 import ProfileColorPicker from './ProfileColorPicker'
+import SummaryManager from './SummaryManager'
 
 const PROFILE_KEY = 'jdr_profile'
 const SELECTED_KEY = 'selectedCharacterId'
@@ -518,6 +519,10 @@ export default function MenuAccueil() {
               onSave={handleSaveDraft}
               onClose={() => setModalOpen(false)}
             />
+
+            {selectedRoom && (
+              <SummaryManager roomId={selectedRoom.id} />
+            )}
           </>
         )}
       </div>

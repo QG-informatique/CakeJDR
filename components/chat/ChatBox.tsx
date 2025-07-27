@@ -81,6 +81,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
           w-1/5
           p-4
           flex flex-col relative
+          overflow-visible
           rounded-xl
           border border-white/10
           bg-black/15
@@ -102,7 +103,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
       className="
         w-1/5
         p-4
-        flex flex-col relative h-full min-h-0
+        flex flex-col relative h-full min-h-0 overflow-visible
         rounded-xl
         border border-white/10
         bg-black/15
