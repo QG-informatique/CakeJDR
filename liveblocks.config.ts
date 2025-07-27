@@ -31,6 +31,11 @@ declare global {
     Presence: {
       // Currently selected character data
       character?: CharacterData;
+      // Cursor position in canvas coordinates
+      cursor?: { x: number; y: number } | null;
+      // Display name and color for cursors
+      name?: string;
+      color?: string;
     };
 
     // The Storage tree for the room, for useMutation, useStorage, etc.
