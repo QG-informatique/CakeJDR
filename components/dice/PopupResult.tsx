@@ -11,32 +11,29 @@ interface Props {
 }
 
 const DiceFace: FC<{ value: string | number }> = ({ value }) => (
-  <motion.div
-    initial={{ scale: 0, rotate: 0, opacity: 0 }}
-    animate={{ scale: 1.2, rotate: 360, opacity: 1 }}
-    transition={{ duration: 0.6 }}
-    className="flex items-center justify-center w-32 h-32 text-black text-6xl font-extrabold rounded-2xl bg-white border-4 border-gray-400 shadow-xl select-none"
-  >
+  <div className="flex items-center justify-center w-32 h-32 text-black text-6xl font-extrabold rounded-2xl bg-white border-4 border-gray-400 shadow-xl select-none">
     {value}
-  </motion.div>
+  </div>
 )
 
 const NeoDice3D: FC<Props> = ({ show, result, diceType, onFinish }) => {
-  const [visible, setVisible] = useState(false)
+  const [phase, setPhase] = useState<'hidden' | 'anim' | 'result'>('hidden')
 
   useEffect(() => {
     if (show && result !== null) {
-      setVisible(true)
-      const timeout = setTimeout(() => {
-        setVisible(false)
+      setPhase('anim')
+      const t1 = setTimeout(() => setPhase('result'), 2000)
+      const t2 = setTimeout(() => {
+        setPhase('hidden')
         onFinish?.()
-      }, 3000) // dé visible 3s
-
-      return () => clearTimeout(timeout)
+      }, 3000)
+      return () => {
+        clearTimeout(t1)
+        clearTimeout(t2)
+      }
     }
   }, [show, result, onFinish])
-
-  if (!visible || result === null) return null
+  if (phase === 'hidden' || result === null) return null
 
   const isCrit = result === diceType
   const isFail = result === 1
@@ -49,9 +46,21 @@ const NeoDice3D: FC<Props> = ({ show, result, diceType, onFinish }) => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-[9999]">
-      <div className={`${bgGlow} rounded-2xl`}>
-        <DiceFace value={result} />
-      </div>
+      {phase === 'anim' && (
+        <motion.div
+          initial={{ rotate: 0 }}
+          animate={{ rotate: 720 }}
+          transition={{ duration: 2, ease: 'easeInOut' }}
+          className="flex items-center justify-center w-32 h-32 text-6xl"
+        >
+          🎲
+        </motion.div>
+      )}
+      {phase === 'result' && (
+        <div className={`${bgGlow} rounded-2xl`}>
+          <DiceFace value={result} />
+        </div>
+      )}
     </div>
   )
 }
