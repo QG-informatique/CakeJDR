@@ -10,7 +10,7 @@ import ChatBox from '@/components/chat/ChatBox'
 import PopupResult from '@/components/dice/PopupResult'
 import Head from 'next/head'
 import InteractiveCanvas from '@/components/canvas/InteractiveCanvas'
-import OnlineProfiles from '@/components/chat/OnlineProfiles'
+import LiveAvatarStack from '@/components/chat/LiveAvatarStack'
 import SideNotes from '@/components/misc/SideNotes'
 import Login from '@/components/login/Login'
 import GMCharacterSelector from '@/components/misc/GMCharacterSelector'
@@ -44,7 +44,6 @@ export default function HomePageInner() {
     const { event } = payload
     if (event.type === 'dice-roll') {
       setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result, ts: Date.now() }])
-      addEvent({ id: crypto.randomUUID(), kind: 'dice', player: event.player, dice: event.dice, result: event.result, ts: Date.now() })
     } else if (event.type === 'gm-select') {
       const char = event.character || defaultPerso
       if (!char.id) char.id = crypto.randomUUID()
@@ -171,7 +170,7 @@ export default function HomePageInner() {
             <PopupResult show={showPopup} result={diceResult} diceType={diceType} onFinish={handlePopupFinish} />
           </div>
           <DiceRoller diceType={diceType} onChange={setDiceType} onRoll={rollDice} disabled={diceDisabled}>
-            <OnlineProfiles />
+            <LiveAvatarStack />
           </DiceRoller>
         </main>
 
