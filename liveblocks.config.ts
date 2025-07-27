@@ -31,6 +31,9 @@ declare global {
     Presence: {
       // Currently selected character data
       character?: CharacterData;
+      // User pseudo and color for avatars
+      pseudo?: string;
+      color?: string;
     };
 
     // The Storage tree for the room, for useMutation, useStorage, etc.

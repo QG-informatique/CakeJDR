@@ -10,14 +10,13 @@ import ChatBox from '@/components/chat/ChatBox'
 import PopupResult from '@/components/dice/PopupResult'
 import Head from 'next/head'
 import InteractiveCanvas from '@/components/canvas/InteractiveCanvas'
-import OnlineProfiles from '@/components/chat/OnlineProfiles'
+import LiveAvatars from '@/components/chat/LiveAvatars'
 import SideNotes from '@/components/misc/SideNotes'
 import Login from '@/components/login/Login'
 import GMCharacterSelector from '@/components/misc/GMCharacterSelector'
 import useDiceHistory from './hooks/useDiceHistory'
 import useEventLog from './hooks/useEventLog'
 import useProfile from './hooks/useProfile'
-import useOnlineStatus from './hooks/useOnlineStatus'
 
 export default function HomePageInner() {
   const router = useRouter()
@@ -68,8 +67,6 @@ export default function HomePageInner() {
       router.push('/menu')
     }
   }, [router])
-
-  useOnlineStatus(user, profile)
 
   useEffect(() => {
     if (profile) setUser(profile.pseudo)
@@ -165,7 +162,7 @@ export default function HomePageInner() {
             <PopupResult show={showPopup} result={diceResult} diceType={diceType} onFinish={handlePopupFinish} />
           </div>
           <DiceRoller diceType={diceType} onChange={setDiceType} onRoll={rollDice} disabled={diceDisabled}>
-            <OnlineProfiles />
+            <LiveAvatars />
           </DiceRoller>
         </main>
 
