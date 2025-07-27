@@ -1,6 +1,6 @@
 'use client'
 import { FC, RefObject, useRef, useState, useEffect } from 'react'
-import { useBroadcastEvent, useEventListener, useRoom } from '@liveblocks/react'
+import { useBroadcastEvent, useRoom } from '@liveblocks/react'
 import SummaryPanel from './SummaryPanel'
 import DiceStats from './DiceStats'
 import useEventLog from '../app/hooks/useEventLog'
@@ -15,37 +15,20 @@ interface Props {
 
 const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
   const room = useRoom()
-  const { addEvent } = useEventLog(room.id)
-  const STORAGE_KEY = `jdr_chat_${room.id}`
-  const [messages, setMessages] = useState<{author:string; text:string}[]>(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) return JSON.parse(raw)
-    } catch {}
-    return [{ author: 'GM', text: 'Welcome!' }]
-  })
+  const { events, addEvent } = useEventLog(room.id)
+  const sortedEvents = [...events].sort((a, b) => a.ts - b.ts)
   const [inputValue, setInputValue] = useState('')
   const endRef = useRef<HTMLDivElement>(null)
   const [showSummary, setShowSummary] = useState(false)
   const [showStats, setShowStats] = useState(false)
-  const prevHist = useRef(0)
   const broadcast = useBroadcastEvent()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  useEventListener((payload: any) => {
-    const { event } = payload
-    if (event.type === 'chat') {
-      setMessages((m: Array<{author:string; text:string}>) => [...m, { author: event.author, text: event.text }])
-      addEvent({ id: crypto.randomUUID(), kind: 'chat', author: event.author, text: event.text, ts: Date.now() })
-    }
-  })
 
   const sendMessage = () => {
     if (inputValue.trim() === '') return
 
     const msg = { author, text: inputValue.trim() }
 
-    setMessages(prev => [...prev, msg])
     broadcast({ type: 'chat', author: msg.author, text: msg.text } as Liveblocks['RoomEvent'])
     addEvent({ id: crypto.randomUUID(), kind: 'chat', author: msg.author, text: msg.text, ts: Date.now() })
     setInputValue('')
@@ -54,24 +37,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages))
-    } catch {}
-  }, [messages, STORAGE_KEY])
-
-  useEffect(() => {
-    if (history.length > prevHist.current) {
-      const toAdd = history.slice(prevHist.current)
-      setMessages(m => [
-        ...m,
-        ...toAdd.map(r => ({ author: '🎲', text: `${r.player} : D${r.dice} → ${r.result}` }))
-      ])
-      prevHist.current = history.length
-    }
-  }, [history])
+  }, [events])
 
   // --- NOUVEL AFFICHAGE VERTICAL ---
   if (showSummary) {
@@ -183,9 +149,15 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
               min-h-0
             "
           >
-            {messages.map((msg, idx) => (
-              <p key={idx}>
-                <strong>{msg.author} :</strong> {msg.text}
+            {sortedEvents.map(ev => (
+              <p key={ev.id}>
+                <span className="mr-1">{ev.kind === 'chat' ? '💬' : '🎲'}</span>
+                {ev.kind === 'chat' && (
+                  <><strong>{ev.author} :</strong> {ev.text}</>
+                )}
+                {ev.kind === 'dice' && (
+                  <span>{ev.player} : D{ev.dice} → {ev.result}</span>
+                )}
               </p>
             ))}
             <div ref={endRef} />
