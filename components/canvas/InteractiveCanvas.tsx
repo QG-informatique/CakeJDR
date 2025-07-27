@@ -25,7 +25,9 @@ export default function InteractiveCanvas() {
   const [isDrawing, setIsDrawing] = useState(false)
   const [drawMode, setDrawMode] = useState<'images' | 'draw' | 'erase'>('images')
   const [color, setColor] = useState('#000000')
-  const [brushSize, setBrushSize] = useState(10)
+  const [penSize, setPenSize] = useState(10)
+  const [eraserSize, setEraserSize] = useState(20)
+  const brushSize = drawMode === 'erase' ? eraserSize : penSize
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
   const [toolsVisible, setToolsVisible] = useState(false)
   const [audioVisible, setAudioVisible] = useState(false)
@@ -135,20 +137,17 @@ export default function InteractiveCanvas() {
     const canvas = drawingCanvasRef.current
     if (!canvas) return
 
-    if (drawMode === 'draw' || drawMode === 'erase') {
-      canvas.style.zIndex = '2'
-      canvas.style.pointerEvents = 'auto'
-    } else {
-      canvas.style.zIndex = '0'
-      canvas.style.pointerEvents = 'none'
-    }
+    canvas.style.zIndex = '2'
+    canvas.style.pointerEvents = drawMode === 'images' ? 'none' : 'auto'
   }, [drawMode])
 
   useEffect(() => {
-    const min = drawMode === 'erase' ? ERASE_MIN : DRAW_MIN
-    const max = drawMode === 'erase' ? ERASE_MAX : DRAW_MAX
-    setBrushSize((bs) => Math.min(Math.max(bs, min), max))
-  }, [ERASE_MAX, ERASE_MIN, drawMode])
+    if (drawMode === 'erase') {
+      setEraserSize((s) => Math.min(Math.max(s, ERASE_MIN), ERASE_MAX))
+    } else {
+      setPenSize((s) => Math.min(Math.max(s, DRAW_MIN), DRAW_MAX))
+    }
+  }, [drawMode, DRAW_MIN, DRAW_MAX, ERASE_MIN, ERASE_MAX])
 
   useEffect(() => {
     if (playerRef.current) {
@@ -407,7 +406,11 @@ export default function InteractiveCanvas() {
             min={drawMode === 'erase' ? ERASE_MIN : DRAW_MIN}
             max={drawMode === 'erase' ? ERASE_MAX : DRAW_MAX}
             value={brushSize}
-            onChange={(e) => setBrushSize(parseInt(e.target.value, 10))}
+            onChange={(e) => {
+              const v = parseInt(e.target.value, 10)
+              if (drawMode === 'erase') setEraserSize(v)
+              else setPenSize(v)
+            }}
             className="w-24 mx-2"
           />
           {COLORS.map((c) => (
