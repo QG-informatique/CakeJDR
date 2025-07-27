@@ -76,6 +76,7 @@ const NeoDice3D: FC<Props> = ({ show, result, diceType, onFinish }) => {
   const timers = useRef<NodeJS.Timeout[]>([])
 
 
+
   const finalRot = useMemo(() => {
     if (result === null) return { x: 0, y: 0, z: 0 }
     if (faces.length === 6) {
@@ -85,8 +86,10 @@ const NeoDice3D: FC<Props> = ({ show, result, diceType, onFinish }) => {
   }, [result, faces])
 
   useEffect(() => {
+
     timers.current.forEach(clearTimeout)
     timers.current = []
+
     let t1: NodeJS.Timeout | null = null
     let t2: NodeJS.Timeout | null = null
     let t3: NodeJS.Timeout | null = null
@@ -131,6 +134,7 @@ const NeoDice3D: FC<Props> = ({ show, result, diceType, onFinish }) => {
             t3 = setTimeout(() => {
               onFinish?.()
             }, REVEAL_MS)
+
             timers.current.push(t3)
           }, GLOW_MS)
           timers.current.push(t2)
@@ -141,6 +145,7 @@ const NeoDice3D: FC<Props> = ({ show, result, diceType, onFinish }) => {
     return () => {
       timers.current.forEach(clearTimeout)
       timers.current = []
+
       controls.stop()
     }
   }, [show, result, controls, finalRot, onFinish])
@@ -213,6 +218,7 @@ const PageEffects: FC<Props> = ({ show, result, diceType }) => {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
   useEffect(() => {
+
     if (timerRef.current) clearTimeout(timerRef.current)
     if (show && result !== null) {
       setSparkKey(k => k + 1)
@@ -220,11 +226,14 @@ const PageEffects: FC<Props> = ({ show, result, diceType }) => {
         () => setPhase('reveal'),
         SHAKE_MS + SPIN_TIME * 1000 + (GLOW_MS - 32)
       )
+
     } else {
       setPhase('hidden')
     }
     return () => {
+
       if (timerRef.current) clearTimeout(timerRef.current)
+
     }
   }, [show, result])
 
