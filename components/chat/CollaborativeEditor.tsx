@@ -12,7 +12,7 @@ import { $generateHtmlFromNodes, $generateNodesFromDOM } from "@lexical/html"
 import { $getRoot } from "lexical"
 import { liveblocksConfig, LiveblocksPlugin, Toolbar } from "@liveblocks/react-lexical"
 import { useRoom } from "@liveblocks/react"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 
 const LOCAL_PREFIX = "summary_pages_"
 
@@ -51,7 +51,6 @@ export default function CollaborativeEditor({ onClose }: { onClose: () => void }
   const room = useRoom()
   const [pages, setPages] = useState<Array<{id:string; title:string}>>([])
   const [pageId, setPageId] = useState('')
-  const editorRef = useRef<null | { save: () => void }>(null)
 
   const pagesKey = room ? `${LOCAL_PREFIX}${room.id}` : LOCAL_PREFIX
   const storageKey = pageId ? `${pagesKey}_${pageId}` : pagesKey
@@ -79,9 +78,20 @@ export default function CollaborativeEditor({ onClose }: { onClose: () => void }
     }
   }, [pageId, pagesKey])
 
-  const handleSave = useCallback(() => {
-    if (editorRef.current) editorRef.current.save()
-  }, [])
+  useEffect(() => {
+    try {
+      localStorage.setItem(pagesKey, JSON.stringify(pages))
+    } catch {}
+  }, [pages, pagesKey])
+
+  const addPage = () => {
+    const title = prompt('Titre de la page ?')?.trim()
+    if (!title) return
+    const newPage = { id: crypto.randomUUID(), title }
+    setPages([...pages, newPage])
+    setPageId(newPage.id)
+  }
+
 
   const initialConfig = liveblocksConfig({
     namespace: "summary-editor",
@@ -91,22 +101,6 @@ export default function CollaborativeEditor({ onClose }: { onClose: () => void }
     },
   })
 
-  function RegisterSave() {
-    const [editor] = useLexicalComposerContext()
-    useEffect(() => {
-      editorRef.current = {
-        save: () => {
-          editor.update(() => {
-            const html = $generateHtmlFromNodes(editor, null)
-            try {
-              localStorage.setItem(storageKey, html)
-            } catch {}
-          })
-        },
-      }
-    }, [editor, storageKey])
-    return null
-  }
 
   return (
     <div className="absolute inset-0 bg-black/35 backdrop-blur-[3px] border border-white/10 rounded-2xl shadow-2xl flex flex-col z-50 p-3 animate-fadeIn" style={{ minHeight: 0 }}>
@@ -119,12 +113,11 @@ export default function CollaborativeEditor({ onClose }: { onClose: () => void }
             ))}
           </select>
         )}
-        <button onClick={handleSave} className="ml-auto px-3 py-1 rounded bg-emerald-600 text-white">Sauvegarder</button>
+        <button onClick={addPage} className="ml-auto px-3 py-1 rounded bg-emerald-600 text-white">+ Page</button>
       </div>
       <LexicalComposer initialConfig={{ ...initialConfig, namespace: `summary-editor-${pageId}` }}>
         <LiveblocksPlugin />
         <LoadContent storageKey={storageKey} />
-        <RegisterSave />
         <SaveOnChange storageKey={storageKey} />
         <Toolbar className="mb-2 z-50" />
         <RichTextPlugin

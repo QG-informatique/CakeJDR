@@ -7,7 +7,6 @@ export type SummaryPage = { id: string; title: string }
 
 export default function SummaryManager({ roomId }: { roomId: string }) {
   const [pages, setPages] = useState<SummaryPage[]>([])
-  const [title, setTitle] = useState('')
   const fileRef = useRef<HTMLInputElement | null>(null)
 
   const storageKey = PREFIX + roomId
@@ -28,12 +27,6 @@ export default function SummaryManager({ roomId }: { roomId: string }) {
     } catch {}
   }, [pages, storageKey])
 
-  const addPage = () => {
-    const t = title.trim()
-    if (!t) return
-    setPages([...pages, { id: crypto.randomUUID(), title: t }])
-    setTitle('')
-  }
 
   const exportPages = () => {
     const data = pages.map(p => ({
@@ -73,26 +66,11 @@ export default function SummaryManager({ roomId }: { roomId: string }) {
   }
 
   return (
-    <section className="mt-6 space-y-2">
+    <section className="mt-6 space-y-2 w-fit">
       <h3 className="text-lg font-semibold text-white">Summaries</h3>
-      <div className="flex gap-2">
-        <input
-          type="text"
-          value={title}
-          onChange={e => setTitle(e.target.value)}
-          placeholder="New page title"
-          className="px-2 py-1 rounded bg-black/40 text-white flex-1"
-        />
-        <button onClick={addPage} className="px-3 py-1 rounded bg-blue-600 text-white">Add</button>
-      </div>
-      <ul className="space-y-1 text-sm text-white/90">
-        {pages.map(p => (
-          <li key={p.id}>{p.title}</li>
-        ))}
-      </ul>
-      <div className="flex items-center gap-2 mt-2">
-        <button onClick={exportPages} className="px-3 py-1 rounded bg-emerald-600 text-white">Export</button>
-        <button onClick={() => fileRef.current?.click()} className="px-3 py-1 rounded bg-purple-600 text-white">Import</button>
+      <div className="flex items-center gap-2">
+        <button onClick={exportPages} className="px-3 py-1 rounded bg-emerald-600 text-white text-sm">Export</button>
+        <button onClick={() => fileRef.current?.click()} className="px-3 py-1 rounded bg-purple-600 text-white text-sm">Import</button>
         <input ref={fileRef} type="file" accept="text/plain" onChange={importPages} className="hidden" />
       </div>
     </section>
