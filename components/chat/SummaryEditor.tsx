@@ -5,13 +5,10 @@ import { ContentEditable } from '@lexical/react/LexicalContentEditable'
 import { HeadingNode, QuoteNode } from '@lexical/rich-text'
 import { ListNode, ListItemNode } from '@lexical/list'
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary'
-import { CollaborationPlugin } from '@lexical/react/LexicalCollaborationPlugin'
-import { liveblocksConfig, Toolbar, FloatingToolbar } from '@liveblocks/react-lexical'
-import { useRoom, useStorage, useMutation } from '@liveblocks/react'
-import { getYjsProviderForRoom } from '@liveblocks/yjs'
-import type { Provider } from '@lexical/yjs'
-import { useCallback, useEffect, useState } from 'react'
-import { Doc } from 'yjs'
+import { LiveblocksPlugin, liveblocksConfig, Toolbar, FloatingToolbar } from '@liveblocks/react-lexical'
+import { useRoom, useStorage, useMutation, RoomProvider } from '@liveblocks/react'
+import { LiveMap, LiveObject, LiveList } from '@liveblocks/client'
+import { useEffect, useState } from 'react'
 import useIsMobile from './use-is-mobile'
 
 const LOCAL_KEY = 'summaryPanel_acts_v1'
@@ -86,17 +83,6 @@ export default function SummaryEditor() {
     reader.readAsText(file)
   }
 
-  const providerFactory = useCallback((id: string, map: Map<string, Doc>): Provider => {
-    const provider = getYjsProviderForRoom(room)
-    provider.loadSubdoc(id)
-    let subdoc = Array.from(provider.getYDoc().subdocs).find(d => d.guid === id)
-    if (!subdoc) {
-      subdoc = new Doc({ guid: id })
-      provider.getYDoc().subdocs.add(subdoc)
-    }
-    map.set(id, subdoc)
-    return provider as unknown as Provider
-  }, [room])
 
   const initialConfig = liveblocksConfig({
     namespace: 'SummaryEditor',
@@ -117,20 +103,32 @@ export default function SummaryEditor() {
         <button onClick={handleExport} className="px-2 py-1 rounded bg-black/40">Export</button>
       </div>
       {current && (
-        <LexicalComposer initialConfig={initialConfig} key={current}>
-          <CollaborationPlugin id={current} providerFactory={providerFactory} shouldBootstrap />
-          <div className="flex flex-col flex-1 min-h-0">
-            <Toolbar className="w-full" />
-            <div className="flex-1 relative">
-              <RichTextPlugin
-                contentEditable={<ContentEditable className="outline-none p-2 text-sm flex-1" />}
-                placeholder={<p className="absolute top-2 left-2 text-gray-400 pointer-events-none">Write summary...</p>}
-                ErrorBoundary={LexicalErrorBoundary}
-              />
-              <FloatingToolbar />
+        <RoomProvider
+          id={`${room.id}-summary-${current}`}
+          initialPresence={{}}
+          initialStorage={{
+            characters: new LiveMap(),
+            images: new LiveMap(),
+            music: new LiveObject({ id: '', playing: false }),
+            summary: new LiveObject({ acts: [] }),
+            events: new LiveList([])
+          }}
+        >
+          <LexicalComposer initialConfig={initialConfig} key={current}>
+            <LiveblocksPlugin />
+            <div className="flex flex-col flex-1 min-h-0">
+              <Toolbar className="w-full" />
+              <div className="flex-1 relative">
+                <RichTextPlugin
+                  contentEditable={<ContentEditable className="outline-none p-2 text-sm flex-1" />}
+                  placeholder={<p className="absolute top-2 left-2 text-gray-400 pointer-events-none">Write summary...</p>}
+                  ErrorBoundary={LexicalErrorBoundary}
+                />
+                <FloatingToolbar />
+              </div>
             </div>
-          </div>
-        </LexicalComposer>
+          </LexicalComposer>
+        </RoomProvider>
       )}
     </div>
   )
