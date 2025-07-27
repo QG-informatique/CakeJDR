@@ -32,6 +32,7 @@ declare global {
       // Currently selected character data
       character?: CharacterData;
       color?: string;
+      cursor?: { x: number; y: number } | null;
     };
 
     // The Storage tree for the room, for useMutation, useStorage, etc.
