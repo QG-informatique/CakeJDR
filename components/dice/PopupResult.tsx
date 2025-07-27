@@ -28,10 +28,15 @@ const getCubeFaceValues = (faces: number[], result: number) => {
   }
   const idx = faces.indexOf(result)
   const shifted = [...faces.slice(idx), ...faces.slice(0, idx)]
-  return [
-    shifted[0], shifted[1 % faces.length], shifted[2 % faces.length],
-    shifted[3 % faces.length], shifted[4 % faces.length], shifted[5 % faces.length],
+  const arr = [
+    shifted[1 % faces.length],
+    shifted[2 % faces.length],
+    shifted[0],
+    shifted[3 % faces.length],
+    shifted[4 % faces.length],
+    shifted[5 % faces.length],
   ]
+  return arr
 }
 
 const SHAKE_MS = 380
