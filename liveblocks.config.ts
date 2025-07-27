@@ -34,6 +34,7 @@ declare global {
       // User pseudo and color for avatars
       pseudo?: string;
       color?: string;
+      avatar?: string;
     };
 
     // The Storage tree for the room, for useMutation, useStorage, etc.
