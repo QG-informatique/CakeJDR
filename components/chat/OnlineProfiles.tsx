@@ -41,7 +41,9 @@ export default function OnlineProfiles() {
   }
 
   return (
-    <div className="flex flex-row-reverse gap-2">
+    <div
+      className="flex flex-row-reverse gap-2 pointer-events-none absolute bottom-4 right-4 z-40"
+    >
       {entries.map(([id, p]) => (
         <div
           key={id}

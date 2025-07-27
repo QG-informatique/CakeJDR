@@ -170,9 +170,7 @@ export default function HomePageInner() {
             <InteractiveCanvas />
             <PopupResult show={showPopup} result={diceResult} diceType={diceType} onFinish={handlePopupFinish} />
           </div>
-          <DiceRoller diceType={diceType} onChange={setDiceType} onRoll={rollDice} disabled={diceDisabled}>
-            <OnlineProfiles />
-          </DiceRoller>
+          <DiceRoller diceType={diceType} onChange={setDiceType} onRoll={rollDice} disabled={diceDisabled} />
         </main>
 
         <ChatBox
@@ -181,6 +179,7 @@ export default function HomePageInner() {
           author={perso.nom || profile?.pseudo || 'Anonymous'}
         />
         <SideNotes />
+        <OnlineProfiles />
       </div>
       <Head>
         <title>CakeJDR</title>

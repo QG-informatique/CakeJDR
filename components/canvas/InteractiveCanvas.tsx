@@ -135,11 +135,14 @@ export default function InteractiveCanvas() {
     const canvas = drawingCanvasRef.current
     if (!canvas) return
 
+    // Always keep the drawing layer above dropped images
+    canvas.style.zIndex = '2'
+
+    // Enable pointer events only when drawing/erasing
     if (drawMode === 'draw' || drawMode === 'erase') {
-      canvas.style.zIndex = '2'
       canvas.style.pointerEvents = 'auto'
     } else {
-      canvas.style.zIndex = '0'
+      // Allow clicks to pass through so images remain interactive
       canvas.style.pointerEvents = 'none'
     }
   }, [drawMode])
