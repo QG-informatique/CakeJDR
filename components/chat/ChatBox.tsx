@@ -1,7 +1,7 @@
 'use client'
 import { FC, RefObject, useRef, useState, useEffect } from 'react'
 import { useBroadcastEvent, useEventListener, useRoom } from '@liveblocks/react'
-import SummaryPanel from './SummaryPanel'
+import SummaryEditor from './SummaryEditor'
 import DiceStats from './DiceStats'
 import useEventLog from '../app/hooks/useEventLog'
 
@@ -92,7 +92,11 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
           boxShadow: '0 4px 18px -8px rgba(0,0,0,0.24), 0 0 0 1px rgba(255,255,255,0.05)'
         }}
       >
-        <SummaryPanel onClose={() => setShowSummary(false)} />
+        <button
+          onClick={() => setShowSummary(false)}
+          className="absolute top-2 right-2 text-white/80 hover:text-red-500"
+        >✕</button>
+        <SummaryEditor />
       </aside>
     )
   }
