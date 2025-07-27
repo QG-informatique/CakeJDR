@@ -1,7 +1,8 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
-import { useBroadcastEvent, useEventListener, useStorage, useMutation } from '@liveblocks/react'
+import { useBroadcastEvent, useEventListener, useStorage, useMutation, useMyPresence } from '@liveblocks/react'
+import LiveCursors from './LiveCursors'
 import Image from 'next/image'
 import YouTube from 'react-youtube'
 import type { YouTubePlayer } from 'youtube-player/dist/types'
@@ -37,6 +38,7 @@ export default function InteractiveCanvas() {
   const broadcast = useBroadcastEvent()
   const lastSend = useRef(0)
   const THROTTLE = 0
+  const [, updateMyPresence] = useMyPresence()
 
   const canvasRef = useRef<HTMLDivElement>(null)
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null)
@@ -53,6 +55,12 @@ export default function InteractiveCanvas() {
     if (p === 'false') setIsPlaying(false)
     else if (p === 'true') setIsPlaying(true)
   }, [])
+
+  useEffect(() => {
+    return () => {
+      updateMyPresence({ cursor: null })
+    }
+  }, [updateMyPresence])
 
   const addImage = useMutation(({ storage }, img: ImageData) => {
     storage.get('images').set(String(img.id), img)
@@ -254,6 +262,7 @@ export default function InteractiveCanvas() {
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
     setMousePos({ x, y })
+    updateMyPresence({ cursor: { x, y } })
 
     if (isDrawing && (drawMode === 'draw' || drawMode === 'erase') && ctxRef.current) {
       ctxRef.current.lineTo(x, y)
@@ -288,6 +297,10 @@ export default function InteractiveCanvas() {
   const handleMouseUp = () => {
     setIsDrawing(false)
     dragState.current = { id: null, type: null, offsetX: 0, offsetY: 0 }
+  }
+
+  const handleMouseLeave = () => {
+    updateMyPresence({ cursor: null })
   }
 
   // Efface tout le canvas. Si broadcastChange=false, on ne renvoie pas
@@ -493,6 +506,7 @@ export default function InteractiveCanvas() {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
         className="w-full h-full relative overflow-hidden z-0"
         style={{ background: 'none', border: 'none', borderRadius: 0 }}
       >
@@ -557,6 +571,7 @@ export default function InteractiveCanvas() {
         {images.length === 0 && (
           <p className="absolute bottom-4 left-5 text-xs text-white/70 z-10">Glisse une image ici</p>
         )}
+        <LiveCursors />
       </div>
     </div>
   )
