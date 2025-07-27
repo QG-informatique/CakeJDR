@@ -83,20 +83,29 @@ const NeoDice3D: FC<Props> = ({ show, result, diceType, onFinish }) => {
   }, [result, faces])
 
   useEffect(() => {
+    let t1: NodeJS.Timeout | null = null
+    let t2: NodeJS.Timeout | null = null
+    let t3: NodeJS.Timeout | null = null
+
     if (!show || result === null) {
       setPhase('hidden')
       setFixedRot(null)
+      controls.stop()
       return
     }
+
     setPhase('shake')
-    const t = setTimeout(() => {
+
+    t1 = setTimeout(() => {
       setPhase('spin')
+
       const rand = () => {
         const turns = 2 + Math.floor(Math.random() * 3)
         const dir = Math.random() < 0.5 ? -1 : 1
         return 360 * turns * dir
       }
       const spinRot = { x: rand(), y: rand(), z: rand() }
+
       controls
         .start({
           rotateX: [0, spinRot.x],
@@ -111,17 +120,23 @@ const NeoDice3D: FC<Props> = ({ show, result, diceType, onFinish }) => {
           setPhase('glow')
           controls.set(finalRot)
           setFixedRot(finalRot)
-          const t2 = setTimeout(() => {
+
+          t2 = setTimeout(() => {
             setPhase('reveal')
-            const t3 = setTimeout(() => {
+
+            t3 = setTimeout(() => {
               onFinish?.()
             }, REVEAL_MS)
-            return () => clearTimeout(t3)
           }, GLOW_MS)
-          return () => clearTimeout(t2)
         })
     }, SHAKE_MS)
-    return () => clearTimeout(t)
+
+    return () => {
+      if (t1) clearTimeout(t1)
+      if (t2) clearTimeout(t2)
+      if (t3) clearTimeout(t3)
+      controls.stop()
+    }
   }, [show, result, controls, finalRot, onFinish])
 
   if (phase === 'hidden') return null
@@ -190,11 +205,15 @@ const PageEffects: FC<Props> = ({ show, result, diceType }) => {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
   useEffect(() => {
+    let t: NodeJS.Timeout | null = null
     if (show && result !== null) {
-      setTimeout(() => setPhase('reveal'), SHAKE_MS + SPIN_TIME*1000 + (GLOW_MS-32))
-      setSparkKey(k => k+1)
+      setSparkKey(k => k + 1)
+      t = setTimeout(() => setPhase('reveal'), SHAKE_MS + SPIN_TIME * 1000 + (GLOW_MS - 32))
     } else {
       setPhase('hidden')
+    }
+    return () => {
+      if (t) clearTimeout(t)
     }
   }, [show, result])
 
