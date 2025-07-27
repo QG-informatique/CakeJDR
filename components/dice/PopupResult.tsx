@@ -73,6 +73,7 @@ const NeoDice3D: FC<Props> = ({ show, result, diceType, onFinish }) => {
   const controls = useAnimationControls()
   const [fixedRot, setFixedRot] = useState<{ x: number, y: number, z: number } | null>(null)
 
+
   const finalRot = useMemo(() => {
     if (result === null) return { x: 0, y: 0, z: 0 }
     if (faces.length === 6) {
@@ -90,11 +91,17 @@ const NeoDice3D: FC<Props> = ({ show, result, diceType, onFinish }) => {
     setPhase('shake')
     const t = setTimeout(() => {
       setPhase('spin')
+      const rand = () => {
+        const turns = 2 + Math.floor(Math.random() * 3)
+        const dir = Math.random() < 0.5 ? -1 : 1
+        return 360 * turns * dir
+      }
+      const spinRot = { x: rand(), y: rand(), z: rand() }
       controls
         .start({
-          rotateX: [0, 720],
-          rotateY: [0, 720],
-          rotateZ: [0, 720],
+          rotateX: [0, spinRot.x],
+          rotateY: [0, spinRot.y],
+          rotateZ: [0, spinRot.z],
           transition: {
             duration: SPIN_TIME,
             ease: [0.22, 1, 0.36, 1],
