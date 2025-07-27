@@ -1,6 +1,6 @@
 'use client'
 
-import { FC, useEffect, useMemo, useState } from 'react'
+import { FC, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, useAnimationControls } from 'framer-motion'
 
 const facesFor = (d: number) =>
@@ -52,6 +52,7 @@ const DiceFace: FC<{ value: string | number, bg: string, rot: string, reveal?: b
     style={{
       transform: rot,
       backfaceVisibility: 'hidden',
+      willChange: 'transform',
     }}
     animate={reveal ? { scale: [0, 1.2, 1], opacity: [0, 1] } : {}}
     transition={{ duration: 0.4 }}
@@ -72,6 +73,8 @@ const NeoDice3D: FC<Props> = ({ show, result, diceType, onFinish }) => {
   const [phase, setPhase] = useState<Phase>('hidden')
   const controls = useAnimationControls()
   const [fixedRot, setFixedRot] = useState<{ x: number, y: number, z: number } | null>(null)
+  const timers = useRef<NodeJS.Timeout[]>([])
+
 
 
   const finalRot = useMemo(() => {
@@ -83,6 +86,10 @@ const NeoDice3D: FC<Props> = ({ show, result, diceType, onFinish }) => {
   }, [result, faces])
 
   useEffect(() => {
+
+    timers.current.forEach(clearTimeout)
+    timers.current = []
+
     let t1: NodeJS.Timeout | null = null
     let t2: NodeJS.Timeout | null = null
     let t3: NodeJS.Timeout | null = null
@@ -127,14 +134,18 @@ const NeoDice3D: FC<Props> = ({ show, result, diceType, onFinish }) => {
             t3 = setTimeout(() => {
               onFinish?.()
             }, REVEAL_MS)
+
+            timers.current.push(t3)
           }, GLOW_MS)
+          timers.current.push(t2)
         })
     }, SHAKE_MS)
+    timers.current.push(t1)
 
     return () => {
-      if (t1) clearTimeout(t1)
-      if (t2) clearTimeout(t2)
-      if (t3) clearTimeout(t3)
+      timers.current.forEach(clearTimeout)
+      timers.current = []
+
       controls.stop()
     }
   }, [show, result, controls, finalRot, onFinish])
@@ -167,6 +178,7 @@ const NeoDice3D: FC<Props> = ({ show, result, diceType, onFinish }) => {
         animate={fixedRot || controls}
         style={{
           perspective: 900,
+          willChange: 'transform',
           animation:
             phase === 'shake'
               ? `shake ${SHAKE_MS}ms ease-in-out`
@@ -198,6 +210,7 @@ const PageEffects: FC<Props> = ({ show, result, diceType }) => {
   const [phase, setPhase] = useState<'hidden'|'reveal'>('hidden')
   const [sparkKey, setSparkKey] = useState(0)
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 })
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
   useEffect(() => {
     setWindowSize({ width: window.innerWidth, height: window.innerHeight })
     const handleResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight })
@@ -205,15 +218,22 @@ const PageEffects: FC<Props> = ({ show, result, diceType }) => {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
   useEffect(() => {
-    let t: NodeJS.Timeout | null = null
+
+    if (timerRef.current) clearTimeout(timerRef.current)
     if (show && result !== null) {
       setSparkKey(k => k + 1)
-      t = setTimeout(() => setPhase('reveal'), SHAKE_MS + SPIN_TIME * 1000 + (GLOW_MS - 32))
+      timerRef.current = setTimeout(
+        () => setPhase('reveal'),
+        SHAKE_MS + SPIN_TIME * 1000 + (GLOW_MS - 32)
+      )
+
     } else {
       setPhase('hidden')
     }
     return () => {
-      if (t) clearTimeout(t)
+
+      if (timerRef.current) clearTimeout(timerRef.current)
+
     }
   }, [show, result])
 
