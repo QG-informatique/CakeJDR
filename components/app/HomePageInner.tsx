@@ -76,6 +76,12 @@ export default function HomePageInner() {
   }, [profile])
 
   useEffect(() => {
+    if (profile) {
+      updateMyPresence({ name: profile.pseudo, color: profile.color })
+    }
+  }, [profile, updateMyPresence])
+
+  useEffect(() => {
     const savedChars = localStorage.getItem('jdr_characters')
     let chars = []
     if (savedChars) {
