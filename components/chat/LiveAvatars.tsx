@@ -47,7 +47,7 @@ export default function LiveAvatars() {
       {unique.map(({ pseudo, color }) => (
         <div
           key={pseudo}
-          className="w-6 h-6 rounded-full border border-white flex items-center justify-center text-[10px] font-bold"
+          className="w-6 h-6 rounded-full border border-white flex items-center justify-center text-[10px] font-bold select-none"
           style={{ backgroundColor: color, color: getTextColor(color) }}
         >
           {pseudo.charAt(0).toUpperCase()}
