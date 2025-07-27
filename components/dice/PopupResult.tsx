@@ -28,10 +28,15 @@ const getCubeFaceValues = (faces: number[], result: number) => {
   }
   const idx = faces.indexOf(result)
   const shifted = [...faces.slice(idx), ...faces.slice(0, idx)]
-  return [
-    shifted[0], shifted[1 % faces.length], shifted[2 % faces.length],
-    shifted[3 % faces.length], shifted[4 % faces.length], shifted[5 % faces.length],
+  const arr = [
+    shifted[1 % faces.length],
+    shifted[2 % faces.length],
+    shifted[0],
+    shifted[3 % faces.length],
+    shifted[4 % faces.length],
+    shifted[5 % faces.length],
   ]
+  return arr
 }
 
 const SHAKE_MS = 380
@@ -39,8 +44,8 @@ const SPIN_TIME = 1.9
 const GLOW_MS = 280
 const REVEAL_MS = 1000
 
-const DiceFace: FC<{ value: number, bg: string, rot: string }> = ({ value, bg, rot }) => (
-  <div
+const DiceFace: FC<{ value: string | number, bg: string, rot: string, reveal?: boolean }> = ({ value, bg, rot, reveal }) => (
+  <motion.div
     className={`absolute inset-0 flex items-center justify-center text-4xl font-black
       rounded-xl bg-gradient-to-br ${bg} text-slate-700 border
       border-slate-300 shadow-inner select-none`}
@@ -48,9 +53,11 @@ const DiceFace: FC<{ value: number, bg: string, rot: string }> = ({ value, bg, r
       transform: rot,
       backfaceVisibility: 'hidden',
     }}
+    animate={reveal ? { scale: [0, 1.2, 1], opacity: [0, 1] } : {}}
+    transition={{ duration: 0.4 }}
   >
     {value}
-  </div>
+  </motion.div>
 )
 
 const EffectsWrapper: FC<Props> = (props) => {
@@ -125,6 +132,9 @@ const NeoDice3D: FC<Props> = ({ show, result, diceType, onFinish }) => {
 
   // 🟠 FIX: on définit cubeFaces juste avant le render !
   const cubeFaces = getCubeFaceValues(faces, result ?? faces[0])
+  const displayFaces = cubeFaces.map((v, idx) =>
+    phase === 'reveal' && idx === 2 ? String(v) : '?'
+  )
 
   return (
     <div className="fixed inset-0 pointer-events-none flex items-center justify-center z-[999]">
@@ -142,12 +152,12 @@ const NeoDice3D: FC<Props> = ({ show, result, diceType, onFinish }) => {
         }}
         id="neo-dice-cube"
       >
-        <DiceFace value={cubeFaces[0]} bg="from-slate-100 to-slate-50" rot="rotateX(90deg) translateZ(72px)" />
-        <DiceFace value={cubeFaces[1]} bg="from-slate-200 to-slate-100" rot="rotateX(-90deg) translateZ(72px)" />
-        <DiceFace value={cubeFaces[2]} bg="from-slate-50 to-slate-200" rot="translateZ(72px)" />
-        <DiceFace value={cubeFaces[3]} bg="from-slate-50 to-slate-200" rot="rotateY(180deg) translateZ(72px)" />
-        <DiceFace value={cubeFaces[4]} bg="from-slate-50 to-slate-200" rot="rotateY(-90deg) translateZ(72px)" />
-        <DiceFace value={cubeFaces[5]} bg="from-slate-50 to-slate-200" rot="rotateY(90deg) translateZ(72px)" />
+        <DiceFace value={displayFaces[0]} bg="from-slate-100 to-slate-50" rot="rotateX(90deg) translateZ(72px)" />
+        <DiceFace value={displayFaces[1]} bg="from-slate-200 to-slate-100" rot="rotateX(-90deg) translateZ(72px)" />
+        <DiceFace value={displayFaces[2]} bg="from-slate-50 to-slate-200" rot="translateZ(72px)" reveal={phase === 'reveal'} />
+        <DiceFace value={displayFaces[3]} bg="from-slate-50 to-slate-200" rot="rotateY(180deg) translateZ(72px)" />
+        <DiceFace value={displayFaces[4]} bg="from-slate-50 to-slate-200" rot="rotateY(-90deg) translateZ(72px)" />
+        <DiceFace value={displayFaces[5]} bg="from-slate-50 to-slate-200" rot="rotateY(90deg) translateZ(72px)" />
       </motion.div>
       <style jsx>{`
         @keyframes shake {
