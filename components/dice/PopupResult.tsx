@@ -1,6 +1,6 @@
 'use client'
 
-import { FC, useEffect, useMemo, useState } from 'react'
+import { FC, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, useAnimationControls } from 'framer-motion'
 
 const facesFor = (d: number) =>
@@ -28,10 +28,15 @@ const getCubeFaceValues = (faces: number[], result: number) => {
   }
   const idx = faces.indexOf(result)
   const shifted = [...faces.slice(idx), ...faces.slice(0, idx)]
-  return [
-    shifted[0], shifted[1 % faces.length], shifted[2 % faces.length],
-    shifted[3 % faces.length], shifted[4 % faces.length], shifted[5 % faces.length],
+  const arr = [
+    shifted[1 % faces.length],
+    shifted[2 % faces.length],
+    shifted[0],
+    shifted[3 % faces.length],
+    shifted[4 % faces.length],
+    shifted[5 % faces.length],
   ]
+  return arr
 }
 
 const SHAKE_MS = 380
@@ -39,18 +44,21 @@ const SPIN_TIME = 1.9
 const GLOW_MS = 280
 const REVEAL_MS = 1000
 
-const DiceFace: FC<{ value: number, bg: string, rot: string }> = ({ value, bg, rot }) => (
-  <div
+const DiceFace: FC<{ value: string | number, bg: string, rot: string, reveal?: boolean }> = ({ value, bg, rot, reveal }) => (
+  <motion.div
     className={`absolute inset-0 flex items-center justify-center text-4xl font-black
       rounded-xl bg-gradient-to-br ${bg} text-slate-700 border
       border-slate-300 shadow-inner select-none`}
     style={{
       transform: rot,
       backfaceVisibility: 'hidden',
+      willChange: 'transform',
     }}
+    animate={reveal ? { scale: [0, 1.2, 1], opacity: [0, 1] } : {}}
+    transition={{ duration: 0.4 }}
   >
     {value}
-  </div>
+  </motion.div>
 )
 
 const EffectsWrapper: FC<Props> = (props) => {
@@ -65,6 +73,8 @@ const NeoDice3D: FC<Props> = ({ show, result, diceType, onFinish }) => {
   const [phase, setPhase] = useState<Phase>('hidden')
   const controls = useAnimationControls()
   const [fixedRot, setFixedRot] = useState<{ x: number, y: number, z: number } | null>(null)
+  const timers = useRef<NodeJS.Timeout[]>([])
+
 
   const finalRot = useMemo(() => {
     if (result === null) return { x: 0, y: 0, z: 0 }
@@ -75,19 +85,36 @@ const NeoDice3D: FC<Props> = ({ show, result, diceType, onFinish }) => {
   }, [result, faces])
 
   useEffect(() => {
+    timers.current.forEach(clearTimeout)
+    timers.current = []
+    let t1: NodeJS.Timeout | null = null
+    let t2: NodeJS.Timeout | null = null
+    let t3: NodeJS.Timeout | null = null
+
     if (!show || result === null) {
       setPhase('hidden')
       setFixedRot(null)
+      controls.stop()
       return
     }
+
     setPhase('shake')
-    const t = setTimeout(() => {
+
+    t1 = setTimeout(() => {
       setPhase('spin')
+
+      const rand = () => {
+        const turns = 2 + Math.floor(Math.random() * 3)
+        const dir = Math.random() < 0.5 ? -1 : 1
+        return 360 * turns * dir
+      }
+      const spinRot = { x: rand(), y: rand(), z: rand() }
+
       controls
         .start({
-          rotateX: [0, 720],
-          rotateY: [0, 720],
-          rotateZ: [0, 720],
+          rotateX: [0, spinRot.x],
+          rotateY: [0, spinRot.y],
+          rotateZ: [0, spinRot.z],
           transition: {
             duration: SPIN_TIME,
             ease: [0.22, 1, 0.36, 1],
@@ -97,17 +124,25 @@ const NeoDice3D: FC<Props> = ({ show, result, diceType, onFinish }) => {
           setPhase('glow')
           controls.set(finalRot)
           setFixedRot(finalRot)
-          const t2 = setTimeout(() => {
+
+          t2 = setTimeout(() => {
             setPhase('reveal')
-            const t3 = setTimeout(() => {
+
+            t3 = setTimeout(() => {
               onFinish?.()
             }, REVEAL_MS)
-            return () => clearTimeout(t3)
+            timers.current.push(t3)
           }, GLOW_MS)
-          return () => clearTimeout(t2)
+          timers.current.push(t2)
         })
     }, SHAKE_MS)
-    return () => clearTimeout(t)
+    timers.current.push(t1)
+
+    return () => {
+      timers.current.forEach(clearTimeout)
+      timers.current = []
+      controls.stop()
+    }
   }, [show, result, controls, finalRot, onFinish])
 
   if (phase === 'hidden') return null
@@ -125,6 +160,9 @@ const NeoDice3D: FC<Props> = ({ show, result, diceType, onFinish }) => {
 
   // 🟠 FIX: on définit cubeFaces juste avant le render !
   const cubeFaces = getCubeFaceValues(faces, result ?? faces[0])
+  const displayFaces = cubeFaces.map((v, idx) =>
+    phase === 'reveal' && idx === 2 ? String(v) : '?'
+  )
 
   return (
     <div className="fixed inset-0 pointer-events-none flex items-center justify-center z-[999]">
@@ -135,6 +173,7 @@ const NeoDice3D: FC<Props> = ({ show, result, diceType, onFinish }) => {
         animate={fixedRot || controls}
         style={{
           perspective: 900,
+          willChange: 'transform',
           animation:
             phase === 'shake'
               ? `shake ${SHAKE_MS}ms ease-in-out`
@@ -142,12 +181,12 @@ const NeoDice3D: FC<Props> = ({ show, result, diceType, onFinish }) => {
         }}
         id="neo-dice-cube"
       >
-        <DiceFace value={cubeFaces[0]} bg="from-slate-100 to-slate-50" rot="rotateX(90deg) translateZ(72px)" />
-        <DiceFace value={cubeFaces[1]} bg="from-slate-200 to-slate-100" rot="rotateX(-90deg) translateZ(72px)" />
-        <DiceFace value={cubeFaces[2]} bg="from-slate-50 to-slate-200" rot="translateZ(72px)" />
-        <DiceFace value={cubeFaces[3]} bg="from-slate-50 to-slate-200" rot="rotateY(180deg) translateZ(72px)" />
-        <DiceFace value={cubeFaces[4]} bg="from-slate-50 to-slate-200" rot="rotateY(-90deg) translateZ(72px)" />
-        <DiceFace value={cubeFaces[5]} bg="from-slate-50 to-slate-200" rot="rotateY(90deg) translateZ(72px)" />
+        <DiceFace value={displayFaces[0]} bg="from-slate-100 to-slate-50" rot="rotateX(90deg) translateZ(72px)" />
+        <DiceFace value={displayFaces[1]} bg="from-slate-200 to-slate-100" rot="rotateX(-90deg) translateZ(72px)" />
+        <DiceFace value={displayFaces[2]} bg="from-slate-50 to-slate-200" rot="translateZ(72px)" reveal={phase === 'reveal'} />
+        <DiceFace value={displayFaces[3]} bg="from-slate-50 to-slate-200" rot="rotateY(180deg) translateZ(72px)" />
+        <DiceFace value={displayFaces[4]} bg="from-slate-50 to-slate-200" rot="rotateY(-90deg) translateZ(72px)" />
+        <DiceFace value={displayFaces[5]} bg="from-slate-50 to-slate-200" rot="rotateY(90deg) translateZ(72px)" />
       </motion.div>
       <style jsx>{`
         @keyframes shake {
@@ -166,6 +205,7 @@ const PageEffects: FC<Props> = ({ show, result, diceType }) => {
   const [phase, setPhase] = useState<'hidden'|'reveal'>('hidden')
   const [sparkKey, setSparkKey] = useState(0)
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 })
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
   useEffect(() => {
     setWindowSize({ width: window.innerWidth, height: window.innerHeight })
     const handleResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight })
@@ -173,11 +213,18 @@ const PageEffects: FC<Props> = ({ show, result, diceType }) => {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
   useEffect(() => {
+    if (timerRef.current) clearTimeout(timerRef.current)
     if (show && result !== null) {
-      setTimeout(() => setPhase('reveal'), SHAKE_MS + SPIN_TIME*1000 + (GLOW_MS-32))
-      setSparkKey(k => k+1)
+      setSparkKey(k => k + 1)
+      timerRef.current = setTimeout(
+        () => setPhase('reveal'),
+        SHAKE_MS + SPIN_TIME * 1000 + (GLOW_MS - 32)
+      )
     } else {
       setPhase('hidden')
+    }
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
     }
   }, [show, result])
 
