@@ -10,7 +10,7 @@ import ChatBox from '@/components/chat/ChatBox'
 import PopupResult from '@/components/dice/PopupResult'
 import Head from 'next/head'
 import InteractiveCanvas from '@/components/canvas/InteractiveCanvas'
-import OnlineProfiles from '@/components/chat/OnlineProfiles'
+import LiveAvatars from '@/components/chat/LiveAvatars'
 import SideNotes from '@/components/misc/SideNotes'
 import Login from '@/components/login/Login'
 import GMCharacterSelector from '@/components/misc/GMCharacterSelector'
@@ -74,6 +74,10 @@ export default function HomePageInner() {
   useEffect(() => {
     if (profile) setUser(profile.pseudo)
   }, [profile])
+
+  useEffect(() => {
+    if (profile?.color) updateMyPresence({ color: profile.color })
+  }, [profile, updateMyPresence])
 
   useEffect(() => {
     const savedChars = localStorage.getItem('jdr_characters')
@@ -165,7 +169,7 @@ export default function HomePageInner() {
             <PopupResult show={showPopup} result={diceResult} diceType={diceType} onFinish={handlePopupFinish} />
           </div>
           <DiceRoller diceType={diceType} onChange={setDiceType} onRoll={rollDice} disabled={diceDisabled}>
-            <OnlineProfiles />
+            <LiveAvatars />
           </DiceRoller>
         </main>
 

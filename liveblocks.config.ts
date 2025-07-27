@@ -31,6 +31,7 @@ declare global {
     Presence: {
       // Currently selected character data
       character?: CharacterData;
+      color?: string;
     };
 
     // The Storage tree for the room, for useMutation, useStorage, etc.

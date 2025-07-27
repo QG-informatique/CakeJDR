@@ -153,25 +153,6 @@ export default function MenuAccueil() {
       .then(res => res.json())
       .then(data => setRemoteChars(data.characters || {}))
       .catch(() => setRemoteChars({}))
-    fetch(`/api/roomdata?roomId=${encodeURIComponent(room.id)}`)
-      .then(res => res.json())
-      .then(data => {
-        if (!data?.data) return
-        const { chat, dice, summary, events } = data.data
-        if (chat && !localStorage.getItem(`jdr_chat_${room.id}`)) {
-          localStorage.setItem(`jdr_chat_${room.id}`, JSON.stringify(chat))
-        }
-        if (dice && !localStorage.getItem(`jdr_dice_${room.id}`)) {
-          localStorage.setItem(`jdr_dice_${room.id}`, JSON.stringify(dice))
-        }
-        if (summary && !localStorage.getItem('summaryPanel_acts_v1')) {
-          localStorage.setItem('summaryPanel_acts_v1', JSON.stringify(summary))
-        }
-        if (events && !localStorage.getItem(`jdr_events_${room.id}`)) {
-          localStorage.setItem(`jdr_events_${room.id}`, JSON.stringify(events))
-        }
-      })
-      .catch(() => {})
     setRoomsOpen(false)
   }
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
-import { useBroadcastEvent, useEventListener, useStorage, useMutation } from '@liveblocks/react'
+import { useBroadcastEvent, useEventListener, useStorage, useMutation, useMyPresence, useOthers } from '@liveblocks/react'
 import Image from 'next/image'
 import YouTube from 'react-youtube'
 import type { YouTubePlayer } from 'youtube-player/dist/types'
@@ -33,6 +33,8 @@ export default function InteractiveCanvas() {
   const [ytId, setYtId] = useState('')
   const [isPlaying, setIsPlaying] = useState(false)
   const [volume, setVolume] = useState(5)
+  const [, updateMyPresence] = useMyPresence()
+  const others = useOthers()
 
   const broadcast = useBroadcastEvent()
   const lastSend = useRef(0)
@@ -46,9 +48,9 @@ export default function InteractiveCanvas() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const v = localStorage.getItem('ytVolume')
-    if (v) setVolume(parseInt(v, 10))
-    else localStorage.setItem('ytVolume', '5')
+    // Always start at 5% volume
+    setVolume(5)
+    localStorage.setItem('ytVolume', '5')
     const p = localStorage.getItem('ytPlaying')
     if (p === 'false') setIsPlaying(false)
     else if (p === 'true') setIsPlaying(true)
@@ -254,6 +256,7 @@ export default function InteractiveCanvas() {
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
     setMousePos({ x, y })
+    updateMyPresence({ cursor: { x, y } })
 
     if (isDrawing && (drawMode === 'draw' || drawMode === 'erase') && ctxRef.current) {
       ctxRef.current.lineTo(x, y)
@@ -287,6 +290,7 @@ export default function InteractiveCanvas() {
 
   const handleMouseUp = () => {
     setIsDrawing(false)
+    updateMyPresence({ cursor: null })
     dragState.current = { id: null, type: null, offsetX: 0, offsetY: 0 }
   }
 
@@ -493,6 +497,7 @@ export default function InteractiveCanvas() {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onMouseLeave={() => updateMyPresence({ cursor: null })}
         className="w-full h-full relative overflow-hidden z-0"
         style={{ background: 'none', border: 'none', borderRadius: 0 }}
       >
@@ -557,6 +562,26 @@ export default function InteractiveCanvas() {
         {images.length === 0 && (
           <p className="absolute bottom-4 left-5 text-xs text-white/70 z-10">Glisse une image ici</p>
         )}
+
+        {others.map(other => {
+          const cur = other.presence?.cursor
+          if (!cur) return null
+          const color = other.presence?.color || '#facc15'
+          return (
+            <div key={other.connectionId}
+              className="absolute pointer-events-none"
+              style={{
+                transform: `translate(${cur.x}px, ${cur.y}px)`,
+                zIndex: 5,
+                color
+              }}
+            >
+              <svg width="12" height="12">
+                <circle cx="6" cy="6" r="5" fill={color} />
+              </svg>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
