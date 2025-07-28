@@ -19,14 +19,20 @@ export default function RoomsPage() {
 
     const createRoom = async () => {
       if (!name) return
-      if (localStorage.getItem('jdr_my_room')) { setErrorMsg('You already created a room'); return }
       const res = await fetch('/api/rooms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, password })
       })
     const data = await res.json()
-    localStorage.setItem('jdr_my_room', data.id)
+    try {
+      const raw = localStorage.getItem('jdr_my_rooms')
+      const list = raw ? JSON.parse(raw) : []
+      if (Array.isArray(list)) {
+        list.push(data.id)
+        localStorage.setItem('jdr_my_rooms', JSON.stringify(list))
+      }
+    } catch {}
     router.push(`/room/${data.id}`)
   }
 

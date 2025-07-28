@@ -18,7 +18,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
   const [joiningId, setJoiningId] = useState<string | null>(null)
   const [joinPassword, setJoinPassword] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
-  const [myRoom, setMyRoom] = useState<string | null>(null)
+  const [myRooms, setMyRooms] = useState<string[]>([])
 
   useEffect(() => {
     const update = () => {
@@ -26,7 +26,14 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
         .then(res => (res.ok ? res.json() : Promise.reject()))
         .then(data => setRooms(data.rooms || []))
         .catch(() => setRooms([]))
-      setMyRoom(localStorage.getItem('jdr_my_room'))
+      try {
+        const raw = localStorage.getItem('jdr_my_rooms')
+        const list = raw ? JSON.parse(raw) : []
+        if (Array.isArray(list)) setMyRooms(list)
+        else setMyRooms([])
+      } catch {
+        setMyRooms([])
+      }
     }
     update()
     window.addEventListener('jdr_rooms_change', update)
@@ -42,10 +49,11 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
     })
     setRooms(r => r.filter(x => x.id !== room.id))
     window.dispatchEvent(new Event('jdr_rooms_change'))
-    if (room.id === myRoom) {
-      localStorage.removeItem('jdr_my_room')
-      setMyRoom(null)
-    }
+    setMyRooms(r => {
+      const next = r.filter(id => id !== room.id)
+      localStorage.setItem('jdr_my_rooms', JSON.stringify(next))
+      return next
+    })
   }
 
   const joinRoom = (room: RoomInfo) => {
@@ -96,8 +104,8 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
               <span className="truncate flex-1 flex items-center gap-1 text-sm">
                 {r.password && <Lock size={12} className="text-pink-300" />} {r.name}
               </span>
-              {myRoom===r.id && <span title="Creator">👑</span>}
-              {myRoom===r.id && (
+              {myRooms.includes(r.id) && <span title="Creator">👑</span>}
+              {myRooms.includes(r.id) && (
                 <button onClick={(e)=>{e.stopPropagation();deleteRoom(r)}} className="ml-1 text-red-400" title="Delete">🗑️</button>
               )}
             </div>

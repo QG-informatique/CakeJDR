@@ -33,7 +33,6 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
 
   const createRoom = async () => {
     if (!name) return
-    if (localStorage.getItem('jdr_my_room')) { setErrorMsg('You already created a room'); return }
     setCreating(true)
     const res = await fetch('/api/rooms', {
       method: 'POST',
@@ -42,7 +41,14 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
     })
     if (!res.ok) { setCreating(false); return }
     const data = await res.json()
-    localStorage.setItem('jdr_my_room', data.id)
+    try {
+      const raw = localStorage.getItem('jdr_my_rooms')
+      const list = raw ? JSON.parse(raw) : []
+      if (Array.isArray(list)) {
+        list.push(data.id)
+        localStorage.setItem('jdr_my_rooms', JSON.stringify(list))
+      }
+    } catch {}
     onClose?.()
     onSelect?.({ id: data.id, name, password: password || undefined })
   }

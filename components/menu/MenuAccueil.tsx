@@ -346,14 +346,13 @@ export default function MenuAccueil() {
               "
             >
               <div className="shrink-0 flex items-center justify-start min-w-[150px] gap-2">
-
                 <button
                   type="button"
-                  aria-label="Enter room"
+                  aria-label="Entrer dans la room sélectionnée"
                   onClick={handlePlay}
-                  className={`relative inline-flex items-center justify-center rounded-md border-2 border-pink-300/40 shadow-md shadow-pink-200/20 transition focus:outline-none focus:ring-2 focus:ring-pink-200/40 focus:ring-offset-2 focus:ring-offset-black ${selectedRoom ? 'animate-pulse' : ''}`}
+                  className={`relative inline-flex items-center justify-center gap-2 rounded-md border-2 border-pink-300/40 shadow-md shadow-pink-200/20 transition transform focus:outline-none focus:ring-2 focus:ring-pink-200/40 focus:ring-offset-2 focus:ring-offset-black hover:shadow-pink-300/60 hover:scale-105 ${selectedRoom ? 'animate-pulse' : ''}`}
                   style={{
-                    width: DICE_SIZE,
+                    padding: '0 12px',
                     height: DICE_SIZE,
                     background: selectedRoom ? 'rgba(38,16,56,0.2)' : 'rgba(38,16,56,0.14)',
                     borderColor: selectedRoom ? '#ff90cc' : '#f7bbf7',
@@ -365,6 +364,7 @@ export default function MenuAccueil() {
                   disabled={!selectedRoom}
                 >
                   <Dice6 className="w-5 h-5 text-white drop-shadow-[0_2px_5px_rgba(255,70,190,0.45)]" />
+                  <span className="text-sm hidden sm:block">Entrer</span>
                 </button>
               </div>
               {selectedRoom && (

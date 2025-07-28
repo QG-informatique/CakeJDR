@@ -15,6 +15,7 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
   const [password, setPassword] = useState('')
   const [creating, setCreating] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+  const [createdMsg, setCreatedMsg] = useState('')
   const addRoom = useMutation(({ storage }, room: RoomInfo) => {
     storage.get('rooms').push(room)
   }, [])
@@ -23,10 +24,6 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
 
   const createRoom = async () => {
     if (!name) return
-    if (localStorage.getItem('jdr_my_room')) {
-      setErrorMsg('You already created a room')
-      return
-    }
     setCreating(true)
     const res = await fetch('/api/rooms', {
       method: 'POST',
@@ -36,12 +33,23 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
     if (!res.ok) { setCreating(false); return }
     const data = await res.json()
     const room = { id: data.id, name, password: password || undefined }
-    localStorage.setItem('jdr_my_room', data.id)
+    try {
+      const raw = localStorage.getItem('jdr_my_rooms')
+      const list = raw ? JSON.parse(raw) : []
+      if (Array.isArray(list)) {
+        list.push(data.id)
+        localStorage.setItem('jdr_my_rooms', JSON.stringify(list))
+      }
+    } catch {}
     setCreating(false)
     addRoom(room)
     window.dispatchEvent(new Event('jdr_rooms_change'))
+    setCreatedMsg('Room created!')
     onCreated?.(room)
-    onClose()
+    setTimeout(() => {
+      setCreatedMsg('')
+      onClose()
+    }, 800)
   }
 
   return (
@@ -84,6 +92,9 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
           >
             Créer
           </button>
+        )}
+        {createdMsg && (
+          <p className="text-green-400 text-sm mt-2 text-center">{createdMsg}</p>
         )}
         {errorMsg && (
           <p className="text-red-400 text-sm mt-2 text-center">{errorMsg}</p>
