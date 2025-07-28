@@ -9,6 +9,7 @@ export default function RoomsPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [withPassword, setWithPassword] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -18,17 +19,37 @@ export default function RoomsPage() {
   }, [])
 
     const createRoom = async () => {
-      if (!name) return
-      if (localStorage.getItem('jdr_my_room')) { setErrorMsg('You already created a room'); return }
-      const res = await fetch('/api/rooms', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, password })
-      })
-    const data = await res.json()
-    localStorage.setItem('jdr_my_room', data.id)
-    router.push(`/room/${data.id}`)
-  }
+      if (!name || isLoading) return
+      if (localStorage.getItem('jdr_my_room')) {
+        setErrorMsg('You already created a room')
+        return
+      }
+      setIsLoading(true)
+      setErrorMsg('')
+      try {
+        const res = await fetch('/api/rooms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, password })
+        })
+        const data = await res.json()
+        if (!res.ok) {
+          setErrorMsg(data.error || 'Failed to create')
+          setIsLoading(false)
+          return
+        }
+        localStorage.setItem('jdr_my_room', data.id)
+        try {
+          await router.push(`/room/${data.id}`)
+        } catch (err) {
+          console.error(err)
+        }
+      } catch {
+        setErrorMsg('Failed to create')
+      } finally {
+        setIsLoading(false)
+      }
+    }
 
   const joinRoom = (id:string) => {
     router.push(`/room/${id}`)
@@ -103,11 +124,10 @@ export default function RoomsPage() {
             )}
             <button
               onClick={createRoom}
-              className="px-4 py-2 bg-blue-600 rounded text-white w-full"
+              disabled={isLoading}
+              className="px-4 py-2 bg-blue-600 rounded text-white w-full disabled:opacity-60"
             >
-
-              Confirm
-
+              {isLoading ? 'Creating…' : 'Confirm'}
             </button>
             {errorMsg && (
               <p className="text-red-400 text-sm text-center mt-2">{errorMsg}</p>
