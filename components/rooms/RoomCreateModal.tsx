@@ -39,6 +39,7 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
     localStorage.setItem('jdr_my_room', data.id)
     setCreating(false)
     addRoom(room)
+    window.dispatchEvent(new Event('jdr_rooms_change'))
     onCreated?.(room)
     onClose()
   }
