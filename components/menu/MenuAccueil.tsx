@@ -278,9 +278,9 @@ export default function MenuAccueil() {
   }
 
   const handleDeleteCloudChar = async (id: string | number) => {
+    if (!selectedRoom) return
     if (!window.confirm('Delete from cloud?')) return
-    const filename = `FichePerso/${id}.json`
-    await fetch(`/api/blop/delete?filename=${encodeURIComponent(filename)}`)
+    await fetch(`/api/roomstorage?roomId=${encodeURIComponent(selectedRoom.id)}&id=${encodeURIComponent(String(id))}`, { method: 'DELETE' })
     setRemoteChars(r => {
       const next = { ...r }
       delete next[String(id)]
