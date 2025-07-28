@@ -13,14 +13,24 @@ interface Props {
 
 export default function RoomList({ onSelect, selectedId, onCreateClick }: Props) {
   const liveRooms = useStorage(root => root.rooms)
-  const rooms = liveRooms ? (Array.from(liveRooms) as RoomInfo[]) : []
+  const [rooms, setRooms] = useState<RoomInfo[]>([])
+  const displayRooms = liveRooms ? (Array.from(liveRooms) as RoomInfo[]) : rooms
   const [joiningId, setJoiningId] = useState<string | null>(null)
   const [joinPassword, setJoinPassword] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [myRoom, setMyRoom] = useState<string | null>(null)
 
   useEffect(() => {
-    setMyRoom(localStorage.getItem('jdr_my_room'))
+    const update = () => {
+      fetch('/api/rooms')
+        .then(res => (res.ok ? res.json() : Promise.reject()))
+        .then(data => setRooms(data.rooms || []))
+        .catch(() => setRooms([]))
+      setMyRoom(localStorage.getItem('jdr_my_room'))
+    }
+    update()
+    window.addEventListener('jdr_rooms_change', update)
+    return () => window.removeEventListener('jdr_rooms_change', update)
   }, [])
 
   const deleteRoom = async (room: RoomInfo) => {
@@ -30,6 +40,8 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: room.id })
     })
+    setRooms(r => r.filter(x => x.id !== room.id))
+    window.dispatchEvent(new Event('jdr_rooms_change'))
     if (room.id === myRoom) {
       localStorage.removeItem('jdr_my_room')
       setMyRoom(null)
@@ -74,7 +86,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
         >
           + Create
         </button>
-        {rooms.map(r => (
+        {displayRooms.map(r => (
           <div
             key={r.id}
             className={`p-3 rounded-lg cursor-pointer flex flex-col gap-1 ${selectedId===r.id ? 'ring-2 ring-pink-300' : 'bg-black/30'}`}
