@@ -162,7 +162,6 @@ export default function MenuAccueil() {
       .then(data => setRemoteChars(data.characters || {}))
       .catch(() => setRemoteChars({}))
       .finally(() => setRoomLoading(false))
-    setRoomsOpen(false)
   }
 
   const handleNewCharacter = () => {
