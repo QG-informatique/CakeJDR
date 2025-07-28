@@ -7,7 +7,7 @@ import { useRouter, useParams } from 'next/navigation'
 import CharacterSheet, { defaultPerso } from '@/components/sheet/CharacterSheet'
 import DiceRoller from '@/components/dice/DiceRoller'
 import ChatBox from '@/components/chat/ChatBox'
-import PopupResult from '@/components/dice/PopupResult'
+import FancyDice from '@/components/dice/FancyDice'
 import Head from 'next/head'
 import InteractiveCanvas from '@/components/canvas/InteractiveCanvas'
 import LiveAvatarStack from '@/components/chat/LiveAvatarStack'
@@ -167,7 +167,7 @@ export default function HomePageInner() {
         <main className="flex-1 flex flex-col min-h-0">
           <div className="flex-1 m-4 flex flex-col justify-center items-center relative min-h-0">
             <InteractiveCanvas />
-            <PopupResult show={showPopup} result={diceResult} diceType={diceType} onFinish={handlePopupFinish} />
+            <FancyDice show={showPopup} result={diceResult} diceType={diceType} onFinish={handlePopupFinish} />
           </div>
           <DiceRoller diceType={diceType} onChange={setDiceType} onRoll={rollDice} disabled={diceDisabled}>
             <LiveAvatarStack />
