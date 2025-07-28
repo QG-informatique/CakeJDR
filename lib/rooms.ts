@@ -51,11 +51,15 @@ export async function saveRooms(rooms: Room[]) {
   if (secret) {
     try {
       const client = new Liveblocks({ secret })
-      await client.initializeStorageDocument(ROOMS_ID, { rooms }).catch(async () => {
-        await client.mutateStorage(ROOMS_ID, ({ root }) => {
-          root.set('rooms', rooms)
+      await client
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .initializeStorageDocument(ROOMS_ID, { rooms } as any)
+        .catch(async () => {
+          await client.mutateStorage(ROOMS_ID, ({ root }) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ;(root as any).set('rooms', rooms as any)
+          })
         })
-      })
     } catch {
       /* ignore */
     }
