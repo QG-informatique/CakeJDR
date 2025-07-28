@@ -31,3 +31,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'update failed' }, { status: 500 })
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  const { searchParams } = new URL(req.url)
+  const roomId = searchParams.get('roomId')
+  const id = searchParams.get('id')
+  if (!roomId || !id) {
+    return NextResponse.json({ error: 'missing data' }, { status: 400 })
+  }
+  const secret = process.env.LIVEBLOCKS_SECRET_KEY
+  if (!secret) return NextResponse.json({ error: 'Liveblocks key missing' }, { status: 500 })
+  const client = new Liveblocks({ secret })
+  try {
+    await client.mutateStorage(roomId, ({ root }) => {
+      const map = root.get('characters')
+      map.delete(String(id))
+    })
+    return NextResponse.json({ ok: true })
+  } catch {
+    return NextResponse.json({ error: 'delete failed' }, { status: 500 })
+  }
+}
