@@ -3,27 +3,18 @@
 import { useRef, useState, useEffect } from 'react'
 import { useBroadcastEvent, useEventListener, useStorage, useMutation, useMyPresence } from '@liveblocks/react'
 import LiveCursors from './LiveCursors'
-import Image from 'next/image'
 import YouTube from 'react-youtube'
 import type { YouTubePlayer } from 'youtube-player/dist/types'
-import { Trash2 } from 'lucide-react'
-
-type ImageData = {
-  id: number
-  src: string
-  x: number
-  y: number
-  width: number
-  height: number
-  local?: boolean
-}
+import CanvasTools, { ToolMode } from './CanvasTools'
+import MusicPanel from './MusicPanel'
+import ImageItem, { ImageData } from './ImageItem'
 
 export default function InteractiveCanvas() {
   // `images` map is created by RoomProvider but may be null until ready
   const imagesMap = useStorage(root => root.images)
   const images = imagesMap ? (Array.from(imagesMap.values()) as ImageData[]) : []
   const [isDrawing, setIsDrawing] = useState(false)
-  const [drawMode, setDrawMode] = useState<'images' | 'draw' | 'erase'>('images')
+  const [drawMode, setDrawMode] = useState<ToolMode>('images')
   const [color, setColor] = useState('#000000')
   const [penSize, setPenSize] = useState(10)
   const [eraserSize, setEraserSize] = useState(20)
@@ -343,146 +334,53 @@ export default function InteractiveCanvas() {
     }
   }
 
-  const COLORS = [
-    '#000000', '#FF0000', '#00FF00', '#0000FF',
-    '#FFFF00', '#FF00FF', '#00FFFF', '#FFFFFF'
-  ]
 
   return (
     <div className="relative w-full h-full select-none">
-      {/* BOUTON OUTILS */}
+      {/* TOOLBAR BUTTON */}
       <div className="absolute top-3 left-3 z-30 pointer-events-auto">
         <button
           onClick={() => setToolsVisible(!toolsVisible)}
-          className={`
-            rounded-xl px-5 py-2 text-base font-semibold shadow border-none
-            bg-black/30 text-white/90
-            hover:bg-emerald-600 hover:text-white
-            transition duration-100 flex items-center justify-center min-h-[38px]
-          `}
+          className="rounded-xl px-5 py-2 text-base font-semibold shadow border-none bg-black/30 text-white/90 hover:bg-emerald-600 hover:text-white transition duration-100 flex items-center justify-center min-h-[38px]"
         >
           <span className="mr-1">🛠️</span> <span className="text-sm">{toolsVisible ? 'Outils' : ''}</span>
         </button>
       </div>
-
-      {/* BARRE OUTILS FLOTTANTE */}
-      <div
-        className={`
-          absolute top-3 left-36 z-30 transition-all duration-300
-          ${toolsVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-0 pointer-events-none'}
-          origin-top-left pointer-events-auto
-        `}
-      >
-        <div className="flex gap-2 flex-wrap items-center p-3 bg-black/60 backdrop-blur-xl rounded-2xl shadow-lg border border-white/10">
-          <button
-            onClick={() => setDrawMode('images')}
-            className={`rounded-xl px-3 py-2 text-xs font-semibold shadow border border-white/10 transition duration-100
-              ${drawMode === 'images'
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'bg-black/20 text-blue-100/85 hover:bg-blue-900/30 hover:text-white/80'}`}
-          >
-            🖼️ Images
-          </button>
-          <button
-            onClick={() => setDrawMode('draw')}
-            className={`rounded-xl px-3 py-2 text-xs font-semibold shadow border border-white/10 transition duration-100
-              ${drawMode === 'draw'
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'bg-black/20 text-blue-100/85 hover:bg-blue-900/30 hover:text-white/80'}`}
-          >
-            ✏️ Dessin
-          </button>
-          <button
-            onClick={() => setDrawMode('erase')}
-            className={`rounded-xl px-3 py-2 text-xs font-semibold shadow border border-white/10 transition duration-100
-              ${drawMode === 'erase'
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'bg-black/20 text-blue-100/85 hover:bg-blue-900/30 hover:text-white/80'}`}
-          >
-            🧹 Gomme
-          </button>
-          <input
-            type="range"
-            min={drawMode === 'erase' ? ERASE_MIN : DRAW_MIN}
-            max={drawMode === 'erase' ? ERASE_MAX : DRAW_MAX}
-            value={brushSize}
-            onChange={(e) => {
-              const v = parseInt(e.target.value, 10)
-              if (drawMode === 'erase') setEraserSize(v)
-              else setPenSize(v)
-            }}
-            className="w-24 mx-2"
+      {toolsVisible && (
+        <div className="absolute top-3 left-36 z-30 origin-top-left pointer-events-auto">
+          <CanvasTools
+            drawMode={drawMode}
+            setDrawMode={setDrawMode}
+            color={color}
+            setColor={setColor}
+            brushSize={brushSize}
+            setPenSize={setPenSize}
+            setEraserSize={setEraserSize}
+            clearCanvas={clearCanvas}
           />
-          {COLORS.map((c) => (
-            <button
-              key={c}
-              onClick={() => setColor(c)}
-              className="w-6 h-6 rounded-full border-2 mx-1"
-              style={{ backgroundColor: c, borderColor: color === c ? '#4f9ddf' : 'white', boxShadow: color === c ? '0 0 0 2px #4f9ddf' : 'none' }}
-            />
-          ))}
-          <button
-            onClick={() => clearCanvas()}
-            className="rounded-xl px-3 py-2 text-xs font-semibold shadow border-none
-              bg-red-600 text-white hover:bg-red-700 ml-4"
-          >
-            Effacer tout
-          </button>
         </div>
-      </div>
+      )}
 
       {/* BOUTON MUSIQUE */}
       <div className="absolute bottom-3 right-3 z-30 pointer-events-auto">
         <button
           onClick={() => setAudioVisible(!audioVisible)}
-          className={`
-            rounded-xl px-5 py-2 text-base font-semibold shadow border-none
-            bg-black/30 text-white/90
-            hover:bg-purple-600 hover:text-white
-            transition duration-100 flex items-center justify-center min-h-[38px]
-          `}
+          className="rounded-xl px-5 py-2 text-base font-semibold shadow border-none bg-black/30 text-white/90 hover:bg-purple-600 hover:text-white transition duration-100 flex items-center justify-center min-h-[38px]"
         >
           <span>🎵</span>
         </button>
       </div>
 
-      {/* PANEL MUSIQUE FLOTTANT */}
       {audioVisible && (
-        <div className="absolute bottom-3 right-40 z-40 bg-black/70 border border-white/10 rounded-2xl shadow-lg p-4 min-w-[250px] max-w-[340px] backdrop-blur-xl">
-          <div className="flex flex-col gap-3">
-            <input
-              type="text"
-              placeholder="Lien YouTube"
-              value={ytUrl}
-              onChange={(e) => setYtUrl(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-black/40 text-white border border-white/20 placeholder:text-white/40"
-            />
-            <button
-              onClick={handleYtSubmit}
-              className="rounded-xl px-3 py-2 text-xs font-semibold shadow border-none
-                bg-blue-600 text-white hover:bg-blue-700"
-            >
-              Charger la musique
-            </button>
-            <div className="flex items-center justify-between mt-1">
-              <button
-                onClick={handlePlayPause}
-                className="rounded-xl px-3 py-2 text-xs font-semibold shadow border-none
-                  bg-black/30 text-white/90 hover:bg-purple-600 hover:text-white"
-              >
-                {isPlaying ? '⏸️ Pause' : '▶️ Lecture'}
-              </button>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={volume}
-                onChange={(e) => setVolume(parseInt(e.target.value, 10))}
-                className="ml-2 flex-1"
-              />
-            </div>
-          </div>
-        </div>
+        <MusicPanel
+          ytUrl={ytUrl}
+          setYtUrl={setYtUrl}
+          isPlaying={isPlaying}
+          handleSubmit={handleYtSubmit}
+          handlePlayPause={handlePlayPause}
+          volume={volume}
+          setVolume={setVolume}
+        />
       )}
 
       {/* Player YouTube (toujours monté pour conserver la lecture) */}
@@ -516,46 +414,13 @@ export default function InteractiveCanvas() {
         <canvas ref={drawingCanvasRef} className="absolute top-0 left-0 w-full h-full" />
 
         {images.map((img) => (
-          <div
+          <ImageItem
             key={img.id}
-            className="absolute border border-white/20 rounded-2xl shadow-md group"
-            style={{ top: img.y, left: img.x, width: img.width, height: img.height, zIndex: 1 }}
-          >
-            {/* Trash button visible in image mode */}
-            {drawMode === 'images' && (
-              <button
-                onClick={() => handleDeleteImage(img.id)}
-                className="absolute top-1 left-1 z-20 p-1 rounded-full bg-black/60 hover:bg-red-600 transition text-white opacity-80 group-hover:opacity-100"
-                title="Delete image"
-                style={{ cursor: 'pointer' }}
-              >
-                <Trash2 size={18} />
-              </button>
-            )}
-            <Image
-              src={img.src}
-              alt="Dropped"
-              width={img.width}
-              height={img.height}
-              className="w-full h-full object-contain pointer-events-none select-none rounded-2xl"
-              style={{ borderRadius: '1rem' }}
-              unoptimized
-            />
-            {drawMode === 'images' && (
-              <>
-                <div
-                  onMouseDown={(e) => handleMouseDown(e, img.id, 'move')}
-                  className="absolute top-0 left-0 w-full h-full cursor-move"
-                  style={{ zIndex: 3 }}
-                />
-                <div
-                  onMouseDown={(e) => handleMouseDown(e, img.id, 'resize')}
-                  className="absolute bottom-0 right-0 w-4 h-4 bg-white/40 border border-white rounded-full cursor-se-resize"
-                  style={{ zIndex: 4 }}
-                />
-              </>
-            )}
-          </div>
+            img={img}
+            drawMode={drawMode}
+            onMouseDown={handleMouseDown}
+            onDelete={handleDeleteImage}
+          />
         ))}
 
         {(drawMode === 'draw' || drawMode === 'erase') && !dragState.current.id && (

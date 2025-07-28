@@ -1,5 +1,4 @@
 'use client'
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useState, useRef } from 'react'
 import { useBroadcastEvent, useOthers } from '@liveblocks/react'
