@@ -447,12 +447,12 @@ export default function MenuAccueil() {
                   onCreateClick={() => setCreateRoomOpen(true)}
                 />
               </div>
+              <RoomCreateModal
+                open={createRoomOpen}
+                onClose={() => setCreateRoomOpen(false)}
+                onCreated={handleRoomSelect}
+              />
             </RoomsIndexProvider>
-            <RoomCreateModal
-              open={createRoomOpen}
-              onClose={() => setCreateRoomOpen(false)}
-              onCreated={handleRoomSelect}
-            />
 
             {/* Liste des personnages */}
             <div className="flex-1 min-h-0 rounded-xl backdrop-blur-md bg-black/20 p-5 overflow-auto">

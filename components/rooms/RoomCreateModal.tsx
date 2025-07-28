@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useMutation } from '@liveblocks/react'
 import type { RoomInfo } from './RoomList'
 
 interface Props {
@@ -14,16 +15,18 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
   const [password, setPassword] = useState('')
   const [creating, setCreating] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+  const addRoom = useMutation(({ storage }, room: RoomInfo) => {
+    storage.get('rooms').push(room)
+  }, [])
 
   if (!open) return null
 
   const createRoom = async () => {
     if (!name) return
-    try {
-      const prof = JSON.parse(localStorage.getItem('jdr_profile') || '{}')
-      if (!prof.isMJ) { setErrorMsg('Active MJ mode before creating a room'); return }
-      if (localStorage.getItem('jdr_my_room')) { setErrorMsg('You already created a room'); return }
-    } catch {}
+    if (localStorage.getItem('jdr_my_room')) {
+      setErrorMsg('You already created a room')
+      return
+    }
     setCreating(true)
     const res = await fetch('/api/rooms', {
       method: 'POST',
@@ -32,8 +35,11 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
     })
     if (!res.ok) { setCreating(false); return }
     const data = await res.json()
+    const room = { id: data.id, name, password: password || undefined }
     localStorage.setItem('jdr_my_room', data.id)
-    onCreated?.({ id: data.id, name, password: password || undefined })
+    setCreating(false)
+    addRoom(room)
+    onCreated?.(room)
     onClose()
   }
 
