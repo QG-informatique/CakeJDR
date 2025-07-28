@@ -44,7 +44,7 @@ export default function RoomGallery(props: Props) {
   const key = process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!
   return (
     <LiveblocksProvider publicApiKey={key}>
-      <RoomProvider id="rooms-index" initialStorage={{ rooms: new LiveList<RoomInfo>([]) }}>
+      <RoomProvider id="rooms-index" initialStorage={{ rooms: new LiveList<RoomInfo>([]) } as unknown as Liveblocks['Storage']}>
         <ClientSideSuspense fallback={null}>
           <GalleryInner {...props} />
         </ClientSideSuspense>
