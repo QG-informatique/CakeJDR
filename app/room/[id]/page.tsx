@@ -6,7 +6,7 @@ import HomePageInner from '@/components/app/HomePageInner'
 import JoinAnnouncer from '@/components/rooms/JoinAnnouncer'
 
 export default function RoomPage() {
-  const { id } = useParams<{ id: string }>()
+  const { id } = useParams() as { id: string }
 
   useEffect(() => {
     fetch('/api/rooms')

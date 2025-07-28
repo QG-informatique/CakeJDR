@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { createClient, type GetRoomsOptions } from '@liveblocks/node'
+import { Liveblocks, type GetRoomsOptions } from '@liveblocks/node'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const secret = process.env.LIVEBLOCKS_SECRET_KEY
@@ -7,7 +7,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(500).json({ error: 'Liveblocks secret missing' })
     return
   }
-  const client = createClient({ secret })
+  const client = new Liveblocks({ secret })
   try {
     if (req.method === 'GET') {
       const result = await client.getRooms({ limit: 100 })

@@ -30,7 +30,7 @@ export default function HomePageInner() {
   const [diceType, setDiceType] = useState(6)
   const [diceResult, setDiceResult] = useState<number | null>(null)
   const [diceDisabled, setDiceDisabled] = useState(false)
-  const { id: roomId } = useParams<{ id: string }>()
+  const { id: roomId } = useParams() as { id: string }
   const [pendingRoll, setPendingRoll] = useState<{ result: number; dice: number; nom: string } | null>(null)
   const [history, setHistory] = useDiceHistory(roomId)
   const { addEvent } = useEventLog(roomId)
