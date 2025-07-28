@@ -4,8 +4,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { Crown, LogOut, Dice6 } from 'lucide-react'
 import SmallSpinner from '../ui/SmallSpinner'
-import RoomList, { RoomInfo } from '../rooms/RoomList'
+import RoomGallery from '../rooms/RoomGallery'
 import RoomCreateModal from '../rooms/RoomCreateModal'
+import type { RoomInfo } from '../rooms/RoomList'
 import { useRouter } from 'next/navigation'
 import Login from '../login/Login'
 import { defaultPerso } from '../sheet/CharacterSheet'
@@ -38,7 +39,6 @@ export default function MenuAccueil() {
   const [hydrated, setHydrated]       = useState(false)
   const [loggingOut, setLoggingOut]   = useState(false)
   const [diceHover, setDiceHover] = useState(false)
-  const [roomsOpen, setRoomsOpen] = useState(false)
   const [createRoomOpen, setCreateRoomOpen] = useState(false)
   const [selectedRoom, setSelectedRoom] = useState<RoomInfo | null>(null)
   const [remoteChars, setRemoteChars] = useState<Record<string, Character>>({})
@@ -146,11 +146,12 @@ export default function MenuAccueil() {
     })
   }
 
-  const handlePlay = () => {
-    setRoomsOpen(v => !v)
-  }
 
   const handleRoomSelect = (room: RoomInfo) => {
+    if (room.id === 'create') {
+      setCreateRoomOpen(true)
+      return
+    }
     setSelectedRoom(room)
     setRoomLoading(true)
     localStorage.setItem(ROOM_KEY, JSON.stringify(room))
@@ -159,7 +160,6 @@ export default function MenuAccueil() {
       .then(data => setRemoteChars(data.characters || {}))
       .catch(() => setRemoteChars({}))
       .finally(() => setRoomLoading(false))
-    setRoomsOpen(false)
   }
 
   const handleNewCharacter = () => {
@@ -349,32 +349,8 @@ export default function MenuAccueil() {
 
                 <button
                   type="button"
-                  aria-label="Open game rooms"
-                  onClick={handlePlay}
-                  onMouseEnter={() => setDiceHover(true)}
-                  onMouseLeave={() => setDiceHover(false)}
-                  className="relative inline-flex items-center justify-center rounded-md border-2 border-pink-300/40 shadow-md shadow-pink-200/20 transition focus:outline-none focus:ring-2 focus:ring-pink-200/40 focus:ring-offset-2 focus:ring-offset-black"
-                  style={{
-                    width: DICE_SIZE,
-                    height: DICE_SIZE,
-                    background: 'rgba(38,16,56,0.14)',
-                    borderColor: diceHover ? '#ff90cc' : '#f7bbf7',
-                    boxShadow: diceHover
-                      ? '0 0 12px 2px #ffb0e366, 0 2px 20px 8px #fff2'
-                      : '0 0 4px 1px #ffe5fa44, 0 2px 8px 2px #fff2',
-                    transition: 'transform 0.18s cubic-bezier(.77,.2,.56,1), box-shadow 0.18s cubic-bezier(.77,.2,.56,1)',
-                    transform: diceHover ? 'scale(1.15) rotate(-7deg)' : 'scale(1) rotate(0deg)'
-                  }}
-                >
-                  <Dice6 className="w-5 h-5 text-white drop-shadow-[0_2px_5px_rgba(255,70,190,0.45)]" />
-                </button>
-                <button
-                  type="button"
+                  aria-label="Enter room"
                   disabled={!selectedRoom}
-                  className={`px-3 py-1.5 rounded-md text-sm shadow transition-colors
-                    ${selectedRoom
-                      ? 'bg-emerald-600 text-white hover:bg-emerald-500'
-                      : 'bg-gray-600 text-gray-300 cursor-not-allowed'}`}
                   onClick={() => {
                     if (!selectedRoom) return
                     if (typeof window !== 'undefined') {
@@ -382,8 +358,24 @@ export default function MenuAccueil() {
                     }
                     router.push(`/room/${selectedRoom.id}`)
                   }}
+                  onMouseEnter={() => setDiceHover(true)}
+                  onMouseLeave={() => setDiceHover(false)}
+                  className="relative inline-flex items-center justify-center rounded-md border-2 border-pink-300/40 shadow-md shadow-pink-200/20 transition focus:outline-none focus:ring-2 focus:ring-pink-200/40 focus:ring-offset-2 focus:ring-offset-black"
+                  style={{
+                    width: DICE_SIZE,
+                    height: DICE_SIZE,
+                    background: 'rgba(38,16,56,0.14)',
+                    borderColor: diceHover || selectedRoom ? '#ff90cc' : '#f7bbf7',
+                    boxShadow: selectedRoom
+                      ? '0 0 12px 2px #ffb0e3aa, 0 0 20px 6px #ff8be344'
+                      : diceHover
+                        ? '0 0 12px 2px #ffb0e366, 0 2px 20px 8px #fff2'
+                        : '0 0 4px 1px #ffe5fa44, 0 2px 8px 2px #fff2',
+                    transition: 'transform 0.18s cubic-bezier(.77,.2,.56,1), box-shadow 0.18s cubic-bezier(.77,.2,.56,1)',
+                    transform: diceHover ? 'scale(1.15) rotate(-7deg)' : 'scale(1) rotate(0deg)'
+                  }}
                 >
-                  Jouer
+                  <Dice6 className="w-5 h-5 text-white drop-shadow-[0_2px_5px_rgba(255,70,190,0.45)]" />
                 </button>
               </div>
               {selectedRoom && (
@@ -458,21 +450,13 @@ export default function MenuAccueil() {
                 </button>
               </div>
             </section>
-            {roomsOpen && (
-              <div
-                className="fixed inset-0 z-50 flex items-center justify-center p-4"
-                onClick={() => setRoomsOpen(false)}
-                style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(2px)' }}
-              >
-                <div onClick={e => e.stopPropagation()}>
-                  <RoomList
-                    selectedId={selectedRoom?.id || null}
-                    onSelect={handleRoomSelect}
-                    onCreateClick={() => setCreateRoomOpen(true)}
-                  />
-                </div>
-              </div>
-            )}
+
+            <RoomGallery
+              selectedId={selectedRoom?.id || null}
+              onSelect={handleRoomSelect}
+              userName={user?.pseudo || null}
+            />
+
             <RoomCreateModal
               open={createRoomOpen}
               onClose={() => setCreateRoomOpen(false)}

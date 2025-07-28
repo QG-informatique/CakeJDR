@@ -34,6 +34,7 @@ export default function HomePageInner() {
   const [pendingRoll, setPendingRoll] = useState<{ result: number; dice: number; nom: string } | null>(null)
   const [history, setHistory] = useDiceHistory(roomId)
   const { addEvent } = useEventLog(roomId)
+  const [roomOwner, setRoomOwner] = useState<string | null>(null)
   const chatBoxRef = useRef<HTMLDivElement>(null)
 
   const broadcast = useBroadcastEvent()
@@ -69,6 +70,16 @@ export default function HomePageInner() {
   }, [router])
 
   useOnlineStatus(user, profile)
+
+  useEffect(() => {
+    fetch('/api/rooms')
+      .then(res => res.json())
+      .then(data => {
+        const r = (data.rooms || []).find((x: any) => x.id === roomId)
+        if (r) setRoomOwner(r.owner || null)
+      })
+      .catch(() => {})
+  }, [roomId])
 
   useEffect(() => {
     if (profile) setUser(profile.pseudo)
@@ -178,6 +189,7 @@ export default function HomePageInner() {
           chatBoxRef={chatBoxRef}
           history={history}
           author={perso.nom || profile?.pseudo || 'Anonymous'}
+          roomOwner={roomOwner}
         />
         <SideNotes />
       </div>

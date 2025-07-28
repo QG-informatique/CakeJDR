@@ -14,12 +14,12 @@ export async function GET() {
 }
 export async function POST(req: Request) {
   try {
-    const { name, password } = await req.json()
+    const { name, password, owner } = await req.json()
     const id = `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now()}`
-  const rooms = await readRooms()
-  rooms.push({ id, name, password })
-  await saveRooms(rooms)
-  return NextResponse.json({ id })
+    const rooms = await readRooms()
+    rooms.push({ id, name, password, owner })
+    await saveRooms(rooms)
+    return NextResponse.json({ id })
   } catch {
     return NextResponse.json({ error: 'Failed to create room' }, { status: 500 })
   }

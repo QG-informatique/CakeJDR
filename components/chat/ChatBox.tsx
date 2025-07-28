@@ -11,9 +11,10 @@ interface Props {
   chatBoxRef: RefObject<HTMLDivElement | null>
   history: Roll[]
   author: string
+  roomOwner?: string | null
 }
 
-const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
+const ChatBox: FC<Props> = ({ chatBoxRef, history, author, roomOwner }) => {
   const room = useRoom()
   const { events, addEvent } = useEventLog(room.id)
   const sortedEvents = [...events].sort((a, b) => a.ts - b.ts)
@@ -153,7 +154,13 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
               <p key={ev.id}>
                 <span className="mr-1">{ev.kind === 'chat' ? '💬' : '🎲'}</span>
                 {ev.kind === 'chat' && (
-                  <><strong>{ev.author} :</strong> {ev.text}</>
+                  <>
+                    <strong>
+                      {ev.author}
+                      {roomOwner && ev.author === roomOwner && ' 👑'}
+                      :
+                    </strong> {ev.text}
+                  </>
                 )}
                 {ev.kind === 'dice' && (
                   <span>{ev.player} : D{ev.dice} → {ev.result}</span>

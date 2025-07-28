@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Lock } from 'lucide-react'
 
-export type RoomInfo = { id: string; name: string; password?: string }
+export type RoomInfo = { id: string; name: string; password?: string; owner?: string }
 
 interface Props {
   onClose?: () => void
@@ -10,7 +10,7 @@ interface Props {
 }
 
 export default function RoomSelector({ onClose, onSelect }: Props) {
-  const [rooms, setRooms] = useState<Array<{id:string,name:string,password?:string}>>([])
+  const [rooms, setRooms] = useState<RoomInfo[]>([])
   const [name, setName] = useState('')
   const [withPassword, setWithPassword] = useState(false)
   const [password, setPassword] = useState('')
@@ -33,25 +33,26 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
 
   const createRoom = async () => {
     if (!name) return
+    let owner = 'Unknown'
     try {
       const prof = JSON.parse(localStorage.getItem('jdr_profile') || '{}')
-      if (!prof.isMJ) { setErrorMsg('Active MJ mode before creating a room'); return }
-      if (localStorage.getItem('jdr_my_room')) { setErrorMsg('You already created a room'); return }
+      owner = prof.pseudo || 'Unknown'
     } catch {}
+    if (localStorage.getItem('jdr_my_room')) { setErrorMsg('You already created a room'); return }
     setCreating(true)
     const res = await fetch('/api/rooms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, password })
+      body: JSON.stringify({ name, password, owner })
     })
     if (!res.ok) { setCreating(false); return }
     const data = await res.json()
     localStorage.setItem('jdr_my_room', data.id)
     onClose?.()
-    onSelect?.({ id: data.id, name, password: password || undefined })
+    onSelect?.({ id: data.id, name, password: password || undefined, owner })
   }
 
-  const joinRoom = (room: {id:string,name:string,password?:string}) => {
+  const joinRoom = (room: RoomInfo) => {
     if (room.password) {
       setJoiningId(room.id)
       setJoinPassword('')
@@ -61,7 +62,7 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
     onSelect?.(room)
   }
 
-  const confirmJoin = (room: {id:string,name:string,password?:string}) => {
+  const confirmJoin = (room: RoomInfo) => {
     if (room.password && joinPassword !== room.password) return
     onClose?.()
     onSelect?.(room)

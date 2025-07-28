@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { Lock } from 'lucide-react'
 
-export type RoomInfo = { id: string; name: string; password?: string }
+export type RoomInfo = { id: string; name: string; password?: string; owner?: string }
 
 interface Props {
   onSelect?: (room: RoomInfo) => void

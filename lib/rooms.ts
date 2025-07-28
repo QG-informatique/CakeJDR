@@ -10,6 +10,7 @@ export interface Room {
   id: string
   name: string
   password?: string
+  owner?: string
   emptySince?: number | null
 }
 
