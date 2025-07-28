@@ -61,7 +61,7 @@ function Dice({ result, onSettled }: { result: number; onSettled: () => void }) 
   ]
 
   return (
-    <motion.mesh ref={meshRef} scale={1.2}>
+    <mesh ref={meshRef} scale={1.2}>
       <boxGeometry args={[1, 1, 1]} />
       <meshStandardMaterial color="white" />
       {faceData.map((f, idx) => (
@@ -75,7 +75,7 @@ function Dice({ result, onSettled }: { result: number; onSettled: () => void }) 
           {result}
         </Text>
       ))}
-    </motion.mesh>
+    </mesh>
   )
 }
 
