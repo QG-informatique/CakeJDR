@@ -5,6 +5,7 @@ export type SessionEvent = {
   id: string
   kind: 'chat' | 'dice'
   author?: string
+  gm?: boolean
   text?: string
   player?: string
   dice?: number

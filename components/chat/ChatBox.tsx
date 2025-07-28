@@ -1,6 +1,7 @@
 'use client'
 import { FC, RefObject, useRef, useState, useEffect } from 'react'
 import { useBroadcastEvent, useRoom } from '@liveblocks/react'
+import { Crown } from 'lucide-react'
 import SummaryPanel from './SummaryPanel'
 import DiceStats from './DiceStats'
 import useEventLog from '../app/hooks/useEventLog'
@@ -11,9 +12,10 @@ interface Props {
   chatBoxRef: RefObject<HTMLDivElement | null>
   history: Roll[]
   author: string
+  isGM?: boolean
 }
 
-const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
+const ChatBox: FC<Props> = ({ chatBoxRef, history, author, isGM }) => {
   const room = useRoom()
   const { events, addEvent } = useEventLog(room.id)
   const sortedEvents = [...events].sort((a, b) => a.ts - b.ts)
@@ -29,8 +31,8 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
 
     const msg = { author, text: inputValue.trim() }
 
-    broadcast({ type: 'chat', author: msg.author, text: msg.text } as Liveblocks['RoomEvent'])
-    addEvent({ id: crypto.randomUUID(), kind: 'chat', author: msg.author, text: msg.text, ts: Date.now() })
+    broadcast({ type: 'chat', author: msg.author, text: msg.text, gm: !!isGM } as Liveblocks['RoomEvent'])
+    addEvent({ id: crypto.randomUUID(), kind: 'chat', author: msg.author, text: msg.text, gm: !!isGM, ts: Date.now() })
     setInputValue('')
   }
 
@@ -44,7 +46,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
     return (
       <aside
         className="
-          w-1/5
+          w-full lg:w-1/5
           p-4
           flex flex-col relative
           rounded-xl
@@ -66,7 +68,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
   return (
     <aside
       className="
-        w-1/5
+          w-full lg:w-1/5
         p-4
         flex flex-col relative h-full min-h-0
         rounded-xl
@@ -153,7 +155,13 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
               <p key={ev.id}>
                 <span className="mr-1">{ev.kind === 'chat' ? '💬' : '🎲'}</span>
                 {ev.kind === 'chat' && (
-                  <><strong>{ev.author} :</strong> {ev.text}</>
+                  <>
+                    <strong className="inline-flex items-center gap-1">
+                      {ev.author}
+                      {ev.gm && <Crown size={12} className="text-pink-400" />}
+                      :
+                    </strong> {ev.text}
+                  </>
                 )}
                 {ev.kind === 'dice' && (
                   <span>{ev.player} : D{ev.dice} → {ev.result}</span>

@@ -68,7 +68,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
   }
 
   return (
-    <div className="bg-black/80 text-white rounded-xl border border-white/10 shadow-xl backdrop-blur-md p-4 w-72">
+    <div className="text-white rounded-xl border border-white/10 shadow-xl backdrop-blur-md bg-black/20 p-4 w-72">
       <button
         className="w-full mb-3 px-3 py-2 rounded-md bg-pink-700/60 hover:bg-pink-700 text-sm font-semibold"
         onClick={onCreateClick}

@@ -176,11 +176,12 @@ const CharacterSheet: FC<Props> = ({
         shadow shadow-black/5 rounded-2xl p-5
         pt-0 pb-3 px-3 overflow-y-auto text-[15px] text-white
         relative select-none
+        w-full max-w-full lg:w-[420px] lg:min-w-[420px] lg:max-w-[420px]
       "
       style={{
-        width: creation ? 'auto' : '420px',
-        minWidth: creation ? '600px' : '420px',
-        maxWidth: creation ? '100%' : '420px',
+        width: creation ? 'auto' : undefined,
+        minWidth: creation ? '600px' : undefined,
+        maxWidth: creation ? '100%' : undefined,
         boxSizing: 'border-box',
         overflowX: 'hidden'
       }}

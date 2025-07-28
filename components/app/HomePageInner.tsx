@@ -155,7 +155,7 @@ export default function HomePageInner() {
 
   return (
     <div className="relative w-screen h-screen font-sans overflow-hidden bg-transparent">
-      <div className="relative z-10 flex w-full h-full">
+      <div className="relative z-10 flex w-full h-full flex-col lg:flex-row">
         <CharacterSheet perso={perso} onUpdate={handleUpdatePerso} chatBoxRef={chatBoxRef} allCharacters={characters} logoOnly>
           {profile?.isMJ && (
             <span className="ml-2">
@@ -178,6 +178,7 @@ export default function HomePageInner() {
           chatBoxRef={chatBoxRef}
           history={history}
           author={perso.nom || profile?.pseudo || 'Anonymous'}
+          isGM={profile?.isMJ}
         />
         <SideNotes />
       </div>

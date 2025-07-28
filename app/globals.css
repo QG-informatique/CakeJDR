@@ -61,3 +61,13 @@ body, .scrollable {
   scrollbar-width: thin;   /* "thin" c'est 4-6px selon le navigateur, mais c'est le plus fin possible */
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-bg);
 }
+
+@keyframes diceGlow {
+  0% { box-shadow: 0 0 4px 1px rgba(255,143,222,0.5); }
+  50% { box-shadow: 0 0 12px 4px rgba(255,143,222,0.9); }
+  100% { box-shadow: 0 0 4px 1px rgba(255,143,222,0.5); }
+}
+
+.dice-glow {
+  animation: diceGlow 2s ease-in-out infinite;
+}
