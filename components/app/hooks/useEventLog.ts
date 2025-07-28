@@ -10,6 +10,7 @@ export type SessionEvent = {
   dice?: number
   result?: number
   ts: number
+  isMJ?: boolean
 }
 
 const prefix = 'jdr_events_'

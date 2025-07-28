@@ -33,11 +33,7 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
 
   const createRoom = async () => {
     if (!name) return
-    try {
-      const prof = JSON.parse(localStorage.getItem('jdr_profile') || '{}')
-      if (!prof.isMJ) { setErrorMsg('Active MJ mode before creating a room'); return }
-      if (localStorage.getItem('jdr_my_room')) { setErrorMsg('You already created a room'); return }
-    } catch {}
+    if (localStorage.getItem('jdr_my_room')) { setErrorMsg('You already created a room'); return }
     setCreating(true)
     const res = await fetch('/api/rooms', {
       method: 'POST',
