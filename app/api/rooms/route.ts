@@ -1,8 +1,8 @@
-import { put, del } from '@vercel/blob'
+import { promises as fs } from 'fs'
+import path from 'path'
 import { NextResponse } from 'next/server'
-import { readRooms, updateRoomsCache } from '@/lib/rooms'
+import { readRooms, saveRooms } from '@/lib/rooms'
 
-const FILE = 'rooms.json'
 
 export async function GET() {
   try {
@@ -18,12 +18,7 @@ export async function POST(req: Request) {
     const id = `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now()}`
   const rooms = await readRooms()
   rooms.push({ id, name, password })
-  const blob = await put(FILE, JSON.stringify(rooms), {
-    access: 'public',
-    addRandomSuffix: false,
-    allowOverwrite: true,
-  })
-  updateRoomsCache(rooms, blob.downloadUrl || blob.url)
+  await saveRooms(rooms)
   return NextResponse.json({ id })
   } catch {
     return NextResponse.json({ error: 'Failed to create room' }, { status: 500 })
@@ -37,12 +32,7 @@ export async function PUT(req: Request) {
     const idx = rooms.findIndex((r) => r.id === id)
     if (idx !== -1) {
       rooms[idx].emptySince = empty ? Date.now() : null
-      const blob = await put(FILE, JSON.stringify(rooms), {
-        access: 'public',
-        addRandomSuffix: false,
-        allowOverwrite: true,
-      })
-      updateRoomsCache(rooms, blob.downloadUrl || blob.url)
+      await saveRooms(rooms)
     }
     return NextResponse.json({ ok: true })
   } catch {
@@ -58,14 +48,13 @@ export async function DELETE(req: Request) {
     const idx = rooms.findIndex(r => r.id === id)
     if (idx !== -1) {
       rooms.splice(idx, 1)
-      const blob = await put(FILE, JSON.stringify(rooms), {
-        access: 'public',
-        addRandomSuffix: false,
-        allowOverwrite: true,
-      })
-      updateRoomsCache(rooms, blob.downloadUrl || blob.url)
+      await saveRooms(rooms)
     }
-    await del(`RoomData/${id}.json`).catch(() => {})
+    try {
+      await fs.unlink(path.resolve(process.cwd(), 'RoomData', `${id}.json`))
+    } catch {
+      /* ignore */
+    }
     return NextResponse.json({ ok: true })
   } catch {
     return NextResponse.json({ error: 'Failed to delete room' }, { status: 500 })
