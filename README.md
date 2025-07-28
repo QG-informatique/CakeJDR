@@ -1,6 +1,6 @@
 # CakeJDR
 
-CakeJDR is a Next.js application for playing tabletop RPGs online. It provides collaborative drawing, real‑time chat and dice tracking, along with character sheet management. Liveblocks powers the synchronization layer, Cloudinary hosts canvas images and Vercel Blob stores character sheets or room data.
+CakeJDR is a Next.js application for playing tabletop RPGs online. It provides collaborative drawing, real‑time chat and dice tracking, along with character sheet management. Liveblocks powers the synchronization layer and stores room data, Cloudinary hosts canvas images and Vercel Blob stores character sheets only.
 
 > **Note**
 > This project is still in active development. Online features remain incomplete and the application currently works only when run locally.
@@ -47,9 +47,9 @@ Once running you can:
 
 - **Next.js** and **React** for the frontend.
 - **Tailwind CSS** for styling.
-- **Liveblocks** for real‑time synchronization (canvas, chat, stats…).
+- **Liveblocks** for real‑time synchronization (canvas, chat, stats…) and to store room metadata.
 - **Cloudinary** for canvas image hosting.
-- **Vercel Blob** for storing character sheets and room data.
+- **Vercel Blob** for storing character sheets on the menu page only.
 - **Framer Motion** and **Lucide React** for animations and icons.
 
 ## Backgrounds
