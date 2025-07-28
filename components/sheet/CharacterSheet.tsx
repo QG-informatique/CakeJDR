@@ -172,15 +172,16 @@ const CharacterSheet: FC<Props> = ({
   return (
     <aside
       className="
+        w-full md:w-[420px]
         bg-black/10 border border-white/10 backdrop-blur-[2px]
         shadow shadow-black/5 rounded-2xl p-5
         pt-0 pb-3 px-3 overflow-y-auto text-[15px] text-white
         relative select-none
       "
       style={{
-        width: creation ? 'auto' : '420px',
-        minWidth: creation ? '600px' : '420px',
-        maxWidth: creation ? '100%' : '420px',
+        width: creation ? 'auto' : undefined,
+        minWidth: creation ? '600px' : undefined,
+        maxWidth: creation ? '100%' : undefined,
         boxSizing: 'border-box',
         overflowX: 'hidden'
       }}

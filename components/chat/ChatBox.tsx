@@ -1,6 +1,7 @@
 'use client'
 import { FC, RefObject, useRef, useState, useEffect } from 'react'
 import { useBroadcastEvent, useRoom } from '@liveblocks/react'
+import useProfile from '../app/hooks/useProfile'
 import SummaryPanel from './SummaryPanel'
 import DiceStats from './DiceStats'
 import useEventLog from '../app/hooks/useEventLog'
@@ -22,15 +23,16 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
   const [showSummary, setShowSummary] = useState(false)
   const [showStats, setShowStats] = useState(false)
   const broadcast = useBroadcastEvent()
+  const profile = useProfile()
 
 
   const sendMessage = () => {
     if (inputValue.trim() === '') return
 
-    const msg = { author, text: inputValue.trim() }
+    const msg = { author, text: inputValue.trim(), isMJ: profile?.isMJ }
 
-    broadcast({ type: 'chat', author: msg.author, text: msg.text } as Liveblocks['RoomEvent'])
-    addEvent({ id: crypto.randomUUID(), kind: 'chat', author: msg.author, text: msg.text, ts: Date.now() })
+    broadcast({ type: 'chat', author: msg.author, text: msg.text, isMJ: msg.isMJ } as Liveblocks['RoomEvent'])
+    addEvent({ id: crypto.randomUUID(), kind: 'chat', author: msg.author, text: msg.text, ts: Date.now(), isMJ: msg.isMJ })
     setInputValue('')
   }
 
@@ -44,7 +46,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
     return (
       <aside
         className="
-          w-1/5
+          w-full lg:w-1/5
           p-4
           flex flex-col relative
           rounded-xl
@@ -66,7 +68,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
   return (
     <aside
       className="
-        w-1/5
+        w-full lg:w-1/5
         p-4
         flex flex-col relative h-full min-h-0
         rounded-xl
@@ -153,7 +155,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
               <p key={ev.id}>
                 <span className="mr-1">{ev.kind === 'chat' ? '💬' : '🎲'}</span>
                 {ev.kind === 'chat' && (
-                  <><strong>{ev.author} :</strong> {ev.text}</>
+                  <><strong>{ev.author}{ev.isMJ && ' 👑'} :</strong> {ev.text}</>
                 )}
                 {ev.kind === 'dice' && (
                   <span>{ev.player} : D{ev.dice} → {ev.result}</span>

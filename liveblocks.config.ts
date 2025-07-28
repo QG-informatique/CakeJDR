@@ -21,6 +21,14 @@ type SessionEvent = {
   dice?: number
   result?: number
   ts: number
+  isMJ?: boolean
+}
+
+type Room = {
+  id: string
+  name: string
+  password?: string
+  owner?: string | null
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -45,6 +53,7 @@ declare global {
       music: LiveObject<{ id: string; playing: boolean }>;
       summary: LiveObject<{ acts: Array<{ id: number; title: string; content: string }> }>;
       events: LiveList<SessionEvent>;
+      rooms: LiveList<Room>;
     };
 
     // Custom user info set when authenticating with a secret key
@@ -64,7 +73,7 @@ declare global {
       | { type: 'delete-image'; id: number }
       | { type: 'clear-canvas' }
       | { type: 'draw-line'; x1:number; y1:number; x2:number; y2:number; color:string; width:number; mode:'draw'|'erase' }
-      | { type: 'chat'; author: string; text: string }
+      | { type: 'chat'; author: string; text: string; isMJ?: boolean }
       | { type: 'dice-roll'; player: string; dice: number; result: number }
       | { type: 'gm-select'; character: CharacterData };
 

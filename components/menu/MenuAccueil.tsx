@@ -6,6 +6,7 @@ import { Crown, LogOut, Dice6 } from 'lucide-react'
 import SmallSpinner from '../ui/SmallSpinner'
 import RoomList, { RoomInfo } from '../rooms/RoomList'
 import RoomCreateModal from '../rooms/RoomCreateModal'
+import RoomsIndexProvider from '../rooms/RoomsIndexProvider'
 import { useRouter } from 'next/navigation'
 import Login from '../login/Login'
 import { defaultPerso } from '../sheet/CharacterSheet'
@@ -37,8 +38,6 @@ export default function MenuAccueil() {
   const [draftChar, setDraftChar]     = useState<Character>(defaultPerso as unknown as Character)
   const [hydrated, setHydrated]       = useState(false)
   const [loggingOut, setLoggingOut]   = useState(false)
-  const [diceHover, setDiceHover] = useState(false)
-  const [roomsOpen, setRoomsOpen] = useState(false)
   const [createRoomOpen, setCreateRoomOpen] = useState(false)
   const [selectedRoom, setSelectedRoom] = useState<RoomInfo | null>(null)
   const [remoteChars, setRemoteChars] = useState<Record<string, Character>>({})
@@ -147,7 +146,11 @@ export default function MenuAccueil() {
   }
 
   const handlePlay = () => {
-    setRoomsOpen(v => !v)
+    if (!selectedRoom) return
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('visitedMenu', 'true')
+    }
+    router.push(`/room/${selectedRoom.id}`)
   }
 
   const handleRoomSelect = (room: RoomInfo) => {
@@ -345,45 +348,24 @@ export default function MenuAccueil() {
             >
               <div className="shrink-0 flex items-center justify-start min-w-[150px] gap-2">
 
-                {/* Button to open the room list */}
-
                 <button
                   type="button"
-                  aria-label="Open game rooms"
+                  aria-label="Enter room"
                   onClick={handlePlay}
-                  onMouseEnter={() => setDiceHover(true)}
-                  onMouseLeave={() => setDiceHover(false)}
-                  className="relative inline-flex items-center justify-center rounded-md border-2 border-pink-300/40 shadow-md shadow-pink-200/20 transition focus:outline-none focus:ring-2 focus:ring-pink-200/40 focus:ring-offset-2 focus:ring-offset-black"
+                  className={`relative inline-flex items-center justify-center rounded-md border-2 border-pink-300/40 shadow-md shadow-pink-200/20 transition focus:outline-none focus:ring-2 focus:ring-pink-200/40 focus:ring-offset-2 focus:ring-offset-black ${selectedRoom ? 'animate-pulse' : ''}`}
                   style={{
                     width: DICE_SIZE,
                     height: DICE_SIZE,
-                    background: 'rgba(38,16,56,0.14)',
-                    borderColor: diceHover ? '#ff90cc' : '#f7bbf7',
-                    boxShadow: diceHover
+                    background: selectedRoom ? 'rgba(38,16,56,0.2)' : 'rgba(38,16,56,0.14)',
+                    borderColor: selectedRoom ? '#ff90cc' : '#f7bbf7',
+                    boxShadow: selectedRoom
                       ? '0 0 12px 2px #ffb0e366, 0 2px 20px 8px #fff2'
                       : '0 0 4px 1px #ffe5fa44, 0 2px 8px 2px #fff2',
-                    transition: 'transform 0.18s cubic-bezier(.77,.2,.56,1), box-shadow 0.18s cubic-bezier(.77,.2,.56,1)',
-                    transform: diceHover ? 'scale(1.15) rotate(-7deg)' : 'scale(1) rotate(0deg)'
+                    transition: 'transform 0.18s cubic-bezier(.77,.2,.56,1), box-shadow 0.18s cubic-bezier(.77,.2,.56,1)'
                   }}
+                  disabled={!selectedRoom}
                 >
                   <Dice6 className="w-5 h-5 text-white drop-shadow-[0_2px_5px_rgba(255,70,190,0.45)]" />
-                </button>
-                <button
-                  type="button"
-                  disabled={!selectedRoom}
-                  className={`px-3 py-1.5 rounded-md text-sm shadow transition-colors
-                    ${selectedRoom
-                      ? 'bg-emerald-600 text-white hover:bg-emerald-500'
-                      : 'bg-gray-600 text-gray-300 cursor-not-allowed'}`}
-                  onClick={() => {
-                    if (!selectedRoom) return
-                    if (typeof window !== 'undefined') {
-                      sessionStorage.setItem('visitedMenu', 'true')
-                    }
-                    router.push(`/room/${selectedRoom.id}`)
-                  }}
-                >
-                  Jouer
                 </button>
               </div>
               {selectedRoom && (
@@ -458,21 +440,15 @@ export default function MenuAccueil() {
                 </button>
               </div>
             </section>
-            {roomsOpen && (
-              <div
-                className="fixed inset-0 z-50 flex items-center justify-center p-4"
-                onClick={() => setRoomsOpen(false)}
-                style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(2px)' }}
-              >
-                <div onClick={e => e.stopPropagation()}>
-                  <RoomList
-                    selectedId={selectedRoom?.id || null}
-                    onSelect={handleRoomSelect}
-                    onCreateClick={() => setCreateRoomOpen(true)}
-                  />
-                </div>
+            <RoomsIndexProvider>
+              <div className="mb-4">
+                <RoomList
+                  selectedId={selectedRoom?.id || null}
+                  onSelect={handleRoomSelect}
+                  onCreateClick={() => setCreateRoomOpen(true)}
+                />
               </div>
-            )}
+            </RoomsIndexProvider>
             <RoomCreateModal
               open={createRoomOpen}
               onClose={() => setCreateRoomOpen(false)}
