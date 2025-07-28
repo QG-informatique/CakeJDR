@@ -4,9 +4,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Crown, LogOut, Dice6 } from 'lucide-react'
 import SmallSpinner from '../ui/SmallSpinner'
-import RoomList, { RoomInfo } from '../rooms/RoomList'
-import RoomCreateModal from '../rooms/RoomCreateModal'
-import RoomsIndexProvider from '../rooms/RoomsIndexProvider'
+import RoomContainer, { RoomData } from '../rooms/RoomContainer'
 import { useRouter } from 'next/navigation'
 import Login from '../login/Login'
 import { defaultPerso } from '../sheet/CharacterSheet'
@@ -38,8 +36,7 @@ export default function MenuAccueil() {
   const [draftChar, setDraftChar]     = useState<Character>(defaultPerso as unknown as Character)
   const [hydrated, setHydrated]       = useState(false)
   const [loggingOut, setLoggingOut]   = useState(false)
-  const [createRoomOpen, setCreateRoomOpen] = useState(false)
-  const [selectedRoom, setSelectedRoom] = useState<RoomInfo | null>(null)
+  const [selectedRoom, setSelectedRoom] = useState<RoomData | null>(null)
   const [remoteChars, setRemoteChars] = useState<Record<string, Character>>({})
   const [roomLoading, setRoomLoading] = useState(false)
 
@@ -153,7 +150,7 @@ export default function MenuAccueil() {
     router.push(`/room/${selectedRoom.id}`)
   }
 
-  const handleRoomSelect = (room: RoomInfo) => {
+  const handleRoomSelect = (room: RoomData) => {
     setSelectedRoom(room)
     setRoomLoading(true)
     localStorage.setItem(ROOM_KEY, JSON.stringify(room))
@@ -439,20 +436,13 @@ export default function MenuAccueil() {
                 </button>
               </div>
             </section>
-            <RoomsIndexProvider>
-              <div className="mb-4">
-                <RoomList
-                  selectedId={selectedRoom?.id || null}
-                  onSelect={handleRoomSelect}
-                  onCreateClick={() => setCreateRoomOpen(true)}
-                />
-              </div>
-              <RoomCreateModal
-                open={createRoomOpen}
-                onClose={() => setCreateRoomOpen(false)}
-                onCreated={handleRoomSelect}
+            <div className="mb-4">
+              <RoomContainer
+                owner={user?.pseudo || null}
+                selectedId={selectedRoom?.id || null}
+                onSelect={handleRoomSelect}
               />
-            </RoomsIndexProvider>
+            </div>
 
             {/* Liste des personnages */}
             <div className="flex-1 min-h-0 rounded-xl backdrop-blur-md bg-black/20 p-5 overflow-auto">
