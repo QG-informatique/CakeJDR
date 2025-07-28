@@ -17,18 +17,14 @@ export default function RoomsPage() {
       .then(data => setRooms(data.rooms || []))
   }, [])
 
-  const createRoom = async () => {
-    if (!name) return
-    try {
-      const prof = JSON.parse(localStorage.getItem('jdr_profile') || '{}')
-      if (!prof.isMJ) { setErrorMsg('Active MJ mode before creating a room'); return }
+    const createRoom = async () => {
+      if (!name) return
       if (localStorage.getItem('jdr_my_room')) { setErrorMsg('You already created a room'); return }
-    } catch {}
-    const res = await fetch('/api/rooms', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, password })
-    })
+      const res = await fetch('/api/rooms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, password })
+      })
     const data = await res.json()
     localStorage.setItem('jdr_my_room', data.id)
     router.push(`/room/${data.id}`)
