@@ -1,5 +1,6 @@
 import { FC, RefObject } from 'react'
-import { Edit2, Trash2, Plus, Upload, Download } from 'lucide-react'
+import { Edit2, Trash2, Plus, Upload, Download, Cloud } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
 
 export type Character = {
   id: string | number
@@ -77,6 +78,7 @@ const CharacterList: FC<Props> = ({
         }
         return (
         <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <AnimatePresence initial={false}>
           {all.map((ch, idx) => {
             const isSelected = selectedIdx !== null && filtered[selectedIdx]?.id === ch.id
             const localIdx = filtered.findIndex(c => String(c.id) === String(ch.id))
@@ -87,7 +89,7 @@ const CharacterList: FC<Props> = ({
             const needsDownload = (!local && cloud) || (local && cloud && (cloudChar.updatedAt || 0) > (localChar?.updatedAt || 0))
             const needsUpload = local && (!cloud || (localChar?.updatedAt || 0) > (cloudChar?.updatedAt || 0))
             return (
-              <li
+              <motion.li
                 key={`${ch.id}-${idx}`}
                 onClick={() => onSelect(local ? filtered.findIndex(c => String(c.id)===String(ch.id)) : -1)}
                 className={`
@@ -108,6 +110,10 @@ const CharacterList: FC<Props> = ({
                     : '0 0 0 1px rgba(255,255,255,0.03), 0 2px 6px -4px rgba(0,0,0,0.50)'
                 }}
                     title={ch.nom || 'No name'}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                layout
               >
                 <div className="flex items-start justify-between gap-2">
                   <span
@@ -116,54 +122,26 @@ const CharacterList: FC<Props> = ({
                   >
                     {ch.nom || 'No name'}
                   </span>
-                  <div className="flex items-center gap-1 shrink-0">
-                    {needsUpload && (
+                  {local && (
+                    <div className="flex items-center gap-1 shrink-0">
                       <button
-                        onClick={e => { e.stopPropagation(); onUpload(local ? filtered[localIdx] : ch) }}
-                        className={btnBase + ' hover:bg-cyan-600/80 text-cyan-100 w-8 h-8'}
-                        title={cloud ? 'Update cloud' : 'Upload'}
+                        onClick={e => { e.stopPropagation(); onEdit(ch.id) }}
+                        className={btnBase + ' hover:bg-yellow-500/90 text-yellow-100 w-8 h-8'}
+                        title="Edit"
                       >
-                        <Upload size={16} />
+                        <Edit2 size={16} />
                       </button>
-                    )}
-                    {needsDownload ? (
                       <button
-                        onClick={e => { e.stopPropagation(); onDownload(cloudChar || ch) }}
-                        className={btnBase + ' hover:bg-emerald-600/80 text-emerald-100 w-8 h-8'}
-                        title="Download"
-                      >
-                        <Download size={16} />
-                      </button>
-                    ) : null}
-                    {cloud && (
-                      <button
-                        onClick={e => { e.stopPropagation(); onDeleteCloud(ch.id) }}
-                        className={btnBase + ' hover:bg-red-700/80 text-red-100 w-8 h-8'}
-                        title="Delete cloud"
+                        onClick={e => { e.stopPropagation(); onDelete(ch.id) }}
+                        className={btnBase + ' hover:bg-red-600/90 text-red-100 w-8 h-8'}
+                        title="Delete"
                       >
                         <Trash2 size={16} />
                       </button>
-                    )}
-                    {local && (
-                    <>
-                      <button
-                        onClick={e => { e.stopPropagation(); onEdit(ch.id) }}
-                      className={btnBase + " hover:bg-yellow-500/90 text-yellow-100 w-8 h-8"}
-                      title="Edit"
-                    >
-                      <Edit2 size={16} />
-                    </button>
-                    <button
-                      onClick={e => { e.stopPropagation(); onDelete(ch.id) }}
-                      className={btnBase + " hover:bg-red-600/90 text-red-100 w-8 h-8"}
-                      title="Delete"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                    </>) }
-                  </div>
+                    </div>
+                  )}
                 </div>
-                <div className="flex flex-col gap-1 text-xs text-white/85 mt-1">
+                <div className="flex flex-col gap-1 text-xs text-white/85 mt-1 flex-1">
                   {ch.niveau !== undefined && (
                     <div>
                       <span className="font-medium text-emerald-200">Niveau</span> {ch.niveau}
@@ -185,9 +163,40 @@ const CharacterList: FC<Props> = ({
                     </div>
                   )}
                 </div>
-              </li>
+                <div className="flex items-center gap-1 justify-end mt-auto">
+                  {cloud && <Cloud size={14} className="text-blue-200/80" />}
+                  {needsUpload && (
+                    <button
+                      onClick={e => { e.stopPropagation(); onUpload(local ? filtered[localIdx] : ch) }}
+                      className={btnBase + ' hover:bg-cyan-600/80 text-cyan-100 w-8 h-8'}
+                      title={cloud ? 'Update cloud' : 'Upload'}
+                    >
+                      <Upload size={16} />
+                    </button>
+                  )}
+                  {needsDownload && (
+                    <button
+                      onClick={e => { e.stopPropagation(); onDownload(cloudChar || ch) }}
+                      className={btnBase + ' hover:bg-emerald-600/80 text-emerald-100 w-8 h-8'}
+                      title="Download"
+                    >
+                      <Download size={16} />
+                    </button>
+                  )}
+                  {cloud && (
+                    <button
+                      onClick={e => { e.stopPropagation(); onDeleteCloud(ch.id) }}
+                      className={btnBase + ' hover:bg-red-700/80 text-red-100 w-8 h-8'}
+                      title="Delete cloud"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                </div>
+              </motion.li>
             )
           })}
+          </AnimatePresence>
         </ul>
         )
       })()}
