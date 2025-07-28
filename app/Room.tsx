@@ -22,7 +22,8 @@ export function Room({ id, children }: { id: string; children: ReactNode }) {
           images: new LiveMap(),
           music: new LiveObject({ id: '', playing: false }),
           summary: new LiveObject({ acts: [] }),
-          events: new LiveList([])
+          events: new LiveList([]),
+          rooms: new LiveList([])
         }}
       >
         <ClientSideSuspense fallback={<div>Loading…</div>}>
