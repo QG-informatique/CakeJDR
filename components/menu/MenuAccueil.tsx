@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Crown, LogOut, Dice6 } from 'lucide-react'
+import SmallSpinner from '../ui/SmallSpinner'
 import RoomList, { RoomInfo } from '../rooms/RoomList'
 import RoomCreateModal from '../rooms/RoomCreateModal'
 import { useRouter } from 'next/navigation'
@@ -41,6 +42,7 @@ export default function MenuAccueil() {
   const [createRoomOpen, setCreateRoomOpen] = useState(false)
   const [selectedRoom, setSelectedRoom] = useState<RoomInfo | null>(null)
   const [remoteChars, setRemoteChars] = useState<Record<string, Character>>({})
+  const [roomLoading, setRoomLoading] = useState(false)
 
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -70,10 +72,12 @@ export default function MenuAccueil() {
           const r = JSON.parse(roomRaw)
           if (r?.id) {
             setSelectedRoom(r)
+            setRoomLoading(true)
             fetch(`/api/roomstorage?roomId=${encodeURIComponent(r.id)}`)
               .then(res => res.json())
               .then(data => setRemoteChars(data.characters || {}))
               .catch(() => setRemoteChars({}))
+              .finally(() => setRoomLoading(false))
           }
         } catch {}
       }
@@ -148,6 +152,7 @@ export default function MenuAccueil() {
 
   const handleRoomSelect = (room: RoomInfo) => {
     setSelectedRoom(room)
+    setRoomLoading(true)
     localStorage.setItem(ROOM_KEY, JSON.stringify(room))
     fetch(`/api/roomstorage?roomId=${encodeURIComponent(room.id)}`)
       .then(res => res.json())
@@ -172,6 +177,7 @@ export default function MenuAccueil() {
         }
       })
       .catch(() => {})
+      .finally(() => setRoomLoading(false))
     setRoomsOpen(false)
   }
 
@@ -400,7 +406,8 @@ export default function MenuAccueil() {
                 </button>
               </div>
               {selectedRoom && (
-                <span className="ml-2 text-sm text-white/80">
+                <span className="ml-2 text-sm text-white/80 flex items-center gap-2">
+                  {roomLoading && <SmallSpinner />}
                   {selectedRoom.name}
                 </span>
               )}
