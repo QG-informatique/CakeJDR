@@ -142,15 +142,17 @@ export default function HomePageInner() {
     setPendingRoll({ result, dice: diceType, nom: perso.nom || '?' })
   }
 
-  const handlePopupFinish = () => {
-    setShowPopup(false)
-    setDiceDisabled(false)
+  const handlePopupReveal = () => {
     if (!pendingRoll) return
-
     setHistory((h) => [...h, { player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result, ts: Date.now() }])
     broadcast({ type: 'dice-roll', player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result } as Liveblocks['RoomEvent'])
     addEvent({ id: crypto.randomUUID(), kind: 'dice', player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result, ts: Date.now() })
     setPendingRoll(null)
+  }
+
+  const handlePopupFinish = () => {
+    setShowPopup(false)
+    setDiceDisabled(false)
   }
 
   return (
@@ -167,7 +169,13 @@ export default function HomePageInner() {
         <main className="flex-1 flex flex-col min-h-0">
           <div className="flex-1 m-4 flex flex-col justify-center items-center relative min-h-0">
             <InteractiveCanvas />
-            <PopupResult show={showPopup} result={diceResult} diceType={diceType} onFinish={handlePopupFinish} />
+            <PopupResult
+              show={showPopup}
+              result={diceResult}
+              diceType={diceType}
+              onReveal={handlePopupReveal}
+              onFinish={handlePopupFinish}
+            />
           </div>
           <DiceRoller diceType={diceType} onChange={setDiceType} onRoll={rollDice} disabled={diceDisabled}>
             <LiveAvatarStack />
