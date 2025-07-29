@@ -4,12 +4,24 @@ export async function listRooms() {
   const secret = process.env.LIVEBLOCKS_SECRET_KEY
   if (!secret) throw new Error('Liveblocks key missing')
   const client = new Liveblocks({ secret })
-  const rooms: Array<{ id: string; name: string }> = []
+  const rooms: Array<{
+    id: string
+    name: string
+    password?: string
+    createdAt: string
+    updatedAt?: string
+  }> = []
   let cursor: string | undefined
   do {
     const { data, nextCursor } = await client.getRooms({ startingAfter: cursor, limit: 50 })
     for (const r of data) {
-      rooms.push({ id: r.id, name: typeof r.metadata?.name === 'string' ? r.metadata.name : '' })
+      rooms.push({
+        id: r.id,
+        name: typeof r.metadata?.name === 'string' ? r.metadata.name : '',
+        password: typeof r.metadata?.password === 'string' ? r.metadata.password : undefined,
+        createdAt: r.createdAt.toISOString(),
+        updatedAt: r.lastConnectionAt ? r.lastConnectionAt.toISOString() : undefined
+      })
     }
     cursor = nextCursor ?? undefined
   } while (cursor)

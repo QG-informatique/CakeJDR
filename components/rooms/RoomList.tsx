@@ -2,7 +2,13 @@
 import { useEffect, useState } from 'react'
 import { Lock } from 'lucide-react'
 
-export type RoomInfo = { id: string; name: string; password?: string }
+export type RoomInfo = {
+  id: string
+  name: string
+  password?: string
+  createdAt?: string
+  updatedAt?: string
+}
 
 interface Props {
   onSelect?: (room: RoomInfo) => void
@@ -76,7 +82,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
   return (
     <div className="rounded-xl backdrop-blur-md bg-black/20 p-4 border border-white/10 shadow-lg">
       <h2 className="text-lg font-semibold mb-2">Rooms</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-60 overflow-y-auto pr-1">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-72 overflow-y-auto pr-1">
         <button
           onClick={onCreateClick}
           className="flex items-center justify-center p-3 rounded-lg bg-pink-700/50 hover:bg-pink-700 text-sm font-semibold"
@@ -91,13 +97,16 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
           >
             <div className="flex justify-between items-center gap-1">
               <span className="truncate flex-1 flex items-center gap-1 text-sm">
-                {r.password && <Lock size={12} className="text-pink-300" />} {r.name}
+                {r.password && <Lock size={12} className="text-pink-300" />} {r.name || r.id}
               </span>
               {myRoom===r.id && <span title="Creator">👑</span>}
               {myRoom===r.id && (
                 <button onClick={(e)=>{e.stopPropagation();deleteRoom(r)}} className="ml-1 text-red-400" title="Delete">🗑️</button>
               )}
             </div>
+            <span className="text-xs text-white/60 truncate">
+              {r.updatedAt ? new Date(r.updatedAt).toLocaleDateString() : new Date(r.createdAt ?? '').toLocaleDateString()}
+            </span>
             {joiningId === r.id && r.password && (
               <>
                 <input

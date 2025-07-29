@@ -2,7 +2,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { Lock } from 'lucide-react'
 
-export type RoomInfo = { id: string; name: string; password?: string }
+export type RoomInfo = {
+  id: string
+  name: string
+  password?: string
+  createdAt?: string
+  updatedAt?: string
+}
 
 interface Props {
   onClose?: () => void
@@ -10,7 +16,7 @@ interface Props {
 }
 
 export default function RoomSelector({ onClose, onSelect }: Props) {
-  const [rooms, setRooms] = useState<Array<{id:string,name:string,password?:string}>>([])
+  const [rooms, setRooms] = useState<RoomInfo[]>([])
   const [name, setName] = useState('')
   const [withPassword, setWithPassword] = useState(false)
   const [password, setPassword] = useState('')
@@ -44,10 +50,10 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
     const data = await res.json()
     localStorage.setItem('jdr_my_room', data.id)
     onClose?.()
-    onSelect?.({ id: data.id, name, password: password || undefined })
+    onSelect?.({ id: data.id, name, password: password || undefined, createdAt: new Date().toISOString() })
   }
 
-  const joinRoom = (room: {id:string,name:string,password?:string}) => {
+  const joinRoom = (room: RoomInfo) => {
     if (room.password) {
       setJoiningId(room.id)
       setJoinPassword('')
@@ -57,7 +63,7 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
     onSelect?.(room)
   }
 
-  const confirmJoin = (room: {id:string,name:string,password?:string}) => {
+  const confirmJoin = (room: RoomInfo) => {
     if (room.password && joinPassword !== room.password) return
     onClose?.()
     onSelect?.(room)
@@ -83,7 +89,7 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
             <li key={r.id} className="flex flex-col gap-1">
               <div className="flex justify-between items-center gap-2">
                 <span className="truncate flex-1 flex items-center gap-1">
-                  {r.password && <Lock size={12} className="text-pink-300" />} {r.name}
+                  {r.password && <Lock size={12} className="text-pink-300" />} {r.name || r.id}
                 </span>
                 {joiningId === r.id && r.password ? (
                   <button
@@ -97,6 +103,9 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
                   >Select</button>
                 )}
               </div>
+              <span className="text-xs text-white/60">
+                {r.updatedAt ? new Date(r.updatedAt).toLocaleDateString() : new Date(r.createdAt ?? '').toLocaleDateString()}
+              </span>
               {joiningId === r.id && r.password && (
                 <input
                   type="password"

@@ -31,7 +31,12 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
     })
     if (!res.ok) { setCreating(false); return }
     const data = await res.json()
-    const room = { id: data.id, name, password: password || undefined }
+    const room = {
+      id: data.id,
+      name,
+      password: password || undefined,
+      createdAt: new Date().toISOString(),
+    }
     localStorage.setItem('jdr_my_room', data.id)
     setCreating(false)
     window.dispatchEvent(new Event('jdr_rooms_change'))

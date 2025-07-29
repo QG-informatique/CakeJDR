@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function RoomsPage() {
-  const [rooms, setRooms] = useState<{ id: string; name: string }[]>([])
+  const [rooms, setRooms] = useState<Array<{ id: string; name: string; createdAt?: string; updatedAt?: string }>>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
@@ -45,7 +45,7 @@ export default function RoomsPage() {
         return
       }
       const data = await res.json()
-      const newRoom = { id: data.id, name }
+      const newRoom = { id: data.id, name, createdAt: new Date().toISOString() }
       setRooms(r => (r.some(x => x.id === newRoom.id) ? r : [...r, newRoom]))
       setSelectedId(newRoom.id)
       localStorage.setItem('jdr_my_room', newRoom.id)
@@ -76,7 +76,8 @@ export default function RoomsPage() {
             onClick={() => { setSelectedId(r.id); localStorage.setItem('jdr_my_room', r.id) }}
             className={`p-3 rounded-lg bg-black/30 flex flex-col gap-2 cursor-pointer ${selectedId===r.id ? 'ring-2 ring-pink-300' : ''}`}
           >
-            <span className="truncate block">{r.name}</span>
+            <span className="truncate block">{r.name || r.id}</span>
+            <span className="text-xs text-white/60">{r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ''}</span>
             <button
               className="text-sm underline"
               onClick={e => { e.stopPropagation(); joinRoom(r.id) }}
