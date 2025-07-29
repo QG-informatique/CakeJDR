@@ -44,6 +44,13 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
     (storage.get('summary') as any).update({ acts })
   }, [])
 
+  const deletePage = useMutation(({ storage }, id: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const summary = storage.get('summary') as any
+    const acts = (summary.get('acts') as Page[]) || []
+    summary.update({ acts: acts.filter(p => p.id !== id) })
+  }, [])
+
   const updateEditor = useMutation(({ storage }, content: string) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     storage.set('editor', content as any)
@@ -121,18 +128,15 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
 
   const handleDelete = () => {
     if (!pages || !current) return
-    if (confirm('Voulez-vous vraiment supprimer cette page ?')) {
-      const rest = pages.filter(p => p.id !== current.id)
-      if (rest.length === 0) {
-        const newPage = { id: crypto.randomUUID(), title: 'Nouvelle page', content: '' }
-        updatePages([newPage])
-        setCurrentId(newPage.id)
-      } else {
-        updatePages(rest)
-        setCurrentId(rest[0].id)
-      }
-      setEditorKey(k => k + 1)
+    if (!confirm('Voulez-vous vraiment supprimer cette page ?')) return
+    const rest = pages.filter(p => p.id !== current.id)
+    if (rest.length === 0) {
+      alert('Impossible de supprimer la dernière page')
+      return
     }
+    deletePage(current.id)
+    setCurrentId(rest[0].id)
+    setEditorKey(k => k + 1)
   }
 
   const editorConfig = liveblocksConfig({
