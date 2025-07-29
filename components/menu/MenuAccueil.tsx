@@ -224,8 +224,8 @@ export default function MenuAccueil() {
         saveCharacters([...characters, withId])
         localStorage.setItem(SELECTED_KEY, String(id))
         setSelectedIdx(characters.length)
-        alert('Fiche importée !')
-      } catch { alert('Erreur : fichier invalide.') }
+        alert('Sheet imported!')
+      } catch { alert('Error: invalid file.') }
     }
     reader.readAsText(file)
     e.target.value = ''

@@ -46,7 +46,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
   }, [])
 
   const deleteRoom = async (room: RoomInfo) => {
-    if (!window.confirm('Supprimer cette room ?')) return
+    if (!window.confirm('Delete this room?')) return
     await fetch('/api/rooms', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },

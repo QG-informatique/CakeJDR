@@ -148,9 +148,9 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
     setModal(null)
   }
 
-  // Reset fiche
+  // Reset sheet
   const handleReset = () => {
-    if (window.confirm("Vraiment réinitialiser la fiche ? (Suppression irréversible)")) {
+    if (window.confirm("Really reset the sheet? (This will delete it)")) {
       onUpdate({ ...defaultPerso })
       setOpen(false)
     }
