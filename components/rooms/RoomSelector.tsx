@@ -31,7 +31,7 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
 
 
   useEffect(() => {
-    fetch('/api/rooms')
+    fetch('/api/rooms/list')
       .then(res => (res.ok ? res.json() : Promise.reject()))
       .then(data => setRooms(data.rooms || []))
       .catch(() => setRooms([]))
@@ -49,6 +49,15 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
     if (!res.ok) { setCreating(false); return }
     const data = await res.json()
     localStorage.setItem('jdr_my_room', data.id)
+    try {
+      const raw = localStorage.getItem('jdr_profile')
+      if (raw) {
+        const prof = JSON.parse(raw)
+        prof.isMJ = true
+        localStorage.setItem('jdr_profile', JSON.stringify(prof))
+        window.dispatchEvent(new Event('jdr_profile_change'))
+      }
+    } catch {}
     onClose?.()
     onSelect?.({ id: data.id, name, password: password || undefined, createdAt: new Date().toISOString() })
   }

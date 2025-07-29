@@ -10,17 +10,21 @@ export async function listRooms() {
     password?: string
     createdAt: string
     updatedAt?: string
+    usersConnected: number
   }> = []
   let cursor: string | undefined
   do {
     const { data, nextCursor } = await client.getRooms({ startingAfter: cursor, limit: 50 })
     for (const r of data) {
+      if (r.id === 'rooms-index' || r.metadata?.name === 'rooms-index') continue
+      const count = (r as { usersCount?: number }).usersCount
       rooms.push({
         id: r.id,
         name: typeof r.metadata?.name === 'string' ? r.metadata.name : '',
         password: typeof r.metadata?.password === 'string' ? r.metadata.password : undefined,
         createdAt: r.createdAt.toISOString(),
-        updatedAt: r.lastConnectionAt ? r.lastConnectionAt.toISOString() : undefined
+        updatedAt: r.lastConnectionAt ? r.lastConnectionAt.toISOString() : undefined,
+        usersConnected: typeof count === 'number' ? count : 0
       })
     }
     cursor = nextCursor ?? undefined
@@ -52,4 +56,11 @@ export async function deleteRoom(id: string) {
   if (!secret) throw new Error('Liveblocks key missing')
   const client = new Liveblocks({ secret })
   await client.deleteRoom(id)
+}
+
+export async function renameRoom(id: string, name: string) {
+  const secret = process.env.LIVEBLOCKS_SECRET_KEY
+  if (!secret) throw new Error('Liveblocks key missing')
+  const client = new Liveblocks({ secret })
+  await client.updateRoom(id, { metadata: { name } })
 }

@@ -38,6 +38,15 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
       createdAt: new Date().toISOString(),
     }
     localStorage.setItem('jdr_my_room', data.id)
+    try {
+      const raw = localStorage.getItem('jdr_profile')
+      if (raw) {
+        const prof = JSON.parse(raw)
+        prof.isMJ = true
+        localStorage.setItem('jdr_profile', JSON.stringify(prof))
+        window.dispatchEvent(new Event('jdr_profile_change'))
+      }
+    } catch {}
     setCreating(false)
     window.dispatchEvent(new Event('jdr_rooms_change'))
     onCreated?.(room)
