@@ -75,19 +75,19 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
   // Champs standards
   const shortFields = [
     { key: 'race', label: 'Race' },
-    { key: 'classe', label: 'Classe' },
-    { key: 'sexe', label: 'Sexe' },
-    { key: 'age', label: 'Âge' },
-    { key: 'taille', label: 'Taille' },
-    { key: 'poids', label: 'Poids' },
-    { key: 'bourse', label: 'Bourse (PA)' },
+    { key: 'classe', label: 'Class' },
+    { key: 'sexe', label: 'Gender' },
+    { key: 'age', label: 'Age' },
+    { key: 'taille', label: 'Height' },
+    { key: 'poids', label: 'Weight' },
+    { key: 'bourse', label: 'Purse (gp)' },
   ]
   const longFields = [
-    { key: 'traits', label: 'Trait perso' },
-    { key: 'ideal', label: 'Idéal' },
-    { key: 'obligations', label: 'Obligations' },
-    { key: 'failles', label: 'Failles' },
-    { key: 'avantages', label: 'Avantages' },
+    { key: 'traits', label: 'Traits' },
+    { key: 'ideal', label: 'Ideal' },
+    { key: 'obligations', label: 'Bonds' },
+    { key: 'failles', label: 'Flaws' },
+    { key: 'avantages', label: 'Features' },
     { key: 'background', label: 'Background' }
   ]
 
@@ -121,13 +121,13 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
         </div>
       ))}
 
-      {/* Capacité raciale alignée */}
+      {/* Racial ability */}
       <div className="grid grid-cols-[120px_18px_1fr] mb-2 items-start">
         <label
           className="font-semibold text-right select-none"
           style={{ minWidth: LABEL_WIDTH }}
         >
-          Capacité raciale
+          Racial ability
         </label>
         <span className="text-right font-bold">:</span>
         <div className="flex-1 min-w-0 break-words pl-3">
@@ -144,7 +144,7 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
         </div>
       </div>
 
-      {/* Champs longs (voir plus) alignés */}
+      {/* Long fields (see more) */}
       {longFields.map(({ key, label }) => (
         <div key={key} className="grid grid-cols-[120px_18px_1fr] mb-2 items-start">
           <label
@@ -171,7 +171,7 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
 
       {/* Champs persos dynamiques */}
       <div className="mt-2">
-        <div className="font-semibold text-base mb-1">Autres champs</div>
+        <div className="font-semibold text-base mb-1">Custom fields</div>
         {edit ? (
           <>
             <div className="flex flex-col gap-1 mb-1">
@@ -193,7 +193,7 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
                     }}
                     style={{ overflowWrap: 'break-word', minWidth: 0 }}
                   />
-                  <button className="text-xs text-red-400 hover:underline col-span-1 justify-self-end" onClick={() => onDelChamp(i)}>Suppr</button>
+                  <button className="text-xs text-red-400 hover:underline col-span-1 justify-self-end" onClick={() => onDelChamp(i)}>Delete</button>
                 </div>
               ))}
             </div>
@@ -201,14 +201,14 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
               <div className="grid grid-cols-[120px_18px_1fr_80px] gap-1 w-full">
                 <input
                   className="p-1 rounded bg-white text-black text-sm w-full text-right"
-                  placeholder="Nom du champ"
+                  placeholder="Field name"
                   value={newChamp.label || ''}
                   onChange={e => setNewChamp({ ...newChamp, label: e.target.value })}
                 />
                 <span className="text-right font-bold">:</span>
                 <textarea
                   className="p-1 rounded bg-white text-black text-sm flex-1 min-h-[28px] resize-y w-full pl-3"
-                  placeholder="Valeur"
+                  placeholder="Value"
                   value={newChamp.value || ''}
                   onChange={e => setNewChamp({ ...newChamp, value: e.target.value })}
                   style={{ overflowWrap: 'break-word', minWidth: 0 }}
@@ -223,7 +223,7 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
                   setNewChamp({})
                 }}
               >
-                Ajouter
+                Add
               </button>
             </div>
           </>

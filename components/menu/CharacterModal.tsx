@@ -67,32 +67,32 @@ const CharacterModal: FC<Props> = ({
         "
       >
         <h2 className="text-2xl font-bold mb-5 tracking-wide text-white text-center">
-          Édition du personnage
+          Character editing
         </h2>
         {/* Flex column: panels scrollent, boutons fixes en bas */}
         <div className="flex flex-col flex-1 min-h-0">
           <div
             className="flex flex-col lg:flex-row gap-5 flex-1 w-full min-h-0"
           >
-            {/* Statistiques */}
+            {/* Statistics */}
             <div
               className="flex-1 min-w-[260px] bg-white/5 rounded-xl p-4 flex flex-col"
               style={{ minWidth: 320, minHeight: 0, height: "100%", overflowY: "auto" }}
             >
               <h3 className="font-semibold text-lg mb-2 text-emerald-200">
-                Statistiques
+                Statistics
               </h3>
               <StatsPanel perso={character} edit={true} onChange={handlePanelChange} />
             </div>
-            {/* Équipement + Compétences dans la même colonne */}
+            {/* Equipment + Skills in the same column */}
             <div
               className="flex-1 min-w-[260px] bg-white/5 rounded-xl p-0 flex flex-col gap-3"
               style={{ minWidth: 320, minHeight: 0, height: "100%" }}
             >
-              {/* Équipement (moitié hauteur) */}
+              {/* Equipment (half height) */}
               <div className="flex-1 flex flex-col min-h-0 p-4 pb-2">
                 <h3 className="font-semibold text-lg mb-2 text-yellow-200">
-                  Équipement
+                  Equipment
                 </h3>
                 <EquipPanel
                   edit={true}
@@ -112,10 +112,10 @@ const CharacterModal: FC<Props> = ({
                   }}
                 />
               </div>
-              {/* Compétences (moitié hauteur) */}
+              {/* Skills (half height) */}
               <div className="flex-1 flex flex-col min-h-0 p-4 pt-0">
                 <h3 className="font-semibold text-lg mb-2 text-fuchsia-200">
-                  Compétences
+                  Skills
                 </h3>
                 <CompetencesPanel
                   competences={(character.competences as Competence[]) || []}
@@ -184,7 +184,7 @@ const CharacterModal: FC<Props> = ({
                 boxShadow: '0 2px 10px -2px #0006, 0 0 0 1px #fff2 inset'
               }}
             >
-              Annuler
+              Cancel
             </button>
             <button
               onClick={onSave}
@@ -201,7 +201,7 @@ const CharacterModal: FC<Props> = ({
                 boxShadow: '0 2px 16px 0 #1e3a8a22, 0 0 0 1.5px #27408155 inset'
               }}
             >
-              Sauvegarder
+              Save
             </button>
           </div>
         </div>

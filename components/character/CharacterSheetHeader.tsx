@@ -66,7 +66,7 @@ const CharacterSheetHeader: FC<Props> = ({
           `}
           style={{ minHeight: 38 }}
         >
-          {edit ? 'Sauver' : 'Éditer'}
+          {edit ? 'Save' : 'Edit'}
         </button>
       </div>
       <nav className="flex gap-2 mt-2">

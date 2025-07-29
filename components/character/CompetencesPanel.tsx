@@ -17,19 +17,19 @@ const CompetencesPanel: FC<Props> = ({ competences = [], edit, onAdd, onDelete }
 
   return (
     <div className="mt-4">
-      <div className="font-semibold text-base mb-1">Compétences</div>
+      <div className="font-semibold text-base mb-1">Skills</div>
       {edit ? (
         <>
           <div className="flex flex-col gap-2 mb-2">
             {competences.map((c, i) => (
               <div key={i} className="bg-gray-800 rounded px-2 py-1 flex flex-col relative">
                 <div className="font-semibold">{c.nom} <span className="text-xs italic text-gray-300">({c.type})</span></div>
-                <div className="text-xs">Effets : {c.effets} {c.degats && <span>- Dégâts : {c.degats}</span>}</div>
-                <button className="absolute top-1 right-2 text-xs text-red-400 hover:underline" onClick={() => onDelete(i)}>Suppr</button>
+                <div className="text-xs">Effects: {c.effets} {c.degats && <span>- Damage: {c.degats}</span>}</div>
+                <button className="absolute top-1 right-2 text-xs text-red-400 hover:underline" onClick={() => onDelete(i)}>Delete</button>
               </div>
             ))}
           </div>
-          {/* Modal d’ajout */}
+          {/* Add skill modal */}
           <AddCompetenceModal
             open={showCompModal}
             onClose={() => setShowCompModal(false)}
@@ -39,7 +39,7 @@ const CompetencesPanel: FC<Props> = ({ competences = [], edit, onAdd, onDelete }
             className="bg-blue-600 hover:bg-blue-700 text-white text-sm rounded px-2 py-1"
             onClick={() => setShowCompModal(true)}
           >
-            Ajouter une compétence
+            Add skill
           </button>
         </>
       ) : (
@@ -47,7 +47,7 @@ const CompetencesPanel: FC<Props> = ({ competences = [], edit, onAdd, onDelete }
           {competences.map((c, i) => (
             <div key={i} className="bg-gray-800 rounded px-2 py-1">
               <div className="font-semibold">{c.nom} <span className="text-xs italic text-gray-300">({c.type})</span></div>
-              <div className="text-xs">Effets : {c.effets} {c.degats && <span>- Dégâts : {c.degats}</span>}</div>
+              <div className="text-xs">Effects: {c.effets} {c.degats && <span>- Damage: {c.degats}</span>}</div>
             </div>
           ))}
           {competences.length === 0 && <span className="text-gray-400 text-xs">No skill.</span>}
