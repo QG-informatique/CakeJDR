@@ -61,3 +61,9 @@ body, .scrollable {
   scrollbar-width: thin;   /* "thin" c'est 4-6px selon le navigateur, mais c'est le plus fin possible */
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-bg);
 }
+
+/* Highlight active toolbar toggles */
+.lb-lexical-toolbar [data-state='on'] {
+  background-color: rgba(250, 204, 21, 0.2);
+  outline: 1px solid #facc15;
+}

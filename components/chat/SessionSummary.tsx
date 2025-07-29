@@ -36,6 +36,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
   const pages = summary?.acts as Page[] | undefined
   const [currentId, setCurrentId] = useState<string>('')
   const [editorKey, setEditorKey] = useState(0)
+  const [showFileMenu, setShowFileMenu] = useState(false)
 
   const updatePages = useMutation(({ storage }, acts: Page[]) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -78,6 +79,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
         setCurrentId(newPages[0].id)
         setEditorKey(k => k + 1)
       }
+      setShowFileMenu(false)
     })
   }
 
@@ -91,6 +93,23 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
     a.download = 'summary.txt'
     a.click()
     URL.revokeObjectURL(url)
+    setShowFileMenu(false)
+  }
+
+  const handleDelete = () => {
+    if (!pages || !current) return
+    if (confirm('Voulez-vous vraiment supprimer cette page ?')) {
+      const rest = pages.filter(p => p.id !== current.id)
+      if (rest.length === 0) {
+        const newPage = { id: crypto.randomUUID(), title: 'Nouvelle page', content: '' }
+        updatePages([newPage])
+        setCurrentId(newPage.id)
+      } else {
+        updatePages(rest)
+        setCurrentId(rest[0].id)
+      }
+      setEditorKey(k => k + 1)
+    }
   }
 
   const editorConfig = liveblocksConfig({
@@ -99,22 +118,37 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
   })
 
   return (
-    <div className="absolute inset-0 bg-black/35 backdrop-blur-[3px] border border-white/10 rounded-2xl shadow-2xl flex flex-col h-full w-full z-20 p-3 animate-fadeIn" style={{ minHeight: 0 }}>
-      <div className="flex items-center gap-2 mb-3">
-        <button onClick={handleNewPage} className="bg-black/40 text-white px-2 py-1 rounded text-sm">Nouvelle page</button>
-        <select value={currentId} onChange={e => { setCurrentId(e.target.value); setEditorKey(k => k + 1) }} className="bg-black/40 text-white rounded px-2 py-1 text-sm">
+    <div className="absolute inset-0 bg-black/35 backdrop-blur-[3px] border border-white/10 rounded-2xl shadow-2xl flex flex-col h-full w-full z-20 p-3 animate-fadeIn overflow-visible" style={{ minHeight: 0 }}>
+      <div className="flex items-center gap-2 mb-3 relative">
+        <button onClick={handleNewPage} className="bg-black/40 text-white px-2 py-1 rounded text-sm">+</button>
+        <select value={currentId} onChange={e => { setCurrentId(e.target.value); setEditorKey(k => k + 1) }} className="bg-black/40 text-white rounded px-2 py-1 text-sm w-32">
           {pages?.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
         </select>
-        <button onClick={handleExport} className="bg-black/40 text-white px-2 py-1 rounded text-sm">Exporter</button>
-        <label className="bg-black/40 text-white px-2 py-1 rounded text-sm cursor-pointer">
-          Importer
-          <input type="file" accept="text/plain" onChange={handleImport} className="hidden" />
-        </label>
+        <button onClick={handleDelete} className="bg-black/40 text-white px-2 py-1 rounded text-sm">🗑️</button>
+        <div className="relative">
+          <button onClick={() => setShowFileMenu(m => !m)} className="bg-black/40 text-white px-2 py-1 rounded text-sm">📁</button>
+          {showFileMenu && (
+            <div className="absolute right-0 mt-1 z-40 bg-black/80 rounded shadow p-1 w-32 flex flex-col">
+              <label className="px-2 py-1 hover:bg-white/10 cursor-pointer text-sm">
+                Importer
+                <input type="file" accept="text/plain" onChange={handleImport} className="hidden" />
+              </label>
+              <button onClick={handleExport} className="text-left px-2 py-1 hover:bg-white/10 text-sm">Exporter</button>
+            </div>
+          )}
+        </div>
         <button onClick={onClose} className="ml-auto text-white/80 hover:text-red-500 text-xl">✕</button>
       </div>
       {current && (
         <LexicalComposer key={editorKey} initialConfig={editorConfig}>
-          <Toolbar />
+          <Toolbar className="mb-2" >
+            <Toolbar.BlockSelector />
+            <Toolbar.SectionInline />
+            <div className="ml-auto flex gap-1">
+              <Toolbar.SectionHistory />
+            </div>
+          </Toolbar>
+          <h2 className="text-center font-semibold mb-2">{current.title}</h2>
           <RichTextPlugin
             contentEditable={<ContentEditable className="flex-1 min-h-0 p-2 bg-black/20 rounded text-white outline-none" />}
             placeholder={<div>Start writing...</div>}
