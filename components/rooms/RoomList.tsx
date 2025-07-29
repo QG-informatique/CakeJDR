@@ -1,9 +1,14 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useStorage } from '@liveblocks/react'
 import { Lock } from 'lucide-react'
 
-export type RoomInfo = { id: string; name: string; password?: string }
+export type RoomInfo = {
+  id: string
+  name: string
+  password?: string
+  createdAt?: string
+  updatedAt?: string
+}
 
 interface Props {
   onSelect?: (room: RoomInfo) => void
@@ -12,13 +17,12 @@ interface Props {
 }
 
 export default function RoomList({ onSelect, selectedId, onCreateClick }: Props) {
-  const liveRooms = useStorage(root => root.rooms)
   const [rooms, setRooms] = useState<RoomInfo[]>([])
-  const displayRooms = liveRooms ? (Array.from(liveRooms) as RoomInfo[]) : rooms
   const [joiningId, setJoiningId] = useState<string | null>(null)
   const [joinPassword, setJoinPassword] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [myRoom, setMyRoom] = useState<string | null>(null)
+  const [revealIds, setRevealIds] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     const update = () => {
@@ -79,28 +83,38 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
   return (
     <div className="rounded-xl backdrop-blur-md bg-black/20 p-4 border border-white/10 shadow-lg">
       <h2 className="text-lg font-semibold mb-2">Rooms</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-60 overflow-y-auto pr-1">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-96 overflow-y-auto p-3">
         <button
           onClick={onCreateClick}
-          className="flex items-center justify-center p-3 rounded-lg bg-pink-700/50 hover:bg-pink-700 text-sm font-semibold"
+          className="flex flex-col items-center justify-center p-3 rounded-lg bg-[#ff90cc]/60 hover:bg-[#ff90cc] text-center"
         >
-          + Create
+          <span className="text-2xl">🧁</span>
+          <span className="text-sm font-semibold mt-1">Create a room</span>
         </button>
-        {displayRooms.map(r => (
+        {rooms.map(r => (
           <div
             key={r.id}
-            className={`p-3 rounded-lg cursor-pointer flex flex-col gap-1 ${selectedId===r.id ? 'ring-2 ring-pink-300' : 'bg-black/30'}`}
+            className={`p-3 rounded-lg cursor-pointer flex flex-col gap-1 ${selectedId===r.id ? 'ring-2 ring-emerald-400/90 shadow-[0_0_12px_2px_rgba(16,185,129,0.6)]' : 'bg-black/30 hover:ring-2 hover:ring-emerald-300/40'}`}
             onClick={() => joinRoom(r)}
           >
             <div className="flex justify-between items-center gap-1">
               <span className="truncate flex-1 flex items-center gap-1 text-sm">
-                {r.password && <Lock size={12} className="text-pink-300" />} {r.name}
+                {r.password && <Lock size={12} className="text-pink-300" />} {r.name || 'Unnamed'}
               </span>
               {myRoom===r.id && <span title="Creator">👑</span>}
               {myRoom===r.id && (
                 <button onClick={(e)=>{e.stopPropagation();deleteRoom(r)}} className="ml-1 text-red-400" title="Delete">🗑️</button>
               )}
             </div>
+            <span className="text-xs text-white/60 truncate">
+              {r.updatedAt ? new Date(r.updatedAt).toLocaleDateString() : new Date(r.createdAt ?? '').toLocaleDateString()}
+            </span>
+            <span
+              className="text-[10px] text-white/40 cursor-pointer select-none"
+              onClick={e => { e.stopPropagation(); setRevealIds(prev => ({ ...prev, [r.id]: !prev[r.id] })) }}
+            >
+              {revealIds[r.id] ? r.id : 'ID'}
+            </span>
             {joiningId === r.id && r.password && (
               <>
                 <input
