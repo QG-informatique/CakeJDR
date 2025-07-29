@@ -76,7 +76,7 @@ export default function RoomsPage() {
             onClick={() => { setSelectedId(r.id); localStorage.setItem('jdr_my_room', r.id) }}
             className={`p-3 rounded-lg flex flex-col gap-2 cursor-pointer ${selectedId===r.id ? 'ring-2 ring-emerald-400/90 shadow-[0_0_12px_2px_rgba(16,185,129,0.6)]' : 'bg-black/30 hover:ring-2 hover:ring-emerald-300/40'}`}
           >
-            <span className="truncate block">{r.name || r.id}</span>
+            <span className="truncate block">{r.name || 'Unnamed'}</span>
             <span className="text-xs text-white/60">{r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ''}</span>
             <button
               className="text-sm underline"

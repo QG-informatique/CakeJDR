@@ -86,9 +86,10 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-96 overflow-y-auto p-3">
         <button
           onClick={onCreateClick}
-          className="flex items-center justify-center p-3 rounded-lg bg-[#ff90cc]/60 hover:bg-[#ff90cc] text-xl"
+          className="flex flex-col items-center justify-center p-3 rounded-lg bg-[#ff90cc]/60 hover:bg-[#ff90cc] text-center"
         >
-          🧁
+          <span className="text-2xl">🧁</span>
+          <span className="text-sm font-semibold mt-1">Create a room</span>
         </button>
         {rooms.map(r => (
           <div
@@ -98,7 +99,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
           >
             <div className="flex justify-between items-center gap-1">
               <span className="truncate flex-1 flex items-center gap-1 text-sm">
-                {r.password && <Lock size={12} className="text-pink-300" />} {r.name || r.id}
+                {r.password && <Lock size={12} className="text-pink-300" />} {r.name || 'Unnamed'}
               </span>
               {myRoom===r.id && <span title="Creator">👑</span>}
               {myRoom===r.id && (
