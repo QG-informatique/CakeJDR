@@ -131,7 +131,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
             <span className="text-xs text-white/60 truncate">
               {r.updatedAt ? new Date(r.updatedAt).toLocaleDateString() : new Date(r.createdAt ?? '').toLocaleDateString()}
             </span>
-            {typeof r.usersConnected === 'number' && (
+            {typeof r.usersConnected === 'number' && r.usersConnected > 0 && (
               <span className="text-xs text-white/50">{r.usersConnected} online</span>
             )}
             <span
