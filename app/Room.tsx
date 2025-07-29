@@ -22,7 +22,7 @@ export function Room({ id, children }: { id: string; children: ReactNode }) {
           images: new LiveMap(),
           music: new LiveObject({ id: '', playing: false }),
           summary: new LiveObject({ acts: [] }),
-          editor: '',
+          editor: new LiveMap(),
           events: new LiveList([]),
           rooms: new LiveList([])
         }}
