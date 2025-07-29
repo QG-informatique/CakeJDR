@@ -14,7 +14,7 @@ export default function RoomsPage() {
   const router = useRouter()
 
   useEffect(() => {
-    fetch('/api/rooms')
+    fetch('/api/rooms/list')
       .then(res => res.json())
       .then(data => {
         setRooms(Array.isArray(data.rooms) ? data.rooms : [])
