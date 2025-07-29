@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import { useMutation } from '@liveblocks/react'
 import type { RoomInfo } from './RoomList'
 
 interface Props {
@@ -15,9 +14,6 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
   const [password, setPassword] = useState('')
   const [creating, setCreating] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
-  const addRoom = useMutation(({ storage }, room: RoomInfo) => {
-    storage.get('rooms').push(room)
-  }, [])
 
   if (!open) return null
 
@@ -38,7 +34,6 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
     const room = { id: data.id, name, password: password || undefined }
     localStorage.setItem('jdr_my_room', data.id)
     setCreating(false)
-    addRoom(room)
     window.dispatchEvent(new Event('jdr_rooms_change'))
     onCreated?.(room)
     onClose()

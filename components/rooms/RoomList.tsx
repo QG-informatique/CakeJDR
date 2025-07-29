@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useStorage } from '@liveblocks/react'
 import { Lock } from 'lucide-react'
 
 export type RoomInfo = { id: string; name: string; password?: string }
@@ -12,9 +11,7 @@ interface Props {
 }
 
 export default function RoomList({ onSelect, selectedId, onCreateClick }: Props) {
-  const liveRooms = useStorage(root => root.rooms)
   const [rooms, setRooms] = useState<RoomInfo[]>([])
-  const displayRooms = liveRooms ? (Array.from(liveRooms) as RoomInfo[]) : rooms
   const [joiningId, setJoiningId] = useState<string | null>(null)
   const [joinPassword, setJoinPassword] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
@@ -86,7 +83,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
         >
           + Create
         </button>
-        {displayRooms.map(r => (
+        {rooms.map(r => (
           <div
             key={r.id}
             className={`p-3 rounded-lg cursor-pointer flex flex-col gap-1 ${selectedId===r.id ? 'ring-2 ring-pink-300' : 'bg-black/30'}`}
