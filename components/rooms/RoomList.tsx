@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { Lock } from 'lucide-react'
+import RoomAvatarStack from './RoomAvatarStack'
 
 export type RoomInfo = {
   id: string
@@ -113,7 +114,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
         {rooms.map(r => (
           <div
             key={r.id}
-            className={`p-3 rounded-lg cursor-pointer flex flex-col gap-1 ${selectedId===r.id ? 'ring-2 ring-emerald-400/90 shadow-[0_0_12px_2px_rgba(16,185,129,0.6)]' : 'bg-black/30 hover:ring-2 hover:ring-emerald-300/40'}`}
+            className={`relative p-3 rounded-lg cursor-pointer flex flex-col gap-1 ${selectedId===r.id ? 'ring-2 ring-emerald-400/90 shadow-[0_0_12px_2px_rgba(16,185,129,0.6)]' : 'bg-black/30 hover:ring-2 hover:ring-emerald-300/40'}`}
             onClick={() => joinRoom(r)}
           >
             <div className="flex justify-between items-center gap-1">
@@ -131,9 +132,9 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
             <span className="text-xs text-white/60 truncate">
               {r.updatedAt ? new Date(r.updatedAt).toLocaleDateString() : new Date(r.createdAt ?? '').toLocaleDateString()}
             </span>
-            {typeof r.usersConnected === 'number' && r.usersConnected > 0 && (
-              <span className="text-xs text-white/50">{r.usersConnected} online</span>
-            )}
+            <div className="absolute top-1 right-1 pointer-events-none">
+              <RoomAvatarStack id={r.id} />
+            </div>
             <span
               className="text-[10px] text-white/40 cursor-pointer select-none"
               onClick={e => { e.stopPropagation(); setRevealIds(prev => ({ ...prev, [r.id]: !prev[r.id] })) }}
