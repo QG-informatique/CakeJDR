@@ -3,34 +3,62 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function RoomsPage() {
-  const [rooms, setRooms] = useState<{id:string,name:string}[]>([])
+  const [rooms, setRooms] = useState<{ id: string; name: string }[]>([])
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
   const [showCreate, setShowCreate] = useState(false)
   const [withPassword, setWithPassword] = useState(false)
+  const [creating, setCreating] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const router = useRouter()
 
   useEffect(() => {
     fetch('/api/rooms')
       .then(res => res.json())
-      .then(data => setRooms(data.rooms || []))
+      .then(data => {
+        setRooms(Array.isArray(data.rooms) ? data.rooms : [])
+        const saved = localStorage.getItem('jdr_my_room')
+        if (saved) {
+          const match = data.rooms?.find((r: { id: string }) => r.id === saved)
+          if (match) setSelectedId(saved)
+        }
+      })
   }, [])
 
-    const createRoom = async () => {
-      if (!name) return
-      if (localStorage.getItem('jdr_my_room')) { setErrorMsg('You already created a room'); return }
+  const createRoom = async () => {
+    if (!name || creating) return
+    if (localStorage.getItem('jdr_my_room')) {
+      setErrorMsg('You already created a room')
+      return
+    }
+    setCreating(true)
+    try {
       const res = await fetch('/api/rooms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, password })
       })
-    const data = await res.json()
-    localStorage.setItem('jdr_my_room', data.id)
-    router.push(`/room/${data.id}`)
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setErrorMsg(data.error || 'Creation failed')
+        return
+      }
+      const data = await res.json()
+      const newRoom = { id: data.id, name }
+      setRooms(r => (r.some(x => x.id === newRoom.id) ? r : [...r, newRoom]))
+      setSelectedId(newRoom.id)
+      localStorage.setItem('jdr_my_room', newRoom.id)
+      setName('')
+      setPassword('')
+      setShowCreate(false)
+    } finally {
+      setCreating(false)
+    }
   }
 
-  const joinRoom = (id:string) => {
+  const joinRoom = (id: string) => {
+    localStorage.setItem('jdr_my_room', id)
     router.push(`/room/${id}`)
   }
 
@@ -41,18 +69,23 @@ export default function RoomsPage() {
 
 
 
-      <ul className="mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-6">
         {rooms.map(r => (
-          <li key={r.id} className="mb-2">
-            {r.name}
-
-            <button onClick={() => joinRoom(r.id)} className="ml-2 underline">Join</button>
-
-
-
-          </li>
+          <div
+            key={r.id}
+            onClick={() => { setSelectedId(r.id); localStorage.setItem('jdr_my_room', r.id) }}
+            className={`p-3 rounded-lg bg-black/30 flex flex-col gap-2 cursor-pointer ${selectedId===r.id ? 'ring-2 ring-pink-300' : ''}`}
+          >
+            <span className="truncate block">{r.name}</span>
+            <button
+              className="text-sm underline"
+              onClick={e => { e.stopPropagation(); joinRoom(r.id) }}
+            >
+              Join
+            </button>
+          </div>
         ))}
-      </ul>
+      </div>
 
       <details className="mb-4" open={showCreate}>
         <summary
@@ -103,11 +136,10 @@ export default function RoomsPage() {
             )}
             <button
               onClick={createRoom}
-              className="px-4 py-2 bg-blue-600 rounded text-white w-full"
+              disabled={creating}
+              className="px-4 py-2 bg-blue-600 rounded text-white w-full disabled:opacity-50"
             >
-
-              Confirm
-
+              {creating ? 'Creating…' : 'Confirm'}
             </button>
             {errorMsg && (
               <p className="text-red-400 text-sm text-center mt-2">{errorMsg}</p>
