@@ -1,7 +1,12 @@
 'use client'
 import { useOthers } from '@liveblocks/react'
 
-export default function LiveAvatarStack() {
+interface Props {
+  className?: string
+  size?: number
+}
+
+export default function LiveAvatarStack({ className = 'fixed bottom-4 right-4 z-40 flex flex-row-reverse gap-2', size = 24 }: Props) {
   const others = useOthers()
   if (others.length === 0) return null
 
@@ -15,7 +20,7 @@ export default function LiveAvatarStack() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-40 flex flex-row-reverse gap-2">
+    <div className={className}>
       {others.map(({ connectionId, presence }) => {
         const name = presence?.name as string | undefined
         const color = (presence?.color as string) || '#888'
@@ -24,8 +29,8 @@ export default function LiveAvatarStack() {
         return (
           <div key={connectionId} className="relative group">
             <div
-              className="w-6 h-6 rounded-full border border-white flex items-center justify-center text-[10px] font-bold"
-              style={{ backgroundColor: color, color: text }}
+              className="rounded-full border border-white flex items-center justify-center font-bold select-none"
+              style={{ backgroundColor: color, color: text, width: size, height: size, fontSize: size * 0.42 }}
             >
               {name.charAt(0).toUpperCase()}
             </div>
