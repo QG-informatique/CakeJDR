@@ -1,11 +1,10 @@
 'use client'
-import { FC, useEffect, useState } from 'react'
+import { FC, useEffect, useState, useRef } from 'react'
 import { useStorage, useMutation } from '@liveblocks/react'
 import { LexicalComposer } from '@lexical/react/LexicalComposer'
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin'
 import { ContentEditable } from '@lexical/react/LexicalContentEditable'
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary'
-import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin'
 import { LiveblocksPlugin, Toolbar, liveblocksConfig } from '@liveblocks/react-lexical'
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import { $getRoot } from 'lexical'
@@ -37,11 +36,24 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
   const [currentId, setCurrentId] = useState<string>('')
   const [editorKey, setEditorKey] = useState(0)
   const [showFileMenu, setShowFileMenu] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const fileBtnRef = useRef<HTMLButtonElement>(null)
 
   const updatePages = useMutation(({ storage }, acts: Page[]) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (storage.get('summary') as any).update({ acts })
   }, [])
+
+  useEffect(() => {
+    if (!showFileMenu) return
+    const handle = (e: MouseEvent) => {
+      if (!menuRef.current?.contains(e.target as Node) && !fileBtnRef.current?.contains(e.target as Node)) {
+        setShowFileMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', handle)
+    return () => document.removeEventListener('mousedown', handle)
+  }, [showFileMenu])
 
   useEffect(() => {
     if (!pages) return
@@ -126,9 +138,9 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
         </select>
         <button onClick={handleDelete} className="bg-black/40 text-white px-2 py-1 rounded text-sm">🗑️</button>
         <div className="relative">
-          <button onClick={() => setShowFileMenu(m => !m)} className="bg-black/40 text-white px-2 py-1 rounded text-sm">📁</button>
+          <button ref={fileBtnRef} onClick={() => setShowFileMenu(m => !m)} className="bg-black/40 text-white px-2 py-1 rounded text-sm">📁</button>
           {showFileMenu && (
-            <div className="absolute right-0 mt-1 z-40 bg-black/80 rounded shadow p-1 w-32 flex flex-col">
+            <div ref={menuRef} className="absolute right-0 mt-1 z-40 bg-black/80 rounded shadow p-1 w-32 flex flex-col">
               <label className="px-2 py-1 hover:bg-white/10 cursor-pointer text-sm">
                 Importer
                 <input type="file" accept="text/plain" onChange={handleImport} className="hidden" />
@@ -141,12 +153,9 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
       </div>
       {current && (
         <LexicalComposer key={editorKey} initialConfig={editorConfig}>
-          <Toolbar className="mb-2" >
+          <Toolbar className="mb-2">
             <Toolbar.BlockSelector />
             <Toolbar.SectionInline />
-            <div className="ml-auto flex gap-1">
-              <Toolbar.SectionHistory />
-            </div>
           </Toolbar>
           <h2 className="text-center font-semibold mb-2">{current.title}</h2>
           <RichTextPlugin
@@ -154,7 +163,6 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
             placeholder={<div>Start writing...</div>}
             ErrorBoundary={LexicalErrorBoundary}
           />
-          <HistoryPlugin />
           <LiveblocksPlugin />
           <AutoSavePlugin onChange={txt => {
             const newPages = (pages || []).map(p => p.id === current.id ? { ...p, content: txt } : p)
