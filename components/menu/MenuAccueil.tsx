@@ -6,7 +6,6 @@ import { Crown, LogOut, Dice6 } from 'lucide-react'
 import SmallSpinner from '../ui/SmallSpinner'
 import RoomList, { RoomInfo } from '../rooms/RoomList'
 import RoomCreateModal from '../rooms/RoomCreateModal'
-import RoomsIndexProvider from '../rooms/RoomsIndexProvider'
 import { useRouter } from 'next/navigation'
 import Login from '../login/Login'
 import { defaultPerso } from '../sheet/CharacterSheet'
@@ -346,7 +345,6 @@ export default function MenuAccueil() {
               "
             >
               <div className="shrink-0 flex items-center justify-start min-w-[150px] gap-2">
-
                 <button
                   type="button"
                   aria-label="Enter room"
@@ -366,13 +364,13 @@ export default function MenuAccueil() {
                 >
                   <Dice6 className="w-5 h-5 text-white drop-shadow-[0_2px_5px_rgba(255,70,190,0.45)]" />
                 </button>
+                {selectedRoom && (
+                  <span className="text-sm text-white/80 flex items-center gap-2">
+                    {roomLoading && <SmallSpinner />}
+                    {selectedRoom.name || 'Unnamed room'}
+                  </span>
+                )}
               </div>
-              {selectedRoom && (
-                <span className="ml-2 text-sm text-white/80 flex items-center gap-2">
-                  {roomLoading && <SmallSpinner />}
-                  {selectedRoom.name}
-                </span>
-              )}
 
               <div className="flex-1 flex items-center justify-center">
                 <span
@@ -439,20 +437,18 @@ export default function MenuAccueil() {
                 </button>
               </div>
             </section>
-            <RoomsIndexProvider>
-              <div className="mb-4">
-                <RoomList
-                  selectedId={selectedRoom?.id || null}
-                  onSelect={handleRoomSelect}
-                  onCreateClick={() => setCreateRoomOpen(true)}
-                />
-              </div>
-              <RoomCreateModal
-                open={createRoomOpen}
-                onClose={() => setCreateRoomOpen(false)}
-                onCreated={handleRoomSelect}
+            <div className="mb-4">
+              <RoomList
+                selectedId={selectedRoom?.id || null}
+                onSelect={handleRoomSelect}
+                onCreateClick={() => setCreateRoomOpen(true)}
               />
-            </RoomsIndexProvider>
+            </div>
+            <RoomCreateModal
+              open={createRoomOpen}
+              onClose={() => setCreateRoomOpen(false)}
+              onCreated={handleRoomSelect}
+            />
 
             {/* Liste des personnages */}
             <div className="flex-1 min-h-0 rounded-xl backdrop-blur-md bg-black/20 p-5 overflow-auto">

@@ -1,62 +1,51 @@
-import { promises as fs } from 'fs'
-import path from 'path'
-import { NextResponse } from 'next/server'
-import { readRooms, saveRooms } from '@/lib/rooms'
-
+import { NextRequest, NextResponse } from 'next/server'
+import { listRooms, createRoom, deleteRoom } from '@/lib/liveRooms'
 
 export async function GET() {
   try {
-    const rooms = await readRooms();
-    return NextResponse.json({ rooms });
-  } catch {
-    return NextResponse.json({ error: "Failed to list rooms" }, { status: 500 });
+    const rooms = await listRooms()
+    return NextResponse.json({ rooms })
+  } catch (e) {
+    console.error(e)
+    return NextResponse.json({ error: 'Failed to list rooms' }, { status: 500 })
   }
 }
-export async function POST(req: Request) {
+
+export async function POST(req: NextRequest) {
   try {
     const { name, password } = await req.json()
-    const id = `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now()}`
-  const rooms = await readRooms()
-  rooms.push({ id, name, password })
-  await saveRooms(rooms)
-  return NextResponse.json({ id })
-  } catch {
+    if (!name || typeof name !== 'string') {
+      return NextResponse.json({ error: 'missing name' }, { status: 400 })
+    }
+    const id = await createRoom(name, typeof password === 'string' ? password : undefined)
+    return NextResponse.json({ id })
+  } catch (e) {
+    const msg = (e as Error).message
+    if (msg === 'name_exists') {
+      return NextResponse.json({ error: 'name already used' }, { status: 400 })
+    }
+    if (msg === 'Liveblocks key missing') {
+      return NextResponse.json({ error: msg }, { status: 500 })
+    }
+    console.error(e)
     return NextResponse.json({ error: 'Failed to create room' }, { status: 500 })
   }
 }
 
-export async function PUT(req: Request) {
-  try {
-    const { id, empty } = await req.json()
-    const rooms = await readRooms()
-    const idx = rooms.findIndex((r) => r.id === id)
-    if (idx !== -1) {
-      rooms[idx].emptySince = empty ? Date.now() : null
-      await saveRooms(rooms)
-    }
-    return NextResponse.json({ ok: true })
-  } catch {
-    return NextResponse.json({ error: 'Failed to update room' }, { status: 500 })
-  }
-}
-
-export async function DELETE(req: Request) {
+export async function DELETE(req: NextRequest) {
   try {
     const { id } = await req.json()
-    if (!id) return NextResponse.json({ error: 'missing id' }, { status: 400 })
-    const rooms = await readRooms()
-    const idx = rooms.findIndex(r => r.id === id)
-    if (idx !== -1) {
-      rooms.splice(idx, 1)
-      await saveRooms(rooms)
+    if (!id || typeof id !== 'string') {
+      return NextResponse.json({ error: 'missing id' }, { status: 400 })
     }
-    try {
-      await fs.unlink(path.resolve(process.cwd(), 'RoomData', `${id}.json`))
-    } catch {
-      /* ignore */
-    }
+    await deleteRoom(id)
     return NextResponse.json({ ok: true })
-  } catch {
+  } catch (e) {
+    const msg = (e as Error).message
+    if (msg === 'Liveblocks key missing') {
+      return NextResponse.json({ error: msg }, { status: 500 })
+    }
+    console.error(e)
     return NextResponse.json({ error: 'Failed to delete room' }, { status: 500 })
   }
 }
