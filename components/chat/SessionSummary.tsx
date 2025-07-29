@@ -19,13 +19,25 @@ interface Page {
 interface Props { onClose: () => void }
 
 function textToState(text: string): SerializedEditorState {
+  const textNode = text
+    ? {
+        type: 'text',
+        text,
+        format: 0,
+        detail: 0,
+        mode: 'normal',
+        style: '',
+        version: 1,
+      }
+    : undefined
+
   return {
     root: {
       type: 'root',
       format: '',
       indent: 0,
       version: 1,
-      direction: 'ltr',
+      direction: null,
       children: [
         {
           type: 'paragraph',
@@ -33,23 +45,13 @@ function textToState(text: string): SerializedEditorState {
           indent: 0,
           version: 1,
           direction: null,
-          children: text
-            ? [
-                {
-                  type: 'text',
-                  text,
-                  format: 0,
-                  detail: 0,
-                  mode: 'normal',
-                  style: '',
-                  version: 1,
-                },
-              ]
-            : [],
+          textFormat: 0,
+          textStyle: '',
+          children: textNode ? [textNode] : [],
         },
       ],
     },
-  }
+  } as unknown as SerializedEditorState
 }
 
 function AutoSavePlugin({ onChange }: { onChange: (text: string) => void }) {
