@@ -345,7 +345,6 @@ export default function MenuAccueil() {
               "
             >
               <div className="shrink-0 flex items-center justify-start min-w-[150px] gap-2">
-
                 <button
                   type="button"
                   aria-label="Enter room"
@@ -365,13 +364,13 @@ export default function MenuAccueil() {
                 >
                   <Dice6 className="w-5 h-5 text-white drop-shadow-[0_2px_5px_rgba(255,70,190,0.45)]" />
                 </button>
+                {selectedRoom && (
+                  <span className="text-sm text-white/80 flex items-center gap-2">
+                    {roomLoading && <SmallSpinner />}
+                    {selectedRoom.name || 'Unnamed room'}
+                  </span>
+                )}
               </div>
-              {selectedRoom && (
-                <span className="ml-2 text-sm text-white/80 flex items-center gap-2">
-                  {roomLoading && <SmallSpinner />}
-                  {selectedRoom.name || 'Unnamed room'}
-                </span>
-              )}
 
               <div className="flex-1 flex items-center justify-center">
                 <span
