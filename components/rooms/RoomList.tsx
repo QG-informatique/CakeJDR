@@ -8,12 +8,20 @@ export type RoomInfo = {
   password?: string
   createdAt?: string
   updatedAt?: string
+  usersConnected?: number
 }
 
 interface Props {
   onSelect?: (room: RoomInfo) => void
   selectedId?: string | null
   onCreateClick?: () => void
+}
+
+export async function fetchRooms() {
+  const res = await fetch('/api/rooms/list')
+  if (!res.ok) throw new Error('failed')
+  const data = await res.json()
+  return Array.isArray(data.rooms) ? data.rooms as RoomInfo[] : []
 }
 
 export default function RoomList({ onSelect, selectedId, onCreateClick }: Props) {
@@ -26,9 +34,8 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
 
   useEffect(() => {
     const update = () => {
-      fetch('/api/rooms')
-        .then(res => (res.ok ? res.json() : Promise.reject()))
-        .then(data => setRooms(data.rooms || []))
+      fetchRooms()
+        .then(setRooms)
         .catch(() => setRooms([]))
       setMyRoom(localStorage.getItem('jdr_my_room'))
     }
@@ -50,6 +57,18 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
       localStorage.removeItem('jdr_my_room')
       setMyRoom(null)
     }
+  }
+
+  const renameRoom = async (room: RoomInfo) => {
+    const newName = window.prompt('Nouveau nom ?', room.name)
+    if (!newName || newName === room.name) return
+    await fetch('/api/rooms', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: room.id, name: newName })
+    })
+    setRooms(r => r.map(x => x.id === room.id ? { ...x, name: newName } : x))
+    window.dispatchEvent(new Event('jdr_rooms_change'))
   }
 
   const joinRoom = (room: RoomInfo) => {
@@ -103,12 +122,18 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
               </span>
               {myRoom===r.id && <span title="Creator">👑</span>}
               {myRoom===r.id && (
-                <button onClick={(e)=>{e.stopPropagation();deleteRoom(r)}} className="ml-1 text-red-400" title="Delete">🗑️</button>
+                <>
+                  <button onClick={(e)=>{e.stopPropagation();renameRoom(r)}} className="ml-1 text-yellow-300" title="Rename">✏️</button>
+                  <button onClick={(e)=>{e.stopPropagation();deleteRoom(r)}} className="ml-1 text-red-400" title="Delete">🗑️</button>
+                </>
               )}
             </div>
             <span className="text-xs text-white/60 truncate">
               {r.updatedAt ? new Date(r.updatedAt).toLocaleDateString() : new Date(r.createdAt ?? '').toLocaleDateString()}
             </span>
+            {typeof r.usersConnected === 'number' && (
+              <span className="text-xs text-white/50">{r.usersConnected} online</span>
+            )}
             <span
               className="text-[10px] text-white/40 cursor-pointer select-none"
               onClick={e => { e.stopPropagation(); setRevealIds(prev => ({ ...prev, [r.id]: !prev[r.id] })) }}

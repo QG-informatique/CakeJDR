@@ -9,7 +9,7 @@ export default function RoomPage() {
   const { id } = useParams<{ id: string }>()
 
   useEffect(() => {
-    fetch('/api/rooms')
+    fetch('/api/rooms/list')
       .then(res => res.json())
       .catch(() => {})
   }, [id])

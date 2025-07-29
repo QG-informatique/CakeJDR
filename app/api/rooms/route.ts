@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { listRooms, createRoom, deleteRoom } from '@/lib/liveRooms'
+import { listRooms, createRoom, deleteRoom, renameRoom } from '@/lib/liveRooms'
 
 export async function GET() {
   try {
@@ -47,5 +47,23 @@ export async function DELETE(req: NextRequest) {
     }
     console.error(e)
     return NextResponse.json({ error: 'Failed to delete room' }, { status: 500 })
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const { id, name } = await req.json()
+    if (!id || typeof id !== 'string' || !name || typeof name !== 'string') {
+      return NextResponse.json({ error: 'missing data' }, { status: 400 })
+    }
+    await renameRoom(id, name)
+    return NextResponse.json({ ok: true })
+  } catch (e) {
+    const msg = (e as Error).message
+    if (msg === 'Liveblocks key missing') {
+      return NextResponse.json({ error: msg }, { status: 500 })
+    }
+    console.error(e)
+    return NextResponse.json({ error: 'Failed to rename room' }, { status: 500 })
   }
 }
