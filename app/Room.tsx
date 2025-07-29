@@ -25,6 +25,7 @@ export function Room({
   return (
     <LiveblocksProvider
       publicApiKey={key}
+      // @ts-expect-error - storage is used by Liveblocks devtools
       storage={{
         editor: pages[currentPageId],
         pages,
