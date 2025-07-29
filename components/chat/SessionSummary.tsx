@@ -8,6 +8,7 @@ import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary'
 import { LiveblocksPlugin, Toolbar, liveblocksConfig } from '@liveblocks/react-lexical'
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import { $getRoot } from 'lexical'
+import type { SerializedEditorState } from 'lexical'
 
 interface Page {
   id: string
@@ -16,6 +17,40 @@ interface Page {
 }
 
 interface Props { onClose: () => void }
+
+function textToState(text: string): SerializedEditorState {
+  return {
+    root: {
+      type: 'root',
+      format: '',
+      indent: 0,
+      version: 1,
+      direction: 'ltr',
+      children: [
+        {
+          type: 'paragraph',
+          format: '',
+          indent: 0,
+          version: 1,
+          direction: null,
+          children: text
+            ? [
+                {
+                  type: 'text',
+                  text,
+                  format: 0,
+                  detail: 0,
+                  mode: 'normal',
+                  style: '',
+                  version: 1,
+                },
+              ]
+            : [],
+        },
+      ],
+    },
+  }
+}
 
 function AutoSavePlugin({ onChange }: { onChange: (text: string) => void }) {
   const [editor] = useLexicalComposerContext()
@@ -44,7 +79,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
     (storage.get('summary') as any).update({ acts })
   }, [])
 
-  const updateEditor = useMutation(({ storage }, content: string) => {
+  const updateEditor = useMutation(({ storage }, content: SerializedEditorState) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     storage.set('editor', content as any)
   }, [])
@@ -75,7 +110,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
 
   useEffect(() => {
     if (current) {
-      updateEditor(current.content)
+      updateEditor(textToState(current.content))
     }
   }, [current, updateEditor])
 
@@ -121,16 +156,11 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
 
   const handleDelete = () => {
     if (!pages || !current) return
+    if (pages.length <= 1) return
     if (confirm('Voulez-vous vraiment supprimer cette page ?')) {
       const rest = pages.filter(p => p.id !== current.id)
-      if (rest.length === 0) {
-        const newPage = { id: crypto.randomUUID(), title: 'Nouvelle page', content: '' }
-        updatePages([newPage])
-        setCurrentId(newPage.id)
-      } else {
-        updatePages(rest)
-        setCurrentId(rest[0].id)
-      }
+      updatePages(rest)
+      setCurrentId(rest[0].id)
       setEditorKey(k => k + 1)
     }
   }
@@ -147,7 +177,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
         <select value={currentId} onChange={e => { setCurrentId(e.target.value); setEditorKey(k => k + 1) }} className="bg-black/40 text-white rounded px-2 py-1 text-sm w-32">
           {pages?.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
         </select>
-        <button onClick={handleDelete} className="bg-black/40 text-white px-2 py-1 rounded text-sm">🗑️</button>
+        <button onClick={handleDelete} disabled={pages?.length === 1} className="bg-black/40 text-white px-2 py-1 rounded text-sm disabled:opacity-50">🗑️</button>
         <div className="relative">
           <button ref={fileBtnRef} onClick={() => setShowFileMenu(m => !m)} className="bg-black/40 text-white px-2 py-1 rounded text-sm">📁</button>
           {showFileMenu && (
@@ -178,7 +208,6 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
             <AutoSavePlugin onChange={txt => {
               const newPages = (pages || []).map(p => p.id === current.id ? { ...p, content: txt } : p)
               updatePages(newPages)
-              updateEditor(txt)
             }} />
           </LexicalComposer>
       )}
