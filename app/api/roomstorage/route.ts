@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Liveblocks } from '@liveblocks/node'
+import type { LiveObject } from '@liveblocks/core'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
     if (!secret) return NextResponse.json({ error: 'Liveblocks key missing' }, { status: 500 })
     const client = new Liveblocks({ secret })
     await client.mutateStorage(roomId, ({ root }) => {
-      const map = root.get('characters')
+      const map = (root as LiveObject<Liveblocks['Storage']>).get('characters')
       map.set(String(id), character)
     })
     return NextResponse.json({ ok: true })
@@ -44,7 +45,7 @@ export async function DELETE(req: NextRequest) {
   const client = new Liveblocks({ secret })
   try {
     await client.mutateStorage(roomId, ({ root }) => {
-      const map = root.get('characters')
+      const map = (root as LiveObject<Liveblocks['Storage']>).get('characters')
       map.delete(String(id))
     })
     return NextResponse.json({ ok: true })
