@@ -53,6 +53,8 @@ declare global {
       music: LiveObject<{ id: string; playing: boolean }>;
       summary: LiveObject<{ acts: Array<{ id: string; title: string; content: string }> }>;
       editor: string;
+      pages: LiveList<{ id: string; title: string; content: string }>;
+      currentPageId: string;
       events: LiveList<SessionEvent>;
       rooms: LiveList<Room>;
     };

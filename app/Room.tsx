@@ -23,6 +23,8 @@ export function Room({ id, children }: { id: string; children: ReactNode }) {
           music: new LiveObject({ id: '', playing: false }),
           summary: new LiveObject({ acts: [] }),
           editor: '',
+          pages: new LiveList([]),
+          currentPageId: '',
           events: new LiveList([]),
           rooms: new LiveList([])
         }}

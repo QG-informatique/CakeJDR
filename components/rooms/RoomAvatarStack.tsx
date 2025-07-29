@@ -17,6 +17,8 @@ export default function RoomAvatarStack({ id }: { id: string }) {
           music: new LiveObject({ id: '', playing: false }),
           summary: new LiveObject({ acts: [] }),
           editor: '',
+          pages: new LiveList([]),
+          currentPageId: '',
           events: new LiveList([]),
           rooms: new LiveList([])
         }}

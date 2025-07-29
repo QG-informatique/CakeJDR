@@ -1,6 +1,7 @@
 'use client'
 import { FC, useEffect, useState, useRef } from 'react'
 import { useStorage, useMutation } from '@liveblocks/react'
+import { LiveList } from '@liveblocks/client'
 import { LexicalComposer } from '@lexical/react/LexicalComposer'
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin'
 import { ContentEditable } from '@lexical/react/LexicalContentEditable'
@@ -31,17 +32,19 @@ function AutoSavePlugin({ onChange }: { onChange: (text: string) => void }) {
 }
 
 const SessionSummary: FC<Props> = ({ onClose }) => {
-  const summary = useStorage(root => root.summary)
-  const pages = summary?.acts as Page[] | undefined
+  const pages = useStorage(root => root.pages) as Page[] | undefined
+  const currentStorageId = useStorage(root => root.currentPageId)
   const [currentId, setCurrentId] = useState<string>('')
+  const setStorageCurrent = useMutation(({ storage }, id: string) => {
+    storage.set('currentPageId', id)
+  }, [])
   const [editorKey, setEditorKey] = useState(0)
   const [showFileMenu, setShowFileMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const fileBtnRef = useRef<HTMLButtonElement>(null)
 
   const updatePages = useMutation(({ storage }, acts: Page[]) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (storage.get('summary') as any).update({ acts })
+    storage.set('pages', new LiveList(acts as any))
   }, [])
 
   const updateEditor = useMutation(({ storage }, content: string) => {
@@ -66,10 +69,12 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
       const first = { id: crypto.randomUUID(), title: 'Nouvelle page', content: '' }
       updatePages([first])
       setCurrentId(first.id)
+      setStorageCurrent(first.id)
     } else if (!currentId) {
-      setCurrentId(pages[0].id)
+      const id = currentStorageId || pages[0].id
+      setCurrentId(id)
     }
-  }, [pages, currentId, updatePages])
+  }, [pages, currentId, updatePages, currentStorageId, setStorageCurrent])
 
   const current = pages?.find(p => p.id === currentId)
 
@@ -83,6 +88,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
     const newPage = { id: crypto.randomUUID(), title: 'Nouvelle page', content: '' }
     updatePages([...(pages || []), newPage])
     setCurrentId(newPage.id)
+    setStorageCurrent(newPage.id)
     setEditorKey(k => k + 1)
   }
 
@@ -100,6 +106,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
       if (newPages.length > 0) {
         updatePages(newPages)
         setCurrentId(newPages[0].id)
+        setStorageCurrent(newPages[0].id)
         setEditorKey(k => k + 1)
       }
       setShowFileMenu(false)
@@ -121,16 +128,12 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
 
   const handleDelete = () => {
     if (!pages || !current) return
+    if (pages.length <= 1) return
     if (confirm('Voulez-vous vraiment supprimer cette page ?')) {
       const rest = pages.filter(p => p.id !== current.id)
-      if (rest.length === 0) {
-        const newPage = { id: crypto.randomUUID(), title: 'Nouvelle page', content: '' }
-        updatePages([newPage])
-        setCurrentId(newPage.id)
-      } else {
-        updatePages(rest)
-        setCurrentId(rest[0].id)
-      }
+      updatePages(rest)
+      setCurrentId(rest[0].id)
+      setStorageCurrent(rest[0].id)
       setEditorKey(k => k + 1)
     }
   }
@@ -144,7 +147,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
     <div className="absolute inset-0 bg-black/35 backdrop-blur-[3px] border border-white/10 rounded-2xl shadow-2xl flex flex-col h-full w-full z-20 p-3 animate-fadeIn overflow-visible" style={{ minHeight: 0 }}>
       <div className="flex items-center gap-2 mb-3 relative">
         <button onClick={handleNewPage} className="bg-black/40 text-white px-2 py-1 rounded text-sm">+</button>
-        <select value={currentId} onChange={e => { setCurrentId(e.target.value); setEditorKey(k => k + 1) }} className="bg-black/40 text-white rounded px-2 py-1 text-sm w-32">
+        <select value={currentId} onChange={e => { const id=e.target.value; setCurrentId(id); setStorageCurrent(id); setEditorKey(k => k + 1) }} className="bg-black/40 text-white rounded px-2 py-1 text-sm w-32">
           {pages?.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
         </select>
         <button onClick={handleDelete} className="bg-black/40 text-white px-2 py-1 rounded text-sm">🗑️</button>
