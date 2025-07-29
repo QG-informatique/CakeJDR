@@ -114,7 +114,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
         {rooms.map(r => (
           <div
             key={r.id}
-            className={`p-3 rounded-lg cursor-pointer flex flex-col gap-1 ${selectedId===r.id ? 'ring-2 ring-emerald-400/90 shadow-[0_0_12px_2px_rgba(16,185,129,0.6)]' : 'bg-black/30 hover:ring-2 hover:ring-emerald-300/40'}`}
+            className={`relative p-3 rounded-lg cursor-pointer flex flex-col gap-1 ${selectedId===r.id ? 'ring-2 ring-emerald-400/90 shadow-[0_0_12px_2px_rgba(16,185,129,0.6)]' : 'bg-black/30 hover:ring-2 hover:ring-emerald-300/40'}`}
             onClick={() => joinRoom(r)}
           >
             <div className="flex justify-between items-center gap-1">
