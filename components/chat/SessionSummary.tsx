@@ -4,6 +4,7 @@ import { useStorage, useMutation } from '@liveblocks/react'
 import { LexicalComposer } from '@lexical/react/LexicalComposer'
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin'
 import { ContentEditable } from '@lexical/react/LexicalContentEditable'
+import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary'
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin'
 import { LiveblocksPlugin, Toolbar, liveblocksConfig } from '@liveblocks/react-lexical'
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
@@ -37,7 +38,8 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
   const [editorKey, setEditorKey] = useState(0)
 
   const updatePages = useMutation(({ storage }, acts: Page[]) => {
-    storage.get('summary').update({ acts })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (storage.get('summary') as any).update({ acts })
   }, [])
 
   useEffect(() => {
@@ -113,7 +115,11 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
       {current && (
         <LexicalComposer key={editorKey} initialConfig={editorConfig}>
           <Toolbar />
-          <RichTextPlugin contentEditable={<ContentEditable className="flex-1 min-h-0 p-2 bg-black/20 rounded text-white outline-none" />} placeholder={<div>Start writing...</div>} />
+          <RichTextPlugin
+            contentEditable={<ContentEditable className="flex-1 min-h-0 p-2 bg-black/20 rounded text-white outline-none" />}
+            placeholder={<div>Start writing...</div>}
+            ErrorBoundary={LexicalErrorBoundary}
+          />
           <HistoryPlugin />
           <LiveblocksPlugin />
           <AutoSavePlugin onChange={txt => {
