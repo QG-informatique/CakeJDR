@@ -89,7 +89,7 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
             <li key={r.id} className="flex flex-col gap-1">
               <div className="flex justify-between items-center gap-2">
                 <span className="truncate flex-1 flex items-center gap-1">
-                  {r.password && <Lock size={12} className="text-pink-300" />} {r.name || r.id}
+                  {r.password && <Lock size={12} className="text-pink-300" />} {r.name || 'Unnamed'}
                 </span>
                 {joiningId === r.id && r.password ? (
                   <button
