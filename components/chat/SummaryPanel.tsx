@@ -14,7 +14,7 @@ export default function SummaryPanel({ onClose }: { onClose: () => void }) {
     return id
   }, [])
   const deletePage = useMutation(({ storage }, id: number) => {
-    const arr = storage.get('summary').get('acts') as Page[]
+    const arr = storage.get('summary').get('acts') as unknown as { delete: (i: number) => void; findIndex: (cb: (p: Page) => boolean) => number }
     const index = arr.findIndex((p: Page) => p.id === id)
     if (index >= 0) arr.delete(index)
   }, [])
