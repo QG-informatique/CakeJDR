@@ -29,7 +29,9 @@ export async function listRooms() {
       const roomName =
         typeof r.metadata?.name === 'string' && r.metadata.name
           ? r.metadata.name
-          : r.id.split('-')[0]
+          : r.id.includes('-')
+            ? r.id.substring(0, r.id.lastIndexOf('-'))
+            : r.id
       rooms.push({
         id: r.id,
         name: roomName,
