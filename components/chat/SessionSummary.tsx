@@ -1,7 +1,7 @@
 'use client'
 import { FC, useEffect, useState, useRef } from 'react'
 import { useStorage, useMutation } from '@liveblocks/react'
-import { LiveList } from '@liveblocks/client'
+import { LiveList, LsonObject } from '@liveblocks/client'
 import { LexicalComposer } from '@lexical/react/LexicalComposer'
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin'
 import { ContentEditable } from '@lexical/react/LexicalContentEditable'
@@ -10,7 +10,7 @@ import { LiveblocksPlugin, Toolbar, liveblocksConfig } from '@liveblocks/react-l
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import { $getRoot } from 'lexical'
 
-interface Page {
+interface Page extends LsonObject {
   id: string
   title: string
   content: string
@@ -44,12 +44,12 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
   const fileBtnRef = useRef<HTMLButtonElement>(null)
 
   const updatePages = useMutation(({ storage }, acts: Page[]) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     storage.set('pages', new LiveList(acts as any))
   }, [])
 
   const updateEditor = useMutation(({ storage }, content: string) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    storage.set('editor', content as any)
+    storage.set('editor', content)
   }, [])
 
   useEffect(() => {
@@ -150,7 +150,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
         <select value={currentId} onChange={e => { const id=e.target.value; setCurrentId(id); setStorageCurrent(id); setEditorKey(k => k + 1) }} className="bg-black/40 text-white rounded px-2 py-1 text-sm w-32">
           {pages?.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
         </select>
-        <button onClick={handleDelete} className="bg-black/40 text-white px-2 py-1 rounded text-sm">🗑️</button>
+        <button onClick={handleDelete} disabled={!pages || pages.length <= 1} className="bg-black/40 text-white px-2 py-1 rounded text-sm disabled:opacity-50">🗑️</button>
         <div className="relative">
           <button ref={fileBtnRef} onClick={() => setShowFileMenu(m => !m)} className="bg-black/40 text-white px-2 py-1 rounded text-sm">📁</button>
           {showFileMenu && (

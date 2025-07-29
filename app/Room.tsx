@@ -1,6 +1,7 @@
 "use client";
 import { ReactNode } from "react";
 import { LiveblocksProvider, RoomProvider, ClientSideSuspense } from "@liveblocks/react/suspense";
+import { useStorage } from '@liveblocks/react'
 import { LiveMap, LiveObject, LiveList } from '@liveblocks/client'
 
 export function Room({ id, children }: { id: string; children: ReactNode }) {
@@ -30,9 +31,23 @@ export function Room({ id, children }: { id: string; children: ReactNode }) {
         }}
       >
         <ClientSideSuspense fallback={<div>Loading…</div>}>
-          {children}
+          <StorageSync>{children}</StorageSync>
         </ClientSideSuspense>
       </RoomProvider>
     </LiveblocksProvider>
   );
+}
+
+function StorageSync({ children }: { children: ReactNode }) {
+  const pages = useStorage(root => root.pages)
+  const currentPageId = useStorage(root => root.currentPageId)
+  const current = pages?.find(p => p.id === currentPageId)
+  return (
+    <LiveblocksProvider
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      {...({ storage: { editor: current, pages }, allowNesting: true } as any)}
+    >
+      {children}
+    </LiveblocksProvider>
+  )
 }
