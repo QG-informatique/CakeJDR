@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 export default function Cursor({ x, y, color, name }: { x:number; y:number; color:string; name?:string }) {
   return (
     <motion.div
-      className="absolute top-0 left-0 pointer-events-none"
+      className="absolute top-0 left-0 pointer-events-none z-20"
       initial={{ x, y }}
       animate={{ x, y }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
