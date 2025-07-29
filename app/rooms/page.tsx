@@ -79,7 +79,9 @@ export default function RoomsPage() {
           >
             <span className="truncate block">{r.name || 'Unnamed'}</span>
             <span className="text-xs text-white/60">{r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ''}</span>
+
             <RoomAvatarStack id={r.id} />
+
             <button
               className="text-sm underline"
               onClick={e => { e.stopPropagation(); joinRoom(r.id) }}
