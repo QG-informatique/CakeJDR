@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Liveblocks } from '@liveblocks/node'
+import type { LiveMap, Lson } from '@liveblocks/core'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -23,8 +24,9 @@ export async function POST(req: NextRequest) {
     if (!secret) return NextResponse.json({ error: 'Liveblocks key missing' }, { status: 500 })
     const client = new Liveblocks({ secret })
     await client.mutateStorage(roomId, ({ root }) => {
-      const map = root.get('characters')
-      map.set(String(id), character)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const map = (root as any).get('characters') as LiveMap<string, Lson>
+      map.set(String(id), character as Lson)
     })
     return NextResponse.json({ ok: true })
   } catch {
@@ -44,7 +46,8 @@ export async function DELETE(req: NextRequest) {
   const client = new Liveblocks({ secret })
   try {
     await client.mutateStorage(roomId, ({ root }) => {
-      const map = root.get('characters')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const map = (root as any).get('characters') as LiveMap<string, Lson>
       map.delete(String(id))
     })
     return NextResponse.json({ ok: true })

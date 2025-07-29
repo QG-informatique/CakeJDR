@@ -2,7 +2,7 @@
 import { FC, RefObject, useRef, useState, useEffect } from 'react'
 import { useBroadcastEvent, useRoom } from '@liveblocks/react'
 import useProfile from '../app/hooks/useProfile'
-import SummaryPanel from './SummaryPanel'
+import SessionSummary from './SessionSummary'
 import DiceStats from './DiceStats'
 import useEventLog from '../app/hooks/useEventLog'
 
@@ -60,7 +60,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
           boxShadow: '0 4px 18px -8px rgba(0,0,0,0.24), 0 0 0 1px rgba(255,255,255,0.05)'
         }}
       >
-        <SummaryPanel onClose={() => setShowSummary(false)} />
+        <SessionSummary onClose={() => setShowSummary(false)} />
       </aside>
     )
   }
