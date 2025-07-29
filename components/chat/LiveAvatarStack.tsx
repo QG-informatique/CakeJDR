@@ -34,7 +34,7 @@ export default function LiveAvatarStack({ className = 'fixed bottom-4 right-4 z-
             >
               {name.charAt(0).toUpperCase()}
             </div>
-            <div className="absolute bottom-full right-0 mb-1 px-2 py-1 rounded bg-black text-white text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none">
+            <div className="absolute bottom-full right-0 mb-1 px-2 py-1 rounded bg-black text-white text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none z-50">
               {name}
             </div>
           </div>
