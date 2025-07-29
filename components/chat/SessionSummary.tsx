@@ -44,8 +44,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
   const fileBtnRef = useRef<HTMLButtonElement>(null)
 
   const updatePages = useMutation(({ storage }, acts: Page[]) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    storage.set('pages', new LiveList(acts as any))
+    storage.set('pages', new LiveList<Page>(acts))
   }, [])
 
   const updateEditor = useMutation(({ storage }, content: string) => {
