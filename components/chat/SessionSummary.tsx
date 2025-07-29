@@ -44,6 +44,11 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
     (storage.get('summary') as any).update({ acts })
   }, [])
 
+  const updateEditor = useMutation(({ storage }, content: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    storage.set('editor', content as any)
+  }, [])
+
   useEffect(() => {
     if (!showFileMenu) return
     const handle = (e: MouseEvent) => {
@@ -67,6 +72,12 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
   }, [pages, currentId, updatePages])
 
   const current = pages?.find(p => p.id === currentId)
+
+  useEffect(() => {
+    if (current) {
+      updateEditor(current.content)
+    }
+  }, [current, updateEditor])
 
   const handleNewPage = () => {
     const newPage = { id: crypto.randomUUID(), title: 'Nouvelle page', content: '' }
@@ -153,22 +164,23 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
       </div>
       {current && (
         <LexicalComposer key={editorKey} initialConfig={editorConfig}>
-          <Toolbar className="mb-2">
-            <Toolbar.BlockSelector />
-            <Toolbar.SectionInline />
-          </Toolbar>
-          <h2 className="text-center font-semibold mb-2">{current.title}</h2>
-          <RichTextPlugin
-            contentEditable={<ContentEditable className="flex-1 min-h-0 p-2 bg-black/20 rounded text-white outline-none" />}
-            placeholder={<div>Start writing...</div>}
-            ErrorBoundary={LexicalErrorBoundary}
-          />
-          <LiveblocksPlugin />
-          <AutoSavePlugin onChange={txt => {
-            const newPages = (pages || []).map(p => p.id === current.id ? { ...p, content: txt } : p)
-            updatePages(newPages)
-          }} />
-        </LexicalComposer>
+            <Toolbar className="mb-2">
+              <Toolbar.BlockSelector />
+              <Toolbar.SectionInline />
+            </Toolbar>
+            <h2 className="text-center font-semibold mb-2">{current.title}</h2>
+            <RichTextPlugin
+              contentEditable={<ContentEditable className="flex-1 min-h-0 p-2 bg-black/20 rounded text-white outline-none" />}
+              placeholder={<div>Start writing...</div>}
+              ErrorBoundary={LexicalErrorBoundary}
+            />
+            <LiveblocksPlugin />
+            <AutoSavePlugin onChange={txt => {
+              const newPages = (pages || []).map(p => p.id === current.id ? { ...p, content: txt } : p)
+              updatePages(newPages)
+              updateEditor(txt)
+            }} />
+          </LexicalComposer>
       )}
     </div>
   )
