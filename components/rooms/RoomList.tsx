@@ -22,6 +22,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
   const [joinPassword, setJoinPassword] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [myRoom, setMyRoom] = useState<string | null>(null)
+  const [revealIds, setRevealIds] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     const update = () => {
@@ -82,12 +83,12 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
   return (
     <div className="rounded-xl backdrop-blur-md bg-black/20 p-4 border border-white/10 shadow-lg">
       <h2 className="text-lg font-semibold mb-2">Rooms</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-96 overflow-y-auto pr-1 pb-1">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-96 overflow-y-auto p-3">
         <button
           onClick={onCreateClick}
-          className="flex items-center justify-center p-3 rounded-lg bg-pink-700/50 hover:bg-pink-700 text-sm font-semibold"
+          className="flex items-center justify-center p-3 rounded-lg bg-[#ff90cc]/60 hover:bg-[#ff90cc] text-xl"
         >
-          + Create
+          🧁
         </button>
         {rooms.map(r => (
           <div
@@ -106,6 +107,12 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
             </div>
             <span className="text-xs text-white/60 truncate">
               {r.updatedAt ? new Date(r.updatedAt).toLocaleDateString() : new Date(r.createdAt ?? '').toLocaleDateString()}
+            </span>
+            <span
+              className="text-[10px] text-white/40 cursor-pointer select-none"
+              onClick={e => { e.stopPropagation(); setRevealIds(prev => ({ ...prev, [r.id]: !prev[r.id] })) }}
+            >
+              {revealIds[r.id] ? r.id : 'ID'}
             </span>
             {joiningId === r.id && r.password && (
               <>
