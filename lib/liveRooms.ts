@@ -47,7 +47,7 @@ export async function createRoom(name: string, password?: string) {
   } while (cursor)
   if (existing.has(name)) throw new Error('name_exists')
   const id = crypto.randomUUID()
-  await client.createRoom(id, { defaultAccesses: [], metadata: { name, ...(password ? { password } : {}) } })
+  await client.createRoom(id, { defaultAccesses: ['room:write'], metadata: { name, ...(password ? { password } : {}) } })
   return id
 }
 
