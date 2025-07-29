@@ -10,9 +10,9 @@
     "test": "npm run lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.2.0",
-    "@liveblocks/node": "^3.2.0",
-    "@liveblocks/react": "^3.2.0",
+    "@liveblocks/client": "^3.2.1",
+    "@liveblocks/node": "^3.2.1",
+    "@liveblocks/react": "^3.2.1",
     "@liveblocks/react-lexical": "^3.2.1",
     "@vercel/blob": "^1.1.1",
     "@lexical/react": "0.24.0",
