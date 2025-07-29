@@ -3,7 +3,17 @@ import { ReactNode } from "react";
 import { LiveblocksProvider, RoomProvider, ClientSideSuspense } from "@liveblocks/react/suspense";
 import { LiveMap, LiveObject, LiveList } from '@liveblocks/client'
 
-export function Room({ id, children }: { id: string; children: ReactNode }) {
+export function Room({
+  id,
+  children,
+  pages = [],
+  currentPageId = 0,
+}: {
+  id: string
+  children: ReactNode
+  pages?: Array<unknown>
+  currentPageId?: number
+}) {
 
   // NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY contains the public API key for the Liveblocks project.
   // It is exposed via the environment. If it's missing we cannot connect.
@@ -13,7 +23,13 @@ export function Room({ id, children }: { id: string; children: ReactNode }) {
   }
 
   return (
-    <LiveblocksProvider publicApiKey={key}>
+    <LiveblocksProvider
+      publicApiKey={key}
+      storage={{
+        editor: pages[currentPageId],
+        pages,
+      }}
+    >
       <RoomProvider
         id={id}
         initialPresence={{}}
