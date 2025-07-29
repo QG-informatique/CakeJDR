@@ -1,9 +1,10 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import RoomAvatarStack from '@/components/rooms/RoomAvatarStack'
 
 export default function RoomsPage() {
-  const [rooms, setRooms] = useState<Array<{ id: string; name: string; createdAt?: string; updatedAt?: string }>>([])
+  const [rooms, setRooms] = useState<Array<{ id: string; name: string; createdAt?: string; updatedAt?: string; usersConnected?: number }>>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
@@ -78,6 +79,7 @@ export default function RoomsPage() {
           >
             <span className="truncate block">{r.name || 'Unnamed'}</span>
             <span className="text-xs text-white/60">{r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ''}</span>
+            <RoomAvatarStack id={r.id} />
             <button
               className="text-sm underline"
               onClick={e => { e.stopPropagation(); joinRoom(r.id) }}
