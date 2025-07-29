@@ -5,6 +5,7 @@ import { LexicalComposer } from '@lexical/react/LexicalComposer'
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin'
 import { ContentEditable } from '@lexical/react/LexicalContentEditable'
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin'
+import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary'
 import { Toolbar, liveblocksConfig } from '@liveblocks/react-lexical'
 import { CollaborationPlugin } from '@lexical/react/LexicalCollaborationPlugin'
 import { LiveblocksYjsProvider } from '@liveblocks/yjs'
@@ -24,7 +25,7 @@ export default function SessionSummary({ onClose }: Props) {
   const room = useRoom()
   const self = useSelf()
   const summary = useStorage(root => root.summary)
-  const pages: Page[] = summary?.get('acts') || []
+  const pages: Page[] = useMemo(() => summary?.acts || [], [summary])
   const [currentId, setCurrentId] = useState<number | null>(pages[0]?.id ?? null)
 
   useEffect(() => {
@@ -36,6 +37,10 @@ export default function SessionSummary({ onClose }: Props) {
     const acts = (s.get('acts') as Page[]) || []
     const newPage: Page = { id: Date.now(), title: 'Nouvelle page', content: '' }
     s.update({ acts: [...acts, newPage] })
+  }, [])
+
+  const setPages = useMutation(({ storage }, acts: Page[]) => {
+    storage.get('summary').update({ acts })
   }, [])
 
 
@@ -87,10 +92,9 @@ export default function SessionSummary({ onClose }: Props) {
     if (newPages.length > 0) {
       newPages[newPages.length - 1].content = text.slice(lastIndex).trim()
     }
-    const s = summary
-    if (!s) return
+    if (!summary) return
     const acts = newPages.map(p => ({ id: p.id, title: p.title, content: '' }))
-    s.update({ acts })
+    setPages(acts)
     for (const p of newPages) {
       const doc = new Doc({ guid: String(p.id) })
       const prov = new LiveblocksYjsProvider(room!, doc)
@@ -105,7 +109,7 @@ export default function SessionSummary({ onClose }: Props) {
     <div className="absolute inset-0 bg-black/35 backdrop-blur-[3px] border border-white/10 rounded-2xl shadow-2xl flex flex-col h-full w-full z-20 p-3" style={{ minHeight: 0 }}>
       <div className="flex items-center gap-2 mb-2">
         <button onClick={addPage} className="bg-black/40 text-white rounded px-2 py-1 text-sm">Nouvelle page</button>
-        <select value={currentId || ''} onChange={e => setCurrentId(e.target.value)} className="bg-black/40 text-white rounded px-2 py-1 text-sm">
+        <select value={currentId ?? ''} onChange={e => setCurrentId(Number(e.target.value))} className="bg-black/40 text-white rounded px-2 py-1 text-sm">
           {pages.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
         </select>
         <button onClick={exportAll} className="bg-black/40 text-white rounded px-2 py-1 text-sm">Exporter</button>
@@ -117,8 +121,8 @@ export default function SessionSummary({ onClose }: Props) {
       {currentId && provider && (
         <LexicalComposer initialConfig={initialConfig} key={currentId}>
           <Toolbar className="mb-2" />
-          <CollaborationPlugin id={currentId} providerFactory={providerFactory} username={self?.info?.name || ''} cursorColor={self?.info?.color} cursorsContainerRef={undefined} shouldBootstrap />
-          <RichTextPlugin contentEditable={<ContentEditable className="flex-1 min-h-0 overflow-auto rounded border border-white/10 p-2 bg-black/30 text-white" />} placeholder={<div className="text-gray-400">Écrivez…</div>} ErrorBoundary={null as unknown as JSX.Element} />
+          <CollaborationPlugin id={String(currentId)} providerFactory={providerFactory} username={(self?.info as { name?: string })?.name || ''} cursorColor={(self?.info as { color?: string })?.color} cursorsContainerRef={undefined} shouldBootstrap />
+          <RichTextPlugin contentEditable={<ContentEditable className="flex-1 min-h-0 overflow-auto rounded border border-white/10 p-2 bg-black/30 text-white" />} placeholder={<div className="text-gray-400">Écrivez…</div>} ErrorBoundary={LexicalErrorBoundary} />
           <HistoryPlugin />
         </LexicalComposer>
       )}

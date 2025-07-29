@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Liveblocks } from '@liveblocks/node'
-import type { LiveObject } from '@liveblocks/core'
+import { Liveblocks as LiveblocksClient } from '@liveblocks/node'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -8,7 +7,7 @@ export async function GET(req: NextRequest) {
   if (!roomId) return NextResponse.json({ error: 'roomId missing' }, { status: 400 })
   const secret = process.env.LIVEBLOCKS_SECRET_KEY
   if (!secret) return NextResponse.json({ error: 'Liveblocks key missing' }, { status: 500 })
-  const client = new Liveblocks({ secret })
+  const client = new LiveblocksClient({ secret })
   const doc = await client.getStorageDocument(roomId, 'json').catch(() => null)
   const data = doc as { characters?: Record<string, unknown> } | null
   return NextResponse.json({ characters: data?.characters || {} })
@@ -22,9 +21,9 @@ export async function POST(req: NextRequest) {
     }
     const secret = process.env.LIVEBLOCKS_SECRET_KEY
     if (!secret) return NextResponse.json({ error: 'Liveblocks key missing' }, { status: 500 })
-    const client = new Liveblocks({ secret })
+    const client = new LiveblocksClient({ secret })
     await client.mutateStorage(roomId, ({ root }) => {
-      const map = (root as LiveObject<Liveblocks['Storage']>).get('characters')
+      const map = (root as unknown as { get(key: string): Map<string, unknown> }).get('characters')
       map.set(String(id), character)
     })
     return NextResponse.json({ ok: true })
@@ -42,10 +41,10 @@ export async function DELETE(req: NextRequest) {
   }
   const secret = process.env.LIVEBLOCKS_SECRET_KEY
   if (!secret) return NextResponse.json({ error: 'Liveblocks key missing' }, { status: 500 })
-  const client = new Liveblocks({ secret })
+  const client = new LiveblocksClient({ secret })
   try {
     await client.mutateStorage(roomId, ({ root }) => {
-      const map = (root as LiveObject<Liveblocks['Storage']>).get('characters')
+      const map = (root as unknown as { get(key: string): Map<string, unknown> }).get('characters')
       map.delete(String(id))
     })
     return NextResponse.json({ ok: true })
