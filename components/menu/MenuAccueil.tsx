@@ -369,7 +369,7 @@ export default function MenuAccueil() {
               {selectedRoom && (
                 <span className="ml-2 text-sm text-white/80 flex items-center gap-2">
                   {roomLoading && <SmallSpinner />}
-                  {selectedRoom.name || selectedRoom.id}
+                  {selectedRoom.name || 'Unnamed room'}
                 </span>
               )}
 
