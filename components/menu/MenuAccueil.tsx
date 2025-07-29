@@ -6,7 +6,6 @@ import { Crown, LogOut, Dice6 } from 'lucide-react'
 import SmallSpinner from '../ui/SmallSpinner'
 import RoomList, { RoomInfo } from '../rooms/RoomList'
 import RoomCreateModal from '../rooms/RoomCreateModal'
-import RoomsIndexProvider from '../rooms/RoomsIndexProvider'
 import { useRouter } from 'next/navigation'
 import Login from '../login/Login'
 import { defaultPerso } from '../sheet/CharacterSheet'
@@ -439,20 +438,18 @@ export default function MenuAccueil() {
                 </button>
               </div>
             </section>
-            <RoomsIndexProvider>
-              <div className="mb-4">
-                <RoomList
-                  selectedId={selectedRoom?.id || null}
-                  onSelect={handleRoomSelect}
-                  onCreateClick={() => setCreateRoomOpen(true)}
-                />
-              </div>
-              <RoomCreateModal
-                open={createRoomOpen}
-                onClose={() => setCreateRoomOpen(false)}
-                onCreated={handleRoomSelect}
+            <div className="mb-4">
+              <RoomList
+                selectedId={selectedRoom?.id || null}
+                onSelect={handleRoomSelect}
+                onCreateClick={() => setCreateRoomOpen(true)}
               />
-            </RoomsIndexProvider>
+            </div>
+            <RoomCreateModal
+              open={createRoomOpen}
+              onClose={() => setCreateRoomOpen(false)}
+              onCreated={handleRoomSelect}
+            />
 
             {/* Liste des personnages */}
             <div className="flex-1 min-h-0 rounded-xl backdrop-blur-md bg-black/20 p-5 overflow-auto">
