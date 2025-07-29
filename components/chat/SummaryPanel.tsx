@@ -1,65 +1,97 @@
 'use client'
-import { FC, useEffect, useState } from 'react'
-import { useRoom, useStorage } from '@liveblocks/react'
-import type { SessionEvent } from '../app/hooks/useEventLog'
+import { useEffect, useState } from 'react'
+import { useStorage, useMutation } from '@liveblocks/react'
+import TextEditor from './TextEditor'
 
-type Props = { onClose: () => void }
+type Page = { id: number; title: string; content: string }
 
-type Filter = 'all' | 'live' | 'saved'
+export default function SummaryPanel({ onClose }: { onClose: () => void }) {
+  const acts = useStorage(root => root.summary.acts) as Page[] | null
+  const addPage = useMutation(({ storage }) => {
+    const arr = storage.get('summary').get('acts')
+    const id = Date.now()
+    arr.push({ id, title: 'New page', content: '' })
+    return id
+  }, [])
+  const deletePage = useMutation(({ storage }, id: number) => {
+    const arr = storage.get('summary').get('acts') as Page[]
+    const index = arr.findIndex((p: Page) => p.id === id)
+    if (index >= 0) arr.delete(index)
+  }, [])
+  const updateTitle = useMutation(({ storage }, id: number, title: string) => {
+    const arr = storage.get('summary').get('acts') as Page[]
+    const page = arr.find((p: Page) => p.id === id)
+    if (page) page.title = title
+  }, [])
+  const updateContent = useMutation(({ storage }, id: number, content: string) => {
+    const arr = storage.get('summary').get('acts') as Page[]
+    const page = arr.find((p: Page) => p.id === id)
+    if (page) page.content = content
+  }, [])
 
-const LOCAL_PREFIX = 'jdr_events_'
-
-const SummaryPanel: FC<Props> = ({ onClose }) => {
-  const room = useRoom()
-  const liveList = useStorage(root => root.events)
-  const liveEvents = liveList ? (Array.from(liveList) as SessionEvent[]) : []
-  const [savedEvents, setSavedEvents] = useState<SessionEvent[]>([])
-  const [filter, setFilter] = useState<Filter>('all')
-
+  const [selected, setSelected] = useState<number | null>(null)
   useEffect(() => {
-    if (!room) return
+    if (!acts) return
+    if (selected === null && acts.length > 0) {
+      setSelected(acts[0].id)
+    }
+  }, [acts, selected])
+
+  const current = acts?.find((p: Page) => p.id === selected) || null
+
+  function exportPages() {
+    if (!acts) return
+    const data = JSON.stringify(acts, null, 2)
+    const blob = new Blob([data], { type: 'application/json' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = 'summary.json'
+    a.click()
+  }
+
+  async function importPages(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
     try {
-      const raw = localStorage.getItem(LOCAL_PREFIX + room.id)
-      if (raw) {
-        const arr = JSON.parse(raw)
-        if (Array.isArray(arr)) setSavedEvents(arr)
-      }
+      const text = await file.text()
+      const arr = JSON.parse(text)
+      if (Array.isArray(arr)) replacePages(arr)
     } catch {}
-  }, [room])
+  }
 
-  const combined = [...liveEvents]
-  savedEvents.forEach(ev => {
-    if (!combined.some(e => e.id === ev.id)) combined.push(ev)
-  })
-  combined.sort((a,b) => a.ts - b.ts)
-
-  const displayed = combined.filter(ev => {
-    if (filter === 'live') return liveEvents.some(e => e.id === ev.id)
-    if (filter === 'saved') return savedEvents.some(e => e.id === ev.id)
-    return true
-  })
+  const replacePages = useMutation(({ storage }, arr: Page[]) => {
+    storage.get('summary').set('acts', arr as unknown as [])
+  }, [])
 
   return (
-    <div className="absolute inset-0 bg-black/35 backdrop-blur-[3px] border border-white/10 rounded-2xl shadow-2xl flex flex-col h-full w-full z-20 p-3 animate-fadeIn" style={{ minHeight: 0 }}>
-      <div className="flex items-center mb-3 gap-2">
-        <select value={filter} onChange={e => setFilter(e.target.value as Filter)} className="bg-black/40 text-white rounded px-2 py-1 text-sm">
-          <option value="all">All</option>
-          <option value="live">Live only</option>
-          <option value="saved">Saved only</option>
-        </select>
-        <button onClick={onClose} className="ml-auto text-white/80 hover:text-red-500 text-xl">✕</button>
+    <div className="absolute inset-0 bg-black/35 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl flex flex-col h-full w-full z-20 p-3" style={{minHeight:0}}>
+      <div className="flex items-center mb-2 gap-2">
+        <button onClick={() => onClose()} className="ml-auto text-white/80 hover:text-red-500 text-xl">✕</button>
       </div>
-      <ul className="flex-1 overflow-y-auto space-y-1 text-sm">
-        {displayed.map(ev => (
-          <li key={ev.id} className="px-2 py-1 rounded bg-black/30 border border-white/10">
-            {ev.kind === 'chat' && <span><strong>{ev.author}:</strong> {ev.text}</span>}
-            {ev.kind === 'dice' && <span>🎲 {ev.player} D{ev.dice} → {ev.result}</span>}
-          </li>
-        ))}
-        {displayed.length === 0 && <li className="text-center text-gray-400">No events</li>}
-      </ul>
+      <div className="flex-1 flex overflow-hidden">
+        <div className="w-40 flex flex-col gap-2 mr-2 overflow-y-auto">
+          {acts?.map((p: Page) => (
+            <div key={p.id} className={`p-1 rounded cursor-pointer ${selected===p.id?'bg-purple-500/50':'bg-black/30'}`} onClick={() => setSelected(p.id)}>
+              <input value={p.title} onChange={e=>updateTitle(p.id,e.target.value)} className="w-full bg-transparent text-white"/>
+              <button className="text-xs text-red-400" onClick={()=>deletePage(p.id)}>Delete</button>
+            </div>
+          ))}
+          <button onClick={async()=>{const id=await addPage();setSelected(id)}} className="p-1 bg-emerald-600/80 rounded text-sm">Add page</button>
+          <button onClick={exportPages} className="p-1 bg-blue-600/80 rounded text-sm mt-2">Export</button>
+          <label className="p-1 bg-blue-600/30 rounded text-sm mt-1 text-center cursor-pointer">
+            Import<input type="file" accept="application/json" onChange={importPages} className="hidden" />
+          </label>
+        </div>
+        <div className="flex-1 border border-white/10 rounded overflow-hidden">
+          {current && (
+            <TextEditor
+              docId={`summary-${current.id}`}
+              initialState={current.content}
+              onChange={state => updateContent(current.id, JSON.stringify(state.toJSON()))}
+            />
+          )}
+        </div>
+      </div>
     </div>
   )
 }
-
-export default SummaryPanel
