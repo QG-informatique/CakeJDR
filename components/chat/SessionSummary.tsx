@@ -24,7 +24,8 @@ const initialConfig = liveblocksConfig({
 export default function SessionSummary({ onClose }: Props) {
   const room = useRoom()
   const self = useSelf()
-  const pages = useStorage(root => (root.summary.get('acts') as Page[]) || [])
+  const rawPages = useStorage(root => root.summary.get('acts') as Page[] | undefined)
+  const pages = useMemo(() => rawPages ?? [], [rawPages])
   const [currentId, setCurrentId] = useState<number | null>(null)
 
   useEffect(() => {
@@ -109,8 +110,8 @@ export default function SessionSummary({ onClose }: Props) {
   }
 
   return (
-    <div className="absolute inset-0 bg-black/35 backdrop-blur-[3px] border border-white/10 rounded-2xl shadow-2xl flex flex-col h-full w-full z-20 p-3" style={{ minHeight: 0 }}>
-      <div className="flex items-center gap-2 mb-2">
+    <div className="absolute inset-0 bg-black/35 backdrop-blur-[3px] border border-white/10 rounded-2xl shadow-2xl flex flex-col h-full w-full z-50 p-3" style={{ minHeight: 0 }}>
+      <div className="flex items-center gap-2 mb-2 z-50">
         <button onClick={addPage} className="bg-black/40 text-white rounded px-2 py-1 text-sm">Nouvelle page</button>
         <select value={currentId ?? ''} onChange={e => setCurrentId(Number(e.target.value))} className="bg-black/40 text-white rounded px-2 py-1 text-sm">
           {pages.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
