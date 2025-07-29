@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { Lock } from 'lucide-react'
+import RoomAvatarStack from './RoomAvatarStack'
 
 export type RoomInfo = {
   id: string
@@ -131,9 +132,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
             <span className="text-xs text-white/60 truncate">
               {r.updatedAt ? new Date(r.updatedAt).toLocaleDateString() : new Date(r.createdAt ?? '').toLocaleDateString()}
             </span>
-            {typeof r.usersConnected === 'number' && r.usersConnected > 0 && (
-              <span className="text-xs text-white/50">{r.usersConnected} online</span>
-            )}
+            <RoomAvatarStack id={r.id} />
             <span
               className="text-[10px] text-white/40 cursor-pointer select-none"
               onClick={e => { e.stopPropagation(); setRevealIds(prev => ({ ...prev, [r.id]: !prev[r.id] })) }}
