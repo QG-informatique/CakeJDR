@@ -24,12 +24,14 @@ const initialConfig = liveblocksConfig({
 export default function SessionSummary({ onClose }: Props) {
   const room = useRoom()
   const self = useSelf()
-  const summary = useStorage(root => root.summary)
-  const pages: Page[] = useMemo(() => summary?.acts || [], [summary])
-  const [currentId, setCurrentId] = useState<number | null>(pages[0]?.id ?? null)
+  const pages = useStorage(root => (root.summary.get('acts') as Page[]) || [])
+  const [currentId, setCurrentId] = useState<number | null>(null)
 
   useEffect(() => {
-    if (!currentId && pages[0]) setCurrentId(pages[0].id)
+    if (currentId === null && pages[0]) setCurrentId(pages[0].id)
+    else if (currentId !== null && !pages.some(p => p.id === currentId)) {
+      setCurrentId(pages[0]?.id ?? null)
+    }
   }, [pages, currentId])
 
   const addPage = useMutation(({ storage }) => {
@@ -49,6 +51,8 @@ export default function SessionSummary({ onClose }: Props) {
     const doc = new Doc({ guid: String(currentId) })
     return new LiveblocksYjsProvider(room, doc)
   }, [room, currentId])
+
+  const currentPage = pages.find(p => p.id === currentId) || null
 
   useEffect(() => () => provider?.destroy(), [provider])
 
@@ -92,7 +96,6 @@ export default function SessionSummary({ onClose }: Props) {
     if (newPages.length > 0) {
       newPages[newPages.length - 1].content = text.slice(lastIndex).trim()
     }
-    if (!summary) return
     const acts = newPages.map(p => ({ id: p.id, title: p.title, content: '' }))
     setPages(acts)
     for (const p of newPages) {
@@ -119,12 +122,28 @@ export default function SessionSummary({ onClose }: Props) {
         <button onClick={onClose} className="ml-auto text-white/80 hover:text-red-500 text-xl">✕</button>
       </div>
       {currentId && provider && (
-        <LexicalComposer initialConfig={initialConfig} key={currentId}>
-          <Toolbar className="mb-2" />
-          <CollaborationPlugin id={String(currentId)} providerFactory={providerFactory} username={(self?.info as { name?: string })?.name || ''} cursorColor={(self?.info as { color?: string })?.color} cursorsContainerRef={undefined} shouldBootstrap />
-          <RichTextPlugin contentEditable={<ContentEditable className="flex-1 min-h-0 overflow-auto rounded border border-white/10 p-2 bg-black/30 text-white" />} placeholder={<div className="text-gray-400">Écrivez…</div>} ErrorBoundary={LexicalErrorBoundary} />
-          <HistoryPlugin />
-        </LexicalComposer>
+        <div className="flex-1 min-h-0 flex flex-col">
+          <div className="text-center font-semibold mb-2">{currentPage?.title}</div>
+          <LexicalComposer initialConfig={initialConfig} key={currentId}>
+            <Toolbar className="mb-2 z-30" />
+            <CollaborationPlugin
+              id={String(currentId)}
+              providerFactory={providerFactory}
+              username={(self?.info as { name?: string })?.name || ''}
+              cursorColor={(self?.info as { color?: string })?.color}
+              cursorsContainerRef={undefined}
+              shouldBootstrap
+            />
+            <RichTextPlugin
+              contentEditable={
+                <ContentEditable className="flex-1 min-h-0 overflow-auto rounded border border-white/10 p-2 bg-black/30 text-white" />
+              }
+              placeholder={<div className="text-gray-400">Écrivez…</div>}
+              ErrorBoundary={LexicalErrorBoundary}
+            />
+            <HistoryPlugin />
+          </LexicalComposer>
+        </div>
       )}
     </div>
   )
