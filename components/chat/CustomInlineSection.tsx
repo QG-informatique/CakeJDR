@@ -1,6 +1,6 @@
 'use client'
-import { Toolbar } from '@liveblocks/react-lexical'
-import { Icon } from '@liveblocks/react-ui'
+import { Bold, Italic, Underline, Strikethrough, Code } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import {
   FORMAT_TEXT_COMMAND,
   $getSelection,
@@ -25,44 +25,40 @@ function isTextFormatActivePersistent(
 
 export default function CustomInlineSection() {
   const [editor] = useLexicalComposerContext()
+  const [, forceUpdate] = useState(0)
+  useEffect(() => {
+    return editor.registerUpdateListener(() => {
+      forceUpdate(v => v + 1)
+    })
+  }, [editor])
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supportsTextFormat = (editor as any)._commands.has(FORMAT_TEXT_COMMAND)
   if (!supportsTextFormat) return null
+
+  const buttons = [
+    { format: 'bold' as TextFormatType, Icon: Bold, label: 'Bold' },
+    { format: 'italic' as TextFormatType, Icon: Italic, label: 'Italic' },
+    { format: 'underline' as TextFormatType, Icon: Underline, label: 'Underline' },
+    { format: 'strikethrough' as TextFormatType, Icon: Strikethrough, label: 'Strikethrough' },
+    { format: 'code' as TextFormatType, Icon: Code, label: 'Inline code' },
+  ]
+
   return (
     <>
-      <Toolbar.Toggle
-        name="Bold"
-        icon={<Icon.Bold />}
-        shortcut="Mod-B"
-        onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold')}
-        active={isTextFormatActivePersistent(editor, 'bold' as TextFormatType)}
-      />
-      <Toolbar.Toggle
-        name="Italic"
-        icon={<Icon.Italic />}
-        shortcut="Mod-I"
-        onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic')}
-        active={isTextFormatActivePersistent(editor, 'italic' as TextFormatType)}
-      />
-      <Toolbar.Toggle
-        name="Underline"
-        icon={<Icon.Underline />}
-        shortcut="Mod-U"
-        onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline')}
-        active={isTextFormatActivePersistent(editor, 'underline' as TextFormatType)}
-      />
-      <Toolbar.Toggle
-        name="Strikethrough"
-        icon={<Icon.Strikethrough />}
-        onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough')}
-        active={isTextFormatActivePersistent(editor, 'strikethrough' as TextFormatType)}
-      />
-      <Toolbar.Toggle
-        name="Inline code"
-        icon={<Icon.Code />}
-        onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'code')}
-        active={isTextFormatActivePersistent(editor, 'code' as TextFormatType)}
-      />
+      {buttons.map(({ format, Icon, label }) => {
+        const active = isTextFormatActivePersistent(editor, format)
+        return (
+          <button
+            key={format}
+            type="button"
+            aria-label={label}
+            className={`toolbar-btn${active ? ' active' : ''}`}
+            onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, format)}
+          >
+            <Icon size={16} />
+          </button>
+        )
+      })}
     </>
   )
 }
