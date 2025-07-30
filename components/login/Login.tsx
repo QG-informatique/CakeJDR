@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import CakeLogo from '@/components/ui/CakeLogo'
 import { useT } from '@/lib/useT'
+import { DoorOpen, RotateCcw } from 'lucide-react'
 
 const PROFILE_KEY = 'jdr_profile'
 const CUBE_SIZE = 200
@@ -50,9 +51,12 @@ function DicePips({ value, size }: { value:number; size:number }) {
 export default function Login({ onLogin }: { onLogin:(p:string)=>void }) {
   // -- Ajout d'un état mounted pour éviter le flash du cube --
   const [mounted, setMounted] = useState(false)
+  const [showHint, setShowHint] = useState(false)
   const t = useT()
   useEffect(() => {
     setMounted(true)
+    const timer = setTimeout(() => setShowHint(true), 10000)
+    return () => clearTimeout(timer)
   }, [])
 
   const [pseudo, setPseudo] = useState('')
@@ -205,10 +209,11 @@ transition: 'opacity 0.4s ease, transform 0.3s ease'
                 {type === 'button' && (
                   <button
                     onClick={handleLogin}
-                    className="bg-pink-500 hover:bg-pink-600 text-white py-2 px-4 rounded font-semibold shadow"
+                    className="bg-pink-500 hover:bg-pink-600 text-white p-3 rounded shadow flex items-center justify-center"
                     style={{ pointerEvents:'auto' }}
+                    aria-label={t('enter')}
                   >
-                    {t('enter')}
+                    <DoorOpen size={24} />
                   </button>
                 )}
                 {type === 'pips' && value && (
@@ -218,6 +223,24 @@ transition: 'opacity 0.4s ease, transform 0.3s ease'
             ))}
           </div>
         </div>
+
+        {/* Indice de rotation du d\u00E9 */}
+        {showHint && !error && (
+          <div
+            style={{
+              position:'absolute',
+              top: CUBE_SIZE + 12,
+              width:'100%',
+              textAlign:'center',
+              pointerEvents:'none'
+            }}
+          >
+            <RotateCcw
+              size={32}
+              className="mx-auto text-pink-400 animate-pulse"
+            />
+          </div>
+        )}
 
         {/* Message d'erreur sous le cube */}
         {error && (
