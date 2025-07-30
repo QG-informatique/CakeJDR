@@ -92,3 +92,8 @@ body, .scrollable {
   z-index: 50;
   position: relative;
 }
+
+/* Keep block type dropdown above overlays */
+.lb-lexical-block-selector-dropdown {
+  z-index: 60 !important;
+}
