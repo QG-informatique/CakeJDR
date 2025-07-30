@@ -1,11 +1,20 @@
 'use client'
 import { Toolbar } from '@liveblocks/react-lexical'
-import { FORMAT_TEXT_COMMAND, $getSelection, $isRangeSelection } from 'lexical'
+import { Icon } from '@liveblocks/react-ui'
+import {
+  FORMAT_TEXT_COMMAND,
+  $getSelection,
+  $isRangeSelection,
+  type TextFormatType,
+} from 'lexical'
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 
 import type { LexicalEditor } from 'lexical'
 
-function isTextFormatActivePersistent(editor: LexicalEditor, format: string) {
+function isTextFormatActivePersistent(
+  editor: LexicalEditor,
+  format: TextFormatType,
+) {
   return editor.getEditorState().read(() => {
     const selection = $getSelection()
     if (!$isRangeSelection(selection)) return false
@@ -23,34 +32,34 @@ export default function CustomInlineSection() {
     <>
       <Toolbar.Toggle
         name="Bold"
-        icon={<Toolbar.BoldIcon />}
+        icon={<Icon.Bold />}
         shortcut="Mod-B"
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold')}
         active={isTextFormatActivePersistent(editor, 'bold')}
       />
       <Toolbar.Toggle
         name="Italic"
-        icon={<Toolbar.ItalicIcon />}
+        icon={<Icon.Italic />}
         shortcut="Mod-I"
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic')}
         active={isTextFormatActivePersistent(editor, 'italic')}
       />
       <Toolbar.Toggle
         name="Underline"
-        icon={<Toolbar.UnderlineIcon />}
+        icon={<Icon.Underline />}
         shortcut="Mod-U"
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline')}
         active={isTextFormatActivePersistent(editor, 'underline')}
       />
       <Toolbar.Toggle
         name="Strikethrough"
-        icon={<Toolbar.StrikethroughIcon />}
+        icon={<Icon.Strikethrough />}
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough')}
         active={isTextFormatActivePersistent(editor, 'strikethrough')}
       />
       <Toolbar.Toggle
         name="Inline code"
-        icon={<Toolbar.CodeIcon />}
+        icon={<Icon.Code />}
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'code')}
         active={isTextFormatActivePersistent(editor, 'code')}
       />
