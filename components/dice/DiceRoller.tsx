@@ -1,6 +1,7 @@
 'use client'
 import { FC } from 'react'
 import { Dice3 } from 'lucide-react'
+import { useT } from '@/lib/useT'
 
 type Props = {
   diceType: number
@@ -10,7 +11,9 @@ type Props = {
   children?: React.ReactNode
 }
 
-const DiceRoller: FC<Props> = ({ diceType, onChange, onRoll, disabled, children }) => (
+const DiceRoller: FC<Props> = ({ diceType, onChange, onRoll, disabled, children }) => {
+  const t = useT()
+  return (
   <div
     className="
       p-4
@@ -26,7 +29,7 @@ const DiceRoller: FC<Props> = ({ diceType, onChange, onRoll, disabled, children 
       boxShadow: '0 4px 18px -8px rgba(0,0,0,0.24), 0 0 0 1px rgba(255,255,255,0.05)'
     }}
   >
-    <label htmlFor="diceType" className="mr-2 font-semibold text-white/85">Type de dé :</label>
+    <label htmlFor="diceType" className="mr-2 font-semibold text-white/85">{t('diceType')}:</label>
     <select
       id="diceType"
       className="border p-1 rounded text-white bg-gray-800/70"
@@ -60,10 +63,11 @@ const DiceRoller: FC<Props> = ({ diceType, onChange, onRoll, disabled, children 
       disabled={disabled}
     >
       <Dice3 className="inline -mt-0.5 text-white/80" size={20} />
-      Lancer
+      {t('roll')}
     </button>
     {children && <div className="ml-auto flex gap-1">{children}</div>}
   </div>
-)
+  )
+}
 
 export default DiceRoller

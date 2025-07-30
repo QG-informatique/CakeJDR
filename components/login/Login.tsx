@@ -1,6 +1,7 @@
 'use client'
 import React, { useState, useEffect, useRef } from 'react'
 import CakeLogo from '@/components/ui/CakeLogo'
+import { useT } from '@/lib/useT'
 
 const PROFILE_KEY = 'jdr_profile'
 const CUBE_SIZE = 200
@@ -49,6 +50,7 @@ function DicePips({ value, size }: { value:number; size:number }) {
 export default function Login({ onLogin }: { onLogin:(p:string)=>void }) {
   // -- Ajout d'un état mounted pour éviter le flash du cube --
   const [mounted, setMounted] = useState(false)
+  const t = useT()
   useEffect(() => {
     setMounted(true)
   }, [])
@@ -70,7 +72,7 @@ export default function Login({ onLogin }: { onLogin:(p:string)=>void }) {
 
   const handleLogin = () => {
     const name = pseudo.trim()
-    if(!name){ setError('Choisis un pseudo'); return }
+    if(!name){ setError(t('chooseName')); return }
     const saved = JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}')
     const profile = {
       ...saved,
@@ -190,7 +192,7 @@ transition: 'opacity 0.4s ease, transform 0.3s ease'
                   <input
                     value={pseudo}
                     onChange={e => setPseudo(e.target.value)}
-                    placeholder="Pseudo"
+                    placeholder={t('username')}
                     className="px-2 py-1 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-pink-400"
                     style={{
                       width: CUBE_SIZE * 0.6,
@@ -206,7 +208,7 @@ transition: 'opacity 0.4s ease, transform 0.3s ease'
                     className="bg-pink-500 hover:bg-pink-600 text-white py-2 px-4 rounded font-semibold shadow"
                     style={{ pointerEvents:'auto' }}
                   >
-                    Entrer
+                    {t('enter')}
                   </button>
                 )}
                 {type === 'pips' && value && (

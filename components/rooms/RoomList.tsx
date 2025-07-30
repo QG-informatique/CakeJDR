@@ -91,7 +91,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
 
   const confirmJoin = (room: RoomInfo) => {
     if (room.password && joinPassword !== room.password) {
-      setErrorMsg('Wrong password')
+    setErrorMsg(t('wrongPassword'))
       return
     }
     if (room.password) {
@@ -104,14 +104,14 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
 
   return (
     <div className="rounded-xl backdrop-blur-md bg-black/20 p-4 border border-white/10 shadow-lg">
-      <h2 className="text-lg font-semibold mb-2">Rooms</h2>
+      <h2 className="text-lg font-semibold mb-2">{t('rooms')}</h2>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-96 overflow-y-auto p-3">
         <button
           onClick={onCreateClick}
           className="flex flex-col items-center justify-center p-3 rounded-lg bg-[#ff90cc]/60 hover:bg-[#ff90cc] text-center"
         >
           <span className="text-2xl">🧁</span>
-          <span className="text-sm font-semibold mt-1">Create a room</span>
+          <span className="text-sm font-semibold mt-1">{t('createRoom')}</span>
         </button>
         {rooms.map(r => (
           <div
