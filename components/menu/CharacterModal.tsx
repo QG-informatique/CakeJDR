@@ -1,5 +1,6 @@
 'use client'
 import { FC } from "react"
+import { useT } from '@/lib/useT'
 import { Character } from "./CharacterList"
 import StatsPanel from "../character/StatsPanel"
 import EquipPanel from "../character/EquipPanel"
@@ -41,6 +42,7 @@ const CharacterModal: FC<Props> = ({
   onSave,
   onClose,
 }) => {
+  const t = useT()
   if (!open || !character) return null
 
   const handlePanelChange = (field: string, value: unknown) => {
@@ -67,7 +69,7 @@ const CharacterModal: FC<Props> = ({
         "
       >
         <h2 className="text-2xl font-bold mb-5 tracking-wide text-white text-center">
-          Character editing
+          {t('characterEditing')}
         </h2>
         {/* Flex column: panels scrollent, boutons fixes en bas */}
         <div className="flex flex-col flex-1 min-h-0">
@@ -80,7 +82,7 @@ const CharacterModal: FC<Props> = ({
               style={{ minWidth: 320, minHeight: 0, height: "100%", overflowY: "auto" }}
             >
               <h3 className="font-semibold text-lg mb-2 text-emerald-200">
-                Statistics
+                {t('attributes')}
               </h3>
               <StatsPanel perso={character} edit={true} onChange={handlePanelChange} />
             </div>
@@ -92,7 +94,7 @@ const CharacterModal: FC<Props> = ({
               {/* Equipment (half height) */}
               <div className="flex-1 flex flex-col min-h-0 p-4 pb-2">
                 <h3 className="font-semibold text-lg mb-2 text-yellow-200">
-                  Equipment
+                  {t('equipment')}
                 </h3>
                 <EquipPanel
                   edit={true}
@@ -115,7 +117,7 @@ const CharacterModal: FC<Props> = ({
               {/* Skills (half height) */}
               <div className="flex-1 flex flex-col min-h-0 p-4 pt-0">
                 <h3 className="font-semibold text-lg mb-2 text-fuchsia-200">
-                  Skills
+                  {t('skills')}
                 </h3>
                 <CompetencesPanel
                   competences={(character.competences as Competence[]) || []}
@@ -137,7 +139,7 @@ const CharacterModal: FC<Props> = ({
               style={{ minWidth: 350, minHeight: 0, height: "100%", overflowY: "auto" }}
             >
               <h3 className="font-semibold text-lg mb-2 text-blue-200">
-                Description
+                {t('description')}
               </h3>
               <DescriptionPanel
                 values={character as unknown as DescriptionValues}
@@ -184,7 +186,7 @@ const CharacterModal: FC<Props> = ({
                 boxShadow: '0 2px 10px -2px #0006, 0 0 0 1px #fff2 inset'
               }}
             >
-              Cancel
+              {t('cancelBtn')}
             </button>
             <button
               onClick={onSave}
@@ -201,7 +203,7 @@ const CharacterModal: FC<Props> = ({
                 boxShadow: '0 2px 16px 0 #1e3a8a22, 0 0 0 1.5px #27408155 inset'
               }}
             >
-              Save
+              {t('save')}
             </button>
           </div>
         </div>

@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useT } from '@/lib/useT'
 import { Lock } from 'lucide-react'
 import RoomAvatarStack from './RoomAvatarStack'
 
@@ -32,6 +33,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
   const [errorMsg, setErrorMsg] = useState('')
   const [myRoom, setMyRoom] = useState<string | null>(null)
   const [revealIds, setRevealIds] = useState<Record<string, boolean>>({})
+  const t = useT()
 
   useEffect(() => {
     const update = () => {
@@ -46,7 +48,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
   }, [])
 
   const deleteRoom = async (room: RoomInfo) => {
-    if (!window.confirm('Delete this room?')) return
+    if (!window.confirm(t('deleteRoomConfirm'))) return
     await fetch('/api/rooms', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
@@ -146,7 +148,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
                   value={joinPassword}
                   onChange={e => setJoinPassword(e.target.value)}
                   className="w-full px-1 py-1 rounded bg-gray-800 text-white border border-white/20 text-xs"
-                  placeholder="Password"
+                  placeholder={t('password')}
                   onKeyDown={e => { if (e.key==='Enter') confirmJoin(r) }}
                 />
                 {errorMsg && <p className="text-red-400 text-xs">{errorMsg}</p>}

@@ -1,19 +1,20 @@
 import { FC } from 'react'
+import { useT } from '@/lib/useT'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 const STATS = [
-  { key: 'force', label: 'Strength' },
-  { key: 'dexterite', label: 'Dexterity' },
-  { key: 'constitution', label: 'Constitution' },
-  { key: 'intelligence', label: 'Intelligence' },
-  { key: 'sagesse', label: 'Wisdom' },
-  { key: 'charisme', label: 'Charisma' }
-]
+  { key: 'force', label: 'strength' },
+  { key: 'dexterite', label: 'dexterity' },
+  { key: 'constitution', label: 'constitution' },
+  { key: 'intelligence', label: 'intelligence' },
+  { key: 'sagesse', label: 'wisdom' },
+  { key: 'charisme', label: 'charisma' }
+] as const
 const ATTACKS = [
-  { key: 'mod_contact', label: 'Melee' },
-  { key: 'mod_distance', label: 'Ranged' },
-  { key: 'mod_magique', label: 'Magic' }
-]
+  { key: 'mod_contact', label: 'melee' },
+  { key: 'mod_distance', label: 'ranged' },
+  { key: 'mod_magique', label: 'magic' }
+] as const
 
 const getStatColor = (value: number) => {
   if (value >= 18) return 'bg-yellow-400 text-black'
@@ -40,6 +41,7 @@ type Props = {
 const StatsPanel: FC<Props> = ({ edit, perso, onChange }) => {
   const pvActuel = Number(perso.pv) || 0
   const pvMax = Number(perso.pv_max ?? perso.pvMax ?? perso.pv) || pvActuel
+  const t = useT()
 
   return (
     <div>
@@ -47,28 +49,28 @@ const StatsPanel: FC<Props> = ({ edit, perso, onChange }) => {
       <div className="flex justify-between items-start mb-2">
         <div className="flex flex-col gap-2 flex-1">
           <div className="flex items-center">
-            <strong className="w-20">Level:</strong>
+            <strong className="w-20">{t('level')}:</strong>
             {edit
               ? <input type="text" value={perso.niveau || ''} onChange={e => onChange('niveau', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-14 text-sm text-black" />
               : <span className="ml-1 text-sm">{perso.niveau}</span>
             }
           </div>
           <div className="flex items-center">
-            <strong className="w-20">Defense:</strong>
+            <strong className="w-20">{t('defense')}:</strong>
             {edit
               ? <input type="text" value={perso.defense || ''} onChange={e => onChange('defense', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-14 text-sm text-black" />
               : <span className="ml-1 text-sm">{perso.defense}</span>
             }
           </div>
           <div className="flex items-center">
-            <strong className="w-20">Luck:</strong>
+            <strong className="w-20">{t('luck')}:</strong>
             {edit
               ? <input type="text" value={perso.chance || ''} onChange={e => onChange('chance', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-14 text-sm text-black" />
               : <span className="ml-1 text-sm">{perso.chance}</span>
             }
           </div>
           <div className="flex items-center">
-            <strong className="w-20">Initiative:</strong>
+            <strong className="w-20">{t('initiative')}:</strong>
             {edit
               ? <input type="text" value={perso.initiative || ''} onChange={e => onChange('initiative', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-14 text-sm text-black" />
               : <span className="ml-1 text-sm">{perso.initiative}</span>
@@ -77,7 +79,7 @@ const StatsPanel: FC<Props> = ({ edit, perso, onChange }) => {
         </div>
         <div className="flex flex-col items-center ml-4">
           <div className="flex items-center mb-1">
-            <span className="text-sm text-gray-400 mr-2">Name:</span>
+            <span className="text-sm text-gray-400 mr-2">{t('name')}:</span>
             {edit
               ? <input value={perso.nom || ''} onChange={e => onChange('nom', e.target.value)} className="px-1 py-0.5 rounded text-sm font-semibold bg-white border text-black w-[90px]" />
               : <span className="text-sm font-semibold">{perso.nom}</span>
@@ -86,7 +88,7 @@ const StatsPanel: FC<Props> = ({ edit, perso, onChange }) => {
           <span className={`flex items-center justify-center text-2xl font-bold rounded-full h-14 w-14 border-4 ${getPvColor(pvActuel, pvMax)}`} style={{ boxShadow: '0 0 8px #222' }}>
             {pvActuel}
           </span>
-          <span className="mt-1 text-xs text-gray-300">HP / {pvMax}</span>
+          <span className="mt-1 text-xs text-gray-300">{t('hp')} / {pvMax}</span>
           {edit && (
             <div className="mt-1 flex gap-1">
               <input
@@ -95,7 +97,7 @@ const StatsPanel: FC<Props> = ({ edit, perso, onChange }) => {
                 value={perso.pv ?? ''}
                 onChange={e => onChange('pv', e.target.value)}
                 className="w-10 px-1 py-0.5 rounded bg-white border text-sm text-black"
-                placeholder="HP"
+                placeholder={t('hp')}
               />
               <span className="text-gray-400 font-bold">/</span>
               <input
@@ -114,10 +116,10 @@ const StatsPanel: FC<Props> = ({ edit, perso, onChange }) => {
       {/* Stats and attack modifiers */}
       <div className="mt-2 flex gap-0">
         <div className="flex-1">
-          <div className="font-semibold text-base mb-1">Attributes</div>
+          <div className="font-semibold text-base mb-1">{t('attributes')}</div>
 {STATS.map(stat =>
   <div key={stat.key} className="flex gap-3 items-center mb-1">
-    <strong className="w-28 text-right">{stat.label} :</strong>
+    <strong className="w-28 text-right">{t(stat.label as any)} :</strong>
     {edit
       ? <>
           <input type="text" value={perso[stat.key] ?? ''} onChange={e => onChange(stat.key, e.target.value)} className="ml-2 px-1 py-0.5 rounded bg-white border w-10 text-sm text-black" />
@@ -144,10 +146,10 @@ const StatsPanel: FC<Props> = ({ edit, perso, onChange }) => {
 
         </div>
         <div className="flex flex-col items-end justify-between ml-4 min-w-[120px]">
-          <div className="font-semibold text-base mb-1">Attack Mods</div>
+          <div className="font-semibold text-base mb-1">{t('attackMods')}</div>
           {ATTACKS.map(att =>
             <div key={att.key} className="flex items-center mb-2 w-full justify-end">
-              <strong className="w-16 text-right">{att.label}</strong>
+              <strong className="w-16 text-right">{t(att.label as any)}</strong>
               {edit
                 ? <input type="text" value={perso[att.key] ?? ''} onChange={e => onChange(att.key, e.target.value)} className="ml-2 px-1 py-0.5 rounded bg-white border w-10 text-sm text-black text-right" />
                 : <span className="ml-3 px-2 py-0.5 rounded text-base font-bold bg-gray-700 text-white text-right">{perso[att.key] ?? 0}</span>
