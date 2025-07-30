@@ -78,11 +78,13 @@ body, .scrollable {
 .lb-lexical-toolbar .toolbar-btn.active {
   background-color: rgba(250, 204, 21, 0.2);
   outline: 1px solid #facc15;
+  color: #facc15;
 }
 
-/* Hide Liveblocks tooltips */
+/* Ensure Liveblocks tooltips appear above overlays */
 .lb-tooltip {
-  display: none !important;
+  z-index: 50 !important;
+  position: fixed;
 }
 
 /* Keep inline toolbars above surrounding content */
