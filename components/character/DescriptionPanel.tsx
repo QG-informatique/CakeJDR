@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { FC, useState } from 'react'
+import { useT } from '@/lib/useT'
 
 type CustomField = { label: string, value: string }
 
@@ -71,25 +72,26 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
   onUpdateChamp,
 }) => {
   const [newChamp, setNewChamp] = useState<Partial<CustomField>>({}) // <-- Ajout ici
+  const t = useT()
 
   // Champs standards
   const shortFields = [
-    { key: 'race', label: 'Race' },
-    { key: 'classe', label: 'Classe' },
-    { key: 'sexe', label: 'Sexe' },
-    { key: 'age', label: 'Âge' },
-    { key: 'taille', label: 'Taille' },
-    { key: 'poids', label: 'Poids' },
-    { key: 'bourse', label: 'Bourse (PA)' },
-  ]
+    'race',
+    'classe',
+    'sexe',
+    'age',
+    'taille',
+    'poids',
+    'bourse',
+  ] as const
   const longFields = [
-    { key: 'traits', label: 'Trait perso' },
-    { key: 'ideal', label: 'Idéal' },
-    { key: 'obligations', label: 'Obligations' },
-    { key: 'failles', label: 'Failles' },
-    { key: 'avantages', label: 'Avantages' },
-    { key: 'background', label: 'Background' }
-  ]
+    'traits',
+    'ideal',
+    'obligations',
+    'failles',
+    'avantages',
+    'background',
+  ] as const
 
   return (
     <div
@@ -97,13 +99,13 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
       style={{ minHeight: 0, overflowX: 'hidden' }}
     >
       {/* Champs courts alignés */}
-      {shortFields.map(({ key, label }) => (
+      {shortFields.map(key => (
         <div key={key} className="grid grid-cols-[120px_18px_1fr] mb-2 items-start">
           <label
             className="font-semibold text-right select-none"
             style={{ minWidth: LABEL_WIDTH }}
           >
-            {label}
+            {t(key as any)}
           </label>
           <span className="text-right font-bold">:</span>
           <div className="flex-1 min-w-0 break-words pl-3">
@@ -121,13 +123,13 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
         </div>
       ))}
 
-      {/* Capacité raciale alignée */}
+      {/* Racial ability */}
       <div className="grid grid-cols-[120px_18px_1fr] mb-2 items-start">
         <label
           className="font-semibold text-right select-none"
           style={{ minWidth: LABEL_WIDTH }}
         >
-          Capacité raciale
+          {t('racialAbility')}
         </label>
         <span className="text-right font-bold">:</span>
         <div className="flex-1 min-w-0 break-words pl-3">
@@ -144,14 +146,14 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
         </div>
       </div>
 
-      {/* Champs longs (voir plus) alignés */}
-      {longFields.map(({ key, label }) => (
+      {/* Long fields (see more) */}
+      {longFields.map(key => (
         <div key={key} className="grid grid-cols-[120px_18px_1fr] mb-2 items-start">
           <label
             className="font-semibold text-right select-none"
             style={{ minWidth: LABEL_WIDTH }}
           >
-            {label}
+            {t(key as any)}
           </label>
           <span className="text-right font-bold">:</span>
           <div className="flex-1 min-w-0 break-words pl-3">
@@ -171,7 +173,7 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
 
       {/* Champs persos dynamiques */}
       <div className="mt-2">
-        <div className="font-semibold text-base mb-1">Autres champs</div>
+        <div className="font-semibold text-base mb-1">{t('customFields')}</div>
         {edit ? (
           <>
             <div className="flex flex-col gap-1 mb-1">
@@ -193,7 +195,7 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
                     }}
                     style={{ overflowWrap: 'break-word', minWidth: 0 }}
                   />
-                  <button className="text-xs text-red-400 hover:underline col-span-1 justify-self-end" onClick={() => onDelChamp(i)}>Suppr</button>
+                  <button className="text-xs text-red-400 hover:underline col-span-1 justify-self-end" onClick={() => onDelChamp(i)}>{t('delete')}</button>
                 </div>
               ))}
             </div>
@@ -201,14 +203,14 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
               <div className="grid grid-cols-[120px_18px_1fr_80px] gap-1 w-full">
                 <input
                   className="p-1 rounded bg-white text-black text-sm w-full text-right"
-                  placeholder="Nom du champ"
+                  placeholder={t('fieldName')}
                   value={newChamp.label || ''}
                   onChange={e => setNewChamp({ ...newChamp, label: e.target.value })}
                 />
                 <span className="text-right font-bold">:</span>
                 <textarea
                   className="p-1 rounded bg-white text-black text-sm flex-1 min-h-[28px] resize-y w-full pl-3"
-                  placeholder="Valeur"
+                  placeholder={t('value')}
                   value={newChamp.value || ''}
                   onChange={e => setNewChamp({ ...newChamp, value: e.target.value })}
                   style={{ overflowWrap: 'break-word', minWidth: 0 }}
@@ -223,7 +225,7 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
                   setNewChamp({})
                 }}
               >
-                Ajouter
+                {t('add')}
               </button>
             </div>
           </>
@@ -236,7 +238,7 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
                 <span className="break-words flex-1 pl-3">{f.value}</span>
               </div>
             ))}
-            {champsPerso.length === 0 && <span className="text-gray-400 text-xs">No custom field.</span>}
+            {champsPerso.length === 0 && <span className="text-gray-400 text-xs">{t('noCustomField')}</span>}
           </div>
         )}
       </div>

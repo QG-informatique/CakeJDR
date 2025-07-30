@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { FC, useRef, useState, useEffect } from 'react'
+import { useT } from '@/lib/useT'
 import { Folder } from 'lucide-react'
 import { defaultPerso } from '../sheet/CharacterSheet'
 
@@ -34,6 +35,7 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
   const [cloudFiles, setCloudFiles] = useState<string[]>([])
   const [localChars, setLocalChars] = useState<any[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
+  const t = useT()
 
   useEffect(() => {
     if (!modal) return
@@ -76,9 +78,9 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
         if (!data || typeof data !== "object") throw new Error()
         onUpdate(data)
         addToList({ ...data, id: data.id || crypto.randomUUID() })
-        alert('Sheet imported successfully!')
+        alert(t('importSuccess'))
       } catch {
-        alert('Import failed: file must be a JSON text file.')
+        alert(t('importFail'))
         // onUpdate({ ...defaultPerso }) // Optionnel : reset fiche si import KO
       }
     }
@@ -89,7 +91,7 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
   // Sauvegarde locale
   const handleLocalSave = () => {
     localStorage.setItem(LOCAL_KEY, JSON.stringify(perso))
-    alert('Sheet saved locally!')
+    alert(t('saveLocallyMsg'))
     setOpen(false)
   }
 
@@ -102,13 +104,13 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
         if (!obj || typeof obj !== "object") throw new Error()
         onUpdate(obj)
         addToList({ ...obj, id: obj.id || crypto.randomUUID() })
-        alert('Sheet loaded from local save!')
+        alert(t('loadLocalSuccess'))
       } catch {
-        alert('Failed to load local save.')
+        alert(t('loadLocalFail'))
         // onUpdate({ ...defaultPerso }) // Optionnel : reset si load KO
       }
     } else {
-      alert('No save found.')
+      alert(t('noSave'))
     }
     setOpen(false)
   }
@@ -120,7 +122,7 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
       method: 'POST',
       body: JSON.stringify(char),
     })
-    alert('Sheet saved to cloud!')
+    alert(t('saveCloud'))
     setModal(null)
   }
 
@@ -134,9 +136,9 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
       const obj = JSON.parse(txt)
       onUpdate(obj)
       addToList({ ...obj, id: obj.id || crypto.randomUUID() })
-      alert('Sheet loaded!')
+      alert(t('loadCloudSuccess'))
     } catch {
-      alert('Cloud load failed.')
+      alert(t('loadCloudFail'))
     }
     setModal(null)
   }
@@ -144,13 +146,13 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
   const deleteFromCloud = async (filename: string) => {
     await fetch(`/api/blop/delete?filename=${encodeURIComponent(filename)}`)
     setCloudFiles(f => f.filter(fl => fl !== filename))
-    alert('Deleted!')
+    alert(t('deleted'))
     setModal(null)
   }
 
-  // Reset fiche
+  // Reset sheet
   const handleReset = () => {
-    if (window.confirm("Vraiment réinitialiser la fiche ? (Suppression irréversible)")) {
+    if (window.confirm("Really reset the sheet? (This will delete it)")) {
       onUpdate({ ...defaultPerso })
       setOpen(false)
     }
@@ -167,20 +169,20 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
       </button>
       {open && (
         <div className="absolute top-full left-full mt-2 ml-2 z-50 w-56 bg-black/35 backdrop-blur-md border border-white/10 rounded-xl shadow-2xl py-2 flex flex-col gap-1 animate-fadeIn">
-          <button onClick={handleExport} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">📤 Export sheet</button>
+          <button onClick={handleExport} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">📤 {t('exportSheet')}</button>
           <label className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm cursor-pointer">
-            📥 Import sheet
+            📥 {t('importSheet')}
             <input type="file" ref={inputRef} accept=".txt,.json" style={{ display: 'none' }} onChange={handleImport} />
           </label>
 
-          <button onClick={handleLocalSave} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">💾 Save locally</button>
-          <button onClick={handleLocalLoad} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">📂 Load local save</button>
-          <button onClick={() => { setModal('export'); setOpen(false) }} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">☁️ Export to cloud</button>
-          <button onClick={() => { setModal('import'); setOpen(false) }} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">☁️ Import from cloud</button>
-          <button onClick={() => { setModal('delete'); setOpen(false) }} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">🗑 Delete from cloud</button>
+          <button onClick={handleLocalSave} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">💾 {t('saveLocally')}</button>
+          <button onClick={handleLocalLoad} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">📂 {t('loadLocal')}</button>
+          <button onClick={() => { setModal('export'); setOpen(false) }} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">☁️ {t('exportCloud')}</button>
+          <button onClick={() => { setModal('import'); setOpen(false) }} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">☁️ {t('importCloud')}</button>
+          <button onClick={() => { setModal('delete'); setOpen(false) }} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">🗑 {t('deleteCloud')}</button>
 
           <hr className="my-1 border-gray-600" />
-          <button onClick={handleReset} className="w-full px-3 py-1 rounded hover:bg-red-700 bg-red-600 text-white text-left text-sm">🗑 Reset sheet</button>
+          <button onClick={handleReset} className="w-full px-3 py-1 rounded hover:bg-red-700 bg-red-600 text-white text-left text-sm">🗑 {t('resetSheet')}</button>
         </div>
       )}
       <style jsx>{`
@@ -204,7 +206,7 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
           >
             {modal === 'import' && (
               <>
-                <h3 className="text-lg font-semibold mb-3">Import from cloud</h3>
+                <h3 className="text-lg font-semibold mb-3">{t('importFromCloud')}</h3>
                 <ul className="space-y-1">
                   {cloudFiles.map((f) => (
                     <li key={f}>
@@ -217,14 +219,14 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
                     </li>
                   ))}
                   {cloudFiles.length === 0 && (
-                    <li className="text-center text-sm text-gray-400">No file</li>
+                    <li className="text-center text-sm text-gray-400">{t('noFile')}</li>
                   )}
                 </ul>
               </>
             )}
             {modal === 'export' && (
               <>
-                <h3 className="text-lg font-semibold mb-3">Export to cloud</h3>
+                <h3 className="text-lg font-semibold mb-3">{t('exportToCloud')}</h3>
                 <ul className="space-y-1">
                   {localChars.map((c) => (
                     <li key={c.id}>
@@ -237,14 +239,14 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
                     </li>
                   ))}
                   {localChars.length === 0 && (
-                    <li className="text-center text-sm text-gray-400">No character</li>
+                    <li className="text-center text-sm text-gray-400">{t('noCharacter')}</li>
                   )}
                 </ul>
               </>
             )}
             {modal === 'delete' && (
               <>
-                <h3 className="text-lg font-semibold mb-3">Delete from cloud</h3>
+                <h3 className="text-lg font-semibold mb-3">{t('deleteFromCloud')}</h3>
                 <ul className="space-y-1">
                   {cloudFiles.map((f) => (
                     <li key={f} className="flex justify-between items-center gap-2">
@@ -253,12 +255,12 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
                         onClick={() => deleteFromCloud(f)}
                         className="px-2 py-1 bg-red-700/50 hover:bg-red-700/80 rounded text-sm"
                       >
-                        Delete
+                        {t('delete')}
                       </button>
                     </li>
                   ))}
                   {cloudFiles.length === 0 && (
-                    <li className="text-center text-sm text-gray-400">No file</li>
+                    <li className="text-center text-sm text-gray-400">{t('noFile')}</li>
                   )}
                 </ul>
               </>

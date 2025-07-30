@@ -1,4 +1,5 @@
 import { FC } from 'react'
+import { useT } from '@/lib/useT'
 import Link from 'next/link'
 import CakeLogo from '../ui/CakeLogo'
 
@@ -26,6 +27,7 @@ const CharacterSheetHeader: FC<Props> = ({
 }) => {
 
   const childrenArray = Array.isArray(children) ? children : [children]
+  const t = useT()
 
   return (
     <div
@@ -66,7 +68,7 @@ const CharacterSheetHeader: FC<Props> = ({
           `}
           style={{ minHeight: 38 }}
         >
-          {edit ? 'Sauver' : 'Éditer'}
+          {edit ? t('save') : t('edit')}
         </button>
       </div>
       <nav className="flex gap-2 mt-2">

@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { FC, useState } from 'react'
+import { useT } from '@/lib/useT'
 
 type Objet = { nom: string, quantite: number }
 
@@ -29,6 +30,7 @@ const EquipPanel: FC<Props> = ({
   onDelObj,
 }) => {
   const [newObj, setNewObj] = useState<{ nom: string, quantite: string }>({ nom: '', quantite: '' })
+  const t = useT()
 
   const handleAddObj = () => {
     if (!newObj.nom || !newObj.quantite) return
@@ -40,36 +42,36 @@ const EquipPanel: FC<Props> = ({
 
   return (
     <div className="text-[1.07rem]">
-      <div className="font-semibold mb-2 text-lg">Armes & Armures</div>
+      <div className="font-semibold mb-2 text-lg">{t('weaponsArmor')}</div>
       <div className="mb-1 flex items-center">
-        <strong className="w-32">Armes :</strong>
+        <strong className="w-32">{t('weapons')}:</strong>
         {edit
           ? <input value={armes || ''} onChange={e => onChange('armes', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-28 text-sm text-black" />
           : <span className="ml-1">{armes}</span>
         }
       </div>
       <div className="mb-1 flex items-center">
-        <strong className="w-32">Dégâts armes :</strong>
+        <strong className="w-32">{t('weaponDamage')}:</strong>
         {edit
           ? <input value={degats_armes || ''} onChange={e => onChange('degats_armes', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-20 text-sm text-black" />
           : <span className="ml-1">{degats_armes}</span>
         }
       </div>
       <div className="mb-1 flex items-center">
-        <strong className="w-32">Armure :</strong>
+        <strong className="w-32">{t('armor')}:</strong>
         {edit
           ? <input value={armure || ''} onChange={e => onChange('armure', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-28 text-sm text-black" />
           : <span className="ml-1">{armure}</span>
         }
       </div>
       <div className="mb-3 flex items-center">
-        <strong className="w-32">Modif armure :</strong>
+        <strong className="w-32">{t('armorMod')}:</strong>
         {edit
           ? <input type="number" value={modif_armure ?? ''} onChange={e => onChange('modif_armure', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-12 text-sm text-black" />
           : <span className="ml-1">{modif_armure}</span>
         }
       </div>
-      <div className="font-semibold text-lg mb-1 mt-3">Objets</div>
+      <div className="font-semibold text-lg mb-1 mt-3">{t('items')}</div>
       {/* Création/édition d’objets */}
       {edit ? (
         <>
@@ -78,20 +80,20 @@ const EquipPanel: FC<Props> = ({
               <div key={i} className="flex items-center gap-2 bg-gray-800 rounded px-2 py-1">
                 <span className="text-base">{o.nom}</span>
                 <span className="text-xs text-gray-300">x{o.quantite}</span>
-                <button className="text-xs text-red-400 hover:underline ml-2" onClick={() => onDelObj(i)}>Suppr</button>
+                <button className="text-xs text-red-400 hover:underline ml-2" onClick={() => onDelObj(i)}>{t('delete')}</button>
               </div>
             ))}
           </div>
           <div className="flex gap-1 mb-2">
             <input
               className="p-1 rounded bg-white text-black text-sm flex-1"
-              placeholder="Nom de l'objet"
+              placeholder={t('itemName')}
               value={newObj.nom}
               onChange={e => setNewObj({ ...newObj, nom: e.target.value })}
             />
             <input
               className="p-1 rounded bg-white text-black text-sm w-16"
-              placeholder="Qté"
+              placeholder={t('qty')}
               type="number"
               min="1"
               value={newObj.quantite}
@@ -101,7 +103,7 @@ const EquipPanel: FC<Props> = ({
               className="bg-blue-600 hover:bg-blue-700 text-white text-sm rounded p-1"
               onClick={handleAddObj}
             >
-              Ajouter
+              {t('add')}
             </button>
           </div>
         </>
@@ -113,7 +115,7 @@ const EquipPanel: FC<Props> = ({
               <span className="text-xs text-gray-300">x{o.quantite}</span>
             </div>
           ))}
-          {objets.length === 0 && <span className="text-gray-400 text-xs">No items.</span>}
+          {objets.length === 0 && <span className="text-gray-400 text-xs">{t('noItems')}</span>}
         </div>
       )}
     </div>
