@@ -205,7 +205,6 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
       {current && (
         <LexicalComposer key={editorKey} initialConfig={editorConfig}>
             <Toolbar className="mb-2">
-              <Toolbar.BlockSelector />
               <Toolbar.SectionInline />
             </Toolbar>
             <input
