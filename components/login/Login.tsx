@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import CakeLogo from '@/components/ui/CakeLogo'
 import { useT } from '@/lib/useT'
-import { DoorOpen, RotateCcw } from 'lucide-react'
+import { DoorOpen } from 'lucide-react'
 
 const PROFILE_KEY = 'jdr_profile'
 const CUBE_SIZE = 200
@@ -229,16 +229,45 @@ transition: 'opacity 0.4s ease, transform 0.3s ease'
           <div
             style={{
               position:'absolute',
-              top: CUBE_SIZE + 12,
+              top: CUBE_SIZE + 20,
               width:'100%',
               textAlign:'center',
               pointerEvents:'none'
             }}
           >
-            <RotateCcw
-              size={32}
-              className="mx-auto text-pink-400 animate-pulse"
-            />
+            <svg
+              width={48}
+              height={24}
+              viewBox="0 0 24 12"
+              className="mx-auto text-pink-400 animate-swipe"
+            >
+              <path
+                d="M2 10c4-8 16-8 20 0"
+                stroke="currentColor"
+                strokeWidth={2}
+                fill="none"
+                strokeLinecap="round"
+              />
+              <path
+                d="M18 6l4 4-4 4"
+                stroke="currentColor"
+                strokeWidth={2}
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <p className="text-xs text-pink-400 mt-1">swipe</p>
+            <style jsx>{`
+              @keyframes swipeHint {
+                0% { transform: translateX(-4px); opacity: 0.6; }
+                50% { transform: translateX(4px); opacity: 1; }
+                100% { transform: translateX(-4px); opacity: 0.6; }
+              }
+              .animate-swipe {
+                animation: swipeHint 1.2s ease-in-out infinite;
+              }
+            `}</style>
           </div>
         )}
 
