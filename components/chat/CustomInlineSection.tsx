@@ -35,33 +35,33 @@ export default function CustomInlineSection() {
         icon={<Icon.Bold />}
         shortcut="Mod-B"
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold')}
-        active={isTextFormatActivePersistent(editor, 'bold')}
+        active={isTextFormatActivePersistent(editor, 'bold' as TextFormatType)}
       />
       <Toolbar.Toggle
         name="Italic"
         icon={<Icon.Italic />}
         shortcut="Mod-I"
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic')}
-        active={isTextFormatActivePersistent(editor, 'italic')}
+        active={isTextFormatActivePersistent(editor, 'italic' as TextFormatType)}
       />
       <Toolbar.Toggle
         name="Underline"
         icon={<Icon.Underline />}
         shortcut="Mod-U"
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline')}
-        active={isTextFormatActivePersistent(editor, 'underline')}
+        active={isTextFormatActivePersistent(editor, 'underline' as TextFormatType)}
       />
       <Toolbar.Toggle
         name="Strikethrough"
         icon={<Icon.Strikethrough />}
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough')}
-        active={isTextFormatActivePersistent(editor, 'strikethrough')}
+        active={isTextFormatActivePersistent(editor, 'strikethrough' as TextFormatType)}
       />
       <Toolbar.Toggle
         name="Inline code"
         icon={<Icon.Code />}
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'code')}
-        active={isTextFormatActivePersistent(editor, 'code')}
+        active={isTextFormatActivePersistent(editor, 'code' as TextFormatType)}
       />
     </>
   )
