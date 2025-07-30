@@ -1,7 +1,7 @@
 'use client'
 import { FC, useEffect, useState, useRef } from 'react'
 import { useStorage, useMutation } from '@liveblocks/react'
-import type { LiveMap } from '@liveblocks/client'
+import { LiveMap } from '@liveblocks/client'
 import { LexicalComposer } from '@lexical/react/LexicalComposer'
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin'
 import { ContentEditable } from '@lexical/react/LexicalContentEditable'
@@ -32,7 +32,8 @@ function AutoSavePlugin({ onChange }: { onChange: (text: string) => void }) {
 
 const SessionSummary: FC<Props> = ({ onClose }) => {
   const summary = useStorage(root => root.summary)
-  const editorMap = useStorage(root => root.editor) as LiveMap<string, string> | null
+  const rawEditor = useStorage(root => root.editor)
+  const editorMap = rawEditor instanceof LiveMap ? rawEditor as LiveMap<string, string> : null
   const pages = summary?.acts as Page[] | undefined
   const [currentId, setCurrentId] = useState<string>('')
   const [editorKey, setEditorKey] = useState(0)
@@ -50,14 +51,26 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
     const summary = storage.get('summary') as any
     const acts = (summary.get('acts') as Page[]) || []
     summary.update({ acts: acts.filter((p: Page) => p.id !== id) })
-    // remove content from editor map
-    const editor = storage.get('editor') as LiveMap<string, string>
-    editor.delete(id)
+    // remove content from editor map if using new structure
+    const editor = storage.get('editor')
+    if (editor instanceof LiveMap) {
+      editor.delete(id)
+    } else {
+      storage.set('editor', new LiveMap())
+    }
   }, [])
 
   const updateEditor = useMutation(({ storage }, data: { id: string; content: string }) => {
-    const editor = storage.get('editor') as LiveMap<string, string>
-    editor.set(data.id, data.content)
+    let editor = storage.get('editor')
+    if (!(editor instanceof LiveMap)) {
+      const map = new LiveMap<string, string>()
+      if (typeof editor === 'string' && data.id) {
+        map.set(data.id, editor)
+      }
+      storage.set('editor', map)
+      editor = map
+    }
+    ;(editor as LiveMap<string, string>).set(data.id, data.content)
   }, [])
 
   useEffect(() => {
@@ -86,9 +99,13 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
   const current = pages?.find(p => p.id === currentId)
 
   useEffect(() => {
-    if (current) {
-      const txt = editorMap?.get(current.id) || ''
-      updateEditor({ id: current.id, content: txt })
+    if (!current) return
+    if (editorMap instanceof LiveMap) {
+      if (!editorMap.has(current.id)) {
+        updateEditor({ id: current.id, content: '' })
+      }
+    } else {
+      updateEditor({ id: current.id, content: '' })
     }
   }, [current, editorMap, updateEditor])
 
@@ -125,7 +142,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
 
   const handleExport = () => {
     if (!pages) return
-    const txt = pages.map(p => `=== Page: ${p.title} ===\n${editorMap?.get(p.id) || ''}\n`).join('\n')
+    const txt = pages.map(p => `=== Page: ${p.title} ===\n${editorMap instanceof LiveMap ? editorMap.get(p.id) || '' : ''}\n`).join('\n')
     const blob = new Blob([txt], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
