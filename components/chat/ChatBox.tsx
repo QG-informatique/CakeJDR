@@ -170,31 +170,33 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
         )}
         <div className={`flex-1 min-h-0 flex flex-col ${showStats ? '' : 'h-full'}`}>
           <h2 className="text-xl font-bold mb-2 text-center">Chat</h2>
-          <div
-            ref={chatBoxRef}
-            className="
-              relative flex-1 overflow-y-auto
-              rounded-xl
-              border border-white/10
-              bg-black/15
-              backdrop-blur-[2px]
-              shadow
-              p-2
-              min-h-0
-            "
-          >
-            {sortedEvents.map(ev => (
-              <p key={ev.id}>
-                <span className="mr-1">{ev.kind === 'chat' ? '💬' : '🎲'}</span>
-                {ev.kind === 'chat' && (
-                  <><strong>{ev.author}{ev.isMJ && ' 👑'} :</strong> {ev.text}</>
-                )}
-                {ev.kind === 'dice' && (
-                  <span>{ev.player} : D{ev.dice} → {ev.result}</span>
-                )}
-              </p>
-            ))}
-            <div ref={endRef} />
+          <div className="relative flex-1 min-h-0">
+            <div
+              ref={chatBoxRef}
+              className="
+                flex-1 overflow-y-auto
+                rounded-xl
+                border border-white/10
+                bg-black/15
+                backdrop-blur-[2px]
+                shadow
+                p-2
+                min-h-0
+              "
+            >
+              {sortedEvents.map(ev => (
+                <p key={ev.id}>
+                  <span className="mr-1">{ev.kind === 'chat' ? '💬' : '🎲'}</span>
+                  {ev.kind === 'chat' && (
+                    <><strong>{ev.author}{ev.isMJ && ' 👑'} :</strong> {ev.text}</>
+                  )}
+                  {ev.kind === 'dice' && (
+                    <span>{ev.player} : D{ev.dice} → {ev.result}</span>
+                  )}
+                </p>
+              ))}
+              <div ref={endRef} />
+            </div>
             <AnimatePresence>
               {!isAtBottom && (
                 <motion.button
