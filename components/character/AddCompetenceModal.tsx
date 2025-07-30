@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useT } from '@/lib/useT'
 
 export type NewCompetence = {
     nom: string;
@@ -29,6 +30,7 @@ export const AddCompetenceModal: React.FC<AddCompetenceModalProps> = ({
     onClose,
     onAdd,
 }) => {
+    const t = useT()
     const [nom, setNom] = useState("");
     const [type, setType] = useState(competenceTypes[0]);
     const [effets, setEffets] = useState("");
@@ -60,19 +62,19 @@ export const AddCompetenceModal: React.FC<AddCompetenceModalProps> = ({
                 >
                     ✕
                 </button>
-                <div className="text-lg font-semibold mb-4">Add skill</div>
+                <div className="text-lg font-semibold mb-4">{t('addSkill')}</div>
                 <div className="flex flex-col gap-3">
                     <div>
-                        <label className="block text-sm mb-1">Name</label>
+                        <label className="block text-sm mb-1">{t('name')}</label>
                         <input
                             className="w-full px-2 py-1 rounded bg-gray-800 text-white"
                             value={nom}
                             onChange={e => setNom(e.target.value)}
-                            placeholder="Skill name"
+                            placeholder={t('skillName')}
                         />
                     </div>
                     <div>
-                        <label className="block text-sm mb-1">Type</label>
+                        <label className="block text-sm mb-1">{t('type')}</label>
                         <select
                             className="w-full px-2 py-1 rounded bg-gray-800 text-white"
                             value={type}
@@ -84,16 +86,16 @@ export const AddCompetenceModal: React.FC<AddCompetenceModalProps> = ({
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm mb-1">Effects</label>
+                        <label className="block text-sm mb-1">{t('effects')}</label>
                         <input
                             className="w-full px-2 py-1 rounded bg-gray-800 text-white"
                             value={effets}
                             onChange={e => setEffets(e.target.value)}
-                            placeholder="Effect description"
+                            placeholder={t('effectDesc')}
                         />
                     </div>
                     <div>
-                        <label className="block text-sm mb-1">Damage (optional)</label>
+                        <label className="block text-sm mb-1">{t('damageOptional')}</label>
                         <input
                             className="w-full px-2 py-1 rounded bg-gray-800 text-white"
                             value={degats}
@@ -107,14 +109,14 @@ export const AddCompetenceModal: React.FC<AddCompetenceModalProps> = ({
                         className="bg-gray-700 hover:bg-gray-600 text-white rounded px-3 py-1"
                         onClick={onClose}
                     >
-                        Cancel
+                        {t('cancel')}
                     </button>
                     <button
                         className="bg-blue-600 hover:bg-blue-700 text-white rounded px-3 py-1"
                         onClick={handleAdd}
                         disabled={!nom || !type || !effets}
                     >
-                        Add
+                        {t('add')}
                     </button>
                 </div>
             </div>

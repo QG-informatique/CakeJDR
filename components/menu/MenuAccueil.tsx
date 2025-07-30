@@ -2,6 +2,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useT } from '@/lib/useT'
 import { Crown, LogOut, Dice6 } from 'lucide-react'
 import SmallSpinner from '../ui/SmallSpinner'
 import RoomList, { RoomInfo } from '../rooms/RoomList'
@@ -30,6 +31,7 @@ type Character = {
 
 export default function MenuAccueil() {
   const router = useRouter()
+  const t = useT()
   const [user, setUser] = useState<{ pseudo:string; isMJ:boolean; color:string } | null>(null)
   const [characters, setCharacters]   = useState<Character[]>([])
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
@@ -190,7 +192,7 @@ export default function MenuAccueil() {
   }
 
   const handleDeleteChar = (id: string | number) => {
-    if (!window.confirm('Delete this sheet?')) return
+    if (!window.confirm(t('deleteSheetConfirm'))) return
     const idx = characters.findIndex(c => String(c.id) === String(id))
     if (idx === -1) return
     const toDelete = characters[idx]
@@ -224,8 +226,8 @@ export default function MenuAccueil() {
         saveCharacters([...characters, withId])
         localStorage.setItem(SELECTED_KEY, String(id))
         setSelectedIdx(characters.length)
-        alert('Sheet imported!')
-      } catch { alert('Error: invalid file.') }
+        alert(t('importSuccess'))
+      } catch { alert(t('invalidFile')) }
     }
     reader.readAsText(file)
     e.target.value = ''
