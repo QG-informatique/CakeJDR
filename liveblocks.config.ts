@@ -51,8 +51,8 @@ declare global {
       characters: LiveMap<string, CharacterData>;
       images: LiveMap<string, CanvasImage>;
       music: LiveObject<{ id: string; playing: boolean }>;
-      summary: LiveObject<{ acts: Array<{ id: string; title: string; content: string }> }>;
-      editor: string;
+      summary: LiveObject<{ acts: Array<{ id: string; title: string }> }>;
+      editor: LiveMap<string, string>;
       events: LiveList<SessionEvent>;
       rooms: LiveList<Room>;
     };

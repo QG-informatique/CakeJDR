@@ -39,7 +39,7 @@ export function Room({
           images: new LiveMap(),
           music: new LiveObject({ id: '', playing: false }),
           summary: new LiveObject({ acts: [] }),
-          editor: '',
+          editor: new LiveMap(),
           events: new LiveList([]),
           rooms: new LiveList([])
         }}
