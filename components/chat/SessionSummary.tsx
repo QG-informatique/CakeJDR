@@ -1,5 +1,5 @@
 'use client'
-import { FC, useEffect, useState, useRef } from 'react'
+import { FC, useEffect, useState, useRef, useCallback } from 'react'
 import { useStorage, useMutation } from '@liveblocks/react'
 import { LiveMap } from '@liveblocks/client'
 import { LexicalComposer } from '@lexical/react/LexicalComposer'
@@ -73,6 +73,20 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
     ;(editor as LiveMap<string, string>).set(data.id, data.content)
   }, [])
 
+  const handleTitleChange = (title: string) => {
+    if (!pages || !current) return
+    const updatedPages = pages.map(p => p.id === current.id ? { ...p, title } : p)
+    updatePages(updatedPages)
+  }
+
+  const createPage = useCallback((title: string) => {
+    const newPage = { id: crypto.randomUUID(), title }
+    updatePages([...(pages || []), newPage])
+    updateEditor({ id: newPage.id, content: '' })
+    setCurrentId(newPage.id)
+    setEditorKey(k => k + 1)
+  }, [pages, updatePages, updateEditor])
+
   useEffect(() => {
     if (!showFileMenu) return
     const handle = (e: MouseEvent) => {
@@ -87,14 +101,12 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
   useEffect(() => {
     if (!pages) return
     if (pages.length === 0) {
-      const first = { id: crypto.randomUUID(), title: 'Nouvelle page' }
-      updatePages([first])
-      updateEditor({ id: first.id, content: '' })
-      setCurrentId(first.id)
+      const title = prompt('Nom de la page ?')?.trim() || 'Nouvelle page'
+      createPage(title)
     } else if (!currentId) {
       setCurrentId(pages[0].id)
     }
-  }, [pages, currentId, updatePages, updateEditor])
+  }, [pages, currentId, updatePages, updateEditor, createPage])
 
   const current = pages?.find(p => p.id === currentId)
 
@@ -110,11 +122,8 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
   }, [current, editorMap, updateEditor])
 
   const handleNewPage = () => {
-    const newPage = { id: crypto.randomUUID(), title: 'Nouvelle page' }
-    updatePages([...(pages || []), newPage])
-    updateEditor({ id: newPage.id, content: '' })
-    setCurrentId(newPage.id)
-    setEditorKey(k => k + 1)
+    const title = prompt('Nom de la page ?')?.trim() || 'Nouvelle page'
+    createPage(title)
   }
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -199,7 +208,11 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
               <Toolbar.BlockSelector />
               <Toolbar.SectionInline />
             </Toolbar>
-            <h2 className="text-center font-semibold mb-2">{current.title}</h2>
+            <input
+              value={current.title}
+              onChange={e => handleTitleChange(e.target.value)}
+              className="text-center font-semibold mb-2 bg-transparent outline-none w-full"
+            />
             <RichTextPlugin
               contentEditable={<ContentEditable className="flex-1 min-h-0 p-2 bg-black/20 rounded text-white outline-none" />}
               placeholder={<div>Start writing...</div>}
