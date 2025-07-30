@@ -67,3 +67,9 @@ body, .scrollable {
   background-color: rgba(250, 204, 21, 0.2);
   outline: 1px solid #facc15;
 }
+
+/* Ensure Lexical tooltips appear above overlays */
+.lb-tooltip {
+  z-index: 50;
+  position: fixed;
+}
