@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useT } from '@/lib/useT'
+import LanguageSwitcher from '../ui/LanguageSwitcher'
 import { Crown, LogOut, Dice6 } from 'lucide-react'
 import SmallSpinner from '../ui/SmallSpinner'
 import RoomList, { RoomInfo } from '../rooms/RoomList'
@@ -320,9 +321,8 @@ export default function MenuAccueil() {
   return (
     <>
       {/* Header avec le bouton qui change de fond */}
-      {user && (
-        <MenuHeader user={user} />
-      )}
+      {user && <MenuHeader user={user} />}
+      <LanguageSwitcher />
 
       <div className="w-full min-h-screen relative text-white px-6 pb-8 flex flex-col max-w-7xl mx-auto bg-transparent overflow-hidden">
         {!user ? (
@@ -435,7 +435,7 @@ export default function MenuAccueil() {
                   }}
                 >
                   <LogOut size={18} className="mr-1" />
-                  Logout
+                  {t('logout')}
                 </button>
               </div>
             </section>

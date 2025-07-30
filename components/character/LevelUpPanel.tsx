@@ -1,5 +1,6 @@
 import { FC, useRef, useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useT } from '@/lib/useT'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // --- CustomSelect maison, DA Import/Export ---
@@ -132,6 +133,7 @@ const LevelUpPanel: FC<Props> = ({
   const diceMax = getDiceMax(dice)
   const isMin = lastGain === 1
   const isMax = lastGain === diceMax
+  const t = useT()
 
   // -- Styles dynamiques inchangés pour l'animation du gain
   let textColor = 'text-green-300'
@@ -185,7 +187,7 @@ const LevelUpPanel: FC<Props> = ({
             background: 'linear-gradient(120deg,rgba(18,28,54,0.35) 60%,rgba(16,18,33,0.23) 100%)'
           }}
         >
-          {processing ? 'Lancement...' : 'Lancer Level Up'}
+          {processing ? t('launching') : t('launchLevelUp')}
         </button>
       </div>
 
