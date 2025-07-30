@@ -68,8 +68,13 @@ body, .scrollable {
   outline: 1px solid #facc15;
 }
 
-/* Ensure Lexical tooltips appear above overlays */
+/* Hide Liveblocks tooltips */
 .lb-tooltip {
+  display: none !important;
+}
+
+/* Keep inline toolbars above surrounding content */
+.lb-lexical-toolbar {
   z-index: 50;
-  position: fixed;
+  position: relative;
 }
