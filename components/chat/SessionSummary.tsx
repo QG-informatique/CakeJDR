@@ -1,6 +1,7 @@
 'use client'
 import { FC, useEffect, useState, useRef } from 'react'
 import { useStorage, useMutation } from '@liveblocks/react'
+import { LiveMap } from '@liveblocks/client'
 import { LexicalComposer } from '@lexical/react/LexicalComposer'
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin'
 import { ContentEditable } from '@lexical/react/LexicalContentEditable'
@@ -12,7 +13,6 @@ import { $getRoot } from 'lexical'
 interface Page {
   id: string
   title: string
-  content: string
 }
 
 interface Props { onClose: () => void }
@@ -32,6 +32,8 @@ function AutoSavePlugin({ onChange }: { onChange: (text: string) => void }) {
 
 const SessionSummary: FC<Props> = ({ onClose }) => {
   const summary = useStorage(root => root.summary)
+  const rawEditor = useStorage(root => root.editor)
+  const editorMap = rawEditor instanceof LiveMap ? rawEditor as LiveMap<string, string> : null
   const pages = summary?.acts as Page[] | undefined
   const [currentId, setCurrentId] = useState<string>('')
   const [editorKey, setEditorKey] = useState(0)
@@ -44,9 +46,31 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
     (storage.get('summary') as any).update({ acts })
   }, [])
 
-  const updateEditor = useMutation(({ storage }, content: string) => {
+  const deletePage = useMutation(({ storage }, id: string) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    storage.set('editor', content as any)
+    const summary = storage.get('summary') as any
+    const acts = (summary.get('acts') as Page[]) || []
+    summary.update({ acts: acts.filter((p: Page) => p.id !== id) })
+    // remove content from editor map if using new structure
+    const editor = storage.get('editor')
+    if (editor instanceof LiveMap) {
+      editor.delete(id)
+    } else {
+      storage.set('editor', new LiveMap())
+    }
+  }, [])
+
+  const updateEditor = useMutation(({ storage }, data: { id: string; content: string }) => {
+    let editor = storage.get('editor')
+    if (!(editor instanceof LiveMap)) {
+      const map = new LiveMap<string, string>()
+      if (typeof editor === 'string' && data.id) {
+        map.set(data.id, editor)
+      }
+      storage.set('editor', map)
+      editor = map
+    }
+    ;(editor as LiveMap<string, string>).set(data.id, data.content)
   }, [])
 
   useEffect(() => {
@@ -63,25 +87,32 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
   useEffect(() => {
     if (!pages) return
     if (pages.length === 0) {
-      const first = { id: crypto.randomUUID(), title: 'Nouvelle page', content: '' }
+      const first = { id: crypto.randomUUID(), title: 'Nouvelle page' }
       updatePages([first])
+      updateEditor({ id: first.id, content: '' })
       setCurrentId(first.id)
     } else if (!currentId) {
       setCurrentId(pages[0].id)
     }
-  }, [pages, currentId, updatePages])
+  }, [pages, currentId, updatePages, updateEditor])
 
   const current = pages?.find(p => p.id === currentId)
 
   useEffect(() => {
-    if (current) {
-      updateEditor(current.content)
+    if (!current) return
+    if (editorMap instanceof LiveMap) {
+      if (!editorMap.has(current.id)) {
+        updateEditor({ id: current.id, content: '' })
+      }
+    } else {
+      updateEditor({ id: current.id, content: '' })
     }
-  }, [current, updateEditor])
+  }, [current, editorMap, updateEditor])
 
   const handleNewPage = () => {
-    const newPage = { id: crypto.randomUUID(), title: 'Nouvelle page', content: '' }
+    const newPage = { id: crypto.randomUUID(), title: 'Nouvelle page' }
     updatePages([...(pages || []), newPage])
+    updateEditor({ id: newPage.id, content: '' })
     setCurrentId(newPage.id)
     setEditorKey(k => k + 1)
   }
@@ -91,11 +122,14 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
     if (!file) return
     file.text().then(text => {
       const parts = text.split(/=== Page: /).slice(1)
-      const newPages: Page[] = parts.map(part => {
+      const newPages: Page[] = []
+      parts.forEach(part => {
         const [titleLine, ...contentLines] = part.split('\n')
         const title = titleLine.replace(/===$/, '').trim()
         const content = contentLines.join('\n').trim()
-        return { id: crypto.randomUUID(), title, content }
+        const id = crypto.randomUUID()
+        newPages.push({ id, title })
+        updateEditor({ id, content })
       })
       if (newPages.length > 0) {
         updatePages(newPages)
@@ -108,7 +142,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
 
   const handleExport = () => {
     if (!pages) return
-    const txt = pages.map(p => `=== Page: ${p.title} ===\n${p.content}\n`).join('\n')
+    const txt = pages.map(p => `=== Page: ${p.title} ===\n${editorMap instanceof LiveMap ? editorMap.get(p.id) || '' : ''}\n`).join('\n')
     const blob = new Blob([txt], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -121,18 +155,15 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
 
   const handleDelete = () => {
     if (!pages || !current) return
-    if (confirm('Voulez-vous vraiment supprimer cette page ?')) {
-      const rest = pages.filter(p => p.id !== current.id)
-      if (rest.length === 0) {
-        const newPage = { id: crypto.randomUUID(), title: 'Nouvelle page', content: '' }
-        updatePages([newPage])
-        setCurrentId(newPage.id)
-      } else {
-        updatePages(rest)
-        setCurrentId(rest[0].id)
-      }
-      setEditorKey(k => k + 1)
+    if (!confirm('Voulez-vous vraiment supprimer cette page ?')) return
+    const rest = pages.filter(p => p.id !== current.id)
+    if (rest.length === 0) {
+      alert('Impossible de supprimer la dernière page')
+      return
     }
+    deletePage(current.id)
+    setCurrentId(rest[0].id)
+    setEditorKey(k => k + 1)
   }
 
   const editorConfig = liveblocksConfig({
@@ -176,9 +207,9 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
             />
             <LiveblocksPlugin />
             <AutoSavePlugin onChange={txt => {
-              const newPages = (pages || []).map(p => p.id === current.id ? { ...p, content: txt } : p)
-              updatePages(newPages)
-              updateEditor(txt)
+              if (current) {
+                updateEditor({ id: current.id, content: txt })
+              }
             }} />
           </LexicalComposer>
       )}
