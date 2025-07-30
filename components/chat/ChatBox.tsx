@@ -6,6 +6,7 @@ import SessionSummary from './SessionSummary'
 import DiceStats from './DiceStats'
 import useEventLog from '../app/hooks/useEventLog'
 import { useT } from '@/lib/useT'
+import { AnimatePresence, motion } from 'framer-motion'
 
 type Roll = { player: string, dice: number, result: number }
 
@@ -27,6 +28,9 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
   const profile = useProfile()
   const t = useT()
 
+  const [isAtBottom, setIsAtBottom] = useState(true)
+  const [hasNewMessages, setHasNewMessages] = useState(false)
+
 
   const sendMessage = () => {
     if (inputValue.trim() === '') return
@@ -38,10 +42,36 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
     setInputValue('')
   }
 
+  const scrollToBottom = () => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth' })
+    setIsAtBottom(true)
+    setHasNewMessages(false)
+  }
+
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [events])
+    if (isAtBottom) {
+      endRef.current?.scrollIntoView({ behavior: 'smooth' })
+    } else {
+      setHasNewMessages(true)
+    }
+  }, [events, isAtBottom])
+
+  useEffect(() => {
+    const el = chatBoxRef.current
+    if (!el) return
+    const handleScroll = () => {
+      const atBottom =
+        el.scrollHeight - el.scrollTop <= el.clientHeight + 10
+      setIsAtBottom(atBottom)
+      if (atBottom) {
+        setHasNewMessages(false)
+      }
+    }
+    el.addEventListener('scroll', handleScroll)
+    handleScroll()
+    return () => el.removeEventListener('scroll', handleScroll)
+  }, [chatBoxRef])
 
   // --- NOUVEL AFFICHAGE VERTICAL ---
   if (showSummary) {
@@ -143,7 +173,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
           <div
             ref={chatBoxRef}
             className="
-              flex-1 overflow-y-auto
+              relative flex-1 overflow-y-auto
               rounded-xl
               border border-white/10
               bg-black/15
@@ -165,6 +195,21 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
               </p>
             ))}
             <div ref={endRef} />
+            <AnimatePresence>
+              {!isAtBottom && (
+                <motion.button
+                  onClick={scrollToBottom}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute bottom-2 right-2 bg-black/60 text-white text-sm rounded-lg px-2 py-1 flex items-center gap-1"
+                >
+                  <span>⬇️</span>
+                  {hasNewMessages && <span>Nouveaux messages</span>}
+                </motion.button>
+              )}
+            </AnimatePresence>
           </div>
             <div className="mt-2 flex items-center w-full max-w-full overflow-hidden">
             <input
