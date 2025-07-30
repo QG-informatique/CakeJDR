@@ -62,8 +62,20 @@ body, .scrollable {
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-bg);
 }
 
-/* Highlight active toolbar toggles */
-.lb-lexical-toolbar [data-state='on'] {
+/* Style custom inline toolbar buttons */
+.lb-lexical-toolbar .toolbar-btn {
+  background-color: transparent;
+  color: inherit;
+  padding: 2px 4px;
+  border-radius: 0.375rem;
+  margin-right: 0.25rem;
+}
+
+.lb-lexical-toolbar .toolbar-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.lb-lexical-toolbar .toolbar-btn.active {
   background-color: rgba(250, 204, 21, 0.2);
   outline: 1px solid #facc15;
 }
