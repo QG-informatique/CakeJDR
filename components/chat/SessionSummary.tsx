@@ -7,6 +7,7 @@ import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin'
 import { ContentEditable } from '@lexical/react/LexicalContentEditable'
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary'
 import { LiveblocksPlugin, Toolbar, liveblocksConfig } from '@liveblocks/react-lexical'
+import CustomInlineSection from './CustomInlineSection'
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import { $getRoot } from 'lexical'
 
@@ -206,7 +207,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
         <LexicalComposer key={editorKey} initialConfig={editorConfig}>
             <Toolbar className="mb-2">
               <Toolbar.BlockSelector />
-              <Toolbar.SectionInline />
+              <CustomInlineSection />
             </Toolbar>
             <input
               value={current.title}
