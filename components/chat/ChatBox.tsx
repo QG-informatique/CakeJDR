@@ -5,6 +5,7 @@ import useProfile from '../app/hooks/useProfile'
 import SessionSummary from './SessionSummary'
 import DiceStats from './DiceStats'
 import useEventLog from '../app/hooks/useEventLog'
+import { useT } from '@/lib/useT'
 
 type Roll = { player: string, dice: number, result: number }
 
@@ -24,6 +25,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
   const [showStats, setShowStats] = useState(false)
   const broadcast = useBroadcastEvent()
   const profile = useProfile()
+  const t = useT()
 
 
   const sendMessage = () => {
@@ -167,7 +169,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
             <div className="mt-2 flex items-center w-full max-w-full overflow-hidden">
             <input
               type="text"
-              placeholder="Your message..."
+              placeholder={t('yourMessage')}
               value={inputValue}
               onChange={e => setInputValue(e.target.value)}
               onKeyDown={e => {
@@ -211,7 +213,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
               "
               style={{ minHeight: 44 }}
             >
-              Send
+              {t('send')}
             </button>
             </div>
         </div>

@@ -2,6 +2,8 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useT } from '@/lib/useT'
+import LanguageSwitcher from '../ui/LanguageSwitcher'
 import { Crown, LogOut, Dice6 } from 'lucide-react'
 import SmallSpinner from '../ui/SmallSpinner'
 import RoomList, { RoomInfo } from '../rooms/RoomList'
@@ -30,6 +32,7 @@ type Character = {
 
 export default function MenuAccueil() {
   const router = useRouter()
+  const t = useT()
   const [user, setUser] = useState<{ pseudo:string; isMJ:boolean; color:string } | null>(null)
   const [characters, setCharacters]   = useState<Character[]>([])
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
@@ -190,7 +193,7 @@ export default function MenuAccueil() {
   }
 
   const handleDeleteChar = (id: string | number) => {
-    if (!window.confirm('Delete this sheet?')) return
+    if (!window.confirm(t('deleteSheetConfirm'))) return
     const idx = characters.findIndex(c => String(c.id) === String(id))
     if (idx === -1) return
     const toDelete = characters[idx]
@@ -224,8 +227,8 @@ export default function MenuAccueil() {
         saveCharacters([...characters, withId])
         localStorage.setItem(SELECTED_KEY, String(id))
         setSelectedIdx(characters.length)
-        alert('Fiche importée !')
-      } catch { alert('Erreur : fichier invalide.') }
+        alert(t('importSuccess'))
+      } catch { alert(t('invalidFile')) }
     }
     reader.readAsText(file)
     e.target.value = ''
@@ -318,9 +321,8 @@ export default function MenuAccueil() {
   return (
     <>
       {/* Header avec le bouton qui change de fond */}
-      {user && (
-        <MenuHeader user={user} />
-      )}
+      {user && <MenuHeader user={user} />}
+      <LanguageSwitcher />
 
       <div className="w-full min-h-screen relative text-white px-6 pb-8 flex flex-col max-w-7xl mx-auto bg-transparent overflow-hidden">
         {!user ? (
@@ -433,7 +435,7 @@ export default function MenuAccueil() {
                   }}
                 >
                   <LogOut size={18} className="mr-1" />
-                  Logout
+                  {t('logout')}
                 </button>
               </div>
             </section>

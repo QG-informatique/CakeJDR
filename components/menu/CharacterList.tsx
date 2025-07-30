@@ -1,6 +1,7 @@
 import { FC, RefObject } from 'react'
 import { Edit2, Trash2, Plus, Upload, Download, Cloud } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { useT } from '@/lib/useT'
 
 export type Character = {
   id: string | number
@@ -53,6 +54,7 @@ const CharacterList: FC<Props> = ({
   fileInputRef,
   onImportFile
 }) => {
+  const t = useT()
 
   return (
     <section
@@ -65,7 +67,7 @@ const CharacterList: FC<Props> = ({
       }}
     >
       <h2 className="text-lg font-semibold mb-2 select-none tracking-wide">
-        Character sheets
+        {t('characterSheets')}
       </h2>
 
       {(() => {
@@ -144,22 +146,22 @@ const CharacterList: FC<Props> = ({
                 <div className="flex flex-col gap-1 text-xs text-white/85 mt-1 flex-1">
                   {ch.niveau !== undefined && (
                     <div>
-                      <span className="font-medium text-emerald-200">Niveau</span> {ch.niveau}
+                      <span className="font-medium text-emerald-200">{t('level')}</span> {ch.niveau}
                     </div>
                   )}
                   {ch.classe && (
                     <div>
-                      <span className="font-medium text-emerald-200">Classe</span> {ch.classe}
+                      <span className="font-medium text-emerald-200">{t('class')}</span> {ch.classe}
                     </div>
                   )}
                   {ch.sexe && (
                     <div>
-                      <span className="font-medium text-emerald-200">Sexe</span> {ch.sexe}
+                      <span className="font-medium text-emerald-200">{t('gender')}</span> {ch.sexe}
                     </div>
                   )}
                   {ch.race && (
                     <div>
-                      <span className="font-medium text-emerald-200">Race</span> {ch.race}
+                      <span className="font-medium text-emerald-200">{t('race')}</span> {ch.race}
                     </div>
                   )}
                 </div>
@@ -206,13 +208,13 @@ const CharacterList: FC<Props> = ({
           onClick={onNew}
           className={btnBase + " hover:bg-emerald-600/80 text-emerald-100"}
         >
-          <Plus size={17} /> New sheet
+          <Plus size={17} /> {t('newSheet')}
         </button>
         <button
           onClick={onImportClick}
           className={btnBase + " hover:bg-purple-700/80 text-purple-100"}
         >
-          <Upload size={17} /> Import
+          <Upload size={17} /> {t('importBtn')}
         </button>
         <button
           onClick={onExport}
@@ -225,7 +227,7 @@ const CharacterList: FC<Props> = ({
               : "")
           }
         >
-          <Download size={17} /> Export
+          <Download size={17} /> {t('exportBtn')}
         </button>
         <input
           type="file"

@@ -6,6 +6,7 @@ import LiveCursors from './LiveCursors'
 import YouTube from 'react-youtube'
 import type { YouTubePlayer } from 'youtube-player/dist/types'
 import CanvasTools, { ToolMode } from './CanvasTools'
+import { useT } from '@/lib/useT'
 import MusicPanel from './MusicPanel'
 import ImageItem, { ImageData } from './ImageItem'
 
@@ -37,6 +38,7 @@ export default function InteractiveCanvas() {
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null)
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null)
   const playerRef = useRef<YouTubePlayer | null>(null)
+  const t = useT()
   const initializedRef = useRef(false)
 
   useEffect(() => {
@@ -343,7 +345,7 @@ export default function InteractiveCanvas() {
           onClick={() => setToolsVisible(!toolsVisible)}
           className="rounded-xl px-5 py-2 text-base font-semibold shadow border-none bg-black/30 text-white/90 hover:bg-emerald-600 hover:text-white transition duration-100 flex items-center justify-center min-h-[38px]"
         >
-          <span className="mr-1">🛠️</span> <span className="text-sm">{toolsVisible ? 'Outils' : ''}</span>
+          <span className="mr-1">🛠️</span> <span className="text-sm">{toolsVisible ? t('tools') : ''}</span>
         </button>
       </div>
       {toolsVisible && (
