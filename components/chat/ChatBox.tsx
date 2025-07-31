@@ -97,9 +97,9 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
             min-h-[44px]
           "
           style={{ minHeight: 44 }}
-          onClick={() => setShowSummary(true)}
-        >
-          Session summary
+        onClick={() => setShowSummary(true)}
+      >
+          {t('sessionSummary')}
         </button>
         <button
           className="
@@ -113,9 +113,9 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
           "
           style={{ minHeight: 44 }}
           onClick={() => setShowStats(s => !s)}
-          title="Stats DD"
+          title={t('diceStats')}
         >
-          {showStats ? 'Chat' : '📊'}
+          {showStats ? t('chat') : '📊'}
         </button>
       </div>
 
@@ -123,7 +123,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
       <div className="flex flex-col flex-1 min-h-0 gap-2">
         {showStats && (
           <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-            <div className="text-center font-bold mb-2">Dice statistics</div>
+            <div className="text-center font-bold mb-2">{t('diceStatsTitle')}</div>
             <div className="
               flex-1 overflow-y-auto
               rounded-xl
@@ -139,7 +139,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
           </div>
         )}
         <div className={`flex-1 min-h-0 flex flex-col ${showStats ? '' : 'h-full'}`}>
-          <h2 className="text-xl font-bold mb-2 text-center">Chat</h2>
+          <h2 className="text-xl font-bold mb-2 text-center">{t('chat')}</h2>
           <div
             ref={chatBoxRef}
             className="

@@ -6,12 +6,7 @@ import StatsTab from './StatsTab'
 import EquipTab from './EquipTab'
 import DescriptionPanel from '../character/DescriptionPanel'
 import CharacterSheetHeader from '../character/CharacterSheetHeader'
-
-const TABS = [
-  { key: 'main', label: 'Statistiques' },
-  { key: 'equip', label: 'Équipement' },
-  { key: 'desc', label: 'Description' }
-]
+import { useT } from '@/lib/useT'
 
 type Props = {
   perso: any // Fiche perso initiale
@@ -76,6 +71,12 @@ const CharacterSheet: FC<Props> = ({
   const [edit, setEdit] = useState(!!creation)
   const [tab, setTab] = useState('main')
   const [localPerso, setLocalPerso] = useState<any>(defaultPerso)
+  const t = useT()
+  const TABS = [
+    { key: 'main', label: t('statsTab') },
+    { key: 'equip', label: t('equipment') },
+    { key: 'desc', label: t('description') },
+  ]
 
   // On met à jour la fiche sélectionnée au chargement/changement
   useEffect(() => {

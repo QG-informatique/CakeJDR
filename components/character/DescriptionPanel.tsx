@@ -3,6 +3,7 @@
 
 import { FC, useState } from 'react'
 import { useT } from '@/lib/useT'
+import type { TranslationKey } from '@/lib/translations'
 
 type CustomField = { label: string, value: string }
 
@@ -35,9 +36,10 @@ type DescriptionPanelProps = {
   onUpdateChamp: (index: number, champ: CustomField) => void,
 }
 
-// Voir plus...
+// See more / close with translation
 const LimiteChamp: FC<{ value: string }> = ({ value }) => {
   const [open, setOpen] = useState(false)
+  const t = useT()
   const LMAX = 130
   if (!value) return null
   if (value.length <= LMAX || open) return (
@@ -45,7 +47,7 @@ const LimiteChamp: FC<{ value: string }> = ({ value }) => {
       {value}
       {value.length > LMAX && (
         <button className="text-blue-400 underline ml-1 text-xs" onClick={() => setOpen(false)}>
-          Fermer
+          {t('close')}
         </button>
       )}
     </span>
@@ -54,7 +56,7 @@ const LimiteChamp: FC<{ value: string }> = ({ value }) => {
     <span className="text-sm whitespace-pre-line break-words">
       {value.slice(0, LMAX) + '...'}
       <button className="text-blue-400 underline ml-1 text-xs" onClick={() => setOpen(true)}>
-        Voir plus
+        {t('seeMore')}
       </button>
     </span>
   )
@@ -93,6 +95,23 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
     'background',
   ] as const
 
+  const LABEL_KEYS: Record<(typeof shortFields[number] | typeof longFields[number] | 'capacite_raciale'), TranslationKey> = {
+    race: 'race',
+    classe: 'class',
+    sexe: 'gender',
+    age: 'age',
+    taille: 'height',
+    poids: 'weight',
+    bourse: 'purse',
+    traits: 'traits',
+    ideal: 'ideal',
+    obligations: 'bonds',
+    failles: 'flaws',
+    avantages: 'features',
+    background: 'background',
+    capacite_raciale: 'racialAbility',
+  }
+
   return (
     <div
       className="h-[calc(100vh-120px)] overflow-y-auto pr-1"
@@ -105,7 +124,7 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
             className="font-semibold text-right select-none"
             style={{ minWidth: LABEL_WIDTH }}
           >
-            {t(key as any)}
+            {t(LABEL_KEYS[key])}
           </label>
           <span className="text-right font-bold">:</span>
           <div className="flex-1 min-w-0 break-words pl-3">
@@ -153,7 +172,7 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
             className="font-semibold text-right select-none"
             style={{ minWidth: LABEL_WIDTH }}
           >
-            {t(key as any)}
+            {t(LABEL_KEYS[key])}
           </label>
           <span className="text-right font-bold">:</span>
           <div className="flex-1 min-w-0 break-words pl-3">
