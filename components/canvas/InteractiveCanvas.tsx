@@ -338,6 +338,7 @@ export default function InteractiveCanvas() {
 
 
   return (
+    <>
     <div className="relative w-full h-full select-none">
       {/* TOOLBAR BUTTON */}
       <div className="absolute top-3 left-3 z-30 pointer-events-auto">
@@ -367,9 +368,10 @@ export default function InteractiveCanvas() {
       <div className="absolute bottom-3 right-3 z-30 pointer-events-auto">
         <button
           onClick={() => setAudioVisible(!audioVisible)}
-          className="rounded-xl px-5 py-2 text-base font-semibold shadow border-none bg-black/30 text-white/90 hover:bg-purple-600 hover:text-white transition duration-100 flex items-center justify-center min-h-[38px]"
+          className="relative rounded-xl px-5 py-2 text-base font-semibold shadow border-none bg-black/30 text-white/90 hover:bg-purple-600 hover:text-white transition duration-100 flex items-center justify-center min-h-[38px]"
         >
-          <span>🎵</span>
+          {isPlaying && <span className="absolute inset-0 rounded-xl pointer-events-none animate-pulse-ring" />}
+          <span className="relative">🎵</span>
         </button>
       </div>
 
@@ -444,5 +446,22 @@ export default function InteractiveCanvas() {
         <LiveCursors />
       </div>
     </div>
+    <style jsx>{`
+      @keyframes pulseRing {
+        0% {
+          box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.6);
+        }
+        70% {
+          box-shadow: 0 0 0 12px rgba(168, 85, 247, 0);
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(168, 85, 247, 0);
+        }
+      }
+      .animate-pulse-ring {
+        animation: pulseRing 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+    `}</style>
+    </>
   )
 }
