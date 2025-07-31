@@ -121,13 +121,13 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
           >
             <div className="flex justify-between items-center gap-1">
               <span className="truncate flex-1 flex items-center gap-1 text-sm">
-                {r.password && <Lock size={12} className="text-pink-300" />} {r.name || 'Unnamed'}
+                {r.password && <Lock size={12} className="text-pink-300" />} {r.name || t('unnamed')}
               </span>
-              {myRoom===r.id && <span title="Creator">👑</span>}
+              {myRoom===r.id && <span title={t('creator')}>👑</span>}
               {myRoom===r.id && (
                 <>
-                  <button onClick={(e)=>{e.stopPropagation();renameRoom(r)}} className="ml-1 text-yellow-300" title="Rename">✏️</button>
-                  <button onClick={(e)=>{e.stopPropagation();deleteRoom(r)}} className="ml-1 text-red-400" title="Delete">🗑️</button>
+                  <button onClick={(e)=>{e.stopPropagation();renameRoom(r)}} className="ml-1 text-yellow-300" title={t('rename')}>✏️</button>
+                  <button onClick={(e)=>{e.stopPropagation();deleteRoom(r)}} className="ml-1 text-red-400" title={t('delete')}>🗑️</button>
                 </>
               )}
             </div>
@@ -139,7 +139,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
               className="text-[10px] text-white/40 cursor-pointer select-none"
               onClick={e => { e.stopPropagation(); setRevealIds(prev => ({ ...prev, [r.id]: !prev[r.id] })) }}
             >
-              {revealIds[r.id] ? r.id : 'ID'}
+              {revealIds[r.id] ? r.id : t('idLabel')}
             </span>
             {joiningId === r.id && r.password && (
               <>

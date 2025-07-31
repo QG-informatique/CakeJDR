@@ -75,7 +75,7 @@ const CharacterList: FC<Props> = ({
         const all = [...filtered, ...remoteOnly]
         if (all.length === 0) {
           return (
-            <p className="text-xs text-white/65 italic">No sheets stored.</p>
+            <p className="text-xs text-white/65 italic">{t('noSheets')}</p>
           )
         }
         return (
@@ -129,14 +129,14 @@ const CharacterList: FC<Props> = ({
                       <button
                         onClick={e => { e.stopPropagation(); onEdit(ch.id) }}
                         className={btnBase + ' hover:bg-yellow-500/90 text-yellow-100 w-8 h-8'}
-                        title="Edit"
+                        title={t('edit')}
                       >
                         <Edit2 size={16} />
                       </button>
                       <button
                         onClick={e => { e.stopPropagation(); onDelete(ch.id) }}
                         className={btnBase + ' hover:bg-red-600/90 text-red-100 w-8 h-8'}
-                        title="Delete"
+                        title={t('delete')}
                       >
                         <Trash2 size={16} />
                       </button>
