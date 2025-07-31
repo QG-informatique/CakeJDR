@@ -3,6 +3,7 @@
 
 import { FC, useState } from 'react'
 import { useT } from '@/lib/useT'
+import type { TranslationKey } from '@/lib/translations'
 
 type CustomField = { label: string, value: string }
 
