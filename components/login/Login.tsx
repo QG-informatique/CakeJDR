@@ -242,14 +242,14 @@ transition: 'opacity 0.4s ease, transform 0.3s ease'
               className="mx-auto text-pink-400 animate-swipe"
             >
               <path
-                d="M2 10c4-8 16-8 20 0"
+                d="M2 6h16"
                 stroke="currentColor"
                 strokeWidth={2}
                 fill="none"
                 strokeLinecap="round"
               />
               <path
-                d="M18 6l4 4-4 4"
+                d="M18 2l4 4-4 4"
                 stroke="currentColor"
                 strokeWidth={2}
                 fill="none"
