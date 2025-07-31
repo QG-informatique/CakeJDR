@@ -55,7 +55,7 @@ export default function Login({ onLogin }: { onLogin:(p:string)=>void }) {
   const t = useT()
   useEffect(() => {
     setMounted(true)
-    const timer = setTimeout(() => setShowHint(true), 10000)
+    const timer = setTimeout(() => setShowHint(true), 5000)
     return () => clearTimeout(timer)
   }, [])
 
