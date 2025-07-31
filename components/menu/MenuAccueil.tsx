@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useT } from '@/lib/useT'
 import LanguageSwitcher from '../ui/LanguageSwitcher'
 import { Crown, LogOut, Dice6 } from 'lucide-react'
+import { motion } from 'framer-motion'
 import SmallSpinner from '../ui/SmallSpinner'
 import RoomList, { RoomInfo } from '../rooms/RoomList'
 import RoomCreateModal from '../rooms/RoomCreateModal'
@@ -347,7 +348,7 @@ export default function MenuAccueil() {
               "
             >
               <div className="shrink-0 flex items-center justify-start min-w-[150px] gap-2">
-                <button
+                <motion.button
                   type="button"
                   aria-label="Enter room"
                   onClick={handlePlay}
@@ -360,12 +361,19 @@ export default function MenuAccueil() {
                     boxShadow: selectedRoom
                       ? '0 0 12px 2px #ffb0e366, 0 2px 20px 8px #fff2'
                       : '0 0 4px 1px #ffe5fa44, 0 2px 8px 2px #fff2',
-                    transition: 'transform 0.18s cubic-bezier(.77,.2,.56,1), box-shadow 0.18s cubic-bezier(.77,.2,.56,1)'
                   }}
                   disabled={!selectedRoom}
+                  whileHover={{
+                    scale: 1.1,
+                    rotate: -8,
+                    boxShadow: selectedRoom
+                      ? '0 0 18px 4px #ffb0e399, 0 4px 24px 8px #fff4'
+                      : '0 0 6px 2px #ffe5fa66, 0 4px 12px 3px #fff3'
+                  }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                 >
                   <Dice6 className="w-5 h-5 text-white drop-shadow-[0_2px_5px_rgba(255,70,190,0.45)]" />
-                </button>
+                </motion.button>
                 {selectedRoom && (
                   <span className="text-sm text-white/80 flex items-center gap-2">
                     {roomLoading && <SmallSpinner />}
