@@ -35,9 +35,10 @@ type DescriptionPanelProps = {
   onUpdateChamp: (index: number, champ: CustomField) => void,
 }
 
-// Voir plus...
+// See more / close with translation
 const LimiteChamp: FC<{ value: string }> = ({ value }) => {
   const [open, setOpen] = useState(false)
+  const t = useT()
   const LMAX = 130
   if (!value) return null
   if (value.length <= LMAX || open) return (
@@ -45,7 +46,7 @@ const LimiteChamp: FC<{ value: string }> = ({ value }) => {
       {value}
       {value.length > LMAX && (
         <button className="text-blue-400 underline ml-1 text-xs" onClick={() => setOpen(false)}>
-          Fermer
+          {t('close')}
         </button>
       )}
     </span>
@@ -54,7 +55,7 @@ const LimiteChamp: FC<{ value: string }> = ({ value }) => {
     <span className="text-sm whitespace-pre-line break-words">
       {value.slice(0, LMAX) + '...'}
       <button className="text-blue-400 underline ml-1 text-xs" onClick={() => setOpen(true)}>
-        Voir plus
+        {t('seeMore')}
       </button>
     </span>
   )
