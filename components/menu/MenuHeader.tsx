@@ -1,8 +1,8 @@
 'use client'
 
-import { FC } from 'react'
+import { FC, useState } from 'react'
 import CakeLogo from '../ui/CakeLogo'
-import { motion } from 'framer-motion'
+import { motion, useAnimation } from 'framer-motion'
 import { useBackground } from '../context/BackgroundContext'
 
 export type User = {
@@ -29,11 +29,21 @@ const MenuHeader: FC<MenuHeaderProps> = ({
 }) => {
   const { cycleBackground } = useBackground()
 
-  const handleCakeClick = () => {
-    cycleBackground()
-  }
+  const controls = useAnimation()
+  const [animating, setAnimating] = useState(false)
 
   const JIGGLE = LOGO_SIZE * 0.25
+
+  const handleCakeClick = async () => {
+    if (animating) return
+    setAnimating(true)
+    await controls.start({
+      x: [0, -JIGGLE, JIGGLE, 0],
+      transition: { duration: 2, ease: 'easeInOut', times: [0, 0.33, 0.66, 1] }
+    })
+    setAnimating(false)
+    cycleBackground()
+  }
 
   return (
     <header
@@ -49,15 +59,8 @@ const MenuHeader: FC<MenuHeaderProps> = ({
       {/* Logo Cake animé, centré, taille personnalisable */}
       <div className="pointer-events-auto absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-20">
         <motion.div
-          animate={{ x: [-JIGGLE, JIGGLE] }}
-          transition={{
-            x: {
-              duration: 4,
-              repeat: Infinity,
-              repeatType: 'reverse',
-              ease: 'easeInOut'
-            }
-          }}
+          animate={controls}
+          initial={{ x: 0 }}
           whileHover={{ scale: 1.07 }}
           onClick={handleCakeClick}
           className="inline-flex items-center justify-center overflow-visible"
