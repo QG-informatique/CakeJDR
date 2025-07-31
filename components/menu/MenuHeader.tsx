@@ -54,10 +54,12 @@ const MenuHeader: FC<MenuHeaderProps> = ({
     },
     walking: {
       scale: 1.0,
-      x: [0, -LOGO_SIZE * 0.7, LOGO_SIZE * 0.7, 0],
-      y: [0, -LOGO_SIZE * 0.28, -LOGO_SIZE * 0.24, 0],
-      rotate: [0, -16, 18, 0],
-      transition: { duration: 1.35, times: [0, 0.28, 0.65, 1], ease: "easeInOut" }
+      x: [0, LOGO_SIZE * 0.6, -LOGO_SIZE * 0.6, 0],
+      transition: {
+        duration: 1.4,
+        times: [0, 0.33, 0.66, 1],
+        ease: 'easeInOut'
+      }
     }
   }
 
@@ -79,6 +81,8 @@ const MenuHeader: FC<MenuHeaderProps> = ({
           initial="idle"
           variants={cakeVariants}
           onClick={handleCakeClick}
+          whileHover={{ scale: 1.05, filter: 'drop-shadow(0 0 8px rgba(244,114,182,0.6))' }}
+          whileTap={{ scale: 0.97 }}
           className="inline-flex items-center justify-center overflow-visible"
           style={{
             cursor: 'pointer',
