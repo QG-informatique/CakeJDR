@@ -55,7 +55,7 @@ export default function Login({ onLogin }: { onLogin:(p:string)=>void }) {
   const t = useT()
   useEffect(() => {
     setMounted(true)
-    const timer = setTimeout(() => setShowHint(true), 5000)
+    const timer = setTimeout(() => setShowHint(true), 10000)
     return () => clearTimeout(timer)
   }, [])
 
@@ -237,19 +237,21 @@ transition: 'opacity 0.4s ease, transform 0.3s ease'
           >
             <svg
               width={48}
-              height={24}
-              viewBox="0 0 24 12"
+              height={20}
+              viewBox="0 0 24 10"
               className="mx-auto text-pink-400 animate-swipe"
             >
-              <path
-                d="M2 6h16"
+              <line
+                x1="2"
+                y1="5"
+                x2="20"
+                y2="5"
                 stroke="currentColor"
                 strokeWidth={2}
-                fill="none"
                 strokeLinecap="round"
               />
-              <path
-                d="M18 2l4 4-4 4"
+              <polyline
+                points="20,1 23,5 20,9"
                 stroke="currentColor"
                 strokeWidth={2}
                 fill="none"
