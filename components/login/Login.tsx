@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import CakeLogo from '@/components/ui/CakeLogo'
 import { useT } from '@/lib/useT'
+import { DoorOpen } from 'lucide-react'
 
 const PROFILE_KEY = 'jdr_profile'
 const CUBE_SIZE = 200
@@ -50,10 +51,24 @@ function DicePips({ value, size }: { value:number; size:number }) {
 export default function Login({ onLogin }: { onLogin:(p:string)=>void }) {
   // -- Ajout d'un état mounted pour éviter le flash du cube --
   const [mounted, setMounted] = useState(false)
+  const [showHint, setShowHint] = useState(false)
+  const hintTimer = useRef<NodeJS.Timeout | null>(null)
   const t = useT()
   useEffect(() => {
     setMounted(true)
+    hintTimer.current = setTimeout(() => setShowHint(true), 10000)
+    return () => {
+      if(hintTimer.current) clearTimeout(hintTimer.current)
+    }
   }, [])
+
+  const hideHint = () => {
+    if(hintTimer.current){
+      clearTimeout(hintTimer.current)
+      hintTimer.current = null
+    }
+    setShowHint(false)
+  }
 
   const [pseudo, setPseudo] = useState('')
   const [error, setError] = useState<string|null>(null)
@@ -97,6 +112,7 @@ export default function Login({ onLogin }: { onLogin:(p:string)=>void }) {
   }
   const onPointerMove = (e:React.PointerEvent) => {
     if(!draggingRef.current) return
+    hideHint()
     const dx = e.clientX - origin.current.x
     const dy = e.clientY - origin.current.y
     setRotation(r => ({ x: r.x - dy * 0.4, y: r.y + dx * 0.4 }))
@@ -205,10 +221,11 @@ transition: 'opacity 0.4s ease, transform 0.3s ease'
                 {type === 'button' && (
                   <button
                     onClick={handleLogin}
-                    className="bg-pink-500 hover:bg-pink-600 text-white py-2 px-4 rounded font-semibold shadow"
+                    className="bg-pink-500 hover:bg-pink-600 text-white p-3 rounded shadow flex items-center justify-center"
                     style={{ pointerEvents:'auto' }}
+                    aria-label={t('enter')}
                   >
-                    {t('enter')}
+                    <DoorOpen size={24} />
                   </button>
                 )}
                 {type === 'pips' && value && (
@@ -218,6 +235,55 @@ transition: 'opacity 0.4s ease, transform 0.3s ease'
             ))}
           </div>
         </div>
+
+        {/* Indice de rotation du d\u00E9 */}
+        {showHint && !error && (
+          <div
+            style={{
+              position:'absolute',
+              top: CUBE_SIZE + 20,
+              width:'100%',
+              textAlign:'center',
+              pointerEvents:'none'
+            }}
+          >
+            <svg
+              width={48}
+              height={20}
+              viewBox="0 0 24 10"
+              className="mx-auto text-pink-400 animate-swipe"
+            >
+              <line
+                x1="2"
+                y1="5"
+                x2="20"
+                y2="5"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+              />
+              <polyline
+                points="20,1 23,5 20,9"
+                stroke="currentColor"
+                strokeWidth={2}
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <p className="text-xs text-pink-400 mt-1">swipe</p>
+            <style jsx>{`
+              @keyframes swipeHint {
+                0% { transform: translateX(-4px); opacity: 0.6; }
+                50% { transform: translateX(4px); opacity: 1; }
+                100% { transform: translateX(-4px); opacity: 0.6; }
+              }
+              .animate-swipe {
+                animation: swipeHint 1.2s ease-in-out infinite;
+              }
+            `}</style>
+          </div>
+        )}
 
         {/* Message d'erreur sous le cube */}
         {error && (
