@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useT } from '@/lib/useT'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+const BUTTON_WIDTH = '160px'
+
 // --- CustomSelect maison, DA Import/Export ---
 type CustomSelectProps = {
   value: string
@@ -24,7 +26,11 @@ const CustomSelect: FC<CustomSelectProps> = ({ value, onChange, disabled, option
   }, [open])
 
   return (
-    <div ref={ref} className="relative w-[158px] max-w-[158px] select-none">
+    <div
+      ref={ref}
+      className="relative select-none"
+      style={{ width: BUTTON_WIDTH, maxWidth: BUTTON_WIDTH }}
+    >
       <button
         type="button"
         disabled={disabled}
@@ -43,7 +49,7 @@ const CustomSelect: FC<CustomSelectProps> = ({ value, onChange, disabled, option
         aria-haspopup="listbox"
         aria-expanded={open}
       >
-        <span>
+        <span className="truncate">
           {options.find(o => o.value === value)?.label || ""}
         </span>
         <svg width="18" height="18" className="ml-2 opacity-70" viewBox="0 0 20 20" fill="none"><path d="M6 8l4 4 4-4" stroke="#fff" strokeWidth="2" strokeLinecap="round"/></svg>
@@ -175,7 +181,7 @@ const LevelUpPanel: FC<Props> = ({
           onClick={onLevelUp}
           disabled={processing}
           className="
-            w-[158px] max-w-[158px] px-4 py-1.5 rounded-xl
+            px-4 py-1.5 rounded-xl
             font-semibold text-white bg-black/35
             border border-white/10 shadow-2xl transition
             hover:bg-gray-800 hover:border-white/20
@@ -183,11 +189,13 @@ const LevelUpPanel: FC<Props> = ({
             focus:ring-2 focus:ring-blue-400/30
           "
           style={{
+            width: BUTTON_WIDTH,
+            maxWidth: BUTTON_WIDTH,
             boxShadow: '0 2px 16px 0 #0007, 0 0 0 1px #fff1 inset',
             background: 'linear-gradient(120deg,rgba(18,28,54,0.35) 60%,rgba(16,18,33,0.23) 100%)'
           }}
         >
-          {processing ? t('launching') : t('launchLevelUp')}
+          <span className="truncate">{processing ? t('launching') : t('launchLevelUp')}</span>
         </button>
       </div>
 

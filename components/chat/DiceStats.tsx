@@ -2,6 +2,8 @@
 import { useState, useRef, useEffect, FC } from 'react'
 import { useT } from '@/lib/useT'
 
+const SELECT_WIDTH = '140px'
+
 // --- CustomSelect DA Import/Export ---
 type CustomSelectProps = {
   value: string
@@ -20,7 +22,11 @@ const CustomSelect: FC<CustomSelectProps> = ({ value, onChange, options, disable
     return () => window.removeEventListener("mousedown", handleClick)
   }, [open])
   return (
-    <div ref={ref} className="relative w-[180px] select-none">
+    <div
+      ref={ref}
+      className="relative select-none"
+      style={{ width: SELECT_WIDTH }}
+    >
       <button
         type="button"
         disabled={disabled}
@@ -185,7 +191,6 @@ export default function DiceStats({ history }: Props) {
   return (
     <div className="p-2">
       <div className="mb-2 flex items-center gap-2">
-        <label className="mr-2">{t('viewStats')} :</label>
         <CustomSelect
           value={statType}
           onChange={setStatType}
