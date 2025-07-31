@@ -1,8 +1,8 @@
 'use client'
 
-import { FC, useState } from 'react'
+import { FC } from 'react'
 import CakeLogo from '../ui/CakeLogo'
-import { motion, useAnimation, type Variants } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { useBackground } from '../context/BackgroundContext'
 
 export type User = {
@@ -27,39 +27,13 @@ const MenuHeader: FC<MenuHeaderProps> = ({
   topPadding = 48,
   bottomPadding = 32,
 }) => {
-  // Animation gâteau
-  const [cakeAnim, setCakeAnim] = useState<'idle'|'walking'>('idle')
-  const cakeControls = useAnimation()
-
-  // --- CORRECTION ICI : UN SEUL HOOK ---
   const { cycleBackground } = useBackground()
-  
-  const handleCakeClick = async () => {
-    if (cakeAnim === 'walking') return
-    setCakeAnim('walking')
-    await cakeControls.start('walking')
-    setCakeAnim('idle')
-    cakeControls.start('idle')
+
+  const handleCakeClick = () => {
     cycleBackground()
   }
 
-  // Animation CakeLogo
-  const cakeVariants: Variants = {
-    idle: {
-      x: 0,
-      y: 0,
-      rotate: 0,
-      scale: 1.0,
-      transition: { duration: 0.4, type: 'spring' }
-    },
-    walking: {
-      scale: 1.0,
-      x: [0, -LOGO_SIZE * 0.7, LOGO_SIZE * 0.7, 0],
-      y: [0, -LOGO_SIZE * 0.28, -LOGO_SIZE * 0.24, 0],
-      rotate: [0, -16, 18, 0],
-      transition: { duration: 1.35, times: [0, 0.28, 0.65, 1], ease: "easeInOut" }
-    }
-  }
+  const JIGGLE = LOGO_SIZE * 0.25
 
   return (
     <header
@@ -75,9 +49,16 @@ const MenuHeader: FC<MenuHeaderProps> = ({
       {/* Logo Cake animé, centré, taille personnalisable */}
       <div className="pointer-events-auto absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-20">
         <motion.div
-          animate={cakeControls}
-          initial="idle"
-          variants={cakeVariants}
+          animate={{ x: [-JIGGLE, JIGGLE] }}
+          transition={{
+            x: {
+              duration: 4,
+              repeat: Infinity,
+              repeatType: 'reverse',
+              ease: 'easeInOut'
+            }
+          }}
+          whileHover={{ scale: 1.07 }}
           onClick={handleCakeClick}
           className="inline-flex items-center justify-center overflow-visible"
           style={{
