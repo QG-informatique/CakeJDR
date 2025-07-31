@@ -44,7 +44,7 @@ export default function RoomsPage() {
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        setErrorMsg(data.error || 'Creation failed')
+        setErrorMsg(data.error || t('creationFailed'))
         return
       }
       const data = await res.json()
@@ -68,7 +68,7 @@ export default function RoomsPage() {
   return (
     <div className="p-6 text-white">
 
-      <h1 className="text-2xl mb-4">Available Rooms</h1>
+      <h1 className="text-2xl mb-4">{t('availableRooms')}</h1>
 
 
 
@@ -79,7 +79,7 @@ export default function RoomsPage() {
             onClick={() => { setSelectedId(r.id); localStorage.setItem('jdr_my_room', r.id) }}
             className={`p-3 rounded-lg flex flex-col gap-2 cursor-pointer ${selectedId===r.id ? 'ring-2 ring-emerald-400/90 shadow-[0_0_12px_2px_rgba(16,185,129,0.6)]' : 'bg-black/30 hover:ring-2 hover:ring-emerald-300/40'}`}
           >
-            <span className="truncate block">{r.name || 'Unnamed'}</span>
+            <span className="truncate block">{r.name || t('unnamed')}</span>
             <span className="text-xs text-white/60">{r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ''}</span>
 
             <RoomAvatarStack id={r.id} />
@@ -88,7 +88,7 @@ export default function RoomsPage() {
               className="text-sm underline"
               onClick={e => { e.stopPropagation(); joinRoom(r.id) }}
             >
-              Join
+              {t('enter')}
             </button>
           </div>
         ))}
@@ -100,7 +100,7 @@ export default function RoomsPage() {
           onClick={() => setShowCreate(v => !v)}
         >
 
-          Create a new room
+          {t('createRoom')}
 
 
 
@@ -109,7 +109,7 @@ export default function RoomsPage() {
           <div className="mt-3 space-y-2 text-black">
             <input
 
-              placeholder="Room name"
+              placeholder={t('roomName')}
 
 
               value={name}
@@ -126,14 +126,14 @@ export default function RoomsPage() {
                 }}
               />
 
-              Password protected
+              {t('passwordProtected')}
 
             </label>
             {withPassword && (
               <input
                 type="password"
 
-                placeholder="Password"
+                placeholder={t('password')}
 
 
                 value={password}
@@ -146,7 +146,7 @@ export default function RoomsPage() {
               disabled={creating}
               className="px-4 py-2 bg-blue-600 rounded text-white w-full disabled:opacity-50"
             >
-              {creating ? 'Creating…' : 'Confirm'}
+              {creating ? t('creating') : t('confirm')}
             </button>
             {errorMsg && (
               <p className="text-red-400 text-sm text-center mt-2">{errorMsg}</p>
