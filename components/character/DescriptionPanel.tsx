@@ -94,6 +94,23 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
     'background',
   ] as const
 
+  const LABEL_KEYS: Record<(typeof shortFields[number] | typeof longFields[number] | 'capacite_raciale'), TranslationKey> = {
+    race: 'race',
+    classe: 'class',
+    sexe: 'gender',
+    age: 'age',
+    taille: 'height',
+    poids: 'weight',
+    bourse: 'purse',
+    traits: 'traits',
+    ideal: 'ideal',
+    obligations: 'bonds',
+    failles: 'flaws',
+    avantages: 'features',
+    background: 'background',
+    capacite_raciale: 'racialAbility',
+  }
+
   return (
     <div
       className="h-[calc(100vh-120px)] overflow-y-auto pr-1"
@@ -106,7 +123,7 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
             className="font-semibold text-right select-none"
             style={{ minWidth: LABEL_WIDTH }}
           >
-            {t(key as any)}
+            {t(LABEL_KEYS[key])}
           </label>
           <span className="text-right font-bold">:</span>
           <div className="flex-1 min-w-0 break-words pl-3">
@@ -154,7 +171,7 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
             className="font-semibold text-right select-none"
             style={{ minWidth: LABEL_WIDTH }}
           >
-            {t(key as any)}
+            {t(LABEL_KEYS[key])}
           </label>
           <span className="text-right font-bold">:</span>
           <div className="flex-1 min-w-0 break-words pl-3">
