@@ -9,7 +9,7 @@ interface Props {
 }
 
 const faceStyle =
-  'absolute w-full h-full flex items-center justify-center text-black text-4xl font-extrabold bg-white rounded-md select-none border border-gray-300'
+  'absolute w-full h-full flex items-center justify-center text-black text-4xl font-extrabold bg-white rounded-md select-none border border-gray-300 backface-hidden'
 
 const ORIENTATIONS = [
   { x: 0, y: 0, z: 0 }, // 1
@@ -29,16 +29,17 @@ const Dice3D: FC<Props> = ({ show, result, diceType, onFinish }) => {
     if (show && result !== null) {
       setVisible(true)
       setReveal(false)
+      controls.set({ rotateX: 45, rotateY: 45, rotateZ: 0 })
       let elapsed = 0
       const interval = setInterval(() => {
         controls.start({
-          rotateX: '+=' + (90 + Math.random() * 180),
-          rotateY: '+=' + (90 + Math.random() * 180),
-          rotateZ: '+=' + (90 + Math.random() * 180),
-          transition: { duration: 0.4, ease: 'easeInOut' },
+          rotateX: "+=" + (90 + Math.random() * 180),
+          rotateY: "+=" + (90 + Math.random() * 180),
+          rotateZ: "+=" + (90 + Math.random() * 180),
+          transition: { duration: 0.3, ease: 'easeInOut' },
         })
-        elapsed += 400
-        if (elapsed >= 2600) {
+        elapsed += 300
+        if (elapsed >= 2700) {
           clearInterval(interval)
           const idx = ((result - 1) % 6 + 6) % 6
           const final = ORIENTATIONS[idx]
@@ -57,7 +58,7 @@ const Dice3D: FC<Props> = ({ show, result, diceType, onFinish }) => {
               }, 1200)
             })
         }
-      }, 400)
+      }, 300)
       return () => clearInterval(interval)
     }
   }, [show, result, controls, onFinish])
