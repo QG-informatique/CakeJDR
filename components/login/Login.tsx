@@ -52,12 +52,23 @@ export default function Login({ onLogin }: { onLogin:(p:string)=>void }) {
   // -- Ajout d'un état mounted pour éviter le flash du cube --
   const [mounted, setMounted] = useState(false)
   const [showHint, setShowHint] = useState(false)
+  const hintTimer = useRef<NodeJS.Timeout | null>(null)
   const t = useT()
   useEffect(() => {
     setMounted(true)
-    const timer = setTimeout(() => setShowHint(true), 10000)
-    return () => clearTimeout(timer)
+    hintTimer.current = setTimeout(() => setShowHint(true), 10000)
+    return () => {
+      if(hintTimer.current) clearTimeout(hintTimer.current)
+    }
   }, [])
+
+  const hideHint = () => {
+    if(hintTimer.current){
+      clearTimeout(hintTimer.current)
+      hintTimer.current = null
+    }
+    setShowHint(false)
+  }
 
   const [pseudo, setPseudo] = useState('')
   const [error, setError] = useState<string|null>(null)
@@ -101,6 +112,7 @@ export default function Login({ onLogin }: { onLogin:(p:string)=>void }) {
   }
   const onPointerMove = (e:React.PointerEvent) => {
     if(!draggingRef.current) return
+    hideHint()
     const dx = e.clientX - origin.current.x
     const dy = e.clientY - origin.current.y
     setRotation(r => ({ x: r.x - dy * 0.4, y: r.y + dx * 0.4 }))
