@@ -160,7 +160,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
                   <><strong>{ev.author}{ev.isMJ && ' 👑'} :</strong> {ev.text}</>
                 )}
                 {ev.kind === 'dice' && (
-                  <span>{ev.player} : D{ev.dice} → {ev.result}</span>
+                  <span>{ev.player} lance un D{ev.dice} → {ev.result}</span>
                 )}
               </p>
             ))}

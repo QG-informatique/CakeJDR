@@ -67,3 +67,10 @@ body, .scrollable {
   background-color: rgba(250, 204, 21, 0.2);
   outline: 1px solid #facc15;
 }
+@keyframes dice-shake {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  50% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+}
+.shake { animation: dice-shake 0.6s ease-in-out; }
