@@ -73,13 +73,20 @@ const MenuHeader: FC<MenuHeaderProps> = ({
       }}
     >
       {/* Logo Cake animé, centré, taille personnalisable */}
-      <div className="pointer-events-auto absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-20">
+      <div
+        className="pointer-events-auto absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-20"
+        style={{ top: 'calc(50% + 100px)' }}
+      >
         <motion.div
           animate={cakeControls}
           initial="idle"
           variants={cakeVariants}
+          whileHover={{ scale: 1.08, filter: 'drop-shadow(0 0 8px #f9a8d4)' }}
+          transition={{ type: 'spring', stiffness: 300 }}
           onClick={handleCakeClick}
           className="inline-flex items-center justify-center overflow-visible"
+          role="button"
+          aria-label="Change background"
           style={{
             cursor: 'pointer',
             userSelect: 'none'
