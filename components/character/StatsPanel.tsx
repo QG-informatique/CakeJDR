@@ -106,7 +106,7 @@ const StatsPanel: FC<Props> = ({ edit, perso, onChange }) => {
                 value={perso.pv_max ?? perso.pvMax ?? ''}
                 onChange={e => onChange('pv_max', e.target.value)}
                 className="w-10 px-1 py-0.5 rounded bg-white border text-sm text-black"
-                placeholder="Max"
+                placeholder={t('max')}
               />
             </div>
           )}
@@ -124,7 +124,7 @@ const StatsPanel: FC<Props> = ({ edit, perso, onChange }) => {
       ? <>
           <input type="text" value={perso[stat.key] ?? ''} onChange={e => onChange(stat.key, e.target.value)} className="ml-2 px-1 py-0.5 rounded bg-white border w-10 text-sm text-black" />
           <span className="mx-1">/</span>
-          <input type="text" value={perso[`${stat.key}_mod`] ?? ''} onChange={e => onChange(`${stat.key}_mod`, e.target.value)} className="px-1 py-0.5 rounded bg-white border w-10 text-sm text-black" placeholder="mod" />
+          <input type="text" value={perso[`${stat.key}_mod`] ?? ''} onChange={e => onChange(`${stat.key}_mod`, e.target.value)} className="px-1 py-0.5 rounded bg-white border w-10 text-sm text-black" placeholder={t('mod')} />
         </>
       : <>
           <span

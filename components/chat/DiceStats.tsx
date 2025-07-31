@@ -1,5 +1,6 @@
 'use client'
 import { useState, useRef, useEffect, FC } from 'react'
+import { useT } from '@/lib/useT'
 
 // --- CustomSelect DA Import/Export ---
 type CustomSelectProps = {
@@ -107,19 +108,17 @@ function computeStats(history: Roll[]) {
   return stats
 }
 
-const STAT_OPTIONS = [
-  { value: "all", label: "Toutes les stats" },
-  { value: "pct", label: "Pourcentages critiques / échecs" },
-  // On peut facilement en ajouter ici si besoin plus tard
-]
-
-const TIME_OPTIONS = [
-  { value: 'all', label: 'All Time' },
-  { value: '7d', label: '7 derniers jours' },
-  { value: '24h', label: '24h' },
-]
-
 export default function DiceStats({ history }: Props) {
+  const t = useT()
+  const STAT_OPTIONS = [
+    { value: 'all', label: t('statAll') },
+    { value: 'pct', label: t('statPct') },
+  ]
+  const TIME_OPTIONS = [
+    { value: 'all', label: t('timeAll') },
+    { value: '7d', label: t('time7d') },
+    { value: '24h', label: t('time24h') },
+  ]
   const [statType, setStatType] = useState<string>('all')
   const [timeRange, setTimeRange] = useState<string>('all')
   let filtered = history
@@ -131,7 +130,7 @@ export default function DiceStats({ history }: Props) {
   const stats = computeStats(filtered)
   const players = Object.keys(stats)
 
-  if (players.length === 0) return <div className="p-2 text-sm">No rolls recorded.</div>
+  if (players.length === 0) return <div className="p-2 text-sm">{t('noRolls')}</div>
 
   let tableHead
   let tableRows
@@ -139,9 +138,9 @@ export default function DiceStats({ history }: Props) {
   if (statType === "pct") {
     tableHead = (
       <tr className="bg-black/25 backdrop-blur-[1px] text-white border-b border-white/10">
-        <th className="px-2 py-1">Joueur</th>
-        <th className="px-2 py-1">% Critiques</th>
-        <th className="px-2 py-1">% Échecs</th>
+        <th className="px-2 py-1">{t('player')}</th>
+        <th className="px-2 py-1">% {t('crits')}</th>
+        <th className="px-2 py-1">% {t('fails')}</th>
       </tr>
     )
     tableRows = players.map(player => {
@@ -160,11 +159,11 @@ export default function DiceStats({ history }: Props) {
     // all
     tableHead = (
       <tr className="bg-black/25 backdrop-blur-[1px] text-white border-b border-white/10">
-        <th className="px-2 py-1">Joueur</th>
-        <th className="px-2 py-1">Jets</th>
-        <th className="px-2 py-1">Critiques</th>
-        <th className="px-2 py-1">Échecs</th>
-        <th className="px-2 py-1">Par dé</th>
+        <th className="px-2 py-1">{t('player')}</th>
+        <th className="px-2 py-1">{t('rolls')}</th>
+        <th className="px-2 py-1">{t('crits')}</th>
+        <th className="px-2 py-1">{t('fails')}</th>
+        <th className="px-2 py-1">{t('perDie')}</th>
       </tr>
     )
     tableRows = players.map(player => {
@@ -186,7 +185,7 @@ export default function DiceStats({ history }: Props) {
   return (
     <div className="p-2">
       <div className="mb-2 flex items-center gap-2">
-        <label className="mr-2">Voir stats :</label>
+        <label className="mr-2">{t('viewStats')} :</label>
         <CustomSelect
           value={statType}
           onChange={setStatType}

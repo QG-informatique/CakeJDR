@@ -22,7 +22,7 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
   const createRoom = async () => {
     if (!name) return
     if (localStorage.getItem('jdr_my_room')) {
-      setErrorMsg('You already created a room')
+      setErrorMsg(t('alreadyCreatedRoom'))
       return
     }
     setCreating(true)

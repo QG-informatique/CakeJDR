@@ -1,5 +1,6 @@
 'use client'
 import { FC, useEffect, useState, useRef, useCallback } from 'react'
+import { useT } from '@/lib/useT'
 import { useStorage, useMutation } from '@liveblocks/react'
 import { LiveMap } from '@liveblocks/client'
 import { LexicalComposer } from '@lexical/react/LexicalComposer'
@@ -40,6 +41,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
   const [showFileMenu, setShowFileMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const fileBtnRef = useRef<HTMLButtonElement>(null)
+  const t = useT()
 
   const updatePages = useMutation(({ storage }, acts: Page[]) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -101,12 +103,12 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
   useEffect(() => {
     if (!pages) return
     if (pages.length === 0) {
-      const title = prompt('Nom de la page ?')?.trim() || 'Nouvelle page'
+      const title = prompt(t('pageNamePrompt'))?.trim() || t('newPage')
       createPage(title)
     } else if (!currentId) {
       setCurrentId(pages[0].id)
     }
-  }, [pages, currentId, updatePages, updateEditor, createPage])
+  }, [pages, currentId, updatePages, updateEditor, createPage, t])
 
   const current = pages?.find(p => p.id === currentId)
 
@@ -122,7 +124,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
   }, [current, editorMap, updateEditor])
 
   const handleNewPage = () => {
-    const title = prompt('Nom de la page ?')?.trim() || 'Nouvelle page'
+    const title = prompt(t('pageNamePrompt'))?.trim() || t('newPage')
     createPage(title)
   }
 
@@ -164,10 +166,10 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
 
   const handleDelete = () => {
     if (!pages || !current) return
-    if (!confirm('Voulez-vous vraiment supprimer cette page ?')) return
+    if (!confirm(t('deletePageConfirm'))) return
     const rest = pages.filter(p => p.id !== current.id)
     if (rest.length === 0) {
-      alert('Impossible de supprimer la dernière page')
+      alert(t('lastPageDeleteError'))
       return
     }
     deletePage(current.id)
@@ -193,10 +195,10 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
           {showFileMenu && (
             <div ref={menuRef} className="absolute right-0 mt-1 z-40 bg-black/80 rounded shadow p-1 w-32 flex flex-col">
               <label className="px-2 py-1 hover:bg-white/10 cursor-pointer text-sm">
-                Importer
+                {t('importBtn')}
                 <input type="file" accept="text/plain" onChange={handleImport} className="hidden" />
               </label>
-              <button onClick={handleExport} className="text-left px-2 py-1 hover:bg-white/10 text-sm">Exporter</button>
+              <button onClick={handleExport} className="text-left px-2 py-1 hover:bg-white/10 text-sm">{t('exportBtn')}</button>
             </div>
           )}
         </div>
@@ -214,7 +216,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
             />
             <RichTextPlugin
               contentEditable={<ContentEditable className="flex-1 min-h-0 p-2 bg-black/20 rounded text-white outline-none" />}
-              placeholder={<div>Start writing...</div>}
+              placeholder={<div>{t('startWriting')}</div>}
               ErrorBoundary={LexicalErrorBoundary}
             />
             <LiveblocksPlugin />

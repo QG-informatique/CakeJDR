@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { useBroadcastEvent, useOthers } from '@liveblocks/react'
+import { useT } from '@/lib/useT'
 import { User2 } from 'lucide-react'
 
 type Character = { id: string | number; name?: string; nom?: string }
@@ -21,6 +22,7 @@ export default function GMCharacterSelector({
   const [selectedId, setSelectedId] = useState<string | number | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const broadcast = useBroadcastEvent()
+  const t = useT()
 
   // Récupère les personnages en temps réel via les presences
   useEffect(() => {
@@ -92,7 +94,7 @@ export default function GMCharacterSelector({
         >
           {chars.length === 0 && (
             <div className="px-4 py-3 text-sm text-gray-400 text-center">
-              Aucun personnage actif
+              {t('noActiveChar')}
             </div>
           )}
           {chars.map((c, idx) => (

@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useT } from '@/lib/useT'
 import { useRouter } from 'next/navigation'
 import RoomAvatarStack from '@/components/rooms/RoomAvatarStack'
 
@@ -13,6 +14,7 @@ export default function RoomsPage() {
   const [creating, setCreating] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const router = useRouter()
+  const t = useT()
 
   useEffect(() => {
     fetch('/api/rooms/list')
@@ -30,7 +32,7 @@ export default function RoomsPage() {
   const createRoom = async () => {
     if (!name || creating) return
     if (localStorage.getItem('jdr_my_room')) {
-      setErrorMsg('You already created a room')
+      setErrorMsg(t('alreadyCreatedRoom'))
       return
     }
     setCreating(true)

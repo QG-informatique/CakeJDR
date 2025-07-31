@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import { useT } from '@/lib/useT'
 
 const STORAGE_KEY = 'jdr_side_notes'
 const HEIGHT_KEY = 'jdr_side_notes_height'
@@ -9,6 +10,7 @@ export default function SideNotes() {
   const [notes, setNotes] = useState('')
   const [height, setHeight] = useState<number>(192) // 48*4 = 192px par défaut
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+  const t = useT()
 
   // Charger les notes et la hauteur au démarrage
   useEffect(() => {
@@ -61,7 +63,7 @@ export default function SideNotes() {
             <button
               className="bg-emerald-600/90 hover:bg-emerald-500/90 text-white px-3 py-1 rounded-md text-xs shadow transition"
               onClick={() => localStorage.setItem(STORAGE_KEY, notes)}
-            >Sauver</button>
+            >{t('save')}</button>
             <button
               className="
                 absolute -right-4 top-1/2 -translate-y-1/2
@@ -74,7 +76,7 @@ export default function SideNotes() {
                 handleResize()
                 setOpen(false)
               }}
-              title="Fermer"
+              title={t('close')}
               style={{
                 fontSize: '1.1rem',
                 width: 32,
@@ -94,7 +96,7 @@ export default function SideNotes() {
     flex items-center justify-center transition
   "
   onClick={() => setOpen(true)}
-  title="Notes"
+  title={t('notes')}
   style={{
     width: 40,
     height: 40,
