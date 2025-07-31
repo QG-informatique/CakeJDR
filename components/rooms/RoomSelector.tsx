@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import { useT } from '@/lib/useT'
 import { Lock } from 'lucide-react'
 
 export type RoomInfo = {
@@ -25,6 +26,7 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
   const [joiningId, setJoiningId] = useState<string | null>(null)
   const [joinPassword, setJoinPassword] = useState('')
   const panelRef = useRef<HTMLDivElement>(null)
+  const t = useT()
 
 
   // Fetch the list of existing rooms
@@ -39,7 +41,7 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
 
   const createRoom = async () => {
     if (!name) return
-    if (localStorage.getItem('jdr_my_room')) { setErrorMsg('You already created a room'); return }
+    if (localStorage.getItem('jdr_my_room')) { setErrorMsg(t('alreadyCreatedRoom')); return }
     setCreating(true)
     const res = await fetch('/api/rooms', {
       method: 'POST',
@@ -90,7 +92,7 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
         className="bg-black/80 text-white rounded-2xl border border-white/10 shadow-2xl backdrop-blur-md p-5 w-80"
       >
 
-      <h2 className="text-lg font-semibold mb-2">Available Rooms</h2>
+      <h2 className="text-lg font-semibold mb-2">{t('availableRooms')}</h2>
 
       <div className="max-h-48 overflow-y-auto mb-3 pr-1">
         <ul className="space-y-1">
@@ -98,18 +100,18 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
             <li key={r.id} className="flex flex-col gap-1">
               <div className="flex justify-between items-center gap-2">
                 <span className="truncate flex-1 flex items-center gap-1">
-                  {r.password && <Lock size={12} className="text-pink-300" />} {r.name || 'Unnamed'}
+                  {r.password && <Lock size={12} className="text-pink-300" />} {r.name || t('unnamed')}
                 </span>
                 {joiningId === r.id && r.password ? (
                   <button
                     className="px-2 py-1 bg-emerald-600/70 hover:bg-emerald-600 rounded text-sm"
                     onClick={() => confirmJoin(r)}
-                  >Enter</button>
+                  >{t('enter')}</button>
                 ) : (
                   <button
                     className="px-2 py-1 bg-pink-700/50 hover:bg-pink-700/70 rounded text-sm"
                     onClick={() => joinRoom(r)}
-                  >Select</button>
+                  >{t('select')}</button>
                 )}
               </div>
               <span className="text-xs text-white/60">
@@ -121,7 +123,7 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
                   value={joinPassword}
                   onChange={e => setJoinPassword(e.target.value)}
                   className="w-full px-2 py-1 rounded bg-gray-800 text-white border border-white/20"
-                  placeholder="Password"
+                  placeholder={t('password')}
                   onKeyDown={e => { if (e.key==='Enter') confirmJoin(r) }}
                 />
               )}
@@ -132,7 +134,7 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
       <div className="border-t border-white/20 pt-3">
         <input
           className="w-full mb-2 px-2 py-1 rounded bg-gray-800 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-pink-400/30"
-          placeholder="Room name"
+          placeholder={t('roomName')}
           value={name}
           onChange={e => setName(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') createRoom() }}
@@ -144,14 +146,14 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
             onChange={e => { setWithPassword(e.target.checked); if(!e.target.checked) setPassword('') }}
           />
 
-          Password?
+          {t('password')}?
 
         </label>
         {withPassword && (
           <input
             type="password"
             className="w-full mb-2 px-2 py-1 rounded bg-gray-800 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-pink-400/30"
-            placeholder="Password"
+            placeholder={t('password')}
             value={password}
             onChange={e => setPassword(e.target.value)}
             onKeyDown={e => { if (e.key==='Enter') createRoom() }}
@@ -166,7 +168,7 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
             className="w-full px-3 py-2 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-semibold"
             onClick={createRoom}
           >
-            Create
+            {t('create')}
           </button>
         )}
         {errorMsg && (

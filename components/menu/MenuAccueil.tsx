@@ -182,7 +182,7 @@ export default function MenuAccueil() {
   const handleSaveDraft = () => {
     if (!user) return
     const id = draftChar.id || crypto.randomUUID()
-    const toSave = { ...draftChar, id, nom: draftChar.nom || 'Unnamed', owner: user.pseudo, updatedAt: Date.now() }
+    const toSave = { ...draftChar, id, nom: draftChar.nom || t('unnamed'), owner: user.pseudo, updatedAt: Date.now() }
     const updated = characters.find(c => c.id === id)
       ? characters.map(c => (c.id === id ? toSave : c))
       : [...characters, toSave]
@@ -369,7 +369,7 @@ export default function MenuAccueil() {
                 {selectedRoom && (
                   <span className="text-sm text-white/80 flex items-center gap-2">
                     {roomLoading && <SmallSpinner />}
-                    {selectedRoom.name || 'Unnamed room'}
+                    {selectedRoom.name || t('unnamedRoom')}
                   </span>
                 )}
               </div>
