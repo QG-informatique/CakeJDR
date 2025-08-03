@@ -74,8 +74,9 @@ declare global {
       | { type: 'clear-canvas' }
       | { type: 'draw-line'; x1:number; y1:number; x2:number; y2:number; color:string; width:number; mode:'draw'|'erase' }
       | { type: 'chat'; author: string; text: string; isMJ?: boolean }
-      | { type: 'dice-roll'; player: string; dice: number; result: number }
-      | { type: 'gm-select'; character: CharacterData };
+        | { type: 'dice-roll'; player: string; dice: number; result: number }
+        | { type: 'dice-3d-roll'; id: string; type: string; seed: number; playerName: string }
+        | { type: 'gm-select'; character: CharacterData };
 
     // Custom metadata set on threads, for useThreads, useCreateThread, etc.
     ThreadMetadata: {

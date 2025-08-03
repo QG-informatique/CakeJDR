@@ -18,6 +18,8 @@ import useDiceHistory from './hooks/useDiceHistory'
 import useEventLog from './hooks/useEventLog'
 import useProfile from './hooks/useProfile'
 import useOnlineStatus from './hooks/useOnlineStatus'
+import Dice3DOverlay, { useSendRollToOthers } from '@/components/dice/Dice3DOverlay'
+import { useDiceQueue, RollRequest } from '@/components/dice/useDiceQueue'
 
 export default function HomePageInner() {
   const router = useRouter()
@@ -31,12 +33,13 @@ export default function HomePageInner() {
   const [diceResult, setDiceResult] = useState<number | null>(null)
   const [diceDisabled, setDiceDisabled] = useState(false)
   const { id: roomId } = useParams<{ id: string }>()
-  const [pendingRoll, setPendingRoll] = useState<{ result: number; dice: number; nom: string } | null>(null)
   const [history, setHistory] = useDiceHistory(roomId)
   const { addEvent } = useEventLog(roomId)
   const chatBoxRef = useRef<HTMLDivElement>(null)
+  const { enqueue } = useDiceQueue()
 
   const broadcast = useBroadcastEvent()
+  const sendRollToOthers = useSendRollToOthers()
   const [, updateMyPresence] = useMyPresence()
 
   // listen for remote dice rolls
@@ -44,6 +47,9 @@ export default function HomePageInner() {
     const { event } = payload
     if (event.type === 'dice-roll') {
       setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result, ts: Date.now() }])
+    } else if (event.type === 'dice-3d-roll') {
+      const { id, type, seed, playerName } = event
+      enqueue({ id, type, seed, playerName, isLocal: false })
     } else if (event.type === 'gm-select') {
       const char = event.character || defaultPerso
       if (!char.id) char.id = crypto.randomUUID()
@@ -135,22 +141,29 @@ export default function HomePageInner() {
   }
 
   const rollDice = () => {
+    if (diceDisabled) return
     setDiceDisabled(true)
-    const result = Math.floor(Math.random() * diceType) + 1
-    setDiceResult(result)
-    setShowPopup(true)
-    setPendingRoll({ result, dice: diceType, nom: perso.nom || '?' })
+    const roll: RollRequest = {
+      id: crypto.randomUUID(),
+      type: `1d${diceType}`,
+      seed: Math.floor(Math.random() * 1_000_000),
+      playerName: perso.nom || '?',
+      isLocal: true
+    }
+    enqueue(roll)
+    sendRollToOthers(roll)
   }
 
-  const handlePopupFinish = () => {
-    setShowPopup(false)
-    setDiceDisabled(false)
-    if (!pendingRoll) return
-
-    setHistory((h) => [...h, { player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result, ts: Date.now() }])
-    broadcast({ type: 'dice-roll', player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result } as Liveblocks['RoomEvent'])
-    addEvent({ id: crypto.randomUUID(), kind: 'dice', player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result, ts: Date.now() })
-    setPendingRoll(null)
+  const handleRollComplete = (values: number[], roll: RollRequest) => {
+    const total = values.reduce((a, b) => a + b, 0)
+    setHistory(h => [...h, { player: roll.playerName, dice: parseInt(roll.type.replace(/^[^d]*d/, '')), result: total, ts: Date.now() }])
+    broadcast({ type: 'dice-roll', player: roll.playerName, dice: parseInt(roll.type.replace(/^[^d]*d/, '')), result: total } as Liveblocks['RoomEvent'])
+    addEvent({ id: crypto.randomUUID(), kind: 'dice', player: roll.playerName, dice: parseInt(roll.type.replace(/^[^d]*d/, '')), result: total, ts: Date.now() })
+    if (roll.isLocal) {
+      setDiceResult(total)
+      setShowPopup(true)
+      setDiceDisabled(false)
+    }
   }
 
   return (
@@ -167,7 +180,8 @@ export default function HomePageInner() {
         <main className="flex-1 flex flex-col min-h-0">
           <div className="flex-1 m-4 flex flex-col justify-center items-center relative min-h-0">
             <InteractiveCanvas />
-            <PopupResult show={showPopup} result={diceResult} diceType={diceType} onFinish={handlePopupFinish} />
+            <Dice3DOverlay onComplete={handleRollComplete} />
+            <PopupResult show={showPopup} result={diceResult} diceType={diceType} onFinish={() => setShowPopup(false)} />
           </div>
           <DiceRoller diceType={diceType} onChange={setDiceType} onRoll={rollDice} disabled={diceDisabled}>
             <LiveAvatarStack />
