@@ -79,5 +79,7 @@ export async function renameRoom(id: string, name: string) {
   const secret = process.env.LIVEBLOCKS_SECRET_KEY
   if (!secret) throw new Error('Liveblocks key missing')
   const client = new Liveblocks({ secret })
-  await client.updateRoom(id, { metadata: { name } })
+  const room = await client.getRoom(id)
+  const metadata = typeof room.metadata === 'object' && room.metadata !== null ? room.metadata : {}
+  await client.updateRoom(id, { metadata: { ...metadata, name } })
 }
