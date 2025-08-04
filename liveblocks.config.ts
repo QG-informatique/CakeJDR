@@ -93,5 +93,4 @@ declare global {
     };
   }
 }
-
-export {};
+export type { Liveblocks };
