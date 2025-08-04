@@ -47,15 +47,15 @@ export default function PopupResult({ show, result, diceType, onFinish }: Props)
     // 1) rotation (SPIN_DURATION)
     // 2) attendre RESULT_DELAY
     // 3) showResult = true
-    // 4) onFinish callback
-    // 5) laisser HOLD_DURATION avant setVisible(false)
+    // 4) laisser HOLD_DURATION puis onFinish
+    // 5) setVisible(false)
     const totalDelay = SPIN_DURATION + RESULT_DELAY
     const t1 = window.setTimeout(() => {
       setShowResult(true)
-      onFinish?.(result)
-      // Hold un peu plus pour visualiser
+      // Hold un peu plus pour visualiser puis déclencher le callback
       window.setTimeout(() => {
         setVisible(false)
+        onFinish?.(result)
       }, HOLD_DURATION)
     }, totalDelay)
 

@@ -36,6 +36,8 @@ export default function HomePageInner() {
   const { addEvent } = useEventLog(roomId)
   const chatBoxRef = useRef<HTMLDivElement>(null)
   const [cooldown, setCooldown] = useState(false)
+  // total durée d'indisponibilité du bouton (animation + hold + cooldown)
+  const ROLL_TOTAL_MS = 2000 + 300 + 2000 + 1000
 
   const broadcast = useBroadcastEvent()
   const [, updateMyPresence] = useMyPresence()
@@ -138,6 +140,7 @@ export default function HomePageInner() {
   const rollDice = () => {
     if (diceDisabled) return
     setDiceDisabled(true)
+    setCooldown(true)
     const result = Math.floor(Math.random() * diceType) + 1
     setDiceResult(result)
     setShowPopup(true)
@@ -152,15 +155,11 @@ export default function HomePageInner() {
     broadcast({ type: 'dice-roll', player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result } as Liveblocks['RoomEvent'])
     addEvent({ id: crypto.randomUUID(), kind: 'dice', player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result, ts: Date.now() })
     setPendingRoll(null)
-    // keep the result visible until the popup unmounts, then start the cooldown
     window.setTimeout(() => {
-      setCooldown(true)
-      window.setTimeout(() => {
-        setCooldown(false)
-        setDiceDisabled(false)
-        setDiceResult(null)
-      }, 1000)
-    }, 2000)
+      setCooldown(false)
+      setDiceDisabled(false)
+      setDiceResult(null)
+    }, 1000)
   }
 
   return (
@@ -179,7 +178,7 @@ export default function HomePageInner() {
             <InteractiveCanvas />
             <PopupResult show={showPopup} result={diceResult} diceType={diceType} onFinish={handlePopupFinish} />
           </div>
-          <DiceRoller diceType={diceType} onChange={setDiceType} onRoll={rollDice} disabled={diceDisabled} cooldown={cooldown}>
+          <DiceRoller diceType={diceType} onChange={setDiceType} onRoll={rollDice} disabled={diceDisabled} cooldown={cooldown} cooldownDuration={ROLL_TOTAL_MS}>
             <LiveAvatarStack />
           </DiceRoller>
         </main>
