@@ -10,10 +10,11 @@ type Props = {
   onRoll: () => void
   disabled: boolean
   cooldown: boolean
+  cooldownDuration: number
   children?: React.ReactNode
 }
 
-const DiceRoller: FC<Props> = ({ diceType, onChange, onRoll, disabled, cooldown, children }) => {
+const DiceRoller: FC<Props> = ({ diceType, onChange, onRoll, disabled, cooldown, cooldownDuration, children }) => {
   const t = useT()
   return (
   <div
@@ -43,11 +44,11 @@ const DiceRoller: FC<Props> = ({ diceType, onChange, onRoll, disabled, cooldown,
         <option key={val} value={val}>D{val}</option>
       ))}
     </select>
-    <div className="relative">
+    <div className="relative ml-4">
       <button
         onClick={onRoll}
         className={`
-          ml-4 flex items-center gap-2
+          flex items-center gap-2
           px-7 py-2 rounded-2xl
           font-bold text-base
           text-white
@@ -73,7 +74,7 @@ const DiceRoller: FC<Props> = ({ diceType, onChange, onRoll, disabled, cooldown,
           className="absolute inset-0 rounded-2xl bg-black/40 origin-left pointer-events-none"
           initial={{ scaleX: 1 }}
           animate={{ scaleX: 0 }}
-          transition={{ duration: 1, ease: 'linear' }}
+          transition={{ duration: cooldownDuration / 1000, ease: 'linear' }}
         />
       )}
     </div>
