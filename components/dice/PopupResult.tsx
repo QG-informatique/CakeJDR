@@ -9,12 +9,13 @@ interface Props {
   result: number | null
   diceType: number
   onFinish?: (result: number) => void
+  onReveal?: (result: number) => void
 }
 
 // Track alternance of spin patterns to vary animation
 let patternToggle = 0
 
-export default function PopupResult({ show, result, diceType, onFinish }: Props) {
+export default function PopupResult({ show, result, diceType, onFinish, onReveal }: Props) {
   const [visible,   setVisible]   = useState(false)
   const [faceIndex, setFaceIndex] = useState(0)
   const [spin,      setSpin]      = useState({ x: 0, y: 0 })
@@ -52,6 +53,7 @@ export default function PopupResult({ show, result, diceType, onFinish }: Props)
     const totalDelay = SPIN_DURATION + RESULT_DELAY
     const t1 = window.setTimeout(() => {
       setShowResult(true)
+      onReveal?.(result)
       // Hold un peu plus pour visualiser puis déclencher le callback
       window.setTimeout(() => {
         setVisible(false)
@@ -62,7 +64,7 @@ export default function PopupResult({ show, result, diceType, onFinish }: Props)
     return () => {
       window.clearTimeout(t1)
     }
-  }, [show, result, onFinish])
+  }, [show, result, onFinish, onReveal])
 
   if (!visible || result === null) return null
 

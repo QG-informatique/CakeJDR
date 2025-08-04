@@ -147,14 +147,18 @@ export default function HomePageInner() {
     setPendingRoll({ result, dice: diceType, nom: perso.nom || '?' })
   }
 
+  const handlePopupReveal = () => {
+    if (!pendingRoll) return
+    const { nom, dice, result } = pendingRoll
+    const entry = { player: nom, dice, result, ts: Date.now() }
+    setHistory((h) => [...h, entry])
+    broadcast({ type: 'dice-roll', player: nom, dice, result } as Liveblocks['RoomEvent'])
+    addEvent({ id: crypto.randomUUID(), kind: 'dice', player: nom, dice, result, ts: entry.ts })
+    setPendingRoll(null)
+  }
+
   const handlePopupFinish = () => {
     setShowPopup(false)
-    if (!pendingRoll) return
-
-    setHistory((h) => [...h, { player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result, ts: Date.now() }])
-    broadcast({ type: 'dice-roll', player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result } as Liveblocks['RoomEvent'])
-    addEvent({ id: crypto.randomUUID(), kind: 'dice', player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result, ts: Date.now() })
-    setPendingRoll(null)
     window.setTimeout(() => {
       setCooldown(false)
       setDiceDisabled(false)
@@ -176,7 +180,7 @@ export default function HomePageInner() {
         <main className="flex-1 flex flex-col min-h-0">
           <div className="flex-1 m-4 flex flex-col justify-center items-center relative min-h-0">
             <InteractiveCanvas />
-            <PopupResult show={showPopup} result={diceResult} diceType={diceType} onFinish={handlePopupFinish} />
+            <PopupResult show={showPopup} result={diceResult} diceType={diceType} onReveal={handlePopupReveal} onFinish={handlePopupFinish} />
           </div>
           <DiceRoller diceType={diceType} onChange={setDiceType} onRoll={rollDice} disabled={diceDisabled} cooldown={cooldown} cooldownDuration={ROLL_TOTAL_MS}>
             <LiveAvatarStack />
