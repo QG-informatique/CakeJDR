@@ -35,6 +35,9 @@ export default function HomePageInner() {
   const [history, setHistory] = useDiceHistory(roomId)
   const { addEvent } = useEventLog(roomId)
   const chatBoxRef = useRef<HTMLDivElement>(null)
+  const [cooldown, setCooldown] = useState(false)
+  // total durée d'indisponibilité du bouton (animation + hold + cooldown)
+  const ROLL_TOTAL_MS = 2000 + 300 + 2000 + 1000
 
   const broadcast = useBroadcastEvent()
   const [, updateMyPresence] = useMyPresence()
@@ -135,22 +138,32 @@ export default function HomePageInner() {
   }
 
   const rollDice = () => {
+    if (diceDisabled) return
     setDiceDisabled(true)
+    setCooldown(true)
     const result = Math.floor(Math.random() * diceType) + 1
     setDiceResult(result)
     setShowPopup(true)
     setPendingRoll({ result, dice: diceType, nom: perso.nom || '?' })
   }
 
+  const handlePopupReveal = () => {
+    if (!pendingRoll) return
+    const { nom, dice, result } = pendingRoll
+    const entry = { player: nom, dice, result, ts: Date.now() }
+    setHistory((h) => [...h, entry])
+    broadcast({ type: 'dice-roll', player: nom, dice, result } as Liveblocks['RoomEvent'])
+    addEvent({ id: crypto.randomUUID(), kind: 'dice', player: nom, dice, result, ts: entry.ts })
+    setPendingRoll(null)
+  }
+
   const handlePopupFinish = () => {
     setShowPopup(false)
-    setDiceDisabled(false)
-    if (!pendingRoll) return
-
-    setHistory((h) => [...h, { player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result, ts: Date.now() }])
-    broadcast({ type: 'dice-roll', player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result } as Liveblocks['RoomEvent'])
-    addEvent({ id: crypto.randomUUID(), kind: 'dice', player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result, ts: Date.now() })
-    setPendingRoll(null)
+    window.setTimeout(() => {
+      setCooldown(false)
+      setDiceDisabled(false)
+      setDiceResult(null)
+    }, 1000)
   }
 
   return (
@@ -167,9 +180,9 @@ export default function HomePageInner() {
         <main className="flex-1 flex flex-col min-h-0">
           <div className="flex-1 m-4 flex flex-col justify-center items-center relative min-h-0">
             <InteractiveCanvas />
-            <PopupResult show={showPopup} result={diceResult} diceType={diceType} onFinish={handlePopupFinish} />
+            <PopupResult show={showPopup} result={diceResult} diceType={diceType} onReveal={handlePopupReveal} onFinish={handlePopupFinish} />
           </div>
-          <DiceRoller diceType={diceType} onChange={setDiceType} onRoll={rollDice} disabled={diceDisabled}>
+          <DiceRoller diceType={diceType} onChange={setDiceType} onRoll={rollDice} disabled={diceDisabled} cooldown={cooldown} cooldownDuration={ROLL_TOTAL_MS}>
             <LiveAvatarStack />
           </DiceRoller>
         </main>

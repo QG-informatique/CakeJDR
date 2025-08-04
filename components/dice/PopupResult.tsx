@@ -1,6 +1,6 @@
 'use client'
 
-import { FC, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import './popupresult.css'
 
@@ -9,21 +9,13 @@ interface Props {
   result: number | null
   diceType: number
   onFinish?: (result: number) => void
+  onReveal?: (result: number) => void
 }
 
-// Angles fixes pour aligner chaque face devant le joueur
-const faceRotations = [
-  { x:   0, y:   0 }, // front
-  { x:   0, y: 180 }, // back
-  { x:   0, y: -90 }, // left
-  { x:   0, y:  90 }, // right
-  { x: -90, y:   0 }, // top
-  { x:  90, y:   0 }, // bottom
-]
-
+// Track alternance of spin patterns to vary animation
 let patternToggle = 0
 
-export default function PopupResult({ show, result, diceType, onFinish }: Props) {
+export default function PopupResult({ show, result, diceType, onFinish, onReveal }: Props) {
   const [visible,   setVisible]   = useState(false)
   const [faceIndex, setFaceIndex] = useState(0)
   const [spin,      setSpin]      = useState({ x: 0, y: 0 })
@@ -32,7 +24,7 @@ export default function PopupResult({ show, result, diceType, onFinish }: Props)
   // Durées (ms)
   const SPIN_DURATION = 2000      // durée de la rotation
   const RESULT_DELAY  = 300       // délai pour démarrer le fondu
-  const HOLD_DURATION = 1000      // temps avant de démonter après le fondu
+  const HOLD_DURATION = 2000      // temps avant de démonter après le fondu
 
   useEffect(() => {
     if (!show || result === null) return
@@ -40,42 +32,39 @@ export default function PopupResult({ show, result, diceType, onFinish }: Props)
     // reset
     setShowResult(false)
     setVisible(true)
-
-    // Choix aléatoire de la face finale
-    const idx = Math.floor(Math.random() * faceRotations.length)
-    setFaceIndex(idx)
+    setFaceIndex(0) // always finish on the front face
 
     // Alterner 2 ou 3 tours pour varier
     const toursX = 2 + (patternToggle % 2)
     const toursY = 2 + ((patternToggle + 1) % 2)
     patternToggle++
 
-    const base = faceRotations[idx]
     setSpin({
-      x: base.x + 360 * toursX,
-      y: base.y + 360 * toursY,
+      x: 360 * toursX,
+      y: 360 * toursY,
     })
 
     // Tant que la pop-up reste visible, on fera :
     // 1) rotation (SPIN_DURATION)
     // 2) attendre RESULT_DELAY
     // 3) showResult = true
-    // 4) onFinish callback
-    // 5) laisser H OLD_DURATION avant setVisible(false)
+    // 4) laisser HOLD_DURATION puis onFinish
+    // 5) setVisible(false)
     const totalDelay = SPIN_DURATION + RESULT_DELAY
     const t1 = window.setTimeout(() => {
       setShowResult(true)
-      onFinish?.(result)
-      // Hold un peu plus pour visualiser
+      onReveal?.(result)
+      // Hold un peu plus pour visualiser puis déclencher le callback
       window.setTimeout(() => {
         setVisible(false)
+        onFinish?.(result)
       }, HOLD_DURATION)
     }, totalDelay)
 
     return () => {
       window.clearTimeout(t1)
     }
-  }, [show, result, onFinish])
+  }, [show, result, onFinish, onReveal])
 
   if (!visible || result === null) return null
 
