@@ -44,11 +44,11 @@ const DiceRoller: FC<Props> = ({ diceType, onChange, onRoll, disabled, cooldown,
         <option key={val} value={val}>D{val}</option>
       ))}
     </select>
-    <div className="relative ml-4">
+    <div className="ml-4">
       <button
         onClick={onRoll}
         className={`
-          flex items-center gap-2
+          relative flex items-center gap-2
           px-7 py-2 rounded-2xl
           font-bold text-base
           text-white
@@ -68,15 +68,15 @@ const DiceRoller: FC<Props> = ({ diceType, onChange, onRoll, disabled, cooldown,
       >
         <Dice3 className="inline -mt-0.5 text-white/80" size={20} />
         {t('roll')}
+        {cooldown && (
+          <motion.span
+            className="absolute inset-0 rounded-2xl bg-black/40 origin-left pointer-events-none"
+            initial={{ scaleX: 1 }}
+            animate={{ scaleX: 0 }}
+            transition={{ duration: cooldownDuration / 1000, ease: 'linear' }}
+          />
+        )}
       </button>
-      {cooldown && (
-        <motion.div
-          className="absolute inset-0 rounded-2xl bg-black/40 origin-left pointer-events-none"
-          initial={{ scaleX: 1 }}
-          animate={{ scaleX: 0 }}
-          transition={{ duration: cooldownDuration / 1000, ease: 'linear' }}
-        />
-      )}
     </div>
     {children && <div className="ml-auto flex gap-1">{children}</div>}
   </div>
