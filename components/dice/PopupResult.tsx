@@ -15,8 +15,8 @@ interface Props {
 const faceRotations = [
   { x:   0, y:   0 }, // front
   { x:   0, y: 180 }, // back
-  { x:   0, y: -90 }, // left
-  { x:   0, y:  90 }, // right
+  { x:   0, y:  90 }, // left
+  { x:   0, y: -90 }, // right
   { x: -90, y:   0 }, // top
   { x:  90, y:   0 }, // bottom
 ]
