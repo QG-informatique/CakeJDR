@@ -35,6 +35,7 @@ export default function HomePageInner() {
   const [history, setHistory] = useDiceHistory(roomId)
   const { addEvent } = useEventLog(roomId)
   const chatBoxRef = useRef<HTMLDivElement>(null)
+  const [cooldown, setCooldown] = useState(false)
 
   const broadcast = useBroadcastEvent()
   const [, updateMyPresence] = useMyPresence()
@@ -135,6 +136,7 @@ export default function HomePageInner() {
   }
 
   const rollDice = () => {
+    if (diceDisabled) return
     setDiceDisabled(true)
     const result = Math.floor(Math.random() * diceType) + 1
     setDiceResult(result)
@@ -144,13 +146,20 @@ export default function HomePageInner() {
 
   const handlePopupFinish = () => {
     setShowPopup(false)
-    setDiceDisabled(false)
     if (!pendingRoll) return
 
     setHistory((h) => [...h, { player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result, ts: Date.now() }])
     broadcast({ type: 'dice-roll', player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result } as Liveblocks['RoomEvent'])
     addEvent({ id: crypto.randomUUID(), kind: 'dice', player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result, ts: Date.now() })
     setPendingRoll(null)
+    setDiceResult(null)
+    window.setTimeout(() => {
+      setCooldown(true)
+      window.setTimeout(() => {
+        setCooldown(false)
+        setDiceDisabled(false)
+      }, 1000)
+    }, 1000)
   }
 
   return (
@@ -169,7 +178,7 @@ export default function HomePageInner() {
             <InteractiveCanvas />
             <PopupResult show={showPopup} result={diceResult} diceType={diceType} onFinish={handlePopupFinish} />
           </div>
-          <DiceRoller diceType={diceType} onChange={setDiceType} onRoll={rollDice} disabled={diceDisabled}>
+          <DiceRoller diceType={diceType} onChange={setDiceType} onRoll={rollDice} disabled={diceDisabled} cooldown={cooldown}>
             <LiveAvatarStack />
           </DiceRoller>
         </main>
