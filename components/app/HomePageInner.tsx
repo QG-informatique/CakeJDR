@@ -152,12 +152,13 @@ export default function HomePageInner() {
     broadcast({ type: 'dice-roll', player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result } as Liveblocks['RoomEvent'])
     addEvent({ id: crypto.randomUUID(), kind: 'dice', player: pendingRoll.nom, dice: pendingRoll.dice, result: pendingRoll.result, ts: Date.now() })
     setPendingRoll(null)
-    setDiceResult(null)
+    // keep the result visible until the popup unmounts, then start the cooldown
     window.setTimeout(() => {
       setCooldown(true)
       window.setTimeout(() => {
         setCooldown(false)
         setDiceDisabled(false)
+        setDiceResult(null)
       }, 1000)
     }, 1000)
   }
