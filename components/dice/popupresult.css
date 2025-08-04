@@ -1,0 +1,34 @@
+.perspective {
+  perspective: 1000px;
+}
+
+.transform-style {
+  transform-style: preserve-3d;
+}
+
+.will-change-transform {
+  will-change: transform;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+.face-front {
+  transform: translateZ(64px);
+}
+.face-back {
+  transform: rotateY(180deg) translateZ(64px);
+}
+.face-right {
+  transform: rotateY(90deg) translateZ(64px);
+}
+.face-left {
+  transform: rotateY(-90deg) translateZ(64px);
+}
+.face-top {
+  transform: rotateX(90deg) translateZ(64px);
+}
+.face-bottom {
+  transform: rotateX(-90deg) translateZ(64px);
+}

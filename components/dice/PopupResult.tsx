@@ -2,58 +2,137 @@
 
 import { FC, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
+import './popupresult.css'
 
 interface Props {
   show: boolean
   result: number | null
   diceType: number
-  onFinish?: () => void
+  onFinish?: (result: number) => void
 }
 
-const DiceFace: FC<{ value: string | number }> = ({ value }) => (
-  <motion.div
-    initial={{ scale: 0, rotate: 0, opacity: 0 }}
-    animate={{ scale: 1.2, rotate: 360, opacity: 1 }}
-    transition={{ duration: 0.6 }}
-    className="flex items-center justify-center w-32 h-32 text-black text-6xl font-extrabold rounded-2xl bg-white border-4 border-gray-400 shadow-xl select-none"
-  >
-    {value}
-  </motion.div>
-)
+// Angles fixes pour aligner chaque face devant le joueur
+const faceRotations = [
+  { x:   0, y:   0 }, // front
+  { x:   0, y: 180 }, // back
+  { x:   0, y: -90 }, // left
+  { x:   0, y:  90 }, // right
+  { x: -90, y:   0 }, // top
+  { x:  90, y:   0 }, // bottom
+]
 
-const NeoDice3D: FC<Props> = ({ show, result, diceType, onFinish }) => {
-  const [visible, setVisible] = useState(false)
+let patternToggle = 0
+
+export default function PopupResult({ show, result, diceType, onFinish }: Props) {
+  const [visible,   setVisible]   = useState(false)
+  const [faceIndex, setFaceIndex] = useState(0)
+  const [spin,      setSpin]      = useState({ x: 0, y: 0 })
+  const [showResult, setShowResult] = useState(false)
+
+  // Durées (ms)
+  const SPIN_DURATION = 2000      // durée de la rotation
+  const RESULT_DELAY  = 300       // délai pour démarrer le fondu
+  const HOLD_DURATION = 1000      // temps avant de démonter après le fondu
 
   useEffect(() => {
-    if (show && result !== null) {
-      setVisible(true)
-      const timeout = setTimeout(() => {
-        setVisible(false)
-        onFinish?.()
-      }, 3000) // dé visible 3s
+    if (!show || result === null) return
 
-      return () => clearTimeout(timeout)
+    // reset
+    setShowResult(false)
+    setVisible(true)
+
+    // Choix aléatoire de la face finale
+    const idx = Math.floor(Math.random() * faceRotations.length)
+    setFaceIndex(idx)
+
+    // Alterner 2 ou 3 tours pour varier
+    const toursX = 2 + (patternToggle % 2)
+    const toursY = 2 + ((patternToggle + 1) % 2)
+    patternToggle++
+
+    const base = faceRotations[idx]
+    setSpin({
+      x: base.x + 360 * toursX,
+      y: base.y + 360 * toursY,
+    })
+
+    // Tant que la pop-up reste visible, on fera :
+    // 1) rotation (SPIN_DURATION)
+    // 2) attendre RESULT_DELAY
+    // 3) showResult = true
+    // 4) onFinish callback
+    // 5) laisser H OLD_DURATION avant setVisible(false)
+    const totalDelay = SPIN_DURATION + RESULT_DELAY
+    const t1 = window.setTimeout(() => {
+      setShowResult(true)
+      onFinish?.(result)
+      // Hold un peu plus pour visualiser
+      window.setTimeout(() => {
+        setVisible(false)
+      }, HOLD_DURATION)
+    }, totalDelay)
+
+    return () => {
+      window.clearTimeout(t1)
     }
   }, [show, result, onFinish])
 
   if (!visible || result === null) return null
 
-  const isCrit = result === diceType
-  const isFail = result === 1
-
-  const bgGlow = isCrit
-    ? 'shadow-[0_0_60px_rgba(253,224,71,0.8)]'
-    : isFail
-    ? 'shadow-[0_0_60px_rgba(239,68,68,0.8)]'
-    : 'shadow-[0_0_40px_rgba(96,165,250,0.6)]'
+  const glowClass =
+    result === diceType
+      ? 'shadow-[0_0_60px_rgba(253,224,71,0.8)]'
+      : result === 1
+      ? 'shadow-[0_0_60px_rgba(239,68,68,0.8)]'
+      : 'shadow-[0_0_40px_rgba(96,165,250,0.6)]'
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-[9999]">
-      <div className={`${bgGlow} rounded-2xl`}>
-        <DiceFace value={result} />
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none">
+      <div className="w-32 h-32 perspective">
+        <motion.div
+          className="relative w-full h-full transform-style preserve-3d will-change-transform"
+          initial={{ rotateX: 0, rotateY: 0 }}
+          animate={{ rotateX: spin.x, rotateY: spin.y }}
+          transition={{ duration: SPIN_DURATION / 1000, ease: 'easeOut' }}
+        >
+          {['front','back','left','right','top','bottom'].map((face, i) => (
+            <div
+              key={face}
+              className={`face-${face} absolute w-full h-full
+                flex items-center justify-center
+                bg-white border-2 border-gray-300 rounded-xl
+                backface-hidden`}
+            >
+              <motion.div
+                initial={{ opacity: 1 }}
+                animate={{ opacity: showResult && i === faceIndex ? 0 : 1 }}
+                transition={{ delay: RESULT_DELAY / 1000, duration: 0.3 }}
+                className="text-5xl font-black text-black"
+                style={{ textShadow: '0 0 2px rgba(0,0,0,0.8)' }}
+              >
+                ?
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: showResult && i === faceIndex ? 1 : 0 }}
+                transition={{ delay: (RESULT_DELAY + 200) / 1000, duration: 0.5 }}
+                className="absolute text-5xl font-black text-black"
+                style={{ textShadow: '0 0 2px rgba(0,0,0,0.8)' }}
+              >
+                {result}
+              </motion.div>
+            </div>
+          ))}
+        </motion.div>
       </div>
+
+      {/* Glow derrière */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: showResult ? 1 : 0 }}
+        transition={{ delay: (RESULT_DELAY + 200) / 1000, duration: 0.5 }}
+        className={`absolute w-32 h-32 rounded-xl ${glowClass}`}
+      />
     </div>
   )
 }
-
-export default NeoDice3D
