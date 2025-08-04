@@ -18,6 +18,7 @@ import useDiceHistory from './hooks/useDiceHistory'
 import useEventLog from './hooks/useEventLog'
 import useProfile from './hooks/useProfile'
 import useOnlineStatus from './hooks/useOnlineStatus'
+import type { Liveblocks } from '@/liveblocks.config'
 
 export default function HomePageInner() {
   const router = useRouter()
