@@ -160,7 +160,7 @@ export default function HomePageInner() {
         setDiceDisabled(false)
         setDiceResult(null)
       }, 1000)
-    }, 1000)
+    }, 2000)
   }
 
   return (
