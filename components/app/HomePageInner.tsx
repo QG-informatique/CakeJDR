@@ -142,7 +142,7 @@ export default function HomePageInner() {
     setPendingRoll({ result, dice: diceType, nom: perso.nom || '?' })
   }
 
-  const handlePopupFinish = () => {
+  const handlePopupFinish: (result: number) => void = () => {
     setShowPopup(false)
     setDiceDisabled(false)
     if (!pendingRoll) return
@@ -167,7 +167,9 @@ export default function HomePageInner() {
         <main className="flex-1 flex flex-col min-h-0">
           <div className="flex-1 m-4 flex flex-col justify-center items-center relative min-h-0">
             <InteractiveCanvas />
-            <PopupResult show={showPopup} result={diceResult} diceType={diceType} onFinish={handlePopupFinish} />
+            {diceResult !== null && (
+              <PopupResult show={showPopup} result={diceResult} diceType={diceType} onFinish={handlePopupFinish} />
+            )}
           </div>
           <DiceRoller diceType={diceType} onChange={setDiceType} onRoll={rollDice} disabled={diceDisabled}>
             <LiveAvatarStack />
