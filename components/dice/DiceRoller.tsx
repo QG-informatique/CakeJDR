@@ -1,6 +1,7 @@
 'use client'
 import { FC } from 'react'
 import { Dice3 } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { useT } from '@/lib/useT'
 
 type Props = {
@@ -8,10 +9,11 @@ type Props = {
   onChange: (value: number) => void
   onRoll: () => void
   disabled: boolean
+  cooldown: boolean
   children?: React.ReactNode
 }
 
-const DiceRoller: FC<Props> = ({ diceType, onChange, onRoll, disabled, children }) => {
+const DiceRoller: FC<Props> = ({ diceType, onChange, onRoll, disabled, cooldown, children }) => {
   const t = useT()
   return (
   <div
@@ -41,30 +43,40 @@ const DiceRoller: FC<Props> = ({ diceType, onChange, onRoll, disabled, children 
         <option key={val} value={val}>D{val}</option>
       ))}
     </select>
-    <button
-      onClick={onRoll}
-      className={`
-        ml-4 flex items-center gap-2
-        px-7 py-2 rounded-2xl
-        font-bold text-base
-        text-white
-        shadow
-        border border-white/10
-        bg-[#253053]/60
-        hover:bg-[#253053]/80
-        active:scale-95
-        transition
-        backdrop-blur-sm
-        ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-      `}
-      style={{
-        boxShadow: '0 2px 12px 0 #1115'
-      }}
-      disabled={disabled}
-    >
-      <Dice3 className="inline -mt-0.5 text-white/80" size={20} />
-      {t('roll')}
-    </button>
+    <div className="relative">
+      <button
+        onClick={onRoll}
+        className={`
+          ml-4 flex items-center gap-2
+          px-7 py-2 rounded-2xl
+          font-bold text-base
+          text-white
+          shadow
+          border border-white/10
+          bg-[#253053]/60
+          hover:bg-[#253053]/80
+          active:scale-95
+          transition
+          backdrop-blur-sm
+          ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+        `}
+        style={{
+          boxShadow: '0 2px 12px 0 #1115'
+        }}
+        disabled={disabled}
+      >
+        <Dice3 className="inline -mt-0.5 text-white/80" size={20} />
+        {t('roll')}
+      </button>
+      {cooldown && (
+        <motion.div
+          className="absolute inset-0 rounded-2xl bg-black/40 origin-left pointer-events-none"
+          initial={{ scaleX: 1 }}
+          animate={{ scaleX: 0 }}
+          transition={{ duration: 1, ease: 'linear' }}
+        />
+      )}
+    </div>
     {children && <div className="ml-auto flex gap-1">{children}</div>}
   </div>
   )
