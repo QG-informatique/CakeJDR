@@ -1,6 +1,6 @@
 'use client'
 
-import { FC, useRef, useState } from 'react'
+import { FC, useState } from 'react'
 import CakeLogo from '../ui/CakeLogo'
 import { motion, useAnimation, type Variants } from 'framer-motion'
 import { useBackground } from '@/components/context/BackgroundContext'
@@ -28,24 +28,18 @@ const MenuHeader: FC<MenuHeaderProps> = ({
   bottomPadding = 32,
 }) => {
   // Animation gâteau
-  const isAnimatingRef = useRef(false)
   const [isAnimating, setIsAnimating] = useState(false)
   const cakeControls = useAnimation()
 
   const { cycleBackground } = useBackground()
 
   const handleCakeClick = async () => {
-    if (isAnimatingRef.current) return
-    isAnimatingRef.current = true
+    if (isAnimating) return
     setIsAnimating(true)
-    try {
-      await cakeControls.start('walking')
-      cycleBackground()
-      await cakeControls.start('idle')
-    } finally {
-      isAnimatingRef.current = false
-      setIsAnimating(false)
-    }
+    await cakeControls.start('walking')
+    cycleBackground()
+    await cakeControls.start('idle')
+    setIsAnimating(false)
   }
 
   // Animation CakeLogo
