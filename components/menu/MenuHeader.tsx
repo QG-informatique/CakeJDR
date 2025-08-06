@@ -1,6 +1,6 @@
 'use client'
 
-import { FC, useRef } from 'react'
+import { FC, useRef, useState } from 'react'
 import CakeLogo from '../ui/CakeLogo'
 import { motion, useAnimation, type Variants } from 'framer-motion'
 import { useBackground } from '@/components/context/BackgroundContext'
@@ -28,23 +28,24 @@ const MenuHeader: FC<MenuHeaderProps> = ({
   bottomPadding = 32,
 }) => {
   // Animation gâteau
-  const isAnimating = useRef(false)
+  const isAnimatingRef = useRef(false)
+  const [isAnimating, setIsAnimating] = useState(false)
   const cakeControls = useAnimation()
 
   const { cycleBackground } = useBackground()
 
-  const handleCakeClick = () => {
-    if (isAnimating.current) return
-    isAnimating.current = true
-    cakeControls.start('walking')
-  }
-
-  const handleAnimationComplete = (definition: string) => {
-    if (definition !== 'walking') return
-    cycleBackground()
-    cakeControls.start('idle').finally(() => {
-      isAnimating.current = false
-    })
+  const handleCakeClick = async () => {
+    if (isAnimatingRef.current) return
+    isAnimatingRef.current = true
+    setIsAnimating(true)
+    try {
+      await cakeControls.start('walking')
+      cycleBackground()
+      await cakeControls.start('idle')
+    } finally {
+      isAnimatingRef.current = false
+      setIsAnimating(false)
+    }
   }
 
   // Animation CakeLogo
@@ -85,13 +86,13 @@ const MenuHeader: FC<MenuHeaderProps> = ({
           initial="idle"
           variants={cakeVariants}
           onClick={handleCakeClick}
-          onAnimationComplete={handleAnimationComplete}
-          whileHover={{ scale: 1.05, filter: 'drop-shadow(0 0 8px rgba(244,114,182,0.6))' }}
-          whileTap={{ scale: 0.97 }}
+          whileHover={!isAnimating ? { scale: 1.05, filter: 'drop-shadow(0 0 8px rgba(244,114,182,0.6))' } : undefined}
+          whileTap={!isAnimating ? { scale: 0.97 } : undefined}
           className="inline-flex items-center justify-center overflow-visible"
           style={{
-            cursor: 'pointer',
-            userSelect: 'none'
+            cursor: isAnimating ? 'default' : 'pointer',
+            userSelect: 'none',
+            pointerEvents: isAnimating ? 'none' : 'auto'
           }}
         >
           <CakeLogo
