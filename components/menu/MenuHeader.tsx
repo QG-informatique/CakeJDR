@@ -34,16 +34,16 @@ const MenuHeader: FC<MenuHeaderProps> = ({
   // --- CORRECTION ICI : UN SEUL HOOK ---
   const { cycleBackground } = useBackground()
 
-  const handleCakeClick = () => {
+  const handleCakeClick = async () => {
     if (isAnimating) return
     setIsAnimating(true)
-    cakeControls
-      .start('walking')
-      .then(() => {
-        cycleBackground()
-        return cakeControls.start('idle')
-      })
-      .finally(() => setIsAnimating(false))
+    try {
+      await cakeControls.start('walking')
+      cycleBackground()
+      await cakeControls.start('idle')
+    } finally {
+      setIsAnimating(false)
+    }
   }
 
   // Animation CakeLogo
