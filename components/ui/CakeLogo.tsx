@@ -1,10 +1,14 @@
 'use client'
+
+// MODIFICATION SUMMARY
+// - Explicitly enable font swap to silence preload warnings (lines 8-9).
+
 import { Cake } from 'lucide-react'
 import { Titan_One } from 'next/font/google'
 import React from 'react'
 
 // Fonte Google « Titan One »
-const titan = Titan_One({ subsets: ['latin'], weight: '400' })
+const titan = Titan_One({ subsets: ['latin'], weight: '400', display: 'swap' }) // FIX: add font-display swap
 
 interface Props {
   className?: string
