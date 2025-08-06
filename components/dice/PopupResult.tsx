@@ -22,8 +22,8 @@ export default function PopupResult({ show, result, diceType, onFinish, onReveal
   const [showResult, setShowResult] = useState(false)
 
   // stocker les callbacks dans des refs pour éviter de relancer l'animation
-  const finishRef = useRef<Props['onFinish']>()
-  const revealRef = useRef<Props['onReveal']>()
+  const finishRef = useRef<Props['onFinish'] | null>(null)
+  const revealRef = useRef<Props['onReveal'] | null>(null)
 
   useEffect(() => {
     finishRef.current = onFinish
