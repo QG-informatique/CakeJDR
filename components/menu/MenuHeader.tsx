@@ -3,7 +3,7 @@
 import { FC, useState } from 'react'
 import CakeLogo from '../ui/CakeLogo'
 import { motion, useAnimation, type Variants } from 'framer-motion'
-import { useBackground } from '../context/BackgroundContext'
+import { useBackground } from '@/components/context/BackgroundContext'
 
 export type User = {
   pseudo: string
@@ -34,16 +34,16 @@ const MenuHeader: FC<MenuHeaderProps> = ({
   // --- CORRECTION ICI : UN SEUL HOOK ---
   const { cycleBackground } = useBackground()
 
-  const handleCakeClick = async () => {
+  const handleCakeClick = () => {
     if (isAnimating) return
     setIsAnimating(true)
-    try {
-      await cakeControls.start('walking')
-      cycleBackground()
-      await cakeControls.start('idle')
-    } finally {
-      setIsAnimating(false)
-    }
+    cakeControls.start('walking')
+  }
+
+  const handleAnimationComplete = (definition: string) => {
+    if (definition !== 'walking') return
+    cycleBackground()
+    cakeControls.start('idle').finally(() => setIsAnimating(false))
   }
 
   // Animation CakeLogo
@@ -84,6 +84,7 @@ const MenuHeader: FC<MenuHeaderProps> = ({
           initial="idle"
           variants={cakeVariants}
           onClick={handleCakeClick}
+          onAnimationComplete={handleAnimationComplete}
           whileHover={{ scale: 1.05, filter: 'drop-shadow(0 0 8px rgba(244,114,182,0.6))' }}
           whileTap={{ scale: 0.97 }}
           className="inline-flex items-center justify-center overflow-visible"
