@@ -1,8 +1,13 @@
 'use client'
 
+// MODIFICATION SUMMARY
+// - Replace manual animation control with variant-driven state (approx. lines 25-50).
+// - Reset animation and cycle backgrounds on animation completion (around line 40).
+// - Drop unused `useAnimation` hook to prevent stale state causing one-shot clicks (line 5 removal).
+
 import { FC, useState } from 'react'
 import CakeLogo from '../ui/CakeLogo'
-import { motion, useAnimation, type Variants } from 'framer-motion'
+import { motion, type Variants } from 'framer-motion'
 import { useBackground } from '../context/BackgroundContext'
 
 export type User = {
@@ -28,19 +33,12 @@ const MenuHeader: FC<MenuHeaderProps> = ({
   bottomPadding = 32,
 }) => {
   // Animation gâteau
-  const [cakeAnim, setCakeAnim] = useState<'idle'|'walking'>('idle')
-  const cakeControls = useAnimation()
-
-  // --- CORRECTION ICI : UN SEUL HOOK ---
+  const [cakeAnim, setCakeAnim] = useState<'idle' | 'walking'>('idle')
   const { cycleBackground } = useBackground()
-  
-  const handleCakeClick = async () => {
-    if (cakeAnim === 'walking') return
-    setCakeAnim('walking')
-    await cakeControls.start('walking')
-    setCakeAnim('idle')
-    cakeControls.start('idle')
-    cycleBackground()
+
+  const handleCakeClick = () => {
+    if (cakeAnim === 'walking') return // FIX: ignore clicks while animation runs
+    setCakeAnim('walking') // FIX: trigger walking animation sequence
   }
 
   // Animation CakeLogo
@@ -77,10 +75,16 @@ const MenuHeader: FC<MenuHeaderProps> = ({
       {/* Logo Cake animé, centré, taille personnalisable */}
       <div className="pointer-events-auto absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-20">
         <motion.div
-          animate={cakeControls}
+          animate={cakeAnim}
           initial="idle"
           variants={cakeVariants}
           onClick={handleCakeClick}
+          onAnimationComplete={(def) => {
+            if (def === 'walking') {
+              cycleBackground() // FIX: change background after animation
+              setCakeAnim('idle') // FIX: re-enable button for next clicks
+            }
+          }}
           whileHover={{ scale: 1.05, filter: 'drop-shadow(0 0 8px rgba(244,114,182,0.6))' }}
           whileTap={{ scale: 0.97 }}
           className="inline-flex items-center justify-center overflow-visible"
