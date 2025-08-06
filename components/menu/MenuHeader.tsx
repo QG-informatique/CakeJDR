@@ -1,6 +1,6 @@
 'use client'
 
-import { FC, useState } from 'react'
+import { FC, useRef } from 'react'
 import CakeLogo from '../ui/CakeLogo'
 import { motion, useAnimation, type Variants } from 'framer-motion'
 import { useBackground } from '@/components/context/BackgroundContext'
@@ -28,22 +28,23 @@ const MenuHeader: FC<MenuHeaderProps> = ({
   bottomPadding = 32,
 }) => {
   // Animation gâteau
-  const [isAnimating, setIsAnimating] = useState(false)
+  const isAnimating = useRef(false)
   const cakeControls = useAnimation()
 
-  // --- CORRECTION ICI : UN SEUL HOOK ---
   const { cycleBackground } = useBackground()
 
   const handleCakeClick = () => {
-    if (isAnimating) return
-    setIsAnimating(true)
+    if (isAnimating.current) return
+    isAnimating.current = true
     cakeControls.start('walking')
   }
 
   const handleAnimationComplete = (definition: string) => {
     if (definition !== 'walking') return
     cycleBackground()
-    cakeControls.start('idle').finally(() => setIsAnimating(false))
+    cakeControls.start('idle').finally(() => {
+      isAnimating.current = false
+    })
   }
 
   // Animation CakeLogo
