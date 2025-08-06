@@ -23,6 +23,11 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
   const endRef = useRef<HTMLDivElement>(null)
   const [showSummary, setShowSummary] = useState(false)
   const [showStats, setShowStats] = useState(false)
+  const sessionStart = useRef(Date.now())
+  const [showHistory, setShowHistory] = useState(false)
+  const displayedEvents = showHistory
+    ? sortedEvents
+    : sortedEvents.filter(ev => ev.ts >= sessionStart.current)
   const broadcast = useBroadcastEvent()
   const profile = useProfile()
   const t = useT()
@@ -143,6 +148,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
           <div
             ref={chatBoxRef}
             className="
+              relative
               flex-1 overflow-y-auto
               rounded-xl
               border border-white/10
@@ -153,7 +159,14 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
               min-h-0
             "
           >
-            {sortedEvents.map(ev => (
+            <button
+              onClick={() => setShowHistory(h => !h)}
+              className="absolute left-1/2 -translate-x-1/2 top-1 text-xs opacity-20 hover:opacity-80 bg-black/20 px-2 py-1 rounded"
+              title={showHistory ? t('hideHistory') : t('showHistory')}
+            >
+              🕘
+            </button>
+            {displayedEvents.map(ev => (
               <p key={ev.id}>
                 <span className="mr-1">{ev.kind === 'chat' ? '💬' : '🎲'}</span>
                 {ev.kind === 'chat' && (
