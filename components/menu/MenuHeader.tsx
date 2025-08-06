@@ -28,19 +28,22 @@ const MenuHeader: FC<MenuHeaderProps> = ({
   bottomPadding = 32,
 }) => {
   // Animation gâteau
-  const [cakeAnim, setCakeAnim] = useState<'idle'|'walking'>('idle')
+  const [isAnimating, setIsAnimating] = useState(false)
   const cakeControls = useAnimation()
 
   // --- CORRECTION ICI : UN SEUL HOOK ---
   const { cycleBackground } = useBackground()
-  
-  const handleCakeClick = async () => {
-    if (cakeAnim === 'walking') return
-    setCakeAnim('walking')
-    await cakeControls.start('walking')
-    setCakeAnim('idle')
-    cakeControls.start('idle')
-    cycleBackground()
+
+  const handleCakeClick = () => {
+    if (isAnimating) return
+    setIsAnimating(true)
+    cakeControls
+      .start('walking')
+      .then(() => {
+        cycleBackground()
+        return cakeControls.start('idle')
+      })
+      .finally(() => setIsAnimating(false))
   }
 
   // Animation CakeLogo
