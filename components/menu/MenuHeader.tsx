@@ -34,17 +34,15 @@ const MenuHeader: FC<MenuHeaderProps> = ({
 
   const { cycleBackground } = useBackground()
 
-  const handleCakeClick = () => {
+  const handleCakeClick = async () => {
     if (animatingRef.current) return
     animatingRef.current = true
     setIsAnimating(true)
-    cakeControls.start('walking')
-  }
 
-  const handleCakeAnimationComplete = async (definition: string) => {
-    if (definition !== 'walking') return
+    await cakeControls.start('walking')
     cycleBackground()
     await cakeControls.start('idle')
+
     animatingRef.current = false
     setIsAnimating(false)
   }
@@ -87,7 +85,6 @@ const MenuHeader: FC<MenuHeaderProps> = ({
           initial="idle"
           variants={cakeVariants}
           onClick={handleCakeClick}
-          onAnimationComplete={handleCakeAnimationComplete}
           whileHover={!isAnimating ? { scale: 1.05, filter: 'drop-shadow(0 0 8px rgba(244,114,182,0.6))' } : undefined}
           whileTap={!isAnimating ? { scale: 0.97 } : undefined}
           className="inline-flex items-center justify-center overflow-visible"
