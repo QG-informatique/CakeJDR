@@ -1,6 +1,6 @@
 'use client'
 
-import { FC, useState } from 'react'
+import { FC, useRef, useState } from 'react'
 import CakeLogo from '../ui/CakeLogo'
 import { motion, useAnimation, type Variants } from 'framer-motion'
 import { useBackground } from '@/components/context/BackgroundContext'
@@ -29,16 +29,23 @@ const MenuHeader: FC<MenuHeaderProps> = ({
 }) => {
   // Animation gâteau
   const [isAnimating, setIsAnimating] = useState(false)
+  const animatingRef = useRef(false)
   const cakeControls = useAnimation()
 
   const { cycleBackground } = useBackground()
 
-  const handleCakeClick = async () => {
-    if (isAnimating) return
+  const handleCakeClick = () => {
+    if (animatingRef.current) return
+    animatingRef.current = true
     setIsAnimating(true)
-    await cakeControls.start('walking')
+    cakeControls.start('walking')
+  }
+
+  const handleCakeAnimationComplete = async (definition: string) => {
+    if (definition !== 'walking') return
     cycleBackground()
     await cakeControls.start('idle')
+    animatingRef.current = false
     setIsAnimating(false)
   }
 
@@ -80,6 +87,7 @@ const MenuHeader: FC<MenuHeaderProps> = ({
           initial="idle"
           variants={cakeVariants}
           onClick={handleCakeClick}
+          onAnimationComplete={handleCakeAnimationComplete}
           whileHover={!isAnimating ? { scale: 1.05, filter: 'drop-shadow(0 0 8px rgba(244,114,182,0.6))' } : undefined}
           whileTap={!isAnimating ? { scale: 0.97 } : undefined}
           className="inline-flex items-center justify-center overflow-visible"
