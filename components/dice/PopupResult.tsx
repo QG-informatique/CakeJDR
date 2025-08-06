@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import './popupresult.css'
 
@@ -20,6 +20,18 @@ export default function PopupResult({ show, result, diceType, onFinish, onReveal
   const [faceIndex, setFaceIndex] = useState(0)
   const [spin,      setSpin]      = useState({ x: 0, y: 0 })
   const [showResult, setShowResult] = useState(false)
+
+  // stocker les callbacks dans des refs pour éviter de relancer l'animation
+  const finishRef = useRef<Props['onFinish'] | null>(null)
+  const revealRef = useRef<Props['onReveal'] | null>(null)
+
+  useEffect(() => {
+    finishRef.current = onFinish
+  }, [onFinish])
+
+  useEffect(() => {
+    revealRef.current = onReveal
+  }, [onReveal])
 
   // Durées (ms)
   const SPIN_DURATION = 2000      // durée de la rotation
@@ -51,20 +63,22 @@ export default function PopupResult({ show, result, diceType, onFinish, onReveal
     // 4) laisser HOLD_DURATION puis onFinish
     // 5) setVisible(false)
     const totalDelay = SPIN_DURATION + RESULT_DELAY
+    let t2: number
     const t1 = window.setTimeout(() => {
       setShowResult(true)
-      onReveal?.(result)
+      revealRef.current?.(result)
       // Hold un peu plus pour visualiser puis déclencher le callback
-      window.setTimeout(() => {
+      t2 = window.setTimeout(() => {
         setVisible(false)
-        onFinish?.(result)
+        finishRef.current?.(result)
       }, HOLD_DURATION)
     }, totalDelay)
 
     return () => {
       window.clearTimeout(t1)
+      window.clearTimeout(t2)
     }
-  }, [show, result, onFinish, onReveal])
+  }, [show, result])
 
   if (!visible || result === null) return null
 
