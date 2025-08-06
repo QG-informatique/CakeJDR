@@ -1,3 +1,8 @@
+// MODIFICATION SUMMARY
+// 1. (≈24-38) Rewrite CakeLogo click handler to rely on animation events instead of awaiting Promises.
+// 2. (≈40-50) Ensure background cycles after walking animation completes and re-enable clicks after idle animation.
+// 3. (≈52) Add onAnimationComplete listener to motion div.
+
 'use client'
 
 import { FC, useRef, useState } from 'react'
@@ -34,17 +39,22 @@ const MenuHeader: FC<MenuHeaderProps> = ({
 
   const { cycleBackground } = useBackground()
 
-  const handleCakeClick = async () => {
+  const handleCakeClick = () => {
     if (animatingRef.current) return
     animatingRef.current = true
     setIsAnimating(true)
+    cakeControls.start('walking') // FIX: start walking animation
+  }
 
-    await cakeControls.start('walking')
-    cycleBackground()
-    await cakeControls.start('idle')
-
-    animatingRef.current = false
-    setIsAnimating(false)
+  const handleCakeAnimationComplete = async (definition: string) => {
+    if (definition !== 'walking') return
+    cycleBackground() // FIX: change background after walking ends
+    try {
+      await cakeControls.start('idle')
+    } finally {
+      animatingRef.current = false
+      setIsAnimating(false) // FIX: re-enable clicks after idle
+    }
   }
 
   // Animation CakeLogo
@@ -85,6 +95,7 @@ const MenuHeader: FC<MenuHeaderProps> = ({
           initial="idle"
           variants={cakeVariants}
           onClick={handleCakeClick}
+          onAnimationComplete={handleCakeAnimationComplete} // FIX: listen for animation end
           whileHover={!isAnimating ? { scale: 1.05, filter: 'drop-shadow(0 0 8px rgba(244,114,182,0.6))' } : undefined}
           whileTap={!isAnimating ? { scale: 0.97 } : undefined}
           className="inline-flex items-center justify-center overflow-visible"
