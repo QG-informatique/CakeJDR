@@ -28,11 +28,26 @@ function SunIcon({ size = 90 }: { size?: number }) {
   )
 }
 
-/* Lune */
+/* Lune avec halo et cratères visibles */
 function MoonIcon({ size = 70 }: { size?: number }) {
   return (
     <svg viewBox="0 0 64 64" width={size} height={size}>
-      <path d="M42 8A24 24 0 1 0 42 56 18 18 0 1 1 42 8Z" fill="#f0f4ff" />
+      <defs>
+        <radialGradient id="moonHalo" r="0.8">
+          <stop offset="0%" stopColor="#fff9e5" stopOpacity="0.6" />
+          <stop offset="100%" stopColor="#fff9e5" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="moonGrad" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0%" stopColor="#fff9e5" />
+          <stop offset="100%" stopColor="#d5d8e0" />
+        </radialGradient>
+      </defs>
+      <circle cx="32" cy="32" r="24" fill="url(#moonHalo)" />
+      <circle cx="32" cy="32" r="18" fill="url(#moonGrad)" />
+      {/* petits cratères */}
+      <circle cx="22" cy="26" r="3" fill="#c7cbd3" />
+      <circle cx="36" cy="18" r="2" fill="#c7cbd3" />
+      <circle cx="40" cy="34" r="2.5" fill="#bfc3cc" />
     </svg>
   )
 }
@@ -149,10 +164,10 @@ const HedgehogIcon = ({ size = 34 }: { size?: number }) => (
   </svg>
 )
 
-/* Etoile simple */
-const Star = ({ size = 2 }: { size?: number }) => (
+/* Etoile simple avec couleur légère */
+const Star = ({ size = 2, color = '#fff' }: { size?: number; color?: string }) => (
   <svg viewBox="0 0 4 4" width={size} height={size}>
-    <circle cx="2" cy="2" r="2" fill="#fff" />
+    <circle cx="2" cy="2" r="2" fill={color} />
   </svg>
 )
 
@@ -274,6 +289,7 @@ export default function SpecialBackground() {
         left: Math.random() * 100,
         top: Math.random() * 30,
         size: 1 + Math.random() * 1.5,
+        color: Math.random() < 0.2 ? '#ffe9b5' : '#fff', // léger ton chaud
       })),
     [],
   )
@@ -329,7 +345,7 @@ export default function SpecialBackground() {
       for (let i = 0; i < 36; i++) {
         const size = 10 + Math.random() * 8
         const left = 6 + Math.random() * 88
-        const top = 71 + Math.random() * 16 // Sur la plaine (vh)
+        const top = 57 + Math.random() * 14 // Sur la plaine uniquement (vh)
         const color = flowerColors[Math.floor(Math.random() * flowerColors.length)]
         fl.push(
           <div
@@ -453,8 +469,9 @@ export default function SpecialBackground() {
         <defs>
           <linearGradient id="neige" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#fff" />
-            <stop offset="65%" stopColor="#eee" />
-            <stop offset="85%" stopColor="#bebfc1" />
+            <stop offset="12%" stopColor="#fff" />
+            <stop offset="20%" stopColor="#e0e2e4" />
+            <stop offset="45%" stopColor="#8b9aa7" />
             <stop offset="100%" stopColor="#4e6574" />
           </linearGradient>
         </defs>
@@ -511,24 +528,36 @@ export default function SpecialBackground() {
       {/* Ciel dégradé */}
       <motion.div
         className="absolute inset-0"
-        style={{ background: `linear-gradient(to bottom,${skyColor} 60%,#75c9ff 100%)` }}
+        style={{
+          background: `linear-gradient(to bottom,${skyColor},${lerp(
+            skyColor,
+            '#000000',
+            0.3,
+          )})`,
+        }}
       />
 
-      {/* Etoiles visibles uniquement la nuit profonde */}
-      {stars.map((s) => (
-        <div
-          key={s.id}
-          style={{
-            position: 'absolute',
-            left: `${s.left}vw`,
-            top: `${s.top}vh`,
-            opacity: dayProgress > 0.27 && dayProgress < 0.33 ? 1 : 0,
-            transition: 'opacity 2s',
-          }}
-        >
-          <Star size={s.size} />
-        </div>
-      ))}
+      {/* Plan d'étoiles dérivant légèrement avec la lune */}
+      <motion.div
+        className="absolute inset-0"
+        animate={{ x: `${(dayProgress - 0.5) * 20}vw` }}
+        transition={{ duration: 1, ease: 'linear' }}
+      >
+        {stars.map((s) => (
+          <div
+            key={s.id}
+            style={{
+              position: 'absolute',
+              left: `${s.left}vw`,
+              top: `${s.top}vh`,
+              opacity: dayProgress > 0.25 && dayProgress < 0.75 ? 1 : 0,
+              transition: 'opacity 2s',
+            }}
+          >
+            <Star size={s.size} color={s.color} />
+          </div>
+        ))}
+      </motion.div>
 
       {/* Soleil & Lune */}
       {[
@@ -638,8 +667,9 @@ export default function SpecialBackground() {
         }}
         preserveAspectRatio="none"
       >
+        {/* Plage : le path commence à y=0 pour coller à la plaine */}
         <path
-          d="M0 45 Q100 25 200 48 T400 40 T600 50 T800 45 T1000 38 V100 H0 Z"
+          d="M0 0 Q125 20 250 0 T500 15 T750 5 T1000 0 V100 H0 Z"
           fill="#f9d9a6"
         />
       </svg>
