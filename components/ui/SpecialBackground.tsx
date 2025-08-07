@@ -557,8 +557,8 @@ export default function SpecialBackground() {
           left: '4vw',
           originX: 0.5,
           originY: 0.5,
+          rotate: arrowRotation,
         }}
-        animate={{ rotate: arrowRotation }}
       >
         <WindArrow />
       </motion.div>
