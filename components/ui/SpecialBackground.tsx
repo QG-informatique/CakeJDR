@@ -6,7 +6,7 @@ import {
   useMotionValue,
   useTransform,
 } from 'framer-motion'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 
 /* -------------------------------------------------------------------------- */
 /* 1.  ICONES SVG - améliorés et ajoutés                                      */
@@ -122,14 +122,37 @@ const FlowerIcon = ({ size = 14, color = "#f8c8ec" }: { size?: number; color?: s
   </svg>
 )
 
-/* Nénuphar */
-const LilyPadIcon = ({ size = 44 }: { size?: number }) => (
-  <svg viewBox="0 0 32 22" width={size} height={size / 2}>
-    <ellipse cx="16" cy="11" rx="15" ry="9" fill="#78c674" />
-    <path d="M16,11 L16,2" stroke="#4b9956" strokeWidth="2" />
-    {/* Fleur sur le nénuphar */}
-    <circle cx="16" cy="7" r="3" fill="#ffeaea" />
-    <circle cx="16" cy="7" r="1" fill="#ffd000" />
+/* Feuille flottante */
+const LeafIcon = ({ size = 24 }: { size?: number }) => (
+  <svg viewBox="0 0 32 16" width={size} height={size / 2}>
+    <path d="M2 8 Q16 -2 30 8 Q16 18 2 8Z" fill="#6fbf73" />
+    <path d="M2 8 Q16 8 30 8" stroke="#4b9956" strokeWidth="1" fill="none" />
+  </svg>
+)
+
+/* Animaux de la plaine */
+const DeerIcon = ({ size = 60 }: { size?: number }) => (
+  <svg viewBox="0 0 64 40" width={size} height={(size * 40) / 64}>
+    <rect x="18" y="20" width="28" height="14" rx="4" fill="#9e7d57" />
+    <circle cx="46" cy="18" r="6" fill="#9e7d57" />
+    <rect x="12" y="32" width="6" height="16" fill="#8b5e3c" />
+    <rect x="44" y="32" width="6" height="16" fill="#8b5e3c" />
+    <path d="M46 18 L56 4 M46 18 L52 2" stroke="#8b5e3c" strokeWidth="2" />
+  </svg>
+)
+
+const HedgehogIcon = ({ size = 34 }: { size?: number }) => (
+  <svg viewBox="0 0 40 24" width={size} height={(size * 24) / 40}>
+    <ellipse cx="20" cy="14" rx="18" ry="10" fill="#775447" />
+    <path d="M4 14 Q20 2 36 14" fill="#8d6656" />
+    <circle cx="30" cy="14" r="2" fill="#000" />
+  </svg>
+)
+
+/* Etoile simple */
+const Star = ({ size = 2 }: { size?: number }) => (
+  <svg viewBox="0 0 4 4" width={size} height={size}>
+    <circle cx="2" cy="2" r="2" fill="#fff" />
   </svg>
 )
 
@@ -148,32 +171,48 @@ const CrabIcon = ({ size = 22 }: { size?: number }) => (
   </svg>
 )
 
-/* Ville améliorée avec lumières intelligentes */
+/* Ville améliorée avec lumières intelligentes (patron stable) */
 function City({ dayProgress = 0 }: { dayProgress: number }) {
-  // dayProgress : 0 (matin) à 0.5 (minuit) à 1 (matin)
-  // => 0/1 = jour ; 0.20 à 0.33 = nuit ; 0.28 à 0.35 = minuit
-  // Plus on est proche de la nuit profonde, moins de fenêtres allumées
-  function shouldLightOn(row: number, col: number) {
-    if (dayProgress < 0.18 || dayProgress > 0.85) return false // Plein jour
-    if (dayProgress > 0.27 && dayProgress < 0.33) {
-      // pleine nuit : très peu allumé
-      return Math.random() < 0.07
-    }
-    // Nuit : 70% fenêtres allumées
-    return Math.random() < 0.7
+  const buildings = useMemo(
+    () => [
+      { x: 10, w: 50, h: 140, color: '#46586a' },
+      { x: 90, w: 50, h: 170, color: '#54738c' },
+      { x: 170, w: 40, h: 130, color: '#455d71' },
+      { x: 230, w: 60, h: 150, color: '#687da1' },
+    ],
+    [],
+  )
+  const patterns = useMemo(() => {
+    return buildings.map((b) => {
+      const rows = Math.floor(b.h / 20)
+      const cols = Math.floor(b.w / 14)
+      const night = Array.from({ length: rows }, () =>
+        Array.from({ length: cols }, () => Math.random() < 0.7),
+      )
+      const midnight = night.map((row) => row.map(() => Math.random() < 0.07))
+      return { rows, cols, night, midnight }
+    })
+  }, [buildings])
+
+  function isLit(bIndex: number, r: number, c: number) {
+    if (dayProgress < 0.18 || dayProgress > 0.85) return false
+    if (dayProgress > 0.27 && dayProgress < 0.33)
+      return patterns[bIndex].midnight[r][c]
+    return patterns[bIndex].night[r][c]
   }
+
   return (
     <svg viewBox="0 0 350 200" style={{ width: '36vw', height: '22vh', minWidth: 320 }}>
-      {/* Grands immeubles */}
-      {[{ x: 10, w: 50, h: 140 }, { x: 90, w: 50, h: 170 }, { x: 170, w: 40, h: 130 }, { x: 230, w: 60, h: 150 }].map((b, i) => (
+      {buildings.map((b, i) => (
         <g key={i}>
-          <rect x={b.x} y={200 - b.h} width={b.w} height={b.h} fill={['#46586a', '#54738c', '#455d71', '#687da1'][i]} />
-          {/* Toits */}
-          <polygon points={`${b.x},${200 - b.h} ${b.x + b.w / 2},${200 - b.h - 12 - i * 2} ${b.x + b.w},${200 - b.h}`} fill="#b1b2b6" />
-          {/* Fenêtres : gérées selon l'heure */}
-          {Array.from({ length: Math.floor(b.h / 20) }).map((_, r) =>
-            Array.from({ length: Math.floor(b.w / 14) }).map((__, c) => {
-              const lit = shouldLightOn(r, c)
+          <rect x={b.x} y={200 - b.h} width={b.w} height={b.h} fill={b.color} />
+          <polygon
+            points={`${b.x},${200 - b.h} ${b.x + b.w / 2},${200 - b.h - 12 - i * 2} ${b.x + b.w},${200 - b.h}`}
+            fill="#b1b2b6"
+          />
+          {Array.from({ length: patterns[i].rows }).map((_, r) =>
+            Array.from({ length: patterns[i].cols }).map((__, c) => {
+              const lit = isLit(i, r, c)
               return (
                 <rect
                   key={`${r}-${c}`}
@@ -182,7 +221,7 @@ function City({ dayProgress = 0 }: { dayProgress: number }) {
                   width="8"
                   height="12"
                   rx={Math.random() < 0.25 ? 6 : 1}
-                  fill={lit ? "#ffd23f" : "#1a1a19"}
+                  fill={lit ? '#ffd23f' : '#1a1a19'}
                   opacity={lit ? 1 : 0.15}
                 />
               )
@@ -190,11 +229,9 @@ function City({ dayProgress = 0 }: { dayProgress: number }) {
           )}
         </g>
       ))}
-      {/* Petits bâtiments devant */}
       <rect x="0" y="150" width="70" height="50" fill="#3e4d5a" />
       <rect x="60" y="162" width="60" height="38" fill="#36444f" />
       <rect x="145" y="155" width="46" height="44" fill="#42546a" />
-      {/* Lampadaires */}
       <g>
         <rect x="310" y="174" width="4" height="26" fill="#d7d9da" />
         <circle cx="312" cy="174" r="6" fill="#ffd23f" opacity={dayProgress > 0.22 && dayProgress < 0.38 ? 1 : 0.2} />
@@ -213,132 +250,171 @@ export default function SpecialBackground() {
   const [clouds, setClouds] = useState<React.ReactElement[]>([])
   const [flowers, setFlowers] = useState<React.ReactElement[]>([])
   const [shells, setShells] = useState<React.ReactElement[]>([])
-  const [crabs, setCrabs] = useState<React.ReactElement[]>([])
-  const [lilyPads, setLilyPads] = useState<React.ReactElement[]>([])
+  const [animals, setAnimals] = useState<{
+    id: number
+    type: 'deer' | 'hedgehog'
+    start: string
+    end: string
+    top: number
+    size: number
+    dur: number
+  }[]>([])
+  const [leaves, setLeaves] = useState<{
+    id: number
+    top: number
+    size: number
+    dur: number
+  }[]>([])
+
+  // Etoiles pré-générées
+  const stars = useMemo(
+    () =>
+      Array.from({ length: 80 }).map((_, i) => ({
+        id: i,
+        left: Math.random() * 100,
+        top: Math.random() * 30,
+        size: 1 + Math.random() * 1.5,
+      })),
+    [],
+  )
+
+  // Crabe unique qui se balade sur la plage
+  const crab = (
+    <motion.div
+      animate={{ x: ['-10vw', '110vw', '-10vw'] }}
+      transition={{ duration: 40, repeat: Infinity, ease: 'linear' }}
+      style={{ position: 'absolute', top: '78vh', zIndex: 6, pointerEvents: 'none' }}
+    >
+      <CrabIcon size={24} />
+    </motion.div>
+  )
 
   // Animation vent
   const windAngle = useMotionValue(0)
-  useEffect(() => {
-    const controls = animate(
-      windAngle,
-      [0, 180, 0],
-      { duration: 600, repeat: Infinity, ease: 'easeInOut' },
-    )
-    return controls.stop
-  }, [])
-
-  // Nuages, fleurs, nénuphars, etc.
-  useEffect(() => {
-    // Nuages : seed et forme VRAIMENT différente pour chaque nuage
-    const cl: React.ReactElement[] = []
-    for (let i = 0; i < 12; i++) {
-      const size = 80 + Math.random() * 110
-      const top = Math.random() * 16
-      const dur = 50 + Math.random() * 35
-      const delay = -Math.random() * dur
-      const shapeIdx = Math.floor(Math.random() * cloudShapes.length)
-      cl.push(
-        <motion.div
-          key={'c' + i + '-' + shapeIdx}
-          initial={{ x: '110vw' }}
-          animate={{ x: '-120vw' }}
-          transition={{ duration: dur, repeat: Infinity, delay, ease: 'linear' }}
-          style={{ position: 'absolute', top: `${top}vh`, pointerEvents: 'none' }}
-        >
-          <CloudIcon size={size} v={shapeIdx} />
-        </motion.div>,
+    useEffect(() => {
+      const controls = animate(
+        windAngle,
+        [0, 180, 0],
+        { duration: 600, repeat: Infinity, ease: 'easeInOut' },
       )
-    }
+      return controls.stop
+    }, [windAngle])
 
-    // Fleurs sur la plaine : dispersées
-    const flowerColors = ['#f8c8ec', '#ffdb99', '#c7e2ad', '#eae5ff', '#f0c3c3']
-    const fl: React.ReactElement[] = []
-    for (let i = 0; i < 36; i++) {
-      const size = 10 + Math.random() * 8
-      const left = 6 + Math.random() * 88
-      const top = 71 + Math.random() * 16 // Sur la plaine (vh)
-      const color = flowerColors[Math.floor(Math.random() * flowerColors.length)]
-      fl.push(
-        <div
-          key={'fl' + i}
-          style={{
-            position: 'absolute',
-            left: `${left}vw`,
-            top: `${top}vh`,
-            pointerEvents: 'none',
-            zIndex: 7,
-          }}
-        >
-          <FlowerIcon size={size} color={color} />
-        </div>,
-      )
-    }
+    // Nuages, fleurs, coquillages
+    useEffect(() => {
+      // Nuages : seed et forme VRAIMENT différente pour chaque nuage
+      const cl: React.ReactElement[] = []
+      for (let i = 0; i < 12; i++) {
+        const size = 80 + Math.random() * 110
+        const top = Math.random() * 16
+        const dur = 50 + Math.random() * 35
+        const delay = -Math.random() * dur
+        const shapeIdx = Math.floor(Math.random() * cloudShapes.length)
+        cl.push(
+          <motion.div
+            key={'c' + i + '-' + shapeIdx}
+            initial={{ x: '110vw' }}
+            animate={{ x: '-120vw' }}
+            transition={{ duration: dur, repeat: Infinity, delay, ease: 'linear' }}
+            style={{ position: 'absolute', top: `${top}vh`, pointerEvents: 'none' }}
+          >
+            <CloudIcon size={size} v={shapeIdx} />
+          </motion.div>,
+        )
+      }
 
-    // Nénuphars animés sur la rivière
-    const nenu: React.ReactElement[] = []
-    for (let i = 0; i < 2 + Math.floor(Math.random() * 2); i++) {
-      const size = 36 + Math.random() * 24
-      const dur = 42 + Math.random() * 12
-      const delay = -Math.random() * dur
-      const top = 84 + Math.random() * 7 // sur la rivière
-      nenu.push(
-        <motion.div
-          key={'lilypad' + i}
-          initial={{ x: '110vw' }}
-          animate={{ x: '-120vw' }}
-          transition={{ duration: dur, repeat: Infinity, delay, ease: 'linear' }}
-          style={{
-            position: 'absolute',
-            left: 0,
-            top: `${top}vh`,
-            zIndex: 10,
-            pointerEvents: 'none',
-          }}
-        >
-          <LilyPadIcon size={size} />
-        </motion.div>,
-      )
-    }
+      // Fleurs sur la plaine : dispersées
+      const flowerColors = ['#f8c8ec', '#ffdb99', '#c7e2ad', '#eae5ff', '#f0c3c3']
+      const fl: React.ReactElement[] = []
+      for (let i = 0; i < 36; i++) {
+        const size = 10 + Math.random() * 8
+        const left = 6 + Math.random() * 88
+        const top = 71 + Math.random() * 16 // Sur la plaine (vh)
+        const color = flowerColors[Math.floor(Math.random() * flowerColors.length)]
+        fl.push(
+          <div
+            key={'fl' + i}
+            style={{
+              position: 'absolute',
+              left: `${left}vw`,
+              top: `${top}vh`,
+              pointerEvents: 'none',
+              zIndex: 7,
+            }}
+          >
+            <FlowerIcon size={size} color={color} />
+          </div>,
+        )
+      }
 
-    // Coquillages
-    const sh: React.ReactElement[] = []
-    for (let i = 0; i < 16; i++) {
-      const size = 8 + Math.random() * 5
-      const left = Math.random() * 100
-      sh.push(
-        <div
-          key={'s' + i}
-          style={{ position: 'absolute', left: `${left}vw`, bottom: '13vh', pointerEvents: 'none' }}
-        >
-          <ShellIcon size={size} />
-        </div>,
-      )
-    }
-    // Crabes
-    const cr: React.ReactElement[] = []
-    for (let i = 0; i < 5; i++) {
-      const size = 18 + Math.random() * 6
-      const left = Math.random() * 100
-      const dur = 10 + Math.random() * 6
-      cr.push(
-        <motion.div
-          key={'cr' + i}
-          initial={{ y: 0 }}
-          animate={{ y: [0, 4, -2, 0] }}
-          transition={{ duration: dur, repeat: Infinity, ease: 'easeInOut' }}
-          style={{ position: 'absolute', left: `${left}vw`, bottom: '13vh', pointerEvents: 'none' }}
-        >
-          <CrabIcon size={size} />
-        </motion.div>,
-      )
-    }
+      // Coquillages espacés sur la plage
+      const sh: React.ReactElement[] = []
+      for (let i = 0; i < 6; i++) {
+        const size = 8 + Math.random() * 5
+        const left = 5 + Math.random() * 90
+        const top = 76 + Math.random() * 4
+        sh.push(
+          <div
+            key={'s' + i}
+            style={{ position: 'absolute', left: `${left}vw`, top: `${top}vh`, pointerEvents: 'none', zIndex: 5 }}
+          >
+            <ShellIcon size={size} />
+          </div>,
+        )
+      }
 
-    setClouds(cl)
-    setFlowers(fl)
-    setLilyPads(nenu)
-    setShells(sh)
-    setCrabs(cr)
-  }, [])
+      setClouds(cl)
+      setFlowers(fl)
+      setShells(sh)
+    }, [])
+
+    // Feuilles dérivant sur la rivière
+    useEffect(() => {
+      function spawnLeaf() {
+        setLeaves((arr) => {
+          if (arr.length >= 2) return arr
+          const id = Date.now()
+          const top = 84 + Math.random() * 7
+          const size = 18 + Math.random() * 6
+          const dur = 35 + Math.random() * 10
+          setTimeout(
+            () => setLeaves((a) => a.filter((l) => l.id !== id)),
+            dur * 1000,
+          )
+          return [...arr, { id, top, size, dur }]
+        })
+      }
+      const interval = setInterval(() => {
+        if (Math.random() < 0.5) spawnLeaf()
+      }, 8000)
+      return () => clearInterval(interval)
+    }, [])
+
+    // Apparition d'animaux sur la plaine
+    useEffect(() => {
+      function spawnAnimal() {
+        setAnimals((arr) => {
+          if (arr.length >= 2) return arr
+          const id = Date.now()
+          const type: 'deer' | 'hedgehog' = Math.random() < 0.5 ? 'deer' : 'hedgehog'
+          const fromLeft = Math.random() < 0.5
+          const start = fromLeft ? '-10vw' : '110vw'
+          const end = fromLeft ? '110vw' : '-10vw'
+          const top = 64 + Math.random() * 6
+          const size = type === 'deer' ? 60 : 34
+          const dur = 25 + Math.random() * 10
+          setTimeout(
+            () => setAnimals((a) => a.filter((an) => an.id !== id)),
+            dur * 1000,
+          )
+          return [...arr, { id, type, start, end, top, size, dur }]
+        })
+      }
+      const interval = setInterval(() => {
+        if (Math.random() < 0.25) spawnAnimal()
+      }, 12000)
+      return () => clearInterval(interval)
+    }, [])
 
   /* Cycle jour/nuit - 0 = matin, 0.5 = minuit, 1 = matin */
   const cycle = 200
@@ -438,6 +514,22 @@ export default function SpecialBackground() {
         style={{ background: `linear-gradient(to bottom,${skyColor} 60%,#75c9ff 100%)` }}
       />
 
+      {/* Etoiles visibles uniquement la nuit profonde */}
+      {stars.map((s) => (
+        <div
+          key={s.id}
+          style={{
+            position: 'absolute',
+            left: `${s.left}vw`,
+            top: `${s.top}vh`,
+            opacity: dayProgress > 0.27 && dayProgress < 0.33 ? 1 : 0,
+            transition: 'opacity 2s',
+          }}
+        >
+          <Star size={s.size} />
+        </div>
+      ))}
+
       {/* Soleil & Lune */}
       {[
         { icon: <SunIcon />, op: [1, 1, 0, 0, 1], key: 'sun' },
@@ -446,8 +538,8 @@ export default function SpecialBackground() {
         <motion.div
           key={key}
           animate={{
-            x: ['-10vw', '110vw'],
-            y: ['50vh', '-10vh', '50vh', '110vh'],
+            x: ['-10vw', '10vw', '50vw', '90vw', '110vw'],
+            y: ['70vh', '60vh', '10vh', '60vh', '80vh'],
             opacity: op,
           }}
           transition={{ duration: cycle, repeat: Infinity, ease: 'linear' }}
@@ -493,7 +585,17 @@ export default function SpecialBackground() {
           zIndex: 2,
         }}
       >
-        <div className="flex justify-evenly items-end h-full">
+        {/* Arbres de fond */}
+        <div
+          className="flex justify-between items-end h-full"
+          style={{ position: 'absolute', width: '100%', top: 0, left: 0, opacity: 0.6, filter: 'saturate(0.6)' }}
+        >
+          {Array.from({ length: 13 }).map((_, i) => (
+            <TreeIcon key={'bg' + i} size={50 + (i % 3) * 8} v={i} />
+          ))}
+        </div>
+        {/* Rangée principale */}
+        <div className="flex justify-evenly items-end h-full relative z-10">
           {Array.from({ length: 11 }).map((_, i) => (
             <TreeIcon key={i} size={90 + (i % 3) * 10} v={i} />
           ))}
@@ -502,6 +604,26 @@ export default function SpecialBackground() {
 
       {/* Fleurs sur la plaine */}
       {flowers}
+
+      {/* Animaux traversant la plaine */}
+      {animals.map((a) => (
+        <motion.div
+          key={a.id}
+          initial={{ x: a.start }}
+          animate={{ x: a.end }}
+          transition={{ duration: a.dur, ease: 'linear' }}
+          style={{ position: 'absolute', top: `${a.top}vh`, zIndex: 8, pointerEvents: 'none' }}
+          onAnimationComplete={() =>
+            setAnimals((arr) => arr.filter((an) => an.id !== a.id))
+          }
+        >
+          {a.type === 'deer' ? (
+            <DeerIcon size={a.size} />
+          ) : (
+            <HedgehogIcon size={a.size} />
+          )}
+        </motion.div>
+      ))}
 
       {/* Plage — un peu agrandie */}
       <svg
@@ -522,11 +644,11 @@ export default function SpecialBackground() {
         />
       </svg>
 
-      {/* Coquillages + crabes */}
+      {/* Coquillages + crabe */}
       {shells}
-      {crabs}
+      {crab}
 
-      {/* Rivière - va jusqu'en bas, nénuphars dessus */}
+      {/* Rivière - va jusqu'en bas */}
       <motion.div
         className="absolute left-0 right-0"
         style={{
@@ -539,24 +661,33 @@ export default function SpecialBackground() {
           zIndex: 4,
         }}
       />
-      {/* Nénuphars animés */}
-      {lilyPads}
+      {/* Feuilles flottantes */}
+      {leaves.map((l) => (
+        <motion.div
+          key={l.id}
+          initial={{ x: '-10vw' }}
+          animate={{ x: '110vw' }}
+          transition={{ duration: l.dur, ease: 'linear' }}
+          style={{ position: 'absolute', top: `${l.top}vh`, zIndex: 10, pointerEvents: 'none' }}
+        >
+          <LeafIcon size={l.size} />
+        </motion.div>
+      ))}
     </div>
   )
 }
 
-/* 
-────────────────────────────────────────────
-Modifications effectuées :
-- Les poissons sont supprimés. 
-- La rivière va jusqu'en bas de l'écran, elle est élargie.
-- La plage est agrandie, bien collée à la rivière.
-- Le front vert (plaine) va jusqu'à la plage, sans fond blanc.
-- Ajout de fleurs variées sur la plaine.
-- Nénuphars animés sur la rivière à la place des poissons.
-- Montagnes avec dégradé neige > roche (plus de zigzag blanc).
-- Nuages : 10 formes SVG vraiment différentes, choix aléatoire par nuage.
-- Ville : lumières des fenêtres gérées selon l'heure (jour, nuit, minuit).
-- Animation fluide et code optimisé, bien commenté.
-────────────────────────────────────────────
-*/
+  /*
+  ────────────────────────────────────────────
+  Décor dynamique :
+  - Ciel dégradé animé selon l'heure et étoiles la nuit profonde.
+  - Soleil et lune suivent un arc naturel.
+  - Nuages variés (12 formes) traversant le ciel.
+  - Montagnes avec dégradé neige > roche.
+  - Plaine herbeuse sans bande parasite, deux rangées d'arbres.
+  - Fleurs dispersées et animaux occasionnels (biche/hérisson).
+  - Plage ondulée avec coquillages espacés et un crabe animé.
+  - Rivière réaliste avec quelques feuilles dérivantes.
+  - Ville : fenêtres et lampadaires synchronisés au cycle jour/nuit.
+  ─────────────────────────────────────────────
+  */
