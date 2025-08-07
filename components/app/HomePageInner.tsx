@@ -172,7 +172,7 @@ export default function HomePageInner() {
         <CharacterSheet perso={perso} onUpdate={handleUpdatePerso} chatBoxRef={chatBoxRef} allCharacters={characters} logoOnly>
           {profile?.isMJ && (
             <span className="ml-2">
-              <GMCharacterSelector onSelect={handleUpdatePerso} className="bg-gray-800 hover:bg-gray-700 text-white p-2 rounded shadow" />
+              <GMCharacterSelector onSelect={handleUpdatePerso} />
             </span>
           )}
         </CharacterSheet>
