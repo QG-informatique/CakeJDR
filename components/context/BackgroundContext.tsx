@@ -1,37 +1,95 @@
 'use client'
-import { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction } from 'react'
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  Dispatch,
+  SetStateAction,
+} from 'react'
 
-export type BackgroundType = 'rpg' | 'cake' | 'banana' | 'unicorn' | 'special'
+/* ------------------------------------------------------------------
+ * 1️⃣  Types des backgrounds
+ * ------------------------------------------------------------------ */
+// 🆕 Ajout des clés 'bg6' → 'bg10'
+export type BackgroundType =
+  | 'rpg'
+  | 'cake'
+  | 'banana'
+  | 'unicorn'
+  | 'special'
+  | 'bg6'      // Floating Runes
+  | 'bg7'      // Paper Lanterns
+  | 'bg8'      // Pixel Hearts
+  | 'bg9'      // Stardust Trails
+  | 'bg10'     // Origami Cranes
 
-const cycleOrder: BackgroundType[] = ['rpg', 'cake', 'banana', 'unicorn', 'special']
+/* ------------------------------------------------------------------
+ * 2️⃣  Ordre de rotation (bouton “next”)
+ * ------------------------------------------------------------------ */
+// 🆕 Ajout des mêmes clés dans le tableau d’ordre
+const cycleOrder: BackgroundType[] = [
+  'rpg',
+  'cake',
+  'banana',
+  'unicorn',
+  'special',
+  'bg6',
+  'bg7',
+  'bg8',
+  'bg9',
+  'bg10',
+]
 
+/* ------------------------------------------------------------------
+ * 3️⃣  Contexte + Provider
+ * ------------------------------------------------------------------ */
 type BackgroundContextValue = {
   background: BackgroundType
   setBackground: Dispatch<SetStateAction<BackgroundType>>
   cycleBackground: () => void
 }
 
-const BackgroundContext = createContext<BackgroundContextValue | undefined>(undefined)
+const BackgroundContext = createContext<BackgroundContextValue | undefined>(
+  undefined,
+)
 
 export function BackgroundProvider({ children }: { children: ReactNode }) {
+  // état initial : 'rpg'
   const [background, setBackground] = useState<BackgroundType>('rpg')
 
+  // ⏩ Passe au background suivant dans cycleOrder
   const cycleBackground = () => {
-    setBackground(prev => {
+    setBackground((prev) => {
       const idx = cycleOrder.indexOf(prev)
       return cycleOrder[(idx + 1) % cycleOrder.length]
     })
   }
 
   return (
-    <BackgroundContext.Provider value={{ background, setBackground, cycleBackground }}>
+    <BackgroundContext.Provider
+      value={{ background, setBackground, cycleBackground }}
+    >
       {children}
     </BackgroundContext.Provider>
   )
 }
 
+/* ------------------------------------------------------------------
+ * 4️⃣  Hook pratique
+ * ------------------------------------------------------------------ */
 export function useBackground() {
   const ctx = useContext(BackgroundContext)
-  if (!ctx) throw new Error('useBackground must be used within BackgroundProvider')
+  if (!ctx)
+    throw new Error('useBackground must be used within BackgroundProvider')
   return ctx
 }
+
+/* ==================================================================
+ * ✅  MODIFICATIONS (résumé)
+ * ------------------------------------------------------------------
+ * • Ajout des clés 'bg6' … 'bg10' dans :
+ *     1. type BackgroundType (lignes 13-22)
+ *     2. tableau cycleOrder (lignes 29-38)
+ *   => le bouton de cycle atteindra désormais Background6, 7, 8, 9, 10.
+ * ================================================================== */

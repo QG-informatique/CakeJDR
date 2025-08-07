@@ -1,61 +1,47 @@
 'use client'
+
 import { motion } from 'framer-motion'
 import React, { useEffect, useState } from 'react'
 
 /**
- * Grosse tête de licorne rose (vue de face), deux yeux kawaii, corne multicolore bien visible.
+ * UnicornBackground – v4 (SVG intégral + yeux mignons)
+ * ====================================================
+ * • Intègre le SVG complet fourni (fill #000 default + couleurs internes).
+ * • Ajoute **deux petits cercles noirs** (`r=10`) pour des yeux kawaii (coordonnées ≈206,235 et 301,235).
+ * • Conserve le fond dégradé arc‑en‑ciel translucide.
  */
+
+const RAINBOW_STYLE: React.CSSProperties = {
+  background:
+    'linear-gradient(120deg,#ff6ec4 0%,#f9b401 20%,#03dfc4 40%,#508dff 60%,#b066f7 80%,#ff6ec4 100%)',
+  opacity: 0.35,
+}
+
 function UnicornIcon({ size = 160, rotate = 0 }: { size?: number; rotate?: number }) {
   return (
     <svg
-      viewBox="0 0 120 120"
+      viewBox="0 0 507.733 507.733"
       width={size}
       height={size}
       style={{ display: 'block', transform: `rotate(${rotate}deg)` }}
+      xmlns="http://www.w3.org/2000/svg"
     >
-      <defs>
-        {/* Dégradé multicolore pour la corne */}
-        <linearGradient id="hornGradient" x1="60" y1="10" x2="60" y2="55" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#ffb7e5"/>
-          <stop offset="20%" stopColor="#ffe066"/>
-          <stop offset="40%" stopColor="#b4e08d"/>
-          <stop offset="60%" stopColor="#7fcafc"/>
-          <stop offset="80%" stopColor="#f59ef7"/>
-          <stop offset="100%" stopColor="#ffd23f"/>
-        </linearGradient>
-        {/* Dégradé blush joue */}
-        <radialGradient id="blush" cx="0.5" cy="0.5" r="0.5">
-          <stop stopColor="#fbb2d9" offset="0%" />
-          <stop stopColor="#fff1fb" offset="100%" />
-        </radialGradient>
-      </defs>
-      {/* Oreilles peluche */}
-      <ellipse cx="32" cy="37" rx="11" ry="20" fill="#fff1fb" stroke="#e1aaff" strokeWidth="2.2"/>
-      <ellipse cx="88" cy="37" rx="11" ry="20" fill="#fff1fb" stroke="#e1aaff" strokeWidth="2.2"/>
-      {/* Tête géante rose pâle */}
-      <ellipse cx="60" cy="68" rx="45" ry="43" fill="#fbe7f6" stroke="#e1aaff" strokeWidth="4"/>
-      {/* Corne multicolore bien au centre */}
-      <rect x="54" y="10" width="12" height="45" rx="6" fill="url(#hornGradient)" stroke="#e1aaff" strokeWidth="2"/>
-      {/* Crinière : encadre la corne mais NE PAS dessus */}
-      <ellipse cx="45" cy="26" rx="10" ry="16" fill="#fbb6e9" opacity="0.96"/>
-      <ellipse cx="75" cy="26" rx="10" ry="16" fill="#ffd3f7" opacity="0.9"/>
-      <ellipse cx="60" cy="22" rx="8" ry="13" fill="#ffbee3" opacity="0.83"/>
-      {/* Joues roses */}
-      <ellipse cx="40" cy="92" rx="8" ry="3.3" fill="url(#blush)" opacity="0.93"/>
-      <ellipse cx="80" cy="92" rx="8" ry="3.3" fill="url(#blush)" opacity="0.93"/>
-      {/* Museau arrondi, plus clair */}
-      <ellipse cx="60" cy="104" rx="26" ry="16" fill="#fff1fb" stroke="#e1aaff" strokeWidth="2"/>
-      {/* Yeux kawaii gauche/droite */}
-      <ellipse cx="46" cy="68" rx="8" ry="12" fill="#3a2456"/>
-      <ellipse cx="74" cy="68" rx="8" ry="12" fill="#3a2456"/>
-      {/* Reflets d'yeux */}
-      <ellipse cx="48.5" cy="64.5" rx="2" ry="4" fill="#fff" opacity="0.8"/>
-      <ellipse cx="76.5" cy="64.5" rx="2" ry="4" fill="#fff" opacity="0.8"/>
-      {/* Narines */}
-      <ellipse cx="54" cy="108" rx="1.9" ry="2.7" fill="#e1aaff"/>
-      <ellipse cx="66" cy="108" rx="1.9" ry="2.7" fill="#e1aaff"/>
-      {/* Mini bouche */}
-      <ellipse cx="60" cy="115" rx="7" ry="1.6" fill="#e1aaff" opacity="0.14"/>
+      {/* SVG complet */}
+      <g transform="translate(5)">
+        <path fill="#FFD0A1" d="M164.387,157.013c14.507-9.387,35.84-21.333,59.733-26.453h0.853c-1.707,19.627-1.707,31.573-1.707,31.573h51.2c0,0,0-11.947-1.707-31.573h0.853c21.333,4.267,40.96,14.507,54.613,23.893l8.533-0.853c0,0,23.04-8.533,57.173-8.533c0,25.6-8.533,42.667-34.133,51.2c0,51.2-17.067,85.333-17.067,85.333l-17.067,25.6c0,0-25.6-17.067-76.8-17.067s-76.8,17.067-76.8,17.067L155,281.6c0,0-17.067-34.133-17.067-85.333c-25.6-8.533-34.133-25.6-34.133-51.2c34.133,0,57.173,8.533,57.173,8.533L164.387,157.013z M248.867,469.333c0-9.387-7.68-17.067-17.067-17.067h-17.067c-2.56,0-5.973,0.853-7.68,1.707l-0.853-1.707h-34.133h-8.533c0,0,0-51.2,17.067-76.8c0,0,7.68-10.24,14.507-16.213l0.853-0.853c13.653,10.24,31.573,17.92,52.907,17.92c20.48,0,38.4-6.827,52.053-17.067l0,0c9.387,6.827,16.213,16.213,16.213,16.213c17.067,25.6,17.067,76.8,17.067,76.8h-8.533h-33.28v2.56c-2.56-1.707-5.973-2.56-9.387-2.56h-17.067C256.547,452.267,248.867,459.947,248.867,469.333z" />
+        <path fill="#ec8ff3" d="M230.093,93.867c-1.707,12.8-3.413,24.747-4.267,34.133v2.56c-1.707,19.627-1.707,31.573-1.707,31.573h51.2c0,0,0-11.947-1.707-31.573v-2.56c-0.853-9.387-2.56-21.333-4.267-34.133c-3.413-24.747-9.387-53.76-19.627-85.333C239.48,40.107,233.507,69.12,230.093,93.867z" />
+        <path fill="#AAB1BA" d="M300.067,503.467h51.2v-34.133c0-9.387-7.68-17.067-17.067-17.067h-8.533h-33.28v2.56c2.56,1.707,4.267,3.413,5.12,5.973c-1.707-2.56-3.413-4.267-5.12-5.973c-2.56-1.707-5.973-2.56-9.387-2.56h-17.067c-9.387,0-17.067,7.68-17.067,17.067v34.133h51.2z M197.667,486.4v17.067h51.2v-25.6c0-9.387-7.68-17.067-17.067-17.067h-17.067c-2.56,0-5.973,0.853-7.68,1.707c-2.56,1.707-5.12,3.413-6.827,5.973c1.707-2.56,3.413-4.267,6.827-5.973l-0.853-1.707h-34.133h-8.533c-9.387,0-17.067,7.68-17.067,17.067v34.133h51.2V486.4z" />
+        <path fill="#F2EDDA" d="M248.867,290.133c51.2,0,76.8,17.067,76.8,17.067c5.12,15.36-5.12,36.693-24.747,51.2c-13.653,10.24-31.573,17.067-52.053,17.067c-21.333,0-39.253-7.68-52.907-17.92c-19.627-14.507-29.013-35.84-23.893-50.347C172.067,307.2,197.667,290.133,248.867,290.133" />
+        <circle fill="#FFD0A1" cx="44.067" cy="68.267" r="8.533" />
+        <circle fill="#7EE1E6" cx="411" cy="8.533" r="8.533" />
+        <circle fill="#7EE1E6" cx="172.067" cy="85.333" r="8.533" />
+        <circle fill="#ec8ff3" cx="334.2" cy="102.4" r="8.533" />
+      </g>
+      {/* chemin externe gris foncé */}
+      <path fill="#51565F" d="M356.267,507.733h-204.8c-2.56,0-4.267-1.707-4.267-4.267v-34.133c0-9.387,7.68-17.92,17.067-19.627c0-12.8,2.56-52.907,17.92-75.093c1.707-1.707,4.267-2.56,5.973-0.853c1.707,1.707,2.56,4.267,0.853,5.973c-13.653,19.627-16.213,57.173-16.213,69.973h4.267c2.56,0,4.267,1.707,4.267,4.267c0,2.56-1.707,4.267-4.267,4.267h-8.533c-6.827,0-12.8,5.12-12.8,12.8v29.867H198.4v-30.72c0-9.387,6.827-17.92,16.213-19.627l-7.68-55.467c0-2.56,1.707-4.267,3.413-5.12c2.56,0,4.267,1.707,5.12,3.413l7.68,56.32H236.8c5.12,0,9.387,1.707,12.8,4.267V409.6c0-2.56,1.707-4.267,4.267-4.267c2.56,0,4.267,1.707,4.267,4.267v42.667c3.413-2.56,7.68-4.267,12.8-4.267h13.653l7.68-56.32c0-2.56,2.56-4.267,5.12-3.413c2.56,0,4.267,2.56,3.413,5.12l-7.68,55.467c9.387,1.707,16.213,10.24,16.213,20.48v29.867H352v-30.72c0-7.68-5.973-12.8-12.8-12.8h-8.533c-2.56,0-4.267-1.707-4.267-4.267s1.707-4.267,4.267-4.267h4.267c-0.853-12.8-2.56-50.347-16.213-69.973c-1.707-1.707-0.853-4.267,0.853-5.973c1.707-1.707,4.267-0.853,5.973,0.853c15.36,22.187,17.067,62.293,17.92,75.093c9.387,1.707,17.067,10.24,17.067,20.48v34.987C360.533,506.027,358.827,507.733,356.267,507.733z" />
+      {/* yeux kawaii */}
+      <circle cx="206" cy="235" r="10" fill="#000" />
+      <circle cx="301" cy="235" r="10" fill="#000" />
     </svg>
   )
 }
@@ -65,7 +51,8 @@ export default function UnicornBackground() {
 
   useEffect(() => {
     const arr: React.ReactElement[] = []
-    for (let i = 0; i < 12; ++i) {
+    const COUNT = 12
+    for (let i = 0; i < COUNT; ++i) {
       const size = Math.random() * 40 + 140
       const left = Math.random() * 100
       const duration = 19 + Math.random() * 8
@@ -75,13 +62,9 @@ export default function UnicornBackground() {
         <motion.div
           key={i}
           initial={{ y: '110vh', opacity: 0 }}
-          animate={{ y: '-120vh', opacity: 0.95 }}
+          animate={{ y: '-120vh', opacity: 1 }}
           transition={{ duration, repeat: Infinity, delay, ease: 'linear' }}
-          style={{
-            position: 'absolute',
-            left: `${left}vw`,
-            pointerEvents: 'none',
-          }}
+          style={{ position: 'absolute', left: `${left}vw`, pointerEvents: 'none', width: size, height: size }}
         >
           <UnicornIcon size={size} rotate={rotate} />
         </motion.div>
@@ -91,10 +74,9 @@ export default function UnicornBackground() {
   }, [])
 
   return (
-    <div className="absolute inset-0 overflow-hidden -z-10">
+    <div className="pointer-events-none absolute inset-0 overflow-hidden isolate z-0">
+      <div className="absolute inset-0 -z-10" style={RAINBOW_STYLE} />
       {unicorns}
-      {/* Overlay foncé comme les autres backgrounds */}
-      <div className="absolute inset-0 bg-gray-900/60" />
     </div>
   )
 }
