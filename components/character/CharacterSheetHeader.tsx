@@ -48,7 +48,7 @@ const CharacterSheetHeader: FC<Props> = ({
         <div className="flex items-center gap-2">
           <Link
             href="/menu-accueil"
-            className="bg-gray-800 hover:bg-gray-900 text-white rounded p-1"
+            className="rounded-xl p-2 font-semibold shadow border-none bg-black/30 text-white/90 hover:bg-emerald-600 hover:text-white transition duration-100 flex items-center justify-center"
           >
             <CakeLogo className="mr-0" showText={false} />
           </Link>

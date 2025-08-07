@@ -153,15 +153,15 @@ function City({ dayProgress = 0 }: { dayProgress: number }) {
   // dayProgress : 0 (matin) à 0.5 (minuit) à 1 (matin)
   // => 0/1 = jour ; 0.20 à 0.33 = nuit ; 0.28 à 0.35 = minuit
   // Plus on est proche de la nuit profonde, moins de fenêtres allumées
-  function shouldLightOn(row: number, col: number) {
-    if (dayProgress < 0.18 || dayProgress > 0.85) return false // Plein jour
-    if (dayProgress > 0.27 && dayProgress < 0.33) {
-      // pleine nuit : très peu allumé
-      return Math.random() < 0.07
-    }
-    // Nuit : 70% fenêtres allumées
-    return Math.random() < 0.7
+function shouldLightOn() {
+  if (dayProgress < 0.18 || dayProgress > 0.85) return false // Plein jour
+  if (dayProgress > 0.27 && dayProgress < 0.33) {
+    // pleine nuit : très peu allumé
+    return Math.random() < 0.07
   }
+  // Nuit : 70% fenêtres allumées
+  return Math.random() < 0.7
+}
   return (
     <svg viewBox="0 0 350 200" style={{ width: '36vw', height: '22vh', minWidth: 320 }}>
       {/* Grands immeubles */}
@@ -173,7 +173,7 @@ function City({ dayProgress = 0 }: { dayProgress: number }) {
           {/* Fenêtres : gérées selon l'heure */}
           {Array.from({ length: Math.floor(b.h / 20) }).map((_, r) =>
             Array.from({ length: Math.floor(b.w / 14) }).map((__, c) => {
-              const lit = shouldLightOn(r, c)
+              const lit = shouldLightOn()
               return (
                 <rect
                   key={`${r}-${c}`}
@@ -225,7 +225,7 @@ export default function SpecialBackground() {
       { duration: 600, repeat: Infinity, ease: 'easeInOut' },
     )
     return controls.stop
-  }, [])
+  }, [windAngle])
 
   // Nuages, fleurs, nénuphars, etc.
   useEffect(() => {
@@ -465,8 +465,8 @@ export default function SpecialBackground() {
           left: '4vw',
           originX: 0.5,
           originY: 0.5,
+          rotate: arrowRotation,
         }}
-        animate={{ rotate: arrowRotation }}
       >
         <WindArrow />
       </motion.div>
