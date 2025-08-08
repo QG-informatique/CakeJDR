@@ -79,7 +79,7 @@ export async function POST(req: Request) {
       bytes: data.bytes,
       format: data.format,
     });
-  } catch (e: any) {
-    return bad(e?.message || "Upload error", 500);
+  } catch (e: unknown) {
+    return bad(e instanceof Error ? e.message : "Upload error", 500);
   }
 }

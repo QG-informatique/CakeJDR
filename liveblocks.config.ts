@@ -31,6 +31,27 @@ type Room = {
   owner?: string | null
 }
 
+export type DiceQueueItem = {
+  id: string
+  userId: string
+  name: string
+  color?: string
+  diceType: number
+  createdAt: number
+  status: 'queued' | 'active'
+}
+
+export type DiceState = {
+  phase: 'idle' | 'rolling'
+  name?: string
+  color?: string
+  diceType?: number
+  result?: number
+  startAt?: number
+  endAt?: number
+  entryId?: string
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type CharacterData = any
 declare global {
@@ -55,6 +76,8 @@ declare global {
       editor: LiveMap<string, string>;
       events: LiveList<SessionEvent>;
       rooms: LiveList<Room>;
+      diceQueue: LiveList<DiceQueueItem>;
+      diceState: LiveObject<DiceState>;
     };
 
     // Custom user info set when authenticating with a secret key
@@ -93,5 +116,3 @@ declare global {
     };
   }
 }
-
-export {};
