@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef } from 'react'
-import { LiveList, LiveObject } from '@liveblocks/client'
+import { LiveList, LiveObject, LsonObject } from '@liveblocks/client'
 import { useBroadcastEvent, useEventListener, useStorage, useMutation } from '@liveblocks/react'
 import PopupResult from './PopupResult'
 
@@ -36,12 +36,10 @@ type DiceStartEvent = {
   name: string
   color?: string
 }
-type DiceEndEvent = { type: 'dice-roll-end'; entryId: string }
 
-interface DiceRoot {
+interface DiceRoot extends LsonObject {
   diceQueue?: LiveList<QueueItem> | QueueItem[]
   diceState?: LiveObject<DiceState> | DiceState
-  [key: string]: unknown
 }
 
 const normalizeQueue = (
@@ -97,7 +95,7 @@ export default function DiceHub() {
   const getOrState = (storage: LiveObject<DiceRoot>): LiveObject<DiceState> => {
     const s = storage.get('diceState') as unknown
     if (!s || typeof (s as LiveObject<DiceState>).toObject !== 'function') {
-      const obj = (s ?? {}) as DiceState
+      const obj = (s ?? {}) as Partial<DiceState>
       const live = new LiveObject<DiceState>({ phase: 'idle', ...obj })
       storage.set('diceState', live)
       return live
@@ -187,12 +185,13 @@ export default function DiceHub() {
 
   // --- Événements Liveblocks → mettent à jour diceState partagé (UI) ---
   useEventListener((payload: { event: unknown }) => {
-    const ev = payload?.event
-    if (!ev || typeof ev !== 'object') return
+    const ev = payload.event
+    if (typeof ev !== 'object' || ev === null) return
+    const type = (ev as { type?: unknown }).type
 
-    if (ev.type === 'dice-roll-start') {
+    if (type === 'dice-roll-start') {
       setDiceStateRolling(ev as DiceStartEvent)
-    } else if (ev.type === 'dice-roll-end') {
+    } else if (type === 'dice-roll-end') {
       clearDiceState()
     }
   })
@@ -227,12 +226,12 @@ export default function DiceHub() {
         name: first.name,
         color: first.color,
       }
-      broadcast(startEvent)
+      broadcast(startEvent as unknown as Liveblocks['RoomEvent'])
 
       const total = Math.max(0, endAt - Date.now()) + 20
       const t = window.setTimeout(() => {
         removeById(first.id)
-        broadcast({ type: 'dice-roll-end', entryId: first.id } as DiceEndEvent)
+        broadcast({ type: 'dice-roll-end', entryId: first.id } as unknown as Liveblocks['RoomEvent'])
       }, total)
       return () => window.clearTimeout(t)
     }
@@ -276,13 +275,18 @@ export default function DiceHub() {
 
       // kickstart si pas d’actif ni de rolling (utile quand on est seul)
       setTimeout(() => {
-        const isRolling = (root?.diceState?.toObject?.()?.phase === 'rolling') &&
-                          ((root?.diceState?.toObject?.()?.endAt ?? 0) > Date.now())
-        const hasActive = normalizeQueue(root?.diceQueue).some((x) => x.status === 'active')
+        const ds = root?.diceState
+        const stateObj =
+          typeof (ds as LiveObject<DiceState>)?.toObject === 'function'
+            ? (ds as LiveObject<DiceState>).toObject()
+            : (ds as DiceState | undefined)
+        const isRolling =
+          stateObj?.phase === 'rolling' && (stateObj?.endAt ?? 0) > Date.now()
+        const hasActive = normalizeQueue(root?.diceQueue).some(x => x.status === 'active')
         if (!isRolling && !hasActive) {
           const list: QueueItem[] = normalizeQueue(root?.diceQueue)
           const first = list.find(i => i.status === 'queued')
-          if (!first) return
+          if (!root || !first) return
 
           const startAt = Date.now() + 250
           const endAt = startAt + ROLL_SPIN_MS + RESULT_DELAY_MS + HOLD_MS
@@ -302,7 +306,7 @@ export default function DiceHub() {
             endAt,
             name: first.name,
             color: first.color,
-          } as DiceStartEvent)
+          } as unknown as Liveblocks['RoomEvent'])
 
           // program end
           const total = Math.max(0, endAt - Date.now()) + 20
@@ -311,7 +315,7 @@ export default function DiceHub() {
             const fresh: QueueItem[] = normalizeQueue(root?.diceQueue)
             const rmIdx = fresh.findIndex(i => i.id === first.id)
             if (rmIdx >= 0) (root!.diceQueue as LiveList<QueueItem>).delete(rmIdx)
-            broadcast({ type: 'dice-roll-end', entryId: first.id } as DiceEndEvent)
+            broadcast({ type: 'dice-roll-end', entryId: first.id } as unknown as Liveblocks['RoomEvent'])
           }, total)
         }
       }, 30)
