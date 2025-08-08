@@ -1,4 +1,4 @@
-import { FC } from 'react'
+import { FC, ReactElement } from 'react'
 import { useT } from '@/lib/useT'
 import Link from 'next/link'
 import CakeLogo from '../ui/CakeLogo'
@@ -67,9 +67,10 @@ const CharacterSheetHeader: FC<Props> = ({
         >
           {edit ? t('save') : t('edit')}
         </button>
-        {childrenArray.map((child, i) => (
-          <span key={i} className="flex items-center">{child}</span>
-        ))}
+        {childrenArray.map((child, i) => {
+          const key = (child as ReactElement)?.key ?? `child-${i}`
+          return <span key={String(key)} className="flex items-center">{child}</span>
+        })}
       </div>
       <nav className="flex gap-2 mt-2">
         {TABS.map(t => (

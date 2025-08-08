@@ -45,11 +45,11 @@ const StatsTab: FC<Props> = ({
           competences: [...(localPerso.competences || []), comp],
         })
       }
-        onDelete={(idx) =>
-          setLocalPerso({
-            ...localPerso,
-            competences: (localPerso.competences || []).filter((_: any, i: number) => i !== idx),
-          })
+      onDelete={(id) =>
+        setLocalPerso({
+          ...localPerso,
+          competences: (localPerso.competences || []).filter((c: any) => c.id !== id),
+        })
       }
     />
     <LevelUpPanel

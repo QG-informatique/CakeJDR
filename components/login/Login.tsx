@@ -31,11 +31,11 @@ function DicePips({ value, size }: { value:number; size:number }) {
   const gap = (size - 3 * dotSize)/4
   return (
     <div style={{ position:'relative', width:size, height:size, pointerEvents:'none' }} aria-label={`Face ${value}`}>
-      {pipPattern(value).map((d,i)=>{
+      {pipPattern(value).map(d=>{
         const top = gap + d.r*(dotSize+gap)
         const left= gap + d.c*(dotSize+gap)
         return (
-          <div key={i} style={{
+          <div key={`${d.r}-${d.c}`} style={{
             position:'absolute', top, left, width:dotSize, height:dotSize,
             borderRadius:'50%',
             background:'radial-gradient(circle at 30% 30%, #fff, #bbb 70%)',
@@ -186,9 +186,9 @@ transition: 'opacity 0.4s ease, transform 0.3s ease'
 
             }}
           >
-            {faces.map(({ rotX, rotY, type, value }, idx) => (
+            {faces.map(({ rotX, rotY, type, value }) => (
               <div
-                key={idx}
+                key={`${type}-${value}`}
                 style={{
                   position:'absolute',
                   width:CUBE_SIZE,
