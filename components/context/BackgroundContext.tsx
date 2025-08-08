@@ -3,6 +3,7 @@ import {
   createContext,
   useContext,
   useState,
+  useEffect,
   ReactNode,
   Dispatch,
   SetStateAction,
@@ -55,8 +56,23 @@ const BackgroundContext = createContext<BackgroundContextValue | undefined>(
 )
 
 export function BackgroundProvider({ children }: { children: ReactNode }) {
-  // état initial : 'rpg'
-  const [background, setBackground] = useState<BackgroundType>('rpg')
+  // état initial : 'rpg' (ou valeur sauvegardée en local)
+  const [background, setBackground] = useState<BackgroundType>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('background') as BackgroundType | null
+      if (stored && cycleOrder.includes(stored)) return stored
+    }
+    return 'rpg'
+  })
+
+  // 💾 Sauvegarde le background à chaque changement
+  useEffect(() => {
+    try {
+      localStorage.setItem('background', background)
+    } catch {
+      // ignore write errors
+    }
+  }, [background])
 
   // ⏩ Passe au background suivant dans cycleOrder
   const cycleBackground = () => {

@@ -62,3 +62,7 @@ Backgrounds are handled through a global React context. To add a new animated ba
 
 The background switch button in the menu will then cycle through all available backgrounds.
 
+The currently selected background is saved in `localStorage` so it persists
+between page reloads. If a stored theme is not available, the default `rpg`
+background is used instead.
+
