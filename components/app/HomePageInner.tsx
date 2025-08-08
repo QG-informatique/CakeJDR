@@ -11,7 +11,6 @@ import PopupResult from '@/components/dice/PopupResult'
 import Head from 'next/head'
 import InteractiveCanvas from '@/components/canvas/InteractiveCanvas'
 import LiveAvatarStack from '@/components/chat/LiveAvatarStack'
-import SideNotes from '@/components/misc/SideNotes'
 import Login from '@/components/login/Login'
 import GMCharacterSelector from '@/components/misc/GMCharacterSelector'
 import useDiceHistory from './hooks/useDiceHistory'
@@ -201,7 +200,6 @@ export default function HomePageInner() {
             author={perso.nom || profile?.pseudo || 'Anonymous'}
           />
         </ErrorBoundary>
-        <SideNotes />
       </div>
       <Head>
         <title>CakeJDR</title>
