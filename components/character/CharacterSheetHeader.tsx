@@ -44,13 +44,15 @@ const CharacterSheetHeader: FC<Props> = ({
         boxShadow: '0 4px 18px -6px rgba(0,0,0,0.30), 0 0 0 1px rgba(255,255,255,0.05)'
       }}
     >
-      <div className="flex items-center gap-2">
+      {/* Flex-wrap keeps header controls readable on small screens */}
+      <div className="flex flex-wrap items-center gap-2">
         <Link
           href="/menu-accueil"
           className="rounded-xl p-2 font-semibold shadow border-none bg-black/30 text-white/90 hover:bg-emerald-600 hover:text-white transition duration-100 flex items-center justify-center"
         >
           <CakeLogo className="mr-0" showText={false} />
         </Link>
+        {/* Edit button sits after menu for intuitive order */}
         <button
           onClick={edit ? onSave : onToggleEdit}
           className={`

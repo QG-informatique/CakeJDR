@@ -74,7 +74,7 @@ const DiceRoller: FC<Props> = ({
   return (
     <div
       className="
-        relative p-4 flex items-center gap-2 justify-between
+        relative w-full p-4 flex items-center gap-2 justify-between
         rounded-xl
         border border-white/10
         bg-black/15
@@ -86,13 +86,16 @@ const DiceRoller: FC<Props> = ({
         boxShadow: '0 4px 18px -8px rgba(0,0,0,0.24), 0 0 0 1px rgba(255,255,255,0.05)',
       }}
     >
-      <button
-        onClick={() => setCollapsed(true)}
-        aria-label="Collapse dice panel"
-        className="absolute -top-3 left-1/2 -translate-x-1/2 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
-      >
-        <ChevronDown size={20} />
-      </button>
+      {/* Center collapse toggle using flex so it remains responsive */}
+      <div className="absolute -top-3 left-0 right-0 flex justify-center">
+        <button
+          onClick={() => setCollapsed(true)}
+          aria-label="Collapse dice panel"
+          className="text-white/80 hover:text-white bg-black/30 rounded-full p-1"
+        >
+          <ChevronDown size={20} />
+        </button>
+      </div>
       <label htmlFor="diceType" className="mr-2 font-semibold text-white/85">
         {t('diceType')}:
       </label>
