@@ -9,7 +9,6 @@ import CanvasTools, { ToolMode } from './CanvasTools'
 import { useT } from '@/lib/useT'
 import MusicPanel from './MusicPanel'
 import ImageItem, { ImageData } from './ImageItem'
-import DiceHub from '@/components/dice/DiceHub'
 
 
 export default function InteractiveCanvas() {
@@ -288,7 +287,6 @@ export default function InteractiveCanvas() {
       const now = Date.now()
       if (THROTTLE === 0 || now - lastSend.current > THROTTLE) {
         lastSend.current = now
-        // @ts-expect-error: type de RoomEvent local
         broadcast({ type: 'draw-line', x1: px, y1: py, x2: x, y2: y, color, width: brushSize, mode: drawMode } as Liveblocks['RoomEvent'])
       }
     }
@@ -328,7 +326,6 @@ export default function InteractiveCanvas() {
       ctx.clearRect(0, 0, drawingCanvasRef.current.width, drawingCanvasRef.current.height)
     }
     if (broadcastChange) {
-      // @ts-expect-error: type de RoomEvent local
       broadcast({ type: 'clear-canvas' } as Liveblocks['RoomEvent'])
     }
   }
@@ -480,8 +477,7 @@ export default function InteractiveCanvas() {
 
 <LiveCursors />
 
-{/* ✅ Ici, juste avant la fermeture du conteneur relatif */}
-<DiceHub />
+{/* DiceHub supprimé : les lancers de dés ne sont plus synchronisés globalement */}
 
 </div> {/* ← fin du conteneur relatif */}
 </div>
