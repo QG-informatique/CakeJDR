@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react'
 import { useT } from '@/lib/useT'
 import { useRouter } from 'next/navigation'
-import RoomAvatarStack from '@/components/rooms/RoomAvatarStack'
 
 export default function RoomsPage() {
   const [rooms, setRooms] = useState<Array<{ id: string; name: string; createdAt?: string; updatedAt?: string; usersConnected?: number }>>([])
@@ -17,7 +16,7 @@ export default function RoomsPage() {
   const t = useT()
 
   useEffect(() => {
-    fetch('/api/rooms/list')
+    fetch('/api/rooms')
       .then(res => res.json())
       .then(data => {
         setRooms(Array.isArray(data.rooms) ? data.rooms : [])
@@ -82,7 +81,10 @@ export default function RoomsPage() {
             <span className="truncate block">{r.name || t('unnamed')}</span>
             <span className="text-xs text-white/60">{r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ''}</span>
 
-            <RoomAvatarStack id={r.id} />
+            <span className="flex items-center gap-1 text-sm text-white/60">
+              <span role="img" aria-label="players">👥</span>
+              {r.usersConnected ?? 0}
+            </span>
 
             <button
               className="text-sm underline"

@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react'
 import { useT } from '@/lib/useT'
 import { Lock } from 'lucide-react'
-import RoomAvatarStack from './RoomAvatarStack'
 
 export type RoomInfo = {
   id: string
@@ -20,7 +19,7 @@ interface Props {
 }
 
 export async function fetchRooms() {
-  const res = await fetch('/api/rooms/list')
+  const res = await fetch('/api/rooms')
   if (!res.ok) throw new Error('failed')
   const data = await res.json()
   return Array.isArray(data.rooms) ? (data.rooms as RoomInfo[]) : []
@@ -164,7 +163,10 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
             <span className="text-xs text-white/60 truncate">
               {r.updatedAt ? new Date(r.updatedAt).toLocaleDateString() : new Date(r.createdAt ?? '').toLocaleDateString()}
             </span>
-            <RoomAvatarStack id={r.id} />
+            <span className="flex items-center gap-1 text-[11px] text-white/60">
+              <span role="img" aria-label="players">👥</span>
+              {r.usersConnected ?? 0}
+            </span>
             <span
               className="text-[10px] text-white/40 cursor-pointer select-none"
               onClick={e => { e.stopPropagation(); setRevealIds(prev => ({ ...prev, [r.id]: !prev[r.id] })) }}
