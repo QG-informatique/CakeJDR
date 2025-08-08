@@ -60,23 +60,31 @@ export default function PopupResult({ show, result, diceType, onFinish, onReveal
     // 1) rotation (SPIN_DURATION)
     // 2) attendre RESULT_DELAY
     // 3) showResult = true
-    // 4) laisser HOLD_DURATION puis onFinish
-    // 5) setVisible(false)
+    // 4) attendre la fin du reveal
+    // 5) déclencher onReveal
+    // 6) laisser HOLD_DURATION puis onFinish
+    // 7) setVisible(false)
     const totalDelay = SPIN_DURATION + RESULT_DELAY
+    const REVEAL_DURATION = RESULT_DELAY + 200 + 500 // delay + animation du résultat
+
     let t2: number
+    let t3: number
     const t1 = window.setTimeout(() => {
       setShowResult(true)
-      revealRef.current?.(result)
-      // Hold un peu plus pour visualiser puis déclencher le callback
       t2 = window.setTimeout(() => {
-        setVisible(false)
-        finishRef.current?.(result)
-      }, HOLD_DURATION)
+        revealRef.current?.(result)
+        // Hold un peu plus pour visualiser puis déclencher le callback
+        t3 = window.setTimeout(() => {
+          setVisible(false)
+          finishRef.current?.(result)
+        }, HOLD_DURATION)
+      }, REVEAL_DURATION)
     }, totalDelay)
 
     return () => {
       window.clearTimeout(t1)
       window.clearTimeout(t2)
+      window.clearTimeout(t3)
     }
   }, [show, result])
 
