@@ -57,9 +57,9 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author, collapsed = false, on
         <button
           onClick={() => onToggle?.()}
           aria-label="Expand chat panel"
-          className="absolute top-1/2 -translate-y-1/2 -left-6 p-2 rounded-full border border-white/10 bg-black/20 text-white"
+          className="absolute top-1/2 -translate-y-1/2 -left-4 w-8 h-8 flex items-center justify-center rounded-full border border-white/10 bg-black/20 text-white"
         >
-          <ChevronLeft />
+          <ChevronLeft className="w-7 h-7" strokeWidth={3} />
         </button>
       </aside>
     )
@@ -87,9 +87,9 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author, collapsed = false, on
         <button
           onClick={() => onToggle?.()}
           aria-label="Collapse chat panel"
-          className="absolute top-1/2 -translate-y-1/2 -left-6 p-2 rounded-full border border-white/10 bg-black/20 text-white"
+          className="absolute top-1/2 -translate-y-1/2 -left-4 w-8 h-8 flex items-center justify-center rounded-full border border-white/10 bg-black/20 text-white"
         >
-          <ChevronRight />
+          <ChevronRight className="w-7 h-7" strokeWidth={3} />
         </button>
         <SessionSummary onClose={() => setShowSummary(false)} />
       </aside>
@@ -116,9 +116,9 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author, collapsed = false, on
       <button
         onClick={() => onToggle?.()}
         aria-label="Collapse chat panel"
-        className="absolute top-1/2 -translate-y-1/2 -left-6 p-2 rounded-full border border-white/10 bg-black/20 text-white"
+        className="absolute top-1/2 -translate-y-1/2 -left-4 w-8 h-8 flex items-center justify-center rounded-full border border-white/10 bg-black/20 text-white"
       >
-        <ChevronRight />
+        <ChevronRight className="w-7 h-7" strokeWidth={3} />
       </button>
       {/* Boutons en-tête */}
       <div className="flex justify-center items-center mb-2 gap-2">

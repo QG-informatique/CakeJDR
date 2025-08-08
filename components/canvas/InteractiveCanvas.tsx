@@ -6,6 +6,7 @@ import LiveCursors from './LiveCursors'
 import YouTube from 'react-youtube'
 import type { YouTubePlayer } from 'youtube-player/dist/types'
 import CanvasTools, { ToolMode } from './CanvasTools'
+import SideNotes from '@/components/misc/SideNotes'
 import { useT } from '@/lib/useT'
 import MusicPanel from './MusicPanel'
 import ImageItem, { ImageData } from './ImageItem'
@@ -403,6 +404,8 @@ export default function InteractiveCanvas() {
             <span className="relative">🎵</span>
           </button>
         </div>
+
+        <SideNotes />
 
         {audioVisible && (
           <MusicPanel

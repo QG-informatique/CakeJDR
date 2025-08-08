@@ -89,9 +89,9 @@ const DiceRoller: FC<Props> = ({
         <button
           onClick={() => onToggle?.()}
           aria-label="Expand dice panel"
-          className="absolute left-1/2 -translate-x-1/2 -top-6 p-2 rounded-full border border-white/10 bg-black/20 text-white"
+          className="absolute left-1/2 -translate-x-1/2 -top-4 w-8 h-8 flex items-center justify-center rounded-full border border-white/10 bg-black/20 text-white"
         >
-          <ChevronUp />
+          <ChevronUp className="w-7 h-7" strokeWidth={3} />
         </button>
       </div>
     )
@@ -116,9 +116,9 @@ const DiceRoller: FC<Props> = ({
       <button
         onClick={() => onToggle?.()}
         aria-label="Collapse dice panel"
-        className="absolute left-1/2 -translate-x-1/2 -top-6 p-2 rounded-full border border-white/10 bg-black/20 text-white"
+        className="absolute left-1/2 -translate-x-1/2 -top-4 w-8 h-8 flex items-center justify-center rounded-full border border-white/10 bg-black/20 text-white"
       >
-        <ChevronDown />
+        <ChevronDown className="w-7 h-7" strokeWidth={3} />
       </button>
       <label htmlFor="diceType" className="mr-2 font-semibold text-white/85">
         {t('diceType')}:
