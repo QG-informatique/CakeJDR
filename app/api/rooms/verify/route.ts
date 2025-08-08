@@ -25,7 +25,11 @@ export async function POST(req: NextRequest) {
     const room = await lb.getRoom(id).catch(() => null);
     if (!room) return bad("Room not found", 404);
 
-    const meta: any = (room as any).metadata ?? {};
+    const meta = (room.metadata ?? {}) as {
+      password?: string;
+      passwordHash?: string;
+      hasPassword?: boolean;
+    };
     const storedPlain = typeof meta.password === "string" ? meta.password : null;
     const storedHash  = typeof meta.passwordHash === "string" ? meta.passwordHash : null;
     const hasPassword = !!storedPlain || !!storedHash || meta.hasPassword === true;
@@ -41,7 +45,8 @@ export async function POST(req: NextRequest) {
     if (!ok) return bad("Invalid password", 401);
 
     return NextResponse.json({ ok: true, guarded: true });
-  } catch (e: any) {
-    return bad(e?.message || "verify failed", 500);
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : "verify failed";
+    return bad(message, 500);
   }
 }

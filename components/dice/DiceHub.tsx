@@ -251,8 +251,19 @@ export default function DiceHub() {
         clearDiceState()
       }, total)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storageReady, queueItems.length, waiting.length, diceStateObj.phase, diceStateObj.endAt])
+  }, [
+    storageReady,
+    queueItems,
+    waiting,
+    diceStateObj.phase,
+    diceStateObj.endAt,
+    setDiceStateRolling,
+    clearDiceState,
+    broadcast,
+    removeById,
+    promoteToActive,
+    cleanupStale,
+  ])
 
   // Nettoyage du timer à la destruction du composant
   useEffect(() => {
