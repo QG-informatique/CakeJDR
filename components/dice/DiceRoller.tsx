@@ -1,7 +1,7 @@
 'use client'
 
-import { FC, useRef } from 'react'
-import { Dice3 } from 'lucide-react'
+import { FC, useRef, useState, useEffect } from 'react'
+import { Dice3, ChevronDown, ChevronUp } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useT } from '@/lib/useT'
 
@@ -26,6 +26,15 @@ const DiceRoller: FC<Props> = ({
 }) => {
   const t = useT()
   const clickLockRef = useRef(false)
+  const [collapsed, setCollapsed] = useState(() =>
+    typeof window !== 'undefined' && localStorage.getItem('dicePanelCollapsed') === '1'
+  )
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('dicePanelCollapsed', collapsed ? '1' : '0')
+    }
+  }, [collapsed])
 
   const handleRollClick = () => {
     if (disabled || cooldown) return
@@ -43,22 +52,47 @@ const DiceRoller: FC<Props> = ({
     }
   }
 
+  if (collapsed) {
+    return (
+      <div
+        className="h-12 flex items-center justify-center rounded-xl border border-white/10 bg-black/15 backdrop-blur-[2px] shadow-lg shadow-black/10 transition flex-shrink-0"
+        style={{
+          boxShadow: '0 4px 18px -8px rgba(0,0,0,0.24), 0 0 0 1px rgba(255,255,255,0.05)',
+        }}
+      >
+        <button
+          onClick={() => setCollapsed(false)}
+          aria-label="Expand dice panel"
+          className="text-white/80 hover:text-white bg-black/30 rounded-full p-1"
+        >
+          <ChevronUp size={20} />
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div
       className="
-        p-4
-        flex items-center gap-2 justify-between
+        relative p-4 flex items-center gap-2 justify-between
         rounded-xl
         border border-white/10
         bg-black/15
         backdrop-blur-[2px]
         shadow-lg shadow-black/10
-        transition
+        transition flex-shrink-0
       "
       style={{
         boxShadow: '0 4px 18px -8px rgba(0,0,0,0.24), 0 0 0 1px rgba(255,255,255,0.05)',
       }}
     >
+      <button
+        onClick={() => setCollapsed(true)}
+        aria-label="Collapse dice panel"
+        className="absolute top-2 right-2 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
+      >
+        <ChevronDown size={20} />
+      </button>
       <label htmlFor="diceType" className="mr-2 font-semibold text-white/85">
         {t('diceType')}:
       </label>
