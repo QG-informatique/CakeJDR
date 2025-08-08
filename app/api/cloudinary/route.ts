@@ -1,73 +1,85 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { v2 as cloudinary } from 'cloudinary'
+// src/app/api/cloudinary/route.ts
+export const runtime = "nodejs";
 
-// Ensure FormData is available in this Node runtime
+import { NextResponse } from "next/server";
 
-// Configure Cloudinary.
-// The environment variables are only checked when the route is invoked so
-// builds won't fail if they are missing. A runtime error is still returned
-// when configuration is incomplete.
-function configureCloudinary(): boolean {
-  const { CLOUDINARY_URL, CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY } = process.env
+const CLOUD_NAME =
+  process.env.CLOUDINARY_CLOUD_NAME ||
+  process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 
-  if (CLOUDINARY_URL) {
-    cloudinary.config({ secure: true })
-    return true
-  }
+const UPLOAD_PRESET =
+  process.env.CLOUDINARY_UPLOAD_PRESET ||
+  process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET ||
+  "cakejdr-images"; // preset non signé
 
-  if (CLOUDINARY_CLOUD_NAME && CLOUDINARY_API_KEY) {
-    cloudinary.config({ cloud_name: CLOUDINARY_CLOUD_NAME, api_key: CLOUDINARY_API_KEY, secure: true })
-    return true
-  }
+const MAX_BYTES = 10 * 1024 * 1024;
+const ALLOWED_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+  "image/svg+xml",
+]);
 
-  console.error('Missing Cloudinary configuration')
-  return false
+function bad(msg: string, code = 400) {
+  return NextResponse.json({ error: msg }, { status: code });
 }
 
-// L’upload POST (multipart/form-data)
-export async function POST(req: NextRequest) {
-  if (!configureCloudinary()) {
-    return NextResponse.json(
-      { error: 'Cloudinary configuration incomplete' },
-      { status: 500 }
-    )
-  }
+// Construit une URL Cloudinary de delivery avec transformations
+function buildDeliveryUrl(publicId: string, transform: string) {
+  return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/${transform}/${publicId}`;
+}
 
-  const incoming = await req.formData()
-  const file = incoming.get('file') as File | null
-  const preset =
-    (incoming.get('upload_preset') as string | null) ??
-    process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET ??
-    'cakejdr-images'
-
-  if (!file) {
-    return NextResponse.json({ error: 'No file received' }, { status: 400 })
-  }
-
-  const arrayBuffer = await file.arrayBuffer()
-  const buffer = Buffer.from(arrayBuffer)
-
-  const data = new FormData()
-  data.append('file', new Blob([buffer], { type: file.type }), file.name)
-  data.append('upload_preset', preset)
-  data.append('folder', 'cakejdr')
-
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME
-  const url = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`
-
-  const resCloud = await fetch(url, { method: 'POST', body: data })
-  const text = await resCloud.text()
-
-  if (!resCloud.ok) {
-    console.error('Cloudinary error:', text)
-    return NextResponse.json({ error: 'Upload failed', details: text }, { status: 500 })
-  }
-
+export async function POST(req: Request) {
   try {
-    const json = JSON.parse(text)
-    return NextResponse.json({ url: json.secure_url })
-  } catch (e) {
-    console.error('Cloudinary parsing error:', e)
-    return NextResponse.json({ error: 'Invalid response from Cloudinary' }, { status: 500 })
+    if (!CLOUD_NAME) return bad("Missing CLOUDINARY_CLOUD_NAME env", 500);
+    if (!UPLOAD_PRESET) return bad("Missing CLOUDINARY_UPLOAD_PRESET env", 500);
+
+    const form = await req.formData();
+    const file = form.get("file");
+    if (!file || !(file instanceof File)) return bad("No file field named 'file'");
+    if (file.size <= 0) return bad("Empty file");
+    if (file.size > MAX_BYTES) return bad(`File too large (max ${Math.round(MAX_BYTES / (1024 * 1024))}MB)`);
+    if (file.type && !ALLOWED_TYPES.has(file.type)) return bad(`Unsupported file type: ${file.type}`);
+
+    // Upload non signé (pas d'option 'eager' autorisée ici)
+    const cloudForm = new FormData();
+    cloudForm.append("file", file);
+    cloudForm.append("upload_preset", UPLOAD_PRESET);
+    cloudForm.append("folder", "cakejdr");
+
+    const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+    const res = await fetch(url, { method: "POST", body: cloudForm });
+    const data = await res.json();
+
+    if (!res.ok) {
+      return bad(data?.error?.message || "Cloudinary upload failed", res.status);
+    }
+
+    const publicId: string = data.public_id;
+
+    // Delivery URLs optimisées (générées à la demande par le CDN)
+    const deliveryUrl = buildDeliveryUrl(
+      publicId,
+      "f_auto,q_auto:good,c_limit,w_1600,dpr_auto"
+    );
+    const thumbUrl = buildDeliveryUrl(
+      publicId,
+      "f_auto,q_auto:eco,c_limit,w_64,e_blur:1000"
+    );
+
+    return NextResponse.json({
+      ok: true,
+      url: data.secure_url || data.url,
+      deliveryUrl,
+      thumbUrl,
+      public_id: publicId,
+      width: data.width,
+      height: data.height,
+      bytes: data.bytes,
+      format: data.format,
+    });
+  } catch (e: any) {
+    return bad(e?.message || "Upload error", 500);
   }
 }

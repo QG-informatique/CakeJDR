@@ -23,7 +23,7 @@ export async function fetchRooms() {
   const res = await fetch('/api/rooms/list')
   if (!res.ok) throw new Error('failed')
   const data = await res.json()
-  return Array.isArray(data.rooms) ? data.rooms as RoomInfo[] : []
+  return Array.isArray(data.rooms) ? (data.rooms as RoomInfo[]) : []
 }
 
 export default function RoomList({ onSelect, selectedId, onCreateClick }: Props) {
@@ -33,6 +33,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
   const [errorMsg, setErrorMsg] = useState('')
   const [myRoom, setMyRoom] = useState<string | null>(null)
   const [revealIds, setRevealIds] = useState<Record<string, boolean>>({})
+  const [verifying, setVerifying] = useState(false)
   const t = useT()
 
   useEffect(() => {
@@ -74,32 +75,61 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
     window.dispatchEvent(new Event('jdr_rooms_change'))
   }
 
-  const joinRoom = (room: RoomInfo) => {
+  // --- NEW: vérification côté serveur
+  const verifyPassword = async (roomId: string, password: string) => {
+    const res = await fetch('/api/rooms/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: roomId, password })
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => null)
+      throw new Error(data?.error || 'Invalid password')
+    }
+    return true
+  }
+
+  const joinRoom = async (room: RoomInfo) => {
+    // Room protégée → on tente auto-join avec mot de passe local (si stocké),
+    // sinon on affiche le champ
     if (room.password) {
-      const saved = localStorage.getItem('room_pw_' + room.id)
-      if (saved && saved === room.password) {
-        onSelect?.(room)
-        return
+      const saved = localStorage.getItem('room_pw_' + room.id) || ''
+      if (saved) {
+        try {
+          setVerifying(true); setErrorMsg('')
+          await verifyPassword(room.id, saved)
+          onSelect?.(room)
+          return
+        } catch {
+          // mauvais mot de passe stocké → on demande à l’utilisateur
+        } finally {
+          setVerifying(false)
+        }
       }
       setJoiningId(room.id)
-      setJoinPassword(saved || '')
+      setJoinPassword(saved)
       setErrorMsg('')
       return
     }
     onSelect?.(room)
   }
 
-  const confirmJoin = (room: RoomInfo) => {
-    if (room.password && joinPassword !== room.password) {
-    setErrorMsg(t('wrongPassword'))
-      return
+  const confirmJoin = async (room: RoomInfo) => {
+    try {
+      setVerifying(true); setErrorMsg('')
+      await verifyPassword(room.id, joinPassword)
+      // Option: mémoriser pour confort (tu peux supprimer si tu préfères)
+      if (room.password) {
+        localStorage.setItem('room_pw_' + room.id, joinPassword)
+      }
+      onSelect?.(room)
+      setJoiningId(null)
+      setErrorMsg('')
+    } catch {
+      setErrorMsg(t('wrongPassword'))
+    } finally {
+      setVerifying(false)
     }
-    if (room.password) {
-      localStorage.setItem('room_pw_' + room.id, joinPassword)
-    }
-    onSelect?.(room)
-    setJoiningId(null)
-    setErrorMsg('')
   }
 
   return (
@@ -141,6 +171,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
             >
               {revealIds[r.id] ? r.id : t('idLabel')}
             </span>
+
             {joiningId === r.id && r.password && (
               <>
                 <input
@@ -150,8 +181,10 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
                   className="w-full px-1 py-1 rounded bg-gray-800 text-white border border-white/20 text-xs"
                   placeholder={t('password')}
                   onKeyDown={e => { if (e.key==='Enter') confirmJoin(r) }}
+                  disabled={verifying}
                 />
                 {errorMsg && <p className="text-red-400 text-xs">{errorMsg}</p>}
+                {verifying && <p className="text-emerald-300 text-[10px]">{t('verifying') ?? 'Vérification…'}</p>}
               </>
             )}
           </div>
