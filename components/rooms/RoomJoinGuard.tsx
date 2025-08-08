@@ -31,8 +31,9 @@ export default function RoomJoinGuard({ roomId, hasPassword = false, onSuccessNa
       }
       if (onSuccessNavigate) router.push(`/room/${roomId}`)
       setOpen(false)
-    } catch (e: any) {
-      setErr(e?.message || 'Erreur')
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Erreur'
+      setErr(message)
     } finally {
       setBusy(false)
     }
