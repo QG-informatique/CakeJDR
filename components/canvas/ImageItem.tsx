@@ -19,13 +19,13 @@ export interface ImageData {
 interface Props {
   img: ImageData
   drawMode: ToolMode
-  onMouseDown: (e: React.MouseEvent, id: number, type: 'move' | 'resize') => void
+  onPointerDown: (e: React.PointerEvent, id: number, type: 'move' | 'resize') => void
   onDelete: (id: number) => void
 }
 
-const ImageItem: React.FC<Props> = ({ img, drawMode, onMouseDown, onDelete }) => (
+const ImageItem: React.FC<Props> = ({ img, drawMode, onPointerDown, onDelete }) => (
   <div
-    className="absolute border border-white/20 rounded-2xl shadow-md group"
+    className="absolute border border-white/20 rounded-2xl shadow-md group touch-none"
     style={{ top: img.y, left: img.x, width: img.width, height: img.height, zIndex: 1 }}
   >
     {drawMode === 'images' && (
@@ -50,12 +50,12 @@ const ImageItem: React.FC<Props> = ({ img, drawMode, onMouseDown, onDelete }) =>
     {drawMode === 'images' && (
       <>
         <div
-          onMouseDown={e => onMouseDown(e, img.id, 'move')}
+          onPointerDown={e => onPointerDown(e, img.id, 'move')}
           className="absolute top-0 left-0 w-full h-full cursor-move"
           style={{ zIndex: 3 }}
         />
         <div
-          onMouseDown={e => onMouseDown(e, img.id, 'resize')}
+          onPointerDown={e => onPointerDown(e, img.id, 'resize')}
           className="absolute bottom-0 right-0 w-4 h-4 bg-white/40 border border-white rounded-full cursor-se-resize"
           style={{ zIndex: 4 }}
         />

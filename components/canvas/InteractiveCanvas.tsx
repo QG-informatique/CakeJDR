@@ -121,17 +121,22 @@ export default function InteractiveCanvas() {
   const ERASE_MAX = DRAW_MAX * 4
 
   useEffect(() => {
-    const canvas = drawingCanvasRef.current
-    if (canvas) {
-      canvas.width = canvas.offsetWidth
-      canvas.height = canvas.offsetHeight
-      const ctx = canvas.getContext('2d')
-      if (ctx) {
-        ctx.lineCap = 'round'
-        ctx.lineJoin = 'round'
-        ctxRef.current = ctx
+    const resize = () => {
+      const canvas = drawingCanvasRef.current
+      if (canvas) {
+        canvas.width = canvas.offsetWidth
+        canvas.height = canvas.offsetHeight
+        const ctx = canvas.getContext('2d')
+        if (ctx) {
+          ctx.lineCap = 'round'
+          ctx.lineJoin = 'round'
+          ctxRef.current = ctx
+        }
       }
     }
+    resize()
+    window.addEventListener('resize', resize)
+    return () => window.removeEventListener('resize', resize)
   }, [])
 
   useEffect(() => {
@@ -239,7 +244,10 @@ export default function InteractiveCanvas() {
 
   // --------------------------------------------------------------------------
 
-  const handleMouseDown = (e: React.MouseEvent, id?: number, type?: 'move' | 'resize') => {
+  const [selectedImageId, setSelectedImageId] = useState<number | null>(null)
+
+  const handlePointerDown = (e: React.PointerEvent, id?: number, type?: 'move' | 'resize') => {
+    e.preventDefault()
     const rect = canvasRef.current?.getBoundingClientRect()
     if (!rect) return
 
@@ -269,10 +277,11 @@ export default function InteractiveCanvas() {
         offsetX: e.clientX - rect.left - img.x,
         offsetY: e.clientY - rect.top - img.y,
       }
+      setSelectedImageId(id)
     }
   }
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handlePointerMove = (e: React.PointerEvent) => {
     const rect = canvasRef.current?.getBoundingClientRect()
     if (!rect) return
     const x = e.clientX - rect.left
@@ -310,13 +319,29 @@ export default function InteractiveCanvas() {
     updateImage(updated)
   }
 
-  const handleMouseUp = () => {
+  const handlePointerUp = () => {
     setIsDrawing(false)
     dragState.current = { id: null, type: null, offsetX: 0, offsetY: 0 }
   }
 
-  const handleMouseLeave = () => {
+  const handlePointerLeave = () => {
     updateMyPresence({ cursor: null })
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (drawMode !== 'images' || selectedImageId === null) return
+    const img = images.find(i => i.id === selectedImageId)
+    if (!img) return
+    const step = 5
+    const updates: Partial<ImageData> = {}
+    if (e.key === 'ArrowUp') updates.y = Math.max(0, img.y - step)
+    else if (e.key === 'ArrowDown') updates.y = img.y + step
+    else if (e.key === 'ArrowLeft') updates.x = Math.max(0, img.x - step)
+    else if (e.key === 'ArrowRight') updates.x = img.x + step
+    if (Object.keys(updates).length) {
+      e.preventDefault()
+      updateImage({ ...img, ...updates })
+    }
   }
 
   const clearCanvas = (broadcastChange = true) => {
@@ -435,13 +460,16 @@ export default function InteractiveCanvas() {
         {/* Zone de dessin + images */}
         <div
           ref={canvasRef}
+          tabIndex={0}
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseLeave}
-          className="w-full h-full relative overflow-hidden z-0"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerLeave={handlePointerLeave}
+          onKeyDown={handleKeyDown}
+          onWheel={(e) => e.preventDefault()}
+          className="w-full h-full relative overflow-hidden z-0 touch-none"
           style={{ background: 'none', border: 'none', borderRadius: 0 }}
         >
           <canvas ref={drawingCanvasRef} className="absolute top-0 left-0 w-full h-full" />
@@ -451,7 +479,7 @@ export default function InteractiveCanvas() {
               key={img.id}
               img={img}
               drawMode={drawMode}
-              onMouseDown={handleMouseDown}
+              onPointerDown={handlePointerDown}
               onDelete={handleDeleteImage}
             />
           ))}
