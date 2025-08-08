@@ -5,8 +5,9 @@ import {
   animate,
   useMotionValue,
   useTransform,
+  MotionValue,
 } from 'framer-motion'
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState, useMemo, useRef } from 'react'
 
 /* -------------------------------------------------------------------------- */
 /* 1.  ICONES SVG - améliorés et ajoutés                                      */
@@ -52,19 +53,38 @@ function MoonIcon({ size = 70 }: { size?: number }) {
   )
 }
 
-/* Flèche de vent */
-function WindArrow({ size = 36 }: { size?: number }) {
+/* Petite ferme avec girouette animée */
+function Farm({ rotation }: { rotation: MotionValue<string> }) {
   return (
-    <svg viewBox="0 0 32 32" width={size} height={size}>
-      <path
-        d="M2 16 H26 M18 8 L26 16 L18 24"
-        stroke="#ffffff"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-      />
-    </svg>
+    <div style={{ position: 'absolute', top: '58vh', left: '6vw', zIndex: 9 }}>
+      {/* Bâtiment de ferme */}
+      <svg viewBox="0 0 80 60" width={80} height={60}>
+        <rect x="5" y="25" width="70" height="30" fill="#b5651d" />
+        <polygon points="5,25 40,5 75,25" fill="#d67f2e" />
+        {/* porte */}
+        <rect x="30" y="38" width="20" height="17" fill="#8b4513" />
+      </svg>
+      {/* Girouette sur le toit, liée à l'angle du vent */}
+      <motion.div
+        style={{
+          position: 'absolute',
+          left: '40px',
+          top: '-10px',
+          originX: 0.5,
+          originY: 1,
+          rotate: rotation,
+        }}
+      >
+        <svg viewBox="0 0 20 20" width={20} height={20}>
+          <path
+            d="M10 0 L13 5 H11 V18 H9 V5 H7 L10 0 Z"
+            fill="#555"
+          />
+          <path d="M10 8 H2 L10 12" fill="#777" />
+          <path d="M10 8 H18 L10 4" fill="#999" />
+        </svg>
+      </motion.div>
+    </div>
   )
 }
 
@@ -146,21 +166,22 @@ const LeafIcon = ({ size = 24 }: { size?: number }) => (
 )
 
 /* Animaux de la plaine */
-const DeerIcon = ({ size = 60 }: { size?: number }) => (
-  <svg viewBox="0 0 64 40" width={size} height={(size * 40) / 64}>
-    <rect x="18" y="20" width="28" height="14" rx="4" fill="#9e7d57" />
-    <circle cx="46" cy="18" r="6" fill="#9e7d57" />
-    <rect x="12" y="32" width="6" height="16" fill="#8b5e3c" />
-    <rect x="44" y="32" width="6" height="16" fill="#8b5e3c" />
-    <path d="M46 18 L56 4 M46 18 L52 2" stroke="#8b5e3c" strokeWidth="2" />
-  </svg>
-)
-
 const HedgehogIcon = ({ size = 34 }: { size?: number }) => (
   <svg viewBox="0 0 40 24" width={size} height={(size * 24) / 40}>
     <ellipse cx="20" cy="14" rx="18" ry="10" fill="#775447" />
     <path d="M4 14 Q20 2 36 14" fill="#8d6656" />
     <circle cx="30" cy="14" r="2" fill="#000" />
+  </svg>
+)
+
+const RabbitIcon = ({ size = 50 }: { size?: number }) => (
+  <svg viewBox="0 0 60 40" width={size} height={(size * 40) / 60}>
+    <ellipse cx="30" cy="26" rx="20" ry="12" fill="#d9d9d9" />
+    <circle cx="38" cy="16" r="8" fill="#d9d9d9" />
+    <ellipse cx="42" cy="6" rx="4" ry="10" fill="#e6e6e6" />
+    <ellipse cx="34" cy="6" rx="4" ry="10" fill="#e6e6e6" />
+    <circle cx="40" cy="16" r="2" fill="#000" />
+    <circle cx="38" cy="18" r="1" fill="#fff" />
   </svg>
 )
 
@@ -205,13 +226,16 @@ function City({ dayProgress = 0 }: { dayProgress: number }) {
         Array.from({ length: cols }, () => Math.random() < 0.7),
       )
       const midnight = night.map((row) => row.map(() => Math.random() < 0.07))
-      return { rows, cols, night, midnight }
+      const rounded = Array.from({ length: rows }, () =>
+        Array.from({ length: cols }, () => Math.random() < 0.25),
+      )
+      return { rows, cols, night, midnight, rounded }
     })
   }, [buildings])
 
   function isLit(bIndex: number, r: number, c: number) {
-    if (dayProgress < 0.18 || dayProgress > 0.85) return false
-    if (dayProgress > 0.27 && dayProgress < 0.33)
+    if (dayProgress < 0.5 || dayProgress > 0.9) return false
+    if (dayProgress > 0.75 && dayProgress <= 0.9)
       return patterns[bIndex].midnight[r][c]
     return patterns[bIndex].night[r][c]
   }
@@ -235,9 +259,10 @@ function City({ dayProgress = 0 }: { dayProgress: number }) {
                   y={200 - b.h + 4 + r * 20}
                   width="8"
                   height="12"
-                  rx={Math.random() < 0.25 ? 6 : 1}
+                  rx={patterns[i].rounded[r][c] ? 6 : 1}
                   fill={lit ? '#ffd23f' : '#1a1a19'}
                   opacity={lit ? 1 : 0.15}
+                  style={{ transition: 'opacity 2s' }}
                 />
               )
             }),
@@ -249,9 +274,23 @@ function City({ dayProgress = 0 }: { dayProgress: number }) {
       <rect x="145" y="155" width="46" height="44" fill="#42546a" />
       <g>
         <rect x="310" y="174" width="4" height="26" fill="#d7d9da" />
-        <circle cx="312" cy="174" r="6" fill="#ffd23f" opacity={dayProgress > 0.22 && dayProgress < 0.38 ? 1 : 0.2} />
+        <circle
+          cx="312"
+          cy="174"
+          r="6"
+          fill="#ffd23f"
+          opacity={dayProgress > 0.5 && dayProgress < 0.9 ? 1 : 0.2}
+          style={{ transition: 'opacity 2s' }}
+        />
         <rect x="280" y="190" width="3" height="10" fill="#d7d9da" />
-        <circle cx="281.5" cy="190" r="3" fill="#ffd23f" opacity={dayProgress > 0.22 && dayProgress < 0.38 ? 1 : 0.15} />
+        <circle
+          cx="281.5"
+          cy="190"
+          r="3"
+          fill="#ffd23f"
+          opacity={dayProgress > 0.5 && dayProgress < 0.9 ? 1 : 0.15}
+          style={{ transition: 'opacity 2s' }}
+        />
       </g>
     </svg>
   )
@@ -262,12 +301,19 @@ function City({ dayProgress = 0 }: { dayProgress: number }) {
 /* -------------------------------------------------------------------------- */
 
 export default function SpecialBackground() {
-  const [clouds, setClouds] = useState<React.ReactElement[]>([])
+  const [clouds, setClouds] = useState<{
+    id: number
+    size: number
+    top: number
+    dur: number
+    delay: number
+    shapeIdx: number
+  }[]>([])
   const [flowers, setFlowers] = useState<React.ReactElement[]>([])
   const [shells, setShells] = useState<React.ReactElement[]>([])
   const [animals, setAnimals] = useState<{
     id: number
-    type: 'deer' | 'hedgehog'
+    type: 'hedgehog' | 'rabbit'
     start: string
     end: string
     top: number
@@ -280,6 +326,48 @@ export default function SpecialBackground() {
     size: number
     dur: number
   }[]>([])
+
+  // Arbres positionnés aléatoirement mais stables
+  const bgTrees = useMemo(
+    () =>
+      Array.from({ length: 15 }).map((_, i) => ({
+        id: i,
+        left: Math.random() * 100,
+        size: 50 + Math.random() * 20,
+        v: i,
+      })),
+    [],
+  )
+  const fgTrees = useMemo(
+    () =>
+      Array.from({ length: 12 }).map((_, i) => ({
+        id: i,
+        left: Math.random() * 100,
+        size: 90 + Math.random() * 20,
+        v: i,
+      })),
+    [],
+  )
+
+  /* Cycle jour/nuit - 0 = matin, 0.5 = minuit, 1 = matin */
+  const cycle = 120
+  const [dayProgress, setDayProgress] = useState(0)
+  useEffect(() => {
+    let frame: number
+    const start = Date.now()
+    function loop() {
+      const now = Date.now()
+      const t = ((now - start) / (cycle * 1000)) % 1
+      setDayProgress(t)
+      frame = requestAnimationFrame(loop)
+    }
+    loop()
+    return () => cancelAnimationFrame(frame)
+  }, [])
+  const dayRef = useRef(0)
+  useEffect(() => {
+    dayRef.current = dayProgress
+  }, [dayProgress])
 
   // Etoiles pré-générées
   const stars = useMemo(
@@ -319,24 +407,21 @@ export default function SpecialBackground() {
     // Nuages, fleurs, coquillages
     useEffect(() => {
       // Nuages : seed et forme VRAIMENT différente pour chaque nuage
-      const cl: React.ReactElement[] = []
+      const cl: {
+        id: number
+        size: number
+        top: number
+        dur: number
+        delay: number
+        shapeIdx: number
+      }[] = []
       for (let i = 0; i < 12; i++) {
         const size = 80 + Math.random() * 110
         const top = Math.random() * 16
         const dur = 50 + Math.random() * 35
         const delay = -Math.random() * dur
         const shapeIdx = Math.floor(Math.random() * cloudShapes.length)
-        cl.push(
-          <motion.div
-            key={'c' + i + '-' + shapeIdx}
-            initial={{ x: '110vw' }}
-            animate={{ x: '-120vw' }}
-            transition={{ duration: dur, repeat: Infinity, delay, ease: 'linear' }}
-            style={{ position: 'absolute', top: `${top}vh`, pointerEvents: 'none' }}
-          >
-            <CloudIcon size={size} v={shapeIdx} />
-          </motion.div>,
-        )
+        cl.push({ id: i, size, top, dur, delay, shapeIdx })
       }
 
       // Fleurs sur la plaine : dispersées
@@ -355,7 +440,7 @@ export default function SpecialBackground() {
               left: `${left}vw`,
               top: `${top}vh`,
               pointerEvents: 'none',
-              zIndex: 7,
+              zIndex: 6,
             }}
           >
             <FlowerIcon size={size} color={color} />
@@ -409,15 +494,16 @@ export default function SpecialBackground() {
     // Apparition d'animaux sur la plaine
     useEffect(() => {
       function spawnAnimal() {
+        if (dayRef.current >= 0.5) return
         setAnimals((arr) => {
-          if (arr.length >= 2) return arr
+          const type: 'hedgehog' | 'rabbit' = Math.random() < 0.5 ? 'hedgehog' : 'rabbit'
+          if (arr.find((a) => a.type === type)) return arr
           const id = Date.now()
-          const type: 'deer' | 'hedgehog' = Math.random() < 0.5 ? 'deer' : 'hedgehog'
           const fromLeft = Math.random() < 0.5
           const start = fromLeft ? '-10vw' : '110vw'
           const end = fromLeft ? '110vw' : '-10vw'
           const top = 64 + Math.random() * 6
-          const size = type === 'deer' ? 60 : 34
+          const size = type === 'hedgehog' ? 34 : 50
           const dur = 25 + Math.random() * 10
           setTimeout(
             () => setAnimals((a) => a.filter((an) => an.id !== id)),
@@ -432,21 +518,9 @@ export default function SpecialBackground() {
       return () => clearInterval(interval)
     }, [])
 
-  /* Cycle jour/nuit - 0 = matin, 0.5 = minuit, 1 = matin */
-  const cycle = 200
-  const [dayProgress, setDayProgress] = useState(0)
-  useEffect(() => {
-    let frame: number
-    const start = Date.now()
-    function loop() {
-      const now = Date.now()
-      const t = ((now - start) / (cycle * 1000)) % 1 // boucle 0-1
-      setDayProgress(t)
-      frame = requestAnimationFrame(loop)
-    }
-    loop()
-    return () => cancelAnimationFrame(frame)
-  }, [])
+    useEffect(() => {
+      if (dayProgress >= 0.5) setAnimals([])
+    }, [dayProgress])
 
   // Ciel dynamique (dégradé)
   const sky = [
@@ -480,11 +554,22 @@ export default function SpecialBackground() {
           d="M0 150 L120 80 L240 140 L380 60 L520 120 L650 90 L780 140 L1000 60 V200 H0 Z"
           fill="url(#neige)"
         />
+        {/* détails de roches et mini arbres */}
+        <g fill="#3f4d57" opacity="0.4">
+          <path d="M150 130 l20 -12 12 22z" />
+          <path d="M420 110 l18 -10 8 18z" />
+          <path d="M760 125 l22 -14 10 20z" />
+        </g>
+        <g fill="#2f3a42" opacity="0.6">
+          <polygon points="260,150 266,136 272,150" />
+          <polygon points="600,145 606,131 612,145" />
+          <polygon points="880,148 886,134 892,148" />
+        </g>
       </svg>
     )
   }
 
-  // Rotation flèche vent
+  // Rotation de la girouette
   const arrowRotation = useTransform(windAngle, (a) => `${a}deg`)
 
   // Gestion dégradé ciel
@@ -550,7 +635,7 @@ export default function SpecialBackground() {
               position: 'absolute',
               left: `${s.left}vw`,
               top: `${s.top}vh`,
-              opacity: dayProgress > 0.25 && dayProgress < 0.75 ? 1 : 0,
+              opacity: dayProgress >= 0.5 ? 1 : 0,
               transition: 'opacity 2s',
             }}
           >
@@ -578,22 +663,24 @@ export default function SpecialBackground() {
         </motion.div>
       ))}
 
-      {/* Flèche de vent */}
-      <motion.div
-        style={{
-          position: 'absolute',
-          top: '4vh',
-          left: '4vw',
-          originX: 0.5,
-          originY: 0.5,
-          rotate: arrowRotation,
-        }}
-      >
-        <WindArrow />
-      </motion.div>
-
       {/* Nuages */}
-      {clouds}
+      {clouds.map((c) => (
+        <motion.div
+          key={c.id}
+          initial={{ x: '110vw' }}
+          animate={{ x: '-120vw' }}
+          transition={{ duration: c.dur, repeat: Infinity, delay: c.delay, ease: 'linear' }}
+          style={{
+            position: 'absolute',
+            top: `${c.top}vh`,
+            pointerEvents: 'none',
+            opacity: dayProgress > 0.5 ? 0.6 : 1,
+            filter: dayProgress > 0.5 ? 'brightness(0.7)' : 'none',
+          }}
+        >
+          <CloudIcon size={c.size} v={c.shapeIdx} />
+        </motion.div>
+      ))}
 
       {/* Montagnes */}
       <MountainBackground />
@@ -602,6 +689,9 @@ export default function SpecialBackground() {
       <div className="absolute" style={{ top: '30vh', right: 0 }}>
         <City dayProgress={dayProgress} />
       </div>
+
+      {/* Petite ferme avec girouette animée */}
+      <Farm rotation={arrowRotation} />
 
       {/* Plaine/Arbres — fond vert jusqu'à la plage */}
       <div
@@ -614,21 +704,29 @@ export default function SpecialBackground() {
           zIndex: 2,
         }}
       >
-        {/* Arbres de fond */}
-        <div
-          className="flex justify-between items-end h-full"
-          style={{ position: 'absolute', width: '100%', top: 0, left: 0, opacity: 0.6, filter: 'saturate(0.6)' }}
-        >
-          {Array.from({ length: 13 }).map((_, i) => (
-            <TreeIcon key={'bg' + i} size={50 + (i % 3) * 8} v={i} />
-          ))}
-        </div>
-        {/* Rangée principale */}
-        <div className="flex justify-evenly items-end h-full relative z-10">
-          {Array.from({ length: 11 }).map((_, i) => (
-            <TreeIcon key={i} size={90 + (i % 3) * 10} v={i} />
-          ))}
-        </div>
+        {bgTrees.map((t) => (
+          <div
+            key={'bg' + t.id}
+            style={{
+              position: 'absolute',
+              left: `${t.left}vw`,
+              bottom: 0,
+              opacity: 0.6,
+              filter: 'saturate(0.6)',
+              zIndex: 3,
+            }}
+          >
+            <TreeIcon size={t.size} v={t.v} />
+          </div>
+        ))}
+        {fgTrees.map((t) => (
+          <div
+            key={'fg' + t.id}
+            style={{ position: 'absolute', left: `${t.left}vw`, bottom: 0, zIndex: 10 }}
+          >
+            <TreeIcon size={t.size} v={t.v} />
+          </div>
+        ))}
       </div>
 
       {/* Fleurs sur la plaine */}
@@ -646,10 +744,10 @@ export default function SpecialBackground() {
             setAnimals((arr) => arr.filter((an) => an.id !== a.id))
           }
         >
-          {a.type === 'deer' ? (
-            <DeerIcon size={a.size} />
-          ) : (
+          {a.type === 'hedgehog' ? (
             <HedgehogIcon size={a.size} />
+          ) : (
+            <RabbitIcon size={a.size} />
           )}
         </motion.div>
       ))}
@@ -667,11 +765,8 @@ export default function SpecialBackground() {
         }}
         preserveAspectRatio="none"
       >
-        {/* Plage : le path commence à y=0 pour coller à la plaine */}
-        <path
-          d="M0 0 Q125 20 250 0 T500 15 T750 5 T1000 0 V100 H0 Z"
-          fill="#f9d9a6"
-        />
+        {/* Plage droite collée à la plaine */}
+        <rect x="0" y="0" width="1000" height="100" fill="#f9d9a6" />
       </svg>
 
       {/* Coquillages + crabe */}
@@ -714,9 +809,9 @@ export default function SpecialBackground() {
   - Soleil et lune suivent un arc naturel.
   - Nuages variés (12 formes) traversant le ciel.
   - Montagnes avec dégradé neige > roche.
-  - Plaine herbeuse sans bande parasite, deux rangées d'arbres.
-  - Fleurs dispersées et animaux occasionnels (biche/hérisson).
-  - Plage ondulée avec coquillages espacés et un crabe animé.
+  - Plaine herbeuse sans bande parasite, arbres répartis naturellement.
+  - Fleurs dispersées et animaux occasionnels (lapin/hérisson).
+  - Plage droite avec coquillages espacés et un crabe animé.
   - Rivière réaliste avec quelques feuilles dérivantes.
   - Ville : fenêtres et lampadaires synchronisés au cycle jour/nuit.
   ─────────────────────────────────────────────
