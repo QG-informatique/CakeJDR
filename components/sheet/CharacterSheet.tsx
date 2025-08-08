@@ -187,7 +187,7 @@ const CharacterSheet: FC<Props> = ({
             transition={{ duration: 0.3 }}
             onClick={onToggle}
             aria-label="Expand character panel"
-            className="absolute top-1/2 -translate-y-1/2 -right-4 text-white"
+            className="absolute top-1/2 -translate-y-1/2 -right-4 text-white rounded-full bg-black/30 backdrop-blur-sm p-1"
           >
             <ChevronRight className="w-7 h-7" strokeWidth={3} />
           </motion.button>
@@ -199,7 +199,7 @@ const CharacterSheet: FC<Props> = ({
             exit={{ x: -420 }}
             transition={{ duration: 0.3 }}
             className="
-              w-full md:w-[420px]
+              w-full md:w-[420px] flex-none
               bg-black/10 border border-white/10 backdrop-blur-[2px]
               shadow shadow-black/5 rounded-2xl p-5
               pt-0 pb-3 px-3 overflow-y-auto text-[15px] text-white
@@ -216,7 +216,7 @@ const CharacterSheet: FC<Props> = ({
             <button
               onClick={onToggle}
               aria-label="Collapse character panel"
-              className="absolute top-1/2 -translate-y-1/2 right-2 text-white"
+              className="absolute top-1/2 -translate-y-1/2 -right-4 text-white rounded-full bg-black/30 backdrop-blur-sm p-1"
             >
               <ChevronLeft className="w-7 h-7" strokeWidth={3} />
             </button>

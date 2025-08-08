@@ -63,7 +63,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author, collapsed = false, on
             transition={{ duration: 0.3 }}
             onClick={() => onToggle?.()}
             aria-label="Expand chat panel"
-            className="absolute top-1/2 -translate-y-1/2 -left-4 text-white"
+            className="absolute top-1/2 -translate-y-1/2 -left-4 text-white rounded-full bg-black/30 backdrop-blur-sm p-1"
           >
             <ChevronLeft className="w-7 h-7" strokeWidth={3} />
           </motion.button>
@@ -75,7 +75,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author, collapsed = false, on
             exit={{ x: 420 }}
             transition={{ duration: 0.3 }}
             className="
-              w-full lg:w-1/5
+              w-full md:w-[420px] flex-none
               p-4 flex flex-col relative
               rounded-xl border border-white/10
               bg-black/15 backdrop-blur-[2px]
@@ -86,7 +86,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author, collapsed = false, on
             <button
               onClick={() => onToggle?.()}
               aria-label="Collapse chat panel"
-              className="absolute top-1/2 -translate-y-1/2 left-2 text-white"
+              className="absolute top-1/2 -translate-y-1/2 -left-4 text-white rounded-full bg-black/30 backdrop-blur-sm p-1"
             >
               <ChevronRight className="w-7 h-7" strokeWidth={3} />
             </button>
@@ -100,7 +100,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author, collapsed = false, on
             exit={{ x: 420 }}
             transition={{ duration: 0.3 }}
             className="
-              w-full lg:w-1/5
+              w-full md:w-[420px] flex-none
               p-4 flex flex-col relative h-full min-h-0
               rounded-xl border border-white/10
               bg-black/15 backdrop-blur-[2px]
@@ -111,7 +111,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author, collapsed = false, on
             <button
               onClick={() => onToggle?.()}
               aria-label="Collapse chat panel"
-              className="absolute top-1/2 -translate-y-1/2 left-2 text-white"
+              className="absolute top-1/2 -translate-y-1/2 -left-4 text-white rounded-full bg-black/30 backdrop-blur-sm p-1"
             >
               <ChevronRight className="w-7 h-7" strokeWidth={3} />
             </button>

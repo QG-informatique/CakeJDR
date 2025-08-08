@@ -95,7 +95,7 @@ const DiceRoller: FC<Props> = ({
             transition={{ duration: 0.3 }}
             onClick={() => onToggle?.()}
             aria-label="Expand dice panel"
-            className="absolute left-1/2 -translate-x-1/2 -top-4 text-white"
+            className="absolute left-1/2 -translate-x-1/2 -top-4 text-white rounded-full bg-black/30 backdrop-blur-sm p-1"
           >
             <ChevronUp className="w-7 h-7" strokeWidth={3} />
           </motion.button>
@@ -107,7 +107,7 @@ const DiceRoller: FC<Props> = ({
             exit={{ y: 100 }}
             transition={{ duration: 0.3 }}
             className="
-              p-4
+              p-4 flex-none
               flex items-center gap-2 justify-between
               rounded-xl
               border border-white/10
@@ -123,7 +123,7 @@ const DiceRoller: FC<Props> = ({
             <button
               onClick={() => onToggle?.()}
               aria-label="Collapse dice panel"
-              className="absolute left-1/2 -translate-x-1/2 top-2 text-white"
+              className="absolute left-1/2 -translate-x-1/2 -top-4 text-white rounded-full bg-black/30 backdrop-blur-sm p-1"
             >
               <ChevronDown className="w-7 h-7" strokeWidth={3} />
             </button>
