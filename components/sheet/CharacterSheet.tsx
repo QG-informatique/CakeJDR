@@ -179,27 +179,31 @@ const CharacterSheet: FC<Props> = ({
     <div className="relative h-full">
       <AnimatePresence initial={false}>
         {collapsed ? (
-          <motion.button
-            key="open"
-            initial={{ x: -40, opacity: 0 }}
+          <motion.aside
+            key="collapsed"
+            initial={{ x: 0, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -40, opacity: 0 }}
+            exit={{ x: 0, opacity: 0 }}
             transition={{ duration: 0.3 }}
-            onClick={onToggle}
-            aria-label="Expand character panel"
-            className="absolute top-1/2 -translate-y-1/2 -right-4 text-white rounded-full bg-black/30 backdrop-blur-sm p-1"
+            className="w-12 flex-none flex items-start justify-center pt-2"
           >
-            <ChevronRight className="w-7 h-7" strokeWidth={3} />
-          </motion.button>
+            <button
+              onClick={onToggle}
+              aria-label="Expand character panel"
+              className="text-white rounded-full bg-black/30 backdrop-blur-sm p-1"
+            >
+              <ChevronRight className="w-7 h-7" strokeWidth={3} />
+            </button>
+          </motion.aside>
         ) : (
           <motion.aside
             key="panel"
-            initial={{ x: -420 }}
+            initial={{ x: '-100%' }}
             animate={{ x: 0 }}
-            exit={{ x: -420 }}
+            exit={{ x: '-100%' }}
             transition={{ duration: 0.3 }}
             className="
-              w-full md:w-[420px] flex-none
+              w-full lg:w-1/5 flex-none
               bg-black/10 border border-white/10 backdrop-blur-[2px]
               shadow shadow-black/5 rounded-2xl p-5
               pt-0 pb-3 px-3 overflow-y-auto text-[15px] text-white
@@ -216,7 +220,7 @@ const CharacterSheet: FC<Props> = ({
             <button
               onClick={onToggle}
               aria-label="Collapse character panel"
-              className="absolute top-1/2 -translate-y-1/2 -right-4 text-white rounded-full bg-black/30 backdrop-blur-sm p-1"
+              className="absolute top-2 right-2 text-white rounded-full bg-black/30 backdrop-blur-sm p-1"
             >
               <ChevronLeft className="w-7 h-7" strokeWidth={3} />
             </button>

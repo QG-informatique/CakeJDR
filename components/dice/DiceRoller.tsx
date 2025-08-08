@@ -87,24 +87,28 @@ const DiceRoller: FC<Props> = ({
     <div className="relative w-full">
       <AnimatePresence initial={false}>
         {collapsed ? (
-          <motion.button
-            key="open"
-            initial={{ y: 40, opacity: 0 }}
+          <motion.div
+            key="collapsed"
+            initial={{ y: 0, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 40, opacity: 0 }}
+            exit={{ y: 0, opacity: 0 }}
             transition={{ duration: 0.3 }}
-            onClick={() => onToggle?.()}
-            aria-label="Expand dice panel"
-            className="absolute left-1/2 -translate-x-1/2 -top-4 text-white rounded-full bg-black/30 backdrop-blur-sm p-1"
+            className="h-12 flex items-center justify-center"
           >
-            <ChevronUp className="w-7 h-7" strokeWidth={3} />
-          </motion.button>
+            <button
+              onClick={() => onToggle?.()}
+              aria-label="Expand dice panel"
+              className="text-white rounded-full bg-black/30 backdrop-blur-sm p-1"
+            >
+              <ChevronUp className="w-7 h-7" strokeWidth={3} />
+            </button>
+          </motion.div>
         ) : (
           <motion.div
             key="panel"
-            initial={{ y: 100 }}
+            initial={{ y: '100%' }}
             animate={{ y: 0 }}
-            exit={{ y: 100 }}
+            exit={{ y: '100%' }}
             transition={{ duration: 0.3 }}
             className="
               p-4 flex-none

@@ -55,27 +55,31 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author, collapsed = false, on
     <div className="relative h-full">
       <AnimatePresence initial={false}>
         {collapsed ? (
-          <motion.button
-            key="open"
-            initial={{ x: 40, opacity: 0 }}
+          <motion.aside
+            key="collapsed"
+            initial={{ x: 0, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            exit={{ x: 40, opacity: 0 }}
+            exit={{ x: 0, opacity: 0 }}
             transition={{ duration: 0.3 }}
-            onClick={() => onToggle?.()}
-            aria-label="Expand chat panel"
-            className="absolute top-1/2 -translate-y-1/2 -left-4 text-white rounded-full bg-black/30 backdrop-blur-sm p-1"
+            className="w-12 flex-none flex items-start justify-center pt-2"
           >
-            <ChevronLeft className="w-7 h-7" strokeWidth={3} />
-          </motion.button>
+            <button
+              onClick={() => onToggle?.()}
+              aria-label="Expand chat panel"
+              className="text-white rounded-full bg-black/30 backdrop-blur-sm p-1"
+            >
+              <ChevronLeft className="w-7 h-7" strokeWidth={3} />
+            </button>
+          </motion.aside>
         ) : showSummary ? (
           <motion.aside
             key="summary"
-            initial={{ x: 420 }}
+            initial={{ x: '100%' }}
             animate={{ x: 0 }}
-            exit={{ x: 420 }}
+            exit={{ x: '100%' }}
             transition={{ duration: 0.3 }}
             className="
-              w-full md:w-[420px] flex-none
+              w-full lg:w-1/5 flex-none
               p-4 flex flex-col relative
               rounded-xl border border-white/10
               bg-black/15 backdrop-blur-[2px]
@@ -86,7 +90,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author, collapsed = false, on
             <button
               onClick={() => onToggle?.()}
               aria-label="Collapse chat panel"
-              className="absolute top-1/2 -translate-y-1/2 -left-4 text-white rounded-full bg-black/30 backdrop-blur-sm p-1"
+              className="absolute top-2 left-2 text-white rounded-full bg-black/30 backdrop-blur-sm p-1"
             >
               <ChevronRight className="w-7 h-7" strokeWidth={3} />
             </button>
@@ -95,12 +99,12 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author, collapsed = false, on
         ) : (
           <motion.aside
             key="panel"
-            initial={{ x: 420 }}
+            initial={{ x: '100%' }}
             animate={{ x: 0 }}
-            exit={{ x: 420 }}
+            exit={{ x: '100%' }}
             transition={{ duration: 0.3 }}
             className="
-              w-full md:w-[420px] flex-none
+              w-full lg:w-1/5 flex-none
               p-4 flex flex-col relative h-full min-h-0
               rounded-xl border border-white/10
               bg-black/15 backdrop-blur-[2px]
@@ -111,7 +115,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author, collapsed = false, on
             <button
               onClick={() => onToggle?.()}
               aria-label="Collapse chat panel"
-              className="absolute top-1/2 -translate-y-1/2 -left-4 text-white rounded-full bg-black/30 backdrop-blur-sm p-1"
+              className="absolute top-2 left-2 text-white rounded-full bg-black/30 backdrop-blur-sm p-1"
             >
               <ChevronRight className="w-7 h-7" strokeWidth={3} />
             </button>
