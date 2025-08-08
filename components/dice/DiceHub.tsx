@@ -104,7 +104,7 @@ export default function DiceHub() {
     if (!s) { s = new LiveObject<DiceState>({ phase: 'idle' }); storage.set('diceState', s); return s }
     if (typeof s.toObject !== 'function') {
       const obj = (s ?? {}) as DiceState
-      const live = new LiveObject<DiceState>({ phase: 'idle', ...obj })
+      const live = new LiveObject<DiceState>({ ...obj, phase: obj.phase ?? 'idle' })
       storage.set('diceState', live)
       return live
     }
@@ -170,6 +170,8 @@ export default function DiceHub() {
     }
   }, [])
 
+  // Les événements de DiceHub n'appartiennent pas à la union Liveblocks['RoomEvent']
+  // -> on les diffuse via useBroadcastEvent puis on caste à l'envoi
   const broadcast = useBroadcastEvent()
 
   // Timer de fin du lancer actif. On le garde dans un ref pour éviter qu'il ne
@@ -237,7 +239,7 @@ export default function DiceHub() {
         name: first.name,
         color: first.color,
       }
-      broadcast(startEvent)
+      broadcast(startEvent as unknown as Liveblocks['RoomEvent'])
       // Màj locale immédiate pour afficher la bannière sans attendre l'écho
       setDiceStateRolling(startEvent)
 
@@ -246,7 +248,7 @@ export default function DiceHub() {
       const total = Math.max(0, endAt - Date.now()) + 20
       rollEndTimerRef.current = window.setTimeout(() => {
         removeById(first.id)
-        broadcast({ type: 'dice-roll-end', entryId: first.id } as DiceEndEvent)
+        broadcast({ type: 'dice-roll-end', entryId: first.id } as unknown as Liveblocks['RoomEvent'])
         // Coupe localement au cas où l'évènement ne revient pas
         clearDiceState()
       }, total)
@@ -336,7 +338,7 @@ export default function DiceHub() {
             name: first.name,
             color: first.color,
           }
-          broadcast(startEvent)
+          broadcast(startEvent as unknown as Liveblocks['RoomEvent'])
           setDiceStateRolling(startEvent)
 
           // program end
@@ -347,7 +349,7 @@ export default function DiceHub() {
             const fresh: QueueItem[] = (root?.diceQueue?.toArray?.() ?? [])
             const rmIdx = fresh.findIndex(i => i.id === first.id)
             if (rmIdx >= 0) (root.diceQueue as LiveList<QueueItem>).delete(rmIdx)
-            broadcast({ type: 'dice-roll-end', entryId: first.id } as DiceEndEvent)
+            broadcast({ type: 'dice-roll-end', entryId: first.id } as unknown as Liveblocks['RoomEvent'])
             clearDiceState()
           }, total)
         }

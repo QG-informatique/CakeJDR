@@ -184,7 +184,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
                   disabled={verifying}
                 />
                 {errorMsg && <p className="text-red-400 text-xs">{errorMsg}</p>}
-                {verifying && <p className="text-emerald-300 text-[10px]">{t('verifying') ?? 'Vérification…'}</p>}
+                {verifying && <p className="text-emerald-300 text-[10px]">{t('verifying' as never) ?? 'Vérification…'}</p>}
               </>
             )}
           </div>

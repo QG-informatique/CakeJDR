@@ -71,8 +71,7 @@ export async function createRoom(name: string, password?: string) {
   // 3) Idempotence côté serveur
   const room = await client.getOrCreateRoom(stableId, {
     defaultAccesses: ['room:write'],
-    metadata: { name, ...(password ? { password } : {}) },
-    name
+    metadata: { name, ...(password ? { password } : {}) }
   })
 
   return room.id
