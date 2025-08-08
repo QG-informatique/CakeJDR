@@ -9,6 +9,7 @@ import CanvasTools, { ToolMode } from './CanvasTools'
 import { useT } from '@/lib/useT'
 import MusicPanel from './MusicPanel'
 import ImageItem, { ImageData } from './ImageItem'
+import SideNotes from '@/components/misc/SideNotes'
 
 
 export default function InteractiveCanvas() {
@@ -469,13 +470,9 @@ export default function InteractiveCanvas() {
   />
 )}
 
-{images.length === 0 && (
-  <p className="absolute bottom-4 left-5 text-xs text-white/70 z-10">
-    Glisse une image ici
-  </p>
-)}
 
 <LiveCursors />
+<SideNotes />
 
 {/* DiceHub supprimé : les lancers de dés ne sont plus synchronisés globalement */}
 
