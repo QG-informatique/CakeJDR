@@ -65,10 +65,15 @@ export default function DiceHub() {
   const queueRaw = root?.diceQueue as any
   const stateRaw = root?.diceState as any
 
-  // Lecture sûre
-  const queueItems: QueueItem[] = Array.isArray(queueRaw)
-    ? queueRaw as QueueItem[]
-    : (queueRaw?.toArray?.() ?? [])
+  // Lecture sûre (mémoisée pour la stabilité des dépendances)
+  const queueItems: QueueItem[] = useMemo(
+    () => (
+      Array.isArray(queueRaw)
+        ? (queueRaw as QueueItem[])
+        : (queueRaw?.toArray?.() ?? [])
+    ),
+    [queueRaw]
+  )
 
   const diceStateObj: DiceState =
     (typeof stateRaw?.toObject === 'function')
@@ -76,7 +81,6 @@ export default function DiceHub() {
       : (stateRaw ?? { phase: 'idle' })
 
   // Dérivés
-  const active = useMemo(() => queueItems.find(i => i.status === 'active'), [queueItems])
   const waiting = useMemo(
     () => queueItems.filter(i => i.status === 'queued').sort((a, b) => a.createdAt - b.createdAt),
     [queueItems]
@@ -341,7 +345,7 @@ export default function DiceHub() {
 
     window.addEventListener('jdr:roll', handler as any)
     return () => window.removeEventListener('jdr:roll', handler as any)
-  }, [enqueue, broadcast, root])
+  }, [enqueue, broadcast, root, setDiceStateRolling, clearDiceState])
 
   // Affichage piloté par diceState (avec fallback timer ci-dessus)
   const bannerVisible = diceStateObj.phase === 'rolling' && (diceStateObj.endAt ?? 0) > Date.now()
