@@ -89,7 +89,7 @@ const DiceRoller: FC<Props> = ({
       <button
         onClick={() => setCollapsed(true)}
         aria-label="Collapse dice panel"
-        className="absolute top-2 right-2 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
+        className="absolute -top-3 left-1/2 -translate-x-1/2 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
       >
         <ChevronDown size={20} />
       </button>
