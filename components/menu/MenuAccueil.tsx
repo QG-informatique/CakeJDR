@@ -16,6 +16,7 @@ import MenuHeader from './MenuHeader'
 import CharacterList from './CharacterList'
 import CharacterModal from './CharacterModal'
 import ProfileColorPicker from './ProfileColorPicker'
+import { useDialog } from '@/components/context/DialogContext'
 
 const PROFILE_KEY = 'jdr_profile'
 const SELECTED_KEY = 'selectedCharacterId'
@@ -34,6 +35,7 @@ type Character = {
 export default function MenuAccueil() {
   const router = useRouter()
   const t = useT()
+  const dialog = useDialog()
   const [user, setUser] = useState<{ pseudo:string; isMJ:boolean; color:string } | null>(null)
   const [characters, setCharacters]   = useState<Character[]>([])
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
@@ -193,8 +195,8 @@ export default function MenuAccueil() {
     setSelectedIdx(updated.findIndex(c => c.id === id))
   }
 
-  const handleDeleteChar = (id: string | number) => {
-    if (!window.confirm(t('deleteSheetConfirm'))) return
+  const handleDeleteChar = async (id: string | number) => {
+    if (!await dialog.confirm(t('deleteSheetConfirm'))) return
     const idx = characters.findIndex(c => String(c.id) === String(id))
     if (idx === -1) return
     const toDelete = characters[idx]
@@ -228,8 +230,10 @@ export default function MenuAccueil() {
         saveCharacters([...characters, withId])
         localStorage.setItem(SELECTED_KEY, String(id))
         setSelectedIdx(characters.length)
-        alert(t('importSuccess'))
-      } catch { alert(t('invalidFile')) }
+        void dialog.alert(t('importSuccess'))
+      } catch {
+        void dialog.alert(t('invalidFile'))
+      }
     }
     reader.readAsText(file)
     e.target.value = ''
@@ -265,7 +269,7 @@ export default function MenuAccueil() {
 
   const handleDeleteCloudChar = async (id: string | number) => {
     if (!selectedRoom) return
-    if (!window.confirm('Delete from cloud?')) return
+    if (!await dialog.confirm('Delete from cloud?')) return
     await fetch(`/api/roomstorage?roomId=${encodeURIComponent(selectedRoom.id)}&id=${encodeURIComponent(String(id))}`, { method: 'DELETE' })
     setRemoteChars(r => {
       const next = { ...r }

@@ -5,6 +5,7 @@ import { FC, useRef, useState, useEffect } from 'react'
 import { useT } from '@/lib/useT'
 import { Folder } from 'lucide-react'
 import { defaultPerso } from '../sheet/CharacterSheet'
+import { useDialog } from '@/components/context/DialogContext'
 
 type Props = {
   perso: any,
@@ -36,6 +37,7 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
   const [localChars, setLocalChars] = useState<any[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
   const t = useT()
+  const dialog = useDialog()
 
   useEffect(() => {
     if (!modal) return
@@ -78,9 +80,9 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
         if (!data || typeof data !== "object") throw new Error()
         onUpdate(data)
         addToList({ ...data, id: data.id || crypto.randomUUID() })
-        alert(t('importSuccess'))
+        void dialog.alert(t('importSuccess'))
       } catch {
-        alert(t('importFail'))
+        void dialog.alert(t('importFail'))
         // onUpdate({ ...defaultPerso }) // Optionnel : reset fiche si import KO
       }
     }
@@ -91,7 +93,7 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
   // Sauvegarde locale
   const handleLocalSave = () => {
     localStorage.setItem(LOCAL_KEY, JSON.stringify(perso))
-    alert(t('saveLocallyMsg'))
+    void dialog.alert(t('saveLocallyMsg'))
     setOpen(false)
   }
 
@@ -104,13 +106,13 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
         if (!obj || typeof obj !== "object") throw new Error()
         onUpdate(obj)
         addToList({ ...obj, id: obj.id || crypto.randomUUID() })
-        alert(t('loadLocalSuccess'))
+        void dialog.alert(t('loadLocalSuccess'))
       } catch {
-        alert(t('loadLocalFail'))
+        void dialog.alert(t('loadLocalFail'))
         // onUpdate({ ...defaultPerso }) // Optionnel : reset si load KO
       }
     } else {
-      alert(t('noSave'))
+      void dialog.alert(t('noSave'))
     }
     setOpen(false)
   }
@@ -122,7 +124,7 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
       method: 'POST',
       body: JSON.stringify(char),
     })
-    alert(t('saveCloud'))
+    void dialog.alert(t('saveCloud'))
     setModal(null)
   }
 
@@ -136,9 +138,9 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
       const obj = JSON.parse(txt)
       onUpdate(obj)
       addToList({ ...obj, id: obj.id || crypto.randomUUID() })
-      alert(t('loadCloudSuccess'))
+      void dialog.alert(t('loadCloudSuccess'))
     } catch {
-      alert(t('loadCloudFail'))
+      void dialog.alert(t('loadCloudFail'))
     }
     setModal(null)
   }
@@ -146,13 +148,13 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
   const deleteFromCloud = async (filename: string) => {
     await fetch(`/api/blop/delete?filename=${encodeURIComponent(filename)}`)
     setCloudFiles(f => f.filter(fl => fl !== filename))
-    alert(t('deleted'))
+    void dialog.alert(t('deleted'))
     setModal(null)
   }
 
   // Reset sheet
-  const handleReset = () => {
-    if (window.confirm("Really reset the sheet? (This will delete it)")) {
+  const handleReset = async () => {
+    if (await dialog.confirm("Really reset the sheet? (This will delete it)")) {
       onUpdate({ ...defaultPerso })
       setOpen(false)
     }

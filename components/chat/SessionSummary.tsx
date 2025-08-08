@@ -3,6 +3,7 @@ import { FC, useEffect, useState, useRef, useCallback } from 'react'
 import { useT } from '@/lib/useT'
 import { useStorage, useMutation } from '@liveblocks/react'
 import { LiveMap } from '@liveblocks/client'
+import { useDialog } from '@/components/context/DialogContext'
 import { LexicalComposer } from '@lexical/react/LexicalComposer'
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin'
 import { ContentEditable } from '@lexical/react/LexicalContentEditable'
@@ -42,6 +43,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
   const menuRef = useRef<HTMLDivElement>(null)
   const fileBtnRef = useRef<HTMLButtonElement>(null)
   const t = useT()
+  const dialog = useDialog()
 
   const updatePages = useMutation(({ storage }, acts: Page[]) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -103,12 +105,14 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
   useEffect(() => {
     if (!pages) return
     if (pages.length === 0) {
-      const title = prompt(t('pageNamePrompt'))?.trim() || t('newPage')
-      createPage(title)
+      (async () => {
+        const title = (await dialog.prompt(t('pageNamePrompt')))?.trim() || t('newPage')
+        createPage(title)
+      })()
     } else if (!currentId) {
       setCurrentId(pages[0].id)
     }
-  }, [pages, currentId, updatePages, updateEditor, createPage, t])
+  }, [pages, currentId, updatePages, updateEditor, createPage, t, dialog])
 
   const current = pages?.find(p => p.id === currentId)
 
@@ -123,8 +127,8 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
     }
   }, [current, editorMap, updateEditor])
 
-  const handleNewPage = () => {
-    const title = prompt(t('pageNamePrompt'))?.trim() || t('newPage')
+  const handleNewPage = async () => {
+    const title = (await dialog.prompt(t('pageNamePrompt')))?.trim() || t('newPage')
     createPage(title)
   }
 
@@ -164,12 +168,12 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
     setShowFileMenu(false)
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!pages || !current) return
-    if (!confirm(t('deletePageConfirm'))) return
+    if (!await dialog.confirm(t('deletePageConfirm'))) return
     const rest = pages.filter(p => p.id !== current.id)
     if (rest.length === 0) {
-      alert(t('lastPageDeleteError'))
+      await dialog.alert(t('lastPageDeleteError'))
       return
     }
     deletePage(current.id)

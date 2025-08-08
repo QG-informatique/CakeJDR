@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useT } from '@/lib/useT'
 import { Lock } from 'lucide-react'
 import RoomAvatarStack from './RoomAvatarStack'
+import { useDialog } from '@/components/context/DialogContext'
 
 export type RoomInfo = {
   id: string
@@ -35,6 +36,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
   const [revealIds, setRevealIds] = useState<Record<string, boolean>>({})
   const [verifying, setVerifying] = useState(false)
   const t = useT()
+  const dialog = useDialog()
 
   useEffect(() => {
     const update = () => {
@@ -49,7 +51,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
   }, [])
 
   const deleteRoom = async (room: RoomInfo) => {
-    if (!window.confirm(t('deleteRoomConfirm'))) return
+    if (!await dialog.confirm(t('deleteRoomConfirm'))) return
     await fetch('/api/rooms', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
@@ -64,7 +66,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
   }
 
   const renameRoom = async (room: RoomInfo) => {
-    const newName = window.prompt('Nouveau nom ?', room.name)
+    const newName = await dialog.prompt('Nouveau nom ?', room.name)
     if (!newName || newName === room.name) return
     await fetch('/api/rooms', {
       method: 'PATCH',
