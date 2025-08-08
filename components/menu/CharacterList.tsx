@@ -81,7 +81,7 @@ const CharacterList: FC<Props> = ({
         return (
         <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <AnimatePresence initial={false}>
-          {all.map((ch, idx) => {
+          {all.map((ch) => {
             const isSelected = selectedIdx !== null && filtered[selectedIdx]?.id === ch.id
             const localIdx = filtered.findIndex(c => String(c.id) === String(ch.id))
             const local = localIdx !== -1
@@ -92,7 +92,7 @@ const CharacterList: FC<Props> = ({
             const needsUpload = local && (!cloud || (localChar?.updatedAt || 0) > (cloudChar?.updatedAt || 0))
             return (
               <motion.li
-                key={`${ch.id}-${idx}`}
+                key={ch.id}
                 onClick={() => onSelect(local ? filtered.findIndex(c => String(c.id)===String(ch.id)) : -1)}
                 className={`
                   group relative rounded-lg p-3 cursor-pointer
