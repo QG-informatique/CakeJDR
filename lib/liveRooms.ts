@@ -50,22 +50,32 @@ export async function createRoom(name: string, password?: string) {
   const secret = process.env.LIVEBLOCKS_SECRET_KEY
   if (!secret) throw new Error('Liveblocks key missing')
   const client = new Liveblocks({ secret })
-  const existing = new Set<string>()
+
+  // 1) Si une room avec ce nom existe déjà (metadata.name), renvoyer son id
   let cursor: string | undefined
   do {
     const { data, nextCursor } = await client.getRooms({ startingAfter: cursor, limit: 50 })
     for (const r of data) {
-      if (typeof r.metadata?.name === 'string') existing.add(r.metadata.name)
+      const metaName = typeof r.metadata?.name === 'string' ? r.metadata.name : undefined
+      if (metaName && metaName.trim().toLowerCase() === name.trim().toLowerCase()) {
+        return r.id
+      }
     }
     cursor = nextCursor ?? undefined
   } while (cursor)
-  if (existing.has(name)) throw new Error('name_exists')
-  const id = `${slugify(name)}-${Date.now()}`
-  await client.createRoom(id, {
+
+  // 2) ID stable pour résister aux doubles soumissions simultanées (sans changer ton format global)
+  const base = slugify(name)
+  const stableId = `${base}-${Buffer.from(name).toString('hex').slice(0, 8)}`
+
+  // 3) Idempotence côté serveur
+  const room = await client.getOrCreateRoom(stableId, {
     defaultAccesses: ['room:write'],
-    metadata: { name, ...(password ? { password } : {}) }
+    metadata: { name, ...(password ? { password } : {}) },
+    name
   })
-  return id
+
+  return room.id
 }
 
 export async function deleteRoom(id: string) {
