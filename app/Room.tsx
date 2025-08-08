@@ -22,15 +22,15 @@ export function Room({
     throw new Error('NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY is not defined');
   }
 
+  const devtoolsProps = {
+    storage: {
+      editor: pages[currentPageId],
+      pages,
+    },
+  } as unknown as Record<string, unknown>;
+
   return (
-    <LiveblocksProvider
-      publicApiKey={key}
-      // @ts-expect-error - storage is used by Liveblocks devtools
-      storage={{
-        editor: pages[currentPageId],
-        pages,
-      }}
-    >
+    <LiveblocksProvider publicApiKey={key} {...devtoolsProps}>
       <RoomProvider
         id={id}
         initialPresence={{}}
