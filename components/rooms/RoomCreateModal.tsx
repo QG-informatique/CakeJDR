@@ -1,7 +1,8 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import type { RoomInfo } from './RoomList'
 import { useT } from '@/lib/useT'
+import useFocusTrap from '@/lib/useFocusTrap'
 
 interface Props {
   open: boolean
@@ -16,6 +17,9 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
   const [creating, setCreating] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const t = useT()
+  const modalRef = useRef<HTMLDivElement>(null)
+
+  useFocusTrap(modalRef, open, onClose)
 
   if (!open) return null
 
@@ -56,9 +60,22 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose} style={{ background:'rgba(0,0,0,0.45)', backdropFilter:'blur(2px)' }}>
-      <div onClick={e => e.stopPropagation()} className="bg-black/80 text-white rounded-2xl border border-white/10 shadow-2xl backdrop-blur-md p-5 w-80">
-        <h2 className="text-lg font-semibold mb-2">{t('createRoom')}</h2>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="room-create-title"
+      style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(2px)' }}
+    >
+      <div
+        ref={modalRef}
+        onClick={e => e.stopPropagation()}
+        className="bg-black/80 text-white rounded-2xl border border-white/10 shadow-2xl backdrop-blur-md p-5 w-80"
+      >
+        <h2 id="room-create-title" className="text-lg font-semibold mb-2">
+          {t('createRoom')}
+        </h2>
         <input
           className="w-full mb-2 px-2 py-1 rounded bg-gray-800 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-pink-400/30"
           placeholder={t('name')}
@@ -85,19 +102,22 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
           />
         )}
         {creating ? (
-          <div className="w-full h-2 bg-gray-700 rounded overflow-hidden mb-2">
-            <div className="h-full bg-emerald-500 animate-pulse" style={{ width:'100%' }} />
+          <div className="w-full h-2 bg-gray-700 rounded overflow-hidden mb-2" role="status" aria-live="polite">
+            <div className="h-full bg-emerald-500 animate-pulse" style={{ width: '100%' }} />
           </div>
         ) : (
           <button
-            className="w-full px-3 py-2 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-semibold"
+            className="w-full px-3 py-2 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-semibold disabled:opacity-50"
             onClick={createRoom}
+            disabled={!name}
           >
             {t('createRoom')}
           </button>
         )}
         {errorMsg && (
-          <p className="text-red-400 text-sm mt-2 text-center">{errorMsg}</p>
+          <p className="text-red-400 text-sm mt-2 text-center" role="alert" aria-live="assertive">
+            {errorMsg}
+          </p>
         )}
       </div>
     </div>

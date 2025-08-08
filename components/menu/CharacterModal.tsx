@@ -1,11 +1,12 @@
 'use client'
-import { FC } from "react"
+import { FC, useRef } from "react"
 import { useT } from '@/lib/useT'
 import { Character } from "./CharacterList"
 import StatsPanel from "../character/StatsPanel"
 import EquipPanel from "../character/EquipPanel"
 import DescriptionPanel from "../character/DescriptionPanel"
 import CompetencesPanel from "../character/CompetencesPanel" // ← Le bon nom !
+import useFocusTrap from '@/lib/useFocusTrap'
 type Competence = { nom: string; type: string; effets: string; degats?: string }
 type Objet = { nom: string; quantite: number }
 type DescriptionValues = {
@@ -43,6 +44,8 @@ const CharacterModal: FC<Props> = ({
   onClose,
 }) => {
   const t = useT()
+  const modalRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(modalRef, open, onClose)
   if (!open || !character) return null
 
   const handlePanelChange = (field: string, value: unknown) => {
@@ -51,7 +54,7 @@ const CharacterModal: FC<Props> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-2"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 transition-opacity"
       style={{
         background: "rgba(20,20,40,0.62)",
         backdropFilter: "blur(8px)",
@@ -59,8 +62,10 @@ const CharacterModal: FC<Props> = ({
       }}
       role="dialog"
       aria-modal="true"
+      aria-labelledby="character-modal-title"
     >
       <div
+        ref={modalRef}
         className="
           relative rounded-2xl shadow-xl flex flex-col w-full
           max-w-[98vw] xl:max-w-[2000px]
@@ -68,7 +73,7 @@ const CharacterModal: FC<Props> = ({
           px-3 sm:px-8 py-7 h-[94vh] max-h-[98vh] min-h-[480px]
         "
       >
-        <h2 className="text-2xl font-bold mb-5 tracking-wide text-white text-center">
+        <h2 id="character-modal-title" className="text-2xl font-bold mb-5 tracking-wide text-white text-center">
           {t('characterEditing')}
         </h2>
         {/* Flex column: panels scrollent, boutons fixes en bas */}

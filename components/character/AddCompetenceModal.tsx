@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useT } from '@/lib/useT'
+import useFocusTrap from '@/lib/useFocusTrap'
 
 export type NewCompetence = {
     nom: string;
@@ -35,6 +36,9 @@ export const AddCompetenceModal: React.FC<AddCompetenceModalProps> = ({
     const [type, setType] = useState(competenceTypes[0]);
     const [effets, setEffets] = useState("");
     const [degats, setDegats] = useState("");
+    const modalRef = useRef<HTMLDivElement>(null)
+
+    useFocusTrap(modalRef, open, onClose)
 
     const handleAdd = () => {
         if (!nom || !type || !effets) return;
@@ -54,15 +58,24 @@ export const AddCompetenceModal: React.FC<AddCompetenceModalProps> = ({
     if (!open) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.2)" }}>
-            <div className="bg-gray-900 rounded-lg shadow-lg p-6 w-full max-w-md relative">
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center transition-opacity"
+            style={{ background: "rgba(0,0,0,0.2)" }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-skill-title"
+        >
+            <div
+                ref={modalRef}
+                className="bg-gray-900 rounded-lg shadow-lg p-6 w-full max-w-md relative"
+            >
                 <button
                     className="absolute top-2 right-2 text-gray-400 hover:text-white"
                     onClick={onClose}
                 >
                     ✕
                 </button>
-                <div className="text-lg font-semibold mb-4">{t('addSkill')}</div>
+                <div id="add-skill-title" className="text-lg font-semibold mb-4">{t('addSkill')}</div>
                 <div className="flex flex-col gap-3">
                     <div>
                         <label className="block text-sm mb-1">{t('name')}</label>
@@ -112,7 +125,7 @@ export const AddCompetenceModal: React.FC<AddCompetenceModalProps> = ({
                         {t('cancel')}
                     </button>
                     <button
-                        className="bg-blue-600 hover:bg-blue-700 text-white rounded px-3 py-1"
+                        className="bg-blue-600 hover:bg-blue-700 text-white rounded px-3 py-1 disabled:opacity-50"
                         onClick={handleAdd}
                         disabled={!nom || !type || !effets}
                     >
