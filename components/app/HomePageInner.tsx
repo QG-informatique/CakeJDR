@@ -39,6 +39,10 @@ export default function HomePageInner() {
   // total durée d'indisponibilité du bouton (animation + hold + cooldown)
   const ROLL_TOTAL_MS = 2000 + 300 + 2000 + 1000
 
+  const [isCharacterCollapsed, setCharacterCollapsed] = useState(false)
+  const [isChatCollapsed, setChatCollapsed] = useState(false)
+  const [isDiceCollapsed, setDiceCollapsed] = useState(false)
+
   const broadcast = useBroadcastEvent()
   const [, updateMyPresence] = useMyPresence()
 
@@ -62,6 +66,24 @@ export default function HomePageInner() {
     }
   })
 
+  useEffect(() => {
+    const char = localStorage.getItem('collapse_character')
+    const chat = localStorage.getItem('collapse_chat')
+    const dice = localStorage.getItem('collapse_dice')
+    if (char !== null) setCharacterCollapsed(char === 'true')
+    if (chat !== null) setChatCollapsed(chat === 'true')
+    if (dice !== null) setDiceCollapsed(dice === 'true')
+  }, [])
+
+  useEffect(() => {
+    localStorage.setItem('collapse_character', String(isCharacterCollapsed))
+  }, [isCharacterCollapsed])
+  useEffect(() => {
+    localStorage.setItem('collapse_chat', String(isChatCollapsed))
+  }, [isChatCollapsed])
+  useEffect(() => {
+    localStorage.setItem('collapse_dice', String(isDiceCollapsed))
+  }, [isDiceCollapsed])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -169,7 +191,15 @@ export default function HomePageInner() {
   return (
     <div className="relative w-screen h-screen font-sans overflow-hidden bg-transparent">
       <div className="relative z-10 flex flex-col lg:flex-row w-full h-full">
-        <CharacterSheet perso={perso} onUpdate={handleUpdatePerso} chatBoxRef={chatBoxRef} allCharacters={characters} logoOnly>
+        <CharacterSheet
+          perso={perso}
+          onUpdate={handleUpdatePerso}
+          chatBoxRef={chatBoxRef}
+          allCharacters={characters}
+          logoOnly
+          collapsed={isCharacterCollapsed}
+          onToggle={() => setCharacterCollapsed(c => !c)}
+        >
           {profile?.isMJ && (
             <span className="ml-2">
               <GMCharacterSelector onSelect={handleUpdatePerso} />
@@ -182,7 +212,16 @@ export default function HomePageInner() {
             <InteractiveCanvas />
             <PopupResult show={showPopup} result={diceResult} diceType={diceType} onReveal={handlePopupReveal} onFinish={handlePopupFinish} />
           </div>
-          <DiceRoller diceType={diceType} onChange={setDiceType} onRoll={rollDice} disabled={diceDisabled} cooldown={cooldown} cooldownDuration={ROLL_TOTAL_MS}>
+          <DiceRoller
+            diceType={diceType}
+            onChange={setDiceType}
+            onRoll={rollDice}
+            disabled={diceDisabled}
+            cooldown={cooldown}
+            cooldownDuration={ROLL_TOTAL_MS}
+            collapsed={isDiceCollapsed}
+            onToggle={() => setDiceCollapsed(c => !c)}
+          >
             <LiveAvatarStack />
           </DiceRoller>
         </main>
@@ -191,6 +230,8 @@ export default function HomePageInner() {
           chatBoxRef={chatBoxRef}
           history={history}
           author={perso.nom || profile?.pseudo || 'Anonymous'}
+          collapsed={isChatCollapsed}
+          onToggle={() => setChatCollapsed(c => !c)}
         />
         <SideNotes />
       </div>

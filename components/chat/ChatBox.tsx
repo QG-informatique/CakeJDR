@@ -1,5 +1,6 @@
 'use client'
 import { FC, RefObject, useRef, useState, useEffect } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useBroadcastEvent, useRoom } from '@liveblocks/react'
 import useProfile from '../app/hooks/useProfile'
 import SessionSummary from './SessionSummary'
@@ -13,9 +14,11 @@ interface Props {
   chatBoxRef: RefObject<HTMLDivElement | null>
   history: Roll[]
   author: string
+  collapsed?: boolean
+  onToggle?: () => void
 }
 
-const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
+const ChatBox: FC<Props> = ({ chatBoxRef, history, author, collapsed = false, onToggle }) => {
   const room = useRoom()
   const { events, addEvent } = useEventLog(room.id)
   const sortedEvents = [...events].sort((a, b) => a.ts - b.ts)
@@ -48,6 +51,16 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [events])
 
+  if (collapsed) {
+    return (
+      <aside className="w-12 p-2 flex items-center justify-center bg-black/15 border border-white/10 rounded-xl backdrop-blur-[2px] shadow-lg shadow-black/10 transition-all duration-300">
+        <button onClick={() => onToggle?.()} aria-label="Expand chat panel" className="text-white">
+          <ChevronLeft />
+        </button>
+      </aside>
+    )
+  }
+
   // --- NOUVEL AFFICHAGE VERTICAL ---
   if (showSummary) {
     return (
@@ -67,6 +80,13 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
           boxShadow: '0 4px 18px -8px rgba(0,0,0,0.24), 0 0 0 1px rgba(255,255,255,0.05)'
         }}
       >
+        <button
+          onClick={() => onToggle?.()}
+          aria-label="Collapse chat panel"
+          className="absolute top-2 left-2 text-white"
+        >
+          <ChevronRight />
+        </button>
         <SessionSummary onClose={() => setShowSummary(false)} />
       </aside>
     )
@@ -89,6 +109,13 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
         boxShadow: '0 4px 18px -8px rgba(0,0,0,0.24), 0 0 0 1px rgba(255,255,255,0.05)'
       }}
     >
+      <button
+        onClick={() => onToggle?.()}
+        aria-label="Collapse chat panel"
+        className="absolute top-2 left-2 text-white"
+      >
+        <ChevronRight />
+      </button>
       {/* Boutons en-tête */}
       <div className="flex justify-center items-center mb-2 gap-2">
         <button

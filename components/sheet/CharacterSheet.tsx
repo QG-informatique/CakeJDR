@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { FC, useState, useEffect } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import StatsTab from './StatsTab'
 import EquipTab from './EquipTab'
 import DescriptionPanel from '../character/DescriptionPanel'
@@ -15,7 +16,9 @@ type Props = {
   creation?: boolean,
   children?: React.ReactNode,
   allCharacters?: any[], // facultatif, si tu veux passer la liste complète
-  logoOnly?: boolean
+  logoOnly?: boolean,
+  collapsed?: boolean,
+  onToggle?: () => void
 }
 
 export const defaultPerso = {
@@ -65,7 +68,9 @@ const CharacterSheet: FC<Props> = ({
   creation = false,
   children,
   allCharacters = [],
-  logoOnly = false
+  logoOnly = false,
+  collapsed = false,
+  onToggle
 }) => {
   // NE PAS relier edit à creation sauf à l'init
   const [edit, setEdit] = useState(!!creation)
@@ -170,6 +175,18 @@ const CharacterSheet: FC<Props> = ({
   }
 
 
+  if (collapsed) {
+    return (
+      <aside
+        className="w-12 p-2 bg-black/10 border border-white/10 backdrop-blur-[2px] shadow shadow-black/5 rounded-2xl flex items-center justify-center transition-all duration-300"
+      >
+        <button onClick={onToggle} aria-label="Expand character panel" className="text-white">
+          <ChevronRight />
+        </button>
+      </aside>
+    )
+  }
+
   return (
     <aside
       className="
@@ -177,7 +194,7 @@ const CharacterSheet: FC<Props> = ({
         bg-black/10 border border-white/10 backdrop-blur-[2px]
         shadow shadow-black/5 rounded-2xl p-5
         pt-0 pb-3 px-3 overflow-y-auto text-[15px] text-white
-        relative select-none
+        relative select-none transition-all duration-300
       "
       style={{
         width: creation ? 'auto' : undefined,
@@ -187,6 +204,13 @@ const CharacterSheet: FC<Props> = ({
         overflowX: 'hidden'
       }}
     >
+      <button
+        onClick={onToggle}
+        aria-label="Collapse character panel"
+        className="absolute top-2 right-2 text-white"
+      >
+        <ChevronLeft />
+      </button>
       {!creation && (
         <CharacterSheetHeader
           edit={edit}

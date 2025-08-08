@@ -1,7 +1,7 @@
 'use client'
 
 import { FC, useRef } from 'react'
-import { Dice3 } from 'lucide-react'
+import { Dice3, ChevronDown, ChevronUp } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useT } from '@/lib/useT'
 
@@ -13,6 +13,8 @@ type Props = {
   cooldown: boolean
   cooldownDuration: number
   children?: React.ReactNode
+  collapsed?: boolean
+  onToggle?: () => void
 }
 
 const DiceRoller: FC<Props> = ({
@@ -22,7 +24,9 @@ const DiceRoller: FC<Props> = ({
   disabled,
   cooldown,
   cooldownDuration,
-  children
+  children,
+  collapsed = false,
+  onToggle
 }) => {
   const t = useT()
   const clickLockRef = useRef(false)
@@ -79,6 +83,18 @@ const DiceRoller: FC<Props> = ({
     }
   }
 
+  if (collapsed) {
+    return (
+      <div
+        className="h-12 p-2 flex items-center justify-center rounded-xl border border-white/10 bg-black/15 backdrop-blur-[2px] shadow-lg shadow-black/10 transition-all duration-300"
+      >
+        <button onClick={() => onToggle?.()} aria-label="Expand dice panel" className="text-white">
+          <ChevronUp />
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div
       className="
@@ -89,12 +105,19 @@ const DiceRoller: FC<Props> = ({
         bg-black/15
         backdrop-blur-[2px]
         shadow-lg shadow-black/10
-        transition
+        transition relative
       "
       style={{
         boxShadow: '0 4px 18px -8px rgba(0,0,0,0.24), 0 0 0 1px rgba(255,255,255,0.05)',
       }}
     >
+      <button
+        onClick={() => onToggle?.()}
+        aria-label="Collapse dice panel"
+        className="absolute top-2 right-2 text-white"
+      >
+        <ChevronDown />
+      </button>
       <label htmlFor="diceType" className="mr-2 font-semibold text-white/85">
         {t('diceType')}:
       </label>
