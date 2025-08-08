@@ -4,9 +4,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useBroadcastEvent, useEventListener, useMyPresence } from '@liveblocks/react'
 import { useRouter, useParams } from 'next/navigation'
-import CharacterSheet, { defaultPerso } from '@/components/sheet/CharacterSheet'
-import DiceRoller from '@/components/dice/DiceRoller'
-import ChatBox from '@/components/chat/ChatBox'
+import { defaultPerso } from '@/components/sheet/CharacterSheet'
+import CharacterPanel from '@/components/panels/CharacterPanel'
+import ChatPanel from '@/components/panels/ChatPanel'
+import DicePanel from '@/components/panels/DicePanel'
 import PopupResult from '@/components/dice/PopupResult'
 import Head from 'next/head'
 import InteractiveCanvas from '@/components/canvas/InteractiveCanvas'
@@ -26,6 +27,25 @@ export default function HomePageInner() {
   const [perso, setPerso] = useState(defaultPerso)
   const [characters, setCharacters] = useState<any[]>([])
 
+  const [characterCollapsed, setCharacterCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('characterCollapsed') === 'true'
+    }
+    return false
+  })
+  const [chatCollapsed, setChatCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('chatCollapsed') === 'true'
+    }
+    return false
+  })
+  const [diceCollapsed, setDiceCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('diceCollapsed') === 'true'
+    }
+    return false
+  })
+
   const [showPopup, setShowPopup] = useState(false)
   const [diceType, setDiceType] = useState(6)
   const [diceResult, setDiceResult] = useState<number | null>(null)
@@ -41,6 +61,22 @@ export default function HomePageInner() {
 
   const broadcast = useBroadcastEvent()
   const [, updateMyPresence] = useMyPresence()
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('characterCollapsed', String(characterCollapsed))
+    }
+  }, [characterCollapsed])
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('chatCollapsed', String(chatCollapsed))
+    }
+  }, [chatCollapsed])
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('diceCollapsed', String(diceCollapsed))
+    }
+  }, [diceCollapsed])
 
   // listen for remote dice rolls
   useEventListener((payload: any) => {
@@ -169,25 +205,44 @@ export default function HomePageInner() {
   return (
     <div className="relative w-screen h-screen font-sans overflow-hidden bg-transparent">
       <div className="relative z-10 flex flex-col lg:flex-row w-full h-full">
-        <CharacterSheet perso={perso} onUpdate={handleUpdatePerso} chatBoxRef={chatBoxRef} allCharacters={characters} logoOnly>
+        <CharacterPanel
+          collapsed={characterCollapsed}
+          onToggle={() => setCharacterCollapsed(c => !c)}
+          perso={perso}
+          onUpdate={handleUpdatePerso}
+          chatBoxRef={chatBoxRef}
+          allCharacters={characters}
+          logoOnly
+        >
           {profile?.isMJ && (
             <span className="ml-2">
               <GMCharacterSelector onSelect={handleUpdatePerso} />
             </span>
           )}
-        </CharacterSheet>
+        </CharacterPanel>
 
         <main className="flex-1 flex flex-col min-h-0">
           <div className="flex-1 m-4 flex flex-col justify-center items-center relative min-h-0">
             <InteractiveCanvas />
             <PopupResult show={showPopup} result={diceResult} diceType={diceType} onReveal={handlePopupReveal} onFinish={handlePopupFinish} />
           </div>
-          <DiceRoller diceType={diceType} onChange={setDiceType} onRoll={rollDice} disabled={diceDisabled} cooldown={cooldown} cooldownDuration={ROLL_TOTAL_MS}>
+          <DicePanel
+            collapsed={diceCollapsed}
+            onToggle={() => setDiceCollapsed(c => !c)}
+            diceType={diceType}
+            onChange={setDiceType}
+            onRoll={rollDice}
+            disabled={diceDisabled}
+            cooldown={cooldown}
+            cooldownDuration={ROLL_TOTAL_MS}
+          >
             <LiveAvatarStack />
-          </DiceRoller>
+          </DicePanel>
         </main>
 
-        <ChatBox
+        <ChatPanel
+          collapsed={chatCollapsed}
+          onToggle={() => setChatCollapsed(c => !c)}
           chatBoxRef={chatBoxRef}
           history={history}
           author={perso.nom || profile?.pseudo || 'Anonymous'}
