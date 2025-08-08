@@ -3,6 +3,7 @@
 
 import { FC, useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import StatsTab from './StatsTab'
 import EquipTab from './EquipTab'
 import DescriptionPanel from '../character/DescriptionPanel'
@@ -174,45 +175,51 @@ const CharacterSheet: FC<Props> = ({
     onUpdate(localPerso)
   }
 
-
-  if (collapsed) {
-    return (
-      <aside className="relative w-0 h-full">
-        <button
-          onClick={onToggle}
-          aria-label="Expand character panel"
-          className="absolute top-1/2 -translate-y-1/2 -right-4 w-8 h-8 flex items-center justify-center rounded-full border border-white/10 bg-black/20 text-white"
-        >
-          <ChevronRight className="w-7 h-7" strokeWidth={3} />
-        </button>
-      </aside>
-    )
-  }
-
   return (
-    <aside
-      className="
-        w-full md:w-[420px]
-        bg-black/10 border border-white/10 backdrop-blur-[2px]
-        shadow shadow-black/5 rounded-2xl p-5
-        pt-0 pb-3 px-3 overflow-y-auto text-[15px] text-white
-        relative select-none transition-all duration-300
-      "
-      style={{
-        width: creation ? 'auto' : undefined,
-        minWidth: creation ? '600px' : undefined,
-        maxWidth: creation ? '100%' : undefined,
-        boxSizing: 'border-box',
-        overflowX: 'hidden'
-      }}
-    >
-      <button
-        onClick={onToggle}
-        aria-label="Collapse character panel"
-        className="absolute top-1/2 -translate-y-1/2 -right-4 w-8 h-8 flex items-center justify-center rounded-full border border-white/10 bg-black/20 text-white"
-      >
-        <ChevronLeft className="w-7 h-7" strokeWidth={3} />
-      </button>
+    <div className="relative h-full">
+      <AnimatePresence initial={false}>
+        {collapsed ? (
+          <motion.button
+            key="open"
+            initial={{ x: -40, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -40, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            onClick={onToggle}
+            aria-label="Expand character panel"
+            className="absolute top-1/2 -translate-y-1/2 -right-4 text-white"
+          >
+            <ChevronRight className="w-7 h-7" strokeWidth={3} />
+          </motion.button>
+        ) : (
+          <motion.aside
+            key="panel"
+            initial={{ x: -420 }}
+            animate={{ x: 0 }}
+            exit={{ x: -420 }}
+            transition={{ duration: 0.3 }}
+            className="
+              w-full md:w-[420px]
+              bg-black/10 border border-white/10 backdrop-blur-[2px]
+              shadow shadow-black/5 rounded-2xl p-5
+              pt-0 pb-3 px-3 overflow-y-auto text-[15px] text-white
+              relative select-none
+            "
+            style={{
+              width: creation ? 'auto' : undefined,
+              minWidth: creation ? '600px' : undefined,
+              maxWidth: creation ? '100%' : undefined,
+              boxSizing: 'border-box',
+              overflowX: 'hidden'
+            }}
+          >
+            <button
+              onClick={onToggle}
+              aria-label="Collapse character panel"
+              className="absolute top-1/2 -translate-y-1/2 right-2 text-white"
+            >
+              <ChevronLeft className="w-7 h-7" strokeWidth={3} />
+            </button>
       {!creation && (
         <CharacterSheetHeader
           edit={edit}
@@ -292,7 +299,10 @@ const CharacterSheet: FC<Props> = ({
           }}
         />
       )}
-    </aside>
+          </motion.aside>
+        )}
+      </AnimatePresence>
+    </div>
   )
 }
 

@@ -2,7 +2,7 @@
 
 import { FC, useRef } from 'react'
 import { Dice3, ChevronDown, ChevronUp } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useT } from '@/lib/useT'
 
 type Props = {
@@ -83,43 +83,50 @@ const DiceRoller: FC<Props> = ({
     }
   }
 
-  if (collapsed) {
-    return (
-      <div className="relative w-full h-0">
-        <button
-          onClick={() => onToggle?.()}
-          aria-label="Expand dice panel"
-          className="absolute left-1/2 -translate-x-1/2 -top-4 w-8 h-8 flex items-center justify-center rounded-full border border-white/10 bg-black/20 text-white"
-        >
-          <ChevronUp className="w-7 h-7" strokeWidth={3} />
-        </button>
-      </div>
-    )
-  }
-
   return (
-    <div
-      className="
-        p-4
-        flex items-center gap-2 justify-between
-        rounded-xl
-        border border-white/10
-        bg-black/15
-        backdrop-blur-[2px]
-        shadow-lg shadow-black/10
-        transition relative
-      "
-      style={{
-        boxShadow: '0 4px 18px -8px rgba(0,0,0,0.24), 0 0 0 1px rgba(255,255,255,0.05)',
-      }}
-    >
-      <button
-        onClick={() => onToggle?.()}
-        aria-label="Collapse dice panel"
-        className="absolute left-1/2 -translate-x-1/2 -top-4 w-8 h-8 flex items-center justify-center rounded-full border border-white/10 bg-black/20 text-white"
-      >
-        <ChevronDown className="w-7 h-7" strokeWidth={3} />
-      </button>
+    <div className="relative w-full">
+      <AnimatePresence initial={false}>
+        {collapsed ? (
+          <motion.button
+            key="open"
+            initial={{ y: 40, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 40, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            onClick={() => onToggle?.()}
+            aria-label="Expand dice panel"
+            className="absolute left-1/2 -translate-x-1/2 -top-4 text-white"
+          >
+            <ChevronUp className="w-7 h-7" strokeWidth={3} />
+          </motion.button>
+        ) : (
+          <motion.div
+            key="panel"
+            initial={{ y: 100 }}
+            animate={{ y: 0 }}
+            exit={{ y: 100 }}
+            transition={{ duration: 0.3 }}
+            className="
+              p-4
+              flex items-center gap-2 justify-between
+              rounded-xl
+              border border-white/10
+              bg-black/15
+              backdrop-blur-[2px]
+              shadow-lg shadow-black/10
+              relative
+            "
+            style={{
+              boxShadow: '0 4px 18px -8px rgba(0,0,0,0.24), 0 0 0 1px rgba(255,255,255,0.05)',
+            }}
+          >
+            <button
+              onClick={() => onToggle?.()}
+              aria-label="Collapse dice panel"
+              className="absolute left-1/2 -translate-x-1/2 top-2 text-white"
+            >
+              <ChevronDown className="w-7 h-7" strokeWidth={3} />
+            </button>
       <label htmlFor="diceType" className="mr-2 font-semibold text-white/85">
         {t('diceType')}:
       </label>
@@ -173,6 +180,9 @@ const DiceRoller: FC<Props> = ({
       </div>
 
       {children && <div className="ml-auto flex gap-1">{children}</div>}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
