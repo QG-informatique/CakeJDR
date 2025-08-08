@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useT } from '@/lib/useT'
 
 export type NewCompetence = {
+    id: string;
     nom: string;
     type: string;
     effets: string;
@@ -39,6 +40,7 @@ export const AddCompetenceModal: React.FC<AddCompetenceModalProps> = ({
     const handleAdd = () => {
         if (!nom || !type || !effets) return;
         onAdd({
+            id: crypto.randomUUID(),
             nom,
             type,
             effets,

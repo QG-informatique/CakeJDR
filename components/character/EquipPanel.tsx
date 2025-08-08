@@ -4,7 +4,7 @@
 import { FC, useState } from 'react'
 import { useT } from '@/lib/useT'
 
-type Objet = { nom: string, quantite: number }
+type Objet = { id: string; nom: string; quantite: number }
 
 type Props = {
   edit: boolean,
@@ -14,7 +14,7 @@ type Props = {
   modif_armure: number,
   objets: Objet[],
   onAddObj: (obj: Objet) => void,
-  onDelObj: (idx: number) => void,
+  onDelObj: (id: string) => void,
   onChange: (field: string, value: any) => void,
 }
 
@@ -36,7 +36,7 @@ const EquipPanel: FC<Props> = ({
     if (!newObj.nom || !newObj.quantite) return
     const quantiteNumber = parseInt(newObj.quantite, 10)
     if (isNaN(quantiteNumber) || quantiteNumber < 1) return
-    onAddObj({ nom: newObj.nom, quantite: quantiteNumber })
+    onAddObj({ id: crypto.randomUUID(), nom: newObj.nom, quantite: quantiteNumber })
     setNewObj({ nom: '', quantite: '' })
   }
 
@@ -76,11 +76,11 @@ const EquipPanel: FC<Props> = ({
       {edit ? (
         <>
           <div className="flex flex-col gap-1 mb-2">
-            {objets.map((o, i) => (
-              <div key={i} className="flex items-center gap-2 bg-gray-800 rounded px-2 py-1">
+            {objets.map((o) => (
+              <div key={o.id} className="flex items-center gap-2 bg-gray-800 rounded px-2 py-1">
                 <span className="text-base">{o.nom}</span>
                 <span className="text-xs text-gray-300">x{o.quantite}</span>
-                <button className="text-xs text-red-400 hover:underline ml-2" onClick={() => onDelObj(i)}>{t('delete')}</button>
+                <button className="text-xs text-red-400 hover:underline ml-2" onClick={() => onDelObj(o.id)}>{t('delete')}</button>
               </div>
             ))}
           </div>
@@ -109,8 +109,8 @@ const EquipPanel: FC<Props> = ({
         </>
       ) : (
         <div className="flex flex-col gap-1">
-          {objets.map((o, i) => (
-            <div key={i} className="flex items-center gap-2 bg-gray-800 rounded px-2 py-1">
+          {objets.map((o) => (
+            <div key={o.id} className="flex items-center gap-2 bg-gray-800 rounded px-2 py-1">
               <span className="text-base">{o.nom}</span>
               <span className="text-xs text-gray-300">x{o.quantite}</span>
             </div>
