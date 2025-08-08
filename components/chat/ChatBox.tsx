@@ -1,5 +1,6 @@
 'use client'
 import { FC, RefObject, useRef, useState, useEffect } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useBroadcastEvent, useRoom } from '@liveblocks/react'
 import useProfile from '../app/hooks/useProfile'
 import SessionSummary from './SessionSummary'
@@ -31,6 +32,15 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
   const broadcast = useBroadcastEvent()
   const profile = useProfile()
   const t = useT()
+  const [collapsed, setCollapsed] = useState(() =>
+    typeof window !== 'undefined' && localStorage.getItem('chatPanelCollapsed') === '1'
+  )
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('chatPanelCollapsed', collapsed ? '1' : '0')
+    }
+  }, [collapsed])
 
 
   const sendMessage = () => {
@@ -48,6 +58,19 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [events])
 
+  // When collapsed, only show a floating button so the panel frees all space
+  if (collapsed) {
+    return (
+      <button
+        onClick={() => setCollapsed(false)}
+        aria-label="Expand chat panel"
+        className="absolute top-2 right-2 z-50 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
+      >
+        <ChevronLeft size={20} />
+      </button>
+    )
+  }
+
   // --- NOUVEL AFFICHAGE VERTICAL ---
   if (showSummary) {
     return (
@@ -61,12 +84,19 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
           bg-black/15
           backdrop-blur-[2px]
           shadow-lg shadow-black/10
-          transition
+          transition flex-shrink-0
         "
         style={{
           boxShadow: '0 4px 18px -8px rgba(0,0,0,0.24), 0 0 0 1px rgba(255,255,255,0.05)'
         }}
       >
+        <button
+          onClick={() => setCollapsed(true)}
+          aria-label="Collapse chat panel"
+          className="absolute top-2 left-2 z-50 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
+        >
+          <ChevronRight size={20} />
+        </button>
         <SessionSummary onClose={() => setShowSummary(false)} />
       </aside>
     )
@@ -83,12 +113,19 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
         bg-black/15
         backdrop-blur-[2px]
         shadow-lg shadow-black/10
-        transition
+        transition flex-shrink-0
       "
       style={{
         boxShadow: '0 4px 18px -8px rgba(0,0,0,0.24), 0 0 0 1px rgba(255,255,255,0.05)'
       }}
     >
+      <button
+        onClick={() => setCollapsed(true)}
+        aria-label="Collapse chat panel"
+        className="absolute top-2 left-2 z-50 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
+      >
+        <ChevronRight size={20} />
+      </button>
       {/* Boutons en-tête */}
       <div className="flex justify-center items-center mb-2 gap-2">
         <button

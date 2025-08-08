@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { FC, useState, useEffect } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import StatsTab from './StatsTab'
 import EquipTab from './EquipTab'
 import DescriptionPanel from '../character/DescriptionPanel'
@@ -77,6 +78,15 @@ const CharacterSheet: FC<Props> = ({
     { key: 'equip', label: t('equipment') },
     { key: 'desc', label: t('description') },
   ]
+  const [collapsed, setCollapsed] = useState(() =>
+    typeof window !== 'undefined' && localStorage.getItem('characterPanelCollapsed') === '1'
+  )
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('characterPanelCollapsed', collapsed ? '1' : '0')
+    }
+  }, [collapsed])
 
   // On met à jour la fiche sélectionnée au chargement/changement
   useEffect(() => {
@@ -169,15 +179,28 @@ const CharacterSheet: FC<Props> = ({
     onUpdate(localPerso)
   }
 
+  // When collapsed, render only an expand button so the panel frees all space
+  if (collapsed) {
+    return (
+      <div className="relative w-0 h-0 overflow-visible flex-shrink-0">
+        <button
+          onClick={() => setCollapsed(false)}
+          aria-label="Expand character panel"
+          className="absolute top-2 left-2 z-50 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
+        >
+          <ChevronRight size={20} />
+        </button>
+      </div>
+    )
+  }
 
   return (
     <aside
       className="
-        w-full md:w-[420px]
+        relative select-none flex-shrink-0 transition-all duration-300
         bg-black/10 border border-white/10 backdrop-blur-[2px]
-        shadow shadow-black/5 rounded-2xl p-5
-        pt-0 pb-3 px-3 overflow-y-auto text-[15px] text-white
-        relative select-none
+        shadow shadow-black/5 rounded-2xl text-[15px] text-white
+        w-full md:w-[420px] p-5 pt-0 pb-3 px-3 overflow-y-auto
       "
       style={{
         width: creation ? 'auto' : undefined,
@@ -187,6 +210,15 @@ const CharacterSheet: FC<Props> = ({
         overflowX: 'hidden'
       }}
     >
+      {/* Collapse button stays visible above content */}
+      <button
+        onClick={() => setCollapsed(true)}
+        aria-label="Collapse character panel"
+        className="absolute top-2 right-2 z-50 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
+      >
+        <ChevronLeft size={20} />
+      </button>
+
       {!creation && (
         <CharacterSheetHeader
           edit={edit}
