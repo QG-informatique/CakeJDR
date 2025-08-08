@@ -179,14 +179,29 @@ const CharacterSheet: FC<Props> = ({
     onUpdate(localPerso)
   }
 
+  // When collapsed, render only an expand button so the panel frees all space
+  if (collapsed) {
+    return (
+      <div className="relative w-0 h-0 overflow-visible flex-shrink-0">
+        <button
+          onClick={() => setCollapsed(false)}
+          aria-label="Expand character panel"
+          className="absolute top-2 left-2 z-50 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
+        >
+          <ChevronRight size={20} />
+        </button>
+      </div>
+    )
+  }
+
   return (
     <aside
-      className={`
+      className="
         relative select-none flex-shrink-0 transition-all duration-300
         bg-black/10 border border-white/10 backdrop-blur-[2px]
         shadow shadow-black/5 rounded-2xl text-[15px] text-white
-        ${collapsed ? 'w-12 p-1 overflow-hidden' : 'w-full md:w-[420px] p-5 pt-0 pb-3 px-3 overflow-y-auto'}
-      `}
+        w-full md:w-[420px] p-5 pt-0 pb-3 px-3 overflow-y-auto
+      "
       style={{
         width: creation ? 'auto' : undefined,
         minWidth: creation ? '600px' : undefined,
@@ -195,96 +210,93 @@ const CharacterSheet: FC<Props> = ({
         overflowX: 'hidden'
       }}
     >
+      {/* Collapse button stays visible above content */}
       <button
-        onClick={() => setCollapsed(c => !c)}
-        aria-label={collapsed ? 'Expand character panel' : 'Collapse character panel'}
-        className={`text-white/80 hover:text-white bg-black/30 rounded-full p-1 ${collapsed ? '' : 'absolute top-2 right-2'}`}
+        onClick={() => setCollapsed(true)}
+        aria-label="Collapse character panel"
+        className="absolute top-2 right-2 z-50 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
       >
-        {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+        <ChevronLeft size={20} />
       </button>
 
-      {!collapsed && (
-        <>
-          {!creation && (
-            <CharacterSheetHeader
-              edit={edit}
-              onToggleEdit={() => setEdit(v => !v)}
-              onSave={save}
-              tab={tab}
-              setTab={setTab}
-              TABS={TABS}
-              logoOnly={logoOnly}
-            >
-              {children}
-            </CharacterSheetHeader>
-          )}
+      {!creation && (
+        <CharacterSheetHeader
+          edit={edit}
+          onToggleEdit={() => setEdit(v => !v)}
+          onSave={save}
+          tab={tab}
+          setTab={setTab}
+          TABS={TABS}
+          logoOnly={logoOnly}
+        >
+          {children}
+        </CharacterSheetHeader>
+      )}
 
-          {(creation || tab === 'main') && (
-            <StatsTab
-              edit={edit}
-              perso={localPerso}
-              onChange={handleChange}
-              setLocalPerso={setLocalPerso}
-              localPerso={localPerso}
-              dice={dice}
-              setDice={setDice}
-              onLevelUp={handleLevelUp}
-              processing={processing}
-              lastStat={lastStat}
-              lastGain={lastGain}
-              animKey={animKey}
-            />
-          )}
-          {(creation || tab === 'equip') && (
-            <EquipTab
-              edit={edit}
-              localPerso={localPerso}
-              setLocalPerso={setLocalPerso}
-              onChange={handleChange}
-            />
-          )}
+      {(creation || tab === 'main') && (
+        <StatsTab
+          edit={edit}
+          perso={localPerso}
+          onChange={handleChange}
+          setLocalPerso={setLocalPerso}
+          localPerso={localPerso}
+          dice={dice}
+          setDice={setDice}
+          onLevelUp={handleLevelUp}
+          processing={processing}
+          lastStat={lastStat}
+          lastGain={lastGain}
+          animKey={animKey}
+        />
+      )}
+      {(creation || tab === 'equip') && (
+        <EquipTab
+          edit={edit}
+          localPerso={localPerso}
+          setLocalPerso={setLocalPerso}
+          onChange={handleChange}
+        />
+      )}
 
-          {(creation || tab === 'desc') && (
-            <DescriptionPanel
-              edit={edit}
-              values={{
-                race: localPerso.race,
-                classe: localPerso.classe,
-                sexe: localPerso.sexe,
-                age: localPerso.age,
-                taille: localPerso.taille,
-                poids: localPerso.poids,
-                capacite_raciale: localPerso.capacite_raciale,
-                bourse: localPerso.bourse,
-                traits: localPerso.traits,
-                ideal: localPerso.ideal,
-                obligations: localPerso.obligations,
-                failles: localPerso.failles,
-                avantages: localPerso.avantages,
-                background: localPerso.background,
-                champs_perso: localPerso.champs_perso,
-              }}
-              onChange={handleChange}
-              champsPerso={localPerso.champs_perso}
-              onAddChamp={champ => {
-                setLocalPerso({
-                  ...localPerso,
-                  champs_perso: [...(localPerso.champs_perso || []), champ]
-                })
-              }}
-              onDelChamp={idx => {
-                const arr = [...(localPerso.champs_perso || [])]
-                arr.splice(idx, 1)
-                setLocalPerso({ ...localPerso, champs_perso: arr })
-              }}
-              onUpdateChamp={(idx, champ) => {
-                const arr = [...(localPerso.champs_perso || [])]
-                arr[idx] = champ
-                setLocalPerso({ ...localPerso, champs_perso: arr })
-              }}
-            />
-          )}
-        </>
+      {(creation || tab === 'desc') && (
+        <DescriptionPanel
+          edit={edit}
+          values={{
+            race: localPerso.race,
+            classe: localPerso.classe,
+            sexe: localPerso.sexe,
+            age: localPerso.age,
+            taille: localPerso.taille,
+            poids: localPerso.poids,
+            capacite_raciale: localPerso.capacite_raciale,
+            bourse: localPerso.bourse,
+            traits: localPerso.traits,
+            ideal: localPerso.ideal,
+            obligations: localPerso.obligations,
+            failles: localPerso.failles,
+            avantages: localPerso.avantages,
+            background: localPerso.background,
+            champs_perso: localPerso.champs_perso,
+          }}
+          onChange={handleChange}
+          champsPerso={localPerso.champs_perso}
+          onAddChamp={champ => {
+            setLocalPerso({
+              ...localPerso,
+              champs_perso: [...(localPerso.champs_perso || []), champ]
+            })
+          }}
+          onDelChamp={idx => {
+            const arr = [...(localPerso.champs_perso || [])]
+            arr.splice(idx, 1)
+            setLocalPerso({ ...localPerso, champs_perso: arr })
+          }}
+          onUpdateChamp={(idx, champ) => {
+            const arr = [...(localPerso.champs_perso || [])]
+            arr[idx] = champ
+            setLocalPerso({ ...localPerso, champs_perso: arr })
+          }}
+        />
       )}
     </aside>
   )
