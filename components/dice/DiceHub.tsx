@@ -1,4 +1,17 @@
-'use client'
+"use client"
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+/**
+ * Correctif file d'attente et bannière de lancement de dés.
+ * - la bannière "NOM lance un D…" était absente car le client n'appliquait pas
+ *   localement l'état "rolling" après l'émission des évènements.
+ * - le timer de fin était annulé à chaque re-rendu, empêchant la file de se
+ *   vider correctement.
+ *
+ * Le composant met désormais à jour le diceState local après le broadcast
+ * et conserve le timer de fin dans un ref afin qu'il survive aux re-rendus.
+ */
 
 import { useEffect, useMemo, useRef } from 'react'
 import { LiveList, LiveObject } from '@liveblocks/client'
@@ -155,6 +168,10 @@ export default function DiceHub() {
 
   const broadcast = useBroadcastEvent()
 
+  // Timer de fin du lancer actif. On le garde dans un ref pour éviter qu'il ne
+  // soit annulé lors des re-rendus intermédiaires.
+  const rollEndTimerRef = useRef<number | null>(null)
+
   // --- Fallback local pour l’UI: si 'dice-roll-end' ne revient pas, on coupe à endAt ---
   const uiEndTimerRef = useRef<number | null>(null)
   useEffect(() => {
@@ -217,16 +234,28 @@ export default function DiceHub() {
         color: first.color,
       }
       broadcast(startEvent)
+      // Màj locale immédiate pour afficher la bannière sans attendre l'écho
+      setDiceStateRolling(startEvent)
 
+      // Programme la fin du lancer et le nettoyage de la file
+      if (rollEndTimerRef.current) window.clearTimeout(rollEndTimerRef.current)
       const total = Math.max(0, endAt - Date.now()) + 20
-      const t = window.setTimeout(() => {
+      rollEndTimerRef.current = window.setTimeout(() => {
         removeById(first.id)
         broadcast({ type: 'dice-roll-end', entryId: first.id } as DiceEndEvent)
+        // Coupe localement au cas où l'évènement ne revient pas
+        clearDiceState()
       }, total)
-      return () => window.clearTimeout(t)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storageReady, queueItems.length, waiting.length, diceStateObj.phase, diceStateObj.endAt])
+
+  // Nettoyage du timer à la destruction du composant
+  useEffect(() => {
+    return () => {
+      if (rollEndTimerRef.current) window.clearTimeout(rollEndTimerRef.current)
+    }
+  }, [])
 
   // --- “API” publique: écoute jdr:roll puis kickstart si personne ne lance ---
   useEffect(() => {
@@ -281,8 +310,8 @@ export default function DiceHub() {
           const idx = list.findIndex(i => i.id === first.id)
           if (idx >= 0) (root.diceQueue as LiveList<QueueItem>).set(idx, { ...first, status: 'active', createdAt: Date.now() })
 
-          // broadcast start
-          broadcast({
+          // broadcast start et mise à jour locale immédiate
+          const startEvent: DiceStartEvent = {
             type: 'dice-roll-start',
             entryId: first.id,
             diceType: first.diceType,
@@ -291,16 +320,20 @@ export default function DiceHub() {
             endAt,
             name: first.name,
             color: first.color,
-          } as DiceStartEvent)
+          }
+          broadcast(startEvent)
+          setDiceStateRolling(startEvent)
 
           // program end
+          if (rollEndTimerRef.current) window.clearTimeout(rollEndTimerRef.current)
           const total = Math.max(0, endAt - Date.now()) + 20
-          setTimeout(() => {
+          rollEndTimerRef.current = window.setTimeout(() => {
             // remove active
             const fresh: QueueItem[] = (root?.diceQueue?.toArray?.() ?? [])
             const rmIdx = fresh.findIndex(i => i.id === first.id)
             if (rmIdx >= 0) (root.diceQueue as LiveList<QueueItem>).delete(rmIdx)
             broadcast({ type: 'dice-roll-end', entryId: first.id } as DiceEndEvent)
+            clearDiceState()
           }, total)
         }
       }, 30)
