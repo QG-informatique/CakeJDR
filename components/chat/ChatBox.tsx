@@ -53,8 +53,12 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author, collapsed = false, on
 
   if (collapsed) {
     return (
-      <aside className="w-12 p-2 flex items-center justify-center bg-black/15 border border-white/10 rounded-xl backdrop-blur-[2px] shadow-lg shadow-black/10 transition-all duration-300">
-        <button onClick={() => onToggle?.()} aria-label="Expand chat panel" className="text-white">
+      <aside className="relative w-0 h-full">
+        <button
+          onClick={() => onToggle?.()}
+          aria-label="Expand chat panel"
+          className="absolute top-1/2 -translate-y-1/2 -left-6 p-2 rounded-full border border-white/10 bg-black/20 text-white"
+        >
           <ChevronLeft />
         </button>
       </aside>
@@ -83,7 +87,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author, collapsed = false, on
         <button
           onClick={() => onToggle?.()}
           aria-label="Collapse chat panel"
-          className="absolute top-2 left-2 text-white"
+          className="absolute top-1/2 -translate-y-1/2 -left-6 p-2 rounded-full border border-white/10 bg-black/20 text-white"
         >
           <ChevronRight />
         </button>
@@ -112,7 +116,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author, collapsed = false, on
       <button
         onClick={() => onToggle?.()}
         aria-label="Collapse chat panel"
-        className="absolute top-2 left-2 text-white"
+        className="absolute top-1/2 -translate-y-1/2 -left-6 p-2 rounded-full border border-white/10 bg-black/20 text-white"
       >
         <ChevronRight />
       </button>

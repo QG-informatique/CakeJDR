@@ -85,10 +85,12 @@ const DiceRoller: FC<Props> = ({
 
   if (collapsed) {
     return (
-      <div
-        className="h-12 p-2 flex items-center justify-center rounded-xl border border-white/10 bg-black/15 backdrop-blur-[2px] shadow-lg shadow-black/10 transition-all duration-300"
-      >
-        <button onClick={() => onToggle?.()} aria-label="Expand dice panel" className="text-white">
+      <div className="relative w-full h-0">
+        <button
+          onClick={() => onToggle?.()}
+          aria-label="Expand dice panel"
+          className="absolute left-1/2 -translate-x-1/2 -top-6 p-2 rounded-full border border-white/10 bg-black/20 text-white"
+        >
           <ChevronUp />
         </button>
       </div>
@@ -114,7 +116,7 @@ const DiceRoller: FC<Props> = ({
       <button
         onClick={() => onToggle?.()}
         aria-label="Collapse dice panel"
-        className="absolute top-2 right-2 text-white"
+        className="absolute left-1/2 -translate-x-1/2 -top-6 p-2 rounded-full border border-white/10 bg-black/20 text-white"
       >
         <ChevronDown />
       </button>

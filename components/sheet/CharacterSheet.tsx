@@ -177,10 +177,12 @@ const CharacterSheet: FC<Props> = ({
 
   if (collapsed) {
     return (
-      <aside
-        className="w-12 p-2 bg-black/10 border border-white/10 backdrop-blur-[2px] shadow shadow-black/5 rounded-2xl flex items-center justify-center transition-all duration-300"
-      >
-        <button onClick={onToggle} aria-label="Expand character panel" className="text-white">
+      <aside className="relative w-0 h-full">
+        <button
+          onClick={onToggle}
+          aria-label="Expand character panel"
+          className="absolute top-1/2 -translate-y-1/2 -right-6 p-2 rounded-full border border-white/10 bg-black/20 text-white"
+        >
           <ChevronRight />
         </button>
       </aside>
@@ -207,7 +209,7 @@ const CharacterSheet: FC<Props> = ({
       <button
         onClick={onToggle}
         aria-label="Collapse character panel"
-        className="absolute top-2 right-2 text-white"
+        className="absolute top-1/2 -translate-y-1/2 -right-6 p-2 rounded-full border border-white/10 bg-black/20 text-white"
       >
         <ChevronLeft />
       </button>
