@@ -6,8 +6,8 @@ import StatsPanel from "../character/StatsPanel"
 import EquipPanel from "../character/EquipPanel"
 import DescriptionPanel from "../character/DescriptionPanel"
 import CompetencesPanel from "../character/CompetencesPanel" // ← Le bon nom !
-type Competence = { nom: string; type: string; effets: string; degats?: string }
-type Objet = { nom: string; quantite: number }
+type Competence = { id: string; nom: string; type: string; effets: string; degats?: string }
+type Objet = { id: string; nom: string; quantite: number }
 type DescriptionValues = {
   race: string
   classe: string
@@ -23,7 +23,7 @@ type DescriptionValues = {
   failles: string
   avantages: string
   background: string
-  champs_perso: { label: string; value: string }[]
+  champs_perso: { id: string; label: string; value: string }[]
   [key: string]: unknown
 }
 
@@ -105,11 +105,11 @@ const CharacterModal: FC<Props> = ({
                   objets={(character.objets as Objet[]) || []}
                   onChange={handlePanelChange}
                   onAddObj={(obj) => {
-                    const objets = [...((character.objets as Objet[]) || []), obj]
+                    const objets = [...((character.objets as Objet[]) || []), { ...obj, id: crypto.randomUUID() }]
                     handlePanelChange("objets", objets)
                   }}
-                  onDelObj={(idx) => {
-                    const objets = ((character.objets as Objet[]) || []).filter((_, i) => i !== idx)
+                  onDelObj={(id) => {
+                    const objets = ((character.objets as Objet[]) || []).filter((o) => o.id !== id)
                     handlePanelChange("objets", objets)
                   }}
                 />
@@ -126,8 +126,8 @@ const CharacterModal: FC<Props> = ({
                     const nv = [...((character.competences as Competence[]) || []), comp]
                     handlePanelChange("competences", nv)
                   }}
-                  onDelete={(idx) => {
-                    const nv = ((character.competences as Competence[]) || []).filter((_, i) => i !== idx)
+                  onDelete={(id) => {
+                    const nv = ((character.competences as Competence[]) || []).filter((c) => c.id !== id)
                     handlePanelChange("competences", nv)
                   }}
                 />
@@ -145,24 +145,24 @@ const CharacterModal: FC<Props> = ({
                 values={character as unknown as DescriptionValues}
                 edit={true}
                 onChange={handlePanelChange}
-                champsPerso={(character.champs_perso as { label: string; value: string }[]) ?? []}
+                champsPerso={(character.champs_perso as { id: string; label: string; value: string }[]) ?? []}
                 onAddChamp={champ =>
                   handlePanelChange(
                     "champs_perso",
-                    [...((character.champs_perso as { label: string; value: string }[]) ?? []), champ]
+                    [...((character.champs_perso as { id: string; label: string; value: string }[]) ?? []), champ]
                   )
                 }
-                onDelChamp={i =>
+                onDelChamp={id =>
                   handlePanelChange(
                     "champs_perso",
-                    ((character.champs_perso as { label: string; value: string }[]) ?? []).filter((_, idx) => idx !== i)
+                    ((character.champs_perso as { id: string; label: string; value: string }[]) ?? []).filter(c => c.id !== id)
                   )
                 }
-                onUpdateChamp={(i, champ) =>
+                onUpdateChamp={(id, champ) =>
                   handlePanelChange(
                     "champs_perso",
-                    ((character.champs_perso as { label: string; value: string }[]) ?? []).map((c, idx) =>
-                      idx === i ? champ : c
+                    ((character.champs_perso as { id: string; label: string; value: string }[]) ?? []).map(c =>
+                      c.id === id ? champ : c
                     )
                   )
                 }

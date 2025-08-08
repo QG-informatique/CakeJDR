@@ -276,7 +276,7 @@ const CharacterSheet: FC<Props> = ({
             failles: localPerso.failles,
             avantages: localPerso.avantages,
             background: localPerso.background,
-            champs_perso: localPerso.champs_perso,
+          champs_perso: localPerso.champs_perso,
           }}
           onChange={handleChange}
           champsPerso={localPerso.champs_perso}
@@ -286,15 +286,17 @@ const CharacterSheet: FC<Props> = ({
               champs_perso: [...(localPerso.champs_perso || []), champ]
             })
           }}
-          onDelChamp={idx => {
-            const arr = [...(localPerso.champs_perso || [])]
-            arr.splice(idx, 1)
-            setLocalPerso({ ...localPerso, champs_perso: arr })
+          onDelChamp={id => {
+            setLocalPerso({
+              ...localPerso,
+              champs_perso: (localPerso.champs_perso || []).filter((c: any) => c.id !== id)
+            })
           }}
-          onUpdateChamp={(idx, champ) => {
-            const arr = [...(localPerso.champs_perso || [])]
-            arr[idx] = champ
-            setLocalPerso({ ...localPerso, champs_perso: arr })
+          onUpdateChamp={(id, champ) => {
+            setLocalPerso({
+              ...localPerso,
+              champs_perso: (localPerso.champs_perso || []).map((c: any) => c.id === id ? champ : c)
+            })
           }}
         />
       )}
