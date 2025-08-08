@@ -79,7 +79,8 @@ export async function POST(req: Request) {
       bytes: data.bytes,
       format: data.format,
     });
-  } catch (e: any) {
-    return bad(e?.message || "Upload error", 500);
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : "Upload error";
+    return bad(message, 500);
   }
 }

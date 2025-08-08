@@ -27,50 +27,14 @@ const DiceRoller: FC<Props> = ({
   const t = useT()
   const clickLockRef = useRef(false)
 
-  function getProfileFromLocalStorage() {
-    // Lecture robuste de jdr_profile (format { pseudo, color, loggedIn })
-    try {
-      const raw = localStorage.getItem('jdr_profile')
-      if (raw) {
-        const p = JSON.parse(raw)
-        if (p && p.loggedIn && p.pseudo) {
-          return {
-            name: String(p.pseudo),
-            color: p.color ? String(p.color) : undefined,
-          }
-        }
-      }
-    } catch {
-      // ignore parse errors
-    }
-    // Fallbacks (si jamais)
-    const legacyName = localStorage.getItem('player_name') || 'Joueur'
-    const legacyColor = localStorage.getItem('player_color') || undefined
-    return { name: legacyName, color: legacyColor as string | undefined }
-  }
-
   const handleRollClick = () => {
     if (disabled || cooldown) return
     if (clickLockRef.current) return
     clickLockRef.current = true
 
     try {
-      const { name, color } = getProfileFromLocalStorage()
-
-      // 1) Callback local (si tu as des effets côté UI)
+      // ✅ Revert to local-only rolls: trigger UI without broadcasting to a global queue
       onRoll?.()
-
-      // 2) Event global consommé par <DiceHub />
-      window.dispatchEvent(
-        new CustomEvent('jdr:roll', {
-          detail: {
-            diceType,
-            name,   // ex: "Gustave"
-            color,  // ex: "#ff90cc"
-            userId: 'anon', // si tu as un vrai id joueur, mets-le ici
-          },
-        })
-      )
     } finally {
       // petit lock anti double-clic
       window.setTimeout(() => {
