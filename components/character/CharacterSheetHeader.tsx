@@ -26,7 +26,7 @@ const CharacterSheetHeader: FC<Props> = ({
   children,
 }) => {
 
-  const childrenArray = Array.isArray(children) ? children : [children]
+  const childrenArray = children ? (Array.isArray(children) ? children : [children]) : []
   const t = useT()
 
   return (
@@ -44,18 +44,13 @@ const CharacterSheetHeader: FC<Props> = ({
         boxShadow: '0 4px 18px -6px rgba(0,0,0,0.30), 0 0 0 1px rgba(255,255,255,0.05)'
       }}
     >
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <Link
-            href="/menu-accueil"
-            className="rounded-xl p-2 font-semibold shadow border-none bg-black/30 text-white/90 hover:bg-emerald-600 hover:text-white transition duration-100 flex items-center justify-center"
-          >
-            <CakeLogo className="mr-0" showText={false} />
-          </Link>
-          {childrenArray.map((child, i) => (
-            <span key={i} className="flex items-center">{child}</span>
-          ))}
-        </div>
+      <div className="flex items-center gap-2">
+        <Link
+          href="/menu-accueil"
+          className="rounded-xl p-2 font-semibold shadow border-none bg-black/30 text-white/90 hover:bg-emerald-600 hover:text-white transition duration-100 flex items-center justify-center"
+        >
+          <CakeLogo className="mr-0" showText={false} />
+        </Link>
         <button
           onClick={edit ? onSave : onToggleEdit}
           className={`
@@ -70,6 +65,9 @@ const CharacterSheetHeader: FC<Props> = ({
         >
           {edit ? t('save') : t('edit')}
         </button>
+        {childrenArray.map((child, i) => (
+          <span key={i} className="flex items-center">{child}</span>
+        ))}
       </div>
       <nav className="flex gap-2 mt-2">
         {TABS.map(t => (
