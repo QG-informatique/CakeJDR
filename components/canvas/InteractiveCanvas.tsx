@@ -9,7 +9,6 @@ import CanvasTools, { ToolMode } from './CanvasTools'
 import { useT } from '@/lib/useT'
 import MusicPanel from './MusicPanel'
 import ImageItem, { ImageData } from './ImageItem'
-import DiceHub from '@/components/dice/DiceHub'
 
 
 export default function InteractiveCanvas() {
@@ -478,8 +477,7 @@ export default function InteractiveCanvas() {
 
 <LiveCursors />
 
-{/* ✅ Ici, juste avant la fermeture du conteneur relatif */}
-<DiceHub />
+{/* DiceHub supprimé : les lancers de dés ne sont plus synchronisés globalement */}
 
 </div> {/* ← fin du conteneur relatif */}
 </div>
