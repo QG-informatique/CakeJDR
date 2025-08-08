@@ -1,116 +1,153 @@
 'use client'
 
-import {
-  motion,
-  animate,
-  useMotionValue,
-  useTransform,
-} from 'framer-motion'
-import React, { useEffect, useState } from 'react'
+import { motion, animate, useMotionValue, useTransform } from 'framer-motion'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 
-/* -------------------------------------------------------------------------- */
-/* 1.  ICONES SVG - améliorés et ajoutés                                      */
-/* -------------------------------------------------------------------------- */
+/* =======================================================================================
+   UTILS : PRNG stable, clamp, couleurs robustes, phases
+   ======================================================================================= */
 
-/* Soleil + halo */
+function mulberry32(seed: number) {
+  return function () {
+    let t = (seed += 0x6d2b79f5)
+    t = Math.imul(t ^ (t >>> 15), t | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v))
+function lerp(a: number, b: number, t: number) { return a + (b - a) * t }
+
+function hexToRgb(hex?: string): [number, number, number] | null {
+  if (typeof hex !== 'string') return null
+  let h = hex.trim()
+  if (h[0] === '#') h = h.slice(1)
+  if (h.length === 3) h = h.split('').map(ch => ch + ch).join('')
+  if (!/^[0-9a-f]{6}$/i.test(h)) return null
+  const r = parseInt(h.slice(0, 2), 16)
+  const g = parseInt(h.slice(2, 4), 16)
+  const b = parseInt(h.slice(4, 6), 16)
+  return [r, g, b]
+}
+function rgbToHex([r, g, b]: [number, number, number]) {
+  const h = (n: number) => clamp(n | 0, 0, 255).toString(16).padStart(2, '0')
+  return `#${h(r)}${h(g)}${h(b)}`
+}
+function lerpColor(a?: string, b?: string, t = 0.5) {
+  const A = hexToRgb(a) ?? [0, 0, 0]
+  const B = hexToRgb(b) ?? [0, 0, 0]
+  return rgbToHex([
+    Math.round(lerp(A[0], B[0], t)),
+    Math.round(lerp(A[1], B[1], t)),
+    Math.round(lerp(A[2], B[2], t)),
+  ])
+}
+
+type Phase = 'day' | 'dawn_dusk' | 'night' | 'midnight'
+function phaseFromProgress(t: number): Phase {
+  const dawn = t >= 0.0 && t < 0.08
+  const morning = t >= 0.08 && t < 0.20
+  const day = t >= 0.20 && t < 0.45
+  const dusk = t >= 0.45 && t < 0.55
+  const night = t >= 0.55 && t < 0.95
+  const predawn = t >= 0.95 && t < 1.0
+  if (day || morning) return 'day'
+  if (dawn || dusk || predawn) return 'dawn_dusk'
+  if (Math.abs(t - 0.75) < 0.07) return 'midnight'
+  return 'night'
+}
+const isDayPhase = (p: Phase) => p === 'day' || p === 'dawn_dusk'
+const isNightPhase = (p: Phase) => p === 'night' || p === 'midnight'
+
+/* =======================================================================================
+   ICONES — soleil, lune, nuages, arbres, fleurs, coquillage, crabe, cœur
+   ======================================================================================= */
+
 function SunIcon({ size = 90 }: { size?: number }) {
   return (
     <svg viewBox="0 0 64 64" width={size} height={size}>
       <defs>
-        <radialGradient id="sunHalo" r="0.6">
+        <radialGradient id="sunHalo" r="0.85">
           <stop offset="0%" stopColor="#fff799" />
+          <stop offset="70%" stopColor="#ffd23f" stopOpacity="0.28" />
           <stop offset="100%" stopColor="#ffd23f" stopOpacity="0" />
         </radialGradient>
       </defs>
-      <circle cx="32" cy="32" r="24" fill="url(#sunHalo)" />
+      <circle cx="32" cy="32" r="28" fill="url(#sunHalo)" />
       <circle cx="32" cy="32" r="16" fill="#ffd23f" />
     </svg>
   )
 }
-
-/* Lune */
 function MoonIcon({ size = 70 }: { size?: number }) {
   return (
     <svg viewBox="0 0 64 64" width={size} height={size}>
+      <defs>
+        <radialGradient id="moonGlow" r="0.9">
+          <stop offset="0%" stopColor="#eef4ff" />
+          <stop offset="100%" stopColor="#eef4ff" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <circle cx="32" cy="32" r="26" fill="url(#moonGlow)" />
       <path d="M42 8A24 24 0 1 0 42 56 18 18 0 1 1 42 8Z" fill="#f0f4ff" />
     </svg>
   )
 }
 
-/* Flèche de vent */
-function WindArrow({ size = 36 }: { size?: number }) {
-  return (
-    <svg viewBox="0 0 32 32" width={size} height={size}>
-      <path
-        d="M2 16 H26 M18 8 L26 16 L18 24"
-        stroke="#ffffff"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-      />
-    </svg>
-  )
-}
-
-/* Nuages : 10 formes VRAIMENT différentes */
+/* Nuages (2 couches, parallax) */
 const cloudShapes = [
-  // arrondi classique
   'M12 22a10 10 0 0 1 0-6A8 8 0 0 1 21 11a9 9 0 0 1 17-2 7 7 0 0 1 9 7 6 6 0 0 1-1 12H13Z',
-  // forme compacte
   'M7 24a9 9 0 0 1 0-5A7 7 0 0 1 15 12a8 8 0 0 1 15-2 6 6 0 0 1 8 6 5 5 0 0 1-1 10H8Z',
-  // long en "moustache"
   'M5 24 Q12 19 25 21 Q29 15 39 18 Q48 15 59 23 Q65 27 60 28 Q50 27 10 26 Z',
-  // nuage plat étalé
   'M3 21 Q10 17 19 18 Q21 10 35 15 Q44 10 53 19 Q62 20 62 23 Q60 27 55 26 H8Z',
-  // décalé en escalier
   'M8 25 Q12 14 20 17 Q24 10 32 12 Q36 5 44 10 Q52 8 58 16 Q64 18 62 26 H9Z',
-  // très compact rond
   'M14 28 Q19 18 25 24 Q30 14 38 20 Q45 10 56 18 Q62 24 56 28 H16Z',
-  // deux bosses
   'M11 23 Q17 16 25 21 Q29 12 35 17 Q41 10 54 22 Q63 22 63 25 H13Z',
-  // bossu sur la droite
   'M5 27 Q14 15 27 17 Q33 13 39 19 Q54 10 62 29 H7Z',
-  // petit & haut
   'M18 24 Q24 10 36 20 Q47 10 54 28 Q54 31 48 28 H22Z',
-  // en U
-  'M7 26 Q18 15 32 29 Q46 12 59 27 H9Z'
+  'M7 26 Q18 15 32 29 Q46 12 59 27 H9Z',
+  'M6 22 Q14 12 22 16 Q30 8 42 14 Q50 10 57 18 Q62 20 61 24 H8Z',
+  'M10 25 Q16 20 24 22 Q33 15 45 19 Q56 16 60 23 H12Z',
 ]
-
-function CloudIcon({ size = 110, v = 0 }: { size?: number; v?: number }) {
-  // v = seed random, pour varier la forme aléatoirement à chaque nuage
-  const shapeIdx = v % cloudShapes.length
+function CloudIcon({ size = 110, v = 0, tint = '#fff' }: { size?: number; v?: number; tint?: string }) {
+  const i = v % cloudShapes.length
   return (
-    <svg
-      viewBox="0 0 64 32"
-      width={size}
-      height={(size * 32) / 64}
-      fill="#fff"
-      style={{ filter: 'drop-shadow(0 3px 8px #0002)' }}
-    >
-      <path d={cloudShapes[shapeIdx]} />
+    <svg viewBox="0 0 64 32" width={size} height={(size * 32) / 64} style={{ filter: 'drop-shadow(0 6px 10px #0002)' }}>
+      <defs>
+        <linearGradient id={`cfill-${i}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={tint} />
+          <stop offset="100%" stopColor="#eaf3ff" />
+        </linearGradient>
+      </defs>
+      <path d={cloudShapes[i]} fill={`url(#cfill-${i})`} />
+      <path d={cloudShapes[i]} fill="none" stroke="#ffffff" strokeOpacity="0.6" strokeWidth="0.6" />
     </svg>
   )
 }
 
-/* Deux variantes d’arbres */
-function TreeIcon({ size = 90, v = 0 }: { size?: number; v?: number }) {
+/* Arbres */
+function TreeIcon({ size = 90, v = 0, tint = 1 }: { size?: number; v?: number; tint?: number }) {
+  const mul = (hex: string, f = 1) => {
+    const rgb = hexToRgb(hex) ?? [0, 0, 0]
+    const h = (n: number) => clamp(Math.round(n), 0, 255).toString(16).padStart(2, '0')
+    return `#${h(rgb[0] * f)}${h(rgb[1] * f)}${h(rgb[2] * f)}`
+  }
+  const c1 = mul('#4caf50', tint)
+  const c2 = mul('#43a047', tint)
   return v % 2 ? (
     <svg viewBox="0 0 64 96" width={size} height={(size * 96) / 64}>
       <rect x="28" y="60" width="8" height="36" fill="#6b4226" />
-      <ellipse cx="32" cy="48" rx="26" ry="22" fill="#4caf50" />
-      <ellipse cx="32" cy="28" rx="20" ry="18" fill="#43a047" />
+      <ellipse cx="32" cy="48" rx="26" ry="22" fill={c1} />
+      <ellipse cx="32" cy="28" rx="20" ry="18" fill={c2} />
     </svg>
   ) : (
     <svg viewBox="0 0 64 96" width={size} height={(size * 96) / 64}>
       <rect x="30" y="60" width="6" height="36" fill="#6b4226" />
-      <polygon points="32,10 52,52 12,52" fill="#4caf50" />
-      <polygon points="32,26 46,58 18,58" fill="#43a047" />
+      <polygon points="32,10 52,52 12,52" fill={c1} />
+      <polygon points="32,26 46,58 18,58" fill={c2} />
     </svg>
   )
 }
 
-/* Fleur (plusieurs couleurs pour variety) */
 const FlowerIcon = ({ size = 14, color = "#f8c8ec" }: { size?: number; color?: string }) => (
   <svg viewBox="0 0 16 16" width={size} height={size}>
     <circle cx="8" cy="8" r="3" fill={color} />
@@ -121,19 +158,6 @@ const FlowerIcon = ({ size = 14, color = "#f8c8ec" }: { size?: number; color?: s
     <circle cx="8" cy="8" r="1.2" fill="#fff870" />
   </svg>
 )
-
-/* Nénuphar */
-const LilyPadIcon = ({ size = 44 }: { size?: number }) => (
-  <svg viewBox="0 0 32 22" width={size} height={size / 2}>
-    <ellipse cx="16" cy="11" rx="15" ry="9" fill="#78c674" />
-    <path d="M16,11 L16,2" stroke="#4b9956" strokeWidth="2" />
-    {/* Fleur sur le nénuphar */}
-    <circle cx="16" cy="7" r="3" fill="#ffeaea" />
-    <circle cx="16" cy="7" r="1" fill="#ffd000" />
-  </svg>
-)
-
-/* Coquillage & Crabe (inchangés) */
 const ShellIcon = ({ size = 10 }: { size?: number }) => (
   <svg viewBox="0 0 16 12" width={size} height={(size * 12) / 16}>
     <path d="M1 11 Q8 -1 15 11 Z" fill="#fdd9b5" stroke="#e3bfa1" strokeWidth="1" />
@@ -147,416 +171,510 @@ const CrabIcon = ({ size = 22 }: { size?: number }) => (
     <path d="M10 18 L6 14 M22 18 L26 14" stroke="#ff7f51" strokeWidth="2" />
   </svg>
 )
-
-/* Ville améliorée avec lumières intelligentes */
-function City({ dayProgress = 0 }: { dayProgress: number }) {
-  // dayProgress : 0 (matin) à 0.5 (minuit) à 1 (matin)
-  // => 0/1 = jour ; 0.20 à 0.33 = nuit ; 0.28 à 0.35 = minuit
-  // Plus on est proche de la nuit profonde, moins de fenêtres allumées
-function shouldLightOn() {
-  if (dayProgress < 0.18 || dayProgress > 0.85) return false // Plein jour
-  if (dayProgress > 0.27 && dayProgress < 0.33) {
-    // pleine nuit : très peu allumé
-    return Math.random() < 0.07
-  }
-  // Nuit : 70% fenêtres allumées
-  return Math.random() < 0.7
-}
+function HeartIcon({ size = 18 }: { size?: number }) {
   return (
-    <svg viewBox="0 0 350 200" style={{ width: '36vw', height: '22vh', minWidth: 320 }}>
-      {/* Grands immeubles */}
-      {[{ x: 10, w: 50, h: 140 }, { x: 90, w: 50, h: 170 }, { x: 170, w: 40, h: 130 }, { x: 230, w: 60, h: 150 }].map((b, i) => (
-        <g key={i}>
-          <rect x={b.x} y={200 - b.h} width={b.w} height={b.h} fill={['#46586a', '#54738c', '#455d71', '#687da1'][i]} />
-          {/* Toits */}
-          <polygon points={`${b.x},${200 - b.h} ${b.x + b.w / 2},${200 - b.h - 12 - i * 2} ${b.x + b.w},${200 - b.h}`} fill="#b1b2b6" />
-          {/* Fenêtres : gérées selon l'heure */}
-          {Array.from({ length: Math.floor(b.h / 20) }).map((_, r) =>
-            Array.from({ length: Math.floor(b.w / 14) }).map((__, c) => {
-              const lit = shouldLightOn()
-              return (
-                <rect
-                  key={`${r}-${c}`}
-                  x={b.x + 4 + c * 14}
-                  y={200 - b.h + 4 + r * 20}
-                  width="8"
-                  height="12"
-                  rx={Math.random() < 0.25 ? 6 : 1}
-                  fill={lit ? "#ffd23f" : "#1a1a19"}
-                  opacity={lit ? 1 : 0.15}
-                />
-              )
-            }),
-          )}
-        </g>
-      ))}
-      {/* Petits bâtiments devant */}
-      <rect x="0" y="150" width="70" height="50" fill="#3e4d5a" />
-      <rect x="60" y="162" width="60" height="38" fill="#36444f" />
-      <rect x="145" y="155" width="46" height="44" fill="#42546a" />
-      {/* Lampadaires */}
-      <g>
-        <rect x="310" y="174" width="4" height="26" fill="#d7d9da" />
-        <circle cx="312" cy="174" r="6" fill="#ffd23f" opacity={dayProgress > 0.22 && dayProgress < 0.38 ? 1 : 0.2} />
-        <rect x="280" y="190" width="3" height="10" fill="#d7d9da" />
-        <circle cx="281.5" cy="190" r="3" fill="#ffd23f" opacity={dayProgress > 0.22 && dayProgress < 0.38 ? 1 : 0.15} />
-      </g>
+    <svg viewBox="0 0 32 28" width={size} height={(size * 28) / 32}>
+      <path d="M16 26 C-10 10 8 -2 16 8 C24 -2 42 10 16 26 Z" fill="#ff5a8a" stroke="#ff2d6b" strokeWidth="1" />
     </svg>
   )
 }
 
-/* -------------------------------------------------------------------------- */
-/* 2.  Composant principal                                                    */
-/* -------------------------------------------------------------------------- */
+/* =======================================================================================
+   ANIMAUX : mapping vers TES SVG (jour / nuit)
+   ======================================================================================= */
+
+type AnimalType =
+  | 'deer'         // jour
+  | 'boar'         // jour
+  | 'red_panda'    // jour
+  | 'racoon'       // nuit
+  | 'wolf'         // nuit
+  | 'wild_cat'     // nuit
+
+const ICONS: Record<AnimalType, string> = {
+  deer:      'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754674008/deer-svgrepo-com_nvbsr7.svg',
+  boar:      'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754673999/boar-svgrepo-com_adokxy.svg',
+  red_panda: 'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754673984/red-panda-svgrepo-com_1_xrvrnm.svg',
+  racoon:    'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754673992/racoon-svgrepo-com_qzvo3e.svg',
+  wolf:      'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754673975/wolf-svgrepo-com_qwk0in.svg',
+  wild_cat:  'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754673961/wild-cat-svgrepo-com_idpv9h.svg',
+}
+const DAY_SPECIES: AnimalType[] = ['deer', 'boar', 'red_panda']
+const NIGHT_SPECIES: AnimalType[] = ['racoon', 'wolf', 'wild_cat']
+
+const BASE_SIZE: Record<AnimalType, number> = {
+  deer: 76, boar: 60, red_panda: 48, racoon: 46, wolf: 60, wild_cat: 50,
+}
+const BASE_SPEED: Record<AnimalType, number> = {
+  deer: 6.2, boar: 5.5, red_panda: 5.2, racoon: 6, wolf: 7, wild_cat: 6.3,
+}
+
+/* =======================================================================================
+   COMPOSANT PRINCIPAL
+   ======================================================================================= */
+
+type AnimalState = 'walk' | 'idle'
+type Animal = {
+  id: number
+  type: AnimalType
+  x: number
+  y: number
+  dir: 1 | -1
+  speed: number
+  state: AnimalState
+  sizeScale: number
+  target?: { x: number; y: number }
+  cooldownMateUntil?: number
+  ageSec: number
+  lifeSec: number
+  dying?: boolean
+}
 
 export default function SpecialBackground() {
-  const [clouds, setClouds] = useState<React.ReactElement[]>([])
-  const [flowers, setFlowers] = useState<React.ReactElement[]>([])
-  const [shells, setShells] = useState<React.ReactElement[]>([])
-  const [crabs, setCrabs] = useState<React.ReactElement[]>([])
-  const [lilyPads, setLilyPads] = useState<React.ReactElement[]>([])
-
-  // Animation vent
-  const windAngle = useMotionValue(0)
+  /* Cycle jour/nuit */
+  const cycleSeconds = 200
+  const [dayProgress, setDayProgress] = useState(0)
   useEffect(() => {
-    const controls = animate(
-      windAngle,
-      [0, 180, 0],
-      { duration: 600, repeat: Infinity, ease: 'easeInOut' },
-    )
+    let raf = 0
+    const start = performance.now()
+    const loop = (now: number) => {
+      setDayProgress(((now - start) / (cycleSeconds * 1000)) % 1)
+      raf = requestAnimationFrame(loop)
+    }
+    raf = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(raf)
+  }, [])
+  const phase = phaseFromProgress(dayProgress)
+
+  /* Ciel dynamique robuste */
+  const skyStops = ['#75c9ff', '#a4ddff', '#8bd0ff', '#ffa95d', '#12223a', '#0d1b2a', '#ffa95d', '#75c9ff']
+  const safeProg = Number.isFinite(dayProgress) ? clamp(dayProgress, 0, 0.999999) : 0
+  const seg = 1 / Math.max(1, (skyStops.length - 1))
+  const idx = clamp(Math.floor(safeProg / seg), 0, skyStops.length - 2)
+  const local = (safeProg - idx * seg) / seg
+  const skyTop = lerpColor(skyStops[idx], skyStops[idx + 1], local)
+  const skyBottom = lerpColor(skyTop, '#75c9ff', 0.35)
+
+  /* Étoiles */
+  const stars = useMemo(() => {
+    const rng = mulberry32(20250808)
+    return Array.from({ length: 140 }).map((_, k) => ({
+      id: `star-${k}`,
+      left: Math.round(rng() * 100),
+      top: Math.round(rng() * 28),
+      size: 1 + Math.round(rng() * 2),
+      tw: 2 + rng() * 3,
+      delay: rng() * 5,
+    }))
+  }, [])
+
+  /* Vent */
+  const windAngle = useMotionValue(0)
+  const arrowRotation = useTransform(windAngle, (a) => `${a}deg`)
+  useEffect(() => {
+    const controls = animate(windAngle, [0, 180, 0], { duration: 600, repeat: Infinity, ease: 'easeInOut' })
     return controls.stop
   }, [windAngle])
 
-  // Nuages, fleurs, nénuphars, etc.
-  useEffect(() => {
-    // Nuages : seed et forme VRAIMENT différente pour chaque nuage
-    const cl: React.ReactElement[] = []
-    for (let i = 0; i < 12; i++) {
-      const size = 80 + Math.random() * 110
-      const top = Math.random() * 16
-      const dur = 50 + Math.random() * 35
-      const delay = -Math.random() * dur
-      const shapeIdx = Math.floor(Math.random() * cloudShapes.length)
-      cl.push(
+  /* Nuages — 2 couches (parallax) */
+  const cloudsNear = useMemo(() => {
+    const rng = mulberry32(424242)
+    return Array.from({ length: 7 }).map((_, i) => {
+      const size = 110 + Math.round(rng() * 140)
+      const top = 8 + Math.round(rng() * 12)
+      const dur = 60 + rng() * 40
+      const delay = -rng() * dur
+      const shapeIdx = Math.floor(rng() * cloudShapes.length)
+      return (
         <motion.div
-          key={'c' + i + '-' + shapeIdx}
+          key={`cN-${i}`}
           initial={{ x: '110vw' }}
           animate={{ x: '-120vw' }}
           transition={{ duration: dur, repeat: Infinity, delay, ease: 'linear' }}
-          style={{ position: 'absolute', top: `${top}vh`, pointerEvents: 'none' }}
+          style={{ position: 'absolute', top: `${top}vh`, pointerEvents: 'none', zIndex: 3 }}
         >
           <CloudIcon size={size} v={shapeIdx} />
-        </motion.div>,
+        </motion.div>
       )
-    }
-
-    // Fleurs sur la plaine : dispersées
-    const flowerColors = ['#f8c8ec', '#ffdb99', '#c7e2ad', '#eae5ff', '#f0c3c3']
-    const fl: React.ReactElement[] = []
-    for (let i = 0; i < 36; i++) {
-      const size = 10 + Math.random() * 8
-      const left = 6 + Math.random() * 88
-      const top = 71 + Math.random() * 16 // Sur la plaine (vh)
-      const color = flowerColors[Math.floor(Math.random() * flowerColors.length)]
-      fl.push(
-        <div
-          key={'fl' + i}
-          style={{
-            position: 'absolute',
-            left: `${left}vw`,
-            top: `${top}vh`,
-            pointerEvents: 'none',
-            zIndex: 7,
-          }}
-        >
-          <FlowerIcon size={size} color={color} />
-        </div>,
-      )
-    }
-
-    // Nénuphars animés sur la rivière
-    const nenu: React.ReactElement[] = []
-    for (let i = 0; i < 2 + Math.floor(Math.random() * 2); i++) {
-      const size = 36 + Math.random() * 24
-      const dur = 42 + Math.random() * 12
-      const delay = -Math.random() * dur
-      const top = 84 + Math.random() * 7 // sur la rivière
-      nenu.push(
+    })
+  }, [])
+  const cloudsFar = useMemo(() => {
+    const rng = mulberry32(424243)
+    return Array.from({ length: 6 }).map((_, i) => {
+      const size = 90 + Math.round(rng() * 120)
+      const top = 5 + Math.round(rng() * 10)
+      const dur = 110 + rng() * 60
+      const delay = -rng() * dur
+      const shapeIdx = Math.floor(rng() * cloudShapes.length)
+      return (
         <motion.div
-          key={'lilypad' + i}
+          key={`cF-${i}`}
           initial={{ x: '110vw' }}
           animate={{ x: '-120vw' }}
           transition={{ duration: dur, repeat: Infinity, delay, ease: 'linear' }}
-          style={{
-            position: 'absolute',
-            left: 0,
-            top: `${top}vh`,
-            zIndex: 10,
-            pointerEvents: 'none',
-          }}
+          style={{ position: 'absolute', top: `${top}vh`, pointerEvents: 'none', opacity: 0.75, zIndex: 2 }}
         >
-          <LilyPadIcon size={size} />
-        </motion.div>,
+          <CloudIcon size={size} v={shapeIdx} tint="#f6fbff" />
+        </motion.div>
       )
-    }
-
-    // Coquillages
-    const sh: React.ReactElement[] = []
-    for (let i = 0; i < 16; i++) {
-      const size = 8 + Math.random() * 5
-      const left = Math.random() * 100
-      sh.push(
-        <div
-          key={'s' + i}
-          style={{ position: 'absolute', left: `${left}vw`, bottom: '13vh', pointerEvents: 'none' }}
-        >
-          <ShellIcon size={size} />
-        </div>,
-      )
-    }
-    // Crabes
-    const cr: React.ReactElement[] = []
-    for (let i = 0; i < 5; i++) {
-      const size = 18 + Math.random() * 6
-      const left = Math.random() * 100
-      const dur = 10 + Math.random() * 6
-      cr.push(
-        <motion.div
-          key={'cr' + i}
-          initial={{ y: 0 }}
-          animate={{ y: [0, 4, -2, 0] }}
-          transition={{ duration: dur, repeat: Infinity, ease: 'easeInOut' }}
-          style={{ position: 'absolute', left: `${left}vw`, bottom: '13vh', pointerEvents: 'none' }}
-        >
-          <CrabIcon size={size} />
-        </motion.div>,
-      )
-    }
-
-    setClouds(cl)
-    setFlowers(fl)
-    setLilyPads(nenu)
-    setShells(sh)
-    setCrabs(cr)
+    })
   }, [])
 
-  /* Cycle jour/nuit - 0 = matin, 0.5 = minuit, 1 = matin */
-  const cycle = 200
-  const [dayProgress, setDayProgress] = useState(0)
+  /* Fleurs & coquillages */
+  const flowers = useMemo(() => {
+    const rng = mulberry32(1312)
+    const colors = ['#f8c8ec', '#ffdb99', '#c7e2ad', '#eae5ff', '#f0c3c3']
+    const pts = Array.from({ length: 50 }).map(() => ({ x: 2 + rng() * 96, y: 56 + rng() * 16 }))
+      .sort((a, b) => a.x - b.x)
+    for (let i = 1; i < pts.length; i++) if (Math.abs(pts[i].x - pts[i - 1].x) < 2.2) pts[i].x += 2 + rng() * 2
+    return pts.map((p, i) => {
+      const size = 10 + Math.round(rng() * 8)
+      const color = colors[Math.floor(rng() * colors.length)]
+      return <div key={`fl-${i}`} style={{ position: 'absolute', left: `${clamp(p.x, 0, 98)}vw`, top: `${clamp(p.y, 56, 72.2)}vh`, zIndex: 5, pointerEvents: 'none' }}>
+        <FlowerIcon size={size} color={color} />
+      </div>
+    })
+  }, [])
+  const shells = useMemo(() => {
+    const rng = mulberry32(8888)
+    return Array.from({ length: 16 }).map((_, i) => {
+      const size = 8 + Math.round(rng() * 5)
+      const left = rng() * 100
+      return <div key={`sh-${i}`} style={{ position: 'absolute', left: `${left}vw`, bottom: '13vh', zIndex: 7, pointerEvents: 'none' }}><ShellIcon size={size} /></div>
+    })
+  }, [])
+
+  /* Feuilles rivière */
+  type Leaf = { id: number; x: number; y: number; v: number; size: number }
+  const [leaves, setLeaves] = useState<Leaf[]>([])
+  const leafId = useRef(1)
+  const nextLeafSpawn = useRef(performance.now() + 6000)
   useEffect(() => {
-    let frame: number
-    const start = Date.now()
-    function loop() {
-      const now = Date.now()
-      const t = ((now - start) / (cycle * 1000)) % 1 // boucle 0-1
-      setDayProgress(t)
-      frame = requestAnimationFrame(loop)
+    let raf = 0
+    let last = performance.now()
+    const loop = (now: number) => {
+      const dt = (now - last) / 1000; last = now
+      setLeaves(prev => {
+        const arr = [...prev]
+        if (arr.length < 2 && now >= nextLeafSpawn.current) {
+          nextLeafSpawn.current = now + 9000 + Math.random() * 7000
+          arr.push({ id: leafId.current++, x: 110, y: 85 + Math.random() * 6, v: 8 + Math.random() * 3, size: 14 + Math.random() * 10 })
+        }
+        for (const lf of arr) lf.x -= lf.v * dt
+        return arr.filter(l => l.x > -20)
+      })
+      raf = requestAnimationFrame(loop)
     }
-    loop()
-    return () => cancelAnimationFrame(frame)
+    raf = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(raf)
   }, [])
 
-  // Ciel dynamique (dégradé)
-  const sky = [
-    '#75c9ff', // matin
-    '#ffa95d', // crépuscule
-    '#0d1b2a', // nuit
-    '#ffa95d', // crépuscule
-    '#75c9ff', // matin
-  ]
+  /* ====================== ANIMAUX (balade + bébé rare + vieillissement) ====================== */
+  const MAX_POP = 7
+  const [animals, setAnimals] = useState<Animal[]>([])
+  const [hearts, setHearts] = useState<Array<{ id: number; x: number; y: number; until: number }>>([])
+  const nextAnimalId = useRef(1)
+  const nextSpawnAt = useRef(performance.now() + 3000)
 
-  // Montagnes avec dégradé neige > rocher
-  function MountainBackground() {
-    return (
-      <svg
-        viewBox="0 0 1000 200"
-        className="absolute inset-x-0"
-        style={{ top: '30vh', height: '22vh', width: '100vw', minWidth: 1200 }}
-        preserveAspectRatio="none"
-      >
-        <defs>
-          <linearGradient id="neige" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#fff" />
-            <stop offset="65%" stopColor="#eee" />
-            <stop offset="85%" stopColor="#bebfc1" />
-            <stop offset="100%" stopColor="#4e6574" />
-          </linearGradient>
-        </defs>
-        {/* Montagnes, pas de zigzag blanc */}
-        <path
-          d="M0 150 L120 80 L240 140 L380 60 L520 120 L650 90 L780 140 L1000 60 V200 H0 Z"
-          fill="url(#neige)"
-        />
-      </svg>
-    )
-  }
+  const PLAIN_Y_MIN = 56, PLAIN_Y_MAX = 71, PLAIN_X_MIN = -5, PLAIN_X_MAX = 105
+  const MATE_DIST = 2.4
+  const HEART_MS = 10000
 
-  // Rotation flèche vent
-  const arrowRotation = useTransform(windAngle, (a) => `${a}deg`)
-
-  // Gestion dégradé ciel
-  const skyStops = sky
-  function lerp(a: string, b: string, t: number) {
-    // interpolation hex couleur rapide
-    function hex2rgb(hex: string) {
-      const n = hex.startsWith('#') ? 1 : 0
-      return [
-        parseInt(hex.substr(n, 2), 16),
-        parseInt(hex.substr(n + 2, 2), 16),
-        parseInt(hex.substr(n + 4, 2), 16),
-      ]
-    }
-    function rgb2hex([r, g, b]: number[]) {
-      return (
-        '#' +
-        [r, g, b]
-          .map((x) => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, '0'))
-          .join('')
-      )
-    }
-    const ra = hex2rgb(a)
-    const rb = hex2rgb(b)
-    return rgb2hex([0, 1, 2].map((i) => ra[i] + (rb[i] - ra[i]) * t))
-  }
-  // gestion dégradé progressif sur 0-0.25, 0.25-0.5, etc.
-  let skyColor = skyStops[0]
-  for (let i = 1; i < skyStops.length; i++) {
-    const p = (i - 1) / (skyStops.length - 1)
-    const nextP = i / (skyStops.length - 1)
-    if (dayProgress >= p && dayProgress < nextP) {
-      const local = (dayProgress - p) / (nextP - p)
-      skyColor = lerp(skyStops[i - 1], skyStops[i], local)
-      break
+  // cible parfois légèrement hors cadre pour permettre la sortie naturelle
+  function randomTarget() {
+    const marginX = 8
+    return {
+      x: (PLAIN_X_MIN - marginX) + Math.random() * ((PLAIN_X_MAX + marginX) - (PLAIN_X_MIN - marginX)),
+      y: PLAIN_Y_MIN + Math.random() * (PLAIN_Y_MAX - PLAIN_Y_MIN),
     }
   }
+  function pickSpeciesForPhase(p: Phase): AnimalType {
+    const pool = isDayPhase(p) ? DAY_SPECIES : NIGHT_SPECIES
+    return pool[Math.floor(Math.random() * pool.length)]
+  }
+  function spawnAnimal(opts?: { type?: AnimalType; babyOf?: AnimalType; near?: { x: number; y: number } }) {
+    setAnimals(cur => {
+      if (cur.length >= MAX_POP) return cur
+      const type = (opts?.type ?? opts?.babyOf ?? pickSpeciesForPhase(phase)) as AnimalType
+      const id = nextAnimalId.current++
+      const sizeScale = opts?.babyOf ? 0.62 : 1
+      const baseSpeed = BASE_SPEED[type] * (0.75 + Math.random() * 0.5) * (opts?.babyOf ? 0.85 : 1)
+      const startX = opts?.near ? opts.near.x + (Math.random() - 0.5) * 2 : (Math.random() < 0.5 ? -12 : 112)
+      const startY = opts?.near ? opts.near.y : 56 + Math.random() * 14
+      const lifeSec = (opts?.babyOf ? 70 : 110) + Math.random() * (opts?.babyOf ? 40 : 80)
+      const a: Animal = {
+        id, type,
+        x: startX, y: startY,
+        dir: startX < 50 ? 1 : -1,
+        speed: baseSpeed,
+        state: 'walk',
+        sizeScale,
+        target: randomTarget(),
+        cooldownMateUntil: performance.now() + (opts?.babyOf ? 30000 : 0),
+        ageSec: 0,
+        lifeSec,
+      }
+      return [...cur, a]
+    })
+  }
 
+  useEffect(() => {
+    let raf = 0
+    let last = performance.now()
+    const loop = (now: number) => {
+      const dt = (now - last) / 1000
+      last = now
+
+      // spawns selon phase, cap 7
+      if (now >= nextSpawnAt.current) {
+        nextSpawnAt.current = now + 7000 + Math.random() * 9000
+        setAnimals(cur => (cur.length < MAX_POP ? (spawnAnimal(), cur) : cur))
+      }
+
+      // update animaux
+      setAnimals(prev => {
+        const arr = prev.map(a => ({ ...a }))
+        for (const a of arr) {
+          a.ageSec += dt
+          if (!a.dying && a.ageSec >= a.lifeSec) a.dying = true
+
+          // croissance lente des bébés
+          if (a.sizeScale < 1) a.sizeScale = Math.min(1, a.sizeScale + dt * 0.005)
+
+          // mort : fade out puis suppression
+          if (a.dying) {
+            a.sizeScale = Math.max(0, a.sizeScale - dt * 0.2)
+            continue
+          }
+
+          // cible aléatoire
+          if (!a.target || Math.hypot((a.target.x - a.x), (a.target.y - a.y)) < 1.2 || Math.random() < 0.002) {
+            a.target = randomTarget()
+            if (Math.random() < 0.18) a.state = 'idle'
+          }
+          if (a.state === 'idle' && Math.random() < 0.01) a.state = 'walk'
+
+          if (a.state === 'walk' && a.target) {
+            const dx = a.target.x - a.x
+            const dy = a.target.y - a.y
+            const d = Math.hypot(dx, dy) + 1e-6
+            const vx = (dx / d) * a.speed
+            const vy = (dy / d) * (a.speed * 0.24)
+            a.dir = vx >= 0 ? 1 : -1
+            a.x += vx * dt
+            a.y = clamp(a.y + vy * dt, PLAIN_Y_MIN, PLAIN_Y_MAX)
+          }
+        }
+
+        // reproduction RARE (1% à la rencontre), cap 7 + gros cooldown
+        for (let i = 0; i < arr.length; i++) for (let j = i + 1; j < arr.length; j++) {
+          const A = arr[i], B = arr[j]
+          if (A.dying || B.dying) continue
+          if (A.type !== B.type) continue
+          const nowMs = performance.now()
+          if ((A.cooldownMateUntil ?? 0) > nowMs || (B.cooldownMateUntil ?? 0) > nowMs) continue
+          const d = Math.hypot(A.x - B.x, A.y - B.y)
+          if (d < MATE_DIST && Math.random() < 0.01 && arr.length < MAX_POP) {
+            const cx = (A.x + B.x) / 2, cy = (A.y + B.y) / 2
+            A.state = 'idle'; B.state = 'idle'
+            A.target = undefined; B.target = undefined
+            const cd = 60000 + Math.random() * 40000 // 60–100s
+            A.cooldownMateUntil = nowMs + cd
+            B.cooldownMateUntil = nowMs + cd
+            const fxId = (A.id * 10000 + B.id) ^ 0x9e3779b9
+            setHearts(h => [...h, { id: fxId, x: cx, y: cy - 2, until: nowMs + HEART_MS }])
+            setTimeout(() => spawnAnimal({ babyOf: A.type, near: { x: cx, y: cy } }), 350)
+          }
+        }
+
+        // purge quand bien sortis de l'écran (et vivants/fadés)
+        return arr.filter(a => a.sizeScale > 0 && a.x > -25 && a.x < 125)
+      })
+
+      // nettoie cœurs
+      setHearts(prev => prev.filter(h => h.until > performance.now()))
+
+      raf = requestAnimationFrame(loop)
+    }
+    raf = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(raf)
+  }, [phase])
+
+  /* Soleil / Lune */
+  function astroPos(t: number, sun = true) {
+    const local = sun ? (t / 0.5) : ((t - 0.5) / 0.5)
+    const clamped = clamp(local, 0, 1)
+    const rx = 60, ry = 28, cx = 50, cy = 38
+    const theta = Math.PI - clamped * Math.PI
+    return { x: `${cx + rx * Math.cos(theta)}vw`, y: `${cy - ry * Math.sin(theta)}vh`, visible: (sun ? t < 0.5 : t >= 0.5) }
+  }
+  const sun = astroPos(dayProgress, true)
+  const moon = astroPos(dayProgress, false)
+
+  /* TREES: profondeur sur toute la plaine (moins d'arbres, plus spread, jusqu'au pied montagne) */
+  const treeLayers = useMemo(() => {
+    const rng = mulberry32(777001)
+    const bands = 6         // bandes de profondeur
+    const perBand = 5       // moins d’arbres -> plus “respirant”
+    const layers: Array<{ x: number; yBottomVh: number; size: number; v: number; opacity: number; z: number }> = []
+    for (let b = 0; b < bands; b++) {
+      const depth = b / (bands - 1) // 0..1
+      const baseSize = lerp(108, 50, depth)          // loin = petit
+      const yBottom = lerp(1.2, 18.5, depth)         // 18.5vh ≈ pied de la montagne
+      for (let i = 0; i < perBand; i++) {
+        let x = 2 + (i + rng()) * (96 / perBand)     // couvre toute la largeur
+        x += (rng() - 0.5) * (6 + 8 * (1 - depth))   // jitter plus fort devant
+        layers.push({
+          x: clamp(x, 0, 98),
+          yBottomVh: yBottom,
+          size: baseSize + (rng() - 0.5) * 10,
+          v: b * perBand + i,
+          opacity: lerp(1, 0.7, depth),
+          z: 12 + Math.floor(depth * 10),            // arbres AU-DESSUS des animaux
+        })
+      }
+    }
+    // dessiner les lointains d'abord (petits), puis les proches
+    return layers.sort((a, b) => a.size - b.size)
+  }, [])
+
+  /* RENDER */
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden -z-10">
-      {/* Ciel dégradé */}
-      <motion.div
-        className="absolute inset-0"
-        style={{ background: `linear-gradient(to bottom,${skyColor} 60%,#75c9ff 100%)` }}
-      />
+      {/* CIEL */}
+      <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, ${skyTop} 55%, ${skyBottom} 100%)`, zIndex: 0 }} />
+      <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)', backgroundSize: '3px 3px', opacity: 0.4, zIndex: 1 }} />
 
-      {/* Soleil & Lune */}
-      {[
-        { icon: <SunIcon />, op: [1, 1, 0, 0, 1], key: 'sun' },
-        { icon: <MoonIcon />, op: [0, 0, 1, 1, 0], key: 'moon' },
-      ].map(({ icon, op, key }) => (
-        <motion.div
-          key={key}
-          animate={{
-            x: ['-10vw', '110vw'],
-            y: ['50vh', '-10vh', '50vh', '110vh'],
-            opacity: op,
-          }}
-          transition={{ duration: cycle, repeat: Infinity, ease: 'linear' }}
-          style={{ position: 'absolute', pointerEvents: 'none' }}
-        >
-          {icon}
-        </motion.div>
-      ))}
+      {/* ÉTOILES */}
+      {stars.map(s => {
+        const show = isNightPhase(phase) || phase === 'dawn_dusk'
+        const base = phase === 'dawn_dusk' ? 0.2 : phase === 'midnight' ? 0.95 : 0.7
+        return (
+          <motion.div key={s.id} initial={{ opacity: 0 }} animate={{ opacity: show ? [0.1, base, 0.1] : 0 }} transition={{ duration: s.tw, repeat: Infinity, delay: s.delay }}
+            style={{ position: 'absolute', left: `${s.left}vw`, top: `${s.top}vh`, width: s.size, height: s.size, borderRadius: s.size, background: '#fff', boxShadow: '0 0 6px #fff8', zIndex: 2 }} />
+        )
+      })}
 
-      {/* Flèche de vent */}
-      <motion.div
-        style={{
-          position: 'absolute',
-          top: '4vh',
-          left: '4vw',
-          originX: 0.5,
-          originY: 0.5,
-          rotate: arrowRotation,
-        }}
-      >
-        <WindArrow />
+      {/* Soleil/Lune */}
+      {sun.visible && <div style={{ position: 'absolute', left: sun.x, top: sun.y, transform: 'translate(-50%, -50%)', zIndex: 2 }}><SunIcon /></div>}
+      {moon.visible && <div style={{ position: 'absolute', left: moon.x, top: moon.y, transform: 'translate(-50%, -50%)', zIndex: 2 }}><MoonIcon /></div>}
+
+      {/* Vent */}
+      <motion.div style={{ position: 'absolute', top: '4vh', left: '4vw', originX: 0.5, originY: 0.5, rotate: arrowRotation, zIndex: 2 }}>
+        <svg viewBox="0 0 32 32" width={36} height={36}><path d="M2 16 H26 M18 8 L26 16 L18 24" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" /></svg>
       </motion.div>
 
       {/* Nuages */}
-      {clouds}
+      {cloudsFar}
+      {cloudsNear}
 
       {/* Montagnes */}
-      <MountainBackground />
-
-      {/* Ville à droite, collée au bord */}
-      <div className="absolute" style={{ top: '30vh', right: 0 }}>
-        <City dayProgress={dayProgress} />
-      </div>
-
-      {/* Plaine/Arbres — fond vert jusqu'à la plage */}
-      <div
-        className="absolute left-0 right-0"
-        style={{
-          top: '52vh',
-          height: '21vh',
-          width: '100vw',
-          background: 'linear-gradient(to top,#379F3D 70%,#4caf50 100%)',
-          zIndex: 2,
-        }}
-      >
-        <div className="flex justify-evenly items-end h-full">
-          {Array.from({ length: 11 }).map((_, i) => (
-            <TreeIcon key={i} size={90 + (i % 3) * 10} v={i} />
-          ))}
-        </div>
-      </div>
-
-      {/* Fleurs sur la plaine */}
-      {flowers}
-
-      {/* Plage — un peu agrandie */}
-      <svg
-        viewBox="0 0 1000 100"
-        className="absolute left-0 right-0"
-        style={{
-          top: '73vh',
-          height: '11vh',
-          width: '100vw',
-          minWidth: 1200,
-          zIndex: 3,
-        }}
-        preserveAspectRatio="none"
-      >
-        <path
-          d="M0 45 Q100 25 200 48 T400 40 T600 50 T800 45 T1000 38 V100 H0 Z"
-          fill="#f9d9a6"
-        />
+      <svg viewBox="0 0 1000 200" className="absolute inset-x-0" style={{ top: '30vh', height: '22vh', width: '100vw', minWidth: 1200, zIndex: 1 }} preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="neige" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#ffffff" />
+            <stop offset="60%" stopColor="#eeeeee" />
+            <stop offset="80%" stopColor="#cbd2d6" />
+            <stop offset="100%" stopColor="#4e6574" />
+          </linearGradient>
+        </defs>
+        <path d="M0 150 L120 80 L240 140 L380 60 L520 120 L650 90 L780 140 L1000 60 V200 H0 Z" fill="url(#neige)" />
       </svg>
 
-      {/* Coquillages + crabes */}
-      {shells}
-      {crabs}
+      {/* PLAINE (arbres en profondeur) */}
+      <div className="absolute left-0 right-0" style={{
+        top: '52vh',
+        height: '22.5vh',
+        width: '100vw',
+        background: 'linear-gradient(to top,#379F3D 70%,#4caf50 100%)',
+        zIndex: 4,
+      }}>
+        {treeLayers.map((t, i) => (
+          <div
+            key={`tree-${i}`}
+            style={{
+              position: 'absolute',
+              left: `${t.x}vw`,
+              bottom: `${t.yBottomVh}vh`,
+              opacity: t.opacity,
+              zIndex: t.z, // arbres AU-DESSUS (occlusion)
+            }}
+          >
+            <TreeIcon size={t.size} v={t.v} tint={lerp(1, 0.85, (t.size - 50) / (108 - 50))} />
+          </div>
+        ))}
+      </div>
 
-      {/* Rivière - va jusqu'en bas, nénuphars dessus */}
+      {/* Fleurs (plaine) */}
+      {flowers}
+
+      {/* PLAGE */}
+      <svg viewBox="0 0 1000 100" className="absolute left-0 right-0" style={{ top: '74vh', height: '10.5vh', width: '100vw', minWidth: 1200, zIndex: 6 }} preserveAspectRatio="none">
+        <path d="M0 0 L1000 0 L1000 100 L0 100 Z" fill="#f9d9a6" />
+      </svg>
+
+      {/* Coquillages */}
+      {shells}
+
+      {/* Crabe (plage, balade + légère variation de hauteur) */}
       <motion.div
-        className="absolute left-0 right-0"
-        style={{
-          bottom: 0,
-          top: '84vh',
-          height: '16vh',
-          width: '100vw',
-          minWidth: 1200,
-          background: 'linear-gradient(to top,#3296e0 70%,#3fa9f5 100%)',
-          zIndex: 4,
+        style={{ position: 'absolute', left: '-15vw', zIndex: 7 }}
+        animate={{
+          x: ['-15vw', '115vw', '-15vw'],
+          bottom: ['12.5vh', '13.8vh', '12.2vh'],
         }}
-      />
-      {/* Nénuphars animés */}
-      {lilyPads}
+        transition={{ duration: 85, repeat: Infinity, ease: 'linear' }}
+      >
+        <CrabIcon size={24} />
+      </motion.div>
+
+      {/* RIVIÈRE */}
+      <div className="absolute left-0 right-0" style={{ bottom: 0, top: '84.5vh', height: '15.5vh', width: '100vw', minWidth: 1200,
+        background: 'linear-gradient(to top,#3296e0 70%,#3fa9f5 100%)', zIndex: 3 }} />
+
+      {/* Feuilles rivière */}
+      {leaves.map(lf => <div key={`leaf-${lf.id}`} style={{ position: 'absolute', top: `${lf.y}vh`, left: `${lf.x}vw`, zIndex: 3 }}>
+        <svg viewBox="0 0 24 12" width={lf.size} height={(lf.size*12)/24}><path d="M2 6 Q10 -2 22 6 Q10 14 2 6 Z" fill="#8fd19e" stroke="#5aa576" strokeWidth="1" /><path d="M2 6 L22 6" stroke="#5aa576" strokeWidth="1" /></svg>
+      </div>)}
+
+      {/* ANIMAUX — en dessous des arbres (occlusion ok) */}
+      {animals.map(a => (
+        <div key={`animal-${a.id}`} style={{
+          position: 'absolute',
+          top: `${a.y}vh`,
+          left: `${a.x}vw`,
+          transform: 'translate(-50%, -50%)',
+          opacity: a.dying ? 0.6 : 1,
+          zIndex: 11, // < arbres (12+)
+        }}>
+          <img
+            src={ICONS[a.type]}
+            alt={a.type}
+            style={{
+              width: BASE_SIZE[a.type] * a.sizeScale,
+              height: 'auto',
+              transform: a.dir < 0 ? 'scaleX(-1)' : undefined,
+              filter: 'drop-shadow(0 2px 4px #0003)',
+            }}
+          />
+        </div>
+      ))}
+
+      {/* Cœurs d'accouplement (10s) */}
+      {hearts.map(h => {
+        const life = Math.max(0, h.until - performance.now())
+        const alpha = Math.min(1, life / HEART_MS)
+        return (
+          <motion.div
+            key={`heart-${h.id}-${Math.round(h.until)}`}
+            style={{ position: 'absolute', left: `${h.x}vw`, top: `${h.y}vh`, zIndex: 10, transform: 'translate(-50%, -50%)' }}
+            animate={{ y: [0, -2, 0], opacity: [alpha, alpha * 0.8, alpha] }}
+            transition={{ duration: 2.2, repeat: Infinity }}
+          >
+            <HeartIcon size={18} />
+          </motion.div>
+        )
+      })}
     </div>
   )
 }
-
-/* 
-────────────────────────────────────────────
-Modifications effectuées :
-- Les poissons sont supprimés. 
-- La rivière va jusqu'en bas de l'écran, elle est élargie.
-- La plage est agrandie, bien collée à la rivière.
-- Le front vert (plaine) va jusqu'à la plage, sans fond blanc.
-- Ajout de fleurs variées sur la plaine.
-- Nénuphars animés sur la rivière à la place des poissons.
-- Montagnes avec dégradé neige > roche (plus de zigzag blanc).
-- Nuages : 10 formes SVG vraiment différentes, choix aléatoire par nuage.
-- Ville : lumières des fenêtres gérées selon l'heure (jour, nuit, minuit).
-- Animation fluide et code optimisé, bien commenté.
-────────────────────────────────────────────
-*/
