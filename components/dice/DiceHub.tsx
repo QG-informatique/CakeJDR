@@ -1,5 +1,12 @@
 'use client'
 
+/*
+  Corrections apportées :
+  - Mise à jour immédiate du diceState lors du lancement pour afficher la bannière du joueur.
+  - Timer conservé entre les rerenders pour retirer le joueur actif et nettoyer la file.
+  - Nettoyage local du diceState à la fin du lancer même si l'évènement 'dice-roll-end' ne revient pas.
+*/
+
 import { useEffect, useMemo, useRef } from 'react'
 import { LiveList, LiveObject, LsonObject } from '@liveblocks/client'
 import { useBroadcastEvent, useEventListener, useStorage, useMutation } from '@liveblocks/react'
@@ -197,6 +204,7 @@ export default function DiceHub() {
   })
 
   // --- Orchestration: promotion + diffusion + fin ---
+  const activeTimerRef = useRef<number | null>(null) // conserve le timer de fin entre les rendus
   useEffect(() => {
     if (!storageReady) return
     if (!queueItems.length) return
@@ -226,17 +234,26 @@ export default function DiceHub() {
         name: first.name,
         color: first.color,
       }
+
+      setDiceStateRolling(startEvent) // met à jour immédiatement l'état partagé pour afficher la bannière
       broadcast(startEvent as unknown as Liveblocks['RoomEvent'])
 
       const total = Math.max(0, endAt - Date.now()) + 20
-      const t = window.setTimeout(() => {
+      if (activeTimerRef.current) window.clearTimeout(activeTimerRef.current)
+      activeTimerRef.current = window.setTimeout(() => {
         removeById(first.id)
+        clearDiceState() // sécurité locale si l'évènement de fin n'est pas reçu
         broadcast({ type: 'dice-roll-end', entryId: first.id } as unknown as Liveblocks['RoomEvent'])
       }, total)
-      return () => window.clearTimeout(t)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storageReady, queueItems.length, waiting.length, diceStateObj.phase, diceStateObj.endAt])
+  }, [storageReady, queueItems, diceStateObj.phase, diceStateObj.endAt])
+
+  useEffect(() => {
+    return () => {
+      if (activeTimerRef.current) window.clearTimeout(activeTimerRef.current)
+    }
+  }, [])
 
   // --- “API” publique: écoute jdr:roll puis kickstart si personne ne lance ---
   useEffect(() => {
@@ -296,8 +313,8 @@ export default function DiceHub() {
           const idx = list.findIndex(i => i.id === first.id)
           if (idx >= 0) (root.diceQueue as LiveList<QueueItem>).set(idx, { ...first, status: 'active', createdAt: Date.now() })
 
-          // broadcast start
-          broadcast({
+          // prépare l'évènement de démarrage
+          const startEvent: DiceStartEvent = {
             type: 'dice-roll-start',
             entryId: first.id,
             diceType: first.diceType,
@@ -306,7 +323,10 @@ export default function DiceHub() {
             endAt,
             name: first.name,
             color: first.color,
-          } as unknown as Liveblocks['RoomEvent'])
+          }
+
+          setDiceStateRolling(startEvent) // mise à jour locale pour afficher la bannière en solo
+          broadcast(startEvent as unknown as Liveblocks['RoomEvent'])
 
           // program end
           const total = Math.max(0, endAt - Date.now()) + 20
@@ -315,6 +335,7 @@ export default function DiceHub() {
             const fresh: QueueItem[] = normalizeQueue(root?.diceQueue)
             const rmIdx = fresh.findIndex(i => i.id === first.id)
             if (rmIdx >= 0) (root!.diceQueue as LiveList<QueueItem>).delete(rmIdx)
+            clearDiceState() // en solo, l'évènement 'end' peut ne pas revenir
             broadcast({ type: 'dice-roll-end', entryId: first.id } as unknown as Liveblocks['RoomEvent'])
           }, total)
         }
@@ -323,7 +344,7 @@ export default function DiceHub() {
 
     window.addEventListener('jdr:roll', handler as EventListener)
     return () => window.removeEventListener('jdr:roll', handler as EventListener)
-  }, [enqueue, broadcast, root])
+  }, [enqueue, broadcast, root, setDiceStateRolling, clearDiceState])
 
   // Affichage piloté par diceState (avec fallback timer ci-dessus)
   const bannerVisible = diceStateObj.phase === 'rolling' && (diceStateObj.endAt ?? 0) > Date.now()
