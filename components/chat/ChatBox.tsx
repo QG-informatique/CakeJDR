@@ -58,19 +58,16 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [events])
 
+  // When collapsed, only show a floating button so the panel frees all space
   if (collapsed) {
     return (
-      <aside
-        className="w-12 p-1 flex flex-col items-start h-full rounded-xl border border-white/10 bg-black/15 backdrop-blur-[2px] shadow-lg shadow-black/10 transition flex-shrink-0"
+      <button
+        onClick={() => setCollapsed(false)}
+        aria-label="Expand chat panel"
+        className="absolute top-2 right-2 z-50 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
       >
-        <button
-          onClick={() => setCollapsed(false)}
-          aria-label="Expand chat panel"
-          className="mt-2 text-white/80 hover:text-white bg-black/30 rounded-full p-1 self-center"
-        >
-          <ChevronLeft size={20} />
-        </button>
-      </aside>
+        <ChevronLeft size={20} />
+      </button>
     )
   }
 
@@ -96,7 +93,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
         <button
           onClick={() => setCollapsed(true)}
           aria-label="Collapse chat panel"
-          className="absolute top-2 left-2 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
+          className="absolute top-2 left-2 z-50 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
         >
           <ChevronRight size={20} />
         </button>
@@ -125,7 +122,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
       <button
         onClick={() => setCollapsed(true)}
         aria-label="Collapse chat panel"
-        className="absolute top-2 left-2 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
+        className="absolute top-2 left-2 z-50 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
       >
         <ChevronRight size={20} />
       </button>

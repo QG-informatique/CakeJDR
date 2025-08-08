@@ -52,22 +52,16 @@ const DiceRoller: FC<Props> = ({
     }
   }
 
+  // When collapsed, show only a centered expand button
   if (collapsed) {
     return (
-      <div
-        className="h-12 flex items-center justify-center rounded-xl border border-white/10 bg-black/15 backdrop-blur-[2px] shadow-lg shadow-black/10 transition flex-shrink-0"
-        style={{
-          boxShadow: '0 4px 18px -8px rgba(0,0,0,0.24), 0 0 0 1px rgba(255,255,255,0.05)',
-        }}
+      <button
+        onClick={() => setCollapsed(false)}
+        aria-label="Expand dice panel"
+        className="absolute bottom-2 left-1/2 -translate-x-1/2 z-50 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
       >
-        <button
-          onClick={() => setCollapsed(false)}
-          aria-label="Expand dice panel"
-          className="text-white/80 hover:text-white bg-black/30 rounded-full p-1"
-        >
-          <ChevronUp size={20} />
-        </button>
-      </div>
+        <ChevronUp size={20} />
+      </button>
     )
   }
 
@@ -91,7 +85,7 @@ const DiceRoller: FC<Props> = ({
         <button
           onClick={() => setCollapsed(true)}
           aria-label="Collapse dice panel"
-          className="text-white/80 hover:text-white bg-black/30 rounded-full p-1"
+          className="z-50 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
         >
           <ChevronDown size={20} />
         </button>
