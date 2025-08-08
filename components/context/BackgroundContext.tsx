@@ -56,14 +56,18 @@ const BackgroundContext = createContext<BackgroundContextValue | undefined>(
 )
 
 export function BackgroundProvider({ children }: { children: ReactNode }) {
-  // état initial : 'rpg' (ou valeur sauvegardée en local)
-  const [background, setBackground] = useState<BackgroundType>(() => {
-    if (typeof window !== 'undefined') {
+  // état initial : 'rpg'
+  const [background, setBackground] = useState<BackgroundType>('rpg')
+
+  // 🔁 Restaure le background sauvegardé au montage
+  useEffect(() => {
+    try {
       const stored = localStorage.getItem('background') as BackgroundType | null
-      if (stored && cycleOrder.includes(stored)) return stored
+      if (stored && cycleOrder.includes(stored)) setBackground(stored)
+    } catch {
+      // ignore read errors
     }
-    return 'rpg'
-  })
+  }, [])
 
   // 💾 Sauvegarde le background à chaque changement
   useEffect(() => {
