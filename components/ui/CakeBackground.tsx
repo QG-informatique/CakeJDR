@@ -1,96 +1,154 @@
 'use client'
 
-import { motion } from 'framer-motion'
-import CakeLogo from '../ui/CakeLogo'
-import React, { useEffect, useState } from 'react'
-
 /**
- * CakeBackground – v9 (bleu ciel, overlay isolé)
- * =============================================
- * ✅ Ce fichier résout définitivement l’effet de « voile pâle » sur toute la page :
- *   - Le wrapper porte désormais `isolate z-0`, créant un *stacking context* indépendant.
- *   - L’overlay bleu ciel reste sous les icônes (`-z-10`) **mais ne touche plus le reste du contenu**.
- *   - Couleur revue : `bg-sky-200/60` (bleu clair un peu plus soutenu que sky‑50).
- *   - Toutes les tailles/icônes inchangées (pâtisseries ×2).
- *
- * 👉 Copie‑colle tel quel ; aucun safelist n’est requis, car la classe est codée en dur.
+ * CakeBackground – TopoFlow (cyan sombre) v2
+ * ==========================================
+ * ✅ Même concept que le TopoFlow précédent (lignes topo qui ondulent),
+ *    mais palette assombrie pour ne pas fatiguer les yeux en faible luminosité.
+ * ✅ Toujours zéro étoiles, zéro rubans, zéro icônes.
+ * ✅ Lignes topo visibles mais moins contrastées → meilleur confort visuel.
  */
 
-// === Configuration simple ===
-const OVERLAY_CLASS = 'bg-sky-200/60' // bleu ciel doux, 24 % opacité
-const LOGO_COLOR_CLASS = 'text-pink-300'
-const PASTRY_COLOR_CLASS = 'text-rose-400'
+import React, { useMemo } from 'react'
+import { motion } from 'framer-motion'
 
-interface CakeBackgroundProps {
-  /** Proportion de pâtisseries (0 → jamais, 1 → toujours). */
-  pastryRatio?: number
+/* =========================
+   CONFIG (couleurs & topo)
+   ========================= */
+const THEME = {
+  // Dégradé bleu-cyan sombre
+  background:
+    'linear-gradient(180deg, #0A1B21 0%, #0C232A 50%, #0E2B33 100%)',
+  // Halos très subtils
+  tintA: 'rgba(0, 157, 255, 0.08)',  // cyan plus saturé
+  tintB: 'rgba(0, 200, 167, 0.06)',  // menthe
+  // Lignes topo légèrement éclaircies par rapport au fond
+  line: 'rgba(180, 230, 255, 0.15)',
 }
 
-export default function CakeBackground({ pastryRatio = 0.15 }: CakeBackgroundProps) {
-  // === Constantes ===
-  const LOGO_COUNT = 40
-  const MIN_SIZE = 30 // px
-  const MAX_SIZE = 68 // px
-  const MIN_DURATION = 18 // s
-  const EXTRA_DURATION = 10 // s
-  const PASTRY_SCALE = 2 // emojis ×2 pour égaler visuellement le SVG
-  const PASTRY_EMOJIS = ['🍩', '🍪', '🍰'] as const
+const TOPO = {
+  rows: 14,
+  width: 1200,
+  height: 800,
+  ampBase: 10,
+  ampJitter: 6,
+  freq: 2.2,
+  duration: 24,
+  strokeWidth: 1.6,
+  opacityStart: 0.25,
+}
 
-  /**
-   * Crée un élément flottant (CakeLogo ou pâtisserie)
-   */
-  const createFloatingItem = (key: number): React.ReactElement => {
-    const baseSize = Math.random() * (MAX_SIZE - MIN_SIZE) + MIN_SIZE
-    const isPastry = Math.random() < pastryRatio
-    const size = isPastry ? baseSize * PASTRY_SCALE : baseSize
-
-    const left = Math.random() * 100 // % largeur viewport
-    const duration = MIN_DURATION + Math.random() * EXTRA_DURATION
-    const delay = -Math.random() * duration
-
-    return (
-      <motion.div
-        key={key}
-        initial={{ y: '110vh', opacity: 0 }}
-        animate={{ y: '-110vh', opacity: 0.66 }}
-        transition={{ duration, repeat: Infinity, delay, ease: 'linear' }}
-        style={{ position: 'absolute', left: `${left}vw`, width: size, height: size }}
-      >
-        {/* Ombre subtile */}
-        <div style={{ width: '100%', height: '100%', opacity: 0.9, filter: 'drop-shadow(0 2px 8px #fff4)' }}>
-          {isPastry ? (
-            // ==> Emoji pâtisserie (agrandi via fontSize inline)
-            <span
-              className={`inline-block w-full h-full flex items-center justify-center ${PASTRY_COLOR_CLASS}`}
-              style={{ lineHeight: 1, fontSize: size }}
-            >
-              {PASTRY_EMOJIS[Math.floor(Math.random() * PASTRY_EMOJIS.length)]}
-            </span>
-          ) : (
-            // ==> CakeLogo (SVG)
-            <CakeLogo xl showText={false} className={LOGO_COLOR_CLASS} />
-          )}
-        </div>
-      </motion.div>
-    )
+/* =========================
+   HELPERS
+   ========================= */
+const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v))
+function mulberry32(seed: number) {
+  return function () {
+    let t = (seed += 0x6d2b79f5)
+    t = Math.imul(t ^ (t >>> 15), t | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
   }
+}
 
-  const [items, setItems] = useState<React.ReactElement[]>([])
+function makeTopoPath({
+  W, H, baseY, amp, phase, freq,
+}: { W: number; H: number; baseY: number; amp: number; phase: number; freq: number; }) {
+  const N = 12
+  const k = (Math.PI * 2 * freq) / (N - 1)
+  const c = W / (N - 1) * 0.42
+  const pts = Array.from({ length: N }, (_, i) => {
+    const x = (W / (N - 1)) * i
+    const y = baseY + Math.sin(phase + i * k) * amp
+    return { x, y }
+  })
+  const d = [
+    `M ${pts[0].x} ${pts[0].y}`,
+    ...pts.slice(0, -1).map((p, i) => {
+      const p2 = pts[i + 1]
+      return `C ${p.x + c} ${p.y}, ${p2.x - c} ${p2.y}, ${p2.x} ${p2.y}`
+    }),
+  ].join(' ')
+  return d
+}
 
-  useEffect(() => {
-    const arr: React.ReactElement[] = []
-    for (let i = 0; i < LOGO_COUNT; ++i) arr.push(createFloatingItem(i))
-    setItems(arr)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pastryRatio])
+/* =========================
+   LIGNE TOPO : 1 <path> morphé
+   ========================= */
+function TopoLine({
+  index,
+  total,
+  seed,
+}: { index: number; total: number; seed: number }) {
+  const rnd = useMemo(() => mulberry32(seed + index * 97), [seed, index])
+  const { W, H } = { W: TOPO.width, H: TOPO.height }
+  const baseY = Math.round((H * (index + 1)) / (total + 1) + (rnd() - 0.5) * 18)
+  const amp = TOPO.ampBase + (rnd() - 0.5) * TOPO.ampJitter * 2
+  const freq = clamp(TOPO.freq + (rnd() - 0.5) * 0.5, 1.6, 3.0)
+
+  const phases = [0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2]
+  const paths = useMemo(
+    () => phases.map(ph => makeTopoPath({ W, H, baseY, amp, phase: ph, freq })),
+    [W, H, baseY, amp, freq]
+  )
+
+  const centerBias = 1 - Math.abs((index - (total - 1) / 2) / ((total - 1) / 2))
+  const opacity = clamp(0.1 + centerBias * (TOPO.opacityStart - 0.1), 0.08, TOPO.opacityStart)
+  const delay = -(rnd() * TOPO.duration)
 
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden isolate z-0">
-      {/* Overlay bleu ciel sous les icônes, mais isolé du reste de la page */}
-      <div className={`absolute inset-0 -z-10 ${OVERLAY_CLASS}`} />
+    <motion.path
+      d={paths[0]}
+      animate={{ d: paths }}
+      transition={{ duration: TOPO.duration, repeat: Infinity, ease: 'easeInOut', delay }}
+      stroke={THEME.line}
+      strokeWidth={TOPO.strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      opacity={opacity}
+      fill="none"
+    />
+  )
+}
 
-      {/* Icônes flottantes */}
-      {items}
+/* =========================
+   Composant principal
+   ========================= */
+export default function CakeBackground() {
+  const lines = useMemo(() => {
+    const arr: React.ReactElement[] = []
+    const seed = 20250809
+    for (let i = 0; i < TOPO.rows; i++) {
+      arr.push(<TopoLine key={`topo-${i}`} index={i} total={TOPO.rows} seed={seed} />)
+    }
+    return arr
+  }, [])
+
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden isolate z-0" aria-hidden>
+      {/* Fond sombre */}
+      <div className="absolute inset-0" style={{ background: THEME.background }} />
+
+      {/* Halos très discrets */}
+      <div
+        className="absolute -top-[30vh] -left-[20vw] w-[90vw] h-[90vh] blur-3xl opacity-70"
+        style={{ background: `radial-gradient(50% 50% at 50% 50%, ${THEME.tintA} 0%, transparent 70%)`, mixBlendMode: 'screen' as any }}
+      />
+      <div
+        className="absolute -bottom-[35vh] -right-[25vw] w-[100vw] h-[100vh] blur-3xl opacity-70"
+        style={{ background: `radial-gradient(50% 50% at 50% 50%, ${THEME.tintB} 0%, transparent 70%)`, mixBlendMode: 'screen' as any }}
+      />
+
+      {/* Lignes topo */}
+      <svg
+        className="absolute inset-0"
+        viewBox={`0 0 ${TOPO.width} ${TOPO.height}`}
+        width="100%"
+        height="100%"
+        preserveAspectRatio="none"
+      >
+        {lines}
+      </svg>
     </div>
   )
 }
