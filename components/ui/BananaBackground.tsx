@@ -1,76 +1,133 @@
 'use client'
 
-import { motion } from 'framer-motion'
-import React, { useEffect, useState } from 'react'
-
 /**
- * BananaBackground – v1 (fond jaune doux)
- * ======================================
- * 🎯 Objectif : remplacer le fond gris foncé par un **jaune clair** qui met en valeur les bananes,
- * sans ternir le reste de la page.
+ * CakeBackground — Fibres tressées (v1)
+ * =====================================
+ * ✅ Fond original & simple : trame de fibres diagonales (effet lin/ramie).
+ * ✅ 100% CSS (gradients), zéro asset, ultra-perf.
+ * ✅ Reflet (sheen) qui balaie en douceur + vignettage discret.
+ * ✅ Accessibilité : animation désactivée si prefers-reduced-motion.
  *
- * - **Overlay isolé** (`isolate z-0`) comme sur CakeBackground → l'overlay reste sous les icônes et
- *   n'affecte pas le contenu en dehors du composant.
- * - **Couleur de fond** : `bg-amber-100/40` (jaune pastel ≃ 16 % d'opacité). Change `OVERLAY_CLASS`
- *   si tu veux une nuance différente (`amber-50` ou `yellow-100`, etc.).
- * - **Animation** : icônes à `opacity: 1` (pas de voile).
+ * ---------------------------
+ * LISTE DES MODIFICATIONS
+ * ---------------------------
+ * [1] Double trame en diagonale via repeating-linear-gradient à +45° / -45°.
+ * [2] Micro-ombrage et micro-brillance par bandes étroites (simulateur de fibre).
+ * [3] Couche de “sheen” (reflet) animée en diagonale, faible intensité.
+ * [4] Vignettage doux pour la profondeur, variables CSS centralisées pour le thème.
  */
 
-// === Overlay configuration ===
-const OVERLAY_CLASS = 'bg-amber-100/40' // jaune pastel, 16 % opacité
+import React from 'react'
 
-/**
- * SVG d'une banane lisse et bien courbée.
- */
-function BananaIcon() {
+export default function CakeBackground() {
   return (
-    <svg width="60px" height="60px" viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M23.86,22.77C-1.41,43.27.53,91.37,18.94,115.59c21.9,28.81,80.15,48.65,124.37,0,4.08-4.49,0-9.31-4.2-7.5C82,132.69,30.84,62.59,36.52,27.94,38.63,15.11,44,5.77,33,5.77S23.86,22.77,23.86,22.77Z"
-        fill="#FFD700" stroke="#5C3B0B" strokeWidth="2"
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-0 isolate z-0"
+      style={{
+        // ====== VARIABLES TWEAK ======
+        // Couleurs principales (tissu)
+        ['--bg' as any]: '#13161c',                   // fond global sous la trame
+        ['--fiber-dark' as any]: 'rgba(220,225,230,0.14)',
+        ['--fiber-light' as any]: 'rgba(255,255,255,0.06)',
+        // Pas de fibre (contrôle densité)
+        ['--fiber-w' as any]: '2px',                  // largeur d'une fibre
+        ['--fiber-gap' as any]: '6px',                // écart entre fibres
+        // Reflet (sheen)
+        ['--sheen' as any]: 'rgba(255,255,230,0.10)',
+        ['--sheen-size' as any]: '60vmin',
+        ['--sheen-blur' as any]: '22px',
+        // Vitesse de balayage
+        ['--speed' as any]: '18s',
+      }}
+    >
+      {/* Couche 0 — Fond de base */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            'linear-gradient(180deg, #0f141a 0%, var(--bg) 100%)',
+        }}
       />
-      <path
-        d="M31.38,22.69a11.85,11.85,0,0,1-5.62-1.23c-.13-2.51,0-8.57,2.49-11.53a5.71,5.71,0,0,1,4.27-2.19c2,0,3.79.2,4.59,1.19,1.2,1.47.13,6.22-.95,10.84-.18.76-.35,1.66-.53,2.45A15.27,15.27,0,0,1,31.38,22.69Z"
-        fill="#FFE066" stroke="#5C3B0B" strokeWidth="1.5"
+
+      {/* Couche 1 — Trame diagonale +45° (warp) */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: `
+            repeating-linear-gradient(
+              45deg,
+              var(--fiber-dark) 0 var(--fiber-w),
+              transparent var(--fiber-w) calc(var(--fiber-w) + var(--fiber-gap))
+            ),
+            repeating-linear-gradient(
+              45deg,
+              transparent 0 calc(var(--fiber-w) + var(--fiber-gap)),
+              var(--fiber-light) calc(var(--fiber-w) + var(--fiber-gap)) calc(var(--fiber-w) + var(--fiber-gap) + 1px)
+            )
+          `,
+          mixBlendMode: 'screen',
+          opacity: 0.9,
+        }}
       />
-      <path d="M24.31,21.66c2.31,2.28,11,1.91,12.84,1.25" fill="none" stroke="#5C3B0B" strokeWidth="1.5" />
-      <path
-        d="M36.67,23.92C18.59,20,16.67,72.13,34.5,95.17c24.71,31.92,69.5,40.83,109,14.1-1.17-1.34-2-3.06-4.24-2.24-13.63,5-46.42,14.64-79.4-21.55C34.29,57.43,36.67,32.83,36.67,23.92Z"
-        fill="#FFC700" stroke="#5C3B0B" strokeWidth="2"
+
+      {/* Couche 2 — Trame diagonale -45° (weft) */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: `
+            repeating-linear-gradient(
+              -45deg,
+              var(--fiber-dark) 0 var(--fiber-w),
+              transparent var(--fiber-w) calc(var(--fiber-w) + var(--fiber-gap))
+            ),
+            repeating-linear-gradient(
+              -45deg,
+              transparent 0 calc(var(--fiber-w) + var(--fiber-gap)),
+              var(--fiber-light) calc(var(--fiber-w) + var(--fiber-gap)) calc(var(--fiber-w) + var(--fiber-gap) + 1px)
+            )
+          `,
+          mixBlendMode: 'screen',
+          opacity: 0.85,
+        }}
       />
-    </svg>
-  )
-}
 
-export default function BananaBackground() {
-  const [bananas, setBananas] = useState<React.ReactElement[]>([])
+      {/* Couche 3 — Reflet (sheen) qui balaye en diagonale */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: `radial-gradient(
+            var(--sheen-size) var(--sheen-size) at -10% 110%,
+            var(--sheen) 0%,
+            rgba(255,255,255,0) 65%
+          )`,
+          filter: `blur(var(--sheen-blur))`,
+          mixBlendMode: 'screen',
+          animation: 'weaveSweep var(--speed) linear infinite',
+        }}
+      />
 
-  useEffect(() => {
-    const arr: React.ReactElement[] = []
-    for (let i = 0; i < 36; ++i) {
-      const left = Math.random() * 100
-      const duration = 16 + Math.random() * 11
-      const delay = -Math.random() * duration
-      arr.push(
-        <motion.div
-          key={i}
-          initial={{ y: '110vh', opacity: 0 }}
-          animate={{ y: '-120vh', opacity: 1 }} // icônes pleinement opaques
-          transition={{ duration, repeat: Infinity, delay, ease: 'linear' }}
-          style={{ position: 'absolute', left: `${left}vw`, pointerEvents: 'none' }}
-        >
-          <BananaIcon />
-        </motion.div>
-      )
-    }
-    setBananas(arr)
-  }, [])
+      {/* Couche 4 — Vignettage doux */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(120% 90% at 50% 40%, rgba(0,0,0,0) 65%, rgba(0,0,0,0.22) 100%)',
+          mixBlendMode: 'multiply',
+        }}
+      />
 
-  return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden isolate z-0">
-      {/* Overlay jaune doux placé derrière les bananes */}
-      <div className={`absolute inset-0 -z-10 ${OVERLAY_CLASS}`} />
-      {bananas}
+      {/* Styles embarqués : animation + reduced motion */}
+      <style jsx>{`
+        @keyframes weaveSweep {
+          0%   { background-position: -20% 120%; }
+          50%  { background-position: 120% -20%; }
+          100% { background-position: -20% 120%; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          :global(div[aria-hidden] .absolute.inset-0:nth-child(3)) { animation: none !important; }
+        }
+      `}</style>
     </div>
   )
 }
