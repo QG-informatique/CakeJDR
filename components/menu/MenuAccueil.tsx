@@ -204,7 +204,7 @@ export default function MenuAccueil() {
   const handleEditCharacter = (id: string | number) => {
     const idx = characters.findIndex((c) => String(c.id) === String(id))
     if (idx !== -1) {
-      setDraftChar(characters[idx]!)
+      setDraftChar(characters.at(idx)!)
       setModalOpen(true)
     }
   }
@@ -232,7 +232,7 @@ export default function MenuAccueil() {
     if (!window.confirm(t('deleteSheetConfirm'))) return
     const idx = characters.findIndex((c) => String(c.id) === String(id))
     if (idx === -1) return
-    const toDelete = characters[idx]
+    const toDelete = characters.at(idx)
     const remaining = characters.filter((_, i) => i !== idx)
     saveCharacters(remaining)
     if (
@@ -277,7 +277,7 @@ export default function MenuAccueil() {
 
   const handleExportChar = () => {
     if (selectedIdx === null) return
-    const char = characters[selectedIdx]!
+      const char = characters.at(selectedIdx)!
     const blob = new Blob([JSON.stringify(char, null, 2)], {
       type: 'text/plain',
     })
@@ -369,7 +369,7 @@ export default function MenuAccueil() {
 
   const handleSelectChar = (idx: number) => {
     setSelectedIdx(idx)
-    const ch = filteredCharacters[idx]
+      const ch = filteredCharacters.at(idx)
     if (ch?.id !== undefined) {
       localStorage.setItem(SELECTED_KEY, String(ch.id))
     }

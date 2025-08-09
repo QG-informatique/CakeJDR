@@ -8,18 +8,20 @@ export default function useOnlineStatus(user: string | null, profile: Profile | 
     localStorage.setItem('jdr_profile_id', id)
     const updateOnline = () => {
       try {
-        const list = JSON.parse(localStorage.getItem('jdr_online') || '{}')
-        list[id] = { pseudo: user, color: profile.color }
-        localStorage.setItem('jdr_online', JSON.stringify(list))
+        const raw = JSON.parse(localStorage.getItem('jdr_online') || '{}')
+        const list = new Map(Object.entries(raw))
+        list.set(id, { pseudo: user, color: profile.color })
+        localStorage.setItem('jdr_online', JSON.stringify(Object.fromEntries(list)))
         window.dispatchEvent(new Event('jdr_online_change'))
       } catch {}
     }
     updateOnline()
     const handleUnload = () => {
       try {
-        const list = JSON.parse(localStorage.getItem('jdr_online') || '{}')
-        delete list[id]
-        localStorage.setItem('jdr_online', JSON.stringify(list))
+        const raw = JSON.parse(localStorage.getItem('jdr_online') || '{}')
+        const list = new Map(Object.entries(raw))
+        list.delete(id)
+        localStorage.setItem('jdr_online', JSON.stringify(Object.fromEntries(list)))
         window.dispatchEvent(new Event('jdr_online_change'))
       } catch {}
     }

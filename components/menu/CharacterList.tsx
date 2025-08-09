@@ -1,4 +1,4 @@
-import { FC, RefObject } from 'react'
+import { FC, RefObject, useMemo } from 'react'
 import { Edit2, Trash2, Plus, Upload, Download, Cloud } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useT } from '@/lib/useT'
@@ -55,6 +55,7 @@ const CharacterList: FC<Props> = ({
   onImportFile,
 }) => {
   const t = useT()
+  const remoteMap = useMemo(() => new Map(Object.entries(remote)), [remote])
 
   return (
     <section
@@ -84,13 +85,13 @@ const CharacterList: FC<Props> = ({
             <AnimatePresence initial={false}>
               {all.map((ch) => {
                 const isSelected =
-                  selectedIdx !== null && filtered[selectedIdx]?.id === ch.id
+                  selectedIdx !== null && filtered.at(selectedIdx)?.id === ch.id
                 const localIdx = filtered.findIndex(
                   (c) => String(c.id) === String(ch.id),
                 )
                 const local = localIdx !== -1
-                const localChar = local ? filtered[localIdx] : null
-                const cloudChar = remote[String(ch.id)]
+                const localChar = local ? filtered.at(localIdx) : null
+                const cloudChar = remoteMap.get(String(ch.id))
                 const cloud = !!cloudChar
                 const needsDownload =
                   (!local && cloud) ||
@@ -218,7 +219,7 @@ const CharacterList: FC<Props> = ({
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            onUpload(local ? filtered[localIdx]! : ch)
+                              onUpload(local ? filtered.at(localIdx)! : ch)
                           }}
                           className={
                             btnBase +
