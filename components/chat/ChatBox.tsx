@@ -29,7 +29,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
   const displayedEvents = showHistory
     ? sortedEvents
     : sortedEvents.filter(ev => ev.ts >= sessionStart.current)
-  const broadcast = useBroadcastEvent<Liveblocks['RoomEvent']>()
+  const broadcast = useBroadcastEvent()
   const profile = useProfile()
   const t = useT()
   const [collapsed, setCollapsed] = useState(() =>

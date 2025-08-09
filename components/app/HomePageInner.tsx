@@ -39,11 +39,11 @@ export default function HomePageInner() {
   // total durée d'indisponibilité du bouton (animation + hold + cooldown)
   const ROLL_TOTAL_MS = 2000 + 300 + 2000 + 1000
 
-  const broadcast = useBroadcastEvent<Liveblocks['RoomEvent']>()
+  const broadcast = useBroadcastEvent()
   const [, updateMyPresence] = useMyPresence()
 
   // listen for remote dice rolls
-  useEventListener<Liveblocks['RoomEvent']>((event) => {
+  useEventListener((event: Liveblocks['RoomEvent']) => {
     if (event.type === 'dice-roll') {
       setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result, ts: Date.now() }])
     } else if (event.type === 'gm-select') {
