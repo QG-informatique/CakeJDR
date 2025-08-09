@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { useBroadcastEvent, useOthers } from '@liveblocks/react'
 import { useT } from '@/lib/useT'
 import { User2 } from 'lucide-react'
@@ -17,20 +17,16 @@ export default function GMCharacterSelector({
   className = '',
 }: Props) {
   const others = useOthers()
-  const [chars, setChars] = useState<Character[]>([])
+  const chars = useMemo(() => {
+    return Array.from(others)
+      .map((o) => o.presence?.character as Character | undefined)
+      .filter((c): c is Character => !!c && c.id !== undefined)
+  }, [others])
   const [open, setOpen] = useState(false)
   const [selectedId, setSelectedId] = useState<string | number | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const broadcast = useBroadcastEvent()
   const t = useT()
-
-  // Récupère les personnages en temps réel via les presences
-  useEffect(() => {
-    const list = Array.from(others)
-      .map((o) => o.presence?.character as Character | undefined)
-      .filter((c): c is Character => !!c && c.id !== undefined)
-    setChars(list)
-  }, [others])
 
   // Ferme le menu au clic en dehors
   useEffect(() => {

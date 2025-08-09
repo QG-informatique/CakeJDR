@@ -18,6 +18,7 @@ import useEventLog from './hooks/useEventLog'
 import useProfile from './hooks/useProfile'
 import useOnlineStatus from './hooks/useOnlineStatus'
 import ErrorBoundary from '@/components/misc/ErrorBoundary'
+import LiveblocksErrorLogger from '@/components/misc/LiveblocksErrorLogger'
 
 export default function HomePageInner() {
   const router = useRouter()
@@ -168,6 +169,7 @@ export default function HomePageInner() {
 
   return (
     <div className="relative w-screen h-screen font-sans overflow-hidden bg-transparent">
+      <LiveblocksErrorLogger />
       <div className="relative z-10 flex flex-col lg:flex-row w-full h-full">
         <CharacterSheet perso={perso} onUpdate={handleUpdatePerso} chatBoxRef={chatBoxRef} allCharacters={characters} logoOnly>
           {profile?.isMJ && (

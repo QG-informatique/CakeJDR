@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useMemo } from 'react'
 import { useBroadcastEvent, useEventListener, useStorage, useMutation, useMyPresence } from '@liveblocks/react'
 import LiveCursors from './LiveCursors'
 import YouTube from 'react-youtube'
@@ -11,6 +11,29 @@ import MusicPanel from './MusicPanel'
 import ImageItem, { ImageData } from './ImageItem'
 import SideNotes from '@/components/misc/SideNotes'
 
+
+function throttle<T extends (...args: unknown[]) => void>(fn: T, delay: number) {
+  let last = 0
+  let timeout: ReturnType<typeof setTimeout> | null = null
+  return (...args: Parameters<T>) => {
+    const now = Date.now()
+    const remaining = delay - (now - last)
+    if (remaining <= 0) {
+      if (timeout) {
+        clearTimeout(timeout)
+        timeout = null
+      }
+      last = now
+      fn(...args)
+    } else if (!timeout) {
+      timeout = setTimeout(() => {
+        last = Date.now()
+        timeout = null
+        fn(...args)
+      }, remaining)
+    }
+  }
+}
 
 export default function InteractiveCanvas() {
   // `images` map is created by RoomProvider but may be null until ready
@@ -40,8 +63,10 @@ export default function InteractiveCanvas() {
   const [volume, setVolume] = useState(5)
 
   const broadcast = useBroadcastEvent()
-  const lastSend = useRef(0)
-  const THROTTLE = 0
+  const throttledBroadcast = useMemo(
+    () => throttle((e: Liveblocks['RoomEvent']) => broadcast(e), 16),
+    [broadcast]
+  )
   const [, updateMyPresence] = useMyPresence()
 
   const canvasRef = useRef<HTMLDivElement>(null)
@@ -74,6 +99,8 @@ export default function InteractiveCanvas() {
   const updateImage = useMutation(({ storage }, img: ImageData) => {
     storage.get('images').set(String(img.id), img)
   }, [])
+
+  const throttledUpdateImage = useMemo(() => throttle(updateImage, 50), [updateImage])
 
   const deleteImage = useMutation(({ storage }, id: number) => {
     storage.get('images').delete(String(id))
@@ -294,11 +321,7 @@ export default function InteractiveCanvas() {
       ctxRef.current.lineTo(x, y)
       ctxRef.current.stroke()
       const { x: px, y: py } = mousePos
-      const now = Date.now()
-      if (THROTTLE === 0 || now - lastSend.current > THROTTLE) {
-        lastSend.current = now
-        broadcast({ type: 'draw-line', x1: px, y1: py, x2: x, y2: y, color, width: brushSize, mode: drawMode } as Liveblocks['RoomEvent'])
-      }
+      throttledBroadcast({ type: 'draw-line', x1: px, y1: py, x2: x, y2: y, color, width: brushSize, mode: drawMode } as Liveblocks['RoomEvent'])
     }
 
     const { id, type, offsetX, offsetY } = dragState.current
@@ -317,11 +340,15 @@ export default function InteractiveCanvas() {
             width: Math.max(50, x - img.x),
             height: Math.max(50, y - img.y),
           }
-    updateImage(updated)
+    throttledUpdateImage(updated)
   }
 
   const handlePointerUp = () => {
     setIsDrawing(false)
+    if (dragState.current.id) {
+      const img = images.find(i => i.id === dragState.current.id)
+      if (img) updateImage(img)
+    }
     dragState.current = { id: null, type: null, offsetX: 0, offsetY: 0 }
   }
 

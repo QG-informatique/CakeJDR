@@ -37,15 +37,19 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
   const t = useT()
 
   useEffect(() => {
+    let mounted = true
     const update = () => {
       fetchRooms()
-        .then(setRooms)
-        .catch(() => setRooms([]))
-      setMyRoom(localStorage.getItem('jdr_my_room'))
+        .then(r => { if (mounted) setRooms(r) })
+        .catch(() => { if (mounted) setRooms([]) })
+      if (mounted) setMyRoom(localStorage.getItem('jdr_my_room'))
     }
     update()
     window.addEventListener('jdr_rooms_change', update)
-    return () => window.removeEventListener('jdr_rooms_change', update)
+    return () => {
+      mounted = false
+      window.removeEventListener('jdr_rooms_change', update)
+    }
   }, [])
 
   const deleteRoom = async (room: RoomInfo) => {

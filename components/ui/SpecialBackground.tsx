@@ -398,7 +398,7 @@ export default function SpecialBackground() {
 
         /* ---- FEUILLES SUR L'EAU ---- */
         setDebris(prev => {
-          let newLeafBubbles: LeafBubble[] = []
+          const newLeafBubbles: LeafBubble[] = []
           const arr = prev.map(d => {
             const nx = d.x + d.v * dt
             const ny = d.y + Math.sin((d.t + dt) * 1.2) * 0.05

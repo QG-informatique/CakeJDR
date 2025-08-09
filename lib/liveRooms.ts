@@ -8,6 +8,24 @@ function slugify(str: string) {
     .replace(/^-+|-+$/g, '')
 }
 
+// Fetch a page of rooms with retries to mitigate transient errors
+async function getRoomsPage(client: Liveblocks, cursor?: string) {
+  const LIMIT = 50
+  const RETRIES = 3
+  for (let attempt = 0; attempt < RETRIES; attempt++) {
+    try {
+      return await client.getRooms({ startingAfter: cursor, limit: LIMIT })
+    } catch (err) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('Liveblocks getRooms error', err)
+      }
+      if (attempt === RETRIES - 1) throw err
+      await new Promise(res => setTimeout(res, 200 * (attempt + 1)))
+    }
+  }
+  throw new Error('unreachable')
+}
+
 export async function listRooms() {
   const secret = process.env.LIVEBLOCKS_SECRET_KEY
   if (!secret) throw new Error('Liveblocks key missing')
@@ -20,9 +38,10 @@ export async function listRooms() {
     updatedAt?: string
     usersConnected: number
   }> = []
+
   let cursor: string | undefined
   do {
-    const { data, nextCursor } = await client.getRooms({ startingAfter: cursor, limit: 50 })
+    const { data, nextCursor } = await getRoomsPage(client, cursor)
     for (const r of data) {
       if (r.id === 'rooms-index' || r.metadata?.name === 'rooms-index') continue
       const count = (r as { usersCount?: number }).usersCount
@@ -54,7 +73,7 @@ export async function createRoom(name: string, password?: string) {
   // 1) Si une room avec ce nom existe déjà (metadata.name), renvoyer son id
   let cursor: string | undefined
   do {
-    const { data, nextCursor } = await client.getRooms({ startingAfter: cursor, limit: 50 })
+    const { data, nextCursor } = await getRoomsPage(client, cursor)
     for (const r of data) {
       const metaName = typeof r.metadata?.name === 'string' ? r.metadata.name : undefined
       if (metaName && metaName.trim().toLowerCase() === name.trim().toLowerCase()) {

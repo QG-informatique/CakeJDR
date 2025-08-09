@@ -33,10 +33,12 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
 
 
   useEffect(() => {
+    let mounted = true
     fetch('/api/rooms/list')
       .then(res => (res.ok ? res.json() : Promise.reject()))
-      .then(data => setRooms(data.rooms || []))
-      .catch(() => setRooms([]))
+      .then(data => { if (mounted) setRooms(data.rooms || []) })
+      .catch(() => { if (mounted) setRooms([]) })
+    return () => { mounted = false }
   }, [])
 
   const createRoom = async () => {
