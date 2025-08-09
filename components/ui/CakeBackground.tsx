@@ -63,9 +63,9 @@ function makeTopoPath({
     return { x, y }
   })
   const d = [
-    `M ${pts[0].x} ${pts[0].y}`,
+    `M ${pts[0]!.x} ${pts[0]!.y}`,
     ...pts.slice(0, -1).map((p, i) => {
-      const p2 = pts[i + 1]
+      const p2 = pts[i + 1]!
       return `C ${p.x + c} ${p.y}, ${p2.x - c} ${p2.y}, ${p2.x} ${p2.y}`
     }),
   ].join(' ')

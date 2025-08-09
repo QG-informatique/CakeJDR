@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * CakeBackground — Fibres tressées (v1)
+ * BananaBackground — Fibres tressées (v1)
  * =====================================
  * ✅ Fond original & simple : trame de fibres diagonales (effet lin/ramie).
  * ✅ 100% CSS (gradients), zéro asset, ultra-perf.
@@ -19,7 +19,19 @@
 
 import React from 'react'
 
-export default function CakeBackground() {
+interface WeaveVars extends React.CSSProperties {
+  '--bg': string
+  '--fiber-dark': string
+  '--fiber-light': string
+  '--fiber-w': string
+  '--fiber-gap': string
+  '--sheen': string
+  '--sheen-size': string
+  '--sheen-blur': string
+  '--speed': string
+}
+
+export default function BananaBackground() {
   return (
     <div
       aria-hidden
@@ -39,7 +51,7 @@ export default function CakeBackground() {
         '--sheen-blur': '22px',
         // Vitesse de balayage
         '--speed': '18s',
-      }}
+      } as WeaveVars}
     >
       {/* Couche 0 — Fond de base */}
       <div
