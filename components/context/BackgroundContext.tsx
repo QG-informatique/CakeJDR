@@ -19,11 +19,11 @@ export type BackgroundType =
   | 'banana'
   | 'unicorn'
   | 'special'
-  | 'bg6'      // Floating Runes
-  | 'bg7'      // Paper Lanterns
-  | 'bg8'      // Pixel Hearts
-  | 'bg9'      // Stardust Trails
-  | 'bg10'     // Origami Cranes
+  | 'bg6' // Floating Runes
+  | 'bg7' // Paper Lanterns
+  | 'bg8' // Pixel Hearts
+  | 'bg9' // Stardust Trails
+  | 'bg10' // Origami Cranes
 
 /* ------------------------------------------------------------------
  * 2️⃣  Ordre de rotation (bouton “next”)
@@ -82,7 +82,7 @@ export function BackgroundProvider({ children }: { children: ReactNode }) {
   const cycleBackground = () => {
     setBackground((prev) => {
       const idx = cycleOrder.indexOf(prev)
-      return cycleOrder[(idx + 1) % cycleOrder.length]
+      return cycleOrder[(idx + 1) % cycleOrder.length] ?? prev
     })
   }
 

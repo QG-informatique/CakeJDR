@@ -11,15 +11,20 @@ type CustomSelectProps = {
   options: { value: string; label: string }[]
   disabled?: boolean
 }
-const CustomSelect: FC<CustomSelectProps> = ({ value, onChange, options, disabled }) => {
+const CustomSelect: FC<CustomSelectProps> = ({
+  value,
+  onChange,
+  options,
+  disabled,
+}) => {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
     }
-    if (open) window.addEventListener("mousedown", handleClick)
-    return () => window.removeEventListener("mousedown", handleClick)
+    if (open) window.addEventListener('mousedown', handleClick)
+    return () => window.removeEventListener('mousedown', handleClick)
   }, [open])
   return (
     <div
@@ -39,24 +44,41 @@ const CustomSelect: FC<CustomSelectProps> = ({ value, onChange, options, disable
         `}
         style={{
           boxShadow: '0 2px 12px 0 #0007, 0 0 0 1px #fff1 inset',
-          background: 'linear-gradient(120deg,rgba(18,28,54,0.35) 60%,rgba(16,18,33,0.23) 100%)'
+          background:
+            'linear-gradient(120deg,rgba(18,28,54,0.35) 60%,rgba(16,18,33,0.23) 100%)',
         }}
-        onClick={() => !disabled && setOpen(v => !v)}
+        onClick={() => !disabled && setOpen((v) => !v)}
         aria-haspopup="listbox"
         aria-expanded={open}
       >
-        <span className="truncate">{options.find(o => o.value === value)?.label || ""}</span>
-        <svg width="16" height="16" className="ml-2 opacity-70" viewBox="0 0 20 20" fill="none"><path d="M6 8l4 4 4-4" stroke="#fff" strokeWidth="2" strokeLinecap="round"/></svg>
+        <span className="truncate">
+          {options.find((o) => o.value === value)?.label || ''}
+        </span>
+        <svg
+          width="16"
+          height="16"
+          className="ml-2 opacity-70"
+          viewBox="0 0 20 20"
+          fill="none"
+        >
+          <path
+            d="M6 8l4 4 4-4"
+            stroke="#fff"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        </svg>
       </button>
       {open && (
         <div
           className="absolute z-30 left-0 w-full mt-1 rounded-xl bg-black/80 border border-white/10 shadow-2xl py-1 animate-fadeIn backdrop-blur-md"
           style={{
-            background: 'linear-gradient(120deg,rgba(18,28,54,0.91) 60%,rgba(16,18,33,0.77) 100%)'
+            background:
+              'linear-gradient(120deg,rgba(18,28,54,0.91) 60%,rgba(16,18,33,0.77) 100%)',
           }}
           role="listbox"
         >
-          {options.map(opt => (
+          {options.map((opt) => (
             <button
               type="button"
               key={opt.value}
@@ -68,9 +90,10 @@ const CustomSelect: FC<CustomSelectProps> = ({ value, onChange, options, disable
                 ${value === opt.value ? 'bg-gray-700/80' : ''}
               `}
               style={{
-                background: value === opt.value
-                  ? "linear-gradient(120deg,#23364aBB 60%,#131b2455 100%)"
-                  : undefined
+                background:
+                  value === opt.value
+                    ? 'linear-gradient(120deg,#23364aBB 60%,#131b2455 100%)'
+                    : undefined,
               }}
               onClick={() => {
                 setOpen(false)
@@ -86,11 +109,17 @@ const CustomSelect: FC<CustomSelectProps> = ({ value, onChange, options, disable
       )}
       <style jsx>{`
         .animate-fadeIn {
-          animation: fadeInMenu .18s;
+          animation: fadeInMenu 0.18s;
         }
         @keyframes fadeInMenu {
-          from { opacity: 0; transform: translateY(12px);}
-          to   { opacity: 1; transform: translateY(0);}
+          from {
+            opacity: 0;
+            transform: translateY(12px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
       `}</style>
     </div>
@@ -98,14 +127,18 @@ const CustomSelect: FC<CustomSelectProps> = ({ value, onChange, options, disable
 }
 // --- /CustomSelect ---
 
-type Roll = { player: string, dice: number, result: number, ts?: number }
+type Roll = { player: string; dice: number; result: number; ts?: number }
 type Props = { history: Roll[] }
 
 function computeStats(history: Roll[]) {
-  const stats: Record<string, { rolls: number, crit: number, fail: number, dist: Record<number, number> }> = {}
+  const stats: Record<
+    string,
+    { rolls: number; crit: number; fail: number; dist: Record<number, number> }
+  > = {}
   for (const h of history) {
-    if (!stats[h.player]) stats[h.player] = { rolls: 0, crit: 0, fail: 0, dist: {} }
-    const s = stats[h.player]
+    if (!stats[h.player])
+      stats[h.player] = { rolls: 0, crit: 0, fail: 0, dist: {} }
+    const s = stats[h.player]!
     s.rolls++
     if (h.result === 1) s.fail++
     if (h.result === h.dice) s.crit++
@@ -131,17 +164,18 @@ export default function DiceStats({ history }: Props) {
   if (timeRange !== 'all') {
     const now = Date.now()
     const limit = timeRange === '7d' ? 7 * 24 * 3600 * 1000 : 24 * 3600 * 1000
-    filtered = history.filter(h => !h.ts || now - h.ts <= limit)
+    filtered = history.filter((h) => !h.ts || now - h.ts <= limit)
   }
   const stats = computeStats(filtered)
   const players = Object.keys(stats)
 
-  if (players.length === 0) return <div className="p-2 text-sm">{t('noRolls')}</div>
+  if (players.length === 0)
+    return <div className="p-2 text-sm">{t('noRolls')}</div>
 
   let tableHead
   let tableRows
 
-  if (statType === "pct") {
+  if (statType === 'pct') {
     tableHead = (
       <tr className="bg-black/25 backdrop-blur-[1px] text-white border-b border-white/10">
         <th className="px-2 py-1">{t('player')}</th>
@@ -149,10 +183,10 @@ export default function DiceStats({ history }: Props) {
         <th className="px-2 py-1">% {t('fails')}</th>
       </tr>
     )
-    tableRows = players.map(player => {
-      const s = stats[player]
-      const critPct = s.rolls ? ((s.crit / s.rolls) * 100).toFixed(1) : "0"
-      const failPct = s.rolls ? ((s.fail / s.rolls) * 100).toFixed(1) : "0"
+    tableRows = players.map((player) => {
+      const s = stats[player]!
+      const critPct = s.rolls ? ((s.crit / s.rolls) * 100).toFixed(1) : '0'
+      const failPct = s.rolls ? ((s.fail / s.rolls) * 100).toFixed(1) : '0'
       return (
         <tr key={player} className="border-b border-white/10">
           <td className="px-2 py-1 font-semibold">{player}</td>
@@ -172,8 +206,8 @@ export default function DiceStats({ history }: Props) {
         <th className="px-2 py-1">{t('perDie')}</th>
       </tr>
     )
-    tableRows = players.map(player => {
-      const s = stats[player]
+    tableRows = players.map((player) => {
+      const s = stats[player]!
       return (
         <tr key={player} className="border-b border-white/10">
           <td className="px-2 py-1 font-semibold">{player}</td>
@@ -181,7 +215,9 @@ export default function DiceStats({ history }: Props) {
           <td className="px-2 py-1 text-center">{s.crit}</td>
           <td className="px-2 py-1 text-center">{s.fail}</td>
           <td className="px-2 py-1 text-sm">
-            {Object.entries(s.dist).map(([d, c]) => `D${d}:${c}`).join(' ')}
+            {Object.entries(s.dist)
+              .map(([d, c]) => `D${d}:${c}`)
+              .join(' ')}
           </td>
         </tr>
       )
@@ -203,12 +239,8 @@ export default function DiceStats({ history }: Props) {
         />
       </div>
       <table className="text-sm w-full text-left border-collapse">
-        <thead>
-          {tableHead}
-        </thead>
-        <tbody>
-          {tableRows}
-        </tbody>
+        <thead>{tableHead}</thead>
+        <tbody>{tableRows}</tbody>
       </table>
     </div>
   )
