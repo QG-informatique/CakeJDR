@@ -15,14 +15,14 @@ class BackgroundErrorBoundary extends React.Component<
   { children: React.ReactNode },
   { hasError: boolean }
 > {
-  constructor(props: any) {
+  constructor(props: { children: React.ReactNode }) {
     super(props)
     this.state = { hasError: false }
   }
   static getDerivedStateFromError() {
     return { hasError: true }
   }
-  componentDidCatch(err: any) {
+  componentDidCatch(err: Error) {
     console.error('Background crashed:', err)
   }
   render() {
