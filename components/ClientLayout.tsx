@@ -13,13 +13,15 @@ const BackgroundWrapper = dynamic(() => import('@/components/ui/BackgroundWrappe
 // Petit garde-fou : si le background crashe, on n’abat pas tout le layout
 class BackgroundErrorBoundary extends React.Component<
   { children: React.ReactNode },
-  { hasError: boolean }
+  { hasError: boolean },
+  never
 > {
   constructor(props: { children: React.ReactNode }) {
     super(props)
     this.state = { hasError: false }
   }
-  static getDerivedStateFromError() {
+  static getDerivedStateFromError(error: Error) {
+    void error
     return { hasError: true }
   }
   componentDidCatch(err: Error) {
