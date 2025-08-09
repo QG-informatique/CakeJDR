@@ -7,7 +7,11 @@ import { LexicalComposer } from '@lexical/react/LexicalComposer'
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin'
 import { ContentEditable } from '@lexical/react/LexicalContentEditable'
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary'
-import { LiveblocksPlugin, Toolbar, liveblocksConfig } from '@liveblocks/react-lexical'
+import {
+  LiveblocksPlugin,
+  Toolbar,
+  liveblocksConfig,
+} from '@liveblocks/react-lexical'
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import { $getRoot } from 'lexical'
 
@@ -16,7 +20,9 @@ interface Page {
   title: string
 }
 
-interface Props { onClose: () => void }
+interface Props {
+  onClose: () => void
+}
 
 function AutoSavePlugin({ onChange }: { onChange: (text: string) => void }) {
   const [editor] = useLexicalComposerContext()
@@ -32,9 +38,10 @@ function AutoSavePlugin({ onChange }: { onChange: (text: string) => void }) {
 }
 
 const SessionSummary: FC<Props> = ({ onClose }) => {
-  const summary = useStorage(root => root.summary)
-  const rawEditor = useStorage(root => root.editor)
-  const editorMap = rawEditor instanceof LiveMap ? rawEditor as LiveMap<string, string> : null
+  const summary = useStorage((root) => root.summary)
+  const rawEditor = useStorage((root) => root.editor)
+  const editorMap =
+    rawEditor instanceof LiveMap ? (rawEditor as LiveMap<string, string>) : null
   const pages = summary?.acts as Page[] | undefined
   const [currentId, setCurrentId] = useState<string>('')
   const [editorKey, setEditorKey] = useState(0)
@@ -45,7 +52,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
 
   const updatePages = useMutation(({ storage }, acts: Page[]) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (storage.get('summary') as any).update({ acts })
+    ;(storage.get('summary') as any).update({ acts })
   }, [])
 
   const deletePage = useMutation(({ storage }, id: string) => {
@@ -62,37 +69,48 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
     }
   }, [])
 
-  const updateEditor = useMutation(({ storage }, data: { id: string; content: string }) => {
-    let editor = storage.get('editor')
-    if (!(editor instanceof LiveMap)) {
-      const map = new LiveMap<string, string>()
-      if (typeof editor === 'string' && data.id) {
-        map.set(data.id, editor)
+  const updateEditor = useMutation(
+    ({ storage }, data: { id: string; content: string }) => {
+      let editor = storage.get('editor')
+      if (!(editor instanceof LiveMap)) {
+        const map = new LiveMap<string, string>()
+        if (typeof editor === 'string' && data.id) {
+          map.set(data.id, editor)
+        }
+        storage.set('editor', map)
+        editor = map
       }
-      storage.set('editor', map)
-      editor = map
-    }
-    ;(editor as LiveMap<string, string>).set(data.id, data.content)
-  }, [])
+      ;(editor as LiveMap<string, string>).set(data.id, data.content)
+    },
+    [],
+  )
 
   const handleTitleChange = (title: string) => {
     if (!pages || !current) return
-    const updatedPages = pages.map(p => p.id === current.id ? { ...p, title } : p)
+    const updatedPages = pages.map((p) =>
+      p.id === current.id ? { ...p, title } : p,
+    )
     updatePages(updatedPages)
   }
 
-  const createPage = useCallback((title: string) => {
-    const newPage = { id: crypto.randomUUID(), title }
-    updatePages([...(pages || []), newPage])
-    updateEditor({ id: newPage.id, content: '' })
-    setCurrentId(newPage.id)
-    setEditorKey(k => k + 1)
-  }, [pages, updatePages, updateEditor])
+  const createPage = useCallback(
+    (title: string) => {
+      const newPage = { id: crypto.randomUUID(), title }
+      updatePages([...(pages || []), newPage])
+      updateEditor({ id: newPage.id, content: '' })
+      setCurrentId(newPage.id)
+      setEditorKey((k) => k + 1)
+    },
+    [pages, updatePages, updateEditor],
+  )
 
   useEffect(() => {
     if (!showFileMenu) return
     const handle = (e: MouseEvent) => {
-      if (!menuRef.current?.contains(e.target as Node) && !fileBtnRef.current?.contains(e.target as Node)) {
+      if (
+        !menuRef.current?.contains(e.target as Node) &&
+        !fileBtnRef.current?.contains(e.target as Node)
+      ) {
         setShowFileMenu(false)
       }
     }
@@ -106,11 +124,11 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
       const title = prompt(t('pageNamePrompt'))?.trim() || t('newPage')
       createPage(title)
     } else if (!currentId) {
-      setCurrentId(pages[0].id)
+      setCurrentId(pages[0]!.id)
     }
   }, [pages, currentId, updatePages, updateEditor, createPage, t])
 
-  const current = pages?.find(p => p.id === currentId)
+  const current = pages?.find((p) => p.id === currentId)
 
   useEffect(() => {
     if (!current) return
@@ -131,11 +149,11 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    file.text().then(text => {
+    file.text().then((text) => {
       const parts = text.split(/=== Page: /).slice(1)
       const newPages: Page[] = []
-      parts.forEach(part => {
-        const [titleLine, ...contentLines] = part.split('\n')
+      parts.forEach((part) => {
+        const [titleLine = '', ...contentLines] = part.split('\n')
         const title = titleLine.replace(/===$/, '').trim()
         const content = contentLines.join('\n').trim()
         const id = crypto.randomUUID()
@@ -144,8 +162,8 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
       })
       if (newPages.length > 0) {
         updatePages(newPages)
-        setCurrentId(newPages[0].id)
-        setEditorKey(k => k + 1)
+        setCurrentId(newPages[0]!.id)
+        setEditorKey((k) => k + 1)
       }
       setShowFileMenu(false)
     })
@@ -153,7 +171,12 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
 
   const handleExport = () => {
     if (!pages) return
-    const txt = pages.map(p => `=== Page: ${p.title} ===\n${editorMap instanceof LiveMap ? editorMap.get(p.id) || '' : ''}\n`).join('\n')
+    const txt = pages
+      .map(
+        (p) =>
+          `=== Page: ${p.title} ===\n${editorMap instanceof LiveMap ? editorMap.get(p.id) || '' : ''}\n`,
+      )
+      .join('\n')
     const blob = new Blob([txt], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -167,65 +190,117 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
   const handleDelete = () => {
     if (!pages || !current) return
     if (!confirm(t('deletePageConfirm'))) return
-    const rest = pages.filter(p => p.id !== current.id)
+    const rest = pages.filter((p) => p.id !== current.id)
     if (rest.length === 0) {
       alert(t('lastPageDeleteError'))
       return
     }
     deletePage(current.id)
-    setCurrentId(rest[0].id)
-    setEditorKey(k => k + 1)
+    setCurrentId(rest[0]!.id)
+    setEditorKey((k) => k + 1)
   }
 
   const editorConfig = liveblocksConfig({
     namespace: 'session-summary',
-    onError: console.error
+    onError: console.error,
   })
 
   return (
-    <div className="absolute inset-0 bg-black/35 backdrop-blur-[3px] border border-white/10 rounded-2xl shadow-2xl flex flex-col h-full w-full z-20 p-3 animate-fadeIn overflow-visible" style={{ minHeight: 0 }}>
+    <div
+      className="absolute inset-0 bg-black/35 backdrop-blur-[3px] border border-white/10 rounded-2xl shadow-2xl flex flex-col h-full w-full z-20 p-3 animate-fadeIn overflow-visible"
+      style={{ minHeight: 0 }}
+    >
       <div className="flex items-center gap-2 mb-3 relative">
-        <button onClick={handleNewPage} className="bg-black/40 text-white px-2 py-1 rounded text-sm">+</button>
-        <select value={currentId} onChange={e => { setCurrentId(e.target.value); setEditorKey(k => k + 1) }} className="bg-black/40 text-white rounded px-2 py-1 text-sm w-32">
-          {pages?.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
+        <button
+          onClick={handleNewPage}
+          className="bg-black/40 text-white px-2 py-1 rounded text-sm"
+        >
+          +
+        </button>
+        <select
+          value={currentId}
+          onChange={(e) => {
+            setCurrentId(e.target.value)
+            setEditorKey((k) => k + 1)
+          }}
+          className="bg-black/40 text-white rounded px-2 py-1 text-sm w-32"
+        >
+          {pages?.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.title}
+            </option>
+          ))}
         </select>
-        <button onClick={handleDelete} className="bg-black/40 text-white px-2 py-1 rounded text-sm">🗑️</button>
+        <button
+          onClick={handleDelete}
+          className="bg-black/40 text-white px-2 py-1 rounded text-sm"
+        >
+          🗑️
+        </button>
         <div className="relative">
-          <button ref={fileBtnRef} onClick={() => setShowFileMenu(m => !m)} className="bg-black/40 text-white px-2 py-1 rounded text-sm">📁</button>
+          <button
+            ref={fileBtnRef}
+            onClick={() => setShowFileMenu((m) => !m)}
+            className="bg-black/40 text-white px-2 py-1 rounded text-sm"
+          >
+            📁
+          </button>
           {showFileMenu && (
-            <div ref={menuRef} className="absolute right-0 mt-1 z-40 bg-black/80 rounded shadow p-1 w-32 flex flex-col">
+            <div
+              ref={menuRef}
+              className="absolute right-0 mt-1 z-40 bg-black/80 rounded shadow p-1 w-32 flex flex-col"
+            >
               <label className="px-2 py-1 hover:bg-white/10 cursor-pointer text-sm">
                 {t('importBtn')}
-                <input type="file" accept="text/plain" onChange={handleImport} className="hidden" />
+                <input
+                  type="file"
+                  accept="text/plain"
+                  onChange={handleImport}
+                  className="hidden"
+                />
               </label>
-              <button onClick={handleExport} className="text-left px-2 py-1 hover:bg-white/10 text-sm">{t('exportBtn')}</button>
+              <button
+                onClick={handleExport}
+                className="text-left px-2 py-1 hover:bg-white/10 text-sm"
+              >
+                {t('exportBtn')}
+              </button>
             </div>
           )}
         </div>
-        <button onClick={onClose} className="ml-auto text-white/80 hover:text-red-500 text-xl">✕</button>
+        <button
+          onClick={onClose}
+          className="ml-auto text-white/80 hover:text-red-500 text-xl"
+        >
+          ✕
+        </button>
       </div>
       {current && (
         <LexicalComposer key={editorKey} initialConfig={editorConfig}>
-            <Toolbar className="mb-2">
-              <Toolbar.SectionInline />
-            </Toolbar>
-            <input
-              value={current.title}
-              onChange={e => handleTitleChange(e.target.value)}
-              className="text-center font-semibold mb-2 bg-transparent outline-none w-full"
-            />
-            <RichTextPlugin
-              contentEditable={<ContentEditable className="flex-1 min-h-0 p-2 bg-black/20 rounded text-white outline-none" />}
-              placeholder={<div>{t('startWriting')}</div>}
-              ErrorBoundary={LexicalErrorBoundary}
-            />
-            <LiveblocksPlugin />
-            <AutoSavePlugin onChange={txt => {
+          <Toolbar className="mb-2">
+            <Toolbar.SectionInline />
+          </Toolbar>
+          <input
+            value={current.title}
+            onChange={(e) => handleTitleChange(e.target.value)}
+            className="text-center font-semibold mb-2 bg-transparent outline-none w-full"
+          />
+          <RichTextPlugin
+            contentEditable={
+              <ContentEditable className="flex-1 min-h-0 p-2 bg-black/20 rounded text-white outline-none" />
+            }
+            placeholder={<div>{t('startWriting')}</div>}
+            ErrorBoundary={LexicalErrorBoundary}
+          />
+          <LiveblocksPlugin />
+          <AutoSavePlugin
+            onChange={(txt) => {
               if (current) {
                 updateEditor({ id: current.id, content: txt })
               }
-            }} />
-          </LexicalComposer>
+            }}
+          />
+        </LexicalComposer>
       )}
     </div>
   )
