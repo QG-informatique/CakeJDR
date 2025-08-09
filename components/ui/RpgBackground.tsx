@@ -7,14 +7,17 @@ import React, { useEffect, useState } from 'react'
  * Fond animé – dés ascendants (40) – SAFE POUR NEXT/SSR !
  */
 export default function RpgBackground() {
-  const icons = React.useMemo(() => [Dice1, Dice2, Dice3, Dice4, Dice5, Dice6], [])
+  const icons = React.useMemo(
+    () => [Dice1, Dice2, Dice3, Dice4, Dice5, Dice6],
+    [],
+  )
   const [dice, setDice] = useState<React.ReactElement[]>([])
 
   useEffect(() => {
     // ⚠️ Tout le random ici, jamais dans le render !
     const arr: React.ReactElement[] = []
     for (let i = 0; i < 40; ++i) {
-      const Icon = icons[i % icons.length]
+      const Icon = icons[i % icons.length]!
       const size = Math.random() * 40 + 24
       const left = Math.random() * 100
       const duration = 18 + Math.random() * 10
@@ -31,7 +34,7 @@ export default function RpgBackground() {
             style={{ width: size, height: size }}
             className="text-pink-300"
           />
-        </motion.div>
+        </motion.div>,
       )
     }
     setDice(arr)

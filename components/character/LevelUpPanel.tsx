@@ -12,7 +12,12 @@ type CustomSelectProps = {
   disabled?: boolean
   options: { value: string; label: string }[]
 }
-const CustomSelect: FC<CustomSelectProps> = ({ value, onChange, disabled, options }) => {
+const CustomSelect: FC<CustomSelectProps> = ({
+  value,
+  onChange,
+  disabled,
+  options,
+}) => {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -21,8 +26,8 @@ const CustomSelect: FC<CustomSelectProps> = ({ value, onChange, disabled, option
     function onClick(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
     }
-    if (open) window.addEventListener("mousedown", onClick)
-    return () => window.removeEventListener("mousedown", onClick)
+    if (open) window.addEventListener('mousedown', onClick)
+    return () => window.removeEventListener('mousedown', onClick)
   }, [open])
 
   return (
@@ -43,22 +48,37 @@ const CustomSelect: FC<CustomSelectProps> = ({ value, onChange, disabled, option
         `}
         style={{
           boxShadow: '0 2px 16px 0 #0007, 0 0 0 1px #fff1 inset',
-          background: 'linear-gradient(120deg,rgba(18,28,54,0.35) 60%,rgba(16,18,33,0.23) 100%)'
+          background:
+            'linear-gradient(120deg,rgba(18,28,54,0.35) 60%,rgba(16,18,33,0.23) 100%)',
         }}
-        onClick={() => !disabled && setOpen(v => !v)}
+        onClick={() => !disabled && setOpen((v) => !v)}
         aria-haspopup="listbox"
         aria-expanded={open}
       >
         <span className="truncate">
-          {options.find(o => o.value === value)?.label || ""}
+          {options.find((o) => o.value === value)?.label || ''}
         </span>
-        <svg width="18" height="18" className="ml-2 opacity-70" viewBox="0 0 20 20" fill="none"><path d="M6 8l4 4 4-4" stroke="#fff" strokeWidth="2" strokeLinecap="round"/></svg>
+        <svg
+          width="18"
+          height="18"
+          className="ml-2 opacity-70"
+          viewBox="0 0 20 20"
+          fill="none"
+        >
+          <path
+            d="M6 8l4 4 4-4"
+            stroke="#fff"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        </svg>
       </button>
       {open && (
         <div
           className="absolute z-30 left-0 w-full mt-1 rounded-xl bg-black/80 border border-white/10 shadow-2xl py-1 animate-fadeIn backdrop-blur-md"
           style={{
-            background: 'linear-gradient(120deg,rgba(18,28,54,0.91) 60%,rgba(16,18,33,0.77) 100%)'
+            background:
+              'linear-gradient(120deg,rgba(18,28,54,0.91) 60%,rgba(16,18,33,0.77) 100%)',
           }}
           role="listbox"
         >
@@ -74,9 +94,10 @@ const CustomSelect: FC<CustomSelectProps> = ({ value, onChange, disabled, option
                 ${value === opt.value ? 'bg-gray-700/80' : ''}
               `}
               style={{
-                background: value === opt.value
-                  ? "linear-gradient(120deg,#23364aBB 60%,#131b2455 100%)"
-                  : undefined
+                background:
+                  value === opt.value
+                    ? 'linear-gradient(120deg,#23364aBB 60%,#131b2455 100%)'
+                    : undefined,
               }}
               onClick={() => {
                 setOpen(false)
@@ -92,11 +113,17 @@ const CustomSelect: FC<CustomSelectProps> = ({ value, onChange, disabled, option
       )}
       <style jsx>{`
         .animate-fadeIn {
-          animation: fadeInMenu .18s;
+          animation: fadeInMenu 0.18s;
         }
         @keyframes fadeInMenu {
-          from { opacity: 0; transform: translateY(12px);}
-          to   { opacity: 1; transform: translateY(0);}
+          from {
+            opacity: 0;
+            transform: translateY(12px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
       `}</style>
     </div>
@@ -117,12 +144,12 @@ type Props = {
 const DICE_OPTIONS = [
   { value: 'd4', label: 'D4' },
   { value: 'd6', label: 'D6' },
-  { value: 'd20', label: 'D20' }
+  { value: 'd20', label: 'D20' },
 ]
 
 function getDiceMax(dice: string) {
   const m = dice.match(/d(\d+)/i)
-  if (m) return parseInt(m[1])
+  if (m) return parseInt(m[1] ?? '0')
   return 1
 }
 
@@ -192,10 +219,13 @@ const LevelUpPanel: FC<Props> = ({
             width: BUTTON_WIDTH,
             maxWidth: BUTTON_WIDTH,
             boxShadow: '0 2px 16px 0 #0007, 0 0 0 1px #fff1 inset',
-            background: 'linear-gradient(120deg,rgba(18,28,54,0.35) 60%,rgba(16,18,33,0.23) 100%)'
+            background:
+              'linear-gradient(120deg,rgba(18,28,54,0.35) 60%,rgba(16,18,33,0.23) 100%)',
           }}
         >
-          <span className="truncate">{processing ? t('launching') : t('launchLevelUp')}</span>
+          <span className="truncate">
+            {processing ? t('launching') : t('launchLevelUp')}
+          </span>
         </button>
       </div>
 
@@ -208,12 +238,12 @@ const LevelUpPanel: FC<Props> = ({
               opacity: 1,
               y: -26,
               scale: isMax ? 1.27 : 1.13,
-              ...extraEffect
+              ...extraEffect,
             }}
             exit={{
               opacity: 0,
               y: -68,
-              scale: isMax ? 1.35 : 1.20,
+              scale: isMax ? 1.35 : 1.2,
             }}
             transition={motionTransition}
             className="absolute left-1/2 -translate-x-1/2 top-[44%] pointer-events-none select-none"
@@ -242,13 +272,13 @@ const LevelUpPanel: FC<Props> = ({
                         opacity: [0, 1, 0],
                         scale: [0.4, 1.15, 0.9],
                         x,
-                        y
+                        y,
                       }}
                       exit={{ opacity: 0, scale: 0.4, x: 0, y: 0 }}
                       transition={{
                         duration: 0.95,
                         delay: 0.08 + i * 0.045,
-                        type: "tween"
+                        type: 'tween',
                       }}
                       className="w-5 h-5"
                       style={{ zIndex: 21 }}
@@ -268,15 +298,18 @@ const LevelUpPanel: FC<Props> = ({
                     ? '0 0 34px #ffd600, 0 0 120px #ffe066'
                     : isMin
                       ? '0 0 18px #fa5252, 0 0 48px #ef4444'
-                      : '0 0 14px #38FFC0, 0 0 40px #00FFA3'
-                ]
+                      : '0 0 14px #38FFC0, 0 0 40px #00FFA3',
+                ],
               }}
               exit={{
                 scale: isMax ? 1.37 : 1.15,
                 opacity: 0,
-                textShadow: '0 0 0 #fff'
+                textShadow: '0 0 0 #fff',
               }}
-              transition={{ duration: isMax || isMin ? 1.03 : 0.85, type: 'tween' }}
+              transition={{
+                duration: isMax || isMin ? 1.03 : 0.85,
+                type: 'tween',
+              }}
               className={`relative z-10 text-5xl font-black tracking-wider drop-shadow-[0_4px_20px_rgba(0,0,0,0.55)] ${textColor} ${pulse}`}
               style={{
                 WebkitTextStroke: `2px ${stroke}`,
@@ -284,7 +317,7 @@ const LevelUpPanel: FC<Props> = ({
                   ? 'drop-shadow(0 0 22px #fff9c4)'
                   : isMin
                     ? 'drop-shadow(0 0 10px #f87171)'
-                    : 'drop-shadow(0 0 10px #38FFC0)'
+                    : 'drop-shadow(0 0 10px #38FFC0)',
               }}
             >
               +{lastGain}
