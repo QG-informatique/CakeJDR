@@ -25,16 +25,21 @@ interface Props {
   onClose: () => void
 }
 
-function AutoSavePlugin({ onChange }: { onChange: (text: string) => void }) {
+function AutoSavePlugin({ onChange, pageId }: { onChange: (text: string) => void; pageId: string }) {
   const [editor] = useLexicalComposerContext()
   useEffect(() => {
     return editor.registerUpdateListener(({ editorState }) => {
       editorState.read(() => {
         const text = $getRoot().getTextContent()
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem(`summary_${pageId}`, text)
+          } catch {}
+        }
         onChange(text)
       })
     })
-  }, [editor, onChange])
+  }, [editor, onChange, pageId])
   return null
 }
 
@@ -201,10 +206,29 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
     setEditorKey((k) => k + 1)
   }
 
-  const initialText =
-    current && editorMap instanceof LiveMap
-      ? editorMap.get(current.id) || ''
-      : ''
+  const initialText = (() => {
+    if (!current) return ''
+    let local = ''
+    if (typeof window !== 'undefined') {
+      try {
+        local = localStorage.getItem(`summary_${current.id}`) || ''
+      } catch {}
+    }
+    if (local) return local
+    if (editorMap instanceof LiveMap) {
+      return editorMap.get(current.id) || ''
+    }
+    return ''
+  })()
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && current) {
+      try {
+        localStorage.setItem(`summary_${current.id}`, initialText)
+      } catch {}
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current?.id])
 
   const editorConfig = {
     ...liveblocksConfig({
@@ -315,10 +339,9 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
           />
           <LiveblocksPlugin />
           <AutoSavePlugin
+            pageId={current.id}
             onChange={(txt) => {
-              if (current) {
-                updateEditor({ id: current.id, content: txt })
-              }
+              updateEditor({ id: current.id, content: txt })
             }}
           />
         </LexicalComposer>
