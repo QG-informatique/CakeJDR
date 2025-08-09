@@ -17,7 +17,6 @@ function mulberry32(seed: number) {
 }
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v))
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t
-const smoothstep01 = (t: number) => { const x = clamp(t, 0, 1); return x * x * (3 - 2 * x) }
 function hexToRgb(hex?: string): [number, number, number] | null {
   if (typeof hex !== 'string') return null
   let h = hex.trim()
