@@ -11,11 +11,11 @@ import { useT } from '@/lib/useT'
 
 type Props = {
   perso: any // Fiche perso initiale
-  onUpdate: (perso: any) => void,
-  chatBoxRef?: React.RefObject<HTMLDivElement | null>,
-  creation?: boolean,
-  children?: React.ReactNode,
-  allCharacters?: any[], // facultatif, si tu veux passer la liste complète
+  onUpdate: (perso: any) => void
+  chatBoxRef?: React.RefObject<HTMLDivElement | null>
+  creation?: boolean
+  children?: React.ReactNode
+  allCharacters?: any[] // facultatif, si tu veux passer la liste complète
   logoOnly?: boolean
 }
 
@@ -51,12 +51,14 @@ export const defaultPerso = {
   avantages: '',
   background: '',
   champs_perso: [],
-  notes: ''
+  notes: '',
 }
 
 // Fonction utilitaire pour récupérer l’ID sélectionné en localStorage
 const loadSelectedCharacterId = (): string | null => {
-  return typeof window !== 'undefined' ? localStorage.getItem('selectedCharacterId') : null
+  return typeof window !== 'undefined'
+    ? localStorage.getItem('selectedCharacterId')
+    : null
 }
 
 const CharacterSheet: FC<Props> = ({
@@ -66,7 +68,7 @@ const CharacterSheet: FC<Props> = ({
   creation = false,
   children,
   allCharacters = [],
-  logoOnly = false
+  logoOnly = false,
 }) => {
   // NE PAS relier edit à creation sauf à l'init
   const [edit, setEdit] = useState(!!creation)
@@ -78,8 +80,10 @@ const CharacterSheet: FC<Props> = ({
     { key: 'equip', label: t('equipment') },
     { key: 'desc', label: t('description') },
   ]
-  const [collapsed, setCollapsed] = useState(() =>
-    typeof window !== 'undefined' && localStorage.getItem('characterPanelCollapsed') === '1'
+  const [collapsed, setCollapsed] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      localStorage.getItem('characterPanelCollapsed') === '1',
   )
 
   useEffect(() => {
@@ -92,7 +96,7 @@ const CharacterSheet: FC<Props> = ({
   useEffect(() => {
     const selectedId = loadSelectedCharacterId()
     if (selectedId && allCharacters.length > 0) {
-      const found = allCharacters.find(c => c.id?.toString() === selectedId)
+      const found = allCharacters.find((c) => c.id?.toString() === selectedId)
       if (found) {
         setLocalPerso(found)
         return
@@ -100,7 +104,6 @@ const CharacterSheet: FC<Props> = ({
     }
     setLocalPerso(Object.keys(perso || {}).length ? perso : defaultPerso)
   }, [perso, allCharacters])
-
 
   // Quand on QUITTE le mode édition, on recharge depuis les props
   useEffect(() => {
@@ -116,7 +119,7 @@ const CharacterSheet: FC<Props> = ({
   const rollDice = (dice: string): number => {
     const match = dice.match(/d(\d+)/i)
     if (!match) return 0
-    const sides = parseInt(match[1])
+    const sides = parseInt(match[1] ?? '0')
     return Math.floor(Math.random() * sides) + 1
   }
 
@@ -126,19 +129,35 @@ const CharacterSheet: FC<Props> = ({
   const [lastGain, setLastGain] = useState<number | null>(null)
   const [animKey, setAnimKey] = useState(0)
 
-  const cFiche = edit ? localPerso : (Object.keys(perso || {}).length ? perso : defaultPerso)
-
+  const cFiche = edit
+    ? localPerso
+    : Object.keys(perso || {}).length
+      ? perso
+      : defaultPerso
 
   const handleLevelUp = async () => {
     if (processing) return
     setProcessing(true)
-    let updatedPerso = { ...cFiche, niveau: Number(cFiche.niveau) + 1 } as Record<string, any>
+    let updatedPerso = {
+      ...cFiche,
+      niveau: Number(cFiche.niveau) + 1,
+    } as Record<string, any>
     const pvMaxKey =
-      updatedPerso.pv_max !== undefined ? 'pv_max'
-      : updatedPerso.pvMax !== undefined ? 'pvMax'
-      : 'pv_max'
+      updatedPerso.pv_max !== undefined
+        ? 'pv_max'
+        : updatedPerso.pvMax !== undefined
+          ? 'pvMax'
+          : 'pv_max'
 
-    for (const stat of ['pv', 'force', 'dexterite', 'constitution', 'intelligence', 'sagesse', 'charisme']) {
+    for (const stat of [
+      'pv',
+      'force',
+      'dexterite',
+      'constitution',
+      'intelligence',
+      'sagesse',
+      'charisme',
+    ]) {
       const gain = rollDice(dice)
 
       if (chatBoxRef?.current) {
@@ -150,7 +169,7 @@ const CharacterSheet: FC<Props> = ({
 
       setLastStat(stat)
       setLastGain(gain)
-      setAnimKey(k => k + 1)
+      setAnimKey((k) => k + 1)
 
       setTimeout(() => {
         setLastStat(null)
@@ -158,13 +177,18 @@ const CharacterSheet: FC<Props> = ({
       }, 1200)
 
       if (stat === 'pv') {
-        const currentMax = Number(updatedPerso[pvMaxKey] ?? updatedPerso.pv ?? 0)
+        const currentMax = Number(
+          updatedPerso[pvMaxKey] ?? updatedPerso.pv ?? 0,
+        )
         const newPvMax = currentMax + gain
         const currentPv = Number(updatedPerso.pv ?? 0)
         const newPv = Math.min(currentPv + gain, newPvMax)
         updatedPerso = { ...updatedPerso, [pvMaxKey]: newPvMax, pv: newPv }
       } else {
-        updatedPerso = { ...updatedPerso, [stat]: Number((updatedPerso as any)[stat] ?? 0) + gain }
+        updatedPerso = {
+          ...updatedPerso,
+          [stat]: Number((updatedPerso as any)[stat] ?? 0) + gain,
+        }
       }
 
       setLocalPerso({ ...updatedPerso })
@@ -207,7 +231,7 @@ const CharacterSheet: FC<Props> = ({
         minWidth: creation ? '600px' : undefined,
         maxWidth: creation ? '100%' : undefined,
         boxSizing: 'border-box',
-        overflowX: 'hidden'
+        overflowX: 'hidden',
       }}
     >
       {/* Collapse button stays visible above content */}
@@ -222,7 +246,7 @@ const CharacterSheet: FC<Props> = ({
       {!creation && (
         <CharacterSheetHeader
           edit={edit}
-          onToggleEdit={() => setEdit(v => !v)}
+          onToggleEdit={() => setEdit((v) => !v)}
           onSave={save}
           tab={tab}
           setTab={setTab}
@@ -276,26 +300,30 @@ const CharacterSheet: FC<Props> = ({
             failles: localPerso.failles,
             avantages: localPerso.avantages,
             background: localPerso.background,
-          champs_perso: localPerso.champs_perso,
+            champs_perso: localPerso.champs_perso,
           }}
           onChange={handleChange}
           champsPerso={localPerso.champs_perso}
-          onAddChamp={champ => {
+          onAddChamp={(champ) => {
             setLocalPerso({
               ...localPerso,
-              champs_perso: [...(localPerso.champs_perso || []), champ]
+              champs_perso: [...(localPerso.champs_perso || []), champ],
             })
           }}
-          onDelChamp={id => {
+          onDelChamp={(id) => {
             setLocalPerso({
               ...localPerso,
-              champs_perso: (localPerso.champs_perso || []).filter((c: any) => c.id !== id)
+              champs_perso: (localPerso.champs_perso || []).filter(
+                (c: any) => c.id !== id,
+              ),
             })
           }}
           onUpdateChamp={(id, champ) => {
             setLocalPerso({
               ...localPerso,
-              champs_perso: (localPerso.champs_perso || []).map((c: any) => c.id === id ? champ : c)
+              champs_perso: (localPerso.champs_perso || []).map((c: any) =>
+                c.id === id ? champ : c,
+              ),
             })
           }}
         />

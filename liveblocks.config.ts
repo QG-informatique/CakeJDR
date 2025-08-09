@@ -38,34 +38,30 @@ declare global {
     // Each user's Presence, for useMyPresence, useOthers, etc.
     Presence: {
       // Currently selected character data
-      character?: CharacterData;
+      character?: CharacterData
       // Cursor position in canvas coordinates
-      cursor?: { x: number; y: number } | null;
+      cursor?: { x: number; y: number } | null
       // Display name and color for cursors
-      name?: string;
-      color?: string;
-    };
+      name?: string
+      color?: string
+    }
 
     // The Storage tree for the room, for useMutation, useStorage, etc.
     Storage: {
-      characters: LiveMap<string, CharacterData>;
-      images: LiveMap<string, CanvasImage>;
-      music: LiveObject<{ id: string; playing: boolean }>;
-      summary: LiveObject<{ acts: Array<{ id: string; title: string }> }>;
-      editor: LiveMap<string, string>;
-      events: LiveList<SessionEvent>;
-      rooms: LiveList<Room>;
-    };
+      characters: LiveMap<string, CharacterData>
+      images: LiveMap<string, CanvasImage>
+      music: LiveObject<{ id: string; playing: boolean }>
+      summary: LiveObject<{ acts: Array<{ id: string; title: string }> }>
+      editor: LiveMap<string, string>
+      events: LiveList<SessionEvent>
+      rooms: LiveList<Room>
+    }
 
     // Custom user info set when authenticating with a secret key
     UserMeta: {
-      id: string;
-      info: {
-        // Example properties, for useSelf, useUser, useOthers, etc.
-        // name: string;
-        // avatar: string;
-      };
-    };
+      id: string
+      info: Record<string, never>
+    }
 
     // Custom events, for useBroadcastEvent, useEventListener
     RoomEvent:
@@ -73,25 +69,26 @@ declare global {
       | { type: 'update-image'; image: CanvasImage }
       | { type: 'delete-image'; id: number }
       | { type: 'clear-canvas' }
-      | { type: 'draw-line'; x1:number; y1:number; x2:number; y2:number; color:string; width:number; mode:'draw'|'erase' }
+      | {
+          type: 'draw-line'
+          x1: number
+          y1: number
+          x2: number
+          y2: number
+          color: string
+          width: number
+          mode: 'draw' | 'erase'
+        }
       | { type: 'chat'; author: string; text: string; isMJ?: boolean }
       | { type: 'dice-roll'; player: string; dice: number; result: number }
-      | { type: 'gm-select'; character: CharacterData };
+      | { type: 'gm-select'; character: CharacterData }
 
     // Custom metadata set on threads, for useThreads, useCreateThread, etc.
-    ThreadMetadata: {
-      // Example, attaching coordinates to a thread
-      // x: number;
-      // y: number;
-    };
+    ThreadMetadata: Record<string, never>
 
     // Custom room info set with resolveRoomsInfo, for useRoomInfo
-    RoomInfo: {
-      // Example, rooms with a title and url
-      // title: string;
-      // url: string;
-    };
+    RoomInfo: Record<string, never>
   }
 }
 
-export {};
+export {}
