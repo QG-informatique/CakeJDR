@@ -14,6 +14,7 @@ import {
 } from '@liveblocks/react-lexical'
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import { $getRoot, $createParagraphNode, $createTextNode } from 'lexical'
+import type { LexicalEditor } from 'lexical'
 
 interface Page {
   id: string
@@ -210,7 +211,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
       namespace: `session-summary-${current ? current.id : 'global'}`,
       onError: console.error,
     }),
-    editorState: (editor) => {
+    editorState: (editor: LexicalEditor) => {
       if (initialText) {
         editor.update(() => {
           const root = $getRoot()
