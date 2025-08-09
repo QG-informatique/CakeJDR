@@ -640,23 +640,23 @@ export default function SpecialBackground() {
         acc = 0
 
         /* ---- FEUILLES SUR L'EAU ---- */
-        setDebris((prev) => {
+
+        setDebris(prev => {
           const newLeafBubbles: LeafBubble[] = []
-          const arr = prev
-            .map((d) => {
-              const nx = d.x + d.v * dt
-              const ny = d.y + Math.sin((d.t + dt) * 1.2) * 0.05
-              if (Math.random() < 0.1 * dt) {
-                newLeafBubbles.push({
-                  id: leafBubbleId.current++,
-                  x: nx - 0.6 + (Math.random() - 0.5) * 0.6,
-                  y: ny + 0.1 + (Math.random() - 0.5) * 0.4,
-                  until: performance.now() + 1100 + Math.random() * 500,
-                })
-              }
-              return { ...d, x: nx, y: ny, t: d.t + dt }
-            })
-            .filter((d) => d.x < 120 && d.t < d.life)
+          const arr = prev.map(d => {
+            const nx = d.x + d.v * dt
+            const ny = d.y + Math.sin((d.t + dt) * 1.2) * 0.05
+            if (Math.random() < 0.10 * dt) {
+              newLeafBubbles.push({
+                id: leafBubbleId.current++,
+                x: nx - 0.6 + (Math.random() - 0.5) * 0.6,
+                y: ny + 0.1 + (Math.random() - 0.5) * 0.4,
+                until: performance.now() + 1100 + Math.random() * 500,
+              })
+            }
+            return { ...d, x: nx, y: ny, t: d.t + dt }
+          }).filter(d => d.x < 120 && d.t < d.life)
+
 
           if (
             performance.now() >= nextDebris.current &&
