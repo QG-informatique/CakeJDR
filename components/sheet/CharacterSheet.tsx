@@ -178,17 +178,18 @@ const CharacterSheet: FC<Props> = ({
 
       if (stat === 'pv') {
         const currentMax = Number(
-          updatedPerso[pvMaxKey] ?? updatedPerso.pv ?? 0,
+          Reflect.get(updatedPerso, pvMaxKey) ?? updatedPerso.pv ?? 0,
         )
         const newPvMax = currentMax + gain
         const currentPv = Number(updatedPerso.pv ?? 0)
         const newPv = Math.min(currentPv + gain, newPvMax)
-        updatedPerso = { ...updatedPerso, [pvMaxKey]: newPvMax, pv: newPv }
+        updatedPerso = { ...updatedPerso }
+        Reflect.set(updatedPerso, pvMaxKey, newPvMax)
+        updatedPerso.pv = newPv
       } else {
-        updatedPerso = {
-          ...updatedPerso,
-          [stat]: Number((updatedPerso as any)[stat] ?? 0) + gain,
-        }
+        updatedPerso = { ...updatedPerso }
+        const prev = Number(Reflect.get(updatedPerso, stat) ?? 0)
+        Reflect.set(updatedPerso, stat, prev + gain)
       }
 
       setLocalPerso({ ...updatedPerso })

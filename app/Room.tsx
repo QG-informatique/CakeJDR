@@ -24,7 +24,7 @@ export function Room({
 
   const devtoolsProps = {
     storage: {
-      editor: pages[currentPageId],
+      editor: pages.at(currentPageId),
       pages,
     },
   } as unknown as Record<string, unknown>;

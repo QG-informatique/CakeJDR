@@ -1,7 +1,7 @@
 'use client'
 
 import { FC, useState } from 'react'
-import AddCompetenceModal from './AddCompetenceModal'
+import { AddCompetenceModal } from './AddCompetenceModal'
 import { useT } from '@/lib/useT'
 
 type Competence = { id: string; nom: string; type: string; effets: string; degats?: string }
