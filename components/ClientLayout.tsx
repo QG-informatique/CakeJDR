@@ -11,18 +11,14 @@ const BackgroundWrapper = dynamic(() => import('@/components/ui/BackgroundWrappe
 })
 
 // Petit garde-fou : si le background crashe, on n’abat pas tout le layout
-interface BackgroundBoundaryProps { // FIX: declare explicit props interface
-  children: React.ReactNode // FIX: type children explicitly
+interface BackgroundBoundaryProps { // FIX: explicit props interface
+  children: React.ReactNode // FIX: typed children
 }
-interface BackgroundBoundaryState { hasError: boolean } // FIX: declare explicit state interface
-class BackgroundErrorBoundary extends React.Component< // FIX: type component with interfaces
-  BackgroundBoundaryProps, // FIX: props type
-  BackgroundBoundaryState, // FIX: state type
-  never // FIX: explicit snapshot type to avoid implicit any
-> {
-  constructor(props: BackgroundBoundaryProps) { // FIX: typed constructor props
+interface BackgroundBoundaryState { hasError: boolean } // FIX: explicit state interface
+class BackgroundErrorBoundary extends React.Component<BackgroundBoundaryProps, BackgroundBoundaryState, never> { // FIX: typed generics
+  constructor(props: BackgroundBoundaryProps) { // FIX: typed constructor
     super(props)
-    this.state = { hasError: false }
+    this.state = { hasError: false } // FIX: initialize state
   }
   static getDerivedStateFromError(error: unknown): BackgroundBoundaryState { // FIX: typed error parameter
     void error // FIX: mark unused
