@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 
 /* ============================================================================
    UTILS
@@ -82,6 +82,13 @@ const MOON_SVG = 'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754686041/
 
 const CRAB_SVG   = 'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754684374/crab-svgrepo-com_mfrmuo.svg'
 const TURTLE_SVG = 'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754684367/turtle-svgrepo-com_cnjdks.svg'
+
+const CLOUD_PATHS = [
+  'M20,100 C35,60 60,40 95,45 C110,20 145,15 170,35 C190,25 230,30 245,60 C280,60 300,75 302,100 L20,100 Z',
+  'M10,100 C30,70 55,55 80,60 C105,35 150,25 180,50 C210,40 250,55 270,80 C290,80 300,90 304,100 L10,100 Z',
+  'M0,100 C20,75 40,65 70,70 C90,50 130,45 160,60 C195,55 230,70 250,85 C270,85 300,95 306,100 L0,100 Z',
+]
+
 
 /* ============================================================================
    PALETTE
@@ -201,26 +208,21 @@ export default function SpecialBackground() {
   }, [])
   const nightish = light < 0.3 // scintillement surtout de nuit
 
-  /* Nuages (identiques) */
-  const CLOUD_PATHS = [
-    'M20,100 C35,60 60,40 95,45 C110,20 145,15 170,35 C190,25 230,30 245,60 C280,60 300,75 302,100 L20,100 Z',
-    'M10,100 C30,70 55,55 80,60 C105,35 150,25 180,50 C210,40 250,55 270,80 C290,80 300,90 304,100 L10,100 Z',
-    'M0,100 C20,75 40,65 70,70 C90,50 130,45 160,60 C195,55 230,70 250,85 C270,85 300,95 306,100 L0,100 Z',
-  ]
-  function PrettyCloud({ size = 150, variant = 0 }: { size?: number; variant?: number }) {
-    const i = Math.abs(variant) % CLOUD_PATHS.length
-    return (
-      <svg viewBox="0 0 306.67 200" width={size} height={(size * 200) / 306.67} style={{ filter: 'drop-shadow(0 8px 12px #0003)' }}>
-        <defs>
-          <linearGradient id={`cfill-${i}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#ffffff" />
-            <stop offset="100%" stopColor="#eef4ff" />
-          </linearGradient>
-        </defs>
-        <path d={CLOUD_PATHS[i]} fill={`url(#cfill-${i})`} stroke="#ffffff" strokeOpacity={0.35} strokeWidth="2" />
-      </svg>
-    )
-  }
+    /* Nuages (identiques) */
+    const PrettyCloud = useCallback(({ size = 150, variant = 0 }: { size?: number; variant?: number }) => {
+      const i = Math.abs(variant) % CLOUD_PATHS.length
+      return (
+        <svg viewBox="0 0 306.67 200" width={size} height={(size * 200) / 306.67} style={{ filter: 'drop-shadow(0 8px 12px #0003)' }}>
+          <defs>
+            <linearGradient id={`cfill-${i}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#ffffff" />
+              <stop offset="100%" stopColor="#eef4ff" />
+            </linearGradient>
+          </defs>
+          <path d={CLOUD_PATHS[i]} fill={`url(#cfill-${i})`} stroke="#ffffff" strokeOpacity={0.35} strokeWidth="2" />
+        </svg>
+      )
+    }, [])
   const clouds = useMemo(() => {
     const rng = mulberry32(99021)
     const layers = [
@@ -249,7 +251,7 @@ export default function SpecialBackground() {
       }
     })
     return arr
-  }, [])
+  }, [PrettyCloud])
 
   /* Fleurs / Coquillages (inchangé) */
   const flowers = useMemo(() => {
@@ -361,13 +363,12 @@ export default function SpecialBackground() {
   /* Vaguelettes ponctuelles */
   const [waves, setWaves] = useState<WaveFX[]>([])
   const waveId = useRef(1)
-  useEffect(() => {
-    let raf = 0, last = performance.now()
-    let nextWave = performance.now() + 3000 + Math.random() * 4000
-    const loop = (now: number) => {
-      const dt = (now - last) / 1000; last = now
-      setWaves(prev => prev.filter(w => w.until > now))
-      if (now >= nextWave) {
+    useEffect(() => {
+      let raf = 0
+      let nextWave = performance.now() + 3000 + Math.random() * 4000
+      const loop = (now: number) => {
+        setWaves(prev => prev.filter(w => w.until > now))
+        if (now >= nextWave) {
         nextWave = now + 5000 + Math.random() * 7000
         const y = 88 + (Math.random() - 0.5) * 4
         const x = 10 + Math.random() * 80
@@ -392,7 +393,7 @@ export default function SpecialBackground() {
   }
   const countAdultsPlain = (list: PlainAnimal[]) => list.filter(a => !a.isBaby).length
 
-  function spawnPlainAnimal(opts?: { type?: AnimalType; babyOf?: AnimalType; near?: { x: number; y: number } }) {
+  const spawnPlainAnimal = useCallback((opts?: { type?: AnimalType; babyOf?: AnimalType; near?: { x: number; y: number } }) => {
     setAnimals(cur => {
       const isBaby = !!opts?.babyOf
       if (!isBaby && countAdultsPlain(cur) >= 3) return cur
@@ -409,17 +410,16 @@ export default function SpecialBackground() {
       }
       return [...cur, a]
     })
-  }
+  }, [isDayNow])
 
-  useEffect(() => {
-    let raf = 0, last = performance.now()
-    const loop = (now: number) => {
-      const dt = (now - last) / 1000; last = now
-
-      if (now >= nextSpawnAt.current) {
-        nextSpawnAt.current = now + 8000 + Math.random() * 9000
-        spawnPlainAnimal()
-      }
+    useEffect(() => {
+      let raf = 0, last = performance.now()
+      const loop = (now: number) => {
+        const dt = (now - last) / 1000; last = now
+        if (now >= nextSpawnAt.current) {
+          nextSpawnAt.current = now + 8000 + Math.random() * 9000
+          spawnPlainAnimal()
+        }
 
       setAnimals(prev => {
         const arr = prev.map(a => ({ ...a }))
@@ -477,7 +477,7 @@ export default function SpecialBackground() {
       raf = requestAnimationFrame(loop)
     }
     raf = requestAnimationFrame(loop); return () => cancelAnimationFrame(raf)
-  }, [isDayNow])
+    }, [isDayNow, spawnPlainAnimal])
 
   /* ====================== SHORE (plage + rivière) ====================== */
   const [shore, setShore] = useState<ShoreAnimal[]>([
