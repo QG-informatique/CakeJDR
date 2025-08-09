@@ -1,5 +1,5 @@
 'use client'
-// MOD: 1 2025-08-09 - typed CSS variable styles to remove any casts
+// MOD: 1 2025-08-09 - assert CSS variable map as React.CSSProperties to avoid any
 
 /**
  * CakeBackground — Fibres tressées (v1)
@@ -21,7 +21,7 @@
 import React from 'react'
 
 export default function CakeBackground() {
-  const styleVars: React.CSSProperties = {
+  const styleVars = {
     // ====== VARIABLES TWEAK ======
     // Couleurs principales (tissu)
     '--bg': '#13161c', // fond global sous la trame
@@ -36,7 +36,7 @@ export default function CakeBackground() {
     '--sheen-blur': '22px',
     // Vitesse de balayage
     '--speed': '18s',
-  } // MOD: 1
+  } as React.CSSProperties // MOD: 1
 
   return (
     <div
