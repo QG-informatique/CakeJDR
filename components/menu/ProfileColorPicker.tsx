@@ -153,7 +153,7 @@ const ProfileColorPicker: FC<Props> = ({ color, onChange, size = 28 }) => {
                 />
                 <button
                   onClick={() => setShowModal(false)}
-                  className="absolute -top-3 -right-3 bg-white text-black rounded-full w-6 h-6 font-bold shadow"
+                  className="absolute -top-3 -right-3 bg-white text-gray-900 rounded-full w-6 h-6 font-bold shadow"
                 >
                   ×
                 </button>

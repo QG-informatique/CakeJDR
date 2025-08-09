@@ -106,7 +106,7 @@ export default function RoomsPage() {
 
         </summary>
         {showCreate && (
-          <div className="mt-3 space-y-2 text-black">
+          <div className="mt-3 space-y-2 text-white">
             <input
 
               placeholder={t('roomName')}

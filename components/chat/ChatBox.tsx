@@ -134,7 +134,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
           className="
             px-5 py-2 rounded-xl font-semibold shadow border-none
             bg-black/30 text-white/90
-            hover:bg-yellow-400 hover:text-black
+            hover:bg-yellow-400 hover:text-gray-900
             transition
             duration-100
             flex items-center justify-center

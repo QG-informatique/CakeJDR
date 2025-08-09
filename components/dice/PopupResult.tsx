@@ -118,7 +118,7 @@ export default function PopupResult({ show, result, diceType, onFinish, onReveal
                 initial={{ opacity: 1 }}
                 animate={{ opacity: showResult && i === faceIndex ? 0 : 1 }}
                 transition={{ delay: RESULT_DELAY / 1000, duration: 0.3 }}
-                className="text-5xl font-black text-black"
+                className="text-5xl font-black text-gray-900"
                 style={{ textShadow: '0 0 2px rgba(0,0,0,0.8)' }}
               >
                 ?
@@ -127,7 +127,7 @@ export default function PopupResult({ show, result, diceType, onFinish, onReveal
                 initial={{ opacity: 0 }}
                 animate={{ opacity: showResult && i === faceIndex ? 1 : 0 }}
                 transition={{ delay: (RESULT_DELAY + 200) / 1000, duration: 0.5 }}
-                className="absolute text-5xl font-black text-black"
+                className="absolute text-5xl font-black text-gray-900"
                 style={{ textShadow: '0 0 2px rgba(0,0,0,0.8)' }}
               >
                 {result}

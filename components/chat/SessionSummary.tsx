@@ -1,7 +1,7 @@
 'use client'
 import { FC, useEffect, useState, useRef, useCallback } from 'react'
 import { useT } from '@/lib/useT'
-import { useStorage, useMutation } from '@liveblocks/react'
+import { useStorage, useMutation, useRoom } from '@liveblocks/react'
 import { LiveMap } from '@liveblocks/client'
 import { LexicalComposer } from '@lexical/react/LexicalComposer'
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin'
@@ -50,6 +50,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
   const menuRef = useRef<HTMLDivElement>(null)
   const fileBtnRef = useRef<HTMLButtonElement>(null)
   const t = useT()
+  const room = useRoom()
 
   const updatePages = useMutation(({ storage }, acts: Page[]) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -213,7 +214,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
 
   const editorConfig = {
     ...liveblocksConfig({
-      namespace: `session-summary-${current ? current.id : 'global'}`,
+      namespace: `session-summary-${room.id}-${current ? current.id : 'global'}`,
       onError: console.error,
     }),
     editorState: (editor: LexicalEditor) => {

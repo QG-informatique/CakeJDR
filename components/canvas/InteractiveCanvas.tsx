@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useCallback } from 'react'
 import {
   useBroadcastEvent,
   useEventListener,
@@ -129,27 +129,40 @@ export default function InteractiveCanvas() {
   const ERASE_MIN = DRAW_MIN * 4
   const ERASE_MAX = DRAW_MAX * 4
 
-    useEffect(() => {
-      const resize = () => {
-        const canvas = drawingCanvasRef.current
-        if (canvas) {
-          const rect = canvas.getBoundingClientRect()
-          const dpr = window.devicePixelRatio || 1
-          canvas.width = rect.width * dpr
-          canvas.height = rect.height * dpr
-          const ctx = canvas.getContext('2d')
-          if (ctx) {
-            ctx.scale(dpr, dpr)
-            ctx.lineCap = 'round'
-            ctx.lineJoin = 'round'
-            ctxRef.current = ctx
-          }
-        }
+  const resizeCanvas = useCallback(() => {
+    const canvas = drawingCanvasRef.current
+    if (canvas) {
+      const rect = canvas.getBoundingClientRect()
+      const dpr = window.devicePixelRatio || 1
+      canvas.width = rect.width * dpr
+      canvas.height = rect.height * dpr
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0)
+        ctx.scale(dpr, dpr)
+        ctx.lineCap = 'round'
+        ctx.lineJoin = 'round'
+        ctxRef.current = ctx
       }
-      resize()
-      window.addEventListener('resize', resize)
-      return () => window.removeEventListener('resize', resize)
-    }, [toolsVisible, audioVisible])
+    }
+  }, [])
+
+  useEffect(() => {
+    resizeCanvas()
+    window.addEventListener('resize', resizeCanvas)
+    return () => window.removeEventListener('resize', resizeCanvas)
+  }, [resizeCanvas])
+
+  useEffect(() => {
+    const observer = new ResizeObserver(() => resizeCanvas())
+    const elem = canvasRef.current
+    if (elem) observer.observe(elem)
+    return () => observer.disconnect()
+  }, [resizeCanvas])
+
+  useEffect(() => {
+    resizeCanvas()
+  }, [toolsVisible, audioVisible, resizeCanvas])
 
   useEffect(() => {
     const canvas = drawingCanvasRef.current
