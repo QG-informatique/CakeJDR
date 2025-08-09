@@ -52,11 +52,11 @@ function mulberry32(seed: number) {
 }
 
 function makeTopoPath({
-  W, H, baseY, amp, phase, freq,
-}: { W: number; H: number; baseY: number; amp: number; phase: number; freq: number; }) {
+  W, baseY, amp, phase, freq,
+}: { W: number; baseY: number; amp: number; phase: number; freq: number }) {
   const N = 12
   const k = (Math.PI * 2 * freq) / (N - 1)
-  const c = W / (N - 1) * 0.42
+  const c = (W / (N - 1)) * 0.42
   const pts = Array.from({ length: N }, (_, i) => {
     const x = (W / (N - 1)) * i
     const y = baseY + Math.sin(phase + i * k) * amp
@@ -72,6 +72,8 @@ function makeTopoPath({
   return d
 }
 
+const PHASES = [0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2]
+
 /* =========================
    LIGNE TOPO : 1 <path> morphé
    ========================= */
@@ -86,10 +88,9 @@ function TopoLine({
   const amp = TOPO.ampBase + (rnd() - 0.5) * TOPO.ampJitter * 2
   const freq = clamp(TOPO.freq + (rnd() - 0.5) * 0.5, 1.6, 3.0)
 
-  const phases = [0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2]
   const paths = useMemo(
-    () => phases.map(ph => makeTopoPath({ W, H, baseY, amp, phase: ph, freq })),
-    [W, H, baseY, amp, freq]
+    () => PHASES.map(ph => makeTopoPath({ W, baseY, amp, phase: ph, freq })),
+    [W, baseY, amp, freq]
   )
 
   const centerBias = 1 - Math.abs((index - (total - 1) / 2) / ((total - 1) / 2))
@@ -132,11 +133,11 @@ export default function CakeBackground() {
       {/* Halos très discrets */}
       <div
         className="absolute -top-[30vh] -left-[20vw] w-[90vw] h-[90vh] blur-3xl opacity-70"
-        style={{ background: `radial-gradient(50% 50% at 50% 50%, ${THEME.tintA} 0%, transparent 70%)`, mixBlendMode: 'screen' as any }}
+        style={{ background: `radial-gradient(50% 50% at 50% 50%, ${THEME.tintA} 0%, transparent 70%)`, mixBlendMode: 'screen' as React.CSSProperties['mixBlendMode'] }}
       />
       <div
         className="absolute -bottom-[35vh] -right-[25vw] w-[100vw] h-[100vh] blur-3xl opacity-70"
-        style={{ background: `radial-gradient(50% 50% at 50% 50%, ${THEME.tintB} 0%, transparent 70%)`, mixBlendMode: 'screen' as any }}
+        style={{ background: `radial-gradient(50% 50% at 50% 50%, ${THEME.tintB} 0%, transparent 70%)`, mixBlendMode: 'screen' as React.CSSProperties['mixBlendMode'] }}
       />
 
       {/* Lignes topo */}
