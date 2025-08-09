@@ -1,5 +1,6 @@
 'use client'
 // MOD: 1 2025-08-09 - fix lint issues: remove any casts, unused params, and stabilize phases
+// MOD: 2 2025-08-09 - assert topo path points exist for strict indexing
 
 /**
  * CakeBackground – TopoFlow (cyan sombre) v2
@@ -59,16 +60,17 @@ function makeTopoPath({
 }: { W: number; baseY: number; amp: number; phase: number; freq: number }) { // MOD: 1
   const N = 12
   const k = (Math.PI * 2 * freq) / (N - 1)
-  const c = W / (N - 1) * 0.42
+  const c = (W / (N - 1)) * 0.42
   const pts = Array.from({ length: N }, (_, i) => {
     const x = (W / (N - 1)) * i
     const y = baseY + Math.sin(phase + i * k) * amp
     return { x, y }
   })
+  const first = pts[0]! // MOD: 2
   const d = [
-    `M ${pts[0].x} ${pts[0].y}`,
+    `M ${first.x} ${first.y}`, // MOD: 2
     ...pts.slice(0, -1).map((p, i) => {
-      const p2 = pts[i + 1]
+      const p2 = pts[i + 1]! // MOD: 2
       return `C ${p.x + c} ${p.y}, ${p2.x - c} ${p2.y}, ${p2.x} ${p2.y}`
     }),
   ].join(' ')
