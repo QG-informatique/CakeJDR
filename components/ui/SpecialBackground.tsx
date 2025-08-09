@@ -1,4 +1,4 @@
-/* eslint-disable react/jsx-no-comment-textnodes */ // FIX:
+/* eslint-disable react/jsx-no-comment-textnodes */
 'use client'
 
 import { motion } from 'framer-motion'
@@ -40,15 +40,11 @@ function lerpColor(a?: string, b?: string, t = 0.5) {
     Math.round(lerp(A[2], B[2], t)),
   ])
 }
-
-
-// FIX: fonction "bell" pour fenêtres dawn/dusk
-function bell(x: number, a: number, b: number) { // FIX:
-  if (x <= a || x >= b) return 0 // FIX:
-  const t = (x - a) / (b - a) // FIX:
-  return 4 * t * (1 - t) // courbe en cloche C1 continue // FIX:
-} // FIX:
-
+function bell(x: number, a: number, b: number) {
+  if (x <= a || x >= b) return 0
+  const t = (x - a) / (b - a)
+  return 4 * t * (1 - t)
+}
 
 /* ============================================================================
    ASSETS
@@ -87,50 +83,48 @@ const CRAB_SVG   = 'https://res.cloudinary.com/dz6ugwzxp/image/upload/v175468437
 const TURTLE_SVG = 'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754684367/turtle-svgrepo-com_cnjdks.svg'
 
 /* ============================================================================
-   PALETTE
+   PALETTE & CYCLE
    ============================================================================ */
 
-const PAL = { // FIX:
-  nightTop:  '#0b1625', nightBottom:  '#0e1d30', // FIX:
-  predawnTop:'#15253b', predawnBottom:'#1a2e49', // FIX:
-  dayTop:    '#78caff', dayBottom:    '#a8ddff', // FIX:
-  dawnTop:   '#2a3a5a', dawnBottom:   '#ffb073', // FIX:
-  duskTop:   '#2a3458', duskBottom:   '#ff8ca1', // FIX:
-  sunHalo:   '#ffd23f', moonHalo: '#dfe9ff', // FIX:
-} // FIX:
+const PAL = {
+  nightTop:  '#0b1625', nightBottom:  '#0e1d30',
+  predawnTop:'#15253b', predawnBottom:'#1a2e49',
+  dayTop:    '#78caff', dayBottom:    '#a8ddff',
+  dawnTop:   '#2a3a5a', dawnBottom:   '#ffb073',
+  duskTop:   '#2a3458', duskBottom:   '#ff8ca1',
+  sunHalo:   '#ffd23f', moonHalo: '#dfe9ff',
+}
 
-// FIX: constantes cycle
-const DAY_SEC = 180; // FIX:
-const NIGHT_SEC = 180; // FIX:
-const MOON_GAP = 2; // FIX:
-const DAWN_SEC = 25; // FIX:
-const DUSK_SEC = 25; // FIX:
-const CYCLE_SEC = DAY_SEC + NIGHT_SEC; // FIX:
+const DAY_SEC = 180
+const NIGHT_SEC = 180
+const MOON_GAP = 2
+const DAWN_SEC = 25
+const DUSK_SEC = 25
+const CYCLE_SEC = DAY_SEC + NIGHT_SEC
 
-// FIX: fonction couleur du ciel continue
-function getSkyColors(t: number): { top: string; bottom: string } { // FIX:
-  const pSun = clamp(t / DAY_SEC, 0, 1); // FIX:
-  const pMoon = clamp((t - DAY_SEC - MOON_GAP) / (NIGHT_SEC - MOON_GAP), 0, 1); // FIX:
-  let top = PAL.nightTop; // FIX:
-  let bot = PAL.nightBottom; // FIX:
-  const kSun = Math.sin(Math.PI * pSun); // FIX:
-  top = lerpColor(top, PAL.dayTop, kSun); // FIX:
-  bot = lerpColor(bot, PAL.dayBottom, kSun); // FIX:
-  const kDawn = bell(pSun, 0, DAWN_SEC / DAY_SEC); // FIX:
-  const kDusk = bell(pSun, 1 - DUSK_SEC / DAY_SEC, 1); // FIX:
-  top = lerpColor(top, PAL.dawnTop, kDawn); // FIX:
-  bot = lerpColor(bot, PAL.dawnBottom, kDawn); // FIX:
-  top = lerpColor(top, PAL.duskTop, kDusk); // FIX:
-  bot = lerpColor(bot, PAL.duskBottom, kDusk); // FIX:
-  const gapDur = Math.min(40, NIGHT_SEC); // FIX:
-  const kGap = smoothstep01((t - DAY_SEC) / gapDur); // FIX:
-  top = lerpColor(top, PAL.nightTop, kGap); // FIX:
-  bot = lerpColor(bot, PAL.nightBottom, kGap); // FIX:
-  const kPre = smoothstep01((pMoon - 0.8) / 0.2); // FIX:
-  top = lerpColor(top, PAL.predawnTop, kPre); // FIX:
-  bot = lerpColor(bot, PAL.predawnBottom, kPre); // FIX:
-  return { top, bottom: bot }; // FIX:
-} // FIX:
+function getSkyColors(t: number): { top: string; bottom: string } {
+  const pSun = clamp(t / DAY_SEC, 0, 1)
+  const pMoon = clamp((t - DAY_SEC - MOON_GAP) / (NIGHT_SEC - MOON_GAP), 0, 1)
+  let top = PAL.nightTop
+  let bot = PAL.nightBottom
+  const kSun = Math.sin(Math.PI * pSun)
+  top = lerpColor(top, PAL.dayTop, kSun)
+  bot = lerpColor(bot, PAL.dayBottom, kSun)
+  const kDawn = bell(pSun, 0, DAWN_SEC / DAY_SEC)
+  const kDusk = bell(pSun, 1 - DUSK_SEC / DAY_SEC, 1)
+  top = lerpColor(top, PAL.dawnTop, kDawn)
+  bot = lerpColor(bot, PAL.dawnBottom, kDawn)
+  top = lerpColor(top, PAL.duskTop, kDusk)
+  bot = lerpColor(bot, PAL.duskBottom, kDusk)
+  const gapDur = Math.min(40, NIGHT_SEC)
+  const kGap = smoothstep01((t - DAY_SEC) / gapDur)
+  top = lerpColor(top, PAL.nightTop, kGap)
+  bot = lerpColor(bot, PAL.nightBottom, kGap)
+  const kPre = smoothstep01((pMoon - 0.8) / 0.2)
+  top = lerpColor(top, PAL.predawnTop, kPre)
+  bot = lerpColor(bot, PAL.predawnBottom, kPre)
+  return { top, bottom: bot }
+}
 
 /* ============================================================================
    TYPES
@@ -155,58 +149,77 @@ type HeartFX = { id: number; x: number; y: number; until: number }
 type SplashFX = { id: number; x: number; y: number; until: number; water: boolean }
 type BubbleFX = { id: number; x: number; y: number; until: number }
 type WaveFX = { id: number; x: number; y: number; until: number }
-type Debris = { id: number; x: number; y: number; v: number; size: number; life: number; t: number; op: number } // feuilles
+type Debris = { id: number; x: number; y: number; v: number; size: number; life: number; t: number; op: number }
 type LeafBubble = { id: number; x: number; y: number; until: number }
+
+/* ============================================================================
+   CONSTANTES PERF
+   ============================================================================ */
+
+const TICK_MS = 33 // ~30fps
+const MAX_LEAVES = 6
+const MAX_LEAF_BUBBLES = 30
+const MAX_WAVES = 8
+const MAX_SPLASHES = 20
+const MAX_WATER_BUBBLES = 40
+const MAX_SHORE_ADULTS = 4
+const MAX_PLAIN_ADULTS = 3
 
 /* ============================================================================
    COMPONENT
    ============================================================================ */
 
 export default function SpecialBackground() {
+  /* --------- Temps (cycle) ---------- */
+  const [timeSec, setTimeSec] = useState(0)
+  useEffect(() => {
+    let raf = 0
+    let lastRAF = performance.now()
+    let acc = 0
+    const start = performance.now()
+    const frame = (now: number) => {
+      const dt = now - lastRAF
+      lastRAF = now
+      acc += dt
+      if (acc >= TICK_MS) {
+        const t = ((now - start) / 1000) % CYCLE_SEC
+        setTimeSec(t)
+        acc = 0
+      }
+      raf = requestAnimationFrame(frame)
+    }
+    raf = requestAnimationFrame(frame)
+    return () => cancelAnimationFrame(raf)
+  }, [])
+  const t = timeSec
 
-  const [timeSec, setTimeSec] = useState(0) // FIX:
-  useEffect(() => { // FIX:
-    let raf = 0; const start = performance.now() // FIX:
-    const loop = (now: number) => { // FIX:
-      setTimeSec(((now - start) / 1000) % CYCLE_SEC) // FIX:
-      raf = requestAnimationFrame(loop) // FIX:
-    } // FIX:
-    raf = requestAnimationFrame(loop); return () => cancelAnimationFrame(raf) // FIX:
-  }, []) // FIX:
-  const t = timeSec // FIX:
+  /* --------- Astres ---------- */
+  const pSun = clamp(t / DAY_SEC, 0, 1)
+  const pMoon = clamp((t - DAY_SEC - MOON_GAP) / (NIGHT_SEC - MOON_GAP), 0, 1)
+  const mapX = (p: number) => -10 + 120 * p
+  const sunX = mapX(pSun)
+  const moonX = mapX(pMoon)
+  const sunY = 34 + Math.sin(Math.PI * pSun) * -18
+  const moonY = 38 + Math.sin(Math.PI * pMoon) * -14
+  const showSun = t < DAY_SEC
+  const showMoon = t >= DAY_SEC + MOON_GAP
+  const { top: skyTop, bottom: skyBottom } = getSkyColors(t)
 
-  // Phases astres // FIX:
-  const pSun = clamp(t / DAY_SEC, 0, 1) // FIX:
-  const pMoon = clamp((t - DAY_SEC - MOON_GAP) / (NIGHT_SEC - MOON_GAP), 0, 1) // FIX:
+  /* --------- Étoiles ---------- */
+  const stars = useMemo(() => {
+    const rng = mulberry32(20250808)
+    return Array.from({ length: 120 }).map((_, k) => ({
+      id: `star-${k}`, left: Math.round(rng() * 100), top: Math.round(rng() * 28),
+      size: 1 + Math.round(rng() * 2), tw: 2 + rng() * 3, delay: rng() * 5,
+    }))
+  }, [])
+  const starStrength = Math.sin(Math.PI * pMoon)
 
-  // Trajectoires en arc // FIX:
-  const mapX = (p: number) => -10 + 120 * p // FIX:
-  const sunX = mapX(pSun) // FIX:
-  const moonX = mapX(pMoon) // FIX:
-  const sunY = 34 + Math.sin(Math.PI * pSun) * -18 // FIX:
-  const moonY = 38 + Math.sin(Math.PI * pMoon) * -14 // FIX:
-  const showSun = t < DAY_SEC // FIX:
-  const showMoon = t >= DAY_SEC + MOON_GAP // FIX:
-
-  // Couleurs du ciel // FIX:
-  const { top: skyTop, bottom: skyBottom } = getSkyColors(t) // FIX:
-
-  /* Étoiles légères la nuit */
-  const stars = useMemo(() => { // FIX:
-    const rng = mulberry32(20250808) // FIX:
-    return Array.from({ length: 120 }).map((_, k) => ({ // FIX:
-      id: `star-${k}`, left: Math.round(rng() * 100), top: Math.round(rng() * 28), // FIX:
-      size: 1 + Math.round(rng() * 2), tw: 2 + rng() * 3, delay: rng() * 5, // FIX:
-    })) // FIX:
-  }, []) // FIX:
-  const starStrength = Math.sin(Math.PI * pMoon) // FIX:
-
-  /* Nuages (identiques) */
+  /* --------- Nuages (formes variées) ---------- */
   const CLOUD_PATHS = [
     'M20,100 C35,60 60,40 95,45 C110,20 145,15 170,35 C190,25 230,30 245,60 C280,60 300,75 302,100 L20,100 Z',
     'M10,100 C30,70 55,55 80,60 C105,35 150,25 180,50 C210,40 250,55 270,80 C290,80 300,90 304,100 L10,100 Z',
     'M0,100 C20,75 40,65 70,70 C90,50 130,45 160,60 C195,55 230,70 250,85 C270,85 300,95 306,100 L0,100 Z',
-
   ]
   function PrettyCloud({ size = 150, variant = 0 }: { size?: number; variant?: number }) {
     const i = Math.abs(variant) % CLOUD_PATHS.length
@@ -225,22 +238,19 @@ export default function SpecialBackground() {
   const clouds = useMemo(() => {
     const rng = mulberry32(99021)
     const layers = [
-      { count: 3, z: 2, durMin: 200, durVar: 140, sizeMin: 120, sizeVar: 120, topMin: 4, topVar: 14 }, // FIX: more cloud variety (size/shape/speed/height)
-      { count: 4, z: 3, durMin: 110, durVar: 100, sizeMin: 220, sizeVar: 180, topMin: 10, topVar: 20 }, // FIX: more cloud variety (size/shape/speed/height)
+      { count: 3, z: 2, durMin: 200, durVar: 140, sizeMin: 120, sizeVar: 120, topMin: 4, topVar: 14 },
+      { count: 4, z: 3, durMin: 110, durVar: 100, sizeMin: 220, sizeVar: 180, topMin: 10, topVar: 20 },
     ]
-
-    const arr: React.ReactElement[] = [] // FIX: type cloud elements to avoid JSX namespace
-
-
+    const arr: React.ReactElement[] = []
     layers.forEach((L, li) => {
       for (let i = 0; i < L.count; i++) {
-        const size = L.sizeMin + Math.round(rng() * L.sizeVar) // FIX: more cloud variety (size/shape/speed/height)
-        const top = L.topMin + Math.round(rng() * L.topVar) // FIX: more cloud variety (size/shape/speed/height)
-        const dur = L.durMin + rng() * L.durVar // FIX: more cloud variety (size/shape/speed/height)
-        const delay = -rng() * dur * 1.5 // FIX: more cloud variety (size/shape/speed/height)
-        const sx = 0.8 + rng() * 0.6 // FIX: more cloud variety (size/shape/speed/height)
-        const sy = 0.8 + rng() * 0.6 // FIX: more cloud variety (size/shape/speed/height)
-        const rot = (rng() - 0.5) * 10 // FIX: more cloud variety (size/shape/speed/height)
+        const size = L.sizeMin + Math.round(rng() * L.sizeVar)
+        const top = L.topMin + Math.round(rng() * L.topVar)
+        const dur = L.durMin + rng() * L.durVar
+        const delay = -rng() * dur * 1.5
+        const sx = 0.8 + rng() * 0.6
+        const sy = 0.8 + rng() * 0.6
+        const rot = (rng() - 0.5) * 10
         const v = Math.floor(rng() * CLOUD_PATHS.length)
         arr.push(
           <motion.div
@@ -257,9 +267,9 @@ export default function SpecialBackground() {
       }
     })
     return arr
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, []) // stable
 
-  /* Fleurs / Coquillages (inchangé) */
+  /* --------- Fleurs / Coquillages (statiques) ---------- */
   const flowers = useMemo(() => {
     const rng = mulberry32(1312)
     const pts = Array.from({ length: 44 }).map(() => ({ x: 2 + rng() * 96, y: 56 + rng() * 16 }))
@@ -313,97 +323,49 @@ export default function SpecialBackground() {
     })
   }, [])
 
-  /* ====================== FEUILLES sur l'eau ====================== */
+  /* --------- États dynamiques ---------- */
   const [debris, setDebris] = useState<Debris[]>([])
   const [leafBubbles, setLeafBubbles] = useState<LeafBubble[]>([])
-  const debId = useRef(1)
-  const leafBubbleId = useRef(1)
-  const nextDebris = useRef(performance.now() + 5000 + Math.random() * 4000) // FIX: reduce river leaves spawn
-
-  useEffect(() => {
-    let raf = 0, last = performance.now()
-    const loop = (now: number) => {
-      const dt = (now - last) / 1000; last = now
-
-      // Avance + micro-ondulation + trail bulles
-      setDebris(prev => {
-        const arr = prev.map(d => {
-          const nx = d.x + d.v * dt
-          const ny = d.y + Math.sin((d.t + dt) * 1.2) * 0.05
-          if (Math.random() < 0.10 * dt) { // MODIF: un peu plus de bulles (toujours léger)
-            setLeafBubbles(b => [...b, {
-              id: leafBubbleId.current++,
-              x: nx - 0.6 + (Math.random() - 0.5) * 0.6,
-              y: ny + 0.1 + (Math.random() - 0.5) * 0.4,
-              until: performance.now() + 1200 + Math.random() * 600,
-            }])
-          }
-          return { ...d, x: nx, y: ny, t: d.t + dt }
-        })
-
-        // Spawn feuilles
-        if (now >= nextDebris.current && arr.length < 5) { // FIX: reduce river leaves spawn
-          nextDebris.current = now + 6000 + Math.random() * 8000 // FIX: reduce river leaves spawn
-          arr.push({
-            id: debId.current++,
-            x: -10, // toujours hors-gauche
-            y: 87 + (Math.random() * 9), // MODIF: bien dans la rivière (84.5–100)
-            v: 3.2 + Math.random() * 2.0, // proche du courant
-            size: 12 + Math.random() * 10, // MODIF: un chouïa plus grandes (visibilité)
-            life: 28 + Math.random() * 12,
-            t: 0,
-            op: 0.75 + Math.random() * 0.2, // MODIF: un peu plus opaques
-          })
-        }
-        return arr.filter(d => d.x < 120 && d.t < d.life)
-      })
-
-      setLeafBubbles(prev => prev.filter(b => b.until > performance.now()))
-
-      raf = requestAnimationFrame(loop)
-    }
-    raf = requestAnimationFrame(loop); return () => cancelAnimationFrame(raf)
-  }, [])
-
-  /* Vaguelettes ponctuelles */
   const [waves, setWaves] = useState<WaveFX[]>([])
-  const waveId = useRef(1)
-  useEffect(() => {
-    let raf = 0
-    let nextWave = performance.now() + 3000 + Math.random() * 4000
-    const loop = (now: number) => {
-      setWaves(prev => prev.filter(w => w.until > now))
-      if (now >= nextWave) {
-        nextWave = now + 5000 + Math.random() * 7000
-        const y = 88 + (Math.random() - 0.5) * 4
-        const x = 10 + Math.random() * 80
-        setWaves(w => [...w, { id: waveId.current++, x, y, until: now + 1800 }])
-      }
-      raf = requestAnimationFrame(loop)
-    }
-    raf = requestAnimationFrame(loop); return () => cancelAnimationFrame(raf)
-  }, [])
-
-  /* ====================== PLAINE (inchangé) ====================== */
   const [animals, setAnimals] = useState<PlainAnimal[]>([])
   const [hearts, setHearts] = useState<HeartFX[]>([])
+  const [shore, setShore] = useState<ShoreAnimal[]>([
+    { id: 1, kind: 'crab',   x: -8,  y: 78, dir: 1,  speedSand: 6,  speedWater: 8.0, zone: 'sand',  sizeScale: 1, isBaby: false },
+    { id: 2, kind: 'turtle', x: 108, y: 88, dir: -1, speedSand: 4.2, speedWater: 6.0, zone: 'water', sizeScale: 1, isBaby: false },
+  ])
+  const [shoreHearts, setShoreHearts] = useState<HeartFX[]>([])
+  const [splashes, setSplashes] = useState<SplashFX[]>([])
+  const [bubbles, setBubbles] = useState<BubbleFX[]>([])
+
+  /* --------- IDs/Timers ---------- */
+  const debId = useRef(1)
+  const leafBubbleId = useRef(1)
+  const waveId = useRef(1)
+  const splashId = useRef(1)
+  const bubbleId = useRef(1)
+  const nextDebris = useRef(performance.now() + 6000 + Math.random() * 6000)
+  const nextWaveAt = useRef(performance.now() + 5000 + Math.random() * 6000)
   const nextAnimalId = useRef(1)
-  const nextSpawnAt = useRef(performance.now() + 3000)
+  const nextSpawnAt = useRef(performance.now() + 4000)
+  const nextShoreId = useRef(3)
+  const lastCrabCheckAt = useRef(performance.now())
+
+  /* --------- Constantes logique ---------- */
   const PLAIN_Y_MIN = 56, PLAIN_Y_MAX = 71
   const HEART_MS = 7000
-
-
-  const isDayNow = t < DAY_SEC // FIX:
+  const isDayNow = t < DAY_SEC
+  const countAdultsPlain = (list: PlainAnimal[]) => list.filter(a => !a.isBaby).length
+  const adultsCountCombined = (arr: ShoreAnimal[]) => arr.filter(a => !a.isBaby).length
+  const hasCrabAdult = (arr: ShoreAnimal[]) => arr.some(a => !a.isBaby && a.kind === 'crab')
 
   function randomTargetPlain() {
     return { x: -8 + Math.random() * 116, y: PLAIN_Y_MIN + Math.random() * (PLAIN_Y_MAX - PLAIN_Y_MIN) }
   }
-  const countAdultsPlain = (list: PlainAnimal[]) => list.filter(a => !a.isBaby).length
 
   function spawnPlainAnimal(opts?: { type?: AnimalType; babyOf?: AnimalType; near?: { x: number; y: number } }) {
     setAnimals(cur => {
       const isBaby = !!opts?.babyOf
-      if (!isBaby && countAdultsPlain(cur) >= 3) return cur
+      if (!isBaby && countAdultsPlain(cur) >= MAX_PLAIN_ADULTS) return cur
       const pool = isDayNow ? DAY_SPECIES : NIGHT_SPECIES
       const chosenType = (opts?.type ?? opts?.babyOf ?? pool[Math.floor(Math.random() * pool.length)]) as AnimalType
       const id = nextAnimalId.current++
@@ -419,202 +381,273 @@ export default function SpecialBackground() {
     })
   }
 
+  /* ============================================================================
+     TICKER ~30fps — TOUTE LA LOGIQUE DYNAMIQUE REGROUPÉE
+     ============================================================================ */
   useEffect(() => {
-    let raf = 0, last = performance.now()
+    let raf = 0
+    let last = performance.now()
+    let acc = 0
     const loop = (now: number) => {
-      const dt = (now - last) / 1000; last = now
+      const dtMs = now - last
+      last = now
+      acc += dtMs
+      if (acc >= TICK_MS) {
+        const dt = acc / 1000 // regrouper le temps accumulé
+        acc = 0
 
-      if (now >= nextSpawnAt.current) {
-        nextSpawnAt.current = now + 8000 + Math.random() * 9000
-        spawnPlainAnimal()
-      }
-
-      setAnimals(prev => {
-        const arr = prev.map(a => ({ ...a }))
-        for (const a of arr) {
-          const shouldStay = (a.phaseTag === 'day' && isDayNow) || (a.phaseTag === 'night' && !isDayNow)
-          if (!shouldStay && a.state !== 'leaving') {
-            a.state = 'leaving'
-            a.target = { x: a.x < 50 ? -20 : 120, y: clamp(a.y + (Math.random() - 0.5) * 6, PLAIN_Y_MIN, PLAIN_Y_MAX) }
-          }
-          if (shouldStay && a.state === 'leaving') {
-            a.state = 'walk'
-            a.target = randomTargetPlain()
-          }
-          if (a.state === 'walk') {
-            if (!a.target || Math.hypot(a.x - a.target.x, a.y - a.target.y) < 1.2 || Math.random() < 0.002) {
-              a.target = randomTargetPlain(); if (Math.random() < 0.15) a.state = 'idle'
+        /* ---- FEUILLES SUR L'EAU ---- */
+        setDebris(prev => {
+          let newLeafBubbles: LeafBubble[] = []
+          const arr = prev.map(d => {
+            const nx = d.x + d.v * dt
+            const ny = d.y + Math.sin((d.t + dt) * 1.2) * 0.05
+            if (Math.random() < 0.10 * dt) {
+              newLeafBubbles.push({
+                id: leafBubbleId.current++,
+                x: nx - 0.6 + (Math.random() - 0.5) * 0.6,
+                y: ny + 0.1 + (Math.random() - 0.5) * 0.4,
+                until: performance.now() + 1100 + Math.random() * 500,
+              })
             }
-          } else if (a.state === 'idle' && Math.random() < 0.01) {
-            a.state = 'walk'
+            return { ...d, x: nx, y: ny, t: d.t + dt }
+          }).filter(d => d.x < 120 && d.t < d.life)
+
+          if (performance.now() >= nextDebris.current && arr.length < MAX_LEAVES) {
+            nextDebris.current = performance.now() + 7000 + Math.random() * 9000
+            arr.push({
+              id: debId.current++,
+              x: -10,
+              y: 87 + (Math.random() * 9),
+              v: 3.0 + Math.random() * 1.6,
+              size: 12 + Math.random() * 10,
+              life: 24 + Math.random() * 10,
+              t: 0,
+              op: 0.72 + Math.random() * 0.18,
+            })
           }
-          if ((a.state === 'walk' || a.state === 'leaving') && a.target) {
-            const dx = a.target.x - a.x, dy = a.target.y - a.y
-            const d = Math.hypot(dx, dy) || 1e-6
-            const vx = (dx / d) * a.speed, vy = (dy / d) * a.speed
-            a.dir = vx >= 0 ? 1 : -1
-            a.x += vx * dt
-            a.y = clamp(a.y + vy * dt, PLAIN_Y_MIN, PLAIN_Y_MAX)
+
+          if (newLeafBubbles.length) {
+            setLeafBubbles(prevB => {
+              const merged = [...prevB.filter(b => b.until > performance.now()), ...newLeafBubbles]
+              return merged.slice(-MAX_LEAF_BUBBLES)
+            })
+          } else {
+            setLeafBubbles(prevB => prevB.filter(b => b.until > performance.now()))
           }
-        }
 
-        // repro (identique)
-        for (let i = 0; i < arr.length; i++) for (let j = i + 1; j < arr.length; j++) {
-          const A = arr[i], B = arr[j]
-          if (A.phaseTag !== B.phaseTag || A.type !== B.type) continue
-          if (A.state === 'leaving' || B.state === 'leaving') continue
-          const nowMs = performance.now()
-          if ((A.cooldownMateUntil ?? 0) > nowMs || (B.cooldownMateUntil ?? 0) > nowMs) continue
-          const d = Math.hypot(A.x - B.x, A.y - B.y)
-          if (d < 2.3 && Math.random() < 0.01) {
-            const cx = (A.x + B.x) / 2, cy = (A.y + B.y) / 2
-            A.state = 'idle'; B.state = 'idle'
-            const cd = 60000 + Math.random() * 40000
-            A.cooldownMateUntil = nowMs + cd; B.cooldownMateUntil = nowMs + cd
-            setHearts(h => [...h, { id: (A.id * 10000 + B.id) ^ 0x9e3779b9, x: cx, y: cy - 2, until: nowMs + HEART_MS }])
-            if (arr.filter(x => x.type === A.type).length < 3) {
-              setTimeout(() => spawnPlainAnimal({ babyOf: A.type, near: { x: cx, y: cy } }), 350)
-            }
-          }
-        }
-        return arr.filter(a => a.x > -25 && a.x < 125)
-      })
+          return arr
+        })
 
-      setHearts(prev => prev.filter(h => h.until > performance.now()))
-
-      raf = requestAnimationFrame(loop)
-    }
-    raf = requestAnimationFrame(loop); return () => cancelAnimationFrame(raf)
-  }, [isDayNow])
-
-  /* ====================== SHORE (plage + rivière) ====================== */
-  const [shore, setShore] = useState<ShoreAnimal[]>([
-    { id: 1, kind: 'crab',   x: -8,  y: 78, dir: 1,  speedSand: 6,  speedWater: 8.0, zone: 'sand',  sizeScale: 1, isBaby: false },
-    { id: 2, kind: 'turtle', x: 108, y: 88, dir: -1, speedSand: 4.2, speedWater: 6.0, zone: 'water', sizeScale: 1, isBaby: false },
-  ])
-  const nextShoreId = useRef(3)
-  const [shoreHearts, setShoreHearts] = useState<HeartFX[]>([])
-  const [splashes, setSplashes] = useState<SplashFX[]>([])
-  const [bubbles, setBubbles] = useState<BubbleFX[]>([])
-  const splashId = useRef(1)
-  const bubbleId = useRef(1)
-  const lastCrabCheckAt = useRef(performance.now())
-
-  const adultsCountCombined = (arr: ShoreAnimal[]) => arr.filter(a => !a.isBaby).length
-  const hasCrabAdult = (arr: ShoreAnimal[]) => arr.some(a => !a.isBaby && a.kind === 'crab')
-
-  useEffect(() => {
-    let raf = 0, last = performance.now()
-    const loop = (now: number) => {
-      const dt = (now - last) / 1000; last = now
-      setShore(prev => {
-        let arr = prev.map(a => ({ ...a }))
-
-        // Spawn (garde-fou crabe)
-        if (adultsCountCombined(arr) < 3 && Math.random() < 0.01) {
-          const forceCrab = (!hasCrabAdult(arr) && now - lastCrabCheckAt.current > 10000)
-          const spawnCrab = forceCrab || Math.random() < 0.5
-          if (forceCrab) lastCrabCheckAt.current = now
-          arr.push({
-            id: nextShoreId.current++,
-            kind: spawnCrab ? 'crab' : 'turtle',
-            x: Math.random() < 0.5 ? -10 : 110,
-            y: spawnCrab ? (78 + Math.random() * 6) : (88 + Math.random() * 4),
-            dir: Math.random() < 0.5 ? 1 : -1,
-            speedSand: spawnCrab ? 6 : 4.2,
-            speedWater: spawnCrab ? 8.0 : 6.0,
-            zone: spawnCrab ? 'sand' : 'water',
-            sizeScale: 1,
-            isBaby: false,
+        /* ---- VAGUELETTES PONCTUELLES ---- */
+        if (performance.now() >= nextWaveAt.current) {
+          nextWaveAt.current = performance.now() + 5500 + Math.random() * 7000
+          const y = 88 + (Math.random() - 0.5) * 4
+          const x = 10 + Math.random() * 80
+          setWaves(prev => {
+            const arr = [...prev, { id: waveId.current++, x, y, until: performance.now() + 1600 }]
+            return arr.slice(-MAX_WAVES)
           })
+        } else {
+          setWaves(prev => prev.filter(w => w.until > performance.now()))
         }
 
-        for (const a of arr) {
-          const prevZone = a.zone
-          const targetX = a.x + a.dir * (a.zone === 'water' ? a.speedWater : a.speedSand)
-          const targetY = a.zone === 'water'
-            ? (a.kind === 'crab' ? 77.5 + Math.sin(now / 700 + a.id) * 0.8 : 88 + Math.sin(now / 850 + a.id) * 0.6)
-            : (a.kind === 'crab' ? 78 + Math.sin(now / 900 + a.id) * 0.5 : 78 + Math.sin(now / 1050 + a.id) * 0.4)
+        /* ---- SPAWN PLAINE ---- */
+        if (performance.now() >= nextSpawnAt.current) {
+          nextSpawnAt.current = performance.now() + 8500 + Math.random() * 9500
+          spawnPlainAnimal()
+        }
 
-          const dx = targetX - a.x, dy = targetY - a.y
-          const d = Math.hypot(dx, dy) || 1e-6
-          const sp = a.zone === 'water' ? a.speedWater : a.speedSand
-          const vx = (dx / d) * sp * 0.8, vy = (dy / d) * sp * 0.8
+        /* ---- MOUVEMENTS PLAINE ---- */
+        setAnimals(prev => {
+          const arr = prev.map(a => ({ ...a }))
+          for (const a of arr) {
+            const shouldStay = (a.phaseTag === 'day' && isDayNow) || (a.phaseTag === 'night' && !isDayNow)
+            if (!shouldStay && a.state !== 'leaving') {
+              a.state = 'leaving'
+              a.target = { x: a.x < 50 ? -20 : 120, y: clamp(a.y + (Math.random() - 0.5) * 6, PLAIN_Y_MIN, PLAIN_Y_MAX) }
+            }
+            if (shouldStay && a.state === 'leaving') {
+              a.state = 'walk'
+              a.target = randomTargetPlain()
+            }
+            if (a.state === 'walk') {
+              if (!a.target || Math.hypot(a.x - a.target.x, a.y - a.target.y) < 1.2 || Math.random() < 0.002) {
+                a.target = randomTargetPlain(); if (Math.random() < 0.15) a.state = 'idle'
+              }
+            } else if (a.state === 'idle' && Math.random() < 0.01) {
+              a.state = 'walk'
+            }
+            if ((a.state === 'walk' || a.state === 'leaving') && a.target) {
+              const dx = a.target.x - a.x, dy = a.target.y - a.y
+              const d = Math.hypot(dx, dy) || 1e-6
+              const vx = (dx / d) * a.speed, vy = (dy / d) * a.speed
+              a.dir = vx >= 0 ? 1 : -1
+              a.x += vx * dt
+              a.y = clamp(a.y + vy * dt, PLAIN_Y_MIN, PLAIN_Y_MAX)
+            }
+          }
 
-          a.x += vx * dt
-          a.y += vy * dt
-
-          if (Math.random() < 0.003) a.dir *= -1
-          if (Math.random() < 0.0015) a.zone = a.zone === 'water' ? 'sand' : 'water'
-
-          // FX splatch au changement de zone
-          if (prevZone !== a.zone) {
-            const baseId = splashId.current++
-            const isToWater = a.zone === 'water'
-            const yOff = isToWater ? 1.2 : -1.2
+          // repro avec collecte d'effets
+          const newHearts: HeartFX[] = []
+          for (let i = 0; i < arr.length; i++) for (let j = i + 1; j < arr.length; j++) {
+            const A = arr[i], B = arr[j]
+            if (A.phaseTag !== B.phaseTag || A.type !== B.type) continue
+            if (A.state === 'leaving' || B.state === 'leaving') continue
             const nowMs = performance.now()
-            setSplashes(spx => [
-              ...spx,
-              { id: baseId,         x: a.x,     y: a.y + yOff, until: nowMs + 900,  water: isToWater },
-              { id: baseId + 1000,  x: a.x+0.7, y: a.y,        until: nowMs + 800,  water: isToWater },
-              { id: baseId + 2000,  x: a.x-0.7, y: a.y,        until: nowMs + 800,  water: isToWater },
-            ])
+            if ((A.cooldownMateUntil ?? 0) > nowMs || (B.cooldownMateUntil ?? 0) > nowMs) continue
+            const d = Math.hypot(A.x - B.x, A.y - B.y)
+            if (d < 2.3 && Math.random() < 0.008) {
+              const cx = (A.x + B.x) / 2, cy = (A.y + B.y) / 2
+              A.state = 'idle'; B.state = 'idle'
+              const cd = 60000 + Math.random() * 40000
+              A.cooldownMateUntil = nowMs + cd; B.cooldownMateUntil = nowMs + cd
+              newHearts.push({ id: (A.id * 10000 + B.id) ^ 0x9e3779b9, x: cx, y: cy - 2, until: nowMs + HEART_MS })
+              if (arr.filter(x => x.type === A.type).length < 3) {
+                setTimeout(() => spawnPlainAnimal({ babyOf: A.type, near: { x: cx, y: cy } }), 350)
+              }
+            }
           }
-          // Bulles en eau
-          if (a.zone === 'water' && Math.random() < 0.25 * dt) {
-            setBubbles(bs => [...bs, {
-              id: bubbleId.current++,
-              x: a.x - a.dir * 1.2 + (Math.random() - 0.5) * 0.8,
-              y: a.y - 0.4 + (Math.random() - 0.5) * 0.6,
-              until: performance.now() + 1400 + Math.random() * 600,
-            }])
+          if (newHearts.length) {
+            setHearts(prevH => {
+              const kept = prevH.filter(h => h.until > performance.now())
+              return [...kept, ...newHearts].slice(-12)
+            })
+          } else {
+            setHearts(prevH => prevH.filter(h => h.until > performance.now()))
           }
-        }
 
-        // repro (identique)
-        for (let i = 0; i < arr.length; i++) for (let j = i + 1; j < arr.length; j++) {
-          const A = arr[i], B = arr[j]
-          if (A.kind !== B.kind) continue
-          const nowMs = performance.now()
-          if ((A.cooldownMateUntil ?? 0) > nowMs || (B.cooldownMateUntil ?? 0) > nowMs) continue
-          const d = Math.hypot(A.x - B.x, A.y - B.y)
-          if (d < 2.2 && Math.random() < 0.02) {
-            const cx = (A.x + B.x) / 2, cy = (A.y + B.y) / 2
-            A.cooldownMateUntil = nowMs + 90000; B.cooldownMateUntil = nowMs + 90000
-            const sameKindCount = arr.filter(x => x.kind === A.kind).length
-            if (sameKindCount < 3) {
-              arr.push({
-                id: nextShoreId.current++,
-                kind: A.kind,
-                x: cx + (Math.random() - 0.5) * 1.4,
-                y: cy + (Math.random() - 0.5) * 0.6,
-                dir: Math.random() < 0.5 ? -1 : 1,
-                speedSand: A.kind === 'crab' ? 6 : 4.2,
-                speedWater: A.kind === 'crab' ? 8.0 : 6.0,
-                zone: Math.random() < 0.5 ? 'sand' : 'water',
-                sizeScale: 0.6,
-                isBaby: true,
+          return arr.filter(a => a.x > -25 && a.x < 125)
+        })
+
+        /* ---- SHORE (CRAB/TURTLE) ---- */
+        setShore(prev => {
+          let arr = prev.map(a => ({ ...a }))
+          if (adultsCountCombined(arr) < MAX_SHORE_ADULTS && Math.random() < 0.008) {
+            const forceCrab = (!hasCrabAdult(arr) && performance.now() - lastCrabCheckAt.current > 10000)
+            const spawnCrab = forceCrab || Math.random() < 0.5
+            if (forceCrab) lastCrabCheckAt.current = performance.now()
+            arr.push({
+              id: nextShoreId.current++,
+              kind: spawnCrab ? 'crab' : 'turtle',
+              x: Math.random() < 0.5 ? -10 : 110,
+              y: spawnCrab ? (78 + Math.random() * 6) : (88 + Math.random() * 4),
+              dir: Math.random() < 0.5 ? 1 : -1,
+              speedSand: spawnCrab ? 6 : 4.2,
+              speedWater: spawnCrab ? 8.0 : 6.0,
+              zone: spawnCrab ? 'sand' : 'water',
+              sizeScale: 1,
+              isBaby: false,
+            })
+          }
+
+          const newSplashes: SplashFX[] = []
+          const newBubbles: BubbleFX[] = []
+          for (const a of arr) {
+            const prevZone = a.zone
+            const targetX = a.x + a.dir * (a.zone === 'water' ? a.speedWater : a.speedSand)
+            const targetY = a.zone === 'water'
+              ? (a.kind === 'crab' ? 77.5 + Math.sin(performance.now() / 700 + a.id) * 0.8 : 88 + Math.sin(performance.now() / 850 + a.id) * 0.6)
+              : (a.kind === 'crab' ? 78 + Math.sin(performance.now() / 900 + a.id) * 0.5 : 78 + Math.sin(performance.now() / 1050 + a.id) * 0.4)
+
+            const dx = targetX - a.x, dy = targetY - a.y
+            const d = Math.hypot(dx, dy) || 1e-6
+            const sp = a.zone === 'water' ? a.speedWater : a.speedSand
+            const vx = (dx / d) * sp * 0.8, vy = (dy / d) * sp * 0.8
+
+            a.x += vx * dt
+            a.y += vy * dt
+
+            if (Math.random() < 0.0025) a.dir *= -1
+            if (Math.random() < 0.0012) a.zone = a.zone === 'water' ? 'sand' : 'water'
+
+            if (prevZone !== a.zone) {
+              const baseId = splashId.current++
+              const isToWater = a.zone === 'water'
+              const yOff = isToWater ? 1.1 : -1.1
+              const nowMs = performance.now()
+              // 2 cercles + 0..1 goutte (au lieu de 3) → moins d’objets
+              newSplashes.push({ id: baseId, x: a.x, y: a.y + yOff, until: nowMs + 700, water: isToWater })
+              newSplashes.push({ id: baseId + 1000, x: a.x + (Math.random() - 0.5) * 1.0, y: a.y, until: nowMs + 650, water: isToWater })
+              if (Math.random() < 0.5) newSplashes.push({ id: baseId + 2000, x: a.x + (Math.random() - 0.5) * 1.0, y: a.y, until: nowMs + 600, water: isToWater })
+            }
+            if (a.zone === 'water' && Math.random() < 0.18 * dt) {
+              newBubbles.push({
+                id: bubbleId.current++,
+                x: a.x - a.dir * 1.1 + (Math.random() - 0.5) * 0.7,
+                y: a.y - 0.4 + (Math.random() - 0.5) * 0.5,
+                until: performance.now() + 1200 + Math.random() * 400,
               })
             }
           }
-        }
 
-        arr = arr.filter(a => a.x > -20 && a.x < 120)
-        return arr
-      })
+          if (newSplashes.length) {
+            setSplashes(prevS => {
+              const kept = prevS.filter(s => s.until > performance.now())
+              const merged = [...kept, ...newSplashes]
+              return merged.slice(-MAX_SPLASHES)
+            })
+          } else {
+            setSplashes(prevS => prevS.filter(s => s.until > performance.now()))
+          }
+          if (newBubbles.length) {
+            setBubbles(prevB => {
+              const kept = prevB.filter(b => b.until > performance.now())
+              const merged = [...kept, ...newBubbles]
+              return merged.slice(-MAX_WATER_BUBBLES)
+            })
+          } else {
+            setBubbles(prevB => prevB.filter(b => b.until > performance.now()))
+          }
 
-      // cleanup FX
-      const nowMs = performance.now()
-      setShoreHearts(prev => prev.filter(h => h.until > nowMs))
-      setSplashes(prev => prev.filter(s => s.until > nowMs))
-      setBubbles(prev => prev.filter(b => b.until > nowMs))
+          // repro shore
+          const newHearts: HeartFX[] = []
+          for (let i = 0; i < arr.length; i++) for (let j = i + 1; j < arr.length; j++) {
+            const A = arr[i], B = arr[j]
+            if (A.kind !== B.kind) continue
+            const nowMs = performance.now()
+            if ((A.cooldownMateUntil ?? 0) > nowMs || (B.cooldownMateUntil ?? 0) > nowMs) continue
+            const d = Math.hypot(A.x - B.x, A.y - B.y)
+            if (d < 2.1 && Math.random() < 0.016) {
+              const cx = (A.x + B.x) / 2, cy = (A.y + B.y) / 2
+              A.cooldownMateUntil = nowMs + 90000; B.cooldownMateUntil = nowMs + 90000
+              if (arr.filter(x => x.kind === A.kind).length < 3) {
+                arr.push({
+                  id: nextShoreId.current++,
+                  kind: A.kind,
+                  x: cx + (Math.random() - 0.5) * 1.4,
+                  y: cy + (Math.random() - 0.5) * 0.6,
+                  dir: Math.random() < 0.5 ? -1 : 1,
+                  speedSand: A.kind === 'crab' ? 6 : 4.2,
+                  speedWater: A.kind === 'crab' ? 8.0 : 6.0,
+                  zone: Math.random() < 0.5 ? 'sand' : 'water',
+                  sizeScale: 0.6,
+                  isBaby: true,
+                })
+              }
+              newHearts.push({ id: (A.id * 10000 + B.id) ^ 0x9e3779b9, x: cx, y: cy - 2, until: nowMs + 8000 })
+            }
+          }
+          if (newHearts.length) {
+            setShoreHearts(prevH => {
+              const kept = prevH.filter(h => h.until > performance.now())
+              return [...kept, ...newHearts].slice(-12)
+            })
+          } else {
+            setShoreHearts(prevH => prevH.filter(h => h.until > performance.now()))
+          }
 
+          arr = arr.filter(a => a.x > -20 && a.x < 120)
+          return arr
+        })
+      }
       raf = requestAnimationFrame(loop)
     }
-    raf = requestAnimationFrame(loop); return () => cancelAnimationFrame(raf)
-  }, [])
+    raf = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(raf)
+  }, [isDayNow])
 
-  /* Montagnes / Arbres (identique) */
+  /* --------- Montagnes / Arbres ---------- */
   const mountainsFront = useMemo(() => {
     const rng = mulberry32(420042)
     const items: Array<{ x: number; w: number; y: number; z: number }> = []
@@ -649,40 +682,37 @@ export default function SpecialBackground() {
     return layers.sort((a, b) => a.size - b.size)
   }, [])
 
-  /* ============================================================================
-     RENDER
-     ============================================================================ */
+  /* ============================== RENDER ============================== */
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden -z-10">
-      {/* CIEL (dégradé lissé, *continu*) */}
+      {/* CIEL */}
       <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, ${skyTop} 55%, ${skyBottom} 100%)`, zIndex: 0 }} />
       <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)', backgroundSize: '3px 3px', opacity: 0.35, zIndex: 0 }} />
 
       {/* ÉTOILES */}
+      {stars.map(s => (
+        <motion.div
+          key={s.id}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: starStrength === 0 ? 0 : [0.1 * starStrength, 0.8 * starStrength, 0.1 * starStrength] }}
+          transition={{ duration: s.tw, repeat: Infinity, delay: s.delay }}
+          style={{ position: 'absolute', left: `${s.left}vw`, top: `${s.top}vh`, width: s.size, height: s.size, borderRadius: s.size, background: '#fff', boxShadow: '0 0 6px #fff8', zIndex: 1 }}
+        />
+      ))}
 
-        {stars.map(s => ( // FIX:
-          <motion.div key={s.id} // FIX:
-            initial={{ opacity: 0 }} // FIX:
-            animate={{ opacity: starStrength === 0 ? 0 : [0.1 * starStrength, 0.8 * starStrength, 0.1 * starStrength] }} // FIX:
-            transition={{ duration: s.tw, repeat: Infinity, delay: s.delay }} // FIX:
-            style={{ position: 'absolute', left: `${s.left}vw`, top: `${s.top}vh`, width: s.size, height: s.size, borderRadius: s.size, background: '#fff', boxShadow: '0 0 6px #fff8', zIndex: 1 }} // FIX:
-          /> // FIX:
-        ))} // FIX:
-
-        {/* SOLEIL / LUNE (taille fixe, sortent hors cadre) */}
-        {showMoon && ( // FIX:
-          <div style={{ position: 'absolute', left: `${moonX}vw`, top: `${moonY}vh`, transform: 'translate(-50%, -50%)', zIndex: 2 }}> // FIX:
-            <div style={{ position: 'absolute', inset: -22, borderRadius: '50%', background: `radial-gradient(${PAL.moonHalo}99, ${PAL.moonHalo}00 70%)`, filter: 'blur(10px)' }} /> // FIX:
-            <img src={MOON_SVG} alt="moon" style={{ width: 84, height: 84 }} /> // FIX:
-          </div> // FIX:
-        )} // FIX:
-        {showSun && ( // FIX:
-          <div style={{ position: 'absolute', left: `${sunX}vw`, top: `${sunY}vh`, transform: 'translate(-50%, -50%)', zIndex: 2 }}> // FIX:
-            <div style={{ position: 'absolute', inset: -20, borderRadius: '50%', background: `radial-gradient(${PAL.sunHalo}88, ${PAL.sunHalo}00 70%)`, filter: 'blur(8px)' }} /> // FIX:
-            <img src={SUN_SVG} alt="sun" style={{ width: 90, height: 90 }} /> // FIX:
-          </div> // FIX:
-        )} // FIX:
-
+      {/* SOLEIL / LUNE */}
+      {showMoon && (
+        <div style={{ position: 'absolute', left: `${moonX}vw`, top: `${moonY}vh`, transform: 'translate(-50%, -50%)', zIndex: 2 }}>
+          <div style={{ position: 'absolute', inset: -22, borderRadius: '50%', background: `radial-gradient(${PAL.moonHalo}99, ${PAL.moonHalo}00 70%)`, filter: 'blur(10px)' }} />
+          <img src={MOON_SVG} alt="moon" style={{ width: 84, height: 84 }} />
+        </div>
+      )}
+      {showSun && (
+        <div style={{ position: 'absolute', left: `${sunX}vw`, top: `${sunY}vh`, transform: 'translate(-50%, -50%)', zIndex: 2 }}>
+          <div style={{ position: 'absolute', inset: -20, borderRadius: '50%', background: `radial-gradient(${PAL.sunHalo}88, ${PAL.sunHalo}00 70%)`, filter: 'blur(8px)' }} />
+          <img src={SUN_SVG} alt="sun" style={{ width: 90, height: 90 }} />
+        </div>
+      )}
 
       {/* Nuages */}
       {clouds}
@@ -737,7 +767,7 @@ export default function SpecialBackground() {
       />
       {shells}
 
-      {/* RIVIÈRE — eau + courant doux */}
+      {/* RIVIÈRE — eau (fond + petits traits) */}
       <div
         className="absolute left-0 right-0"
         style={{
@@ -755,28 +785,46 @@ export default function SpecialBackground() {
           backgroundRepeat: 'no-repeat, repeat, repeat, repeat',
         }}
       >
-        <motion.div
-          aria-hidden
-          style={{
-            position: 'absolute',
-            left: '-50%', width: '200%', height: '36%',
-            top: '32%',
-            zIndex: 3,
-            backgroundImage: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.11) 50%, rgba(255,255,255,0) 100%)',
-            opacity: 0.16,
-            mixBlendMode: 'screen',
-          }}
-          animate={{ x: ['-25%', '25%'] }}
-          transition={{ duration: 55, ease: 'linear', repeat: Infinity }}
-        />
+        {useMemo(() => {
+          const rng = mulberry32(424242)
+          const lines = Array.from({ length: 14 }).map((_, i) => {
+            const topPct = 20 + rng() * 50
+            const widthPx = 24 + rng() * 38
+            const thickness = 1 + (rng() < 0.25 ? 1 : 0)
+            const duration = 28 + rng() * 18
+            const delay = -rng() * duration
+            const opacity = 0.18 + rng() * 0.18
+            return (
+              <motion.div
+                key={`wline-${i}`}
+                initial={{ x: '-20vw' }}
+                animate={{ x: '120vw' }}
+                transition={{ duration, repeat: Infinity, ease: 'linear', delay }}
+                style={{
+                  position: 'absolute',
+                  top: `${topPct}%`,
+                  left: 0,
+                  width: widthPx,
+                  height: thickness,
+                  borderRadius: 999,
+                  background: 'rgba(255,255,255,0.9)',
+                  opacity,
+                  filter: 'blur(0.2px)',
+                  mixBlendMode: 'screen',
+                }}
+              />
+            )
+          })
+          return lines
+        }, [])}
       </div>
 
       {/* Vaguelettes ponctuelles */}
       {waves.map(w => {
         const life = Math.max(0, w.until - performance.now())
-        const k = 1 - life / 1800
-        const op = 0.5 * (1 - k)
-        const size = 22 + 18 * k
+        const k = 1 - life / 1600
+        const op = 0.45 * (1 - k)
+        const size = 20 + 16 * k
         return (
           <div key={`wave-${w.id}`} style={{ position: 'absolute', left: `${w.x}vw`, top: `${w.y}vh`, transform: 'translate(-50%, -50%)', zIndex: 4, pointerEvents: 'none', opacity: op }}>
             <div style={{ width: size, height: size * 0.5, borderRadius: 999, border: '2px solid #e6f5ff', background: '#ffffff10', filter: 'blur(0.2px)' }} />
@@ -784,7 +832,7 @@ export default function SpecialBackground() {
         )
       })}
 
-      {/* FEUILLES flottantes — MODIF: zIndex 11 pour être "au‑dessus de la rivière" */}
+      {/* FEUILLES flottantes */}
       {debris.map(d => (
         <div
           key={`deb-${d.id}`}
@@ -792,7 +840,7 @@ export default function SpecialBackground() {
             position: 'absolute',
             left: `${d.x}vw`, top: `${d.y}vh`,
             transform: 'translate(-50%,-50%)',
-            zIndex: 11, // ↑↑ au-dessus eau + courant + vaguelettes + animaux eau
+            zIndex: 11,
             pointerEvents: 'none',
             opacity: d.op,
             filter: 'drop-shadow(0 0.6px 1.2px #0003)',
@@ -804,12 +852,12 @@ export default function SpecialBackground() {
         </div>
       ))}
 
-      {/* Bulles des feuilles (au‑dessus de l’eau/feuilles) */}
+      {/* Bulles feuilles */}
       {leafBubbles.map(b => {
         const life = Math.max(0, b.until - performance.now())
-        const k = 1 - life / 1500
+        const k = 1 - life / 1400
         const r = 3 + 2 * k
-        const op = 0.6 * (1 - k)
+        const op = 0.58 * (1 - k)
         return (
           <div key={`lb-${b.id}`} style={{ position: 'absolute', left: `${b.x}vw`, top: `${b.y - k * 1.2}vh`, transform: 'translate(-50%, -50%)', zIndex: 11, opacity: op, pointerEvents: 'none' }}>
             <div style={{ width: r, height: r, borderRadius: 999, border: '1px solid #dff2ff', background: '#ffffff10', filter: 'blur(0.2px)' }} />
@@ -835,7 +883,7 @@ export default function SpecialBackground() {
         )
       })}
 
-      {/* SHORE — CRAB & TURTLE (eau z=8, sable z=10) */}
+      {/* SHORE — CRAB & TURTLE */}
       {shore.map(s => {
         const isCrab = s.kind === 'crab'
         const imgSrc = isCrab ? CRAB_SVG : TURTLE_SVG
@@ -857,17 +905,15 @@ export default function SpecialBackground() {
         )
       })}
 
-      {/* Splatch shore */}
+      {/* Splashes (optimisés) */}
       {splashes.map(s => {
         const life = Math.max(0, s.until - performance.now())
-        const k = 1 - life / 900
-        const r = 10 + 10 * k
-        const op = 0.55 * (1 - k)
+        const k = 1 - life / 700
+        const r = 8 + 9 * k
+        const op = 0.5 * (1 - k)
         return (
           <div key={`spl-${s.id}`} style={{ position: 'absolute', left: `${s.x}vw`, top: `${s.y}vh`, transform: 'translate(-50%, -50%)', zIndex: 9, pointerEvents: 'none', opacity: op }}>
-            <div style={{ width: r, height: r * 0.5, borderRadius: 999, border: '2px solid #e6f5ff', background: '#ffffff12', filter: 'blur(0.2px)' }} />
-            <div style={{ position: 'absolute', left: '-6px', top: '-4px', width: 3, height: 3, borderRadius: 999, background: '#e6f5ff' }} />
-            <div style={{ position: 'absolute', left: '6px', top: '-4px', width: 3, height: 3, borderRadius: 999, background: '#e6f5ff' }} />
+            <div style={{ width: r, height: r * 0.5, borderRadius: 999, border: '2px solid #e6f5ff', background: '#ffffff10', filter: 'blur(0.2px)' }} />
           </div>
         )
       })}
@@ -875,17 +921,17 @@ export default function SpecialBackground() {
       {/* Bulles shore */}
       {bubbles.map(b => {
         const life = Math.max(0, b.until - performance.now())
-        const k = 1 - life / 1600
-        const r = 3.5 + 2.5 * k
-        const op = 0.6 * (1 - k)
+        const k = 1 - life / 1300
+        const r = 3.5 + 2.0 * k
+        const op = 0.55 * (1 - k)
         return (
-          <div key={`wb-${b.id}`} style={{ position: 'absolute', left: `${b.x}vw`, top: `${b.y - k * 1.4}vh`, transform: 'translate(-50%, -50%)', zIndex: 9, opacity: op, pointerEvents: 'none' }}>
+          <div key={`wb-${b.id}`} style={{ position: 'absolute', left: `${b.x}vw`, top: `${b.y - k * 1.2}vh`, transform: 'translate(-50%, -50%)', zIndex: 9, opacity: op, pointerEvents: 'none' }}>
             <div style={{ width: r, height: r, borderRadius: 999, border: '1px solid #dff2ff', background: '#ffffff10', filter: 'blur(0.2px)' }} />
           </div>
         )
       })}
 
-      {/* CŒURS */}
+      {/* Cœurs */}
       {hearts.map(h => {
         const life = Math.max(0, h.until - performance.now())
         const alpha = Math.min(1, life / 7000)
@@ -898,7 +944,7 @@ export default function SpecialBackground() {
       })}
       {shoreHearts.map(h => {
         const life = Math.max(0, h.until - performance.now())
-        const alpha = Math.min(1, life / 10000)
+        const alpha = Math.min(1, life / 8000)
         return (
           <motion.div key={`heart-sh-${h.id}-${Math.round(h.until)}`} style={{ position: 'absolute', left: `${h.x}vw`, top: `${h.y}vh`, zIndex: 11, transform: 'translate(-50%, -50%)' }}
             animate={{ y: [0, -2, 0], opacity: [alpha, alpha * 0.8, alpha] }} transition={{ duration: 2.2, repeat: Infinity }}>
@@ -907,7 +953,7 @@ export default function SpecialBackground() {
         )
       })}
 
-      {/* ARBRES au-dessus (z=12) */}
+      {/* ARBRES (devant) */}
       <div className="absolute left-0 right-0" style={{ top: '52vh', height: '22.5vh', width: '100vw', zIndex: 12, pointerEvents: 'none' }}>
         {treeLayers.map((t, i) => (
           <div key={`tree-${i}`} style={{ position: 'absolute', left: `${t.x}vw`, bottom: `${t.yBottomVh}vh` }}>
