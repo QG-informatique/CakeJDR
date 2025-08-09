@@ -224,7 +224,7 @@ export default function SpecialBackground() {
       { count: 3, z: 2, durMin: 120, durVar: 80, sizeMin: 140, sizeVar: 120, topMin: 6, topVar: 10 },
       { count: 4, z: 3, durMin: 90,  durVar: 70, sizeMin: 160, sizeVar: 140, topMin: 10, topVar: 12 },
     ]
-    const arr: JSX.Element[] = []
+    const arr: React.ReactElement[] = [] // FIX: type cloud elements to avoid JSX namespace
     layers.forEach((L, li) => {
       for (let i = 0; i < L.count; i++) {
         const size = L.sizeMin + Math.round(rng() * L.sizeVar)
