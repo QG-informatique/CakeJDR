@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+// MOD: 1 2025-08-09 - fix dark text on dark background
 import { useT } from '@/lib/useT'
 import { useRouter } from 'next/navigation'
 import RoomAvatarStack from '@/components/rooms/RoomAvatarStack'
@@ -106,7 +107,8 @@ export default function RoomsPage() {
 
         </summary>
         {showCreate && (
-          <div className="mt-3 space-y-2 text-black">
+          // MOD: 1 2025-08-09 - use white text for readability
+          <div className="mt-3 space-y-2 text-white">
             <input
 
               placeholder={t('roomName')}
