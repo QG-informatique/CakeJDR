@@ -85,6 +85,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
           backdrop-blur-[2px]
           shadow-lg shadow-black/10
           transition flex-shrink-0
+          text-white
         "
         style={{
           boxShadow: '0 4px 18px -8px rgba(0,0,0,0.24), 0 0 0 1px rgba(255,255,255,0.05)'
@@ -114,6 +115,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
         backdrop-blur-[2px]
         shadow-lg shadow-black/10
         transition flex-shrink-0
+        text-white
       "
       style={{
         boxShadow: '0 4px 18px -8px rgba(0,0,0,0.24), 0 0 0 1px rgba(255,255,255,0.05)'

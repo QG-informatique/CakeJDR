@@ -228,7 +228,7 @@ export default function DiceStats({ history }: Props) {
   }
 
   return (
-    <div className="p-2">
+    <div className="p-2 text-white">
       <div className="mb-2 flex items-center gap-2">
         <CustomSelect
           value={statType}
