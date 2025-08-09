@@ -1,8 +1,13 @@
-/* eslint-disable react/jsx-no-comment-textnodes */
 'use client'
 
 import { motion } from 'framer-motion'
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 
 /* ============================================================================
    UTILS
@@ -65,47 +70,52 @@ function bell(x: number, a: number, b: number) {
    ============================================================================ */
 
 type AnimalType = 'deer' | 'boar' | 'red_panda' | 'racoon' | 'wolf' | 'wild_cat'
-const ICONS: Record<AnimalType, string> = {
-  deer: 'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754674008/deer-svgrepo-com_nvbsr7.svg',
-  boar: 'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754673999/boar-svgrepo-com_adokxy.svg',
-  red_panda:
+const ICONS = new Map<AnimalType, string>([
+  ['deer', 'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754674008/deer-svgrepo-com_nvbsr7.svg'],
+  ['boar', 'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754673999/boar-svgrepo-com_adokxy.svg'],
+  [
+    'red_panda',
     'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754673984/red-panda-svgrepo-com_1_xrvrnm.svg',
-  racoon:
-    'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754673992/racoon-svgrepo-com_qzvo3e.svg',
-  wolf: 'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754673975/wolf-svgrepo-com_qwk0in.svg',
-  wild_cat:
+  ],
+  ['racoon', 'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754673992/racoon-svgrepo-com_qzvo3e.svg'],
+  ['wolf', 'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754673975/wolf-svgrepo-com_qwk0in.svg'],
+  [
+    'wild_cat',
     'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754673961/wild-cat-svgrepo-com_idpv9h.svg',
-}
-const DAY_SPECIES: AnimalType[] = ['deer', 'boar', 'red_panda']
-const NIGHT_SPECIES: AnimalType[] = ['racoon', 'wolf', 'wild_cat']
-const BASE_SIZE: Record<AnimalType, number> = {
-  deer: 76,
-  boar: 60,
-  red_panda: 48,
-  racoon: 46,
-  wolf: 60,
-  wild_cat: 50,
-}
-const BASE_SPEED: Record<AnimalType, number> = {
-  deer: 6.0,
-  boar: 5.4,
-  red_panda: 5.0,
-  racoon: 5.8,
-  wolf: 6.6,
-  wild_cat: 6.0,
-}
+  ],
+])
+const DAY_SPECIES = ['deer', 'boar', 'red_panda'] as const satisfies readonly AnimalType[]
+const NIGHT_SPECIES = ['racoon', 'wolf', 'wild_cat'] as const satisfies readonly AnimalType[]
+const BASE_SIZE = new Map<AnimalType, number>([
+  ['deer', 76],
+  ['boar', 60],
+  ['red_panda', 48],
+  ['racoon', 46],
+  ['wolf', 60],
+  ['wild_cat', 50],
+])
+const BASE_SPEED = new Map<AnimalType, number>([
+  ['deer', 6.0],
+  ['boar', 5.4],
+  ['red_panda', 5.0],
+  ['racoon', 5.8],
+  ['wolf', 6.6],
+  ['wild_cat', 6.0],
+])
 
 const TREE_SVGS = [
   'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754684600/tree-svgrepo-com_c9i63x.svg',
   'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754684607/tree-svgrepo-com_1_nuemwy.svg',
   'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754684614/tree-svgrepo-com_2_n520jg.svg',
-]
+] as const
+const TREE_SVGS_COUNT = TREE_SVGS.length
 const FLOWER_SVGS = [
   'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754685947/flowers-flower-svgrepo-com_lk7kvz.svg',
   'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754685992/freesia-flower-svgrepo-com_ubjkej.svg',
   'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754685999/flowers-flower-svgrepo-com_2_mrg0uy.svg',
   'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754686008/daisy-flower-svgrepo-com_y2nahd.svg',
-]
+] as const
+const FLOWER_SVGS_COUNT = FLOWER_SVGS.length
 const MOUNTAIN_SVG =
   'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754686025/mountain-svgrepo-com_elnvgl.svg'
 const SUN_SVG =
@@ -117,6 +127,46 @@ const CRAB_SVG =
   'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754684374/crab-svgrepo-com_mfrmuo.svg'
 const TURTLE_SVG =
   'https://res.cloudinary.com/dz6ugwzxp/image/upload/v1754684367/turtle-svgrepo-com_cnjdks.svg'
+
+const CLOUD_PATHS = [
+  'M20,100 C35,60 60,40 95,45 C110,20 145,15 170,35 C190,25 230,30 245,60 C280,60 300,75 302,100 L20,100 Z',
+  'M10,100 C30,70 55,55 80,60 C105,35 150,25 180,50 C210,40 250,55 270,80 C290,80 300,90 304,100 L10,100 Z',
+  'M0,100 C20,75 40,65 70,70 C90,50 130,45 160,60 C195,55 230,70 250,85 C270,85 300,95 306,100 L0,100 Z',
+] as const
+const CLOUD_PATH_COUNT = CLOUD_PATHS.length
+
+function PrettyCloud({
+  size = 150,
+  variant = 0,
+}: {
+  size?: number
+  variant?: number
+}) {
+  const i = Math.abs(variant) % CLOUD_PATH_COUNT
+  const path = CLOUD_PATHS.at(i)!
+  return (
+    <svg
+      viewBox="0 0 306.67 200"
+      width={size}
+      height={(size * 200) / 306.67}
+      style={{ filter: 'drop-shadow(0 8px 12px #0003)' }}
+    >
+      <defs>
+        <linearGradient id={`cfill-${i}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="100%" stopColor="#eef4ff" />
+        </linearGradient>
+      </defs>
+      <path
+        d={path}
+        fill={`url(#cfill-${i})`}
+        stroke="#ffffff"
+        strokeOpacity={0.35}
+        strokeWidth="2"
+      />
+    </svg>
+  )
+}
 
 /* ============================================================================
    PALETTE & CYCLE
@@ -293,42 +343,6 @@ export default function SpecialBackground() {
   const starStrength = Math.sin(Math.PI * pMoon)
 
   /* --------- Nuages (formes variées) ---------- */
-  const CLOUD_PATHS = [
-    'M20,100 C35,60 60,40 95,45 C110,20 145,15 170,35 C190,25 230,30 245,60 C280,60 300,75 302,100 L20,100 Z',
-    'M10,100 C30,70 55,55 80,60 C105,35 150,25 180,50 C210,40 250,55 270,80 C290,80 300,90 304,100 L10,100 Z',
-    'M0,100 C20,75 40,65 70,70 C90,50 130,45 160,60 C195,55 230,70 250,85 C270,85 300,95 306,100 L0,100 Z',
-  ]
-  function PrettyCloud({
-    size = 150,
-    variant = 0,
-  }: {
-    size?: number
-    variant?: number
-  }) {
-    const i = Math.abs(variant) % CLOUD_PATHS.length
-    return (
-      <svg
-        viewBox="0 0 306.67 200"
-        width={size}
-        height={(size * 200) / 306.67}
-        style={{ filter: 'drop-shadow(0 8px 12px #0003)' }}
-      >
-        <defs>
-          <linearGradient id={`cfill-${i}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#ffffff" />
-            <stop offset="100%" stopColor="#eef4ff" />
-          </linearGradient>
-        </defs>
-        <path
-          d={CLOUD_PATHS[i]}
-          fill={`url(#cfill-${i})`}
-          stroke="#ffffff"
-          strokeOpacity={0.35}
-          strokeWidth="2"
-        />
-      </svg>
-    )
-  }
   const clouds = useMemo(() => {
     const rng = mulberry32(99021)
     const layers = [
@@ -363,7 +377,7 @@ export default function SpecialBackground() {
         const sx = 0.8 + rng() * 0.6
         const sy = 0.8 + rng() * 0.6
         const rot = (rng() - 0.5) * 10
-        const v = Math.floor(rng() * CLOUD_PATHS.length)
+        const v = Math.floor(rng() * CLOUD_PATH_COUNT)
         arr.push(
           <motion.div
             key={`c-${li}-${i}`}
@@ -390,7 +404,7 @@ export default function SpecialBackground() {
       }
     })
     return arr
-  }, []) // stable
+  }, [])
 
   /* --------- Fleurs / Coquillages (statiques) ---------- */
   const flowers = useMemo(() => {
@@ -398,11 +412,16 @@ export default function SpecialBackground() {
     const pts = Array.from({ length: 44 })
       .map(() => ({ x: 2 + rng() * 96, y: 56 + rng() * 16 }))
       .sort((a, b) => a.x - b.x)
-    for (let i = 1; i < pts.length; i++)
-      if (Math.abs(pts[i]!.x - pts[i - 1]!.x) < 2.2) pts[i]!.x += 2 + rng() * 2
+    for (let i = 1; i < pts.length; i++) {
+      const cur = pts.at(i)
+      const prev = pts.at(i - 1)
+      if (cur && prev && Math.abs(cur.x - prev.x) < 2.2) {
+        cur.x += 2 + rng() * 2
+      }
+    }
     return pts.map((p, i) => {
       const size = 14 + Math.round(rng() * 10)
-      const src = FLOWER_SVGS[Math.floor(rng() * FLOWER_SVGS.length)]!
+      const src = FLOWER_SVGS.at(Math.floor(rng() * FLOWER_SVGS_COUNT))!
       return (
         <div
           key={`fl-${i}`}
@@ -586,43 +605,47 @@ export default function SpecialBackground() {
     }
   }
 
-  function spawnPlainAnimal(opts?: {
-    type?: AnimalType
-    babyOf?: AnimalType
-    near?: { x: number; y: number }
-  }) {
-    setAnimals((cur) => {
-      const isBaby = !!opts?.babyOf
-      if (!isBaby && countAdultsPlain(cur) >= MAX_PLAIN_ADULTS) return cur
-      const pool = isDayNow ? DAY_SPECIES : NIGHT_SPECIES
-      const chosenType = (opts?.type ??
-        opts?.babyOf ??
-        pool[Math.floor(Math.random() * pool.length)]) as AnimalType
-      const id = nextAnimalId.current++
-      const sizeScale = isBaby ? 0.62 : 1
-      const baseSpeed = BASE_SPEED[chosenType] * (isBaby ? 0.9 : 1) * 0.92
-      const startX = opts?.near
-        ? opts.near.x + (Math.random() - 0.5) * 2
-        : Math.random() < 0.5
-          ? -12
-          : 112
-      const startY = opts?.near ? opts.near.y : 56 + Math.random() * 14
-      const a: PlainAnimal = {
-        id,
-        type: chosenType,
-        x: startX,
-        y: startY,
-        dir: startX < 50 ? 1 : -1,
-        speed: baseSpeed,
-        state: 'walk',
-        sizeScale,
-        isBaby,
-        target: randomTargetPlain(),
-        phaseTag: isDayNow ? 'day' : 'night',
-      }
-      return [...cur, a]
-    })
-  }
+  const spawnPlainAnimal = useCallback(
+    (opts?: {
+      type?: AnimalType
+      babyOf?: AnimalType
+      near?: { x: number; y: number }
+    }) => {
+      setAnimals((cur) => {
+        const isBaby = !!opts?.babyOf
+        if (!isBaby && countAdultsPlain(cur) >= MAX_PLAIN_ADULTS) return cur
+        const pool = isDayNow ? DAY_SPECIES : NIGHT_SPECIES
+        const chosenType = (opts?.type ??
+          opts?.babyOf ??
+          pool.at(Math.floor(Math.random() * pool.length))!) as AnimalType
+        const id = nextAnimalId.current++
+        const sizeScale = isBaby ? 0.62 : 1
+        const baseSpeed =
+          (BASE_SPEED.get(chosenType) ?? 0) * (isBaby ? 0.9 : 1) * 0.92
+        const startX = opts?.near
+          ? opts.near.x + (Math.random() - 0.5) * 2
+          : Math.random() < 0.5
+            ? -12
+            : 112
+        const startY = opts?.near ? opts.near.y : 56 + Math.random() * 14
+        const a: PlainAnimal = {
+          id,
+          type: chosenType,
+          x: startX,
+          y: startY,
+          dir: startX < 50 ? 1 : -1,
+          speed: baseSpeed,
+          state: 'walk',
+          sizeScale,
+          isBaby,
+          target: randomTargetPlain(),
+          phaseTag: isDayNow ? 'day' : 'night',
+        }
+        return [...cur, a]
+      })
+    },
+    [isDayNow],
+  )
 
   /* ============================================================================
      TICKER ~30fps — TOUTE LA LOGIQUE DYNAMIQUE REGROUPÉE
@@ -764,8 +787,8 @@ export default function SpecialBackground() {
           const newHearts: HeartFX[] = []
           for (let i = 0; i < arr.length; i++)
             for (let j = i + 1; j < arr.length; j++) {
-              const A = arr[i]!,
-                B = arr[j]!
+              const A = arr.at(i)!,
+                B = arr.at(j)!
               if (A.phaseTag !== B.phaseTag || A.type !== B.type) continue
               if (A.state === 'leaving' || B.state === 'leaving') continue
               const nowMs = performance.now()
@@ -936,8 +959,8 @@ export default function SpecialBackground() {
           const newHearts: HeartFX[] = []
           for (let i = 0; i < arr.length; i++)
             for (let j = i + 1; j < arr.length; j++) {
-              const A = arr[i]!,
-                B = arr[j]!
+              const A = arr.at(i)!,
+                B = arr.at(j)!
               if (A.kind !== B.kind) continue
               const nowMs = performance.now()
               if (
@@ -992,7 +1015,7 @@ export default function SpecialBackground() {
     }
     raf = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(raf)
-  }, [isDayNow])
+  }, [isDayNow, spawnPlainAnimal])
 
   /* --------- Montagnes / Arbres ---------- */
   const mountainsFront = useMemo(() => {
@@ -1029,7 +1052,7 @@ export default function SpecialBackground() {
           x: clamp(x, 0, 98),
           yBottomVh: yBottom,
           size: baseSize + (rng() - 0.5) * 12,
-          src: TREE_SVGS[Math.floor(rng() * TREE_SVGS.length)]!,
+          src: TREE_SVGS.at(Math.floor(rng() * TREE_SVGS_COUNT))!,
         })
       }
     }
@@ -1366,10 +1389,10 @@ export default function SpecialBackground() {
             }}
           >
             <img
-              src={ICONS[a.type]}
+              src={ICONS.get(a.type)!}
               alt={a.type}
               style={{
-                width: BASE_SIZE[a.type] * a.sizeScale,
+                width: (BASE_SIZE.get(a.type) ?? 0) * a.sizeScale,
                 height: 'auto',
                 transform: a.dir < 0 ? 'scaleX(-1)' : undefined,
                 filter: `drop-shadow(0 2px 4px #0003) ${babyFilter}`,
@@ -1582,7 +1605,7 @@ export default function SpecialBackground() {
             }}
           >
             <img
-              src={TREE_SVGS[(i + 1) % TREE_SVGS.length]}
+              src={TREE_SVGS.at((i + 1) % TREE_SVGS_COUNT)!}
               alt="tree"
               style={{
                 width: t.size,
