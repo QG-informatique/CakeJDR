@@ -1,9 +1,11 @@
 'use client'
+// MOD: 1 2025-08-09 - add global language switcher
 
 import React, { Suspense } from 'react'
 import dynamic from 'next/dynamic'
 import { BackgroundProvider } from '@/components/context/BackgroundContext'
 import { LanguageProvider } from '@/components/context/LanguageContext'
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher' // MOD: 1 2025-08-09 - global language flag
 
 // Charge le fond uniquement côté client pour éviter les plantages SSR/hydration
 const BackgroundWrapper = dynamic(() => import('@/components/ui/BackgroundWrapper'), {
@@ -46,6 +48,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             <BackgroundWrapper />
           </Suspense>
         </BackgroundErrorBoundary>
+        <LanguageSwitcher />
         <main className="relative z-10">{children}</main>
       </BackgroundProvider>
     </LanguageProvider>

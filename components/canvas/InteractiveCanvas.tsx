@@ -1,4 +1,5 @@
 'use client'
+// MOD: 1 2025-08-09 - fix canvas coordinate offset when layout changes
 
 import { useRef, useState, useEffect } from 'react'
 import {
@@ -129,27 +130,31 @@ export default function InteractiveCanvas() {
   const ERASE_MIN = DRAW_MIN * 4
   const ERASE_MAX = DRAW_MAX * 4
 
-    useEffect(() => {
-      const resize = () => {
-        const canvas = drawingCanvasRef.current
-        if (canvas) {
-          const rect = canvas.getBoundingClientRect()
-          const dpr = window.devicePixelRatio || 1
-          canvas.width = rect.width * dpr
-          canvas.height = rect.height * dpr
-          const ctx = canvas.getContext('2d')
-          if (ctx) {
-            ctx.scale(dpr, dpr)
-            ctx.lineCap = 'round'
-            ctx.lineJoin = 'round'
-            ctxRef.current = ctx
-          }
+  useEffect(() => {
+    const resize = () => {
+      const canvas = drawingCanvasRef.current
+      if (canvas) {
+        const rect = canvas.getBoundingClientRect()
+        const dpr = window.devicePixelRatio || 1
+        canvas.width = rect.width * dpr
+        canvas.height = rect.height * dpr
+        const ctx = canvas.getContext('2d')
+        if (ctx) {
+          ctx.lineCap = 'round'
+          ctx.lineJoin = 'round'
+          ctxRef.current = ctx
         }
       }
-      resize()
-      window.addEventListener('resize', resize)
-      return () => window.removeEventListener('resize', resize)
-    }, [toolsVisible, audioVisible])
+    }
+    resize()
+    const observer = new ResizeObserver(resize)
+    if (canvasRef.current) observer.observe(canvasRef.current)
+    window.addEventListener('resize', resize)
+    return () => {
+      window.removeEventListener('resize', resize)
+      observer.disconnect()
+    }
+  }, [toolsVisible, audioVisible])
 
   useEffect(() => {
     const canvas = drawingCanvasRef.current
@@ -258,53 +263,63 @@ export default function InteractiveCanvas() {
 
   const [selectedImageId, setSelectedImageId] = useState<number | null>(null)
 
-  const handlePointerDown = (
-    e: React.PointerEvent,
-    id?: number,
-    type?: 'move' | 'resize',
-  ) => {
-    e.preventDefault()
-    const rect = drawingCanvasRef.current?.getBoundingClientRect()
-    if (!rect) return
+    const handlePointerDown = (
+      e: React.PointerEvent,
+      id?: number,
+      type?: 'move' | 'resize',
+    ) => {
+      e.preventDefault()
+      const canvas = drawingCanvasRef.current
+      const rect = canvas?.getBoundingClientRect()
+      if (!rect || !canvas) return
+      const scaleX = canvas.width / rect.width
+      const scaleY = canvas.height / rect.height
 
-    if ((drawMode === 'draw' || drawMode === 'erase') && !id) {
-      setIsDrawing(true)
-      const x = e.clientX - rect.left
-      const y = e.clientY - rect.top
-      setMousePos({ x, y })
-      const ctx = ctxRef.current
-      if (ctx) {
-        ctx.strokeStyle = drawMode === 'erase' ? 'rgba(0,0,0,1)' : color
-        ctx.lineWidth = brushSize
-        ctx.globalCompositeOperation =
-          drawMode === 'erase' ? 'destination-out' : 'source-over'
-        ctx.beginPath()
-        ctx.moveTo(x, y)
+      if ((drawMode === 'draw' || drawMode === 'erase') && !id) {
+        setIsDrawing(true)
+        const cssX = e.clientX - rect.left
+        const cssY = e.clientY - rect.top
+        const x = cssX * scaleX
+        const y = cssY * scaleY
+        setMousePos({ x: cssX, y: cssY })
+        const ctx = ctxRef.current
+        if (ctx) {
+          ctx.strokeStyle = drawMode === 'erase' ? 'rgba(0,0,0,1)' : color
+          ctx.lineWidth = brushSize * scaleX
+          ctx.globalCompositeOperation =
+            drawMode === 'erase' ? 'destination-out' : 'source-over'
+          ctx.beginPath()
+          ctx.moveTo(x, y)
+        }
+        return
       }
-      return
-    }
 
-    if (drawMode === 'images' && id && type) {
-      const img = images.find((i) => i.id === id)
-      if (!img) return
+      if (drawMode === 'images' && id && type) {
+        const img = images.find((i) => i.id === id)
+        if (!img) return
 
-      dragState.current = {
-        id,
-        type,
-        offsetX: e.clientX - rect.left - img.x,
-        offsetY: e.clientY - rect.top - img.y,
+        dragState.current = {
+          id,
+          type,
+          offsetX: e.clientX - rect.left - img.x,
+          offsetY: e.clientY - rect.top - img.y,
+        }
+        setSelectedImageId(id)
       }
-      setSelectedImageId(id)
     }
-  }
 
   const handlePointerMove = (e: React.PointerEvent) => {
-    const rect = drawingCanvasRef.current?.getBoundingClientRect()
-    if (!rect) return
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
-    setMousePos({ x, y })
-    updateMyPresence({ cursor: { x, y } })
+    const canvas = drawingCanvasRef.current
+    const rect = canvas?.getBoundingClientRect()
+    if (!rect || !canvas) return
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
+    const cssX = e.clientX - rect.left
+    const cssY = e.clientY - rect.top
+    const x = cssX * scaleX
+    const y = cssY * scaleY
+    setMousePos({ x: cssX, y: cssY })
+    updateMyPresence({ cursor: { x: cssX, y: cssY } })
 
     if (
       isDrawing &&
@@ -313,7 +328,9 @@ export default function InteractiveCanvas() {
     ) {
       ctxRef.current.lineTo(x, y)
       ctxRef.current.stroke()
-      const { x: px, y: py } = mousePos
+      const { x: pxCss, y: pyCss } = mousePos
+      const px = pxCss * scaleX
+      const py = pyCss * scaleY
       const now = Date.now()
       if (THROTTLE === 0 || now - lastSend.current > THROTTLE) {
         lastSend.current = now
@@ -324,7 +341,7 @@ export default function InteractiveCanvas() {
           x2: x,
           y2: y,
           color,
-          width: brushSize,
+          width: brushSize * scaleX,
           mode: drawMode,
         } as Liveblocks['RoomEvent'])
       }
@@ -338,13 +355,13 @@ export default function InteractiveCanvas() {
       type === 'move'
         ? {
             ...img,
-            x: Math.max(0, Math.min(x - offsetX, rect.width - img.width)),
-            y: Math.max(0, Math.min(y - offsetY, rect.height - img.height)),
+            x: Math.max(0, Math.min(cssX - offsetX, rect.width - img.width)),
+            y: Math.max(0, Math.min(cssY - offsetY, rect.height - img.height)),
           }
         : {
             ...img,
-            width: Math.max(50, x - img.x),
-            height: Math.max(50, y - img.y),
+            width: Math.max(50, cssX - img.x),
+            height: Math.max(50, cssY - img.y),
           }
     updateImage(updated)
   }

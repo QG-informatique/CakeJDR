@@ -1,7 +1,8 @@
 'use client'
+// MOD: 1 2025-08-09 - ensure editor logs and uses current room
 import { FC, useEffect, useState, useRef, useCallback } from 'react'
 import { useT } from '@/lib/useT'
-import { useStorage, useMutation } from '@liveblocks/react'
+import { useStorage, useMutation, useRoom } from '@liveblocks/react'
 import { LiveMap } from '@liveblocks/client'
 import { LexicalComposer } from '@lexical/react/LexicalComposer'
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin'
@@ -39,6 +40,14 @@ function AutoSavePlugin({ onChange }: { onChange: (text: string) => void }) {
 }
 
 const SessionSummary: FC<Props> = ({ onClose }) => {
+  const room = useRoom()
+  useEffect(() => {
+    // MOD: 2 2025-08-09 - log current room id for debug
+    if (process.env.NODE_ENV === 'development') {
+      console.log('SessionSummary roomId', room.id)
+    }
+  }, [room.id])
+
   const summary = useStorage((root) => root.summary)
   const rawEditor = useStorage((root) => root.editor)
   const editorMap =
