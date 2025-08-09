@@ -19,7 +19,8 @@ interface Props {
 const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
   const room = useRoom()
   const { events, addEvent } = useEventLog(room.id)
-  const sortedEvents = [...events].sort((a, b) => a.ts - b.ts)
+  // sort by timestamp and break ties with the unique id to keep order stable
+  const sortedEvents = [...events].sort((a, b) => a.ts - b.ts || a.id.localeCompare(b.id))
   const [inputValue, setInputValue] = useState('')
   const endRef = useRef<HTMLDivElement>(null)
   const [showSummary, setShowSummary] = useState(false)
@@ -46,10 +47,13 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
   const sendMessage = () => {
     if (inputValue.trim() === '') return
 
+    const id = crypto.randomUUID()
+    const ts = Date.now()
     const msg = { author, text: inputValue.trim(), isMJ: profile?.isMJ }
 
-    broadcast({ type: 'chat', author: msg.author, text: msg.text, isMJ: msg.isMJ } as Liveblocks['RoomEvent'])
-    addEvent({ id: crypto.randomUUID(), kind: 'chat', author: msg.author, text: msg.text, ts: Date.now(), isMJ: msg.isMJ })
+    // include id+ts in the broadcast so receivers use the same ordering info
+    broadcast({ type: 'chat', id, ts, author: msg.author, text: msg.text, isMJ: msg.isMJ } as Liveblocks['RoomEvent'])
+    addEvent({ id, kind: 'chat', author: msg.author, text: msg.text, ts, isMJ: msg.isMJ })
     setInputValue('')
   }
 

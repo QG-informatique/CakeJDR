@@ -2,12 +2,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useRef, useState } from 'react'
-import { useBroadcastEvent, useEventListener, useMyPresence } from '@liveblocks/react'
+import { useEventListener, useMyPresence } from '@liveblocks/react'
 import { useRouter, useParams } from 'next/navigation'
 import CharacterSheet, { defaultPerso } from '@/components/sheet/CharacterSheet'
-import DiceRoller from '@/components/dice/DiceRoller'
+import DiceHub from '@/components/dice/DiceHub'
 import ChatBox from '@/components/chat/ChatBox'
-import PopupResult from '@/components/dice/PopupResult'
 import Head from 'next/head'
 import InteractiveCanvas from '@/components/canvas/InteractiveCanvas'
 import LiveAvatarStack from '@/components/chat/LiveAvatarStack'
@@ -26,28 +25,16 @@ export default function HomePageInner() {
   const [perso, setPerso] = useState(defaultPerso)
   const [characters, setCharacters] = useState<any[]>([])
 
-  const [showPopup, setShowPopup] = useState(false)
-  const [diceType, setDiceType] = useState(6)
-  const [diceResult, setDiceResult] = useState<number | null>(null)
-  const [diceDisabled, setDiceDisabled] = useState(false)
   const { id: roomId } = useParams<{ id: string }>()
-  const [pendingRoll, setPendingRoll] = useState<{ result: number; dice: number; nom: string } | null>(null)
   const [history, setHistory] = useDiceHistory(roomId)
   const { addEvent } = useEventLog(roomId)
   const chatBoxRef = useRef<HTMLDivElement>(null)
-  const [cooldown, setCooldown] = useState(false)
-  // total durée d'indisponibilité du bouton (animation + hold + cooldown)
-  const ROLL_TOTAL_MS = 2000 + 300 + 2000 + 1000
-
-  const broadcast = useBroadcastEvent()
   const [, updateMyPresence] = useMyPresence()
 
-  // listen for remote dice rolls
+  // listen for GM character selections only
   useEventListener((payload: any) => {
     const { event } = payload
-    if (event.type === 'dice-roll') {
-      setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result, ts: Date.now() }])
-    } else if (event.type === 'gm-select') {
+    if (event.type === 'gm-select') {
       const char = event.character || defaultPerso
       if (!char.id) char.id = crypto.randomUUID()
       setPerso(char)
@@ -136,36 +123,6 @@ export default function HomePageInner() {
   if (!user) {
     return <Login onLogin={setUser} />
   }
-
-  const rollDice = () => {
-    if (diceDisabled) return
-    setDiceDisabled(true)
-    setCooldown(true)
-    const result = Math.floor(Math.random() * diceType) + 1
-    setDiceResult(result)
-    setShowPopup(true)
-    setPendingRoll({ result, dice: diceType, nom: perso.nom || '?' })
-  }
-
-  const handlePopupReveal = () => {
-    if (!pendingRoll) return
-    const { nom, dice, result } = pendingRoll
-    const entry = { player: nom, dice, result, ts: Date.now() }
-    setHistory((h) => [...h, entry])
-    broadcast({ type: 'dice-roll', player: nom, dice, result } as Liveblocks['RoomEvent'])
-    addEvent({ id: crypto.randomUUID(), kind: 'dice', player: nom, dice, result, ts: entry.ts })
-    setPendingRoll(null)
-  }
-
-  const handlePopupFinish = () => {
-    setShowPopup(false)
-    window.setTimeout(() => {
-      setCooldown(false)
-      setDiceDisabled(false)
-      setDiceResult(null)
-    }, 1000)
-  }
-
   return (
     <div className="relative w-screen h-screen font-sans overflow-hidden bg-transparent">
       <div className="relative z-10 flex flex-col lg:flex-row w-full h-full">
@@ -182,14 +139,11 @@ export default function HomePageInner() {
             <ErrorBoundary fallback={<div className="p-4 text-red-500">Canvas error</div>}>
               <InteractiveCanvas />
             </ErrorBoundary>
-            <ErrorBoundary fallback={<div className="p-4 text-red-500">Dice display error</div>}>
-              <PopupResult show={showPopup} result={diceResult} diceType={diceType} onReveal={handlePopupReveal} onFinish={handlePopupFinish} />
-            </ErrorBoundary>
           </div>
-          <ErrorBoundary fallback={<div className="p-4 text-red-500">Dice roller error</div>}>
-            <DiceRoller diceType={diceType} onChange={setDiceType} onRoll={rollDice} disabled={diceDisabled} cooldown={cooldown} cooldownDuration={ROLL_TOTAL_MS}>
+          <ErrorBoundary fallback={<div className="p-4 text-red-500">Dice hub error</div>}>
+            <DiceHub player={perso.nom || '?'} setHistory={setHistory} addEvent={addEvent}>
               <LiveAvatarStack />
-            </DiceRoller>
+            </DiceHub>
           </ErrorBoundary>
         </main>
 

@@ -74,8 +74,9 @@ declare global {
       | { type: 'delete-image'; id: number }
       | { type: 'clear-canvas' }
       | { type: 'draw-line'; x1:number; y1:number; x2:number; y2:number; color:string; width:number; mode:'draw'|'erase' }
-      | { type: 'chat'; author: string; text: string; isMJ?: boolean }
-      | { type: 'dice-roll'; player: string; dice: number; result: number }
+      // chat and dice events now carry an id + timestamp so all clients agree on order
+      | { type: 'chat'; id: string; ts: number; author: string; text: string; isMJ?: boolean }
+      | { type: 'dice-roll'; id: string; ts: number; player: string; dice: number; result: number }
       | { type: 'gm-select'; character: CharacterData };
 
     // Custom metadata set on threads, for useThreads, useCreateThread, etc.

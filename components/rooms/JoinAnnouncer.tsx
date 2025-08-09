@@ -8,8 +8,12 @@ export default function JoinAnnouncer() {
     try {
       const prof = JSON.parse(localStorage.getItem('jdr_profile') || '{}')
       if (prof.pseudo) {
+        const id = crypto.randomUUID()
+        const ts = Date.now()
         broadcast({
           type: 'chat',
+          id,
+          ts,
           author: 'System',
           text: `${prof.pseudo} joined the game`,
         } as Liveblocks['RoomEvent'])
