@@ -140,43 +140,57 @@ export default function SpecialBackground() {
   }, [])
   const t = clamp(progress, 0, 0.999999)
   const seconds = t * cycleSeconds
-  const s01 = seconds / cycleSeconds // MODIF: phase 0..1 sur tout le cycle
 
-  // Phases astres (conservées)
-  const moonPhase = clamp(seconds / 180, 0, 1)
-  const sunPhase  = clamp((seconds - 180) / 180, 0, 1)
+  // Durées et décalages
+  const sunDuration = 170
+  const gapAfterSunset = 10
+  const moonDuration = 170
+  const gapAfterMoonset = 10
+  const moonStart = sunDuration + gapAfterSunset
+  const moonEnd = moonStart + moonDuration
+
+  // Phases astres
+  const sunPhase = clamp(seconds / sunDuration, 0, 1)
+  const moonPhase = clamp((seconds - moonStart) / moonDuration, 0, 1)
 
   // Trajectoires en arc
   const mapX = (p: number) => -10 + p * 120
-  const moonX = mapX(moonPhase)
   const sunX  = mapX(sunPhase)
-  const moonY = 38 + Math.sin(Math.PI * moonPhase) * -14
+  const moonX = mapX(moonPhase)
   const sunY  = 34 + Math.sin(Math.PI * sunPhase) * -18
-  const showMoon = seconds < 180
-  const showSun  = seconds >= 180
+  const moonY = 38 + Math.sin(Math.PI * moonPhase) * -14
+  const showSun  = seconds < sunDuration
+  const showMoon = seconds >= moonStart && seconds < moonEnd
 
   /* ==========================================================================
-     CIEL — MODIF MAJEURE: interpolation CONTINUE (pas de branches qui "snap")
-     - light(t) évolue sur tout le cycle avec une cosinusoïde (doux, C1)
-     - pulses "dawn/dusk" 30s via smoothWindow (4t(1-t)) pour teintes chaudes
+     CIEL — interpolation sans rupture, calée sur les phases d'astres
      ========================================================================== */
-  const light = 0.5 * (1 - Math.cos(2 * Math.PI * s01)) // 0 (minuit) → 1 (midi) → 0 (minuit), *continu*
+  let light: number
+  if (showSun) {
+    light = 0.2 + 0.8 * Math.sin(Math.PI * sunPhase)
+  } else if (seconds < moonStart) {
+    const p = (seconds - sunDuration) / gapAfterSunset
+    light = 0.2 - 0.1 * p
+  } else if (showMoon) {
+    light = 0.1 - 0.1 * Math.sin(Math.PI * moonPhase)
+  } else {
+    const p = (seconds - moonEnd) / gapAfterMoonset
+    light = 0.1 + 0.1 * p
+  }
+  light = clamp(light, 0, 1)
+
   // base night↔day
   let baseTop = lerpColor(PAL.nightTop, PAL.dayTop, light)
   let baseBot = lerpColor(PAL.nightBottom, PAL.dayBottom, light)
-  // pulses dawn/dusk (30 s)
-  const dawnStart = 180 / 360, dawnEnd = (180 + 30) / 360
-  const duskStart = (360 - 30) / 360, duskEnd = 1
-  const wDawn = smoothWindow(s01, dawnStart, dawnEnd)
-  const wDusk = smoothWindow(s01, duskStart, duskEnd)
-  // mix progressif (faible intensité pour garder naturel)
-  baseTop = lerpColor(baseTop, PAL.dawnTop, 0.45 * wDawn)
-  baseBot = lerpColor(baseBot, PAL.dawnBottom, 0.45 * wDawn)
-  baseTop = lerpColor(baseTop, PAL.duskTop, 0.50 * wDusk)
-  baseBot = lerpColor(baseBot, PAL.duskBottom, 0.50 * wDusk)
+  // pulses dawn/dusk
+  const wDawn = smoothWindow(seconds, 0, 30) + smoothWindow(seconds, 350, 360)
+  const wDusk = smoothWindow(seconds, 140, 170)
+  baseTop = lerpColor(baseTop, PAL.dawnTop, 0.6 * wDawn)
+  baseBot = lerpColor(baseBot, PAL.dawnBottom, 0.6 * wDawn)
+  baseTop = lerpColor(baseTop, PAL.duskTop, 0.6 * wDusk)
+  baseBot = lerpColor(baseBot, PAL.duskBottom, 0.6 * wDusk)
   const skyTop = baseTop
   const skyBottom = baseBot
-  // NOTE: plus aucun `if/else` basé sur showSun/showMoon pour le ciel ⇒ plus de "snap"
 
   /* Étoiles légères la nuit */
   const stars = useMemo(() => {
@@ -186,7 +200,7 @@ export default function SpecialBackground() {
       size: 1 + Math.round(rng() * 2), tw: 2 + rng() * 3, delay: rng() * 5,
     }))
   }, [])
-  const nightish = light < 0.45 || light > 0.55 // scintillement surtout de nuit
+  const nightish = light < 0.3 // scintillement surtout de nuit
 
   /* Nuages (identiques) */
   const CLOUD_PATHS = [
@@ -641,7 +655,7 @@ export default function SpecialBackground() {
       {stars.map(s => (
         <motion.div key={s.id}
           initial={{ opacity: 0 }}
-          animate={{ opacity: nightish ? [0.1, (light < 0.2 || light > 0.8) ? 0.8 : 0.35, 0.1] : 0 }}
+          animate={{ opacity: nightish ? [0.1, light < 0.1 ? 0.8 : 0.35, 0.1] : 0 }}
           transition={{ duration: s.tw, repeat: Infinity, delay: s.delay }}
           style={{ position: 'absolute', left: `${s.left}vw`, top: `${s.top}vh`, width: s.size, height: s.size, borderRadius: s.size, background: '#fff', boxShadow: '0 0 6px #fff8', zIndex: 1 }}
         />
