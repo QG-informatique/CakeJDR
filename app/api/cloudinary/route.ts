@@ -2,6 +2,7 @@
 export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
 const CLOUD_NAME =
   process.env.CLOUDINARY_CLOUD_NAME ||
@@ -36,11 +37,23 @@ export async function POST(req: Request) {
     if (!UPLOAD_PRESET) return bad("Missing CLOUDINARY_UPLOAD_PRESET env", 500);
 
     const form = await req.formData();
-    const file = form.get("file");
-    if (!file || !(file instanceof File)) return bad("No file field named 'file'");
-    if (file.size <= 0) return bad("Empty file");
-    if (file.size > MAX_BYTES) return bad(`File too large (max ${Math.round(MAX_BYTES / (1024 * 1024))}MB)`);
-    if (file.type && !ALLOWED_TYPES.has(file.type)) return bad(`Unsupported file type: ${file.type}`);
+    const schema = z.object({
+      file: z
+        .instanceof(File, { message: "No file field named 'file'" })
+        .refine((f) => f.size > 0, { message: "Empty file" })
+        .refine((f) => f.size <= MAX_BYTES, {
+          message: `File too large (max ${Math.round(MAX_BYTES / (1024 * 1024))}MB)`,
+        })
+        .refine((f) => !f.type || ALLOWED_TYPES.has(f.type), {
+          message: "Unsupported file type",
+        }),
+    });
+    const parsed = schema.safeParse({ file: form.get("file") });
+    if (!parsed.success) {
+      const msg = parsed.error.errors.map((e) => e.message).join(", ");
+      return bad(msg);
+    }
+    const { file } = parsed.data;
 
     // Upload non signé (pas d'option 'eager' autorisée ici)
     const cloudForm = new FormData();

@@ -4,6 +4,7 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { Liveblocks } from "@liveblocks/node";
 import crypto from "node:crypto";
+import { z } from "zod";
 
 interface RoomMetadata {
   password?: string;
@@ -19,11 +20,16 @@ function bad(msg: string, code = 400) {
 
 export async function POST(req: NextRequest) {
   try {
+    const schema = z.object({
+      id: z.string().trim().min(1),
+      password: z.string().optional(),
+    });
     const body = await req.json().catch(() => ({}));
-    const id = String(body?.id || "").trim();
-    const password = String(body?.password || "");
-
-    if (!id) return bad("Missing id");
+    const parsed = schema.safeParse(body);
+    if (!parsed.success) {
+      return bad(parsed.error.errors[0].message);
+    }
+    const { id, password = "" } = parsed.data;
     const secret = process.env.LIVEBLOCKS_SECRET_KEY;
     if (!secret) return bad("Server misconfigured", 500);
 

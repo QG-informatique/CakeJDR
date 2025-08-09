@@ -1,10 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { listRooms, createRoom, deleteRoom, renameRoom } from '@/lib/liveRooms'
+import { z } from 'zod'
 
 export async function GET() {
   try {
     const rooms = await listRooms()
-    return NextResponse.json({ rooms })
+    const roomSchema = z.object({
+      id: z.string(),
+      name: z.string(),
+      password: z.string().optional(),
+      createdAt: z.string(),
+      updatedAt: z.string().optional(),
+      usersConnected: z.number(),
+    })
+    const parsed = z.array(roomSchema).safeParse(rooms)
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid room data' }, { status: 500 })
+    }
+    return NextResponse.json({ rooms: parsed.data })
   } catch (e) {
     console.error(e)
     return NextResponse.json({ error: 'Failed to list rooms' }, { status: 500 })
@@ -13,11 +26,17 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, password } = await req.json()
-    if (!name || typeof name !== 'string') {
-      return NextResponse.json({ error: 'missing name' }, { status: 400 })
+    const schema = z.object({
+      name: z.string().min(1),
+      password: z.string().optional(),
+    })
+    const body = await req.json().catch(() => ({}))
+    const parsed = schema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 })
     }
-    const id = await createRoom(name, typeof password === 'string' ? password : undefined)
+    const { name, password } = parsed.data
+    const id = await createRoom(name, password)
     return NextResponse.json({ id })
   } catch (e) {
     const msg = (e as Error).message
@@ -34,10 +53,13 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const { id } = await req.json()
-    if (!id || typeof id !== 'string') {
-      return NextResponse.json({ error: 'missing id' }, { status: 400 })
+    const schema = z.object({ id: z.string().min(1) })
+    const body = await req.json().catch(() => ({}))
+    const parsed = schema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 })
     }
+    const { id } = parsed.data
     await deleteRoom(id)
     return NextResponse.json({ ok: true })
   } catch (e) {
@@ -52,10 +74,13 @@ export async function DELETE(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const { id, name } = await req.json()
-    if (!id || typeof id !== 'string' || !name || typeof name !== 'string') {
-      return NextResponse.json({ error: 'missing data' }, { status: 400 })
+    const schema = z.object({ id: z.string().min(1), name: z.string().min(1) })
+    const body = await req.json().catch(() => ({}))
+    const parsed = schema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 })
     }
+    const { id, name } = parsed.data
     await renameRoom(id, name)
     return NextResponse.json({ ok: true })
   } catch (e) {

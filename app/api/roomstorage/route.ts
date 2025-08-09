@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Liveblocks } from '@liveblocks/node'
 import type { LiveMap, Lson } from '@liveblocks/core'
+import { z } from 'zod'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const roomId = searchParams.get('roomId')
-  if (!roomId) return NextResponse.json({ error: 'roomId missing' }, { status: 400 })
+  const schema = z.object({ roomId: z.string().min(1) })
+  const parsed = schema.safeParse({ roomId: searchParams.get('roomId') })
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 })
+  }
+  const { roomId } = parsed.data
   const secret = process.env.LIVEBLOCKS_SECRET_KEY
   if (!secret) return NextResponse.json({ error: 'Liveblocks key missing' }, { status: 500 })
   const client = new Liveblocks({ secret })
@@ -16,10 +21,17 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { roomId, id, character } = await req.json()
-    if (!roomId || !id || !character) {
-      return NextResponse.json({ error: 'missing data' }, { status: 400 })
+    const schema = z.object({
+      roomId: z.string().min(1),
+      id: z.string().min(1),
+      character: z.record(z.any()),
+    })
+    const body = await req.json().catch(() => ({}))
+    const parsed = schema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 })
     }
+    const { roomId, id, character } = parsed.data
     const secret = process.env.LIVEBLOCKS_SECRET_KEY
     if (!secret) return NextResponse.json({ error: 'Liveblocks key missing' }, { status: 500 })
     const client = new Liveblocks({ secret })
@@ -36,11 +48,18 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const roomId = searchParams.get('roomId')
-  const id = searchParams.get('id')
-  if (!roomId || !id) {
-    return NextResponse.json({ error: 'missing data' }, { status: 400 })
+  const schema = z.object({
+    roomId: z.string().min(1),
+    id: z.string().min(1),
+  })
+  const parsed = schema.safeParse({
+    roomId: searchParams.get('roomId'),
+    id: searchParams.get('id'),
+  })
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 })
   }
+  const { roomId, id } = parsed.data
   const secret = process.env.LIVEBLOCKS_SECRET_KEY
   if (!secret) return NextResponse.json({ error: 'Liveblocks key missing' }, { status: 500 })
   const client = new Liveblocks({ secret })
