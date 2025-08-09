@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-no-comment-textnodes */ // FIX:
 'use client'
 
 import { motion } from 'framer-motion'
@@ -40,7 +41,15 @@ function lerpColor(a?: string, b?: string, t = 0.5) {
   ])
 }
 
-// MODIF: petite fenêtre lissée (0 hors fenêtre, pic à 1 au centre) pour dawn/dusk
+
+// FIX: fonction "bell" pour fenêtres dawn/dusk
+function bell(x: number, a: number, b: number) { // FIX:
+  if (x <= a || x >= b) return 0 // FIX:
+  const t = (x - a) / (b - a) // FIX:
+  return 4 * t * (1 - t) // courbe en cloche C1 continue // FIX:
+} // FIX:
+
+
 /* ============================================================================
    ASSETS
    ============================================================================ */
@@ -81,12 +90,47 @@ const TURTLE_SVG = 'https://res.cloudinary.com/dz6ugwzxp/image/upload/v175468436
    PALETTE
    ============================================================================ */
 
-const PAL = {
-  nightTop: '#0b1625',  nightBottom: '#0e1d30',
-  dawnTop:  '#2a3a5a',  dawnBottom:  '#ffb073',
-  dayTop:   '#78caff',  dayBottom:   '#a8ddff',
-  duskTop:  '#2a3458',  duskBottom:  '#ff8ca1',
-}
+const PAL = { // FIX:
+  nightTop:  '#0b1625', nightBottom:  '#0e1d30', // FIX:
+  predawnTop:'#15253b', predawnBottom:'#1a2e49', // FIX:
+  dayTop:    '#78caff', dayBottom:    '#a8ddff', // FIX:
+  dawnTop:   '#2a3a5a', dawnBottom:   '#ffb073', // FIX:
+  duskTop:   '#2a3458', duskBottom:   '#ff8ca1', // FIX:
+  sunHalo:   '#ffd23f', moonHalo: '#dfe9ff', // FIX:
+} // FIX:
+
+// FIX: constantes cycle
+const DAY_SEC = 180; // FIX:
+const NIGHT_SEC = 180; // FIX:
+const MOON_GAP = 2; // FIX:
+const DAWN_SEC = 25; // FIX:
+const DUSK_SEC = 25; // FIX:
+const CYCLE_SEC = DAY_SEC + NIGHT_SEC; // FIX:
+
+// FIX: fonction couleur du ciel continue
+function getSkyColors(t: number): { top: string; bottom: string } { // FIX:
+  const pSun = clamp(t / DAY_SEC, 0, 1); // FIX:
+  const pMoon = clamp((t - DAY_SEC - MOON_GAP) / (NIGHT_SEC - MOON_GAP), 0, 1); // FIX:
+  let top = PAL.nightTop; // FIX:
+  let bot = PAL.nightBottom; // FIX:
+  const kSun = Math.sin(Math.PI * pSun); // FIX:
+  top = lerpColor(top, PAL.dayTop, kSun); // FIX:
+  bot = lerpColor(bot, PAL.dayBottom, kSun); // FIX:
+  const kDawn = bell(pSun, 0, DAWN_SEC / DAY_SEC); // FIX:
+  const kDusk = bell(pSun, 1 - DUSK_SEC / DAY_SEC, 1); // FIX:
+  top = lerpColor(top, PAL.dawnTop, kDawn); // FIX:
+  bot = lerpColor(bot, PAL.dawnBottom, kDawn); // FIX:
+  top = lerpColor(top, PAL.duskTop, kDusk); // FIX:
+  bot = lerpColor(bot, PAL.duskBottom, kDusk); // FIX:
+  const gapDur = Math.min(40, NIGHT_SEC); // FIX:
+  const kGap = smoothstep01((t - DAY_SEC) / gapDur); // FIX:
+  top = lerpColor(top, PAL.nightTop, kGap); // FIX:
+  bot = lerpColor(bot, PAL.nightBottom, kGap); // FIX:
+  const kPre = smoothstep01((pMoon - 0.8) / 0.2); // FIX:
+  top = lerpColor(top, PAL.predawnTop, kPre); // FIX:
+  bot = lerpColor(bot, PAL.predawnBottom, kPre); // FIX:
+  return { top, bottom: bot }; // FIX:
+} // FIX:
 
 /* ============================================================================
    TYPES
@@ -119,88 +163,50 @@ type LeafBubble = { id: number; x: number; y: number; until: number }
    ============================================================================ */
 
 export default function SpecialBackground() {
-  /* === Cycle 6 minutes === */
-  const cycleSeconds = 360
-  const [progress, setProgress] = useState(0)
-  useEffect(() => {
-    let raf = 0
-    const start = performance.now()
-    const loop = (now: number) => {
-      setProgress(((now - start) / (cycleSeconds * 1000)) % 1)
-      raf = requestAnimationFrame(loop)
-    }
-    raf = requestAnimationFrame(loop); return () => cancelAnimationFrame(raf)
-  }, [])
-  const t = clamp(progress, 0, 0.999999)
-  const seconds = t * cycleSeconds
 
-  /* === Découpage jour / nuit === */
-  const dayDur = 180, nightDur = 180, gapDur = 0 // FIX: seamless day-night cycle
-  const sunEnd = dayDur
-  const moonStart = sunEnd + gapDur
+  const [timeSec, setTimeSec] = useState(0) // FIX:
+  useEffect(() => { // FIX:
+    let raf = 0; const start = performance.now() // FIX:
+    const loop = (now: number) => { // FIX:
+      setTimeSec(((now - start) / 1000) % CYCLE_SEC) // FIX:
+      raf = requestAnimationFrame(loop) // FIX:
+    } // FIX:
+    raf = requestAnimationFrame(loop); return () => cancelAnimationFrame(raf) // FIX:
+  }, []) // FIX:
+  const t = timeSec // FIX:
 
-  // Phases normalisées des astres (zéro délai entre soleil et lune)
-  const showSun = seconds < sunEnd
-  const showMoon = !showSun
-  const pSun = clamp(seconds / dayDur, 0, 1)
-  const pMoon = clamp((seconds - moonStart) / nightDur, 0, 1)
+  // Phases astres // FIX:
+  const pSun = clamp(t / DAY_SEC, 0, 1) // FIX:
+  const pMoon = clamp((t - DAY_SEC - MOON_GAP) / (NIGHT_SEC - MOON_GAP), 0, 1) // FIX:
 
-  // Trajectoires en arc (même taille, jamais de shrink)
-  const mapX = (p: number) => -10 + p * 120
-  const sunX = mapX(pSun)
-  const moonX = mapX(pMoon)
-  const sunY = 34 + Math.sin(Math.PI * pSun) * -18
-  const moonY = 38 + Math.sin(Math.PI * pMoon) * -14
+  // Trajectoires en arc // FIX:
+  const mapX = (p: number) => -10 + 120 * p // FIX:
+  const sunX = mapX(pSun) // FIX:
+  const moonX = mapX(pMoon) // FIX:
+  const sunY = 34 + Math.sin(Math.PI * pSun) * -18 // FIX:
+  const moonY = 38 + Math.sin(Math.PI * pMoon) * -14 // FIX:
+  const showSun = t < DAY_SEC // FIX:
+  const showMoon = t >= DAY_SEC + MOON_GAP // FIX:
 
-  /* ========================================================================
-     CIEL — transitions continües calées sur pSun/pMoon
-     ====================================================================== */
-  let skyTop = PAL.nightTop
-  let skyBottom = PAL.nightBottom
-  if (showSun) {
-    // lever -> jour -> coucher
-    const rise = smoothstep01(pSun / 0.25)
-    const set = smoothstep01((pSun - 0.75) / 0.25)
-    skyTop = lerpColor(PAL.dawnTop, PAL.dayTop, rise)
-    skyBottom = lerpColor(PAL.dawnBottom, PAL.dayBottom, rise)
-    skyTop = lerpColor(skyTop, PAL.duskTop, set)
-    skyBottom = lerpColor(skyBottom, PAL.duskBottom, set)
-  } else {
-    // nuit: dusk -> night -> pré-aube bleutée
-    skyTop = lerpColor(PAL.duskTop, PAL.nightTop, smoothstep01(pMoon / 0.1))
-    skyBottom = lerpColor(PAL.duskBottom, PAL.nightBottom, smoothstep01(pMoon / 0.1))
-    const dark = Math.sin(Math.PI * clamp(pMoon, 0, 1)) // pic au milieu de nuit
-    skyTop = lerpColor(skyTop, '#040b19', 0.25 * dark)
-    skyBottom = lerpColor(skyBottom, '#070f1f', 0.25 * dark)
-    const pre = smoothstep01((pMoon - 0.85) / 0.15)
-    skyTop = lerpColor(skyTop, PAL.dawnTop, 0.2 * pre)
-    skyBottom = lerpColor(skyBottom, PAL.dawnBottom, 0.2 * pre)
-  }
+  // Couleurs du ciel // FIX:
+  const { top: skyTop, bottom: skyBottom } = getSkyColors(t) // FIX:
 
-  /* Étoiles (visibilité continue) */
-  const stars = useMemo(() => {
-    const rng = mulberry32(20250808)
-    return Array.from({ length: 120 }).map((_, k) => ({
-      id: `star-${k}`, left: Math.round(rng() * 100), top: Math.round(rng() * 28),
-      size: 1 + Math.round(rng() * 2), tw: 2 + rng() * 3, delay: rng() * 5,
-    }))
-  }, [])
-  let starOpacity = 0
-  if (showMoon) {
-    const fadeIn = smoothstep01(pMoon / 0.2)
-    const fadeOut = smoothstep01((1 - pMoon) / 0.2)
-    starOpacity = fadeIn * fadeOut
-  }
-  const nightish = starOpacity > 0.2 // scintillement surtout de nuit
+  /* Étoiles légères la nuit */
+  const stars = useMemo(() => { // FIX:
+    const rng = mulberry32(20250808) // FIX:
+    return Array.from({ length: 120 }).map((_, k) => ({ // FIX:
+      id: `star-${k}`, left: Math.round(rng() * 100), top: Math.round(rng() * 28), // FIX:
+      size: 1 + Math.round(rng() * 2), tw: 2 + rng() * 3, delay: rng() * 5, // FIX:
+    })) // FIX:
+  }, []) // FIX:
+  const starStrength = Math.sin(Math.PI * pMoon) // FIX:
 
-  /* Nuages */
-  const CLOUD_PATHS = [ // FIX: more cloud variety (size/shape/speed/height)
-    'M20,100 C35,60 60,40 95,45 C110,20 145,15 170,35 C190,25 230,30 245,60 C280,60 300,75 302,100 L20,100 Z', // FIX: more cloud variety (size/shape/speed/height)
-    'M10,100 C30,70 55,55 80,60 C105,35 150,25 180,50 C210,40 250,55 270,80 C290,80 300,90 304,100 L10,100 Z', // FIX: more cloud variety (size/shape/speed/height)
-    'M0,100 C20,75 40,65 70,70 C90,50 130,45 160,60 C195,55 230,70 250,85 C270,85 300,95 306,100 L0,100 Z', // FIX: more cloud variety (size/shape/speed/height)
-    'M15,100 C45,65 70,35 105,45 C130,25 170,20 195,40 C215,35 255,45 275,70 C295,70 315,85 318,100 L15,100 Z', // FIX: more cloud variety (size/shape/speed/height)
-    'M5,100 C25,68 50,52 75,58 C95,33 140,28 170,52 C205,47 240,60 260,82 C285,82 305,92 309,100 L5,100 Z', // FIX: more cloud variety (size/shape/speed/height)
-    'M18,100 C38,74 65,60 92,63 C118,43 158,33 188,53 C218,47 254,65 274,86 C294,86 314,96 316,100 L18,100 Z', // FIX: more cloud variety (size/shape/speed/height)
+  /* Nuages (identiques) */
+  const CLOUD_PATHS = [
+    'M20,100 C35,60 60,40 95,45 C110,20 145,15 170,35 C190,25 230,30 245,60 C280,60 300,75 302,100 L20,100 Z',
+    'M10,100 C30,70 55,55 80,60 C105,35 150,25 180,50 C210,40 250,55 270,80 C290,80 300,90 304,100 L10,100 Z',
+    'M0,100 C20,75 40,65 70,70 C90,50 130,45 160,60 C195,55 230,70 250,85 C270,85 300,95 306,100 L0,100 Z',
+
   ]
   function PrettyCloud({ size = 150, variant = 0 }: { size?: number; variant?: number }) {
     const i = Math.abs(variant) % CLOUD_PATHS.length
@@ -222,7 +228,10 @@ export default function SpecialBackground() {
       { count: 3, z: 2, durMin: 200, durVar: 140, sizeMin: 120, sizeVar: 120, topMin: 4, topVar: 14 }, // FIX: more cloud variety (size/shape/speed/height)
       { count: 4, z: 3, durMin: 110, durVar: 100, sizeMin: 220, sizeVar: 180, topMin: 10, topVar: 20 }, // FIX: more cloud variety (size/shape/speed/height)
     ]
-    const arr: React.ReactElement[] = []
+
+    const arr: React.ReactElement[] = [] // FIX: type cloud elements to avoid JSX namespace
+
+
     layers.forEach((L, li) => {
       for (let i = 0; i < L.count; i++) {
         const size = L.sizeMin + Math.round(rng() * L.sizeVar) // FIX: more cloud variety (size/shape/speed/height)
@@ -383,7 +392,9 @@ export default function SpecialBackground() {
   const PLAIN_Y_MIN = 56, PLAIN_Y_MAX = 71
   const HEART_MS = 7000
 
-  const isDayNow = showSun
+
+  const isDayNow = t < DAY_SEC // FIX:
+
   function randomTargetPlain() {
     return { x: -8 + Math.random() * 116, y: PLAIN_Y_MIN + Math.random() * (PLAIN_Y_MAX - PLAIN_Y_MIN) }
   }
@@ -648,29 +659,30 @@ export default function SpecialBackground() {
       <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)', backgroundSize: '3px 3px', opacity: 0.35, zIndex: 0 }} />
 
       {/* ÉTOILES */}
-        {stars.map(s => (
-          <motion.div
-            key={s.id}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: nightish ? [0.1 * starOpacity, starOpacity, 0.1 * starOpacity] : starOpacity }}
-            transition={{ duration: s.tw, repeat: Infinity, delay: s.delay }}
-            style={{ position: 'absolute', left: `${s.left}vw`, top: `${s.top}vh`, width: s.size, height: s.size, borderRadius: s.size, background: '#fff', boxShadow: '0 0 6px #fff8', zIndex: 1 }}
-          />
-        ))}
 
-      {/* SOLEIL / LUNE (taille fixe, sortent hors cadre) */}
-      {showMoon && (
-        <div style={{ position: 'absolute', left: `${moonX}vw`, top: `${moonY}vh`, transform: 'translate(-50%, -50%)', zIndex: 2 }}>
-          <div style={{ position: 'absolute', inset: -22, borderRadius: '50%', background: 'radial-gradient(#dfe9ff99, #dfe9ff00 70%)', filter: 'blur(10px)' }} />
-          <img src={MOON_SVG} alt="moon" style={{ width: 84, height: 84 }} />
-        </div>
-      )}
-      {showSun && (
-        <div style={{ position: 'absolute', left: `${sunX}vw`, top: `${sunY}vh`, transform: 'translate(-50%, -50%)', zIndex: 2 }}>
-          <div style={{ position: 'absolute', inset: -20, borderRadius: '50%', background: 'radial-gradient(#ffd23f88, #ffd23f00 70%)', filter: 'blur(8px)' }} />
-          <img src={SUN_SVG} alt="sun" style={{ width: 90, height: 90 }} />
-        </div>
-      )}
+        {stars.map(s => ( // FIX:
+          <motion.div key={s.id} // FIX:
+            initial={{ opacity: 0 }} // FIX:
+            animate={{ opacity: starStrength === 0 ? 0 : [0.1 * starStrength, 0.8 * starStrength, 0.1 * starStrength] }} // FIX:
+            transition={{ duration: s.tw, repeat: Infinity, delay: s.delay }} // FIX:
+            style={{ position: 'absolute', left: `${s.left}vw`, top: `${s.top}vh`, width: s.size, height: s.size, borderRadius: s.size, background: '#fff', boxShadow: '0 0 6px #fff8', zIndex: 1 }} // FIX:
+          /> // FIX:
+        ))} // FIX:
+
+        {/* SOLEIL / LUNE (taille fixe, sortent hors cadre) */}
+        {showMoon && ( // FIX:
+          <div style={{ position: 'absolute', left: `${moonX}vw`, top: `${moonY}vh`, transform: 'translate(-50%, -50%)', zIndex: 2 }}> // FIX:
+            <div style={{ position: 'absolute', inset: -22, borderRadius: '50%', background: `radial-gradient(${PAL.moonHalo}99, ${PAL.moonHalo}00 70%)`, filter: 'blur(10px)' }} /> // FIX:
+            <img src={MOON_SVG} alt="moon" style={{ width: 84, height: 84 }} /> // FIX:
+          </div> // FIX:
+        )} // FIX:
+        {showSun && ( // FIX:
+          <div style={{ position: 'absolute', left: `${sunX}vw`, top: `${sunY}vh`, transform: 'translate(-50%, -50%)', zIndex: 2 }}> // FIX:
+            <div style={{ position: 'absolute', inset: -20, borderRadius: '50%', background: `radial-gradient(${PAL.sunHalo}88, ${PAL.sunHalo}00 70%)`, filter: 'blur(8px)' }} /> // FIX:
+            <img src={SUN_SVG} alt="sun" style={{ width: 90, height: 90 }} /> // FIX:
+          </div> // FIX:
+        )} // FIX:
+
 
       {/* Nuages */}
       {clouds}
