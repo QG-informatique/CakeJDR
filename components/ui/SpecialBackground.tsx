@@ -238,7 +238,7 @@ export default function SpecialBackground() {
       { count: 3, z: 2, durMin: 120, durVar: 80, sizeMin: 140, sizeVar: 120, topMin: 6, topVar: 10 },
       { count: 4, z: 3, durMin: 90,  durVar: 70, sizeMin: 160, sizeVar: 140, topMin: 10, topVar: 12 },
     ]
-    const arr: JSX.Element[] = []
+    const arr: React.ReactElement[] = []
     layers.forEach((L, li) => {
       for (let i = 0; i < L.count; i++) {
         const size = L.sizeMin + Math.round(rng() * L.sizeVar)
@@ -373,10 +373,9 @@ export default function SpecialBackground() {
   const [waves, setWaves] = useState<WaveFX[]>([])
   const waveId = useRef(1)
   useEffect(() => {
-    let raf = 0, last = performance.now()
+    let raf = 0
     let nextWave = performance.now() + 3000 + Math.random() * 4000
     const loop = (now: number) => {
-      const dt = (now - last) / 1000; last = now
       setWaves(prev => prev.filter(w => w.until > now))
       if (now >= nextWave) {
         nextWave = now + 5000 + Math.random() * 7000
