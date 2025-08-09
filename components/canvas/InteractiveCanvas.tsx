@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
+import { z } from 'zod'
 import { useBroadcastEvent, useEventListener, useStorage, useMutation, useMyPresence } from '@liveblocks/react'
 import LiveCursors from './LiveCursors'
 import YouTube from 'react-youtube'
@@ -38,6 +39,15 @@ export default function InteractiveCanvas() {
 
   // Volume: **local uniquement** (0..100), défaut 5%
   const [volume, setVolume] = useState(5)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
+  // Abort pending uploads on unmount
+  const uploadControllers = useRef<AbortController[]>([])
+  useEffect(() => {
+    return () => {
+      uploadControllers.current.forEach(c => c.abort())
+    }
+  }, [])
 
   const broadcast = useBroadcastEvent()
   const lastSend = useRef(0)
@@ -50,6 +60,25 @@ export default function InteractiveCanvas() {
   const playerRef = useRef<YouTubePlayer | null>(null)
   const t = useT()
   const initializedRef = useRef(false)
+
+  // Throttle image position/size updates to Liveblocks (avoid flooding)
+  const throttledUpdate = useRef<(img: ImageData) => void>(() => {})
+  useEffect(() => {
+    let frame: number | null = null
+    let last: ImageData | null = null
+    throttledUpdate.current = (img: ImageData) => {
+      last = img
+      if (frame === null) {
+        frame = requestAnimationFrame(() => {
+          frame = null
+          if (last) updateImage(last)
+        })
+      }
+    }
+    return () => {
+      if (frame !== null) cancelAnimationFrame(frame)
+    }
+  }, [updateImage])
 
   // init local prefs (volume local et état play local – on respecte l'état global à l'arrivée via musicObj)
   useEffect(() => {
@@ -143,7 +172,8 @@ export default function InteractiveCanvas() {
   useEffect(() => {
     const canvas = drawingCanvasRef.current
     if (!canvas) return
-    canvas.style.zIndex = '2'
+    // Ensure drawing canvas stays above images at all times
+    canvas.style.zIndex = '10'
     canvas.style.pointerEvents = drawMode === 'images' ? 'none' : 'auto'
   }, [drawMode])
 
@@ -187,12 +217,26 @@ export default function InteractiveCanvas() {
   }, [musicObj])
 
   // --------- DnD images: aperçu instantané + swap vers Cloudinary optimisé ---------
+  const MAX_BYTES = 10 * 1024 * 1024
+  const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/svg+xml']
+  const ALLOWED_EXTS = ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg']
+
+  const fileSchema = z
+    .instanceof(File)
+    .refine(f => ALLOWED_TYPES.includes(f.type), 'Unsupported file type')
+    .refine(f => ALLOWED_EXTS.includes(f.name.split('.').pop()?.toLowerCase() || ''), 'Invalid extension')
+    .refine(f => f.size <= MAX_BYTES, `File too large (max ${Math.round(MAX_BYTES / (1024 * 1024))}MB)`)
 
   function fileToObjectURL(file: File) {
     return URL.createObjectURL(file)
   }
 
   async function uploadImageOptimistic(file: File, dropX: number, dropY: number) {
+    const parsed = fileSchema.safeParse(file)
+    if (!parsed.success) {
+      setErrorMsg(parsed.error.issues[0]?.message || 'Invalid file')
+      return
+    }
     const localUrl = fileToObjectURL(file)
     const tempId = Date.now() + Math.random()
     const tempImg: ImageData = {
@@ -210,7 +254,10 @@ export default function InteractiveCanvas() {
       form.append('file', file)
       form.append('upload_preset', 'cakejdr-images')
 
-      const res = await fetch('/api/cloudinary', { method: 'POST', body: form })
+      const controller = new AbortController()
+      uploadControllers.current.push(controller)
+
+      const res = await fetch('/api/cloudinary', { method: 'POST', body: form, signal: controller.signal })
       const data = await res.json().catch(() => null)
 
       if (!res.ok || !data) {
@@ -226,7 +273,9 @@ export default function InteractiveCanvas() {
     } catch (err) {
       deleteImage(tempId)
       console.error(err)
+      setErrorMsg(err instanceof Error ? err.message : 'Upload failed')
     } finally {
+      uploadControllers.current = uploadControllers.current.filter(c => c !== controller)
       URL.revokeObjectURL(localUrl)
     }
   }
@@ -317,11 +366,16 @@ export default function InteractiveCanvas() {
             width: Math.max(50, x - img.x),
             height: Math.max(50, y - img.y),
           }
-    updateImage(updated)
+    throttledUpdate.current(updated)
   }
 
   const handlePointerUp = () => {
     setIsDrawing(false)
+    const { id } = dragState.current
+    if (id) {
+      const img = images.find(i => i.id === id)
+      if (img) updateImage(img) // final sync without throttle
+    }
     dragState.current = { id: null, type: null, offsetX: 0, offsetY: 0 }
   }
 
@@ -394,6 +448,18 @@ export default function InteractiveCanvas() {
   return (
     <>
       <div className="relative w-full h-full select-none">
+        {errorMsg && (
+          <div className="absolute top-3 right-3 z-40 bg-red-600 text-white px-4 py-2 rounded shadow">
+            {errorMsg}
+            <button
+              className="ml-2 font-bold"
+              onClick={() => setErrorMsg(null)}
+              aria-label="close error"
+            >
+              ×
+            </button>
+          </div>
+        )}
         {/* TOOLBAR BUTTON */}
         <div className="absolute top-3 left-3 z-30 pointer-events-auto">
           <button
@@ -482,6 +548,7 @@ export default function InteractiveCanvas() {
               drawMode={drawMode}
               onPointerDown={handlePointerDown}
               onDelete={handleDeleteImage}
+              selected={img.id === selectedImageId}
             />
           ))}
 

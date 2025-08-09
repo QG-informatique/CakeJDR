@@ -21,12 +21,15 @@ interface Props {
   drawMode: ToolMode
   onPointerDown: (e: React.PointerEvent, id: number, type: 'move' | 'resize') => void
   onDelete: (id: number) => void
+  /** Whether this image is currently selected */
+  selected: boolean
 }
 
-const ImageItem: React.FC<Props> = ({ img, drawMode, onPointerDown, onDelete }) => (
+const ImageItem: React.FC<Props> = ({ img, drawMode, onPointerDown, onDelete, selected }) => (
   <div
     className="absolute border border-white/20 rounded-2xl shadow-md group touch-none"
-    style={{ top: img.y, left: img.x, width: img.width, height: img.height, zIndex: 1 }}
+    /* Keep images below drawing canvas even when selected */
+    style={{ top: img.y, left: img.x, width: img.width, height: img.height, zIndex: selected ? 5 : 4 }}
   >
     {drawMode === 'images' && (
       <button

@@ -2,6 +2,8 @@
 export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
+import { z } from "zod";
+import path from "path";
 
 const CLOUD_NAME =
   process.env.CLOUDINARY_CLOUD_NAME ||
@@ -13,13 +15,27 @@ const UPLOAD_PRESET =
   "cakejdr-images"; // preset non signé
 
 const MAX_BYTES = 10 * 1024 * 1024;
-const ALLOWED_TYPES = new Set([
+const ALLOWED_TYPES = [
   "image/png",
   "image/jpeg",
   "image/webp",
   "image/gif",
   "image/svg+xml",
-]);
+];
+const ALLOWED_EXTS = [".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"];
+
+const fileSchema = z
+  .instanceof(File)
+  .refine((f) => ALLOWED_TYPES.includes(f.type), {
+    message: "Unsupported file type",
+  })
+  .refine((f) => ALLOWED_EXTS.includes(path.extname(f.name).toLowerCase()), {
+    message: "Invalid file extension",
+  })
+  .refine((f) => f.size > 0, { message: "Empty file" })
+  .refine((f) => f.size <= MAX_BYTES, {
+    message: `File too large (max ${Math.round(MAX_BYTES / (1024 * 1024))}MB)`,
+  });
 
 function bad(msg: string, code = 400) {
   return NextResponse.json({ error: msg }, { status: code });
@@ -38,10 +54,12 @@ export async function POST(req: Request) {
     const form = await req.formData();
     const file = form.get("file");
     if (!file || !(file instanceof File)) return bad("No file field named 'file'");
-    if (file.size <= 0) return bad("Empty file");
-    if (file.size > MAX_BYTES) return bad(`File too large (max ${Math.round(MAX_BYTES / (1024 * 1024))}MB)`);
-    if (file.type && !ALLOWED_TYPES.has(file.type)) return bad(`Unsupported file type: ${file.type}`);
 
+    const parsed = fileSchema.safeParse(file);
+    if (!parsed.success) {
+      return bad(parsed.error.issues[0]?.message || "Invalid file");
+    }
+    
     // Upload non signé (pas d'option 'eager' autorisée ici)
     const cloudForm = new FormData();
     cloudForm.append("file", file);
