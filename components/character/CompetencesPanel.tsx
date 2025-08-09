@@ -4,13 +4,13 @@ import { FC, useState } from 'react'
 import AddCompetenceModal from './AddCompetenceModal'
 import { useT } from '@/lib/useT'
 
-type Competence = { nom: string, type: string, effets: string, degats?: string }
+type Competence = { id: string; nom: string; type: string; effets: string; degats?: string }
 
 type Props = {
   competences: Competence[],
   edit: boolean,
   onAdd: (comp: Competence) => void,
-  onDelete: (index: number) => void,
+  onDelete: (id: string) => void,
 }
 
 const CompetencesPanel: FC<Props> = ({ competences = [], edit, onAdd, onDelete }) => {
@@ -23,11 +23,11 @@ const CompetencesPanel: FC<Props> = ({ competences = [], edit, onAdd, onDelete }
       {edit ? (
         <>
           <div className="flex flex-col gap-2 mb-2">
-            {competences.map((c, i) => (
-              <div key={i} className="bg-gray-800 rounded px-2 py-1 flex flex-col relative">
+            {competences.map((c) => (
+              <div key={c.id} className="bg-gray-800 rounded px-2 py-1 flex flex-col relative">
                 <div className="font-semibold">{c.nom} <span className="text-xs italic text-gray-300">({c.type})</span></div>
                 <div className="text-xs">{t('effects')}: {c.effets} {c.degats && <span>- {t('damageOptional').replace(' (optional)','')}: {c.degats}</span>}</div>
-                <button className="absolute top-1 right-2 text-xs text-red-400 hover:underline" onClick={() => onDelete(i)}>{t('delete')}</button>
+                <button className="absolute top-1 right-2 text-xs text-red-400 hover:underline" onClick={() => onDelete(c.id)}>{t('delete')}</button>
               </div>
             ))}
           </div>
@@ -46,8 +46,8 @@ const CompetencesPanel: FC<Props> = ({ competences = [], edit, onAdd, onDelete }
         </>
       ) : (
         <div className="flex flex-col gap-1">
-          {competences.map((c, i) => (
-            <div key={i} className="bg-gray-800 rounded px-2 py-1">
+          {competences.map((c) => (
+            <div key={c.id} className="bg-gray-800 rounded px-2 py-1">
               <div className="font-semibold">{c.nom} <span className="text-xs italic text-gray-300">({c.type})</span></div>
               <div className="text-xs">{t('effects')}: {c.effets} {c.degats && <span>- {t('damageOptional').replace(' (optional)','')}: {c.degats}</span>}</div>
             </div>
