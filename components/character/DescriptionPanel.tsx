@@ -5,7 +5,7 @@ import { FC, useState } from 'react'
 import { useT } from '@/lib/useT'
 import type { TranslationKey } from '@/lib/translations'
 
-type CustomField = { label: string, value: string }
+type CustomField = { id: string; label: string; value: string }
 
 type DescriptionValues = {
   race: string,
@@ -32,8 +32,8 @@ type DescriptionPanelProps = {
   onChange: (field: string, value: any) => void,
   champsPerso: CustomField[],
   onAddChamp: (champ: CustomField) => void,
-  onDelChamp: (index: number) => void,
-  onUpdateChamp: (index: number, champ: CustomField) => void,
+  onDelChamp: (id: string) => void,
+  onUpdateChamp: (id: string, champ: CustomField) => void,
 }
 
 // See more / close with translation
@@ -196,13 +196,13 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
         {edit ? (
           <>
             <div className="flex flex-col gap-1 mb-1">
-              {champsPerso.map((f, i) => (
-                <div key={i} className="grid grid-cols-[120px_18px_1fr_80px] gap-1 mb-1 items-start w-full">
+            {champsPerso.map((f) => (
+                <div key={f.id} className="grid grid-cols-[120px_18px_1fr_80px] gap-1 mb-1 items-start w-full">
                   <input
                     className="p-1 rounded bg-white text-black text-sm w-full text-right"
                     value={f.label}
                     onChange={e => {
-                      onUpdateChamp(i, { ...f, label: e.target.value })
+                      onUpdateChamp(f.id, { ...f, label: e.target.value })
                     }}
                   />
                   <span className="text-right font-bold">:</span>
@@ -210,11 +210,11 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
                     className="p-1 rounded bg-white text-black text-sm flex-1 min-h-[28px] resize-y w-full pl-3"
                     value={f.value}
                     onChange={e => {
-                      onUpdateChamp(i, { ...f, value: e.target.value })
+                      onUpdateChamp(f.id, { ...f, value: e.target.value })
                     }}
                     style={{ overflowWrap: 'break-word', minWidth: 0 }}
                   />
-                  <button className="text-xs text-red-400 hover:underline col-span-1 justify-self-end" onClick={() => onDelChamp(i)}>{t('delete')}</button>
+                  <button className="text-xs text-red-400 hover:underline col-span-1 justify-self-end" onClick={() => onDelChamp(f.id)}>{t('delete')}</button>
                 </div>
               ))}
             </div>
@@ -240,7 +240,7 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
                 className="bg-blue-600 hover:bg-blue-700 text-white text-sm rounded p-1 mt-1 w-fit self-end"
                 onClick={() => {
                   if (!newChamp.label || !newChamp.value) return
-                  onAddChamp({ label: newChamp.label, value: newChamp.value })
+                  onAddChamp({ id: crypto.randomUUID(), label: newChamp.label, value: newChamp.value })
                   setNewChamp({})
                 }}
               >
@@ -250,8 +250,8 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
           </>
         ) : (
           <div className="flex flex-col gap-1">
-            {champsPerso.map((f, i) => (
-              <div key={i} className="grid grid-cols-[120px_18px_1fr] items-start w-full">
+            {champsPerso.map((f) => (
+              <div key={f.id} className="grid grid-cols-[120px_18px_1fr] items-start w-full">
                 <span className="font-semibold text-right">{f.label}</span>
                 <span className="text-right font-bold">:</span>
                 <span className="break-words flex-1 pl-3">{f.value}</span>

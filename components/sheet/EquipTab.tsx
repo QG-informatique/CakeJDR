@@ -21,13 +21,13 @@ const EquipTab: FC<Props> = ({ edit, localPerso, setLocalPerso, onChange }) => (
     onAddObj={(obj) =>
       setLocalPerso({
         ...localPerso,
-        objets: [...(localPerso.objets || []), obj],
+        objets: [...(localPerso.objets || []), { ...obj, id: crypto.randomUUID() }],
       })
     }
-    onDelObj={(idx) =>
+    onDelObj={(id) =>
       setLocalPerso({
         ...localPerso,
-        objets: (localPerso.objets || []).filter((_: any, i: number) => i !== idx),
+        objets: (localPerso.objets || []).filter((o: any) => o.id !== id),
       })
     }
     onChange={onChange}

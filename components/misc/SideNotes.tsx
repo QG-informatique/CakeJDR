@@ -39,8 +39,7 @@ export default function SideNotes() {
 
   return (
     <div
-      className="fixed top-1/2 -translate-y-1/2 z-50"
-      style={{ left: 430 }}
+      className="absolute bottom-4 left-4 z-50"
     >
       {open ? (
         <div

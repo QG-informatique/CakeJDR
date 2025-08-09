@@ -99,7 +99,7 @@ export default function GMCharacterSelector({
           )}
           {chars.map((c, idx) => (
             <button
-              key={`${c.id}-${idx}`}
+              key={c.id}
               onClick={() => handleSelect(c.id)}
               className={`
                 w-full text-left px-4 py-2 rounded-xl text-base

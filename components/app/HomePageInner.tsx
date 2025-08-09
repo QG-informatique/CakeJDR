@@ -11,13 +11,13 @@ import PopupResult from '@/components/dice/PopupResult'
 import Head from 'next/head'
 import InteractiveCanvas from '@/components/canvas/InteractiveCanvas'
 import LiveAvatarStack from '@/components/chat/LiveAvatarStack'
-import SideNotes from '@/components/misc/SideNotes'
 import Login from '@/components/login/Login'
 import GMCharacterSelector from '@/components/misc/GMCharacterSelector'
 import useDiceHistory from './hooks/useDiceHistory'
 import useEventLog from './hooks/useEventLog'
 import useProfile from './hooks/useProfile'
 import useOnlineStatus from './hooks/useOnlineStatus'
+import ErrorBoundary from '@/components/misc/ErrorBoundary'
 
 export default function HomePageInner() {
   const router = useRouter()
@@ -179,20 +179,27 @@ export default function HomePageInner() {
 
         <main className="flex-1 flex flex-col min-h-0">
           <div className="flex-1 m-4 flex flex-col justify-center items-center relative min-h-0">
-            <InteractiveCanvas />
-            <PopupResult show={showPopup} result={diceResult} diceType={diceType} onReveal={handlePopupReveal} onFinish={handlePopupFinish} />
+            <ErrorBoundary fallback={<div className="p-4 text-red-500">Canvas error</div>}>
+              <InteractiveCanvas />
+            </ErrorBoundary>
+            <ErrorBoundary fallback={<div className="p-4 text-red-500">Dice display error</div>}>
+              <PopupResult show={showPopup} result={diceResult} diceType={diceType} onReveal={handlePopupReveal} onFinish={handlePopupFinish} />
+            </ErrorBoundary>
           </div>
-          <DiceRoller diceType={diceType} onChange={setDiceType} onRoll={rollDice} disabled={diceDisabled} cooldown={cooldown} cooldownDuration={ROLL_TOTAL_MS}>
-            <LiveAvatarStack />
-          </DiceRoller>
+          <ErrorBoundary fallback={<div className="p-4 text-red-500">Dice roller error</div>}>
+            <DiceRoller diceType={diceType} onChange={setDiceType} onRoll={rollDice} disabled={diceDisabled} cooldown={cooldown} cooldownDuration={ROLL_TOTAL_MS}>
+              <LiveAvatarStack />
+            </DiceRoller>
+          </ErrorBoundary>
         </main>
 
-        <ChatBox
-          chatBoxRef={chatBoxRef}
-          history={history}
-          author={perso.nom || profile?.pseudo || 'Anonymous'}
-        />
-        <SideNotes />
+        <ErrorBoundary fallback={<div className="p-4 text-red-500">Chat error</div>}>
+          <ChatBox
+            chatBoxRef={chatBoxRef}
+            history={history}
+            author={perso.nom || profile?.pseudo || 'Anonymous'}
+          />
+        </ErrorBoundary>
       </div>
       <Head>
         <title>CakeJDR</title>
