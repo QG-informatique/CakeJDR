@@ -13,7 +13,8 @@ import {
   liveblocksConfig,
 } from '@liveblocks/react-lexical'
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
-import { $getRoot } from 'lexical'
+import { $getRoot, $createParagraphNode, $createTextNode } from 'lexical'
+import type { LexicalEditor } from 'lexical'
 
 interface Page {
   id: string
@@ -200,17 +201,37 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
     setEditorKey((k) => k + 1)
   }
 
-  const editorConfig = liveblocksConfig({
-    namespace: 'session-summary',
-    onError: console.error,
-  })
+  const initialText =
+    current && editorMap instanceof LiveMap
+      ? editorMap.get(current.id) || ''
+      : ''
+
+  const editorConfig = {
+    ...liveblocksConfig({
+      namespace: `session-summary-${current ? current.id : 'global'}`,
+      onError: console.error,
+    }),
+    editorState: (editor: LexicalEditor) => {
+      if (initialText) {
+        editor.update(() => {
+          const root = $getRoot()
+          root.clear()
+          initialText.split('\n').forEach((line) => {
+            const p = $createParagraphNode()
+            p.append($createTextNode(line))
+            root.append(p)
+          })
+        })
+      }
+    },
+  }
 
   return (
     <div
       className="absolute inset-0 bg-black/35 backdrop-blur-[3px] border border-white/10 rounded-2xl shadow-2xl flex flex-col h-full w-full z-20 p-3 animate-fadeIn overflow-visible"
       style={{ minHeight: 0 }}
     >
-      <div className="flex items-center gap-2 mb-3 relative">
+      <div className="flex items-center gap-2 mb-3 relative justify-end">
         <button
           onClick={handleNewPage}
           className="bg-black/40 text-white px-2 py-1 rounded text-sm"
@@ -270,7 +291,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
         </div>
         <button
           onClick={onClose}
-          className="ml-auto text-white/80 hover:text-red-500 text-xl"
+          className="text-white/80 hover:text-red-500 text-xl"
         >
           ✕
         </button>
