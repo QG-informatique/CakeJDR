@@ -39,7 +39,7 @@ function lerpColor(a?: string, b?: string, t = 0.5) {
   ])
 }
 
-// MODIF: petite fenêtre lissée (0 hors fenêtre, pic à 1 au centre) pour dawn/dusk
+// Smooth bell curve (0 outside the window, peak 1 at the center) for dawn/dusk blending
 function smoothWindow(x: number, a: number, b: number) {
   if (b <= a) return 0
   if (x <= a || x >= b) return 0
