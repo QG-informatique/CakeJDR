@@ -41,12 +41,14 @@ function lerpColor(a?: string, b?: string, t = 0.5) {
   ])
 }
 
+
 // FIX: fonction "bell" pour fenêtres dawn/dusk
 function bell(x: number, a: number, b: number) { // FIX:
   if (x <= a || x >= b) return 0 // FIX:
   const t = (x - a) / (b - a) // FIX:
   return 4 * t * (1 - t) // courbe en cloche C1 continue // FIX:
 } // FIX:
+
 
 /* ============================================================================
    ASSETS
@@ -161,6 +163,7 @@ type LeafBubble = { id: number; x: number; y: number; until: number }
    ============================================================================ */
 
 export default function SpecialBackground() {
+
   const [timeSec, setTimeSec] = useState(0) // FIX:
   useEffect(() => { // FIX:
     let raf = 0; const start = performance.now() // FIX:
@@ -203,6 +206,7 @@ export default function SpecialBackground() {
     'M20,100 C35,60 60,40 95,45 C110,20 145,15 170,35 C190,25 230,30 245,60 C280,60 300,75 302,100 L20,100 Z',
     'M10,100 C30,70 55,55 80,60 C105,35 150,25 180,50 C210,40 250,55 270,80 C290,80 300,90 304,100 L10,100 Z',
     'M0,100 C20,75 40,65 70,70 C90,50 130,45 160,60 C195,55 230,70 250,85 C270,85 300,95 306,100 L0,100 Z',
+
   ]
   function PrettyCloud({ size = 150, variant = 0 }: { size?: number; variant?: number }) {
     const i = Math.abs(variant) % CLOUD_PATHS.length
@@ -221,16 +225,22 @@ export default function SpecialBackground() {
   const clouds = useMemo(() => {
     const rng = mulberry32(99021)
     const layers = [
-      { count: 3, z: 2, durMin: 120, durVar: 80, sizeMin: 140, sizeVar: 120, topMin: 6, topVar: 10 },
-      { count: 4, z: 3, durMin: 90,  durVar: 70, sizeMin: 160, sizeVar: 140, topMin: 10, topVar: 12 },
+      { count: 3, z: 2, durMin: 200, durVar: 140, sizeMin: 120, sizeVar: 120, topMin: 4, topVar: 14 }, // FIX: more cloud variety (size/shape/speed/height)
+      { count: 4, z: 3, durMin: 110, durVar: 100, sizeMin: 220, sizeVar: 180, topMin: 10, topVar: 20 }, // FIX: more cloud variety (size/shape/speed/height)
     ]
+
     const arr: React.ReactElement[] = [] // FIX: type cloud elements to avoid JSX namespace
+
+
     layers.forEach((L, li) => {
       for (let i = 0; i < L.count; i++) {
-        const size = L.sizeMin + Math.round(rng() * L.sizeVar)
-        const top = L.topMin + Math.round(rng() * L.topVar)
-        const dur = L.durMin + rng() * L.durVar
-        const delay = -rng() * dur
+        const size = L.sizeMin + Math.round(rng() * L.sizeVar) // FIX: more cloud variety (size/shape/speed/height)
+        const top = L.topMin + Math.round(rng() * L.topVar) // FIX: more cloud variety (size/shape/speed/height)
+        const dur = L.durMin + rng() * L.durVar // FIX: more cloud variety (size/shape/speed/height)
+        const delay = -rng() * dur * 1.5 // FIX: more cloud variety (size/shape/speed/height)
+        const sx = 0.8 + rng() * 0.6 // FIX: more cloud variety (size/shape/speed/height)
+        const sy = 0.8 + rng() * 0.6 // FIX: more cloud variety (size/shape/speed/height)
+        const rot = (rng() - 0.5) * 10 // FIX: more cloud variety (size/shape/speed/height)
         const v = Math.floor(rng() * CLOUD_PATHS.length)
         arr.push(
           <motion.div
@@ -238,7 +248,8 @@ export default function SpecialBackground() {
             initial={{ x: '110vw' }}
             animate={{ x: '-120vw' }}
             transition={{ duration: dur, repeat: Infinity, delay, ease: 'linear' }}
-            style={{ position: 'absolute', top: `${top}vh`, zIndex: L.z, pointerEvents: 'none', opacity: 0.95 }}
+            style={{ position: 'absolute', top: `${top}vh`, zIndex: L.z, pointerEvents: 'none', opacity: 0.95,
+              transform: `scaleX(${sx}) scaleY(${sy}) rotate(${rot}deg)` }}
           >
             <PrettyCloud size={size} variant={v} />
           </motion.div>
@@ -246,7 +257,7 @@ export default function SpecialBackground() {
       }
     })
     return arr
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   /* Fleurs / Coquillages (inchangé) */
   const flowers = useMemo(() => {
@@ -307,8 +318,7 @@ export default function SpecialBackground() {
   const [leafBubbles, setLeafBubbles] = useState<LeafBubble[]>([])
   const debId = useRef(1)
   const leafBubbleId = useRef(1)
-  // MODIF: spawn quasi immédiat pour vérifier visuel + cadence un peu ↑
-  const nextDebris = useRef(performance.now() + 500 + Math.random() * 800)
+  const nextDebris = useRef(performance.now() + 5000 + Math.random() * 4000) // FIX: reduce river leaves spawn
 
   useEffect(() => {
     let raf = 0, last = performance.now()
@@ -332,8 +342,8 @@ export default function SpecialBackground() {
         })
 
         // Spawn feuilles
-        if (now >= nextDebris.current && arr.length < 8) { // MODIF: densité ↑ (max 8)
-          nextDebris.current = now + 2500 + Math.random() * 3500
+        if (now >= nextDebris.current && arr.length < 5) { // FIX: reduce river leaves spawn
+          nextDebris.current = now + 6000 + Math.random() * 8000 // FIX: reduce river leaves spawn
           arr.push({
             id: debId.current++,
             x: -10, // toujours hors-gauche
@@ -359,10 +369,9 @@ export default function SpecialBackground() {
   const [waves, setWaves] = useState<WaveFX[]>([])
   const waveId = useRef(1)
   useEffect(() => {
-    let raf = 0, last = performance.now()
+    let raf = 0
     let nextWave = performance.now() + 3000 + Math.random() * 4000
     const loop = (now: number) => {
-      const dt = (now - last) / 1000; last = now
       setWaves(prev => prev.filter(w => w.until > now))
       if (now >= nextWave) {
         nextWave = now + 5000 + Math.random() * 7000
@@ -383,7 +392,9 @@ export default function SpecialBackground() {
   const PLAIN_Y_MIN = 56, PLAIN_Y_MAX = 71
   const HEART_MS = 7000
 
+
   const isDayNow = t < DAY_SEC // FIX:
+
   function randomTargetPlain() {
     return { x: -8 + Math.random() * 116, y: PLAIN_Y_MIN + Math.random() * (PLAIN_Y_MAX - PLAIN_Y_MIN) }
   }
@@ -648,6 +659,7 @@ export default function SpecialBackground() {
       <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)', backgroundSize: '3px 3px', opacity: 0.35, zIndex: 0 }} />
 
       {/* ÉTOILES */}
+
         {stars.map(s => ( // FIX:
           <motion.div key={s.id} // FIX:
             initial={{ opacity: 0 }} // FIX:
@@ -670,6 +682,7 @@ export default function SpecialBackground() {
             <img src={SUN_SVG} alt="sun" style={{ width: 90, height: 90 }} /> // FIX:
           </div> // FIX:
         )} // FIX:
+
 
       {/* Nuages */}
       {clouds}
