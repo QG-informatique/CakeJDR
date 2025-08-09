@@ -43,8 +43,12 @@ export default function InteractiveCanvas() {
   // Lecture: synchro globale
   const [isPlaying, setIsPlaying] = useState(false)
 
-  // Volume: **local uniquement** (0..100), défaut 5%
-  const [volume, setVolume] = useState(5)
+  // Volume: synchro globale (0..100), défaut 5%
+  const [volume, setVolumeState] = useState(5)
+  const setVolume = (v: number) => {
+    setVolumeState(v)
+    if (storageReady) updateMusic({ volume: v })
+  }
 
   const broadcast = useBroadcastEvent()
   const lastSend = useRef(0)
@@ -57,16 +61,6 @@ export default function InteractiveCanvas() {
   const playerRef = useRef<YouTubePlayer | null>(null)
   const t = useT()
   const initializedRef = useRef(false)
-
-  // init local prefs (volume local et état play local – on respecte l'état global à l'arrivée via musicObj)
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const v = localStorage.getItem('ytVolume')
-    setVolume(v ? parseInt(v, 10) : 5) // défaut 5%
-    const p = localStorage.getItem('ytPlaying')
-    if (p === 'false') setIsPlaying(false)
-    else if (p === 'true') setIsPlaying(true)
-  }, [])
 
   useEffect(() => {
     return () => {
@@ -93,9 +87,12 @@ export default function InteractiveCanvas() {
     })
   }, [])
 
-  // Mutation musique: **ne gère que ce qui est global** (id, playing)
+  // Mutation musique: gère l'état global (id, lecture, volume)
   const updateMusic = useMutation(
-    ({ storage }, updates: { id?: string; playing?: boolean }) => {
+    (
+      { storage },
+      updates: { id?: string; playing?: boolean; volume?: number },
+    ) => {
       storage.get('music').update(updates)
     },
     [],
@@ -132,24 +129,27 @@ export default function InteractiveCanvas() {
   const ERASE_MIN = DRAW_MIN * 4
   const ERASE_MAX = DRAW_MAX * 4
 
-  useEffect(() => {
-    const resize = () => {
-      const canvas = drawingCanvasRef.current
-      if (canvas) {
-        canvas.width = canvas.offsetWidth
-        canvas.height = canvas.offsetHeight
-        const ctx = canvas.getContext('2d')
-        if (ctx) {
-          ctx.lineCap = 'round'
-          ctx.lineJoin = 'round'
-          ctxRef.current = ctx
+    useEffect(() => {
+      const resize = () => {
+        const canvas = drawingCanvasRef.current
+        if (canvas) {
+          const rect = canvas.getBoundingClientRect()
+          const dpr = window.devicePixelRatio || 1
+          canvas.width = rect.width * dpr
+          canvas.height = rect.height * dpr
+          const ctx = canvas.getContext('2d')
+          if (ctx) {
+            ctx.scale(dpr, dpr)
+            ctx.lineCap = 'round'
+            ctx.lineJoin = 'round'
+            ctxRef.current = ctx
+          }
         }
       }
-    }
-    resize()
-    window.addEventListener('resize', resize)
-    return () => window.removeEventListener('resize', resize)
-  }, [])
+      resize()
+      window.addEventListener('resize', resize)
+      return () => window.removeEventListener('resize', resize)
+    }, [toolsVisible, audioVisible])
 
   useEffect(() => {
     const canvas = drawingCanvasRef.current
@@ -166,13 +166,10 @@ export default function InteractiveCanvas() {
     }
   }, [drawMode, DRAW_MIN, DRAW_MAX, ERASE_MIN, ERASE_MAX])
 
-  // Volume: applique seulement au player + persiste localement (pas de Liveblocks)
+  // Volume: applique seulement au player
   useEffect(() => {
     if (playerRef.current) {
       playerRef.current.setVolume(volume)
-    }
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('ytVolume', String(volume))
     }
   }, [volume])
 
@@ -182,19 +179,14 @@ export default function InteractiveCanvas() {
     if (!player) return
     if (isPlaying) player.playVideo()
     else player.pauseVideo()
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('ytPlaying', String(isPlaying))
-    }
   }, [isPlaying])
 
-  // Quand l’état global musique change (depuis Liveblocks), on s’aligne **sans toucher au volume**
+  // Quand l’état global musique change (depuis Liveblocks), on s’aligne
   useEffect(() => {
     if (!musicObj) return
     setYtId(musicObj.id)
     setIsPlaying(!!musicObj.playing)
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('ytPlaying', String(!!musicObj.playing))
-    }
+    setVolumeState(musicObj.volume ?? 5)
   }, [musicObj])
 
   // --------- DnD images: aperçu instantané + swap vers Cloudinary optimisé ---------
@@ -249,7 +241,7 @@ export default function InteractiveCanvas() {
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault()
     const files = Array.from(e.dataTransfer.files)
-    const rect = canvasRef.current?.getBoundingClientRect()
+    const rect = drawingCanvasRef.current?.getBoundingClientRect()
     if (!rect) return
 
     for (const file of files) {
@@ -272,7 +264,7 @@ export default function InteractiveCanvas() {
     type?: 'move' | 'resize',
   ) => {
     e.preventDefault()
-    const rect = canvasRef.current?.getBoundingClientRect()
+    const rect = drawingCanvasRef.current?.getBoundingClientRect()
     if (!rect) return
 
     if ((drawMode === 'draw' || drawMode === 'erase') && !id) {
@@ -307,7 +299,7 @@ export default function InteractiveCanvas() {
   }
 
   const handlePointerMove = (e: React.PointerEvent) => {
-    const rect = canvasRef.current?.getBoundingClientRect()
+    const rect = drawingCanvasRef.current?.getBoundingClientRect()
     if (!rect) return
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
@@ -407,10 +399,6 @@ export default function InteractiveCanvas() {
     if (match) {
       setYtId(match[1] ?? '') // local immédiat
       setIsPlaying(true)
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('ytPlaying', 'true')
-      }
-      // synchro globale si storage prêt
       if (storageReady) {
         updateMusic({ id: match[1], playing: true })
       }
@@ -425,9 +413,6 @@ export default function InteractiveCanvas() {
 
     const newPlaying = !isPlaying
     setIsPlaying(newPlaying)
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('ytPlaying', String(newPlaying))
-    }
     if (storageReady) {
       updateMusic({ playing: newPlaying })
     }
@@ -497,9 +482,9 @@ export default function InteractiveCanvas() {
               if (!initializedRef.current) {
                 initializedRef.current = true
               }
-              // volume local appliqué
               e.target.setVolume(volume)
-              if (!isPlaying) e.target.pauseVideo()
+              if (isPlaying) e.target.playVideo()
+              else e.target.pauseVideo()
             }}
           />
         )}
