@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useMemo, useCallback } from 'react'
 import { useBroadcastEvent, useEventListener, useStorage, useMutation, useMyPresence } from '@liveblocks/react'
 import LiveCursors from './LiveCursors'
 import YouTube from 'react-youtube'
@@ -12,7 +12,7 @@ import ImageItem, { ImageData } from './ImageItem'
 import SideNotes from '@/components/misc/SideNotes'
 
 
-export default function InteractiveCanvas() {
+export default function InteractiveCanvas({ roomId, user }: { roomId: string; user: string }) {
   // `images` map is created by RoomProvider but may be null until ready
   const imagesMap = useStorage(root => root.images)
   const images = imagesMap ? (Array.from(imagesMap.values()) as ImageData[]) : []
@@ -39,6 +39,10 @@ export default function InteractiveCanvas() {
   // Volume: **local uniquement** (0..100), défaut 5%
   const [volume, setVolume] = useState(5)
 
+  // clés de persistance (room + user)
+  const volKey = useMemo(() => `ytVolume-${roomId}-${user}`, [roomId, user])
+  const playKey = useMemo(() => `ytPlaying-${roomId}-${user}`, [roomId, user])
+
   const broadcast = useBroadcastEvent()
   const lastSend = useRef(0)
   const THROTTLE = 0
@@ -54,12 +58,12 @@ export default function InteractiveCanvas() {
   // init local prefs (volume local et état play local – on respecte l'état global à l'arrivée via musicObj)
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const v = localStorage.getItem('ytVolume')
+    const v = localStorage.getItem(volKey)
     setVolume(v ? parseInt(v, 10) : 5) // défaut 5%
-    const p = localStorage.getItem('ytPlaying')
+    const p = localStorage.getItem(playKey)
     if (p === 'false') setIsPlaying(false)
     else if (p === 'true') setIsPlaying(true)
-  }, [])
+  }, [volKey, playKey])
 
   useEffect(() => {
     return () => {
@@ -78,6 +82,10 @@ export default function InteractiveCanvas() {
   const deleteImage = useMutation(({ storage }, id: number) => {
     storage.get('images').delete(String(id))
   }, [])
+
+  const handleDeleteImage = useCallback((id: number) => {
+    deleteImage(id)
+  }, [deleteImage])
 
   const clearImages = useMutation(({ storage }) => {
     const map = storage.get('images')
@@ -161,9 +169,9 @@ export default function InteractiveCanvas() {
       playerRef.current.setVolume(volume)
     }
     if (typeof window !== 'undefined') {
-      localStorage.setItem('ytVolume', String(volume))
+      localStorage.setItem(volKey, String(volume))
     }
-  }, [volume])
+  }, [volume, volKey])
 
   // Lecture: contrôle global (synchro via musicObj)
   useEffect(() => {
@@ -172,19 +180,19 @@ export default function InteractiveCanvas() {
     if (isPlaying) player.playVideo()
     else player.pauseVideo()
     if (typeof window !== 'undefined') {
-      localStorage.setItem('ytPlaying', String(isPlaying))
+      localStorage.setItem(playKey, String(isPlaying))
     }
-  }, [isPlaying])
+  }, [isPlaying, playKey])
 
   // Quand l’état global musique change (depuis Liveblocks), on s’aligne **sans toucher au volume**
   useEffect(() => {
     if (!musicObj) return
     setYtId(musicObj.id)
-    setIsPlaying(!!musicObj.playing)
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('ytPlaying', String(!!musicObj.playing))
+    if (typeof window !== 'undefined' && localStorage.getItem(playKey) !== null) {
+      return // pas de relance auto si un état local existe
     }
-  }, [musicObj])
+    setIsPlaying(!!musicObj.playing)
+  }, [musicObj, playKey])
 
   // --------- DnD images: aperçu instantané + swap vers Cloudinary optimisé ---------
 
@@ -356,17 +364,13 @@ export default function InteractiveCanvas() {
     }
   }
 
-  const handleDeleteImage = (id: number) => {
-    deleteImage(id)
-  }
-
   const handleYtSubmit = () => {
     const match = ytUrl.match(/(?:youtube\.com.*v=|youtu\.be\/)([^&\n?#]+)/)
     if (match) {
       setYtId(match[1]) // local immédiat
       setIsPlaying(true)
       if (typeof window !== 'undefined') {
-        localStorage.setItem('ytPlaying', 'true')
+        localStorage.setItem(playKey, 'true')
       }
       // synchro globale si storage prêt
       if (storageReady) {
@@ -384,7 +388,7 @@ export default function InteractiveCanvas() {
     const newPlaying = !isPlaying
     setIsPlaying(newPlaying)
     if (typeof window !== 'undefined') {
-      localStorage.setItem('ytPlaying', String(newPlaying))
+      localStorage.setItem(playKey, String(newPlaying))
     }
     if (storageReady) {
       updateMusic({ playing: newPlaying })

@@ -180,7 +180,7 @@ export default function HomePageInner() {
         <main className="flex-1 flex flex-col min-h-0">
           <div className="flex-1 m-4 flex flex-col justify-center items-center relative min-h-0">
             <ErrorBoundary fallback={<div className="p-4 text-red-500">Canvas error</div>}>
-              <InteractiveCanvas />
+              <InteractiveCanvas roomId={roomId} user={user ?? 'anon'} />
             </ErrorBoundary>
             <ErrorBoundary fallback={<div className="p-4 text-red-500">Dice display error</div>}>
               <PopupResult show={showPopup} result={diceResult} diceType={diceType} onReveal={handlePopupReveal} onFinish={handlePopupFinish} />

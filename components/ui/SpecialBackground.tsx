@@ -1,8 +1,7 @@
-/* eslint-disable react/jsx-no-comment-textnodes */
 'use client'
 
-import { motion } from 'framer-motion'
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { motion, useMotionValue, animate } from 'framer-motion'
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 
 /* ============================================================================
    UTILS
@@ -97,14 +96,13 @@ const PAL = {
 
 const DAY_SEC = 180
 const NIGHT_SEC = 180
-const MOON_GAP = 2
 const DAWN_SEC = 25
 const DUSK_SEC = 25
 const CYCLE_SEC = DAY_SEC + NIGHT_SEC
 
 function getSkyColors(t: number): { top: string; bottom: string } {
   const pSun = clamp(t / DAY_SEC, 0, 1)
-  const pMoon = clamp((t - DAY_SEC - MOON_GAP) / (NIGHT_SEC - MOON_GAP), 0, 1)
+  const pMoon = clamp((t - DAY_SEC) / NIGHT_SEC, 0, 1)
   let top = PAL.nightTop
   let bot = PAL.nightBottom
   const kSun = Math.sin(Math.PI * pSun)
@@ -164,6 +162,7 @@ const MAX_SPLASHES = 20
 const MAX_WATER_BUBBLES = 40
 const MAX_SHORE_ADULTS = 4
 const MAX_PLAIN_ADULTS = 3
+const WAVE_MS = 3000
 
 /* ============================================================================
    COMPONENT
@@ -190,20 +189,31 @@ export default function SpecialBackground() {
     }
     raf = requestAnimationFrame(frame)
     return () => cancelAnimationFrame(raf)
-  }, [])
+  }, [CLOUD_PATHS])
   const t = timeSec
+
+  // Wind: motion value to avoid re-renders
+  const windAngle = useMotionValue(0)
+  useEffect(() => {
+    const controls = animate(windAngle, [-5, 5], {
+      duration: 20,
+      repeat: Infinity,
+      repeatType: 'mirror',
+    })
+    return () => controls.stop()
+  }, [windAngle])
 
   /* --------- Astres ---------- */
   const pSun = clamp(t / DAY_SEC, 0, 1)
-  const pMoon = clamp((t - DAY_SEC - MOON_GAP) / (NIGHT_SEC - MOON_GAP), 0, 1)
-  const mapX = (p: number) => -10 + 120 * p
+  const pMoon = clamp((t - DAY_SEC) / NIGHT_SEC, 0, 1)
+  const mapX = (p: number) => -10 + 140 * p
   const sunX = mapX(pSun)
   const moonX = mapX(pMoon)
   const sunY = 34 + Math.sin(Math.PI * pSun) * -18
   const moonY = 38 + Math.sin(Math.PI * pMoon) * -14
   const showSun = t < DAY_SEC
-  const showMoon = t >= DAY_SEC + MOON_GAP
-  const { top: skyTop, bottom: skyBottom } = getSkyColors(t)
+  const showMoon = t >= DAY_SEC && t < DAY_SEC + NIGHT_SEC
+  const { top: skyTop, bottom: skyBottom } = useMemo(() => getSkyColors(t), [t])
 
   /* --------- Étoiles ---------- */
   const stars = useMemo(() => {
@@ -212,16 +222,16 @@ export default function SpecialBackground() {
       id: `star-${k}`, left: Math.round(rng() * 100), top: Math.round(rng() * 28),
       size: 1 + Math.round(rng() * 2), tw: 2 + rng() * 3, delay: rng() * 5,
     }))
-  }, [])
+  }, [CLOUD_PATHS])
   const starStrength = Math.sin(Math.PI * pMoon)
 
   /* --------- Nuages (formes variées) ---------- */
-  const CLOUD_PATHS = [
+  const CLOUD_PATHS = useMemo(() => [
     'M20,100 C35,60 60,40 95,45 C110,20 145,15 170,35 C190,25 230,30 245,60 C280,60 300,75 302,100 L20,100 Z',
     'M10,100 C30,70 55,55 80,60 C105,35 150,25 180,50 C210,40 250,55 270,80 C290,80 300,90 304,100 L10,100 Z',
     'M0,100 C20,75 40,65 70,70 C90,50 130,45 160,60 C195,55 230,70 250,85 C270,85 300,95 306,100 L0,100 Z',
-  ]
-  function PrettyCloud({ size = 150, variant = 0 }: { size?: number; variant?: number }) {
+  ], [])
+  const PrettyCloud = useCallback(({ size = 150, variant = 0 }: { size?: number; variant?: number }) => {
     const i = Math.abs(variant) % CLOUD_PATHS.length
     return (
       <svg viewBox="0 0 306.67 200" width={size} height={(size * 200) / 306.67} style={{ filter: 'drop-shadow(0 8px 12px #0003)' }}>
@@ -234,7 +244,7 @@ export default function SpecialBackground() {
         <path d={CLOUD_PATHS[i]} fill={`url(#cfill-${i})`} stroke="#ffffff" strokeOpacity={0.35} strokeWidth="2" />
       </svg>
     )
-  }
+  }, [CLOUD_PATHS])
   const clouds = useMemo(() => {
     const rng = mulberry32(99021)
     const layers = [
@@ -267,7 +277,7 @@ export default function SpecialBackground() {
       }
     })
     return arr
-  }, []) // stable
+  }, [PrettyCloud, CLOUD_PATHS.length])
 
   /* --------- Fleurs / Coquillages (statiques) ---------- */
   const flowers = useMemo(() => {
@@ -330,8 +340,8 @@ export default function SpecialBackground() {
   const [animals, setAnimals] = useState<PlainAnimal[]>([])
   const [hearts, setHearts] = useState<HeartFX[]>([])
   const [shore, setShore] = useState<ShoreAnimal[]>([
-    { id: 1, kind: 'crab',   x: -8,  y: 78, dir: 1,  speedSand: 6,  speedWater: 8.0, zone: 'sand',  sizeScale: 1, isBaby: false },
-    { id: 2, kind: 'turtle', x: 108, y: 88, dir: -1, speedSand: 4.2, speedWater: 6.0, zone: 'water', sizeScale: 1, isBaby: false },
+    { id: 1, kind: 'crab',   x: -8,  y: 78, dir: 1,  speedSand: 6,  speedWater: 4.0, zone: 'sand',  sizeScale: 1, isBaby: false },
+    { id: 2, kind: 'turtle', x: 108, y: 88, dir: -1, speedSand: 4.2, speedWater: 3.0, zone: 'water', sizeScale: 1, isBaby: false },
   ])
   const [shoreHearts, setShoreHearts] = useState<HeartFX[]>([])
   const [splashes, setSplashes] = useState<SplashFX[]>([])
@@ -398,7 +408,7 @@ export default function SpecialBackground() {
 
         /* ---- FEUILLES SUR L'EAU ---- */
         setDebris(prev => {
-          let newLeafBubbles: LeafBubble[] = []
+          const newLeafBubbles: LeafBubble[] = []
           const arr = prev.map(d => {
             const nx = d.x + d.v * dt
             const ny = d.y + Math.sin((d.t + dt) * 1.2) * 0.05
@@ -445,7 +455,7 @@ export default function SpecialBackground() {
           const y = 88 + (Math.random() - 0.5) * 4
           const x = 10 + Math.random() * 80
           setWaves(prev => {
-            const arr = [...prev, { id: waveId.current++, x, y, until: performance.now() + 1600 }]
+            const arr = [...prev, { id: waveId.current++, x, y, until: performance.now() + WAVE_MS }]
             return arr.slice(-MAX_WAVES)
           })
         } else {
@@ -534,7 +544,7 @@ export default function SpecialBackground() {
               y: spawnCrab ? (78 + Math.random() * 6) : (88 + Math.random() * 4),
               dir: Math.random() < 0.5 ? 1 : -1,
               speedSand: spawnCrab ? 6 : 4.2,
-              speedWater: spawnCrab ? 8.0 : 6.0,
+              speedWater: spawnCrab ? 4.0 : 3.0,
               zone: spawnCrab ? 'sand' : 'water',
               sizeScale: 1,
               isBaby: false,
@@ -619,7 +629,7 @@ export default function SpecialBackground() {
                   y: cy + (Math.random() - 0.5) * 0.6,
                   dir: Math.random() < 0.5 ? -1 : 1,
                   speedSand: A.kind === 'crab' ? 6 : 4.2,
-                  speedWater: A.kind === 'crab' ? 8.0 : 6.0,
+                  speedWater: A.kind === 'crab' ? 4.0 : 3.0,
                   zone: Math.random() < 0.5 ? 'sand' : 'water',
                   sizeScale: 0.6,
                   isBaby: true,
@@ -715,7 +725,9 @@ export default function SpecialBackground() {
       )}
 
       {/* Nuages */}
-      {clouds}
+      <motion.div style={{ rotate: windAngle }}>
+        {clouds}
+      </motion.div>
 
       {/* Montagnes */}
       {mountainsFront.map((m, i) => (
@@ -822,7 +834,7 @@ export default function SpecialBackground() {
       {/* Vaguelettes ponctuelles */}
       {waves.map(w => {
         const life = Math.max(0, w.until - performance.now())
-        const k = 1 - life / 1600
+        const k = 1 - life / WAVE_MS
         const op = 0.45 * (1 - k)
         const size = 20 + 16 * k
         return (
