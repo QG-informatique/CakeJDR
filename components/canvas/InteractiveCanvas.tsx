@@ -1,7 +1,13 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
-import { useBroadcastEvent, useEventListener, useStorage, useMutation, useMyPresence } from '@liveblocks/react'
+import {
+  useBroadcastEvent,
+  useEventListener,
+  useStorage,
+  useMutation,
+  useMyPresence,
+} from '@liveblocks/react'
 import LiveCursors from './LiveCursors'
 import YouTube from 'react-youtube'
 import type { YouTubePlayer } from 'youtube-player/dist/types'
@@ -11,13 +17,14 @@ import MusicPanel from './MusicPanel'
 import ImageItem, { ImageData } from './ImageItem'
 import SideNotes from '@/components/misc/SideNotes'
 
-
 export default function InteractiveCanvas() {
   // `images` map is created by RoomProvider but may be null until ready
-  const imagesMap = useStorage(root => root.images)
-  const images = imagesMap ? (Array.from(imagesMap.values()) as ImageData[]) : []
+  const imagesMap = useStorage((root) => root.images)
+  const images = imagesMap
+    ? (Array.from(imagesMap.values()) as ImageData[])
+    : []
 
-  const musicObj = useStorage(root => root.music) // peut être null au démarrage
+  const musicObj = useStorage((root) => root.music) // peut être null au démarrage
   const storageReady = Boolean(musicObj)
 
   const [isDrawing, setIsDrawing] = useState(false)
@@ -87,9 +94,12 @@ export default function InteractiveCanvas() {
   }, [])
 
   // Mutation musique: **ne gère que ce qui est global** (id, playing)
-  const updateMusic = useMutation(({ storage }, updates: { id?: string; playing?: boolean }) => {
-    storage.get('music').update(updates)
-  }, [])
+  const updateMusic = useMutation(
+    ({ storage }, updates: { id?: string; playing?: boolean }) => {
+      storage.get('music').update(updates)
+    },
+    [],
+  )
 
   // Events canvas
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -101,7 +111,8 @@ export default function InteractiveCanvas() {
       const { x1, y1, x2, y2, color: c, width, mode } = event
       ctxRef.current.strokeStyle = mode === 'erase' ? 'rgba(0,0,0,1)' : c
       ctxRef.current.lineWidth = width
-      ctxRef.current.globalCompositeOperation = mode === 'erase' ? 'destination-out' : 'source-over'
+      ctxRef.current.globalCompositeOperation =
+        mode === 'erase' ? 'destination-out' : 'source-over'
       ctxRef.current.beginPath()
       ctxRef.current.moveTo(x1, y1)
       ctxRef.current.lineTo(x2, y2)
@@ -192,7 +203,11 @@ export default function InteractiveCanvas() {
     return URL.createObjectURL(file)
   }
 
-  async function uploadImageOptimistic(file: File, dropX: number, dropY: number) {
+  async function uploadImageOptimistic(
+    file: File,
+    dropX: number,
+    dropY: number,
+  ) {
     const localUrl = fileToObjectURL(file)
     const tempId = Date.now() + Math.random()
     const tempImg: ImageData = {
@@ -239,7 +254,11 @@ export default function InteractiveCanvas() {
 
     for (const file of files) {
       if (!file.type.startsWith('image/')) continue
-      await uploadImageOptimistic(file, e.clientX - rect.left, e.clientY - rect.top)
+      await uploadImageOptimistic(
+        file,
+        e.clientX - rect.left,
+        e.clientY - rect.top,
+      )
     }
   }
 
@@ -247,7 +266,11 @@ export default function InteractiveCanvas() {
 
   const [selectedImageId, setSelectedImageId] = useState<number | null>(null)
 
-  const handlePointerDown = (e: React.PointerEvent, id?: number, type?: 'move' | 'resize') => {
+  const handlePointerDown = (
+    e: React.PointerEvent,
+    id?: number,
+    type?: 'move' | 'resize',
+  ) => {
     e.preventDefault()
     const rect = canvasRef.current?.getBoundingClientRect()
     if (!rect) return
@@ -261,7 +284,8 @@ export default function InteractiveCanvas() {
       if (ctx) {
         ctx.strokeStyle = drawMode === 'erase' ? 'rgba(0,0,0,1)' : color
         ctx.lineWidth = brushSize
-        ctx.globalCompositeOperation = drawMode === 'erase' ? 'destination-out' : 'source-over'
+        ctx.globalCompositeOperation =
+          drawMode === 'erase' ? 'destination-out' : 'source-over'
         ctx.beginPath()
         ctx.moveTo(x, y)
       }
@@ -290,14 +314,27 @@ export default function InteractiveCanvas() {
     setMousePos({ x, y })
     updateMyPresence({ cursor: { x, y } })
 
-    if (isDrawing && (drawMode === 'draw' || drawMode === 'erase') && ctxRef.current) {
+    if (
+      isDrawing &&
+      (drawMode === 'draw' || drawMode === 'erase') &&
+      ctxRef.current
+    ) {
       ctxRef.current.lineTo(x, y)
       ctxRef.current.stroke()
       const { x: px, y: py } = mousePos
       const now = Date.now()
       if (THROTTLE === 0 || now - lastSend.current > THROTTLE) {
         lastSend.current = now
-        broadcast({ type: 'draw-line', x1: px, y1: py, x2: x, y2: y, color, width: brushSize, mode: drawMode } as Liveblocks['RoomEvent'])
+        broadcast({
+          type: 'draw-line',
+          x1: px,
+          y1: py,
+          x2: x,
+          y2: y,
+          color,
+          width: brushSize,
+          mode: drawMode,
+        } as Liveblocks['RoomEvent'])
       }
     }
 
@@ -331,7 +368,7 @@ export default function InteractiveCanvas() {
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (drawMode !== 'images' || selectedImageId === null) return
-    const img = images.find(i => i.id === selectedImageId)
+    const img = images.find((i) => i.id === selectedImageId)
     if (!img) return
     const step = 5
     const updates: Partial<ImageData> = {}
@@ -349,7 +386,12 @@ export default function InteractiveCanvas() {
     clearImages()
     const ctx = ctxRef.current
     if (ctx && drawingCanvasRef.current) {
-      ctx.clearRect(0, 0, drawingCanvasRef.current.width, drawingCanvasRef.current.height)
+      ctx.clearRect(
+        0,
+        0,
+        drawingCanvasRef.current.width,
+        drawingCanvasRef.current.height,
+      )
     }
     if (broadcastChange) {
       broadcast({ type: 'clear-canvas' } as Liveblocks['RoomEvent'])
@@ -363,7 +405,7 @@ export default function InteractiveCanvas() {
   const handleYtSubmit = () => {
     const match = ytUrl.match(/(?:youtube\.com.*v=|youtu\.be\/)([^&\n?#]+)/)
     if (match) {
-      setYtId(match[1]) // local immédiat
+      setYtId(match[1] ?? '') // local immédiat
       setIsPlaying(true)
       if (typeof window !== 'undefined') {
         localStorage.setItem('ytPlaying', 'true')
@@ -400,7 +442,8 @@ export default function InteractiveCanvas() {
             onClick={() => setToolsVisible(!toolsVisible)}
             className="rounded-xl px-5 py-2 text-base font-semibold shadow border-none bg-black/30 text-white/90 hover:bg-emerald-600 hover:text-white transition duration-100 flex items-center justify-center min-h-[38px]"
           >
-            <span className="mr-1">🛠️</span> <span className="text-sm">{toolsVisible ? t('tools') : ''}</span>
+            <span className="mr-1">🛠️</span>{' '}
+            <span className="text-sm">{toolsVisible ? t('tools') : ''}</span>
           </button>
         </div>
         {toolsVisible && (
@@ -417,18 +460,18 @@ export default function InteractiveCanvas() {
             />
           </div>
         )}
-
         {/* BOUTON MUSIQUE */}
         <div className="absolute bottom-3 right-3 z-30 pointer-events-auto">
           <button
             onClick={() => setAudioVisible(!audioVisible)}
             className="relative rounded-xl px-5 py-2 text-base font-semibold shadow border-none bg-black/30 text-white/90 hover:bg-purple-600 hover:text-white transition duration-100 flex items-center justify-center min-h-[38px]"
           >
-            {isPlaying && <span className="absolute inset-0 rounded-xl pointer-events-none animate-pulse-ring" />}
+            {isPlaying && (
+              <span className="absolute inset-0 rounded-xl pointer-events-none animate-pulse-ring" />
+            )}
             <span className="relative">🎵</span>
           </button>
         </div>
-
         {audioVisible && (
           <MusicPanel
             ytUrl={ytUrl}
@@ -440,12 +483,15 @@ export default function InteractiveCanvas() {
             setVolume={setVolume}
           />
         )}
-
         {/* Player YouTube (toujours monté pour conserver la lecture) */}
         {ytId && (
           <YouTube
             videoId={ytId}
-            opts={{ height: '0', width: '0', playerVars: { autoplay: 0, rel: 0, playsinline: 1 } }}
+            opts={{
+              height: '0',
+              width: '0',
+              playerVars: { autoplay: 0, rel: 0, playsinline: 1 },
+            }}
             onReady={(e) => {
               playerRef.current = e.target
               if (!initializedRef.current) {
@@ -457,7 +503,6 @@ export default function InteractiveCanvas() {
             }}
           />
         )}
-
         {/* Zone de dessin + images */}
         <div
           ref={canvasRef}
@@ -473,7 +518,10 @@ export default function InteractiveCanvas() {
           className="w-full h-full relative overflow-hidden z-0 touch-none"
           style={{ background: 'none', border: 'none', borderRadius: 0 }}
         >
-          <canvas ref={drawingCanvasRef} className="absolute top-0 left-0 w-full h-full" />
+          <canvas
+            ref={drawingCanvasRef}
+            className="absolute top-0 left-0 w-full h-full"
+          />
 
           {images.map((img) => (
             <ImageItem
@@ -485,40 +533,44 @@ export default function InteractiveCanvas() {
             />
           ))}
 
-{(drawMode === 'draw' || drawMode === 'erase') && !dragState.current.id && (
-  <div
-    className="absolute rounded-full border border-emerald-500 pointer-events-none"
-    style={{
-      top: mousePos.y - brushSize / 2,
-      left: mousePos.x - brushSize / 2,
-      width: brushSize,
-      height: brushSize,
-      zIndex: 2,
-    }}
-  />
-)}
+          {(drawMode === 'draw' || drawMode === 'erase') &&
+            !dragState.current.id && (
+              <div
+                className="absolute rounded-full border border-emerald-500 pointer-events-none"
+                style={{
+                  top: mousePos.y - brushSize / 2,
+                  left: mousePos.x - brushSize / 2,
+                  width: brushSize,
+                  height: brushSize,
+                  zIndex: 2,
+                }}
+              />
+            )}
 
+          <LiveCursors />
+          <SideNotes />
 
-<LiveCursors />
-<SideNotes />
+          {/* DiceHub supprimé : les lancers de dés ne sont plus synchronisés globalement */}
+        </div>{' '}
+        {/* ← fin du conteneur relatif */}
+      </div>
 
-{/* DiceHub supprimé : les lancers de dés ne sont plus synchronisés globalement */}
-
-</div> {/* ← fin du conteneur relatif */}
-</div>
-
-
-
-<style jsx>{`
-  @keyframes pulseRing {
-    0% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.6); }
-    70% { box-shadow: 0 0 0 12px rgba(168, 85, 247, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0); }
-  }
-  .animate-pulse-ring {
-    animation: pulseRing 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-`}</style>
+      <style jsx>{`
+        @keyframes pulseRing {
+          0% {
+            box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.6);
+          }
+          70% {
+            box-shadow: 0 0 0 12px rgba(168, 85, 247, 0);
+          }
+          100% {
+            box-shadow: 0 0 0 0 rgba(168, 85, 247, 0);
+          }
+        }
+        .animate-pulse-ring {
+          animation: pulseRing 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+      `}</style>
     </>
   )
 }
