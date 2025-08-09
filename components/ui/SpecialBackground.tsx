@@ -260,7 +260,7 @@ export default function SpecialBackground() {
       }
     })
     return arr
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   /* Fleurs / Coquillages (inchangé) */
   const flowers = useMemo(() => {
