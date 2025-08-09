@@ -1,4 +1,5 @@
 'use client'
+// MOD: 1 2025-08-09 - remove any casts from mixBlendMode to satisfy eslint
 
 /**
  * Background 9 – “Nebula + Stardust Trails” (v7-combined)
@@ -205,7 +206,7 @@ function AuroraBlob({
         left: `${startX}vw`,
         top: `${startY}vh`,
         opacity,
-        mixBlendMode: blend as any,
+        mixBlendMode: blend, // MOD: 1
         background: via
           ? `radial-gradient(60% 60% at 50% 50%, ${from} 0%, ${via} 40%, ${to} 70%, transparent 100%)`
           : `radial-gradient(60% 60% at 50% 50%, ${from} 0%, ${to} 70%, transparent 100%)`,
@@ -329,7 +330,7 @@ export default function Background9 () {
           height: '60vh',
           background:
             'radial-gradient(60% 60% at 50% 30%, rgba(59,130,246,0.18) 0%, rgba(59,130,246,0.08) 35%, transparent 70%)',
-          mixBlendMode: 'screen' as any,
+          mixBlendMode: 'screen', // MOD: 1
         }}
       />
     </div>

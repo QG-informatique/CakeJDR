@@ -1,4 +1,5 @@
 'use client'
+// MOD: 1 2025-08-09 - typed CSS variable styles to remove any casts
 
 /**
  * CakeBackground — Fibres tressées (v1)
@@ -20,26 +21,28 @@
 import React from 'react'
 
 export default function CakeBackground() {
+  const styleVars: React.CSSProperties = {
+    // ====== VARIABLES TWEAK ======
+    // Couleurs principales (tissu)
+    '--bg': '#13161c', // fond global sous la trame
+    '--fiber-dark': 'rgba(220,225,230,0.14)',
+    '--fiber-light': 'rgba(255,255,255,0.06)',
+    // Pas de fibre (contrôle densité)
+    '--fiber-w': '2px', // largeur d'une fibre
+    '--fiber-gap': '6px', // écart entre fibres
+    // Reflet (sheen)
+    '--sheen': 'rgba(255,255,230,0.10)',
+    '--sheen-size': '60vmin',
+    '--sheen-blur': '22px',
+    // Vitesse de balayage
+    '--speed': '18s',
+  } // MOD: 1
+
   return (
     <div
       aria-hidden
       className="pointer-events-none absolute inset-0 isolate z-0"
-      style={{
-        // ====== VARIABLES TWEAK ======
-        // Couleurs principales (tissu)
-        ['--bg' as any]: '#13161c',                   // fond global sous la trame
-        ['--fiber-dark' as any]: 'rgba(220,225,230,0.14)',
-        ['--fiber-light' as any]: 'rgba(255,255,255,0.06)',
-        // Pas de fibre (contrôle densité)
-        ['--fiber-w' as any]: '2px',                  // largeur d'une fibre
-        ['--fiber-gap' as any]: '6px',                // écart entre fibres
-        // Reflet (sheen)
-        ['--sheen' as any]: 'rgba(255,255,230,0.10)',
-        ['--sheen-size' as any]: '60vmin',
-        ['--sheen-blur' as any]: '22px',
-        // Vitesse de balayage
-        ['--speed' as any]: '18s',
-      }}
+      style={styleVars} // MOD: 1
     >
       {/* Couche 0 — Fond de base */}
       <div

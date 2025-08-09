@@ -1,4 +1,5 @@
 'use client'
+// MOD: 1 2025-08-09 - fix lint issues: remove any casts, unused params, and stabilize phases
 
 /**
  * CakeBackground – TopoFlow (cyan sombre) v2
@@ -38,6 +39,8 @@ const TOPO = {
   opacityStart: 0.25,
 }
 
+const PHASES = [0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2] as const // MOD: 1
+
 /* =========================
    HELPERS
    ========================= */
@@ -52,8 +55,8 @@ function mulberry32(seed: number) {
 }
 
 function makeTopoPath({
-  W, H, baseY, amp, phase, freq,
-}: { W: number; H: number; baseY: number; amp: number; phase: number; freq: number; }) {
+  W, baseY, amp, phase, freq,
+}: { W: number; baseY: number; amp: number; phase: number; freq: number }) { // MOD: 1
   const N = 12
   const k = (Math.PI * 2 * freq) / (N - 1)
   const c = W / (N - 1) * 0.42
@@ -81,15 +84,15 @@ function TopoLine({
   seed,
 }: { index: number; total: number; seed: number }) {
   const rnd = useMemo(() => mulberry32(seed + index * 97), [seed, index])
-  const { W, H } = { W: TOPO.width, H: TOPO.height }
+  const W = TOPO.width // MOD: 1
+  const H = TOPO.height // MOD: 1
   const baseY = Math.round((H * (index + 1)) / (total + 1) + (rnd() - 0.5) * 18)
   const amp = TOPO.ampBase + (rnd() - 0.5) * TOPO.ampJitter * 2
   const freq = clamp(TOPO.freq + (rnd() - 0.5) * 0.5, 1.6, 3.0)
 
-  const phases = [0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2]
   const paths = useMemo(
-    () => phases.map(ph => makeTopoPath({ W, H, baseY, amp, phase: ph, freq })),
-    [W, H, baseY, amp, freq]
+    () => PHASES.map(ph => makeTopoPath({ W, baseY, amp, phase: ph, freq })), // MOD: 1
+    [W, baseY, amp, freq]
   )
 
   const centerBias = 1 - Math.abs((index - (total - 1) / 2) / ((total - 1) / 2))
@@ -132,11 +135,11 @@ export default function CakeBackground() {
       {/* Halos très discrets */}
       <div
         className="absolute -top-[30vh] -left-[20vw] w-[90vw] h-[90vh] blur-3xl opacity-70"
-        style={{ background: `radial-gradient(50% 50% at 50% 50%, ${THEME.tintA} 0%, transparent 70%)`, mixBlendMode: 'screen' as any }}
+        style={{ background: `radial-gradient(50% 50% at 50% 50%, ${THEME.tintA} 0%, transparent 70%)`, mixBlendMode: 'screen' }} // MOD: 1
       />
       <div
         className="absolute -bottom-[35vh] -right-[25vw] w-[100vw] h-[100vh] blur-3xl opacity-70"
-        style={{ background: `radial-gradient(50% 50% at 50% 50%, ${THEME.tintB} 0%, transparent 70%)`, mixBlendMode: 'screen' as any }}
+        style={{ background: `radial-gradient(50% 50% at 50% 50%, ${THEME.tintB} 0%, transparent 70%)`, mixBlendMode: 'screen' }} // MOD: 1
       />
 
       {/* Lignes topo */}
