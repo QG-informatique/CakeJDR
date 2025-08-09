@@ -131,18 +131,21 @@ type Roll = { player: string; dice: number; result: number; ts?: number }
 type Props = { history: Roll[] }
 
 function computeStats(history: Roll[]) {
-  const stats: Record<
-    string,
-    { rolls: number; crit: number; fail: number; dist: Record<number, number> }
-  > = {}
+  const stats = new Map<string, {
+    rolls: number
+    crit: number
+    fail: number
+    dist: Map<number, number>
+  }>()
   for (const h of history) {
-    if (!stats[h.player])
-      stats[h.player] = { rolls: 0, crit: 0, fail: 0, dist: {} }
-    const s = stats[h.player]!
+    if (!stats.has(h.player)) {
+      stats.set(h.player, { rolls: 0, crit: 0, fail: 0, dist: new Map() })
+    }
+    const s = stats.get(h.player)!
     s.rolls++
     if (h.result === 1) s.fail++
     if (h.result === h.dice) s.crit++
-    s.dist[h.dice] = (s.dist[h.dice] || 0) + 1
+    s.dist.set(h.dice, (s.dist.get(h.dice) || 0) + 1)
   }
   return stats
 }
@@ -167,7 +170,7 @@ export default function DiceStats({ history }: Props) {
     filtered = history.filter((h) => !h.ts || now - h.ts <= limit)
   }
   const stats = computeStats(filtered)
-  const players = Object.keys(stats)
+  const players = Array.from(stats.keys())
 
   if (players.length === 0)
     return <div className="p-2 text-sm">{t('noRolls')}</div>
@@ -184,7 +187,7 @@ export default function DiceStats({ history }: Props) {
       </tr>
     )
     tableRows = players.map((player) => {
-      const s = stats[player]!
+      const s = stats.get(player)!
       const critPct = s.rolls ? ((s.crit / s.rolls) * 100).toFixed(1) : '0'
       const failPct = s.rolls ? ((s.fail / s.rolls) * 100).toFixed(1) : '0'
       return (
@@ -207,7 +210,7 @@ export default function DiceStats({ history }: Props) {
       </tr>
     )
     tableRows = players.map((player) => {
-      const s = stats[player]!
+      const s = stats.get(player)!
       return (
         <tr key={player} className="border-b border-white/10">
           <td className="px-2 py-1 font-semibold">{player}</td>
@@ -215,7 +218,7 @@ export default function DiceStats({ history }: Props) {
           <td className="px-2 py-1 text-center">{s.crit}</td>
           <td className="px-2 py-1 text-center">{s.fail}</td>
           <td className="px-2 py-1 text-sm">
-            {Object.entries(s.dist)
+            {Array.from(s.dist.entries())
               .map(([d, c]) => `D${d}:${c}`)
               .join(' ')}
           </td>

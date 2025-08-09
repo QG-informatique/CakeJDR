@@ -118,29 +118,33 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
       style={{ minHeight: 0, overflowX: 'hidden' }}
     >
       {/* Champs courts alignés */}
-      {shortFields.map(key => (
-        <div key={key} className="grid grid-cols-[120px_18px_1fr] mb-2 items-start">
-          <label
-            className="font-semibold text-right select-none"
-            style={{ minWidth: LABEL_WIDTH }}
-          >
-            {t(LABEL_KEYS[key])}
-          </label>
-          <span className="text-right font-bold">:</span>
-          <div className="flex-1 min-w-0 break-words pl-3">
+      {shortFields.map((key) => {
+        const val = Reflect.get(values, key) as string | undefined
+        const label = Reflect.get(LABEL_KEYS, key) as TranslationKey
+        return (
+          <div key={key} className="grid grid-cols-[120px_18px_1fr] mb-2 items-start">
+            <label
+              className="font-semibold text-right select-none"
+              style={{ minWidth: LABEL_WIDTH }}
+            >
+              {t(label)}
+            </label>
+            <span className="text-right font-bold">:</span>
+            <div className="flex-1 min-w-0 break-words pl-3">
               {edit ? (
                 <input
-                  value={(values as any)[key] || ''}
-                  onChange={e => onChange(key, e.target.value)}
+                  value={val || ''}
+                  onChange={(e) => onChange(key, e.target.value)}
                   className="px-1 py-0.5 rounded bg-white border text-sm text-black w-full"
                   style={{ minWidth: 0 }}
                 />
               ) : (
-                <span className="text-sm whitespace-pre-line break-words w-full">{(values as any)[key]}</span>
+                <span className="text-sm whitespace-pre-line break-words w-full">{val}</span>
               )}
+            </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
 
       {/* Racial ability */}
       <div className="grid grid-cols-[120px_18px_1fr] mb-2 items-start">
@@ -166,29 +170,33 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
       </div>
 
       {/* Long fields (see more) */}
-      {longFields.map(key => (
-        <div key={key} className="grid grid-cols-[120px_18px_1fr] mb-2 items-start">
-          <label
-            className="font-semibold text-right select-none"
-            style={{ minWidth: LABEL_WIDTH }}
-          >
-            {t(LABEL_KEYS[key])}
-          </label>
-          <span className="text-right font-bold">:</span>
-          <div className="flex-1 min-w-0 break-words pl-3">
+      {longFields.map((key) => {
+        const val = Reflect.get(values, key) as string | undefined
+        const label = Reflect.get(LABEL_KEYS, key) as TranslationKey
+        return (
+          <div key={key} className="grid grid-cols-[120px_18px_1fr] mb-2 items-start">
+            <label
+              className="font-semibold text-right select-none"
+              style={{ minWidth: LABEL_WIDTH }}
+            >
+              {t(label)}
+            </label>
+            <span className="text-right font-bold">:</span>
+            <div className="flex-1 min-w-0 break-words pl-3">
               {edit ? (
                 <textarea
-                  value={(values as any)[key] || ''}
-                  onChange={e => onChange(key, e.target.value)}
+                  value={val || ''}
+                  onChange={(e) => onChange(key, e.target.value)}
                   className="px-1 py-0.5 rounded bg-white border text-sm text-black w-full min-h-[34px] max-h-[130px] resize-y"
                   style={{ minWidth: 0, overflowWrap: 'break-word' }}
                 />
               ) : (
-              <LimiteChamp value={(values as any)[key] || ''} />
+                <LimiteChamp value={val || ''} />
               )}
+            </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
 
       {/* Champs persos dynamiques */}
       <div className="mt-2">

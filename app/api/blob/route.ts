@@ -3,10 +3,10 @@ import { put, del, list } from '@vercel/blob'
 import { NextResponse } from 'next/server'
 
 const CACHE_TTL = 60000
-const listCache: Record<string, { ts: number; files: any }> = {}
+const listCache = new Map<string, { ts: number; files: any }>()
 
 function invalidate(prefix: string) {
-  delete listCache[prefix]
+  listCache.delete(prefix)
 }
 
 // Handler POST (upload)
@@ -44,13 +44,13 @@ export async function DELETE(request: Request): Promise<NextResponse> {
 export async function GET(request: Request): Promise<NextResponse> {
   const { searchParams } = new URL(request.url)
   const prefix = searchParams.get('prefix') || 'FichePerso/'
-  const cached = listCache[prefix]
+  const cached = listCache.get(prefix)
   if (cached && Date.now() - cached.ts < CACHE_TTL) {
     return NextResponse.json({ files: cached.files })
   }
   try {
     const files = await list({ prefix })
-    listCache[prefix] = { files, ts: Date.now() }
+    listCache.set(prefix, { files, ts: Date.now() })
     return NextResponse.json({ files })
   } catch {
     return NextResponse.json({ error: 'list failed' }, { status: 500 })
