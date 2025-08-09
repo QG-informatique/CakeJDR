@@ -98,7 +98,7 @@ export default function InteractiveCanvas() {
   )
 
   // Events canvas
-  useEventListener((event: Liveblocks['RoomEvent']) => {
+  useEventListener(({ event }) => {
     if (event.type === 'clear-canvas') {
       clearCanvas(false)
     } else if (event.type === 'draw-line' && ctxRef.current) {

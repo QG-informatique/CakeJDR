@@ -59,15 +59,15 @@ function mulberry32(seed: number) {
     const N = 12
     const k = (Math.PI * 2 * freq) / (N - 1)
     const c = (W / (N - 1)) * 0.42
-    const pts = Array.from({ length: N }, (_, i) => {
+    const pts: Array<{ x: number; y: number }> = Array.from({ length: N }, (_, i) => {
       const x = (W / (N - 1)) * i
       const y = baseY + Math.sin(phase + i * k) * amp
       return { x, y }
     })
     const d = [
-      `M ${pts[0].x} ${pts[0].y}`,
+      `M ${pts[0]!.x} ${pts[0]!.y}`,
       ...pts.slice(0, -1).map((p, i) => {
-        const p2 = pts[i + 1]
+        const p2 = pts[i + 1]!
         return `C ${p.x + c} ${p.y}, ${p2.x - c} ${p2.y}, ${p2.x} ${p2.y}`
       }),
     ].join(' ')

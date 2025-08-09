@@ -43,7 +43,7 @@ export default function HomePageInner() {
   const [, updateMyPresence] = useMyPresence()
 
   // listen for remote dice rolls
-  useEventListener((event: Liveblocks['RoomEvent']) => {
+  useEventListener(({ event }) => {
     if (event.type === 'dice-roll') {
       setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result, ts: Date.now() }])
     } else if (event.type === 'gm-select') {
