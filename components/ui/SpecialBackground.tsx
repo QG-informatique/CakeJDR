@@ -41,13 +41,6 @@ function lerpColor(a?: string, b?: string, t = 0.5) {
 }
 
 // MODIF: petite fenêtre lissée (0 hors fenêtre, pic à 1 au centre) pour dawn/dusk
-function smoothWindow(x: number, a: number, b: number) {
-  if (b <= a) return 0
-  if (x <= a || x >= b) return 0
-  const t = (x - a) / (b - a)
-  return 4 * t * (1 - t) // courbe en cloche C1 continue
-}
-
 /* ============================================================================
    ASSETS
    ============================================================================ */
@@ -140,45 +133,66 @@ export default function SpecialBackground() {
   }, [])
   const t = clamp(progress, 0, 0.999999)
   const seconds = t * cycleSeconds
-  const s01 = seconds / cycleSeconds // MODIF: phase 0..1 sur tout le cycle
 
-  // Phases astres (conservées)
-  const moonPhase = clamp(seconds / 180, 0, 1)
-  const sunPhase  = clamp((seconds - 180) / 180, 0, 1)
+  /* === Découpage jour / nuit avec interludes === */
+  const dayDur = 170, nightDur = 170, gapDur = 10
+  const sunEnd = dayDur
+  const moonStart = dayDur + gapDur, moonEnd = moonStart + nightDur
 
-  // Trajectoires en arc
+  // Phases normalisées des astres
+  let showSun = false, showMoon = false
+  let pSun = 0, pMoon = 0
+  if (seconds < sunEnd) { // soleil visible
+    showSun = true
+    pSun = seconds / dayDur
+  } else if (seconds >= moonStart && seconds < moonEnd) { // lune visible
+    showMoon = true
+    pMoon = (seconds - moonStart) / nightDur
+  }
+
+  // Trajectoires en arc (même taille, jamais de shrink)
   const mapX = (p: number) => -10 + p * 120
-  const moonX = mapX(moonPhase)
-  const sunX  = mapX(sunPhase)
-  const moonY = 38 + Math.sin(Math.PI * moonPhase) * -14
-  const sunY  = 34 + Math.sin(Math.PI * sunPhase) * -18
-  const showMoon = seconds < 180
-  const showSun  = seconds >= 180
+  const sunX = mapX(pSun)
+  const moonX = mapX(pMoon)
+  const sunY = 34 + Math.sin(Math.PI * pSun) * -18
+  const moonY = 38 + Math.sin(Math.PI * pMoon) * -14
 
-  /* ==========================================================================
-     CIEL — MODIF MAJEURE: interpolation CONTINUE (pas de branches qui "snap")
-     - light(t) évolue sur tout le cycle avec une cosinusoïde (doux, C1)
-     - pulses "dawn/dusk" 30s via smoothWindow (4t(1-t)) pour teintes chaudes
-     ========================================================================== */
-  const light = 0.5 * (1 - Math.cos(2 * Math.PI * s01)) // 0 (minuit) → 1 (midi) → 0 (minuit), *continu*
-  // base night↔day
-  let baseTop = lerpColor(PAL.nightTop, PAL.dayTop, light)
-  let baseBot = lerpColor(PAL.nightBottom, PAL.dayBottom, light)
-  // pulses dawn/dusk (30 s)
-  const dawnStart = 180 / 360, dawnEnd = (180 + 30) / 360
-  const duskStart = (360 - 30) / 360, duskEnd = 1
-  const wDawn = smoothWindow(s01, dawnStart, dawnEnd)
-  const wDusk = smoothWindow(s01, duskStart, duskEnd)
-  // mix progressif (faible intensité pour garder naturel)
-  baseTop = lerpColor(baseTop, PAL.dawnTop, 0.45 * wDawn)
-  baseBot = lerpColor(baseBot, PAL.dawnBottom, 0.45 * wDawn)
-  baseTop = lerpColor(baseTop, PAL.duskTop, 0.50 * wDusk)
-  baseBot = lerpColor(baseBot, PAL.duskBottom, 0.50 * wDusk)
-  const skyTop = baseTop
-  const skyBottom = baseBot
-  // NOTE: plus aucun `if/else` basé sur showSun/showMoon pour le ciel ⇒ plus de "snap"
+  /* ========================================================================
+     CIEL — transitions continües calées sur pSun/pMoon
+     ====================================================================== */
+  let skyTop = PAL.nightTop
+  let skyBottom = PAL.nightBottom
+  if (showSun) {
+    // lever -> jour -> coucher
+    const rise = smoothstep01(pSun / 0.25)
+    const set = smoothstep01((pSun - 0.75) / 0.25)
+    skyTop = lerpColor(PAL.dawnTop, PAL.dayTop, rise)
+    skyBottom = lerpColor(PAL.dawnBottom, PAL.dayBottom, rise)
+    skyTop = lerpColor(skyTop, PAL.duskTop, set)
+    skyBottom = lerpColor(skyBottom, PAL.duskBottom, set)
+  } else if (showMoon) {
+    // début de nuit depuis dusk puis nuit profonde puis pré-aube bleutée
+    skyTop = lerpColor(PAL.duskTop, PAL.nightTop, smoothstep01(pMoon / 0.1))
+    skyBottom = lerpColor(PAL.duskBottom, PAL.nightBottom, smoothstep01(pMoon / 0.1))
+    const dark = Math.sin(Math.PI * clamp(pMoon, 0, 1)) // pic au milieu de nuit
+    skyTop = lerpColor(skyTop, '#040b19', 0.25 * dark)
+    skyBottom = lerpColor(skyBottom, '#070f1f', 0.25 * dark)
+    const pre = smoothstep01((pMoon - 0.85) / 0.15)
+    skyTop = lerpColor(skyTop, PAL.dawnTop, 0.2 * pre)
+    skyBottom = lerpColor(skyBottom, PAL.dawnBottom, 0.2 * pre)
+  } else if (seconds < moonStart) {
+    // interlude après coucher du soleil
+    const k = smoothstep01((seconds - sunEnd) / gapDur)
+    skyTop = lerpColor(PAL.duskTop, PAL.nightTop, k)
+    skyBottom = lerpColor(PAL.duskBottom, PAL.nightBottom, k)
+  } else {
+    // pré-aube avant lever du soleil
+    const k = smoothstep01((seconds - moonEnd) / gapDur)
+    skyTop = lerpColor(PAL.nightTop, PAL.dawnTop, k)
+    skyBottom = lerpColor(PAL.nightBottom, PAL.dawnBottom, k)
+  }
 
-  /* Étoiles légères la nuit */
+  /* Étoiles (visibilité continue) */
   const stars = useMemo(() => {
     const rng = mulberry32(20250808)
     return Array.from({ length: 120 }).map((_, k) => ({
@@ -186,7 +200,17 @@ export default function SpecialBackground() {
       size: 1 + Math.round(rng() * 2), tw: 2 + rng() * 3, delay: rng() * 5,
     }))
   }, [])
-  const nightish = light < 0.45 || light > 0.55 // scintillement surtout de nuit
+  let starOpacity = 0
+  if (showMoon) {
+    const fadeIn = smoothstep01(pMoon / 0.2)
+    const fadeOut = smoothstep01((1 - pMoon) / 0.2)
+    starOpacity = fadeIn * fadeOut
+  } else if (seconds < moonStart) {
+    starOpacity = smoothstep01((seconds - sunEnd) / gapDur)
+  } else {
+    starOpacity = 1 - smoothstep01((seconds - moonEnd) / gapDur)
+  }
+  const nightish = starOpacity > 0.2 // scintillement surtout de nuit
 
   /* Nuages (identiques) */
   const CLOUD_PATHS = [
@@ -373,7 +397,7 @@ export default function SpecialBackground() {
   const PLAIN_Y_MIN = 56, PLAIN_Y_MAX = 71
   const HEART_MS = 7000
 
-  const isDayNow = seconds >= 180
+  const isDayNow = showSun
   function randomTargetPlain() {
     return { x: -8 + Math.random() * 116, y: PLAIN_Y_MIN + Math.random() * (PLAIN_Y_MAX - PLAIN_Y_MIN) }
   }
@@ -638,14 +662,15 @@ export default function SpecialBackground() {
       <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)', backgroundSize: '3px 3px', opacity: 0.35, zIndex: 0 }} />
 
       {/* ÉTOILES */}
-      {stars.map(s => (
-        <motion.div key={s.id}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: nightish ? [0.1, (light < 0.2 || light > 0.8) ? 0.8 : 0.35, 0.1] : 0 }}
-          transition={{ duration: s.tw, repeat: Infinity, delay: s.delay }}
-          style={{ position: 'absolute', left: `${s.left}vw`, top: `${s.top}vh`, width: s.size, height: s.size, borderRadius: s.size, background: '#fff', boxShadow: '0 0 6px #fff8', zIndex: 1 }}
-        />
-      ))}
+        {stars.map(s => (
+          <motion.div
+            key={s.id}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: nightish ? [0.1 * starOpacity, starOpacity, 0.1 * starOpacity] : starOpacity }}
+            transition={{ duration: s.tw, repeat: Infinity, delay: s.delay }}
+            style={{ position: 'absolute', left: `${s.left}vw`, top: `${s.top}vh`, width: s.size, height: s.size, borderRadius: s.size, background: '#fff', boxShadow: '0 0 6px #fff8', zIndex: 1 }}
+          />
+        ))}
 
       {/* SOLEIL / LUNE (taille fixe, sortent hors cadre) */}
       {showMoon && (
