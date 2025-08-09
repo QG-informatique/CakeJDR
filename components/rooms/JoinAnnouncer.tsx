@@ -3,7 +3,7 @@ import { useEffect } from 'react'
 import { useBroadcastEvent } from '@liveblocks/react'
 
 export default function JoinAnnouncer() {
-  const broadcast = useBroadcastEvent()
+  const broadcast = useBroadcastEvent<Liveblocks['RoomEvent']>()
   useEffect(() => {
     try {
       const prof = JSON.parse(localStorage.getItem('jdr_profile') || '{}')
@@ -12,7 +12,7 @@ export default function JoinAnnouncer() {
           type: 'chat',
           author: 'System',
           text: `${prof.pseudo} joined the game`,
-        } as Liveblocks['RoomEvent'])
+        })
       }
     } catch {}
   }, [broadcast])

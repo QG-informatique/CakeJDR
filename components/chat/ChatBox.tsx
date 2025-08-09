@@ -29,7 +29,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
   const displayedEvents = showHistory
     ? sortedEvents
     : sortedEvents.filter(ev => ev.ts >= sessionStart.current)
-  const broadcast = useBroadcastEvent()
+  const broadcast = useBroadcastEvent<Liveblocks['RoomEvent']>()
   const profile = useProfile()
   const t = useT()
   const [collapsed, setCollapsed] = useState(() =>
@@ -48,7 +48,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
 
     const msg = { author, text: inputValue.trim(), isMJ: profile?.isMJ }
 
-    broadcast({ type: 'chat', author: msg.author, text: msg.text, isMJ: msg.isMJ } as Liveblocks['RoomEvent'])
+    broadcast({ type: 'chat', author: msg.author, text: msg.text, isMJ: msg.isMJ })
     addEvent({ id: crypto.randomUUID(), kind: 'chat', author: msg.author, text: msg.text, ts: Date.now(), isMJ: msg.isMJ })
     setInputValue('')
   }

@@ -39,12 +39,11 @@ export default function HomePageInner() {
   // total durée d'indisponibilité du bouton (animation + hold + cooldown)
   const ROLL_TOTAL_MS = 2000 + 300 + 2000 + 1000
 
-  const broadcast = useBroadcastEvent()
+  const broadcast = useBroadcastEvent<Liveblocks['RoomEvent']>()
   const [, updateMyPresence] = useMyPresence()
 
   // listen for remote dice rolls
-  useEventListener((payload: any) => {
-    const { event } = payload
+  useEventListener<Liveblocks['RoomEvent']>((event) => {
     if (event.type === 'dice-roll') {
       setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result, ts: Date.now() }])
     } else if (event.type === 'gm-select') {
@@ -52,9 +51,9 @@ export default function HomePageInner() {
       if (!char.id) char.id = crypto.randomUUID()
       setPerso(char)
       updateMyPresence({ character: char })
-      setCharacters(prev => {
-        const idx = prev.findIndex(c => String(c.id) === String(char.id))
-        const next = idx !== -1 ? prev.map((c,i)=> i===idx ? char : c) : [...prev, char]
+      setCharacters((prev) => {
+        const idx = prev.findIndex((c) => String(c.id) === String(char.id))
+        const next = idx !== -1 ? prev.map((c, i) => (i === idx ? char : c)) : [...prev, char]
         localStorage.setItem('jdr_characters', JSON.stringify(next))
         localStorage.setItem('selectedCharacterId', String(char.id))
         return next
@@ -152,7 +151,7 @@ export default function HomePageInner() {
     const { nom, dice, result } = pendingRoll
     const entry = { player: nom, dice, result, ts: Date.now() }
     setHistory((h) => [...h, entry])
-    broadcast({ type: 'dice-roll', player: nom, dice, result } as Liveblocks['RoomEvent'])
+    broadcast({ type: 'dice-roll', player: nom, dice, result })
     addEvent({ id: crypto.randomUUID(), kind: 'dice', player: nom, dice, result, ts: entry.ts })
     setPendingRoll(null)
   }

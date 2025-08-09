@@ -205,7 +205,7 @@ function AuroraBlob({
         left: `${startX}vw`,
         top: `${startY}vh`,
         opacity,
-        mixBlendMode: blend as any,
+        mixBlendMode: blend,
         background: via
           ? `radial-gradient(60% 60% at 50% 50%, ${from} 0%, ${via} 40%, ${to} 70%, transparent 100%)`
           : `radial-gradient(60% 60% at 50% 50%, ${from} 0%, ${to} 70%, transparent 100%)`,
@@ -329,7 +329,7 @@ export default function Background9 () {
           height: '60vh',
           background:
             'radial-gradient(60% 60% at 50% 30%, rgba(59,130,246,0.18) 0%, rgba(59,130,246,0.08) 35%, transparent 70%)',
-          mixBlendMode: 'screen' as any,
+          mixBlendMode: 'screen',
         }}
       />
     </div>

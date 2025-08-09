@@ -49,8 +49,7 @@ export default function InteractiveCanvas() {
     setVolumeState(v)
     if (storageReady) updateMusic({ volume: v })
   }
-
-  const broadcast = useBroadcastEvent()
+    const broadcast = useBroadcastEvent<Liveblocks['RoomEvent']>()
   const lastSend = useRef(0)
   const THROTTLE = 0
   const [, updateMyPresence] = useMyPresence()
@@ -98,24 +97,22 @@ export default function InteractiveCanvas() {
     [],
   )
 
-  // Events canvas
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  useEventListener((payload: any) => {
-    const { event } = payload
-    if (event.type === 'clear-canvas') {
-      clearCanvas(false)
-    } else if (event.type === 'draw-line' && ctxRef.current) {
-      const { x1, y1, x2, y2, color: c, width, mode } = event
-      ctxRef.current.strokeStyle = mode === 'erase' ? 'rgba(0,0,0,1)' : c
-      ctxRef.current.lineWidth = width
-      ctxRef.current.globalCompositeOperation =
-        mode === 'erase' ? 'destination-out' : 'source-over'
-      ctxRef.current.beginPath()
-      ctxRef.current.moveTo(x1, y1)
-      ctxRef.current.lineTo(x2, y2)
-      ctxRef.current.stroke()
-    }
-  })
+    // Events canvas
+    useEventListener<Liveblocks['RoomEvent']>((event) => {
+      if (event.type === 'clear-canvas') {
+        clearCanvas(false)
+      } else if (event.type === 'draw-line' && ctxRef.current) {
+        const { x1, y1, x2, y2, color: c, width, mode } = event
+        ctxRef.current.strokeStyle = mode === 'erase' ? 'rgba(0,0,0,1)' : c
+        ctxRef.current.lineWidth = width
+        ctxRef.current.globalCompositeOperation =
+          mode === 'erase' ? 'destination-out' : 'source-over'
+        ctxRef.current.beginPath()
+        ctxRef.current.moveTo(x1, y1)
+        ctxRef.current.lineTo(x2, y2)
+        ctxRef.current.stroke()
+      }
+    })
 
   const dragState = useRef({
     id: null as number | null,
@@ -330,16 +327,16 @@ export default function InteractiveCanvas() {
       const now = Date.now()
       if (THROTTLE === 0 || now - lastSend.current > THROTTLE) {
         lastSend.current = now
-        broadcast({
-          type: 'draw-line',
-          x1: px,
-          y1: py,
-          x2: x,
-          y2: y,
-          color,
-          width: brushSize,
-          mode: drawMode,
-        } as Liveblocks['RoomEvent'])
+          broadcast({
+            type: 'draw-line',
+            x1: px,
+            y1: py,
+            x2: x,
+            y2: y,
+            color,
+            width: brushSize,
+            mode: drawMode,
+          })
       }
     }
 
@@ -399,7 +396,7 @@ export default function InteractiveCanvas() {
       )
     }
     if (broadcastChange) {
-      broadcast({ type: 'clear-canvas' } as Liveblocks['RoomEvent'])
+      broadcast({ type: 'clear-canvas' })
     }
   }
 
