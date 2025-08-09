@@ -134,21 +134,16 @@ export default function SpecialBackground() {
   const t = clamp(progress, 0, 0.999999)
   const seconds = t * cycleSeconds
 
-  /* === Découpage jour / nuit avec interludes === */
-  const dayDur = 170, nightDur = 170, gapDur = 10
+  /* === Découpage jour / nuit === */
+  const dayDur = 180, nightDur = 180, gapDur = 0 // FIX: seamless day-night cycle
   const sunEnd = dayDur
-  const moonStart = dayDur + gapDur, moonEnd = moonStart + nightDur
+  const moonStart = sunEnd + gapDur
 
-  // Phases normalisées des astres
-  let showSun = false, showMoon = false
-  let pSun = 0, pMoon = 0
-  if (seconds < sunEnd) { // soleil visible
-    showSun = true
-    pSun = seconds / dayDur
-  } else if (seconds >= moonStart && seconds < moonEnd) { // lune visible
-    showMoon = true
-    pMoon = (seconds - moonStart) / nightDur
-  }
+  // Phases normalisées des astres (zéro délai entre soleil et lune)
+  const showSun = seconds < sunEnd
+  const showMoon = !showSun
+  const pSun = clamp(seconds / dayDur, 0, 1)
+  const pMoon = clamp((seconds - moonStart) / nightDur, 0, 1)
 
   // Trajectoires en arc (même taille, jamais de shrink)
   const mapX = (p: number) => -10 + p * 120
@@ -170,8 +165,8 @@ export default function SpecialBackground() {
     skyBottom = lerpColor(PAL.dawnBottom, PAL.dayBottom, rise)
     skyTop = lerpColor(skyTop, PAL.duskTop, set)
     skyBottom = lerpColor(skyBottom, PAL.duskBottom, set)
-  } else if (showMoon) {
-    // début de nuit depuis dusk puis nuit profonde puis pré-aube bleutée
+  } else {
+    // nuit: dusk -> night -> pré-aube bleutée
     skyTop = lerpColor(PAL.duskTop, PAL.nightTop, smoothstep01(pMoon / 0.1))
     skyBottom = lerpColor(PAL.duskBottom, PAL.nightBottom, smoothstep01(pMoon / 0.1))
     const dark = Math.sin(Math.PI * clamp(pMoon, 0, 1)) // pic au milieu de nuit
@@ -180,16 +175,6 @@ export default function SpecialBackground() {
     const pre = smoothstep01((pMoon - 0.85) / 0.15)
     skyTop = lerpColor(skyTop, PAL.dawnTop, 0.2 * pre)
     skyBottom = lerpColor(skyBottom, PAL.dawnBottom, 0.2 * pre)
-  } else if (seconds < moonStart) {
-    // interlude après coucher du soleil
-    const k = smoothstep01((seconds - sunEnd) / gapDur)
-    skyTop = lerpColor(PAL.duskTop, PAL.nightTop, k)
-    skyBottom = lerpColor(PAL.duskBottom, PAL.nightBottom, k)
-  } else {
-    // pré-aube avant lever du soleil
-    const k = smoothstep01((seconds - moonEnd) / gapDur)
-    skyTop = lerpColor(PAL.nightTop, PAL.dawnTop, k)
-    skyBottom = lerpColor(PAL.nightBottom, PAL.dawnBottom, k)
   }
 
   /* Étoiles (visibilité continue) */
@@ -205,18 +190,17 @@ export default function SpecialBackground() {
     const fadeIn = smoothstep01(pMoon / 0.2)
     const fadeOut = smoothstep01((1 - pMoon) / 0.2)
     starOpacity = fadeIn * fadeOut
-  } else if (seconds < moonStart) {
-    starOpacity = smoothstep01((seconds - sunEnd) / gapDur)
-  } else {
-    starOpacity = 1 - smoothstep01((seconds - moonEnd) / gapDur)
   }
   const nightish = starOpacity > 0.2 // scintillement surtout de nuit
 
-  /* Nuages (identiques) */
-  const CLOUD_PATHS = [
-    'M20,100 C35,60 60,40 95,45 C110,20 145,15 170,35 C190,25 230,30 245,60 C280,60 300,75 302,100 L20,100 Z',
-    'M10,100 C30,70 55,55 80,60 C105,35 150,25 180,50 C210,40 250,55 270,80 C290,80 300,90 304,100 L10,100 Z',
-    'M0,100 C20,75 40,65 70,70 C90,50 130,45 160,60 C195,55 230,70 250,85 C270,85 300,95 306,100 L0,100 Z',
+  /* Nuages */
+  const CLOUD_PATHS = [ // FIX: more cloud variety (size/shape/speed/height)
+    'M20,100 C35,60 60,40 95,45 C110,20 145,15 170,35 C190,25 230,30 245,60 C280,60 300,75 302,100 L20,100 Z', // FIX: more cloud variety (size/shape/speed/height)
+    'M10,100 C30,70 55,55 80,60 C105,35 150,25 180,50 C210,40 250,55 270,80 C290,80 300,90 304,100 L10,100 Z', // FIX: more cloud variety (size/shape/speed/height)
+    'M0,100 C20,75 40,65 70,70 C90,50 130,45 160,60 C195,55 230,70 250,85 C270,85 300,95 306,100 L0,100 Z', // FIX: more cloud variety (size/shape/speed/height)
+    'M15,100 C45,65 70,35 105,45 C130,25 170,20 195,40 C215,35 255,45 275,70 C295,70 315,85 318,100 L15,100 Z', // FIX: more cloud variety (size/shape/speed/height)
+    'M5,100 C25,68 50,52 75,58 C95,33 140,28 170,52 C205,47 240,60 260,82 C285,82 305,92 309,100 L5,100 Z', // FIX: more cloud variety (size/shape/speed/height)
+    'M18,100 C38,74 65,60 92,63 C118,43 158,33 188,53 C218,47 254,65 274,86 C294,86 314,96 316,100 L18,100 Z', // FIX: more cloud variety (size/shape/speed/height)
   ]
   function PrettyCloud({ size = 150, variant = 0 }: { size?: number; variant?: number }) {
     const i = Math.abs(variant) % CLOUD_PATHS.length
@@ -235,16 +219,19 @@ export default function SpecialBackground() {
   const clouds = useMemo(() => {
     const rng = mulberry32(99021)
     const layers = [
-      { count: 3, z: 2, durMin: 120, durVar: 80, sizeMin: 140, sizeVar: 120, topMin: 6, topVar: 10 },
-      { count: 4, z: 3, durMin: 90,  durVar: 70, sizeMin: 160, sizeVar: 140, topMin: 10, topVar: 12 },
+      { count: 3, z: 2, durMin: 200, durVar: 140, sizeMin: 120, sizeVar: 120, topMin: 4, topVar: 14 }, // FIX: more cloud variety (size/shape/speed/height)
+      { count: 4, z: 3, durMin: 110, durVar: 100, sizeMin: 220, sizeVar: 180, topMin: 10, topVar: 20 }, // FIX: more cloud variety (size/shape/speed/height)
     ]
     const arr: React.ReactElement[] = []
     layers.forEach((L, li) => {
       for (let i = 0; i < L.count; i++) {
-        const size = L.sizeMin + Math.round(rng() * L.sizeVar)
-        const top = L.topMin + Math.round(rng() * L.topVar)
-        const dur = L.durMin + rng() * L.durVar
-        const delay = -rng() * dur
+        const size = L.sizeMin + Math.round(rng() * L.sizeVar) // FIX: more cloud variety (size/shape/speed/height)
+        const top = L.topMin + Math.round(rng() * L.topVar) // FIX: more cloud variety (size/shape/speed/height)
+        const dur = L.durMin + rng() * L.durVar // FIX: more cloud variety (size/shape/speed/height)
+        const delay = -rng() * dur * 1.5 // FIX: more cloud variety (size/shape/speed/height)
+        const sx = 0.8 + rng() * 0.6 // FIX: more cloud variety (size/shape/speed/height)
+        const sy = 0.8 + rng() * 0.6 // FIX: more cloud variety (size/shape/speed/height)
+        const rot = (rng() - 0.5) * 10 // FIX: more cloud variety (size/shape/speed/height)
         const v = Math.floor(rng() * CLOUD_PATHS.length)
         arr.push(
           <motion.div
@@ -252,7 +239,8 @@ export default function SpecialBackground() {
             initial={{ x: '110vw' }}
             animate={{ x: '-120vw' }}
             transition={{ duration: dur, repeat: Infinity, delay, ease: 'linear' }}
-            style={{ position: 'absolute', top: `${top}vh`, zIndex: L.z, pointerEvents: 'none', opacity: 0.95 }}
+            style={{ position: 'absolute', top: `${top}vh`, zIndex: L.z, pointerEvents: 'none', opacity: 0.95,
+              transform: `scaleX(${sx}) scaleY(${sy}) rotate(${rot}deg)` }}
           >
             <PrettyCloud size={size} variant={v} />
           </motion.div>
@@ -321,8 +309,7 @@ export default function SpecialBackground() {
   const [leafBubbles, setLeafBubbles] = useState<LeafBubble[]>([])
   const debId = useRef(1)
   const leafBubbleId = useRef(1)
-  // MODIF: spawn quasi immédiat pour vérifier visuel + cadence un peu ↑
-  const nextDebris = useRef(performance.now() + 500 + Math.random() * 800)
+  const nextDebris = useRef(performance.now() + 5000 + Math.random() * 4000) // FIX: reduce river leaves spawn
 
   useEffect(() => {
     let raf = 0, last = performance.now()
@@ -346,8 +333,8 @@ export default function SpecialBackground() {
         })
 
         // Spawn feuilles
-        if (now >= nextDebris.current && arr.length < 8) { // MODIF: densité ↑ (max 8)
-          nextDebris.current = now + 2500 + Math.random() * 3500
+        if (now >= nextDebris.current && arr.length < 5) { // FIX: reduce river leaves spawn
+          nextDebris.current = now + 6000 + Math.random() * 8000 // FIX: reduce river leaves spawn
           arr.push({
             id: debId.current++,
             x: -10, // toujours hors-gauche
