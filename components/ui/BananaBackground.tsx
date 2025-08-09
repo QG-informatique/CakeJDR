@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * CakeBackground — Fibres tressées (v1)
+ * BananaBackground — Fibres tressées (v1)
  * =====================================
  * ✅ Fond original & simple : trame de fibres diagonales (effet lin/ramie).
  * ✅ 100% CSS (gradients), zéro asset, ultra-perf.
@@ -19,7 +19,19 @@
 
 import React from 'react'
 
-export default function CakeBackground() {
+interface WeaveVars extends React.CSSProperties {
+  '--bg': string
+  '--fiber-dark': string
+  '--fiber-light': string
+  '--fiber-w': string
+  '--fiber-gap': string
+  '--sheen': string
+  '--sheen-size': string
+  '--sheen-blur': string
+  '--speed': string
+}
+
+export default function BananaBackground() {
   return (
     <div
       aria-hidden
@@ -27,19 +39,19 @@ export default function CakeBackground() {
       style={{
         // ====== VARIABLES TWEAK ======
         // Couleurs principales (tissu)
-        ['--bg' as any]: '#13161c',                   // fond global sous la trame
-        ['--fiber-dark' as any]: 'rgba(220,225,230,0.14)',
-        ['--fiber-light' as any]: 'rgba(255,255,255,0.06)',
+        '--bg': '#13161c',                   // fond global sous la trame
+        '--fiber-dark': 'rgba(220,225,230,0.14)',
+        '--fiber-light': 'rgba(255,255,255,0.06)',
         // Pas de fibre (contrôle densité)
-        ['--fiber-w' as any]: '2px',                  // largeur d'une fibre
-        ['--fiber-gap' as any]: '6px',                // écart entre fibres
+        '--fiber-w': '2px',                  // largeur d'une fibre
+        '--fiber-gap': '6px',                // écart entre fibres
         // Reflet (sheen)
-        ['--sheen' as any]: 'rgba(255,255,230,0.10)',
-        ['--sheen-size' as any]: '60vmin',
-        ['--sheen-blur' as any]: '22px',
+        '--sheen': 'rgba(255,255,230,0.10)',
+        '--sheen-size': '60vmin',
+        '--sheen-blur': '22px',
         // Vitesse de balayage
-        ['--speed' as any]: '18s',
-      }}
+        '--speed': '18s',
+      } as WeaveVars}
     >
       {/* Couche 0 — Fond de base */}
       <div
