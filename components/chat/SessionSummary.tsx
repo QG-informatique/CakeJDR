@@ -325,14 +325,14 @@ function LocalSummary({
       {current && (
         <LexicalComposer key={editorKey} initialConfig={editorConfig}>
           {/* Pas de LiveblocksPlugin en local */}
-          <Toolbar className="mb-2">
+          <Toolbar className="mb-2 w-full flex-shrink-0 !opacity-100">
             <Toolbar.SectionInline />
           </Toolbar>
 
           <input
             value={current.title}
             onChange={(e) => handleTitleChange(e.target.value)}
-            className="text-center font-semibold mb-2 bg-transparent outline-none w-full text-white placeholder-white/50"
+            className="text-center font-semibold mb-2 bg-transparent outline-none w-full flex-shrink-0 text-white placeholder-white/50"
             placeholder={(t('untitled' as never) as string) || 'Sans titre'}
           />
 
@@ -659,14 +659,14 @@ function LiveSummary({
       {current && (
         <LexicalComposer key={editorKey} initialConfig={editorConfig}>
           <LiveblocksPlugin />
-          <Toolbar className="mb-2">
+          <Toolbar className="mb-2 w-full flex-shrink-0 !opacity-100">
             <Toolbar.SectionInline />
           </Toolbar>
 
           <input
             value={current.title}
             onChange={(e) => handleTitleChange(e.target.value)}
-            className="text-center font-semibold mb-2 bg-transparent outline-none w-full text-white placeholder-white/50"
+            className="text-center font-semibold mb-2 bg-transparent outline-none w-full flex-shrink-0 text-white placeholder-white/50"
             placeholder={(t('untitled' as never) as string) || 'Sans titre'}
           />
 
