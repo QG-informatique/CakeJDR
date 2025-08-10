@@ -729,7 +729,7 @@ function LogsPanel({
             className="fixed inset-0 z-40"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute right-0 top-full mt-2 w-[420px] max-h-[220px] overflow-auto bg-black/80 text-white text-xs rounded p-2 border border-white/10">
+          <div className="absolute right-0 top-full mt-2 z-50 w-[420px] max-h-[220px] overflow-auto bg-black/80 text-white text-xs rounded p-2 border border-white/10">
             <div className="flex items-center justify-between mb-2">
               <b>Logs de synchro</b>
               <button onClick={clear} className="text-white/70 hover:text-white underline">
