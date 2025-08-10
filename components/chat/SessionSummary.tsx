@@ -83,7 +83,9 @@ class ErrorBoundary extends React.Component<
   { onTrip: (err?: unknown) => void; children: React.ReactNode },
   { hasError: boolean }
 > {
-  constructor(props: any) {
+  constructor(
+    props: { onTrip: (err?: unknown) => void; children: React.ReactNode },
+  ) {
     super(props)
     this.state = { hasError: false }
   }
@@ -266,8 +268,6 @@ function LocalSummary({
     <div className="flex flex-col h-full" style={{ minHeight: 0 }}>
       {/* Barre d’actions */}
       <TopBar
-        mode="local"
-        statusText="Local (hors‑ligne)"
         onNewPage={() => createPage((t('newPage') as string) || 'New page')}
         pages={state.acts}
         currentId={currentId}
@@ -322,7 +322,6 @@ function LiveSummary({
 }) {
   const t = useT()
   const status = useStatus() // 'initializing' | 'connected' | 'reconnecting' | 'disconnected'
-  const [connectionStatus, setConnectionStatus] = useState(status)
 
   // Timeout 3s si pas connecté -> bascule local
   useEffect(() => {
@@ -338,7 +337,6 @@ function LiveSummary({
 
   // Si on passe en disconnected plus tard -> bascule local
   useEffect(() => {
-    setConnectionStatus(status)
     if (status === 'disconnected') {
       pushLog('Liveblocks: disconnected -> bascule en local')
       tripToLocal('Disconnected')
@@ -391,7 +389,7 @@ function LiveSummary({
       s = new LiveObject<{ acts?: Page[]; currentId?: string }>({ acts: [], currentId: undefined })
       storage.set('summary', s)
     }
-    ;(s as LiveObject<any>).update({ acts })
+    ;(s as LiveObject<{ acts?: Page[]; currentId?: string }>).update({ acts })
   }, [])
 
   const updateCurrentId = useMutation(({ storage }, id: string | undefined) => {
@@ -400,7 +398,7 @@ function LiveSummary({
       s = new LiveObject<{ acts?: Page[]; currentId?: string }>({ acts: [], currentId: undefined })
       storage.set('summary', s)
     }
-    ;(s as LiveObject<any>).update({ currentId: id })
+    ;(s as LiveObject<{ acts?: Page[]; currentId?: string }>).update({ currentId: id })
   }, [])
 
   const deletePage = useMutation(({ storage }, id: string) => {
@@ -409,8 +407,13 @@ function LiveSummary({
       s = new LiveObject<{ acts?: Page[]; currentId?: string }>({ acts: [], currentId: undefined })
       storage.set('summary', s)
     }
-    const acts = ((s as LiveObject<any>).get('acts') as Page[]) || []
-    ;(s as LiveObject<any>).update({ acts: acts.filter((p: Page) => p.id !== id) })
+    const acts =
+      ((s as LiveObject<{ acts?: Page[]; currentId?: string }>).get(
+        'acts',
+      ) as Page[]) || []
+    ;(s as LiveObject<{ acts?: Page[]; currentId?: string }>).update({
+      acts: acts.filter((p: Page) => p.id !== id),
+    })
 
     let e = storage.get('editor')
     if (!(e instanceof LiveMap)) {
@@ -534,19 +537,11 @@ function LiveSummary({
     onError: (e) => pushLog('Lexical error (live): ' + (e?.message ?? String(e))),
   })
 
-  const statusText =
-    connectionStatus === 'connected'
-      ? 'En ligne'
-      : connectionStatus === 'reconnecting'
-      ? 'Reconnexion…'
-      : 'Connexion…'
 
   return (
     <div className="flex flex-col h-full" style={{ minHeight: 0 }}>
       {/* Barre d’actions */}
       <TopBar
-        mode={connectionStatus === 'connected' ? 'live' : 'reconnecting'}
-        statusText={statusText}
         onNewPage={() => createPage((t('newPage') as string) || 'New page')}
         pages={pages || []}
         currentId={currentId}
@@ -599,8 +594,6 @@ function LiveSummary({
 
 // ===================== Barre du haut commune (badge + actions + file menu) =====================
 function TopBar({
-  mode, // 'live' | 'reconnecting' | 'local'
-  statusText,
   onNewPage,
   pages,
   currentId,
@@ -611,8 +604,6 @@ function TopBar({
   onClose,
   fileInputRef,
 }: {
-  mode: 'live' | 'reconnecting' | 'local'
-  statusText: string
   onNewPage: () => void
   pages: Page[]
   currentId?: string
