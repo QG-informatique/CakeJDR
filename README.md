@@ -16,8 +16,7 @@ npm install
 2. Copy `.env.example` to `.env.local` and provide the required secrets. The file lists
    the following variables:
    - `CLOUDINARY_URL`
-   - `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY`
-   - `LIVEBLOCKS_SECRET_KEY`
+   - `LIVEBLOCKS_SECRET_KEY` (secret key used by the Liveblocks authentication endpoint)
    - `BLOB_READ_WRITE_TOKEN`
    - `VERCEL_OIDC_TOKEN`
 
