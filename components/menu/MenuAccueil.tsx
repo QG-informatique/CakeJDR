@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useT } from '@/lib/useT'
 import LanguageSwitcher from '../ui/LanguageSwitcher'
 import { Crown, LogOut, Dice6 } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import SmallSpinner from '../ui/SmallSpinner'
 import RoomList, { RoomInfo } from '../rooms/RoomList'
 import RoomCreateModal from '../rooms/RoomCreateModal'
@@ -53,6 +53,18 @@ export default function MenuAccueil() {
   const [roomLoading, setRoomLoading] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const statusTimeout = useRef<number>()
+  const [status, setStatus] = useState<string | null>(null)
+
+  const showStatus = (msg: string) => {
+    setStatus(msg)
+    window.clearTimeout(statusTimeout.current)
+    statusTimeout.current = window.setTimeout(() => setStatus(null), 3000)
+  }
+
+  useEffect(() => {
+    return () => window.clearTimeout(statusTimeout.current)
+  }, [])
 
   useEffect(() => {
     setHydrated(true)
@@ -266,9 +278,9 @@ export default function MenuAccueil() {
         saveCharacters([...characters, withId])
         localStorage.setItem(SELECTED_KEY, String(id))
         setSelectedIdx(characters.length)
-        alert(t('importSuccess'))
+        showStatus(t('importSuccess'))
       } catch {
-        alert(t('invalidFile'))
+        showStatus(t('invalidFile'))
       }
     }
     reader.readAsText(file)
@@ -290,23 +302,30 @@ export default function MenuAccueil() {
     a.click()
     a.remove()
     URL.revokeObjectURL(url)
+    showStatus(t('exportSuccess'))
   }
 
   const handleUploadChar = async (char: Character) => {
     if (!selectedRoom) return
-    await fetch('/api/roomstorage', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        roomId: selectedRoom.id,
-        id: char.id,
-        character: { ...char, updatedAt: Date.now() },
-      }),
-    })
-    setRemoteChars((r) => ({
-      ...r,
-      [String(char.id)]: { ...char, updatedAt: Date.now() },
-    }))
+    try {
+      const res = await fetch('/api/roomstorage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roomId: selectedRoom.id,
+          id: char.id,
+          character: { ...char, updatedAt: Date.now() },
+        }),
+      })
+      if (!res.ok) throw new Error('upload failed')
+      setRemoteChars((r) => ({
+        ...r,
+        [String(char.id)]: { ...char, updatedAt: Date.now() },
+      }))
+      showStatus(t('saveCloud'))
+    } catch {
+      showStatus(t('saveCloudFail'))
+    }
   }
 
   const handleDownloadChar = (char: Character) => {
@@ -316,6 +335,7 @@ export default function MenuAccueil() {
         ? characters.map((c, i) => (i === idx ? char : c))
         : [...characters, char]
     saveCharacters(updated)
+    showStatus(t('loadCloudSuccess'))
   }
 
   const handleDeleteCloudChar = async (id: string | number) => {
@@ -570,6 +590,18 @@ export default function MenuAccueil() {
           </>
         )}
       </div>
+      <AnimatePresence>
+        {status && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-md bg-black/80 text-white shadow-lg z-50"
+          >
+            {status}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   )
 }
