@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useT } from '@/lib/useT'
 import LanguageSwitcher from '../ui/LanguageSwitcher'
 import { Crown, LogOut, Dice6 } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import SmallSpinner from '../ui/SmallSpinner'
 import RoomList, { RoomInfo } from '../rooms/RoomList'
 import RoomCreateModal from '../rooms/RoomCreateModal'
@@ -51,6 +51,7 @@ export default function MenuAccueil() {
   const [selectedRoom, setSelectedRoom] = useState<RoomInfo | null>(null)
   const [remoteChars, setRemoteChars] = useState<Record<string, Character>>({})
   const [roomLoading, setRoomLoading] = useState(false)
+  const [statusMessage, setStatusMessage] = useState<string | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -98,6 +99,12 @@ export default function MenuAccueil() {
       }
     } catch {}
   }, [])
+
+  useEffect(() => {
+    if (!statusMessage) return
+    const timer = setTimeout(() => setStatusMessage(null), 3000)
+    return () => clearTimeout(timer)
+  }, [statusMessage])
 
   // Met à jour la liste quand une fiche est importée depuis un autre onglet
   useEffect(() => {
@@ -266,9 +273,9 @@ export default function MenuAccueil() {
         saveCharacters([...characters, withId])
         localStorage.setItem(SELECTED_KEY, String(id))
         setSelectedIdx(characters.length)
-        alert(t('importSuccess'))
+        setStatusMessage(t('importSuccess'))
       } catch {
-        alert(t('invalidFile'))
+        setStatusMessage(t('invalidFile'))
       }
     }
     reader.readAsText(file)
@@ -290,23 +297,29 @@ export default function MenuAccueil() {
     a.click()
     a.remove()
     URL.revokeObjectURL(url)
+    setStatusMessage(t('exportSuccess'))
   }
 
   const handleUploadChar = async (char: Character) => {
     if (!selectedRoom) return
-    await fetch('/api/roomstorage', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        roomId: selectedRoom.id,
-        id: char.id,
-        character: { ...char, updatedAt: Date.now() },
-      }),
-    })
-    setRemoteChars((r) => ({
-      ...r,
-      [String(char.id)]: { ...char, updatedAt: Date.now() },
-    }))
+    try {
+      await fetch('/api/roomstorage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roomId: selectedRoom.id,
+          id: char.id,
+          character: { ...char, updatedAt: Date.now() },
+        }),
+      })
+      setRemoteChars((r) => ({
+        ...r,
+        [String(char.id)]: { ...char, updatedAt: Date.now() },
+      }))
+      setStatusMessage(t('saveCloud'))
+    } catch {
+      setStatusMessage(t('saveCloudFail'))
+    }
   }
 
   const handleDownloadChar = (char: Character) => {
@@ -570,6 +583,19 @@ export default function MenuAccueil() {
           </>
         )}
       </div>
+      <AnimatePresence>
+        {statusMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.3 }}
+            className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded"
+          >
+            {statusMessage}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   )
 }
