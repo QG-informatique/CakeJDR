@@ -11,10 +11,10 @@ import {
   LiveblocksPlugin,
   Toolbar,
   liveblocksConfig,
+  useIsEditorReady,
 } from '@liveblocks/react-lexical'
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import { $getRoot, $createParagraphNode, $createTextNode } from 'lexical'
-import type { LexicalEditor } from 'lexical'
 
 interface Page {
   id: string
@@ -23,6 +23,24 @@ interface Page {
 
 interface Props {
   onClose: () => void
+}
+
+function InitialContentPlugin({ text }: { text: string }) {
+  const [editor] = useLexicalComposerContext()
+  const isReady = useIsEditorReady()
+  useEffect(() => {
+    if (!isReady) return
+    editor.update(() => {
+      const root = $getRoot()
+      root.clear()
+      text.split('\n').forEach((line) => {
+        const p = $createParagraphNode()
+        p.append($createTextNode(line))
+        root.append(p)
+      })
+    })
+  }, [isReady, editor, text])
+  return null
 }
 
 function AutoSavePlugin({ onChange }: { onChange: (text: string) => void }) {
@@ -39,12 +57,14 @@ function AutoSavePlugin({ onChange }: { onChange: (text: string) => void }) {
 }
 
 const SessionSummary: FC<Props> = ({ onClose }) => {
-  const summary = useStorage((root) => root.summary)
+  const summary = useStorage((root) => root.summary) as
+    | { acts?: Page[]; currentId?: string }
+    | undefined
   const rawEditor = useStorage((root) => root.editor)
   const editorMap =
     rawEditor instanceof LiveMap ? (rawEditor as LiveMap<string, string>) : null
   const pages = summary?.acts as Page[] | undefined
-  const [currentId, setCurrentId] = useState<string>('')
+  const currentId = summary?.currentId as string | undefined
   const [editorKey, setEditorKey] = useState(0)
   const [showFileMenu, setShowFileMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -54,6 +74,11 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
   const updatePages = useMutation(({ storage }, acts: Page[]) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(storage.get('summary') as any).update({ acts })
+  }, [])
+
+  const updateCurrentId = useMutation(({ storage }, id: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(storage.get('summary') as any).update({ currentId: id })
   }, [])
 
   const deletePage = useMutation(({ storage }, id: string) => {
@@ -99,10 +124,10 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
       const newPage = { id: crypto.randomUUID(), title }
       updatePages([...(pages || []), newPage])
       updateEditor({ id: newPage.id, content: '' })
-      setCurrentId(newPage.id)
+      updateCurrentId(newPage.id)
       setEditorKey((k) => k + 1)
     },
-    [pages, updatePages, updateEditor],
+    [pages, updatePages, updateEditor, updateCurrentId],
   )
 
   useEffect(() => {
@@ -125,9 +150,9 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
       const title = prompt(t('pageNamePrompt'))?.trim() || t('newPage')
       createPage(title)
     } else if (!currentId) {
-      setCurrentId(pages[0]!.id)
+      updateCurrentId(pages[0]!.id)
     }
-  }, [pages, currentId, updatePages, updateEditor, createPage, t])
+  }, [pages, currentId, updatePages, updateEditor, createPage, t, updateCurrentId])
 
   const current = pages?.find((p) => p.id === currentId)
 
@@ -163,7 +188,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
       })
       if (newPages.length > 0) {
         updatePages(newPages)
-        setCurrentId(newPages[0]!.id)
+        updateCurrentId(newPages[0]!.id)
         setEditorKey((k) => k + 1)
       }
       setShowFileMenu(false)
@@ -197,7 +222,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
       return
     }
     deletePage(current.id)
-    setCurrentId(rest[0]!.id)
+    updateCurrentId(rest[0]!.id)
     setEditorKey((k) => k + 1)
   }
 
@@ -211,25 +236,10 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
     setEditorKey((k) => k + 1)
   }, [current, editorMap])
 
-  const editorConfig = {
-    ...liveblocksConfig({
-      namespace: `session-summary-${current ? current.id : 'global'}`,
-      onError: console.error,
-    }),
-    editorState: (editor: LexicalEditor) => {
-      if (initialText) {
-        editor.update(() => {
-          const root = $getRoot()
-          root.clear()
-          initialText.split('\n').forEach((line) => {
-            const p = $createParagraphNode()
-            p.append($createTextNode(line))
-            root.append(p)
-          })
-        })
-      }
-    },
-  }
+  const editorConfig = liveblocksConfig({
+    namespace: `session-summary-${current ? current.id : 'global'}`,
+    onError: console.error,
+  })
 
   return (
     <div
@@ -246,7 +256,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
         <select
           value={currentId}
           onChange={(e) => {
-            setCurrentId(e.target.value)
+            updateCurrentId(e.target.value)
             setEditorKey((k) => k + 1)
           }}
           className="bg-black/40 text-white rounded px-2 py-1 text-sm w-32"
@@ -303,22 +313,23 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
       </div>
       {current && (
         <LexicalComposer key={editorKey} initialConfig={editorConfig}>
+          <LiveblocksPlugin />
           <Toolbar className="mb-2">
             <Toolbar.SectionInline />
           </Toolbar>
           <input
             value={current.title}
             onChange={(e) => handleTitleChange(e.target.value)}
-            className="text-center font-semibold mb-2 bg-transparent outline-none w-full"
+            className="text-center font-semibold mb-2 bg-transparent outline-none w-full text-white"
           />
           <RichTextPlugin
             contentEditable={
               <ContentEditable className="flex-1 min-h-0 p-2 bg-black/20 rounded text-white outline-none" />
             }
-            placeholder={<div>{t('startWriting')}</div>}
+            placeholder={<div className="text-white/50">{t('startWriting')}</div>}
             ErrorBoundary={LexicalErrorBoundary}
           />
-          <LiveblocksPlugin />
+          <InitialContentPlugin text={initialText} />
           <AutoSavePlugin
             onChange={(txt) => {
               updateEditor({ id: current.id, content: txt })
