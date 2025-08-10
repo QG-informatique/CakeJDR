@@ -4,10 +4,8 @@ import { LiveMap, LiveObject, LiveList } from '@liveblocks/client'
 import LiveAvatarStack from '../chat/LiveAvatarStack'
 
 export default function RoomAvatarStack({ id }: { id: string }) {
-  const key = process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY
-  if (!key) return null
   return (
-    <LiveblocksProvider publicApiKey={key}>
+    <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
       <RoomProvider
         id={id}
         initialPresence={{}}
