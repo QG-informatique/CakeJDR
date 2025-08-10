@@ -51,7 +51,7 @@ declare global {
       characters: LiveMap<string, CharacterData>
       images: LiveMap<string, CanvasImage>
         music: LiveObject<{ id: string; playing: boolean; volume: number }>
-      summary: LiveObject<{ acts: Array<{ id: string; title: string }> }>
+      summary: LiveObject<{ acts: Array<{ id: string; title: string }>; lastDocId?: string }>
       editor: LiveMap<string, string>
       events: LiveList<SessionEvent>
       rooms: LiveList<Room>

@@ -44,12 +44,18 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
   const editorMap =
     rawEditor instanceof LiveMap ? (rawEditor as LiveMap<string, string>) : null
   const pages = summary?.acts as Page[] | undefined
+  const lastDocId = summary?.lastDocId as string | undefined
   const [currentId, setCurrentId] = useState<string>('')
   const [editorKey, setEditorKey] = useState(0)
   const [showFileMenu, setShowFileMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const fileBtnRef = useRef<HTMLButtonElement>(null)
   const t = useT()
+
+  const updateLastDocId = useMutation(({ storage }, id: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(storage.get('summary') as any).update({ lastDocId: id })
+  }, [])
 
   const updatePages = useMutation(({ storage }, acts: Page[]) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -100,9 +106,10 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
       updatePages([...(pages || []), newPage])
       updateEditor({ id: newPage.id, content: '' })
       setCurrentId(newPage.id)
+      updateLastDocId(newPage.id)
       setEditorKey((k) => k + 1)
     },
-    [pages, updatePages, updateEditor],
+    [pages, updatePages, updateEditor, updateLastDocId],
   )
 
   useEffect(() => {
@@ -125,9 +132,14 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
       const title = prompt(t('pageNamePrompt'))?.trim() || t('newPage')
       createPage(title)
     } else if (!currentId) {
-      setCurrentId(pages[0]!.id)
+      const id =
+        lastDocId && pages.some((p) => p.id === lastDocId)
+          ? lastDocId
+          : pages[0]!.id
+      setCurrentId(id)
+      updateLastDocId(id)
     }
-  }, [pages, currentId, updatePages, updateEditor, createPage, t])
+  }, [pages, currentId, createPage, t, lastDocId, updateLastDocId])
 
   const current = pages?.find((p) => p.id === currentId)
 
@@ -164,6 +176,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
       if (newPages.length > 0) {
         updatePages(newPages)
         setCurrentId(newPages[0]!.id)
+        updateLastDocId(newPages[0]!.id)
         setEditorKey((k) => k + 1)
       }
       setShowFileMenu(false)
@@ -198,6 +211,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
     }
     deletePage(current.id)
     setCurrentId(rest[0]!.id)
+    updateLastDocId(rest[0]!.id)
     setEditorKey((k) => k + 1)
   }
 
@@ -234,7 +248,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
   return (
     <div
       className="absolute inset-0 bg-black/35 backdrop-blur-[3px] border border-white/10 rounded-2xl shadow-2xl flex flex-col h-full w-full z-20 p-3 animate-fadeIn overflow-visible"
-      style={{ minHeight: 0 }}
+      style={{ minHeight: 0, color: 'var(--text-primary)' }}
     >
       <div className="flex items-center gap-2 mb-3 relative justify-end">
         <button
@@ -247,6 +261,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
           value={currentId}
           onChange={(e) => {
             setCurrentId(e.target.value)
+            updateLastDocId(e.target.value)
             setEditorKey((k) => k + 1)
           }}
           className="bg-black/40 text-white rounded px-2 py-1 text-sm w-32"

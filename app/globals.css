@@ -3,6 +3,8 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* Default readable text color */
+  --text-primary: #fff;
 }
 
 @theme inline {
@@ -16,6 +18,8 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    /* Light text on dark backgrounds */
+    --text-primary: #fff;
   }
 }
 

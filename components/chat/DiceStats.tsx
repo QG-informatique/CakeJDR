@@ -180,7 +180,10 @@ export default function DiceStats({ history }: Props) {
 
   if (statType === 'pct') {
     tableHead = (
-      <tr className="bg-black/25 backdrop-blur-[1px] text-white border-b border-white/10">
+      <tr
+        className="bg-black/25 backdrop-blur-[1px] border-b border-white/10"
+        style={{ color: 'var(--text-primary)' }}
+      >
         <th className="px-2 py-1">{t('player')}</th>
         <th className="px-2 py-1">% {t('crits')}</th>
         <th className="px-2 py-1">% {t('fails')}</th>
@@ -201,7 +204,10 @@ export default function DiceStats({ history }: Props) {
   } else {
     // all
     tableHead = (
-      <tr className="bg-black/25 backdrop-blur-[1px] text-white border-b border-white/10">
+      <tr
+        className="bg-black/25 backdrop-blur-[1px] border-b border-white/10"
+        style={{ color: 'var(--text-primary)' }}
+      >
         <th className="px-2 py-1">{t('player')}</th>
         <th className="px-2 py-1">{t('rolls')}</th>
         <th className="px-2 py-1">{t('crits')}</th>
@@ -228,7 +234,7 @@ export default function DiceStats({ history }: Props) {
   }
 
   return (
-    <div className="p-2 text-white">
+    <div className="p-2" style={{ color: 'var(--text-primary)' }}>
       <div className="mb-2 flex items-center gap-2">
         <CustomSelect
           value={statType}
