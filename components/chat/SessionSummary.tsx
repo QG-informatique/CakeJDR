@@ -22,6 +22,7 @@ import { useT } from '@/lib/useT'
 // ====== Liveblocks (collaboratif) ======
 import { useStorage, useMutation, useStatus } from '@liveblocks/react'
 import { LiveMap, LiveObject } from '@liveblocks/client'
+import type { LsonObject } from '@liveblocks/client'
 
 // ====== Lexical ======
 import { LexicalComposer } from '@lexical/react/LexicalComposer'
@@ -38,12 +39,21 @@ import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext
 import { $createParagraphNode, $createTextNode, $getRoot } from 'lexical'
 
 // ===================== Types =====================
-interface Page {
+type Page = LsonObject & {
   id: string
   title: string
 }
 interface Props {
   onClose: () => void
+}
+
+interface ErrorBoundaryProps {
+  onTrip: (err?: unknown) => void
+  children: React.ReactNode
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean
 }
 
 // ===================== Plugins Lexical communs =====================
@@ -86,7 +96,9 @@ type ErrorBoundaryProps = {
 
 class ErrorBoundary extends React.Component<
   ErrorBoundaryProps,
+
   { hasError: boolean }
+
 > {
   constructor(props: ErrorBoundaryProps) {
     super(props)
@@ -107,22 +119,34 @@ class ErrorBoundary extends React.Component<
 // ===================== Persistance locale (fallback) =====================
 const LOCAL_KEY = 'sessionSummaryLocal'
 
-function loadLocal(): { acts: Page[]; currentId?: string; editor: Record<string, string> } {
+function loadLocal(): {
+  acts: Page[]
+  currentId?: string
+  editor: Record<string, string>
+} {
   try {
     const raw = localStorage.getItem(LOCAL_KEY)
     if (!raw) return { acts: [], currentId: undefined, editor: {} }
     const parsed = JSON.parse(raw)
     return {
       acts: Array.isArray(parsed?.acts) ? parsed.acts : [],
-      currentId: typeof parsed?.currentId === 'string' ? parsed.currentId : undefined,
-      editor: typeof parsed?.editor === 'object' && parsed?.editor !== null ? parsed.editor : {},
+      currentId:
+        typeof parsed?.currentId === 'string' ? parsed.currentId : undefined,
+      editor:
+        typeof parsed?.editor === 'object' && parsed?.editor !== null
+          ? parsed.editor
+          : {},
     }
   } catch {
     return { acts: [], currentId: undefined, editor: {} }
   }
 }
 
-function saveLocal(data: { acts: Page[]; currentId?: string; editor: Record<string, string> }) {
+function saveLocal(data: {
+  acts: Page[]
+  currentId?: string
+  editor: Record<string, string>
+}) {
   localStorage.setItem(LOCAL_KEY, JSON.stringify(data))
 }
 
@@ -134,9 +158,11 @@ function LocalSummary({
   onClose: () => void
   pushLog: (msg: string) => void
 }) {
-  const t = useT()
+  const t = useT() as unknown as (key: string) => string | undefined
   const [state, setState] = useState(loadLocal())
-  const [currentId, setCurrentId] = useState<string | undefined>(state.currentId)
+  const [currentId, setCurrentId] = useState<string | undefined>(
+    state.currentId,
+  )
   const [editorKey, setEditorKey] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -150,7 +176,11 @@ function LocalSummary({
   const createPage = useCallback(
     (title: string) => {
       const newPage: Page = { id: crypto.randomUUID(), title }
-      const next = { ...state, acts: [...state.acts, newPage], currentId: newPage.id }
+      const next = {
+        ...state,
+        acts: [...state.acts, newPage],
+        currentId: newPage.id,
+      }
       setState(next)
       setCurrentId(newPage.id)
       saveLocal(next)
@@ -173,7 +203,9 @@ function LocalSummary({
   // Renommer
   const handleTitleChange = (title: string) => {
     if (!current) return
-    const acts = state.acts.map((p) => (p.id === current.id ? { ...p, title } : p))
+    const acts = state.acts.map((p) =>
+      p.id === current.id ? { ...p, title } : p,
+    )
     const next = { ...state, acts }
     setState(next)
     saveLocal(next)
@@ -200,10 +232,16 @@ function LocalSummary({
   const handleDelete = () => {
     if (!current) return
     if (state.acts.length <= 1) {
-      alert((t('lastPageDeleteError') as string) || 'Impossible de supprimer la dernière page.')
+      alert(
+        (t('lastPageDeleteError') as string) ||
+          'Impossible de supprimer la dernière page.',
+      )
       return
     }
-    if (!confirm((t('deletePageConfirm') as string) || 'Supprimer cette page ?')) return
+    if (
+      !confirm((t('deletePageConfirm') as string) || 'Supprimer cette page ?')
+    )
+      return
     const acts = state.acts.filter((p) => p.id !== current.id)
     const nextId = acts[0]?.id
     const editor = { ...state.editor }
@@ -219,31 +257,38 @@ function LocalSummary({
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    file.text().then((text) => {
-      const parts = text.split(/=== Page: /).slice(1)
-      const incoming: Page[] = []
-      const editor = { ...state.editor }
-      parts.forEach((part) => {
-        const [titleLine = '', ...contentLines] = part.split('\n')
-        const title = titleLine.replace(/===$/, '').trim() || (t('newPage') as string) || 'New page'
-        const content = contentLines.join('\n').trim()
-        const id = crypto.randomUUID()
-        incoming.push({ id, title })
-        editor[id] = content
+    file
+      .text()
+      .then((text) => {
+        const parts = text.split(/=== Page: /).slice(1)
+        const incoming: Page[] = []
+        const editor = { ...state.editor }
+        parts.forEach((part) => {
+          const [titleLine = '', ...contentLines] = part.split('\n')
+          const title =
+            titleLine.replace(/===$/, '').trim() ||
+            (t('newPage') as string) ||
+            'New page'
+          const content = contentLines.join('\n').trim()
+          const id = crypto.randomUUID()
+          incoming.push({ id, title })
+          // eslint-disable-next-line security/detect-object-injection
+          editor[id] = content
+        })
+        if (incoming.length > 0) {
+          const nextActs = [...state.acts, ...incoming]
+          const nextId = incoming[0]!.id
+          const next = { acts: nextActs, currentId: nextId, editor }
+          setState(next)
+          setCurrentId(nextId)
+          saveLocal(next)
+          setEditorKey((k) => k + 1)
+          if (fileInputRef.current) fileInputRef.current.value = ''
+        }
       })
-      if (incoming.length > 0) {
-        const nextActs = [...state.acts, ...incoming]
-        const nextId = incoming[0]!.id
-        const next = { acts: nextActs, currentId: nextId, editor }
-        setState(next)
-        setCurrentId(nextId)
-        saveLocal(next)
-        setEditorKey((k) => k + 1)
-        if (fileInputRef.current) fileInputRef.current.value = ''
-      }
-    }).catch((err) => {
-      pushLog('Import local: ' + (err?.message ?? String(err)))
-    })
+      .catch((err) => {
+        pushLog('Import local: ' + (err?.message ?? String(err)))
+      })
   }
 
   // Export
@@ -264,15 +309,14 @@ function LocalSummary({
 
   const editorConfig = liveblocksConfig({
     namespace: `session-summary-local-${current ? current.id : 'global'}`,
-    onError: (e) => pushLog('Lexical error (local): ' + (e?.message ?? String(e))),
+    onError: (e) =>
+      pushLog('Lexical error (local): ' + (e?.message ?? String(e))),
   })
 
   return (
     <div className="flex flex-col h-full" style={{ minHeight: 0 }}>
       {/* Barre d’actions */}
       <TopBar
-        mode="local"
-        statusText="Local (hors‑ligne)"
         onNewPage={() => createPage((t('newPage') as string) || 'New page')}
         pages={state.acts}
         currentId={currentId}
@@ -288,22 +332,28 @@ function LocalSummary({
       {current && (
         <LexicalComposer key={editorKey} initialConfig={editorConfig}>
           {/* Pas de LiveblocksPlugin en local */}
-          <Toolbar className="mb-2">
+          <Toolbar className="mb-2 w-full flex-shrink-0 !opacity-100">
             <Toolbar.SectionInline />
           </Toolbar>
 
           <input
             value={current.title}
             onChange={(e) => handleTitleChange(e.target.value)}
+
             className="text-center font-semibold mb-2 bg-transparent outline-none w-full text-white placeholder-white/50"
               placeholder={(t('untitled' as unknown as Parameters<typeof t>[0]) as string) || 'Sans titre'}
+
           />
 
           <RichTextPlugin
             contentEditable={
               <ContentEditable className="flex-1 min-h-0 p-2 bg-black/20 rounded text-white outline-none" />
             }
-            placeholder={<div className="text-white/50">{(t('startWriting') as string) || 'Commence à écrire...'}</div>}
+            placeholder={
+              <div className="text-white/50">
+                {(t('startWriting') as string) || 'Commence à écrire...'}
+              </div>
+            }
             ErrorBoundary={LexicalErrorBoundary}
           />
 
@@ -325,9 +375,9 @@ function LiveSummary({
   pushLog: (msg: string) => void
   tripToLocal: (reason?: string) => void
 }) {
-  const t = useT()
+  const t = useT() as unknown as (key: string) => string | undefined
   const status = useStatus() // 'initializing' | 'connected' | 'reconnecting' | 'disconnected'
-  const [connectionStatus, setConnectionStatus] = useState(status)
+
 
     // Timeout 3s si pas connecté -> bascule local
     useEffect(() => {
@@ -337,13 +387,13 @@ function LiveSummary({
         pushLog(`Timeout de connexion Liveblocks (status: ${status}) -> bascule en local`)
         tripToLocal(`Timeout Liveblocks (status: ${status})`)
       }
+
     }, 3000)
     return () => clearTimeout(id)
   }, [status, pushLog, tripToLocal])
 
   // Si on passe en disconnected plus tard -> bascule local
   useEffect(() => {
-    setConnectionStatus(status)
     if (status === 'disconnected') {
       pushLog('Liveblocks: disconnected -> bascule en local')
       tripToLocal('Disconnected')
@@ -352,7 +402,9 @@ function LiveSummary({
 
   // Sélecteurs Liveblocks (peuvent être undefined avant init)
   const summary = useStorage((root) => root.summary) as
+
     | { acts?: Page[]; currentId?: string }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     | LiveObject<any>
     | undefined
@@ -379,8 +431,10 @@ function LiveSummary({
   const ensureStorageShape = useMutation(({ storage }) => {
     const s = storage.get('summary')
     if (!(s instanceof LiveObject)) {
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       storage.set('summary', new LiveObject<any>({ acts: [], currentId: undefined }))
+
     }
     const e = storage.get('editor')
     if (!(e instanceof LiveMap)) {
@@ -395,8 +449,10 @@ function LiveSummary({
   const updatePages = useMutation(({ storage }, acts: Page[]) => {
     let s = storage.get('summary')
     if (!(s instanceof LiveObject)) {
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       s = new LiveObject<any>({ acts: [], currentId: undefined })
+
       storage.set('summary', s)
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -406,8 +462,10 @@ function LiveSummary({
   const updateCurrentId = useMutation(({ storage }, id: string | undefined) => {
     let s = storage.get('summary')
     if (!(s instanceof LiveObject)) {
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       s = new LiveObject<any>({ acts: [], currentId: undefined })
+
       storage.set('summary', s)
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -417,14 +475,18 @@ function LiveSummary({
   const deletePage = useMutation(({ storage }, id: string) => {
     let s = storage.get('summary')
     if (!(s instanceof LiveObject)) {
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       s = new LiveObject<any>({ acts: [], currentId: undefined })
+
       storage.set('summary', s)
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const acts = ((s as LiveObject<any>).get('acts') as Page[]) || []
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     ;(s as LiveObject<any>).update({ acts: acts.filter((p: Page) => p.id !== id) })
+
 
     let e = storage.get('editor')
     if (!(e instanceof LiveMap)) {
@@ -434,14 +496,17 @@ function LiveSummary({
     ;(e as LiveMap<string, string>).delete(id)
   }, [])
 
-  const updateEditor = useMutation(({ storage }, data: { id: string; content: string }) => {
-    let e = storage.get('editor')
-    if (!(e instanceof LiveMap)) {
-      e = new LiveMap<string, string>()
-      storage.set('editor', e)
-    }
-    ;(e as LiveMap<string, string>).set(data.id, data.content)
-  }, [])
+  const updateEditor = useMutation(
+    ({ storage }, data: { id: string; content: string }) => {
+      let e = storage.get('editor')
+      if (!(e instanceof LiveMap)) {
+        e = new LiveMap<string, string>()
+        storage.set('editor', e)
+      }
+      ;(e as LiveMap<string, string>).set(data.id, data.content)
+    },
+    [],
+  )
 
   // Bootstrapping pages / currentId
   useEffect(() => {
@@ -485,17 +550,25 @@ function LiveSummary({
 
   const handleTitleChange = (title: string) => {
     if (!pages || !current) return
-    const updatedPages = pages.map((p) => (p.id === current.id ? { ...p, title } : p))
+    const updatedPages = pages.map((p) =>
+      p.id === current.id ? { ...p, title } : p,
+    )
     updatePages(updatedPages)
   }
 
   const handleDelete = () => {
     if (!pages || !current) return
     if (pages.length <= 1) {
-      alert((t('lastPageDeleteError') as string) || 'Impossible de supprimer la dernière page.')
+      alert(
+        (t('lastPageDeleteError') as string) ||
+          'Impossible de supprimer la dernière page.',
+      )
       return
     }
-    if (!confirm((t('deletePageConfirm') as string) || 'Supprimer cette page ?')) return
+    if (
+      !confirm((t('deletePageConfirm') as string) || 'Supprimer cette page ?')
+    )
+      return
     const rest = pages.filter((p) => p.id !== current.id)
     deletePage(current.id)
     updateCurrentId(rest[0]?.id)
@@ -505,32 +578,41 @@ function LiveSummary({
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    file.text().then((text) => {
-      const parts = text.split(/=== Page: /).slice(1)
-      const newPages: Page[] = []
-      parts.forEach((part) => {
-        const [titleLine = '', ...contentLines] = part.split('\n')
-        const title = titleLine.replace(/===$/, '').trim() || (t('newPage') as string) || 'New page'
-        const content = contentLines.join('\n').trim()
-        const id = crypto.randomUUID()
-        newPages.push({ id, title })
-        updateEditor({ id, content })
+    file
+      .text()
+      .then((text) => {
+        const parts = text.split(/=== Page: /).slice(1)
+        const newPages: Page[] = []
+        parts.forEach((part) => {
+          const [titleLine = '', ...contentLines] = part.split('\n')
+          const title =
+            titleLine.replace(/===$/, '').trim() ||
+            (t('newPage') as string) ||
+            'New page'
+          const content = contentLines.join('\n').trim()
+          const id = crypto.randomUUID()
+          newPages.push({ id, title })
+          updateEditor({ id, content })
+        })
+        if (newPages.length > 0) {
+          updatePages([...(pages || []), ...newPages])
+          updateCurrentId(newPages[0]!.id)
+          setEditorKey((k) => k + 1)
+        }
+        if (fileInputRef.current) fileInputRef.current.value = ''
       })
-      if (newPages.length > 0) {
-        updatePages([...(pages || []), ...newPages])
-        updateCurrentId(newPages[0]!.id)
-        setEditorKey((k) => k + 1)
-      }
-      if (fileInputRef.current) fileInputRef.current.value = ''
-    }).catch((err) => {
-      pushLog('Import live: ' + (err?.message ?? String(err)))
-    })
+      .catch((err) => {
+        pushLog('Import live: ' + (err?.message ?? String(err)))
+      })
   }
 
   const handleExport = () => {
     if (!pages) return
     const txt = pages
-      .map((p) => `=== Page: ${p.title} ===\n${editorMap instanceof LiveMap ? editorMap.get(p.id) || '' : ''}\n`)
+      .map(
+        (p) =>
+          `=== Page: ${p.title} ===\n${editorMap instanceof LiveMap ? editorMap.get(p.id) || '' : ''}\n`,
+      )
       .join('\n')
     const blob = new Blob([txt], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
@@ -541,26 +623,22 @@ function LiveSummary({
     URL.revokeObjectURL(url)
   }
 
-  const initialText = current ? (editorMap instanceof LiveMap ? editorMap.get(current.id) || '' : '') : ''
+  const initialText = current
+    ? editorMap instanceof LiveMap
+      ? editorMap.get(current.id) || ''
+      : ''
+    : ''
 
   const editorConfig = liveblocksConfig({
     namespace: `session-summary-${current ? current.id : 'global'}`,
-    onError: (e) => pushLog('Lexical error (live): ' + (e?.message ?? String(e))),
+    onError: (e) =>
+      pushLog('Lexical error (live): ' + (e?.message ?? String(e))),
   })
-
-  const statusText =
-    connectionStatus === 'connected'
-      ? 'En ligne'
-      : connectionStatus === 'reconnecting'
-      ? 'Reconnexion…'
-      : 'Connexion…'
 
   return (
     <div className="flex flex-col h-full" style={{ minHeight: 0 }}>
       {/* Barre d’actions */}
       <TopBar
-        mode={connectionStatus === 'connected' ? 'live' : 'reconnecting'}
-        statusText={statusText}
         onNewPage={() => createPage((t('newPage') as string) || 'New page')}
         pages={pages || []}
         currentId={currentId}
@@ -579,22 +657,28 @@ function LiveSummary({
       {current && (
         <LexicalComposer key={editorKey} initialConfig={editorConfig}>
           <LiveblocksPlugin />
-          <Toolbar className="mb-2">
+          <Toolbar className="mb-2 w-full flex-shrink-0 !opacity-100">
             <Toolbar.SectionInline />
           </Toolbar>
 
           <input
             value={current.title}
             onChange={(e) => handleTitleChange(e.target.value)}
+
             className="text-center font-semibold mb-2 bg-transparent outline-none w-full text-white placeholder-white/50"
               placeholder={(t('untitled' as unknown as Parameters<typeof t>[0]) as string) || 'Sans titre'}
+
           />
 
           <RichTextPlugin
             contentEditable={
               <ContentEditable className="flex-1 min-h-0 p-2 bg-black/20 rounded text-white outline-none" />
             }
-            placeholder={<div className="text-white/50">{(t('startWriting') as string) || 'Commence à écrire...'}</div>}
+            placeholder={
+              <div className="text-white/50">
+                {(t('startWriting') as string) || 'Commence à écrire...'}
+              </div>
+            }
             ErrorBoundary={LexicalErrorBoundary}
           />
 
@@ -613,8 +697,6 @@ function LiveSummary({
 
 // ===================== Barre du haut commune (badge + actions + file menu) =====================
 function TopBar({
-  mode, // 'live' | 'reconnecting' | 'local'
-  statusText,
   onNewPage,
   pages,
   currentId,
@@ -624,6 +706,7 @@ function TopBar({
   onExport,
   onClose,
   fileInputRef,
+
   }: {
     mode: 'live' | 'reconnecting' | 'local'
     statusText: string
@@ -638,6 +721,7 @@ function TopBar({
     fileInputRef: React.RefObject<HTMLInputElement | null>
   }) {
   const t = useT()
+
   const [showFileMenu, setShowFileMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const btnRef = useRef<HTMLButtonElement>(null)
@@ -645,7 +729,10 @@ function TopBar({
   useEffect(() => {
     if (!showFileMenu) return
     const onDown = (e: MouseEvent) => {
-      if (!menuRef.current?.contains(e.target as Node) && !btnRef.current?.contains(e.target as Node)) {
+      if (
+        !menuRef.current?.contains(e.target as Node) &&
+        !btnRef.current?.contains(e.target as Node)
+      ) {
         setShowFileMenu(false)
       }
     }
@@ -656,8 +743,12 @@ function TopBar({
   // [CHANGEMENT VISUEL] — suppression du badge dans la TopBar (il masquait des éléments)
 
   return (
-    <div className="flex items-center gap-2 mb-3 relative justify-end">
-      <button onClick={onNewPage} className="bg-black/40 text-white px-2 py-1 rounded text-sm" title={t('newPage') as string}>
+    <div className="mb-3 flex w-full items-center justify-end gap-2 relative flex-shrink-0">
+      <button
+        onClick={onNewPage}
+        className="bg-black/40 text-white px-2 py-1 rounded text-sm"
+        title={t('newPage') as string}
+      >
         +
       </button>
 
@@ -673,7 +764,9 @@ function TopBar({
         ))}
       </select>
 
+
       <button onClick={onDelete} className="bg-black/40 text-white px-2 py-1 rounded text-sm" title={t('deletePage' as unknown as Parameters<typeof t>[0]) as string}>
+
         🗑️
       </button>
 
@@ -687,19 +780,35 @@ function TopBar({
           📁
         </button>
         {showFileMenu && (
-          <div ref={menuRef} className="absolute right-0 mt-1 z-40 bg-black/80 rounded shadow p-1 w-40 flex flex-col">
+          <div
+            ref={menuRef}
+            className="absolute right-0 mt-1 z-40 bg-black/80 rounded shadow p-1 w-40 flex flex-col"
+          >
             <label className="px-2 py-1 hover:bg-white/10 cursor-pointer text-sm text-white">
               {t('importBtn') as string}
-              <input ref={fileInputRef} type="file" accept="text/plain" onChange={onImport} className="hidden" />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="text/plain"
+                onChange={onImport}
+                className="hidden"
+              />
             </label>
-            <button onClick={onExport} className="text-left px-2 py-1 hover:bg-white/10 text-sm text-white">
+            <button
+              onClick={onExport}
+              className="text-left px-2 py-1 hover:bg-white/10 text-sm text-white"
+            >
               {t('exportBtn') as string}
             </button>
           </div>
         )}
       </div>
 
-      <button onClick={onClose} className="text-white/80 hover:text-red-500 text-xl" title={t('close') as string}>
+      <button
+        onClick={onClose}
+        className="text-white/80 hover:text-red-500 text-xl"
+        title={t('close') as string}
+      >
         ✕
       </button>
     </div>
@@ -711,7 +820,7 @@ function LogsPanel({
   logs,
   clear,
   statusText, // [CHANGEMENT VISUEL] — nouveau libellé passé depuis le parent
-  isLocal,     // [CHANGEMENT VISUEL] — pour la couleur
+  isLocal, // [CHANGEMENT VISUEL] — pour la couleur
 }: {
   logs: string[]
   clear: () => void
@@ -733,7 +842,9 @@ function LogsPanel({
       </button>
 
       {/* Badge déplacé ici, collé au bouton logs */}
-      <span className={`inline-flex items-center ${badgeColor} text-white text-xs px-2 py-1 rounded`}>
+      <span
+        className={`inline-flex items-center ${badgeColor} text-white text-xs px-2 py-1 rounded`}
+      >
         ● {statusText}
       </span>
 
@@ -741,7 +852,10 @@ function LogsPanel({
         <div className="absolute right-0 mt-10 w-[420px] max-h-[220px] overflow-auto bg-black/80 text-white text-xs rounded p-2 border border-white/10">
           <div className="flex items-center justify-between mb-2">
             <b>Logs de synchro</b>
-            <button onClick={clear} className="text-white/70 hover:text-white underline">
+            <button
+              onClick={clear}
+              className="text-white/70 hover:text-white underline"
+            >
               Effacer
             </button>
           </div>
@@ -768,15 +882,22 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
   const [logs, setLogs] = useState<string[]>([])
 
   const pushLog = useCallback((msg: string) => {
-    setLogs((prev) => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`].slice(-200))
+    setLogs((prev) =>
+      [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`].slice(-200),
+    )
   }, [])
 
-  const tripToLocal = useCallback((reason?: string) => {
-    if (!isLocal) {
-      pushLog('Bascule en mode LOCAL' + (reason ? ` (raison: ${reason})` : ''))
-      setIsLocal(true)
-    }
-  }, [isLocal, pushLog])
+  const tripToLocal = useCallback(
+    (reason?: string) => {
+      if (!isLocal) {
+        pushLog(
+          'Bascule en mode LOCAL' + (reason ? ` (raison: ${reason})` : ''),
+        )
+        setIsLocal(true)
+      }
+    },
+    [isLocal, pushLog],
+  )
 
   return (
     <div
@@ -787,11 +908,18 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
       {!isLocal ? (
         <ErrorBoundary
           onTrip={(err) => {
-            pushLog('Exception Liveblocks: ' + (err instanceof Error ? err.message : String(err)))
+            pushLog(
+              'Exception Liveblocks: ' +
+                (err instanceof Error ? err.message : String(err)),
+            )
             tripToLocal('Exception')
           }}
         >
-          <LiveSummary onClose={onClose} pushLog={pushLog} tripToLocal={tripToLocal} />
+          <LiveSummary
+            onClose={onClose}
+            pushLog={pushLog}
+            tripToLocal={tripToLocal}
+          />
         </ErrorBoundary>
       ) : (
         <LocalSummary onClose={onClose} pushLog={pushLog} />
