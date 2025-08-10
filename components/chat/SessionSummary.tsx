@@ -709,7 +709,7 @@ function LogsPanel({
 
   return (
     // [CHANGEMENT VISUEL] — même position qu’avant, mais on ajoute le badge juste à côté
-    <div className="absolute right-3 top-16 flex items-center gap-2">
+    <div className="absolute right-3 top-16 z-50 flex items-center gap-2">
       <button
         onClick={() => setOpen((o) => !o)}
         className="bg-black/50 text-white text-xs px-2 py-1 rounded"
@@ -724,25 +724,31 @@ function LogsPanel({
       </span>
 
       {open && (
-        <div className="absolute right-0 mt-10 w-[420px] max-h-[220px] overflow-auto bg-black/80 text-white text-xs rounded p-2 border border-white/10">
-          <div className="flex items-center justify-between mb-2">
-            <b>Logs de synchro</b>
-            <button onClick={clear} className="text-white/70 hover:text-white underline">
-              Effacer
-            </button>
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setOpen(false)}
+          />
+          <div className="absolute right-0 top-full mt-2 w-[420px] max-h-[220px] overflow-auto bg-black/80 text-white text-xs rounded p-2 border border-white/10">
+            <div className="flex items-center justify-between mb-2">
+              <b>Logs de synchro</b>
+              <button onClick={clear} className="text-white/70 hover:text-white underline">
+                Effacer
+              </button>
+            </div>
+            {logs.length === 0 ? (
+              <div className="text-white/60">Aucun log pour le moment.</div>
+            ) : (
+              <ul className="space-y-1">
+                {logs.map((l, i) => (
+                  <li key={i} className="whitespace-pre-wrap">
+                    • {l}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
-          {logs.length === 0 ? (
-            <div className="text-white/60">Aucun log pour le moment.</div>
-          ) : (
-            <ul className="space-y-1">
-              {logs.map((l, i) => (
-                <li key={i} className="whitespace-pre-wrap">
-                  • {l}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        </>
       )}
     </div>
   )
