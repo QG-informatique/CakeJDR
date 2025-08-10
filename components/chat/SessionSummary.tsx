@@ -226,6 +226,7 @@ function LocalSummary({
         const content = contentLines.join('\n').trim()
         const id = crypto.randomUUID()
         incoming.push({ id, title })
+        // eslint-disable-next-line security/detect-object-injection
         editor[id] = content
       })
       if (incoming.length > 0) {
@@ -612,7 +613,7 @@ function TopBar({
   onImport: (e: React.ChangeEvent<HTMLInputElement>) => void
   onExport: () => void
   onClose: () => void
-  fileInputRef: React.RefObject<HTMLInputElement>
+  fileInputRef: React.MutableRefObject<HTMLInputElement | null>
 }) {
   const t = useT()
   const [showFileMenu, setShowFileMenu] = useState(false)
