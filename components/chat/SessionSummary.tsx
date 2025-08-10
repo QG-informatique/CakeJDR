@@ -47,11 +47,6 @@ interface Props {
   onClose: () => void
 }
 
-interface ErrorBoundaryProps {
-  onTrip: (err?: unknown) => void
-  children: React.ReactNode
-}
-
 
 // ===================== Plugins Lexical communs =====================
 function InitialContentPlugin({ text }: { text: string }) {
@@ -702,20 +697,17 @@ function TopBar({
   onExport,
   onClose,
   fileInputRef,
-
-  }: {
-    mode: 'live' | 'reconnecting' | 'local'
-    statusText: string
-    onNewPage: () => void
-    pages: Page[]
-    currentId?: string
-    onSwitch: (id: string) => void
-    onDelete: () => void
-    onImport: (e: React.ChangeEvent<HTMLInputElement>) => void
-    onExport: () => void
-    onClose: () => void
-    fileInputRef: React.RefObject<HTMLInputElement | null>
-  }) {
+}: {
+  onNewPage: () => void
+  pages: Page[]
+  currentId?: string
+  onSwitch: (id: string) => void
+  onDelete: () => void
+  onImport: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onExport: () => void
+  onClose: () => void
+  fileInputRef: React.RefObject<HTMLInputElement | null>
+}) {
   const t = useT()
 
   const [showFileMenu, setShowFileMenu] = useState(false)
