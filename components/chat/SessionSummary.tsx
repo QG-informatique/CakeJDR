@@ -713,7 +713,7 @@ function LogsPanel({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="bg-black/50 text-white text-xs px-2 py-1 rounded"
+        className="relative z-50 bg-black/50 text-white text-xs px-2 py-1 rounded"
         title="Afficher / masquer les logs"
       >
         {open ? 'Masquer logs' : 'Voir logs'}
