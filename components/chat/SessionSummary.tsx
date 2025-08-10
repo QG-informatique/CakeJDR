@@ -79,11 +79,16 @@ function AutoSavePlugin({ onChange }: { onChange: (text: string) => void }) {
 }
 
 // ===================== ErrorBoundary : si la partie "Live" throw, on tombe en local =====================
+type ErrorBoundaryProps = {
+  onTrip: (err?: unknown) => void
+  children: React.ReactNode
+}
+
 class ErrorBoundary extends React.Component<
-  { onTrip: (err?: unknown) => void; children: React.ReactNode },
+  ErrorBoundaryProps,
   { hasError: boolean }
 > {
-  constructor(props: any) {
+  constructor(props: ErrorBoundaryProps) {
     super(props)
     this.state = { hasError: false }
   }
@@ -291,7 +296,7 @@ function LocalSummary({
             value={current.title}
             onChange={(e) => handleTitleChange(e.target.value)}
             className="text-center font-semibold mb-2 bg-transparent outline-none w-full text-white placeholder-white/50"
-            placeholder={(t('untitled') as string) || 'Sans titre'}
+              placeholder={(t('untitled' as unknown as Parameters<typeof t>[0]) as string) || 'Sans titre'}
           />
 
           <RichTextPlugin
@@ -324,11 +329,11 @@ function LiveSummary({
   const status = useStatus() // 'initializing' | 'connected' | 'reconnecting' | 'disconnected'
   const [connectionStatus, setConnectionStatus] = useState(status)
 
-  // Timeout 3s si pas connecté -> bascule local
-  useEffect(() => {
-    if (status === 'connected') return
-    const id = setTimeout(() => {
-      if (status !== 'connected') {
+    // Timeout 3s si pas connecté -> bascule local
+    useEffect(() => {
+      if (status === ('connected' as unknown as typeof status)) return
+      const id = setTimeout(() => {
+        if (status !== ('connected' as unknown as typeof status)) {
         pushLog(`Timeout de connexion Liveblocks (status: ${status}) -> bascule en local`)
         tripToLocal(`Timeout Liveblocks (status: ${status})`)
       }
@@ -348,7 +353,8 @@ function LiveSummary({
   // Sélecteurs Liveblocks (peuvent être undefined avant init)
   const summary = useStorage((root) => root.summary) as
     | { acts?: Page[]; currentId?: string }
-    | LiveObject<{ acts?: Page[]; currentId?: string }>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    | LiveObject<any>
     | undefined
 
   const rawEditor = useStorage((root) => root.editor)
@@ -373,7 +379,8 @@ function LiveSummary({
   const ensureStorageShape = useMutation(({ storage }) => {
     const s = storage.get('summary')
     if (!(s instanceof LiveObject)) {
-      storage.set('summary', new LiveObject<{ acts?: Page[]; currentId?: string }>({ acts: [], currentId: undefined }))
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      storage.set('summary', new LiveObject<any>({ acts: [], currentId: undefined }))
     }
     const e = storage.get('editor')
     if (!(e instanceof LiveMap)) {
@@ -388,28 +395,35 @@ function LiveSummary({
   const updatePages = useMutation(({ storage }, acts: Page[]) => {
     let s = storage.get('summary')
     if (!(s instanceof LiveObject)) {
-      s = new LiveObject<{ acts?: Page[]; currentId?: string }>({ acts: [], currentId: undefined })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      s = new LiveObject<any>({ acts: [], currentId: undefined })
       storage.set('summary', s)
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(s as LiveObject<any>).update({ acts })
   }, [])
 
   const updateCurrentId = useMutation(({ storage }, id: string | undefined) => {
     let s = storage.get('summary')
     if (!(s instanceof LiveObject)) {
-      s = new LiveObject<{ acts?: Page[]; currentId?: string }>({ acts: [], currentId: undefined })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      s = new LiveObject<any>({ acts: [], currentId: undefined })
       storage.set('summary', s)
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(s as LiveObject<any>).update({ currentId: id })
   }, [])
 
   const deletePage = useMutation(({ storage }, id: string) => {
     let s = storage.get('summary')
     if (!(s instanceof LiveObject)) {
-      s = new LiveObject<{ acts?: Page[]; currentId?: string }>({ acts: [], currentId: undefined })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      s = new LiveObject<any>({ acts: [], currentId: undefined })
       storage.set('summary', s)
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const acts = ((s as LiveObject<any>).get('acts') as Page[]) || []
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(s as LiveObject<any>).update({ acts: acts.filter((p: Page) => p.id !== id) })
 
     let e = storage.get('editor')
@@ -573,7 +587,7 @@ function LiveSummary({
             value={current.title}
             onChange={(e) => handleTitleChange(e.target.value)}
             className="text-center font-semibold mb-2 bg-transparent outline-none w-full text-white placeholder-white/50"
-            placeholder={(t('untitled') as string) || 'Sans titre'}
+              placeholder={(t('untitled' as unknown as Parameters<typeof t>[0]) as string) || 'Sans titre'}
           />
 
           <RichTextPlugin
@@ -610,19 +624,19 @@ function TopBar({
   onExport,
   onClose,
   fileInputRef,
-}: {
-  mode: 'live' | 'reconnecting' | 'local'
-  statusText: string
-  onNewPage: () => void
-  pages: Page[]
-  currentId?: string
-  onSwitch: (id: string) => void
-  onDelete: () => void
-  onImport: (e: React.ChangeEvent<HTMLInputElement>) => void
-  onExport: () => void
-  onClose: () => void
-  fileInputRef: React.RefObject<HTMLInputElement>
-}) {
+  }: {
+    mode: 'live' | 'reconnecting' | 'local'
+    statusText: string
+    onNewPage: () => void
+    pages: Page[]
+    currentId?: string
+    onSwitch: (id: string) => void
+    onDelete: () => void
+    onImport: (e: React.ChangeEvent<HTMLInputElement>) => void
+    onExport: () => void
+    onClose: () => void
+    fileInputRef: React.RefObject<HTMLInputElement | null>
+  }) {
   const t = useT()
   const [showFileMenu, setShowFileMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -659,17 +673,17 @@ function TopBar({
         ))}
       </select>
 
-      <button onClick={onDelete} className="bg-black/40 text-white px-2 py-1 rounded text-sm" title={t('deletePage') as string}>
+      <button onClick={onDelete} className="bg-black/40 text-white px-2 py-1 rounded text-sm" title={t('deletePage' as unknown as Parameters<typeof t>[0]) as string}>
         🗑️
       </button>
 
       <div className="relative">
-        <button
-          ref={btnRef}
-          onClick={() => setShowFileMenu((m) => !m)}
-          className="bg-black/40 text-white px-2 py-1 rounded text-sm"
-          title={t('fileMenu') as string}
-        >
+          <button
+            ref={btnRef}
+            onClick={() => setShowFileMenu((m) => !m)}
+            className="bg-black/40 text-white px-2 py-1 rounded text-sm"
+            title={t('fileMenu' as unknown as Parameters<typeof t>[0]) as string}
+          >
           📁
         </button>
         {showFileMenu && (
