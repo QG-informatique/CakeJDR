@@ -40,7 +40,7 @@ import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext
 import { $createParagraphNode, $createTextNode, $getRoot } from 'lexical'
 
 // ===================== Types =====================
-type Page = LsonObject & {
+type Page = {
   id: string
   title: string
 }
@@ -49,6 +49,10 @@ interface Props {
 }
 
 
+type Summary = LsonObject & {
+  acts: Page[]
+  currentId?: string
+}
 
 
 // ===================== Plugins Lexical communs =====================
@@ -387,10 +391,9 @@ function LiveSummary({
   // Sélecteurs Liveblocks (peuvent être undefined avant init)
   const summary = useStorage((root) => root.summary) as
 
-    | { acts?: Page[]; currentId?: string }
+    | Summary
+    | LiveObject<Summary>
 
-
-    | LiveObject<any>
     | undefined
 
   const rawEditor = useStorage((root) => root.editor)
@@ -416,7 +419,10 @@ function LiveSummary({
     const s = storage.get('summary')
     if (!(s instanceof LiveObject)) {
 
-      storage.set('summary', new LiveObject<any>({ acts: [], currentId: undefined }))
+      storage.set(
+        'summary',
+        new LiveObject<Summary>({ acts: [], currentId: undefined }),
+      )
 
     }
     const e = storage.get('editor')
@@ -431,40 +437,32 @@ function LiveSummary({
 
   const updatePages = useMutation(({ storage }, acts: Page[]) => {
 
-    let s = storage.get('summary') as LiveObject<any> | undefined
-    if (!s || !(s instanceof LiveObject)) {
-      s = new LiveObject<any>({ acts: [], currentId: undefined })
+    let s = storage.get('summary')
+    if (!(s instanceof LiveObject)) {
+      s = new LiveObject<Summary>({ acts: [], currentId: undefined })
       storage.set('summary', s)
     }
-    s.update({ acts })
+    ;(s as LiveObject<Summary>).update({ acts })
   }, [])
 
   const updateCurrentId = useMutation(({ storage }, id: string | undefined) => {
-    let s = storage.get('summary') as LiveObject<any> | undefined
-    if (!s || !(s instanceof LiveObject)) {
-      s = new LiveObject<any>({ acts: [], currentId: undefined })
+    let s = storage.get('summary')
+    if (!(s instanceof LiveObject)) {
+      s = new LiveObject<Summary>({ acts: [], currentId: undefined })
       storage.set('summary', s)
     }
-    s.update({ currentId: id })
+    ;(s as LiveObject<Summary>).update({ currentId: id })
   }, [])
 
   const deletePage = useMutation(({ storage }, id: string) => {
-    let s = storage.get('summary') as LiveObject<any> | undefined
-    if (!s || !(s instanceof LiveObject)) {
-      s = new LiveObject<any>({ acts: [], currentId: undefined })
+    let s = storage.get('summary')
+    if (!(s instanceof LiveObject)) {
+      s = new LiveObject<Summary>({ acts: [], currentId: undefined })
       storage.set('summary', s)
     }
-    const acts = (s.get('acts') as Page[]) || []
-    s.update({ acts: acts.filter((p) => p.id !== id) })
+    const acts = (s as LiveObject<Summary>).get('acts') || []
+    ;(s as LiveObject<Summary>).update({ acts: acts.filter((p: Page) => p.id !== id) })
 
-    let e = storage.get('editor') as LiveMap<string, string> | undefined
-    if (!e || !(e instanceof LiveMap)) {
-
-      e = new LiveMap<string, string>()
-      storage.set('editor', e)
-    }
-    e.delete(id)
-  }, [])
 
 
   const updateEditor = useMutation(({ storage }, data: { id: string; content: string }) => {
@@ -688,7 +686,9 @@ function TopBar({
   onClose: () => void
   fileInputRef: React.RefObject<HTMLInputElement | null>
 }) {
-  const t = useT() as (key: string) => string
+
+  const t = useT()
+
 
   const [showFileMenu, setShowFileMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
