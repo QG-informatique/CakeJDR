@@ -263,15 +263,29 @@ function LocalSummary({
       const editor = { ...state.editor }
       parts.forEach((part) => {
         const [titleLine = '', ...contentLines] = part.split('\n')
-        const title = titleLine.replace(/===$/, '').trim() || (t('newPage') as string) || 'New page'
+        const title =
+          titleLine.replace(/===$/, '').trim() ||
+          (t('newPage') as string) ||
+          'New page'
         const content = contentLines.join('\n').trim()
         const id = crypto.randomUUID()
         incoming.push({ id, title })
         // eslint-disable-next-line security/detect-object-injection
         editor[id] = content
-
       })
+
+      if (incoming.length > 0) {
+        const acts = [...state.acts, ...incoming]
+        const nextCurrentId = incoming[0]!.id
+        const next = { acts, currentId: nextCurrentId, editor }
+        setState(next)
+        setCurrentId(nextCurrentId)
+        saveLocal(next)
+        setEditorKey((k) => k + 1)
+      }
+    })
   }
+
 
   // Export
   const handleExport = () => {
