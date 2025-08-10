@@ -7,6 +7,7 @@
 //
 // ───────────────────────────────────────────────────────────────────────────────────────────
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import React, {
@@ -46,7 +47,6 @@ interface Props {
   onClose: () => void
 }
 
-type SummaryData = { acts?: Page[]; currentId?: string }
 
 // ===================== Plugins Lexical communs =====================
 function InitialContentPlugin({ text }: { text: string }) {
@@ -131,7 +131,7 @@ function LocalSummary({
   onClose: () => void
   pushLog: (msg: string) => void
 }) {
-  const t = useT()
+  const t = useT() as (key: string) => string
   const [state, setState] = useState(loadLocal())
   const [currentId, setCurrentId] = useState<string | undefined>(state.currentId)
   const [editorKey, setEditorKey] = useState(0)
@@ -321,8 +321,8 @@ function LiveSummary({
   pushLog: (msg: string) => void
   tripToLocal: (reason?: string) => void
 }) {
-  const t = useT()
-  const status = useStatus() // 'initializing' | 'connected' | 'reconnecting' | 'disconnected'
+  const t = useT() as (key: string) => string
+  const status = useStatus() as string // 'initializing' | 'connected' | 'reconnecting' | 'disconnected'
 
   // Timeout 3s si pas connecté -> bascule local
   useEffect(() => {
@@ -347,7 +347,7 @@ function LiveSummary({
   // Sélecteurs Liveblocks (peuvent être undefined avant init)
   const summary = useStorage((root) => root.summary) as
     | { acts?: Page[]; currentId?: string }
-    | LiveObject<{ acts?: Page[]; currentId?: string }>
+    | LiveObject<any>
     | undefined
 
   const rawEditor = useStorage((root) => root.editor)
@@ -372,7 +372,7 @@ function LiveSummary({
   const ensureStorageShape = useMutation(({ storage }) => {
     const s = storage.get('summary')
     if (!(s instanceof LiveObject)) {
-      storage.set('summary', new LiveObject<{ acts?: Page[]; currentId?: string }>({ acts: [], currentId: undefined }))
+      storage.set('summary', new LiveObject<any>({ acts: [], currentId: undefined }))
     }
     const e = storage.get('editor')
     if (!(e instanceof LiveMap)) {
@@ -385,27 +385,27 @@ function LiveSummary({
   }, [ensureStorageShape])
 
   const updatePages = useMutation(({ storage }, acts: Page[]) => {
-    let s = storage.get('summary') as LiveObject<SummaryData> | undefined
+    let s = storage.get('summary') as LiveObject<any> | undefined
     if (!s || !(s instanceof LiveObject)) {
-      s = new LiveObject<SummaryData>({ acts: [], currentId: undefined })
+      s = new LiveObject<any>({ acts: [], currentId: undefined })
       storage.set('summary', s)
     }
     s.update({ acts })
   }, [])
 
   const updateCurrentId = useMutation(({ storage }, id: string | undefined) => {
-    let s = storage.get('summary') as LiveObject<SummaryData> | undefined
+    let s = storage.get('summary') as LiveObject<any> | undefined
     if (!s || !(s instanceof LiveObject)) {
-      s = new LiveObject<SummaryData>({ acts: [], currentId: undefined })
+      s = new LiveObject<any>({ acts: [], currentId: undefined })
       storage.set('summary', s)
     }
     s.update({ currentId: id })
   }, [])
 
   const deletePage = useMutation(({ storage }, id: string) => {
-    let s = storage.get('summary') as LiveObject<SummaryData> | undefined
+    let s = storage.get('summary') as LiveObject<any> | undefined
     if (!s || !(s instanceof LiveObject)) {
-      s = new LiveObject<SummaryData>({ acts: [], currentId: undefined })
+      s = new LiveObject<any>({ acts: [], currentId: undefined })
       storage.set('summary', s)
     }
     const acts = (s.get('acts') as Page[]) || []
@@ -607,9 +607,9 @@ function TopBar({
   onImport: (e: React.ChangeEvent<HTMLInputElement>) => void
   onExport: () => void
   onClose: () => void
-  fileInputRef: React.RefObject<HTMLInputElement>
+  fileInputRef: React.RefObject<HTMLInputElement | null>
 }) {
-  const t = useT()
+  const t = useT() as (key: string) => string
   const [showFileMenu, setShowFileMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const btnRef = useRef<HTMLButtonElement>(null)
