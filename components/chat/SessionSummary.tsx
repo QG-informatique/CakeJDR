@@ -46,6 +46,8 @@ interface Props {
   onClose: () => void
 }
 
+type SummaryData = { acts?: Page[]; currentId?: string }
+
 // ===================== Plugins Lexical communs =====================
 function InitialContentPlugin({ text }: { text: string }) {
   const [editor] = useLexicalComposerContext()
@@ -83,7 +85,7 @@ class ErrorBoundary extends React.Component<
   { onTrip: (err?: unknown) => void; children: React.ReactNode },
   { hasError: boolean }
 > {
-  constructor(props: any) {
+  constructor(props: { onTrip: (err?: unknown) => void; children: React.ReactNode }) {
     super(props)
     this.state = { hasError: false }
   }
@@ -224,6 +226,7 @@ function LocalSummary({
         const content = contentLines.join('\n').trim()
         const id = crypto.randomUUID()
         incoming.push({ id, title })
+        // eslint-disable-next-line security/detect-object-injection
         editor[id] = content
       })
       if (incoming.length > 0) {
@@ -266,8 +269,6 @@ function LocalSummary({
     <div className="flex flex-col h-full" style={{ minHeight: 0 }}>
       {/* Barre d’actions */}
       <TopBar
-        mode="local"
-        statusText="Local (hors‑ligne)"
         onNewPage={() => createPage((t('newPage') as string) || 'New page')}
         pages={state.acts}
         currentId={currentId}
@@ -322,7 +323,6 @@ function LiveSummary({
 }) {
   const t = useT()
   const status = useStatus() // 'initializing' | 'connected' | 'reconnecting' | 'disconnected'
-  const [connectionStatus, setConnectionStatus] = useState(status)
 
   // Timeout 3s si pas connecté -> bascule local
   useEffect(() => {
@@ -338,7 +338,6 @@ function LiveSummary({
 
   // Si on passe en disconnected plus tard -> bascule local
   useEffect(() => {
-    setConnectionStatus(status)
     if (status === 'disconnected') {
       pushLog('Liveblocks: disconnected -> bascule en local')
       tripToLocal('Disconnected')
@@ -386,47 +385,47 @@ function LiveSummary({
   }, [ensureStorageShape])
 
   const updatePages = useMutation(({ storage }, acts: Page[]) => {
-    let s = storage.get('summary')
-    if (!(s instanceof LiveObject)) {
-      s = new LiveObject<{ acts?: Page[]; currentId?: string }>({ acts: [], currentId: undefined })
+    let s = storage.get('summary') as LiveObject<SummaryData> | undefined
+    if (!s || !(s instanceof LiveObject)) {
+      s = new LiveObject<SummaryData>({ acts: [], currentId: undefined })
       storage.set('summary', s)
     }
-    ;(s as LiveObject<any>).update({ acts })
+    s.update({ acts })
   }, [])
 
   const updateCurrentId = useMutation(({ storage }, id: string | undefined) => {
-    let s = storage.get('summary')
-    if (!(s instanceof LiveObject)) {
-      s = new LiveObject<{ acts?: Page[]; currentId?: string }>({ acts: [], currentId: undefined })
+    let s = storage.get('summary') as LiveObject<SummaryData> | undefined
+    if (!s || !(s instanceof LiveObject)) {
+      s = new LiveObject<SummaryData>({ acts: [], currentId: undefined })
       storage.set('summary', s)
     }
-    ;(s as LiveObject<any>).update({ currentId: id })
+    s.update({ currentId: id })
   }, [])
 
   const deletePage = useMutation(({ storage }, id: string) => {
-    let s = storage.get('summary')
-    if (!(s instanceof LiveObject)) {
-      s = new LiveObject<{ acts?: Page[]; currentId?: string }>({ acts: [], currentId: undefined })
+    let s = storage.get('summary') as LiveObject<SummaryData> | undefined
+    if (!s || !(s instanceof LiveObject)) {
+      s = new LiveObject<SummaryData>({ acts: [], currentId: undefined })
       storage.set('summary', s)
     }
-    const acts = ((s as LiveObject<any>).get('acts') as Page[]) || []
-    ;(s as LiveObject<any>).update({ acts: acts.filter((p: Page) => p.id !== id) })
+    const acts = (s.get('acts') as Page[]) || []
+    s.update({ acts: acts.filter((p) => p.id !== id) })
 
-    let e = storage.get('editor')
-    if (!(e instanceof LiveMap)) {
+    let e = storage.get('editor') as LiveMap<string, string> | undefined
+    if (!e || !(e instanceof LiveMap)) {
       e = new LiveMap<string, string>()
       storage.set('editor', e)
     }
-    ;(e as LiveMap<string, string>).delete(id)
+    e.delete(id)
   }, [])
 
   const updateEditor = useMutation(({ storage }, data: { id: string; content: string }) => {
-    let e = storage.get('editor')
-    if (!(e instanceof LiveMap)) {
+    let e = storage.get('editor') as LiveMap<string, string> | undefined
+    if (!e || !(e instanceof LiveMap)) {
       e = new LiveMap<string, string>()
       storage.set('editor', e)
     }
-    ;(e as LiveMap<string, string>).set(data.id, data.content)
+    e.set(data.id, data.content)
   }, [])
 
   // Bootstrapping pages / currentId
@@ -534,22 +533,13 @@ function LiveSummary({
     onError: (e) => pushLog('Lexical error (live): ' + (e?.message ?? String(e))),
   })
 
-  const statusText =
-    connectionStatus === 'connected'
-      ? 'En ligne'
-      : connectionStatus === 'reconnecting'
-      ? 'Reconnexion…'
-      : 'Connexion…'
-
-  return (
-    <div className="flex flex-col h-full" style={{ minHeight: 0 }}>
-      {/* Barre d’actions */}
-      <TopBar
-        mode={connectionStatus === 'connected' ? 'live' : 'reconnecting'}
-        statusText={statusText}
-        onNewPage={() => createPage((t('newPage') as string) || 'New page')}
-        pages={pages || []}
-        currentId={currentId}
+    return (
+      <div className="flex flex-col h-full" style={{ minHeight: 0 }}>
+        {/* Barre d’actions */}
+        <TopBar
+          onNewPage={() => createPage((t('newPage') as string) || 'New page')}
+          pages={pages || []}
+          currentId={currentId}
         onSwitch={(id) => {
           updateCurrentId(id)
           setEditorKey((k) => k + 1)
@@ -599,8 +589,6 @@ function LiveSummary({
 
 // ===================== Barre du haut commune (badge + actions + file menu) =====================
 function TopBar({
-  mode, // 'live' | 'reconnecting' | 'local'
-  statusText,
   onNewPage,
   pages,
   currentId,
@@ -611,8 +599,6 @@ function TopBar({
   onClose,
   fileInputRef,
 }: {
-  mode: 'live' | 'reconnecting' | 'local'
-  statusText: string
   onNewPage: () => void
   pages: Page[]
   currentId?: string
