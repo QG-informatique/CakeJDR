@@ -739,7 +739,7 @@ function TopBar({
   // [CHANGEMENT VISUEL] — suppression du badge dans la TopBar (il masquait des éléments)
 
   return (
-    <div className="flex items-center gap-2 mb-3 relative justify-end">
+    <div className="mb-3 flex w-full items-center justify-end gap-2 relative flex-shrink-0">
       <button
         onClick={onNewPage}
         className="bg-black/40 text-white px-2 py-1 rounded text-sm"
