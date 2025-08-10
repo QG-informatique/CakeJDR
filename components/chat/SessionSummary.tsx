@@ -39,7 +39,7 @@ import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext
 import { $createParagraphNode, $createTextNode, $getRoot } from 'lexical'
 
 // ===================== Types =====================
-type Page = LsonObject & {
+type Page = {
   id: string
   title: string
 }
@@ -47,13 +47,9 @@ interface Props {
   onClose: () => void
 }
 
-interface ErrorBoundaryProps {
-  onTrip: (err?: unknown) => void
-  children: React.ReactNode
-}
-
-interface ErrorBoundaryState {
-  hasError: boolean
+type Summary = LsonObject & {
+  acts: Page[]
+  currentId?: string
 }
 
 // ===================== Plugins Lexical communs =====================
@@ -402,11 +398,8 @@ function LiveSummary({
 
   // Sélecteurs Liveblocks (peuvent être undefined avant init)
   const summary = useStorage((root) => root.summary) as
-
-    | { acts?: Page[]; currentId?: string }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    | LiveObject<any>
+    | Summary
+    | LiveObject<Summary>
     | undefined
 
   const rawEditor = useStorage((root) => root.editor)
@@ -431,10 +424,10 @@ function LiveSummary({
   const ensureStorageShape = useMutation(({ storage }) => {
     const s = storage.get('summary')
     if (!(s instanceof LiveObject)) {
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      storage.set('summary', new LiveObject<any>({ acts: [], currentId: undefined }))
-
+      storage.set(
+        'summary',
+        new LiveObject<Summary>({ acts: [], currentId: undefined }),
+      )
     }
     const e = storage.get('editor')
     if (!(e instanceof LiveMap)) {
@@ -449,44 +442,29 @@ function LiveSummary({
   const updatePages = useMutation(({ storage }, acts: Page[]) => {
     let s = storage.get('summary')
     if (!(s instanceof LiveObject)) {
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      s = new LiveObject<any>({ acts: [], currentId: undefined })
-
+      s = new LiveObject<Summary>({ acts: [], currentId: undefined })
       storage.set('summary', s)
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(s as LiveObject<any>).update({ acts })
+    ;(s as LiveObject<Summary>).update({ acts })
   }, [])
 
   const updateCurrentId = useMutation(({ storage }, id: string | undefined) => {
     let s = storage.get('summary')
     if (!(s instanceof LiveObject)) {
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      s = new LiveObject<any>({ acts: [], currentId: undefined })
-
+      s = new LiveObject<Summary>({ acts: [], currentId: undefined })
       storage.set('summary', s)
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(s as LiveObject<any>).update({ currentId: id })
+    ;(s as LiveObject<Summary>).update({ currentId: id })
   }, [])
 
   const deletePage = useMutation(({ storage }, id: string) => {
     let s = storage.get('summary')
     if (!(s instanceof LiveObject)) {
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      s = new LiveObject<any>({ acts: [], currentId: undefined })
-
+      s = new LiveObject<Summary>({ acts: [], currentId: undefined })
       storage.set('summary', s)
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const acts = ((s as LiveObject<any>).get('acts') as Page[]) || []
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-
-    ;(s as LiveObject<any>).update({ acts: acts.filter((p: Page) => p.id !== id) })
-
+    const acts = (s as LiveObject<Summary>).get('acts') || []
+    ;(s as LiveObject<Summary>).update({ acts: acts.filter((p: Page) => p.id !== id) })
 
     let e = storage.get('editor')
     if (!(e instanceof LiveMap)) {
@@ -706,20 +684,17 @@ function TopBar({
   onExport,
   onClose,
   fileInputRef,
-
-  }: {
-    mode: 'live' | 'reconnecting' | 'local'
-    statusText: string
-    onNewPage: () => void
-    pages: Page[]
-    currentId?: string
-    onSwitch: (id: string) => void
-    onDelete: () => void
-    onImport: (e: React.ChangeEvent<HTMLInputElement>) => void
-    onExport: () => void
-    onClose: () => void
-    fileInputRef: React.RefObject<HTMLInputElement | null>
-  }) {
+}: {
+  onNewPage: () => void
+  pages: Page[]
+  currentId?: string
+  onSwitch: (id: string) => void
+  onDelete: () => void
+  onImport: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onExport: () => void
+  onClose: () => void
+  fileInputRef: React.RefObject<HTMLInputElement | null>
+}) {
   const t = useT()
 
   const [showFileMenu, setShowFileMenu] = useState(false)
