@@ -463,9 +463,7 @@ function LiveSummary({
       s = new LiveObject<Summary>({ acts: [], currentId: undefined })
       storage.set('summary', s)
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const acts = ((s as LiveObject<any>).get('acts') as Page[]) || []
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(s as LiveObject<any>).update({ acts: acts.filter((p: Page) => p.id !== id) })
   }, []) // [FIX] accolade + tableau de dépendances manquants
 
