@@ -7,6 +7,7 @@
 //
 // ───────────────────────────────────────────────────────────────────────────────────────────
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import React, {
@@ -47,10 +48,12 @@ interface Props {
   onClose: () => void
 }
 
+
 type Summary = LsonObject & {
   acts: Page[]
   currentId?: string
 }
+
 
 // ===================== Plugins Lexical communs =====================
 function InitialContentPlugin({ text }: { text: string }) {
@@ -96,7 +99,9 @@ class ErrorBoundary extends React.Component<
   { hasError: boolean }
 
 > {
-  constructor(props: ErrorBoundaryProps) {
+
+  constructor(props: { onTrip: (err?: unknown) => void; children: React.ReactNode }) {
+
     super(props)
     this.state = { hasError: false }
   }
@@ -154,7 +159,9 @@ function LocalSummary({
   onClose: () => void
   pushLog: (msg: string) => void
 }) {
-  const t = useT() as unknown as (key: string) => string | undefined
+
+  const t = useT() as (key: string) => string
+
   const [state, setState] = useState(loadLocal())
   const [currentId, setCurrentId] = useState<string | undefined>(
     state.currentId,
@@ -253,37 +260,20 @@ function LocalSummary({
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    file
-      .text()
-      .then((text) => {
-        const parts = text.split(/=== Page: /).slice(1)
-        const incoming: Page[] = []
-        const editor = { ...state.editor }
-        parts.forEach((part) => {
-          const [titleLine = '', ...contentLines] = part.split('\n')
-          const title =
-            titleLine.replace(/===$/, '').trim() ||
-            (t('newPage') as string) ||
-            'New page'
-          const content = contentLines.join('\n').trim()
-          const id = crypto.randomUUID()
-          incoming.push({ id, title })
-          // eslint-disable-next-line security/detect-object-injection
-          editor[id] = content
-        })
-        if (incoming.length > 0) {
-          const nextActs = [...state.acts, ...incoming]
-          const nextId = incoming[0]!.id
-          const next = { acts: nextActs, currentId: nextId, editor }
-          setState(next)
-          setCurrentId(nextId)
-          saveLocal(next)
-          setEditorKey((k) => k + 1)
-          if (fileInputRef.current) fileInputRef.current.value = ''
-        }
-      })
-      .catch((err) => {
-        pushLog('Import local: ' + (err?.message ?? String(err)))
+
+    file.text().then((text) => {
+      const parts = text.split(/=== Page: /).slice(1)
+      const incoming: Page[] = []
+      const editor = { ...state.editor }
+      parts.forEach((part) => {
+        const [titleLine = '', ...contentLines] = part.split('\n')
+        const title = titleLine.replace(/===$/, '').trim() || (t('newPage') as string) || 'New page'
+        const content = contentLines.join('\n').trim()
+        const id = crypto.randomUUID()
+        incoming.push({ id, title })
+        // eslint-disable-next-line security/detect-object-injection
+        editor[id] = content
+
       })
   }
 
@@ -371,8 +361,10 @@ function LiveSummary({
   pushLog: (msg: string) => void
   tripToLocal: (reason?: string) => void
 }) {
-  const t = useT() as unknown as (key: string) => string | undefined
-  const status = useStatus() // 'initializing' | 'connected' | 'reconnecting' | 'disconnected'
+
+  const t = useT() as (key: string) => string
+  const status = useStatus() as string // 'initializing' | 'connected' | 'reconnecting' | 'disconnected'
+
 
 
     // Timeout 3s si pas connecté -> bascule local
@@ -398,8 +390,10 @@ function LiveSummary({
 
   // Sélecteurs Liveblocks (peuvent être undefined avant init)
   const summary = useStorage((root) => root.summary) as
+
     | Summary
     | LiveObject<Summary>
+
     | undefined
 
   const rawEditor = useStorage((root) => root.editor)
@@ -424,10 +418,12 @@ function LiveSummary({
   const ensureStorageShape = useMutation(({ storage }) => {
     const s = storage.get('summary')
     if (!(s instanceof LiveObject)) {
+
       storage.set(
         'summary',
         new LiveObject<Summary>({ acts: [], currentId: undefined }),
       )
+
     }
     const e = storage.get('editor')
     if (!(e instanceof LiveMap)) {
@@ -440,6 +436,7 @@ function LiveSummary({
   }, [ensureStorageShape])
 
   const updatePages = useMutation(({ storage }, acts: Page[]) => {
+
     let s = storage.get('summary')
     if (!(s instanceof LiveObject)) {
       s = new LiveObject<Summary>({ acts: [], currentId: undefined })
@@ -466,25 +463,17 @@ function LiveSummary({
     const acts = (s as LiveObject<Summary>).get('acts') || []
     ;(s as LiveObject<Summary>).update({ acts: acts.filter((p: Page) => p.id !== id) })
 
-    let e = storage.get('editor')
-    if (!(e instanceof LiveMap)) {
+
+
+  const updateEditor = useMutation(({ storage }, data: { id: string; content: string }) => {
+    let e = storage.get('editor') as LiveMap<string, string> | undefined
+    if (!e || !(e instanceof LiveMap)) {
       e = new LiveMap<string, string>()
       storage.set('editor', e)
     }
-    ;(e as LiveMap<string, string>).delete(id)
+    e.set(data.id, data.content)
   }, [])
 
-  const updateEditor = useMutation(
-    ({ storage }, data: { id: string; content: string }) => {
-      let e = storage.get('editor')
-      if (!(e instanceof LiveMap)) {
-        e = new LiveMap<string, string>()
-        storage.set('editor', e)
-      }
-      ;(e as LiveMap<string, string>).set(data.id, data.content)
-    },
-    [],
-  )
 
   // Bootstrapping pages / currentId
   useEffect(() => {
@@ -613,13 +602,14 @@ function LiveSummary({
       pushLog('Lexical error (live): ' + (e?.message ?? String(e))),
   })
 
-  return (
-    <div className="flex flex-col h-full" style={{ minHeight: 0 }}>
-      {/* Barre d’actions */}
-      <TopBar
-        onNewPage={() => createPage((t('newPage') as string) || 'New page')}
-        pages={pages || []}
-        currentId={currentId}
+    return (
+      <div className="flex flex-col h-full" style={{ minHeight: 0 }}>
+        {/* Barre d’actions */}
+        <TopBar
+          onNewPage={() => createPage((t('newPage') as string) || 'New page')}
+          pages={pages || []}
+          currentId={currentId}
+
         onSwitch={(id) => {
           updateCurrentId(id)
           setEditorKey((k) => k + 1)
@@ -684,6 +674,7 @@ function TopBar({
   onExport,
   onClose,
   fileInputRef,
+
 }: {
   onNewPage: () => void
   pages: Page[]
@@ -695,7 +686,9 @@ function TopBar({
   onClose: () => void
   fileInputRef: React.RefObject<HTMLInputElement | null>
 }) {
+
   const t = useT()
+
 
   const [showFileMenu, setShowFileMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -807,10 +800,11 @@ function LogsPanel({
 
   return (
     // [CHANGEMENT VISUEL] — même position qu’avant, mais on ajoute le badge juste à côté
-    <div className="absolute right-3 top-16 flex items-center gap-2">
+    <div className="absolute right-3 top-16 z-50 flex items-center gap-2">
       <button
+        type="button"
         onClick={() => setOpen((o) => !o)}
-        className="bg-black/50 text-white text-xs px-2 py-1 rounded"
+        className="relative z-50 bg-black/50 text-white text-xs px-2 py-1 rounded"
         title="Afficher / masquer les logs"
       >
         {open ? 'Masquer logs' : 'Voir logs'}
@@ -824,28 +818,34 @@ function LogsPanel({
       </span>
 
       {open && (
-        <div className="absolute right-0 mt-10 w-[420px] max-h-[220px] overflow-auto bg-black/80 text-white text-xs rounded p-2 border border-white/10">
-          <div className="flex items-center justify-between mb-2">
-            <b>Logs de synchro</b>
-            <button
-              onClick={clear}
-              className="text-white/70 hover:text-white underline"
-            >
-              Effacer
-            </button>
+
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setOpen(false)}
+            aria-hidden="true"
+          />
+          <div className="absolute right-0 top-full mt-2 z-50 w-[420px] max-h-[220px] overflow-auto bg-black/80 text-white text-xs rounded p-2 border border-white/10">
+            <div className="flex items-center justify-between mb-2">
+              <b>Logs de synchro</b>
+              <button type="button" onClick={clear} className="text-white/70 hover:text-white underline">
+                Effacer
+              </button>
+            </div>
+            {logs.length === 0 ? (
+              <div className="text-white/60">Aucun log pour le moment.</div>
+            ) : (
+              <ul className="space-y-1">
+                {logs.map((l, i) => (
+                  <li key={i} className="whitespace-pre-wrap">
+                    • {l}
+                  </li>
+                ))}
+              </ul>
+            )}
+
           </div>
-          {logs.length === 0 ? (
-            <div className="text-white/60">Aucun log pour le moment.</div>
-          ) : (
-            <ul className="space-y-1">
-              {logs.map((l, i) => (
-                <li key={i} className="whitespace-pre-wrap">
-                  • {l}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        </>
       )}
     </div>
   )
