@@ -252,7 +252,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
           className="bg-black/40 text-white rounded px-2 py-1 text-sm w-32"
         >
           {pages?.map((p) => (
-            <option key={p.id} value={p.id}>
+            <option key={p.id} value={p.id} className="bg-black text-white">
               {p.title}
             </option>
           ))}
@@ -276,7 +276,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
               ref={menuRef}
               className="absolute right-0 mt-1 z-40 bg-black/80 rounded shadow p-1 w-32 flex flex-col"
             >
-              <label className="px-2 py-1 hover:bg-white/10 cursor-pointer text-sm">
+              <label className="px-2 py-1 hover:bg-white/10 cursor-pointer text-sm text-white">
                 {t('importBtn')}
                 <input
                   type="file"
@@ -287,7 +287,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
               </label>
               <button
                 onClick={handleExport}
-                className="text-left px-2 py-1 hover:bg-white/10 text-sm"
+                className="text-left px-2 py-1 hover:bg-white/10 text-sm text-white"
               >
                 {t('exportBtn')}
               </button>
@@ -309,13 +309,13 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
           <input
             value={current.title}
             onChange={(e) => handleTitleChange(e.target.value)}
-            className="text-center font-semibold mb-2 bg-transparent outline-none w-full"
+            className="text-center font-semibold mb-2 bg-transparent outline-none w-full text-white"
           />
           <RichTextPlugin
             contentEditable={
               <ContentEditable className="flex-1 min-h-0 p-2 bg-black/20 rounded text-white outline-none" />
             }
-            placeholder={<div>{t('startWriting')}</div>}
+            placeholder={<div className="text-white/50">{t('startWriting')}</div>}
             ErrorBoundary={LexicalErrorBoundary}
           />
           <LiveblocksPlugin />

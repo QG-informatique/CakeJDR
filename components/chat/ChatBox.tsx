@@ -78,7 +78,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
         className="
           w-full lg:w-1/5
           p-4
-          flex flex-col relative
+          flex flex-col relative h-full min-h-0
           rounded-xl
           border border-white/10
           bg-black/15
