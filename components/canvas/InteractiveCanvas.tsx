@@ -144,12 +144,19 @@ export default function InteractiveCanvas() {
             ctx.lineJoin = 'round'
             ctxRef.current = ctx
           }
+          images.forEach((img) => { // [FIX #1]
+            const x = Math.max(0, Math.min(img.x, rect.width - img.width)) // [FIX #1]
+            const y = Math.max(0, Math.min(img.y, rect.height - img.height)) // [FIX #1]
+            if (x !== img.x || y !== img.y) { // [FIX #1]
+              updateImage({ ...img, x, y }) // [FIX #1]
+            } // [FIX #1]
+          }) // [FIX #1]
         }
       }
       resize()
       window.addEventListener('resize', resize)
       return () => window.removeEventListener('resize', resize)
-    }, [toolsVisible, audioVisible])
+    }, [toolsVisible, audioVisible, images, updateImage]) // [FIX #1]
 
   useEffect(() => {
     const canvas = drawingCanvasRef.current
@@ -246,11 +253,9 @@ export default function InteractiveCanvas() {
 
     for (const file of files) {
       if (!file.type.startsWith('image/')) continue
-      await uploadImageOptimistic(
-        file,
-        e.clientX - rect.left,
-        e.clientY - rect.top,
-      )
+      const dropX = Math.max(100, Math.min(e.clientX - rect.left, rect.width - 100)) // [FIX #1]
+      const dropY = Math.max(100, Math.min(e.clientY - rect.top, rect.height - 100)) // [FIX #1]
+      await uploadImageOptimistic(file, dropX, dropY) // [FIX #1]
     }
   }
 
@@ -343,8 +348,8 @@ export default function InteractiveCanvas() {
           }
         : {
             ...img,
-            width: Math.max(50, x - img.x),
-            height: Math.max(50, y - img.y),
+            width: Math.max(50, Math.min(x - img.x, rect.width - img.x)), // [FIX #1]
+            height: Math.max(50, Math.min(y - img.y, rect.height - img.y)), // [FIX #1]
           }
     updateImage(updated)
   }
@@ -361,13 +366,16 @@ export default function InteractiveCanvas() {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (drawMode !== 'images' || selectedImageId === null) return
     const img = images.find((i) => i.id === selectedImageId)
-    if (!img) return
+    const rect = drawingCanvasRef.current?.getBoundingClientRect() // [FIX #1]
+    if (!img || !rect) return
     const step = 5
     const updates: Partial<ImageData> = {}
+    const maxX = rect.width - img.width // [FIX #1]
+    const maxY = rect.height - img.height // [FIX #1]
     if (e.key === 'ArrowUp') updates.y = Math.max(0, img.y - step)
-    else if (e.key === 'ArrowDown') updates.y = img.y + step
+    else if (e.key === 'ArrowDown') updates.y = Math.min(maxY, img.y + step) // [FIX #1]
     else if (e.key === 'ArrowLeft') updates.x = Math.max(0, img.x - step)
-    else if (e.key === 'ArrowRight') updates.x = img.x + step
+    else if (e.key === 'ArrowRight') updates.x = Math.min(maxX, img.x + step) // [FIX #1]
     if (Object.keys(updates).length) {
       e.preventDefault()
       updateImage({ ...img, ...updates })
