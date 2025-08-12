@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useRef, useState } from 'react'
-import { useBroadcastEvent, useEventListener, useMyPresence } from '@liveblocks/react'
+import { useBroadcastEvent, useEventListener, useMyPresence, useOthers } from '@liveblocks/react'
 import { useRouter, useParams } from 'next/navigation'
 import CharacterSheet, { defaultPerso } from '@/components/sheet/CharacterSheet'
 import DiceRoller from '@/components/dice/DiceRoller'
@@ -25,6 +25,8 @@ export default function HomePageInner() {
   const profile = useProfile()
   const [perso, setPerso] = useState(defaultPerso)
   const [characters, setCharacters] = useState<any[]>([])
+  // [FIX #7] Keep inspected character local to the GM
+  const [inspectingId, setInspectingId] = useState<string | null>(null)
 
   const [showPopup, setShowPopup] = useState(false)
   const [diceType, setDiceType] = useState(6)
@@ -41,24 +43,13 @@ export default function HomePageInner() {
 
   const broadcast = useBroadcastEvent()
   const [, updateMyPresence] = useMyPresence()
+  const others = useOthers()
 
-  // listen for remote dice rolls
+  // listen for remote dice rolls only; sheet selection is now local
   useEventListener((payload: any) => {
     const { event } = payload
     if (event.type === 'dice-roll') {
       setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result, ts: Date.now() }])
-    } else if (event.type === 'gm-select') {
-      const char = event.character || defaultPerso
-      if (!char.id) char.id = crypto.randomUUID()
-      setPerso(char)
-      updateMyPresence({ character: char })
-      setCharacters(prev => {
-        const idx = prev.findIndex(c => String(c.id) === String(char.id))
-        const next = idx !== -1 ? prev.map((c,i)=> i===idx ? char : c) : [...prev, char]
-        localStorage.setItem('jdr_characters', JSON.stringify(next))
-        localStorage.setItem('selectedCharacterId', String(char.id))
-        return next
-      })
     }
   })
 
@@ -133,6 +124,24 @@ export default function HomePageInner() {
     })
   }
 
+  // [FIX #7] GM inspects a character locally
+  const handleInspectChar = (char: any) => {
+    if (!char || !char.id) return
+    setInspectingId(String(char.id))
+    setPerso(char)
+    updateMyPresence({ inspecting: char.id })
+  }
+
+  // [FIX #7] Sync inspected character with live presence updates
+  useEffect(() => {
+    if (!profile?.isMJ || !inspectingId) return
+    const list = Array.from(others)
+    const found = list
+      .map((o) => o.presence?.character as any)
+      .find((c) => c && String(c.id) === inspectingId)
+    if (found) setPerso(found)
+  }, [others, inspectingId, profile?.isMJ])
+
   if (!user) {
     return <Login onLogin={setUser} />
   }
@@ -172,7 +181,8 @@ export default function HomePageInner() {
         <CharacterSheet perso={perso} onUpdate={handleUpdatePerso} chatBoxRef={chatBoxRef} allCharacters={characters} logoOnly>
           {profile?.isMJ && (
             <span className="ml-2">
-              <GMCharacterSelector onSelect={handleUpdatePerso} />
+              {/* [FIX #7] MJ selection doesn't overwrite players */}
+              <GMCharacterSelector onSelect={handleInspectChar} />
             </span>
           )}
         </CharacterSheet>
