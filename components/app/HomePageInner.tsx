@@ -17,6 +17,7 @@ import useDiceHistory from './hooks/useDiceHistory'
 import useEventLog from './hooks/useEventLog'
 import useProfile from './hooks/useProfile'
 import useOnlineStatus from './hooks/useOnlineStatus'
+import { syncServerTime, serverNow } from '@/lib/serverTime'
 import ErrorBoundary from '@/components/misc/ErrorBoundary'
 
 export default function HomePageInner() {
@@ -42,11 +43,15 @@ export default function HomePageInner() {
   const broadcast = useBroadcastEvent()
   const [, updateMyPresence] = useMyPresence()
 
+  useEffect(() => {
+    syncServerTime() // [FIX #2]
+  }, [])
+
   // listen for remote dice rolls
   useEventListener((payload: any) => {
     const { event } = payload
     if (event.type === 'dice-roll') {
-      setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result, ts: Date.now() }])
+      setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result, ts: event.ts }]) // [FIX #2]
     } else if (event.type === 'gm-select') {
       const char = event.character || defaultPerso
       if (!char.id) char.id = crypto.randomUUID()
@@ -150,10 +155,11 @@ export default function HomePageInner() {
   const handlePopupReveal = () => {
     if (!pendingRoll) return
     const { nom, dice, result } = pendingRoll
-    const entry = { player: nom, dice, result, ts: Date.now() }
+    const ts = serverNow() // [FIX #2]
+    const entry = { player: nom, dice, result, ts }
     setHistory((h) => [...h, entry])
-    broadcast({ type: 'dice-roll', player: nom, dice, result } as Liveblocks['RoomEvent'])
-    addEvent({ id: crypto.randomUUID(), kind: 'dice', player: nom, dice, result, ts: entry.ts })
+    broadcast({ type: 'dice-roll', player: nom, dice, result, ts } as Liveblocks['RoomEvent'])
+    addEvent({ id: crypto.randomUUID(), kind: 'dice', player: nom, dice, result, ts })
     setPendingRoll(null)
   }
 

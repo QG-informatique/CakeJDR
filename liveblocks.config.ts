@@ -80,7 +80,7 @@ declare global {
           mode: 'draw' | 'erase'
         }
       | { type: 'chat'; author: string; text: string; isMJ?: boolean }
-      | { type: 'dice-roll'; player: string; dice: number; result: number }
+      | { type: 'dice-roll'; player: string; dice: number; result: number; ts: number } // [FIX #2]
       | { type: 'gm-select'; character: CharacterData }
 
     // Custom metadata set on threads, for useThreads, useCreateThread, etc.

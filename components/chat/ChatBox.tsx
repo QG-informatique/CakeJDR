@@ -1,11 +1,12 @@
 'use client'
-import { FC, RefObject, useRef, useState, useEffect } from 'react'
+import { FC, RefObject, useRef, useState, useEffect, useMemo } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useBroadcastEvent, useRoom } from '@liveblocks/react'
 import useProfile from '../app/hooks/useProfile'
 import SessionSummary from './SessionSummary'
 import DiceStats from './DiceStats'
 import useEventLog from '../app/hooks/useEventLog'
+import { serverNow } from '@/lib/serverTime'
 import { useT } from '@/lib/useT'
 
 type Roll = { player: string, dice: number, result: number }
@@ -19,7 +20,12 @@ interface Props {
 const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
   const room = useRoom()
   const { events, addEvent } = useEventLog(room.id)
-  const sortedEvents = [...events].sort((a, b) => a.ts - b.ts)
+  const sortedEvents = useMemo(() => {
+    return events
+      .map((ev, idx) => ({ ev, idx }))
+      .sort((a, b) => (a.ev.ts === b.ev.ts ? a.idx - b.idx : a.ev.ts - b.ev.ts))
+      .map(({ ev }) => ev)
+  }, [events]) // [FIX #2]
   const [inputValue, setInputValue] = useState('')
   const endRef = useRef<HTMLDivElement>(null)
   const [showSummary, setShowSummary] = useState(false)
@@ -47,9 +53,10 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
     if (inputValue.trim() === '') return
 
     const msg = { author, text: inputValue.trim(), isMJ: profile?.isMJ }
+    const ts = serverNow() // [FIX #2]
 
     broadcast({ type: 'chat', author: msg.author, text: msg.text, isMJ: msg.isMJ } as Liveblocks['RoomEvent'])
-    addEvent({ id: crypto.randomUUID(), kind: 'chat', author: msg.author, text: msg.text, ts: Date.now(), isMJ: msg.isMJ })
+    addEvent({ id: crypto.randomUUID(), kind: 'chat', author: msg.author, text: msg.text, ts, isMJ: msg.isMJ })
     setInputValue('')
   }
 
