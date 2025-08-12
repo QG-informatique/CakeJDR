@@ -436,8 +436,9 @@ function LiveSummary({
   }, [])
 
   useEffect(() => {
+    if (status !== 'connected') return // [FIX #3] éviter mutation avant connexion
     ensureStorageShape()
-  }, [ensureStorageShape])
+  }, [status, ensureStorageShape])
 
   const updatePages = useMutation(({ storage }, acts: Page[]) => {
     let s = storage.get('summary')
@@ -481,7 +482,7 @@ function LiveSummary({
 
   // Bootstrapping pages / currentId
   useEffect(() => {
-    if (!pages) return
+    if (status !== 'connected' || !pages) return // [FIX #3] attendre connexion
     if (pages.length === 0) {
       const title = (t('pageNamePrompt') as string) || 'New page'
       const newPage = { id: crypto.randomUUID(), title }
@@ -494,13 +495,13 @@ function LiveSummary({
       setEditorKey((k) => k + 1)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pages, currentId])
+  }, [status, pages, currentId])
 
   const current = pages?.find((p) => p.id === currentId)
 
   // S’assurer qu’on a un slot texte pour la page courante
   useEffect(() => {
-    if (!current) return
+    if (status !== 'connected' || !current) return // [FIX #3]
     if (editorMap instanceof LiveMap) {
       if (!editorMap.has(current.id)) {
         updateEditor({ id: current.id, content: '' })
@@ -508,10 +509,11 @@ function LiveSummary({
     } else {
       updateEditor({ id: current.id, content: '' })
     }
-  }, [current, editorMap, updateEditor])
+  }, [status, current, editorMap, updateEditor])
 
   // Actions UI
   const createPage = (title: string) => {
+    if (status !== 'connected') return // [FIX #3]
     const newPage = { id: crypto.randomUUID(), title }
     updatePages([...(pages || []), newPage])
     updateEditor({ id: newPage.id, content: '' })
@@ -520,7 +522,7 @@ function LiveSummary({
   }
 
   const handleTitleChange = (title: string) => {
-    if (!pages || !current) return
+    if (status !== 'connected' || !pages || !current) return // [FIX #3]
     const updatedPages = pages.map((p) =>
       p.id === current.id ? { ...p, title } : p,
     )
@@ -528,7 +530,7 @@ function LiveSummary({
   }
 
   const handleDelete = () => {
-    if (!pages || !current) return
+    if (status !== 'connected' || !pages || !current) return // [FIX #3]
     if (pages.length <= 1) {
       alert(
         (t('lastPageDeleteError') as string) ||
@@ -547,6 +549,7 @@ function LiveSummary({
   }
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (status !== 'connected') return // [FIX #3]
     const file = e.target.files?.[0]
     if (!file) return
     file
@@ -578,7 +581,7 @@ function LiveSummary({
   }
 
   const handleExport = () => {
-    if (!pages) return
+    if (status !== 'connected' || !pages) return // [FIX #3]
     const txt = pages
       .map(
         (p) =>
@@ -616,6 +619,7 @@ function LiveSummary({
         pages={pages || []}
         currentId={currentId}
         onSwitch={(id) => {
+          if (status !== 'connected') return // [FIX #3]
           updateCurrentId(id)
           setEditorKey((k) => k + 1)
         }}
@@ -659,7 +663,7 @@ function LiveSummary({
           <InitialContentPlugin text={initialText} />
           <AutoSavePlugin
             onChange={(txt) => {
-              if (!current) return
+              if (!current || status !== 'connected') return // [FIX #3]
               updateEditor({ id: current.id, content: txt })
             }}
           />
