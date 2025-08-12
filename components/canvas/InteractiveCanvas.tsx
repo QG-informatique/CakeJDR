@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useCallback, useMemo } from 'react'
 import {
   useBroadcastEvent,
   useEventListener,
@@ -17,12 +17,28 @@ import MusicPanel from './MusicPanel'
 import ImageItem, { ImageData } from './ImageItem'
 import SideNotes from '@/components/misc/SideNotes'
 
+// [FIX #9] stroke data structure
+type StrokeData = {
+  id: string
+  color: string
+  width: number
+  mode: 'draw' | 'erase'
+  points: Array<{ x: number; y: number }>
+}
+
 export default function InteractiveCanvas() {
   // `images` map is created by RoomProvider but may be null until ready
   const imagesMap = useStorage((root) => root.images)
   const images = imagesMap
     ? (Array.from(imagesMap.values()) as ImageData[])
     : []
+
+  // [FIX #9] persistent strokes list
+  const strokesList = useStorage((root) => root.strokes)
+  const strokes = useMemo(
+    () => (strokesList ? (Array.from(strokesList) as StrokeData[]) : []),
+    [strokesList],
+  )
 
   const musicObj = useStorage((root) => root.music) // peut être null au démarrage
   const storageReady = Boolean(musicObj)
@@ -36,6 +52,9 @@ export default function InteractiveCanvas() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
   const [toolsVisible, setToolsVisible] = useState(false)
   const [audioVisible, setAudioVisible] = useState(false)
+
+  // [FIX #9] keep current stroke points
+  const strokePoints = useRef<Array<{ x: number; y: number }>>([])
 
   const [ytUrl, setYtUrl] = useState('')
   const [ytId, setYtId] = useState('')
@@ -85,6 +104,18 @@ export default function InteractiveCanvas() {
     map.forEach((_v, key) => {
       map.delete(key)
     })
+  }, [])
+
+  // [FIX #9] mutations for strokes
+  const addStroke = useMutation(({ storage }, stroke: StrokeData) => {
+    storage.get('strokes').push(stroke)
+  }, [])
+
+  const clearStrokes = useMutation(({ storage }) => {
+    const list = storage.get('strokes')
+    for (let i = list.length - 1; i >= 0; i--) {
+      list.delete(i)
+    }
   }, [])
 
   // Mutation musique: gère l'état global (id, lecture, volume)
@@ -143,13 +174,14 @@ export default function InteractiveCanvas() {
             ctx.lineCap = 'round'
             ctx.lineJoin = 'round'
             ctxRef.current = ctx
+            redrawStrokes() // [FIX #9] redraw after resize
           }
         }
       }
       resize()
       window.addEventListener('resize', resize)
       return () => window.removeEventListener('resize', resize)
-    }, [toolsVisible, audioVisible])
+    }, [toolsVisible, audioVisible, redrawStrokes])
 
   useEffect(() => {
     const canvas = drawingCanvasRef.current
@@ -165,6 +197,10 @@ export default function InteractiveCanvas() {
       setPenSize((s) => Math.min(Math.max(s, DRAW_MIN), DRAW_MAX))
     }
   }, [drawMode, DRAW_MIN, DRAW_MAX, ERASE_MIN, ERASE_MAX])
+
+  useEffect(() => {
+    redrawStrokes()
+  }, [redrawStrokes]) // [FIX #9]
 
   // Volume: applique seulement au player
   useEffect(() => {
@@ -272,6 +308,7 @@ export default function InteractiveCanvas() {
       const x = e.clientX - rect.left
       const y = e.clientY - rect.top
       setMousePos({ x, y })
+      strokePoints.current = [{ x, y }] // [FIX #9]
       const ctx = ctxRef.current
       if (ctx) {
         ctx.strokeStyle = drawMode === 'erase' ? 'rgba(0,0,0,1)' : color
@@ -313,6 +350,7 @@ export default function InteractiveCanvas() {
     ) {
       ctxRef.current.lineTo(x, y)
       ctxRef.current.stroke()
+      strokePoints.current.push({ x, y }) // [FIX #9]
       const { x: px, y: py } = mousePos
       const now = Date.now()
       if (THROTTLE === 0 || now - lastSend.current > THROTTLE) {
@@ -350,11 +388,26 @@ export default function InteractiveCanvas() {
   }
 
   const handlePointerUp = () => {
+    if (
+      isDrawing &&
+      (drawMode === 'draw' || drawMode === 'erase') &&
+      strokePoints.current.length > 1
+    ) {
+      addStroke({
+        id: crypto.randomUUID(),
+        color,
+        width: brushSize,
+        mode: drawMode,
+        points: strokePoints.current,
+      })
+    }
+    strokePoints.current = [] // [FIX #9]
     setIsDrawing(false)
     dragState.current = { id: null, type: null, offsetX: 0, offsetY: 0 }
   }
 
   const handlePointerLeave = () => {
+    if (isDrawing) handlePointerUp() // [FIX #9]
     updateMyPresence({ cursor: null })
   }
 
@@ -374,8 +427,32 @@ export default function InteractiveCanvas() {
     }
   }
 
+  // [FIX #9] redraw canvas from stored strokes
+  const redrawStrokes = useCallback(() => {
+    const ctx = ctxRef.current
+    const canvas = drawingCanvasRef.current
+    if (!ctx || !canvas) return
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    strokes.forEach((s) => {
+      if (!s.points || s.points.length < 2) return
+      ctx.strokeStyle = s.mode === 'erase' ? 'rgba(0,0,0,1)' : s.color
+      ctx.lineWidth = s.width
+      ctx.globalCompositeOperation =
+        s.mode === 'erase' ? 'destination-out' : 'source-over'
+      ctx.beginPath()
+      ctx.moveTo(s.points[0].x, s.points[0].y)
+      for (let i = 1; i < s.points.length; i++) {
+        // eslint-disable-next-line security/detect-object-injection
+        const p = s.points[i]
+        ctx.lineTo(p.x, p.y)
+      }
+      ctx.stroke()
+    })
+  }, [strokes])
+
   const clearCanvas = (broadcastChange = true) => {
     clearImages()
+    clearStrokes() // [FIX #9]
     const ctx = ctxRef.current
     if (ctx && drawingCanvasRef.current) {
       ctx.clearRect(

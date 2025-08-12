@@ -30,7 +30,9 @@ export function Room({
         initialStorage={{
           characters: new LiveMap(),
           images: new LiveMap(),
-            music: new LiveObject({ id: '', playing: false, volume: 5 }),
+          // [FIX #9] persistent strokes storage
+          strokes: new LiveList([]),
+          music: new LiveObject({ id: '', playing: false, volume: 5 }),
           summary: new LiveObject({ acts: [], currentId: '' }),
           editor: new LiveMap(),
           events: new LiveList([]),

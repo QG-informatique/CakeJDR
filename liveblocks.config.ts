@@ -33,6 +33,15 @@ type Room = {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type CharacterData = any
+
+// [FIX #9] stroke definition for persistent drawings
+type CanvasStroke = {
+  id: string
+  color: string
+  width: number
+  mode: 'draw' | 'erase'
+  points: Array<{ x: number; y: number }>
+}
 declare global {
   interface Liveblocks {
     // Each user's Presence, for useMyPresence, useOthers, etc.
@@ -50,7 +59,9 @@ declare global {
     Storage: {
       characters: LiveMap<string, CharacterData>
       images: LiveMap<string, CanvasImage>
-        music: LiveObject<{ id: string; playing: boolean; volume: number }>
+      // [FIX #9] store persisted strokes
+      strokes: LiveList<CanvasStroke>
+      music: LiveObject<{ id: string; playing: boolean; volume: number }>
       summary: LiveObject<{ acts: Array<{ id: string; title: string }> }>
       editor: LiveMap<string, string>
       events: LiveList<SessionEvent>
