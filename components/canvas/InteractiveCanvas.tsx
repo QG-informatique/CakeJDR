@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useMemo } from 'react'
 import {
   useBroadcastEvent,
   useEventListener,
@@ -17,6 +17,17 @@ import MusicPanel from './MusicPanel'
 import ImageItem, { ImageData } from './ImageItem'
 import SideNotes from '@/components/misc/SideNotes'
 
+// [FIX #5] Persisted stroke information
+type LineSegment = {
+  x1: number
+  y1: number
+  x2: number
+  y2: number
+  color: string
+  width: number
+  mode: ToolMode
+}
+
 export default function InteractiveCanvas() {
   // `images` map is created by RoomProvider but may be null until ready
   const imagesMap = useStorage((root) => root.images)
@@ -26,6 +37,12 @@ export default function InteractiveCanvas() {
 
   const musicObj = useStorage((root) => root.music) // peut être null au démarrage
   const storageReady = Boolean(musicObj)
+
+  const storedLines = useStorage(
+    (root) => root.lines?.toArray() as LineSegment[] | undefined,
+  )
+  const lines = useMemo(() => storedLines ?? [], [storedLines])
+  const linesRef = useRef<LineSegment[]>([]) // [FIX #5]
 
   const [isDrawing, setIsDrawing] = useState(false)
   const [drawMode, setDrawMode] = useState<ToolMode>('images')
@@ -87,6 +104,14 @@ export default function InteractiveCanvas() {
     })
   }, [])
 
+  const addLine = useMutation(({ storage }, line: LineSegment) => {
+    storage.get('lines').push(line)
+  }, [])
+
+  const clearLines = useMutation(({ storage }) => {
+    storage.get('lines').clear()
+  }, []) // [FIX #5]
+
   // Mutation musique: gère l'état global (id, lecture, volume)
   const updateMusic = useMutation(
     (
@@ -129,6 +154,23 @@ export default function InteractiveCanvas() {
   const ERASE_MIN = DRAW_MIN * 4
   const ERASE_MAX = DRAW_MAX * 4
 
+  const redrawLines = () => {
+    const ctx = ctxRef.current
+    const canvas = drawingCanvasRef.current
+    if (!ctx || !canvas) return
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    linesRef.current.forEach((l) => {
+      ctx.strokeStyle = l.mode === 'erase' ? 'rgba(0,0,0,1)' : l.color
+      ctx.lineWidth = l.width
+      ctx.globalCompositeOperation =
+        l.mode === 'erase' ? 'destination-out' : 'source-over'
+      ctx.beginPath()
+      ctx.moveTo(l.x1, l.y1)
+      ctx.lineTo(l.x2, l.y2)
+      ctx.stroke()
+    })
+  } // [FIX #5]
+
     useEffect(() => {
       const resize = () => {
         const canvas = drawingCanvasRef.current
@@ -143,6 +185,7 @@ export default function InteractiveCanvas() {
             ctx.lineCap = 'round'
             ctx.lineJoin = 'round'
             ctxRef.current = ctx
+            redrawLines() // [FIX #5]
           }
         }
       }
@@ -150,6 +193,11 @@ export default function InteractiveCanvas() {
       window.addEventListener('resize', resize)
       return () => window.removeEventListener('resize', resize)
     }, [toolsVisible, audioVisible])
+
+  useEffect(() => {
+    linesRef.current = lines
+    redrawLines()
+  }, [lines]) // [FIX #5]
 
   useEffect(() => {
     const canvas = drawingCanvasRef.current
@@ -327,6 +375,15 @@ export default function InteractiveCanvas() {
           width: brushSize,
           mode: drawMode,
         } as Liveblocks['RoomEvent'])
+        addLine({
+          x1: px,
+          y1: py,
+          x2: x,
+          y2: y,
+          color,
+          width: brushSize,
+          mode: drawMode,
+        }) // [FIX #5]
       }
     }
 
@@ -376,6 +433,7 @@ export default function InteractiveCanvas() {
 
   const clearCanvas = (broadcastChange = true) => {
     clearImages()
+    clearLines() // [FIX #5]
     const ctx = ctxRef.current
     if (ctx && drawingCanvasRef.current) {
       ctx.clearRect(
