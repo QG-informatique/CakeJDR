@@ -89,11 +89,18 @@ export default function MenuAccueil() {
           if (r?.id) {
             setSelectedRoom(r)
             setRoomLoading(true)
-            fetch(`/api/roomstorage?roomId=${encodeURIComponent(r.id)}`)
-              .then((res) => res.json())
-              .then((data) => setRemoteChars(data.characters || {}))
-              .catch(() => setRemoteChars({}))
-              .finally(() => setRoomLoading(false))
+    fetch(`/api/roomstorage?roomId=${encodeURIComponent(r.id)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        const chars: Record<string, Character> = {}
+        for (const key in data.characters || {}) {
+          const c = (data.characters || {})[key]
+          if (c && c.id) chars[String(c.id)] = c as Character
+        }
+        setRemoteChars(chars)
+      })
+      .catch(() => setRemoteChars({}))
+      .finally(() => setRoomLoading(false))
           }
         } catch {}
       }
@@ -194,7 +201,14 @@ export default function MenuAccueil() {
     localStorage.setItem(ROOM_KEY, JSON.stringify(room))
     fetch(`/api/roomstorage?roomId=${encodeURIComponent(room.id)}`)
       .then((res) => res.json())
-      .then((data) => setRemoteChars(data.characters || {}))
+      .then((data) => {
+        const chars: Record<string, Character> = {}
+        for (const key in data.characters || {}) {
+          const c = (data.characters || {})[key]
+          if (c && c.id) chars[String(c.id)] = c as Character
+        }
+        setRemoteChars(chars)
+      })
       .catch(() => setRemoteChars({}))
       .finally(() => setRoomLoading(false))
   }
@@ -303,19 +317,20 @@ export default function MenuAccueil() {
   const handleUploadChar = async (char: Character) => {
     if (!selectedRoom) return
     try {
-      await fetch('/api/roomstorage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          roomId: selectedRoom.id,
-          id: char.id,
-          character: { ...char, updatedAt: Date.now() },
-        }),
-      })
-      setRemoteChars((r) => ({
-        ...r,
-        [String(char.id)]: { ...char, updatedAt: Date.now() },
-      }))
+        await fetch('/api/roomstorage', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            roomId: selectedRoom.id,
+            owner: char.owner,
+            id: char.id,
+            character: { ...char, updatedAt: Date.now() },
+          }),
+        })
+        setRemoteChars((r) => ({
+          ...r,
+          [String(char.id)]: { ...char, updatedAt: Date.now() },
+        }))
       setStatusMessage(t('saveCloud'))
     } catch {
       setStatusMessage(t('saveCloudFail'))
@@ -334,10 +349,11 @@ export default function MenuAccueil() {
   const handleDeleteCloudChar = async (id: string | number) => {
     if (!selectedRoom) return
     if (!window.confirm('Delete from cloud?')) return
+    const char = remoteChars[String(id)]
     await fetch(
-      `/api/roomstorage?roomId=${encodeURIComponent(selectedRoom.id)}&id=${encodeURIComponent(String(id))}`,
+      `/api/roomstorage?roomId=${encodeURIComponent(selectedRoom.id)}&owner=${encodeURIComponent(char.owner)}&id=${encodeURIComponent(String(id))}`,
       { method: 'DELETE' },
-    )
+    ) // [FIX #8]
     setRemoteChars((r) => {
       const next = { ...r }
       delete next[String(id)]
