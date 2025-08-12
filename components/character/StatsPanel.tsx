@@ -79,9 +79,17 @@ const StatsPanel: FC<Props> = ({ edit, perso, onChange }) => {
         </div>
         <div className="flex flex-col items-center ml-4">
           <div className="flex items-center mb-1">
-            <span className="text-sm text-gray-400 mr-2">{t('name')}:</span>
+            <strong className="text-sm mr-2 text-white">{t('name')}:</strong>
             {edit
-              ? <input value={perso.nom || ''} onChange={e => onChange('nom', e.target.value)} className="px-1 py-0.5 rounded text-sm font-semibold bg-white border text-black w-[90px]" />
+              ? (
+                // [FIX #11] Harmonize name field style with other inputs
+                <input
+                  value={perso.nom || ''}
+                  onChange={e => onChange('nom', e.target.value)}
+                  className="px-1 py-0.5 rounded text-sm font-semibold bg-transparent border border-white/20 text-white placeholder-white/50 w-[90px]"
+                  placeholder={t('name')}
+                />
+              )
               : <span className="text-sm font-semibold">{perso.nom}</span>
             }
           </div>
