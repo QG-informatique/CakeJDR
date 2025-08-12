@@ -16,6 +16,8 @@ import { useT } from '@/lib/useT'
 import MusicPanel from './MusicPanel'
 import ImageItem, { ImageData } from './ImageItem'
 import SideNotes from '@/components/misc/SideNotes'
+import { useParams } from 'next/navigation'
+import useProfile from '../app/hooks/useProfile'
 
 export default function InteractiveCanvas() {
   // `images` map is created by RoomProvider but may be null until ready
@@ -26,6 +28,9 @@ export default function InteractiveCanvas() {
 
   const musicObj = useStorage((root) => root.music) // peut être null au démarrage
   const storageReady = Boolean(musicObj)
+  const { id: roomId } = useParams<{ id: string }>()
+  const profile = useProfile()
+  const volumeKey = `yt_volume_${roomId}_${profile?.pseudo ?? 'anon'}` // [FIX #6]
 
   const [isDrawing, setIsDrawing] = useState(false)
   const [drawMode, setDrawMode] = useState<ToolMode>('images')
@@ -43,12 +48,29 @@ export default function InteractiveCanvas() {
   // Lecture: synchro globale
   const [isPlaying, setIsPlaying] = useState(false)
 
-  // Volume: synchro globale (0..100), défaut 5%
+  // Volume local (0..100), défaut 5% [FIX #6]
   const [volume, setVolumeState] = useState(5)
   const setVolume = (v: number) => {
     setVolumeState(v)
-    if (storageReady) updateMusic({ volume: v })
   }
+
+  // Charge et mémorise le volume localement [FIX #6]
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const saved = localStorage.getItem(volumeKey)
+    if (saved !== null) {
+      const v = parseInt(saved, 10)
+      if (!isNaN(v)) setVolumeState(v)
+    } else {
+      localStorage.setItem(volumeKey, String(volume))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [volumeKey])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    localStorage.setItem(volumeKey, String(volume))
+  }, [volume, volumeKey])
 
   const broadcast = useBroadcastEvent()
   const lastSend = useRef(0)
@@ -87,16 +109,16 @@ export default function InteractiveCanvas() {
     })
   }, [])
 
-  // Mutation musique: gère l'état global (id, lecture, volume)
+  // Mutation musique: gère l'état global (id, lecture) [FIX #6]
   const updateMusic = useMutation(
     (
       { storage },
-      updates: { id?: string; playing?: boolean; volume?: number },
+      updates: { id?: string; playing?: boolean },
     ) => {
       storage.get('music').update(updates)
     },
     [],
-  )
+  ) // [FIX #6]
 
   // Events canvas
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -186,8 +208,7 @@ export default function InteractiveCanvas() {
     if (!musicObj) return
     setYtId(musicObj.id)
     setIsPlaying(!!musicObj.playing)
-    setVolumeState(musicObj.volume ?? 5)
-  }, [musicObj])
+  }, [musicObj]) // [FIX #6]
 
   // --------- DnD images: aperçu instantané + swap vers Cloudinary optimisé ---------
 
