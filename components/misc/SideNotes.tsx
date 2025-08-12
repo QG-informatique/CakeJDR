@@ -1,16 +1,25 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { useT } from '@/lib/useT'
-
-const STORAGE_KEY = 'jdr_side_notes'
-const HEIGHT_KEY = 'jdr_side_notes_height'
+// [FIX #4] intégration Liveblocks + fallback local
+import { useRoom, useStorage, useMutation, useStatus } from '@liveblocks/react'
 
 export default function SideNotes() {
+  const room = useRoom()
+  const STORAGE_KEY = `jdr_side_notes_${room.id}`
+  const HEIGHT_KEY = `jdr_side_notes_height_${room.id}`
+
   const [open, setOpen] = useState(false)
   const [notes, setNotes] = useState('')
   const [height, setHeight] = useState<number>(192) // 48*4 = 192px par défaut
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const t = useT()
+
+  const status = useStatus() as string
+  const noteObj = useStorage((root) => root.quickNote) as { text: string } | undefined
+  const updateNote = useMutation(({ storage }, text: string) => {
+    storage.get('quickNote').update({ text })
+  }, [])
 
   // Charger les notes et la hauteur au démarrage
   useEffect(() => {
@@ -18,17 +27,39 @@ export default function SideNotes() {
     if (saved) setNotes(saved)
     const savedHeight = localStorage.getItem(HEIGHT_KEY)
     if (savedHeight) setHeight(Number(savedHeight))
-  }, [])
+  }, [STORAGE_KEY, HEIGHT_KEY])
+
+  // À la connexion, pousser le local vers Liveblocks et aligner l'état
+  useEffect(() => {
+    if (status !== 'connected' || !noteObj) return
+    const local = localStorage.getItem(STORAGE_KEY) ?? ''
+    if (noteObj.text !== local) {
+      updateNote(local)
+    }
+    setNotes(local)
+  }, [status, noteObj, STORAGE_KEY, updateNote])
+
+  // Synchro quand la note Liveblocks change (autres clients)
+  useEffect(() => {
+    if (!noteObj) return
+    if (noteObj.text !== notes) {
+      setNotes(noteObj.text)
+      localStorage.setItem(STORAGE_KEY, noteObj.text)
+    }
+  }, [noteObj, notes, STORAGE_KEY])
 
   // Sauver les notes à chaque modif
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, notes)
-  }, [notes])
+    if (status === 'connected' && noteObj) {
+      updateNote(notes)
+    }
+  }, [notes, status, noteObj, updateNote, STORAGE_KEY])
 
   // Sauver la hauteur à chaque modif
   useEffect(() => {
     localStorage.setItem(HEIGHT_KEY, String(height))
-  }, [height])
+  }, [height, HEIGHT_KEY])
 
   // Gérer la détection de resize (on le fait à la fermeture OU quand on perd le focus)
   const handleResize = () => {
@@ -61,7 +92,10 @@ export default function SideNotes() {
           <div className="flex justify-between items-center mt-2">
             <button
               className="bg-emerald-600/90 hover:bg-emerald-500/90 text-white px-3 py-1 rounded-md text-xs shadow transition"
-              onClick={() => localStorage.setItem(STORAGE_KEY, notes)}
+              onClick={() => {
+                localStorage.setItem(STORAGE_KEY, notes)
+                if (status === 'connected' && noteObj) updateNote(notes)
+              }}
             >{t('save')}</button>
             <button
               className="
