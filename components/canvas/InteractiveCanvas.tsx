@@ -135,10 +135,29 @@ export default function InteractiveCanvas() {
         if (canvas) {
           const rect = canvas.getBoundingClientRect()
           const dpr = window.devicePixelRatio || 1
+
+          // Preserve current drawing before resizing
+          const prevCanvas = document.createElement('canvas')
+          prevCanvas.width = canvas.width
+          prevCanvas.height = canvas.height
+          const prevCtx = prevCanvas.getContext('2d')
+          prevCtx?.drawImage(canvas, 0, 0)
+
           canvas.width = rect.width * dpr
           canvas.height = rect.height * dpr
           const ctx = canvas.getContext('2d')
           if (ctx) {
+            ctx.drawImage(
+              prevCanvas,
+              0,
+              0,
+              prevCanvas.width,
+              prevCanvas.height,
+              0,
+              0,
+              canvas.width,
+              canvas.height,
+            )
             ctx.scale(dpr, dpr)
             ctx.lineCap = 'round'
             ctx.lineJoin = 'round'
