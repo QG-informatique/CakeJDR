@@ -114,6 +114,7 @@ export default function HomePageInner() {
       id = crypto.randomUUID()
       newPerso = { ...newPerso, id }
     }
+    if (!newPerso.owner && profile) newPerso = { ...newPerso, owner: profile.pseudo }
     newPerso = { ...newPerso, updatedAt: Date.now() }
     setPerso(newPerso)
     updateMyPresence({ character: newPerso })
@@ -132,6 +133,29 @@ export default function HomePageInner() {
       return next
     })
   }
+
+  useEffect(() => {
+    if (!profile || profile.pseudo !== perso.owner) return
+    if (!perso.id) return
+    const controller = new AbortController()
+    const timer = setTimeout(() => {
+      fetch('/api/roomstorage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roomId,
+          owner: profile.pseudo,
+          id: perso.id,
+          character: perso,
+        }),
+        signal: controller.signal,
+      }).catch(() => {})
+    }, 500)
+    return () => {
+      clearTimeout(timer)
+      controller.abort()
+    }
+  }, [perso, profile, roomId]) // [FIX #8]
 
   if (!user) {
     return <Login onLogin={setUser} />

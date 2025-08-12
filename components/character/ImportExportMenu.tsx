@@ -40,7 +40,8 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
   useEffect(() => {
     if (!modal) return
     if (modal === 'import' || modal === 'delete') {
-      fetch('/api/blob')
+      const prefix = `FichePerso/${perso.owner || 'unknown'}/`
+      fetch(`/api/blob?prefix=${encodeURIComponent(prefix)}`)
         .then(res => res.json())
         .then(data => setCloudFiles(data.files?.blobs?.map((b:any)=>b.pathname) || []))
         .catch(() => setCloudFiles([]))
@@ -51,7 +52,7 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
         setLocalChars(Array.isArray(list) ? list : [])
       } catch { setLocalChars([]) }
     }
-  }, [modal])
+  }, [modal, perso.owner])
 
   // Export fiche
   const handleExport = () => {
@@ -116,8 +117,9 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
   }
 
   const saveToCloud = async (char: any) => {
-    const slug = (char.nom || char.name || 'sans_nom').replace(/[^a-zA-Z0-9-_]/g, '_')
-    const filename = `FichePerso/${slug}.json`
+    const owner = char.owner || 'unknown'
+    const id = char.id || crypto.randomUUID()
+    const filename = `FichePerso/${owner}/${id}.json` // [FIX #8]
     await fetch(`/api/blob?filename=${encodeURIComponent(filename)}`, {
       method: 'POST',
       body: JSON.stringify(char),

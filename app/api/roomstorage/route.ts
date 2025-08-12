@@ -16,17 +16,17 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { roomId, id, character } = await req.json()
-    if (!roomId || !id || !character) {
+    const { roomId, owner, id, character } = await req.json()
+    if (!roomId || !owner || !id || !character) {
       return NextResponse.json({ error: 'missing data' }, { status: 400 })
     }
     const secret = process.env.LIVEBLOCKS_SECRET_KEY
     if (!secret) return NextResponse.json({ error: 'Liveblocks key missing' }, { status: 500 })
     const client = new Liveblocks({ secret })
     await client.mutateStorage(roomId, ({ root }) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const map = (root as any).get('characters') as LiveMap<string, Lson>
-      map.set(String(id), character as Lson)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const map = (root as any).get('characters') as LiveMap<string, Lson>
+        map.set(`${owner}:${id}`, character as Lson) // [FIX #8]
     })
     return NextResponse.json({ ok: true })
   } catch {
@@ -37,8 +37,9 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const roomId = searchParams.get('roomId')
+  const owner = searchParams.get('owner')
   const id = searchParams.get('id')
-  if (!roomId || !id) {
+  if (!roomId || !owner || !id) {
     return NextResponse.json({ error: 'missing data' }, { status: 400 })
   }
   const secret = process.env.LIVEBLOCKS_SECRET_KEY
@@ -46,9 +47,9 @@ export async function DELETE(req: NextRequest) {
   const client = new Liveblocks({ secret })
   try {
     await client.mutateStorage(roomId, ({ root }) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const map = (root as any).get('characters') as LiveMap<string, Lson>
-      map.delete(String(id))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const map = (root as any).get('characters') as LiveMap<string, Lson>
+        map.delete(`${owner}:${id}`) // [FIX #8]
     })
     return NextResponse.json({ ok: true })
   } catch {
