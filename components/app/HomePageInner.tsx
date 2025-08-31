@@ -46,19 +46,9 @@ export default function HomePageInner() {
   useEventListener((payload: any) => {
     const { event } = payload
     if (event.type === 'dice-roll') {
-      setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result, ts: event.ts ?? Date.now() }])
-    } else if (event.type === 'gm-select') {
-      const char = event.character || defaultPerso
-      if (!char.id) char.id = crypto.randomUUID()
-      setPerso(char)
-      updateMyPresence({ character: char })
-      setCharacters(prev => {
-        const idx = prev.findIndex(c => String(c.id) === String(char.id))
-        const next = idx !== -1 ? prev.map((c,i)=> i===idx ? char : c) : [...prev, char]
-        localStorage.setItem('jdr_characters', JSON.stringify(next))
-        localStorage.setItem('selectedCharacterId', String(char.id))
-        return next
-      })
+
+      setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result, ts: Date.now() }])
+
     }
   })
 
@@ -133,6 +123,11 @@ export default function HomePageInner() {
     })
   }
 
+  const handleGMSelect = (char: any) => {
+    setPerso(char)
+    updateMyPresence({ gmView: { id: char.id, name: char.nom || char.name } })
+  }
+
   if (!user) {
     return <Login onLogin={setUser} />
   }
@@ -180,7 +175,7 @@ export default function HomePageInner() {
         <CharacterSheet perso={perso} onUpdate={handleUpdatePerso} chatBoxRef={chatBoxRef} allCharacters={characters} logoOnly>
           {profile?.isMJ && (
             <span className="ml-2">
-              <GMCharacterSelector onSelect={handleUpdatePerso} />
+              <GMCharacterSelector onSelect={handleGMSelect} />
             </span>
           )}
         </CharacterSheet>
