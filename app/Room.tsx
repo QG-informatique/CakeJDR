@@ -30,7 +30,11 @@ export function Room({
 
   return (
     <LiveblocksProvider authEndpoint="/api/liveblocks-auth" {...devtoolsProps}>
-      <RoomProvider id={id} initialPresence={{}}>
+      <RoomProvider
+        id={id}
+        initialPresence={{}}
+        initialStorage={undefined as unknown as Liveblocks['Storage']}
+      >
         <ClientSideSuspense fallback={<div>Loading…</div>}>
           <StorageInitializer>{children}</StorageInitializer>
         </ClientSideSuspense>
