@@ -7,6 +7,7 @@ import SessionSummary from './SessionSummary'
 import DiceStats from './DiceStats'
 import useEventLog from '../app/hooks/useEventLog'
 import { useT } from '@/lib/useT'
+import { debug } from '@/lib/debug'
 
 type Roll = { player: string, dice: number, result: number }
 
@@ -47,15 +48,13 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
     if (inputValue.trim() === '') return
 
     const msg = { author, text: inputValue.trim(), isMJ: profile?.isMJ }
-    let ts = Date.now()
-    try {
-      const res = await fetch('/api/timestamp')
-      const data = await res.json()
-      if (typeof data.ts === 'number') ts = data.ts
-    } catch {}
 
-    broadcast({ type: 'chat', author: msg.author, text: msg.text, isMJ: msg.isMJ } as Liveblocks['RoomEvent'])
+    const ts = Date.now()
+
+    broadcast({ type: 'chat', author: msg.author, text: msg.text, isMJ: msg.isMJ, ts } as Liveblocks['RoomEvent'])
     addEvent({ id: crypto.randomUUID(), kind: 'chat', author: msg.author, text: msg.text, ts, isMJ: msg.isMJ })
+    debug('chat', msg)
+
     setInputValue('')
   }
 
