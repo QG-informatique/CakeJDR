@@ -64,4 +64,7 @@ const ImageItem: React.FC<Props> = ({ img, drawMode, onPointerDown, onDelete }) 
   </div>
 )
 
-export default ImageItem
+export default React.memo(
+  ImageItem,
+  (prev, next) => prev.img === next.img && prev.drawMode === next.drawMode,
+)
