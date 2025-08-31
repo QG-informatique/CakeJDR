@@ -174,9 +174,11 @@ export default function HomePageInner() {
 
     const ts = Date.now()
     const entry = { player: nom, dice, result, ts }
+
     lastRollTs.current = ts
     setHistory((h) => [...h, entry])
     addEvent({ id: crypto.randomUUID(), kind: 'dice', ...entry })
+
     broadcast({ type: 'dice-roll', player: nom, dice, result, ts } as Liveblocks['RoomEvent'])
     debug('dice-roll send', entry)
     setPendingRoll(null)
