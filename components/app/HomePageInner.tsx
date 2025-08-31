@@ -225,7 +225,9 @@ export default function HomePageInner() {
           <ChatBox
             chatBoxRef={chatBoxRef}
             history={history}
-            author={perso.nom || profile?.pseudo || 'Anonymous'}
+            author={profile?.isMJ
+              ? profile.pseudo
+              : perso.nom || profile?.pseudo || 'Anonymous'}
           />
         </ErrorBoundary>
       </div>
