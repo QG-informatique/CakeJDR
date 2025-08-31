@@ -270,7 +270,7 @@ export default function InteractiveCanvas() {
     return URL.createObjectURL(file)
   }
 
-  async function uploadImageOptimistic(
+  async function uploadImage(
     file: File,
     dropX: number,
     dropY: number,
@@ -286,8 +286,8 @@ export default function InteractiveCanvas() {
       width: 200,
       height: 200,
     }
-    const clamped = clampImage(tempImg, rect)
-    addImage(clamped)
+    const clampedTemp = clampImage(tempImg, rect)
+    setDragImages((prev) => [ ...(prev ?? images), clampedTemp ])
 
     try {
       const form = new FormData()
@@ -306,11 +306,24 @@ export default function InteractiveCanvas() {
         throw new Error('No URL returned by Cloudinary endpoint')
       }
 
-      updateImage({ ...clamped, src: finalUrl })
+      const width: number = data.width ?? clampedTemp.width
+      const height: number = data.height ?? clampedTemp.height
+      const finalImg: ImageData = clampImage(
+        {
+          id: tempId,
+          src: finalUrl,
+          x: dropX - width / 2,
+          y: dropY - height / 2,
+          width,
+          height,
+        },
+        rect,
+      )
+      addImage(finalImg)
     } catch (err) {
-      deleteImage(tempId)
       console.error(err)
     } finally {
+      setDragImages(null)
       URL.revokeObjectURL(localUrl)
     }
   }
@@ -323,7 +336,7 @@ export default function InteractiveCanvas() {
 
     for (const file of files) {
       if (!file.type.startsWith('image/')) continue
-      await uploadImageOptimistic(
+      await uploadImage(
         file,
         e.clientX - rect.left,
         e.clientY - rect.top,
@@ -430,6 +443,7 @@ export default function InteractiveCanvas() {
     setDragImages((prev) =>
       prev ? prev.map((i) => (i.id === id ? clamped : i)) : prev,
     )
+    updateImage(clamped)
   }
 
   const handlePointerUp = () => {
