@@ -1,9 +1,12 @@
+export const runtime = 'nodejs'
 import { NextRequest, NextResponse } from 'next/server'
 import { listRooms, createRoom, deleteRoom, renameRoom } from '@/lib/liveRooms'
+import { debug } from '@/lib/debug'
 
 export async function GET() {
   try {
     const rooms = await listRooms()
+    debug('rooms list', rooms.length)
     return NextResponse.json({ rooms })
   } catch (e) {
     console.error(e)
@@ -18,6 +21,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'missing name' }, { status: 400 })
     }
     const id = await createRoom(name, typeof password === 'string' ? password : undefined)
+    debug('room created', name, id)
     return NextResponse.json({ id })
   } catch (e) {
     const msg = (e as Error).message
@@ -39,6 +43,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'missing id' }, { status: 400 })
     }
     await deleteRoom(id)
+    debug('room deleted', id)
     return NextResponse.json({ ok: true })
   } catch (e) {
     const msg = (e as Error).message
@@ -57,6 +62,7 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'missing data' }, { status: 400 })
     }
     await renameRoom(id, name)
+    debug('room renamed', id, name)
     return NextResponse.json({ ok: true })
   } catch (e) {
     const msg = (e as Error).message
