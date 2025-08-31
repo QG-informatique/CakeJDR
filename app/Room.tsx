@@ -32,7 +32,7 @@ export function Room({
           images: new LiveMap(),
             music: new LiveObject({ id: '', playing: false, volume: 5 }),
 
-          summary: new LiveObject({ acts: [], currentId: '' }),
+          summary: new LiveObject({ acts: new LiveList<{ id: string; title: string }>([]), currentId: '' }),
           quickNote: new LiveObject({ text: '', updatedAt: 0 }),
 
           editor: new LiveMap(),
