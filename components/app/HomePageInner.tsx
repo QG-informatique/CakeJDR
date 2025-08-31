@@ -46,19 +46,27 @@ export default function HomePageInner() {
   useEventListener((payload: any) => {
     const { event } = payload
     if (event.type === 'dice-roll') {
+
       setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result, ts: Date.now() }])
+
     } else if (event.type === 'gm-select') {
       const char = event.character || defaultPerso
       if (!char.id) char.id = crypto.randomUUID()
       setPerso(char)
       updateMyPresence({ character: char })
-      setCharacters(prev => {
-        const idx = prev.findIndex(c => String(c.id) === String(char.id))
-        const next = idx !== -1 ? prev.map((c,i)=> i===idx ? char : c) : [...prev, char]
-        localStorage.setItem('jdr_characters', JSON.stringify(next))
-        localStorage.setItem('selectedCharacterId', String(char.id))
-        return next
-      })
+      if (profile?.isMJ || char.owner === profile?.pseudo) {
+        setCharacters(prev => {
+          const idx = prev.findIndex(
+            c => String(c.id) === String(char.id) && c.owner === char.owner,
+          )
+          const next =
+            idx !== -1 ? prev.map((c,i)=> i===idx ? char : c) : [...prev, char]
+          localStorage.setItem('jdr_characters', JSON.stringify(next))
+          localStorage.setItem('selectedCharacterId', String(char.id))
+          return next
+        })
+      }
+
     }
   })
 
@@ -117,20 +125,27 @@ export default function HomePageInner() {
     newPerso = { ...newPerso, updatedAt: Date.now() }
     setPerso(newPerso)
     updateMyPresence({ character: newPerso })
-    setCharacters((prevChars) => {
-      let found = false
-      const next = prevChars.map((c) => {
-        if (c.id === id) {
-          found = true
-          return { ...c, ...newPerso }
-        }
-        return c
+    if (profile?.isMJ || newPerso.owner === profile?.pseudo) {
+      setCharacters((prevChars) => {
+        let found = false
+        const next = prevChars.map((c) => {
+          if (c.id === id && c.owner === newPerso.owner) {
+            found = true
+            return { ...c, ...newPerso }
+          }
+          return c
+        })
+        if (!found) next.push(newPerso)
+        localStorage.setItem('jdr_characters', JSON.stringify(next))
+        localStorage.setItem('selectedCharacterId', id)
+        return next
       })
-      if (!found) next.push(newPerso)
-      localStorage.setItem('jdr_characters', JSON.stringify(next))
-      localStorage.setItem('selectedCharacterId', id)
-      return next
-    })
+    }
+  }
+
+  const handleGMSelect = (char: any) => {
+    setPerso(char)
+    updateMyPresence({ gmView: { id: char.id, name: char.nom || char.name } })
   }
 
   if (!user) {
@@ -150,11 +165,19 @@ export default function HomePageInner() {
   const handlePopupReveal = () => {
     if (!pendingRoll) return
     const { nom, dice, result } = pendingRoll
-    const entry = { player: nom, dice, result, ts: Date.now() }
-    setHistory((h) => [...h, entry])
-    broadcast({ type: 'dice-roll', player: nom, dice, result } as Liveblocks['RoomEvent'])
-    addEvent({ id: crypto.randomUUID(), kind: 'dice', player: nom, dice, result, ts: entry.ts })
-    setPendingRoll(null)
+    ;(async () => {
+      let ts = Date.now()
+      try {
+        const res = await fetch('/api/timestamp')
+        const data = await res.json()
+        if (typeof data.ts === 'number') ts = data.ts
+      } catch {}
+      const entry = { player: nom, dice, result, ts }
+      setHistory((h) => [...h, entry])
+      broadcast({ type: 'dice-roll', player: nom, dice, result, ts } as Liveblocks['RoomEvent'])
+      addEvent({ id: crypto.randomUUID(), kind: 'dice', player: nom, dice, result, ts })
+      setPendingRoll(null)
+    })()
   }
 
   const handlePopupFinish = () => {
@@ -167,12 +190,12 @@ export default function HomePageInner() {
   }
 
   return (
-    <div className="relative w-screen h-screen font-sans overflow-hidden bg-transparent">
+    <div className="relative w-screen h-dvh font-sans overflow-hidden bg-transparent">
       <div className="relative z-10 flex flex-col lg:flex-row w-full h-full">
         <CharacterSheet perso={perso} onUpdate={handleUpdatePerso} chatBoxRef={chatBoxRef} allCharacters={characters} logoOnly>
           {profile?.isMJ && (
             <span className="ml-2">
-              <GMCharacterSelector onSelect={handleUpdatePerso} />
+              <GMCharacterSelector onSelect={handleGMSelect} />
             </span>
           )}
         </CharacterSheet>

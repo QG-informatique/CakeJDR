@@ -39,8 +39,16 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
 
   useEffect(() => {
     if (!modal) return
+    const roomId = (() => {
+      try {
+        const r = JSON.parse(localStorage.getItem('jdr_selected_room') || '{}')
+        return r.id || 'global'
+      } catch { return 'global' }
+    })()
+    const owner = perso.owner || 'anon'
+    const prefix = `FichePerso/${roomId}_${owner}_`
     if (modal === 'import' || modal === 'delete') {
-      fetch('/api/blob')
+      fetch(`/api/blob?prefix=${encodeURIComponent(prefix)}`)
         .then(res => res.json())
         .then(data => setCloudFiles(data.files?.blobs?.map((b:any)=>b.pathname) || []))
         .catch(() => setCloudFiles([]))
@@ -51,7 +59,7 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
         setLocalChars(Array.isArray(list) ? list : [])
       } catch { setLocalChars([]) }
     }
-  }, [modal])
+  }, [modal, perso.owner])
 
   // Export fiche
   const handleExport = () => {
@@ -117,7 +125,14 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
 
   const saveToCloud = async (char: any) => {
     const slug = (char.nom || char.name || 'sans_nom').replace(/[^a-zA-Z0-9-_]/g, '_')
-    const filename = `FichePerso/${slug}.json`
+    const roomId = (() => {
+      try {
+        const r = JSON.parse(localStorage.getItem('jdr_selected_room') || '{}')
+        return r.id || 'global'
+      } catch { return 'global' }
+    })()
+    const owner = char.owner || 'anon'
+    const filename = `FichePerso/${roomId}_${owner}_${char.id}_${slug}.json`
     await fetch(`/api/blob?filename=${encodeURIComponent(filename)}`, {
       method: 'POST',
       body: JSON.stringify(char),
