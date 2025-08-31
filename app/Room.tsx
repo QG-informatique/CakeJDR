@@ -30,7 +30,7 @@ export function Room({
         initialStorage={{
           characters: new LiveMap(),
           images: new LiveMap(),
-            music: new LiveObject({ id: '', playing: false, volume: 5 }),
+            music: new LiveObject({ id: '', playing: false }),
           summary: new LiveObject({ acts: [], currentId: '' }),
           editor: new LiveMap(),
           events: new LiveList([]),

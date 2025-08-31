@@ -1,12 +1,14 @@
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useMemo } from 'react'
 import {
   useBroadcastEvent,
   useEventListener,
   useStorage,
   useMutation,
   useMyPresence,
+  useRoom,
+  useSelf,
 } from '@liveblocks/react'
 import LiveCursors from './LiveCursors'
 import YouTube from 'react-youtube'
@@ -20,12 +22,17 @@ import SideNotes from '@/components/misc/SideNotes'
 export default function InteractiveCanvas() {
   // `images` map is created by RoomProvider but may be null until ready
   const imagesMap = useStorage((root) => root.images)
-  const images = imagesMap
-    ? (Array.from(imagesMap.values()) as ImageData[])
-    : []
+  const images = useMemo(
+    () => (imagesMap ? (Array.from(imagesMap.values()) as ImageData[]) : []),
+    [imagesMap],
+  )
 
   const musicObj = useStorage((root) => root.music) // peut être null au démarrage
   const storageReady = Boolean(musicObj)
+
+  const room = useRoom()
+  const self = useSelf()
+  const volumeKey = room && self ? `volume-${room.id}-${self.id}` : undefined
 
   const [isDrawing, setIsDrawing] = useState(false)
   const [drawMode, setDrawMode] = useState<ToolMode>('images')
@@ -43,12 +50,24 @@ export default function InteractiveCanvas() {
   // Lecture: synchro globale
   const [isPlaying, setIsPlaying] = useState(false)
 
-  // Volume: synchro globale (0..100), défaut 5%
+  // Volume: local (0..100), défaut 5%
   const [volume, setVolumeState] = useState(5)
   const setVolume = (v: number) => {
     setVolumeState(v)
-    if (storageReady) updateMusic({ volume: v })
+    if (volumeKey) localStorage.setItem(volumeKey, String(v))
   }
+
+  useEffect(() => {
+    if (!volumeKey) return
+    const stored = localStorage.getItem(volumeKey)
+    if (stored !== null) {
+      const v = parseInt(stored, 10)
+      setVolumeState(Number.isNaN(v) ? 5 : v)
+    } else {
+      setVolumeState(5)
+      localStorage.setItem(volumeKey, '5')
+    }
+  }, [volumeKey])
 
   const broadcast = useBroadcastEvent()
   const lastSend = useRef(0)
@@ -87,11 +106,11 @@ export default function InteractiveCanvas() {
     })
   }, [])
 
-  // Mutation musique: gère l'état global (id, lecture, volume)
+  // Mutation musique: gère l'état global (id, lecture)
   const updateMusic = useMutation(
     (
       { storage },
-      updates: { id?: string; playing?: boolean; volume?: number },
+      updates: { id?: string; playing?: boolean },
     ) => {
       storage.get('music').update(updates)
     },
@@ -129,27 +148,40 @@ export default function InteractiveCanvas() {
   const ERASE_MIN = DRAW_MIN * 4
   const ERASE_MAX = DRAW_MAX * 4
 
-    useEffect(() => {
-      const resize = () => {
-        const canvas = drawingCanvasRef.current
-        if (canvas) {
-          const rect = canvas.getBoundingClientRect()
-          const dpr = window.devicePixelRatio || 1
-          canvas.width = rect.width * dpr
-          canvas.height = rect.height * dpr
-          const ctx = canvas.getContext('2d')
-          if (ctx) {
-            ctx.scale(dpr, dpr)
-            ctx.lineCap = 'round'
-            ctx.lineJoin = 'round'
-            ctxRef.current = ctx
-          }
+  function clampImage(img: ImageData, rect: DOMRect) {
+    return {
+      x: Math.max(0, Math.min(img.x, rect.width - img.width)),
+      y: Math.max(0, Math.min(img.y, rect.height - img.height)),
+    }
+  }
+
+  useEffect(() => {
+    const resize = () => {
+      const canvas = drawingCanvasRef.current
+      if (canvas) {
+        const rect = canvas.getBoundingClientRect()
+        const dpr = window.devicePixelRatio || 1
+        canvas.width = rect.width * dpr
+        canvas.height = rect.height * dpr
+        const ctx = canvas.getContext('2d')
+        if (ctx) {
+          ctx.scale(dpr, dpr)
+          ctx.lineCap = 'round'
+          ctx.lineJoin = 'round'
+          ctxRef.current = ctx
         }
+        images.forEach((img) => {
+          const clamped = clampImage(img, rect)
+          if (clamped.x !== img.x || clamped.y !== img.y) {
+            updateImage({ ...img, ...clamped })
+          }
+        })
       }
-      resize()
-      window.addEventListener('resize', resize)
-      return () => window.removeEventListener('resize', resize)
-    }, [toolsVisible, audioVisible])
+    }
+    resize()
+    window.addEventListener('resize', resize)
+    return () => window.removeEventListener('resize', resize)
+  }, [toolsVisible, audioVisible, images, updateImage])
 
   useEffect(() => {
     const canvas = drawingCanvasRef.current
@@ -186,7 +218,6 @@ export default function InteractiveCanvas() {
     if (!musicObj) return
     setYtId(musicObj.id)
     setIsPlaying(!!musicObj.playing)
-    setVolumeState(musicObj.volume ?? 5)
   }, [musicObj])
 
   // --------- DnD images: aperçu instantané + swap vers Cloudinary optimisé ---------

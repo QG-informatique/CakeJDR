@@ -50,7 +50,7 @@ declare global {
     Storage: {
       characters: LiveMap<string, CharacterData>
       images: LiveMap<string, CanvasImage>
-        music: LiveObject<{ id: string; playing: boolean; volume: number }>
+        music: LiveObject<{ id: string; playing: boolean }>
       summary: LiveObject<{ acts: Array<{ id: string; title: string }> }>
       editor: LiveMap<string, string>
       events: LiveList<SessionEvent>
