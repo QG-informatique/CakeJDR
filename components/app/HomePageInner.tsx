@@ -52,7 +52,7 @@ export default function HomePageInner() {
       const ts = typeof event.ts === 'number' ? event.ts : Date.now()
       if (ts === lastRollTs.current) return
       setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result, ts }])
-      addEvent({ id: crypto.randomUUID(), kind: 'dice', player: event.player, dice: event.dice, result: event.result, ts })
+      // sender already stored the event, so avoid adding duplicates
       debug('dice-roll received', event)
 
     } else if (event.type === 'gm-select') {
