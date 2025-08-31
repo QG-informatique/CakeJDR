@@ -39,6 +39,8 @@ declare global {
     Presence: {
       // Currently selected character data
       character?: CharacterData
+      // Optional information about which character the GM is consulting
+      gmView?: { id: string | number; name?: string }
       // Cursor position in canvas coordinates
       cursor?: { x: number; y: number } | null
       // Display name and color for cursors
@@ -50,8 +52,10 @@ declare global {
     Storage: {
       characters: LiveMap<string, CharacterData>
       images: LiveMap<string, CanvasImage>
+
         music: LiveObject<{ id: string; playing: boolean }>
       summary: LiveObject<{ acts: Array<{ id: string; title: string }> }>
+
       editor: LiveMap<string, string>
       events: LiveList<SessionEvent>
       rooms: LiveList<Room>
@@ -79,8 +83,9 @@ declare global {
           width: number
           mode: 'draw' | 'erase'
         }
-      | { type: 'chat'; author: string; text: string; isMJ?: boolean }
-      | { type: 'dice-roll'; player: string; dice: number; result: number }
+
+      | { type: 'chat'; author: string; text: string; isMJ?: boolean; ts?: number }
+      | { type: 'dice-roll'; player: string; dice: number; result: number; ts?: number }
       | { type: 'gm-select'; character: CharacterData }
 
     // Custom metadata set on threads, for useThreads, useCreateThread, etc.
