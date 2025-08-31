@@ -17,6 +17,16 @@ import MusicPanel from './MusicPanel'
 import ImageItem, { ImageData } from './ImageItem'
 import SideNotes from '@/components/misc/SideNotes'
 
+interface StrokeSegment {
+  x1: number
+  y1: number
+  x2: number
+  y2: number
+  color: string
+  width: number
+  mode: ToolMode
+}
+
 export default function InteractiveCanvas() {
   // `images` map is created by RoomProvider but may be null until ready
   const imagesMap = useStorage((root) => root.images)
@@ -61,6 +71,7 @@ export default function InteractiveCanvas() {
   const playerRef = useRef<YouTubePlayer | null>(null)
   const t = useT()
   const initializedRef = useRef(false)
+  const strokesRef = useRef<StrokeSegment[]>([])
 
   useEffect(() => {
     return () => {
@@ -127,6 +138,15 @@ export default function InteractiveCanvas() {
       ctxRef.current.moveTo(x1, y1)
       ctxRef.current.lineTo(x2, y2)
       ctxRef.current.stroke()
+      strokesRef.current.push({
+        x1,
+        y1,
+        x2,
+        y2,
+        color: c,
+        width,
+        mode,
+      })
     }
   })
 
@@ -142,27 +162,43 @@ export default function InteractiveCanvas() {
   const ERASE_MIN = DRAW_MIN * 4
   const ERASE_MAX = DRAW_MAX * 4
 
-    useEffect(() => {
-      const resize = () => {
-        const canvas = drawingCanvasRef.current
-        if (canvas) {
-          const rect = canvas.getBoundingClientRect()
-          const dpr = window.devicePixelRatio || 1
-          canvas.width = rect.width * dpr
-          canvas.height = rect.height * dpr
-          const ctx = canvas.getContext('2d')
-          if (ctx) {
-            ctx.scale(dpr, dpr)
-            ctx.lineCap = 'round'
-            ctx.lineJoin = 'round'
-            ctxRef.current = ctx
-          }
+  const redrawStrokes = () => {
+    const ctx = ctxRef.current
+    if (!ctx) return
+    for (const s of strokesRef.current) {
+      ctx.strokeStyle = s.mode === 'erase' ? 'rgba(0,0,0,1)' : s.color
+      ctx.lineWidth = s.width
+      ctx.globalCompositeOperation =
+        s.mode === 'erase' ? 'destination-out' : 'source-over'
+      ctx.beginPath()
+      ctx.moveTo(s.x1, s.y1)
+      ctx.lineTo(s.x2, s.y2)
+      ctx.stroke()
+    }
+  }
+
+  useEffect(() => {
+    const resize = () => {
+      const canvas = drawingCanvasRef.current
+      if (canvas) {
+        const rect = canvas.getBoundingClientRect()
+        const dpr = window.devicePixelRatio || 1
+        canvas.width = rect.width * dpr
+        canvas.height = rect.height * dpr
+        const ctx = canvas.getContext('2d')
+        if (ctx) {
+          ctx.scale(dpr, dpr)
+          ctx.lineCap = 'round'
+          ctx.lineJoin = 'round'
+          ctxRef.current = ctx
+          redrawStrokes()
         }
       }
-      resize()
-      window.addEventListener('resize', resize)
-      return () => window.removeEventListener('resize', resize)
-    }, [toolsVisible, audioVisible])
+    }
+    resize()
+    window.addEventListener('resize', resize)
+    return () => window.removeEventListener('resize', resize)
+  }, [])
 
   useEffect(() => {
     const canvas = drawingCanvasRef.current
@@ -343,6 +379,7 @@ export default function InteractiveCanvas() {
     if (!rect) return
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
+    const prev = mousePos
     setMousePos({ x, y })
     updateMyPresence({ cursor: { x, y } })
 
@@ -353,14 +390,22 @@ export default function InteractiveCanvas() {
     ) {
       ctxRef.current.lineTo(x, y)
       ctxRef.current.stroke()
-      const { x: px, y: py } = mousePos
+      strokesRef.current.push({
+        x1: prev.x,
+        y1: prev.y,
+        x2: x,
+        y2: y,
+        color,
+        width: brushSize,
+        mode: drawMode,
+      })
       const now = Date.now()
       if (THROTTLE === 0 || now - lastSend.current > THROTTLE) {
         lastSend.current = now
         broadcast({
           type: 'draw-line',
-          x1: px,
-          y1: py,
+          x1: prev.x,
+          y1: prev.y,
           x2: x,
           y2: y,
           color,
@@ -410,6 +455,7 @@ export default function InteractiveCanvas() {
 
   const clearCanvas = (broadcastChange = true) => {
     clearImages()
+    strokesRef.current = []
     const ctx = ctxRef.current
     if (ctx && drawingCanvasRef.current) {
       ctx.clearRect(
