@@ -118,7 +118,7 @@ export default function InteractiveCanvas() {
     const canvas = drawingCanvasRef.current
     if (!ctx || !canvas) return
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-    strokesList?.toArray().forEach(drawStroke)
+    strokesList?.forEach(drawStroke)
   }, [strokesList, drawStroke])
 
   useEffect(() => {
