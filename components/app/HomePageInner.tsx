@@ -46,7 +46,7 @@ export default function HomePageInner() {
   useEventListener((payload: any) => {
     const { event } = payload
     if (event.type === 'dice-roll') {
-      setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result, ts: Date.now() }])
+      setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result, ts: event.ts ?? Date.now() }])
     } else if (event.type === 'gm-select') {
       const char = event.character || defaultPerso
       if (!char.id) char.id = crypto.randomUUID()
@@ -150,11 +150,19 @@ export default function HomePageInner() {
   const handlePopupReveal = () => {
     if (!pendingRoll) return
     const { nom, dice, result } = pendingRoll
-    const entry = { player: nom, dice, result, ts: Date.now() }
-    setHistory((h) => [...h, entry])
-    broadcast({ type: 'dice-roll', player: nom, dice, result } as Liveblocks['RoomEvent'])
-    addEvent({ id: crypto.randomUUID(), kind: 'dice', player: nom, dice, result, ts: entry.ts })
-    setPendingRoll(null)
+    ;(async () => {
+      let ts = Date.now()
+      try {
+        const res = await fetch('/api/timestamp')
+        const data = await res.json()
+        if (typeof data.ts === 'number') ts = data.ts
+      } catch {}
+      const entry = { player: nom, dice, result, ts }
+      setHistory((h) => [...h, entry])
+      broadcast({ type: 'dice-roll', player: nom, dice, result, ts } as Liveblocks['RoomEvent'])
+      addEvent({ id: crypto.randomUUID(), kind: 'dice', player: nom, dice, result, ts })
+      setPendingRoll(null)
+    })()
   }
 
   const handlePopupFinish = () => {
@@ -167,7 +175,7 @@ export default function HomePageInner() {
   }
 
   return (
-    <div className="relative w-screen h-screen font-sans overflow-hidden bg-transparent">
+    <div className="relative w-screen h-dvh font-sans overflow-hidden bg-transparent">
       <div className="relative z-10 flex flex-col lg:flex-row w-full h-full">
         <CharacterSheet perso={perso} onUpdate={handleUpdatePerso} chatBoxRef={chatBoxRef} allCharacters={characters} logoOnly>
           {profile?.isMJ && (

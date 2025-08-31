@@ -105,7 +105,9 @@ export default function InteractiveCanvas() {
     })
   }, [])
 
+
   // Mutation musique: gère l'état global (id, lecture)
+
   const updateMusic = useMutation(
     (
       { storage },
@@ -177,6 +179,30 @@ export default function InteractiveCanvas() {
   }, [drawMode])
 
   useEffect(() => {
+    const handleResize = () => {
+      const rect = drawingCanvasRef.current?.getBoundingClientRect()
+      if (!rect) return
+      imagesRef.current.forEach((img) => {
+        const clamped = clampImage(img, rect)
+        if (
+          clamped.x !== img.x ||
+          clamped.y !== img.y ||
+          clamped.width !== img.width ||
+          clamped.height !== img.height
+        ) {
+          updateImage(clamped)
+        }
+      })
+    }
+    window.addEventListener('resize', handleResize)
+    window.addEventListener('orientationchange', handleResize)
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      window.removeEventListener('orientationchange', handleResize)
+    }
+  }, [updateImage])
+
+  useEffect(() => {
     if (drawMode === 'erase') {
       setEraserSize((s) => Math.min(Math.max(s, ERASE_MIN), ERASE_MAX))
     } else {
@@ -216,6 +242,7 @@ export default function InteractiveCanvas() {
     file: File,
     dropX: number,
     dropY: number,
+    rect: DOMRect,
   ) {
     const localUrl = fileToObjectURL(file)
     const tempId = Date.now() + Math.random()
@@ -227,7 +254,8 @@ export default function InteractiveCanvas() {
       width: 200,
       height: 200,
     }
-    addImage(tempImg)
+    const clamped = clampImage(tempImg, rect)
+    addImage(clamped)
 
     try {
       const form = new FormData()
@@ -246,7 +274,7 @@ export default function InteractiveCanvas() {
         throw new Error('No URL returned by Cloudinary endpoint')
       }
 
-      updateImage({ ...tempImg, src: finalUrl })
+      updateImage({ ...clamped, src: finalUrl })
     } catch (err) {
       deleteImage(tempId)
       console.error(err)
@@ -267,6 +295,7 @@ export default function InteractiveCanvas() {
         file,
         e.clientX - rect.left,
         e.clientY - rect.top,
+        rect,
       )
     }
   }
@@ -353,17 +382,9 @@ export default function InteractiveCanvas() {
     if (!img) return
     const updated =
       type === 'move'
-        ? {
-            ...img,
-            x: Math.max(0, Math.min(x - offsetX, rect.width - img.width)),
-            y: Math.max(0, Math.min(y - offsetY, rect.height - img.height)),
-          }
-        : {
-            ...img,
-            width: Math.max(50, x - img.x),
-            height: Math.max(50, y - img.y),
-          }
-    updateImage(updated)
+        ? { ...img, x: x - offsetX, y: y - offsetY }
+        : { ...img, width: x - img.x, height: y - img.y }
+    updateImage(clampImage(updated, rect))
   }
 
   const handlePointerUp = () => {
@@ -378,16 +399,18 @@ export default function InteractiveCanvas() {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (drawMode !== 'images' || selectedImageId === null) return
     const img = images.find((i) => i.id === selectedImageId)
-    if (!img) return
+    const rect = drawingCanvasRef.current?.getBoundingClientRect()
+    if (!img || !rect) return
     const step = 5
-    const updates: Partial<ImageData> = {}
-    if (e.key === 'ArrowUp') updates.y = Math.max(0, img.y - step)
-    else if (e.key === 'ArrowDown') updates.y = img.y + step
-    else if (e.key === 'ArrowLeft') updates.x = Math.max(0, img.x - step)
-    else if (e.key === 'ArrowRight') updates.x = img.x + step
-    if (Object.keys(updates).length) {
+    let updated = { ...img }
+    if (e.key === 'ArrowUp') updated.y -= step
+    else if (e.key === 'ArrowDown') updated.y += step
+    else if (e.key === 'ArrowLeft') updated.x -= step
+    else if (e.key === 'ArrowRight') updated.x += step
+    updated = clampImage(updated, rect)
+    if (updated.x !== img.x || updated.y !== img.y) {
       e.preventDefault()
-      updateImage({ ...img, ...updates })
+      updateImage(updated)
     }
   }
 
