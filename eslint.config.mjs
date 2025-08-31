@@ -40,6 +40,7 @@ export default [
       'jsx-a11y/no-autofocus': 'off',
       '@next/next/no-img-element': 'off',
       'import/no-anonymous-default-export': 'off',
+      'import/no-unresolved': ['error', { ignore: ['uuid'] }],
     },
   },
 ]

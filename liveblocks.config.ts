@@ -31,6 +31,17 @@ type Room = {
   owner?: string | null
 }
 
+type Stroke = {
+  id: string
+  x1: number
+  y1: number
+  x2: number
+  y2: number
+  color: string
+  width: number
+  mode: 'draw' | 'erase'
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type CharacterData = any
 declare global {
@@ -60,6 +71,7 @@ declare global {
       editor: LiveMap<string, string>
       events: LiveList<SessionEvent>
       rooms: LiveList<Room>
+      strokes: LiveList<Stroke>
     }
 
     // Custom user info set when authenticating with a secret key
@@ -76,6 +88,7 @@ declare global {
       | { type: 'clear-canvas' }
       | {
           type: 'draw-line'
+          id: string
           x1: number
           y1: number
           x2: number
@@ -97,4 +110,4 @@ declare global {
   }
 }
 
-export {}
+export type { Stroke }
