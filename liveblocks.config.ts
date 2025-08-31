@@ -53,7 +53,10 @@ declare global {
       characters: LiveMap<string, CharacterData>
       images: LiveMap<string, CanvasImage>
         music: LiveObject<{ id: string; playing: boolean; volume: number }>
-      summary: LiveObject<{ acts: Array<{ id: string; title: string }> }>
+        summary: LiveObject<{
+          acts: LiveList<{ id: string; title: string }>
+          currentId?: string
+        }>
       editor: LiveMap<string, string>
       events: LiveList<SessionEvent>
       rooms: LiveList<Room>
@@ -81,8 +84,10 @@ declare global {
           width: number
           mode: 'draw' | 'erase'
         }
+
       | { type: 'chat'; author: string; text: string; isMJ?: boolean }
       | { type: 'dice-roll'; player: string; dice: number; result: number }
+
 
     // Custom metadata set on threads, for useThreads, useCreateThread, etc.
     ThreadMetadata: Record<string, never>
