@@ -43,13 +43,19 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
   }, [collapsed])
 
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (inputValue.trim() === '') return
 
     const msg = { author, text: inputValue.trim(), isMJ: profile?.isMJ }
+    let ts = Date.now()
+    try {
+      const res = await fetch('/api/timestamp')
+      const data = await res.json()
+      if (typeof data.ts === 'number') ts = data.ts
+    } catch {}
 
     broadcast({ type: 'chat', author: msg.author, text: msg.text, isMJ: msg.isMJ } as Liveblocks['RoomEvent'])
-    addEvent({ id: crypto.randomUUID(), kind: 'chat', author: msg.author, text: msg.text, ts: Date.now(), isMJ: msg.isMJ })
+    addEvent({ id: crypto.randomUUID(), kind: 'chat', author: msg.author, text: msg.text, ts, isMJ: msg.isMJ })
     setInputValue('')
   }
 
