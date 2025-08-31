@@ -69,7 +69,7 @@ export const AddCompetenceModal: React.FC<AddCompetenceModalProps> = ({
                     <div>
                         <label className="block text-sm mb-1">{t('name')}</label>
                         <input
-                            className="w-full px-2 py-1 rounded bg-gray-800 text-white"
+                            className="w-full px-2 py-1 rounded bg-gray-800 text-white placeholder-white"
                             value={nom}
                             onChange={e => setNom(e.target.value)}
                             placeholder={t('skillName')}
@@ -90,7 +90,7 @@ export const AddCompetenceModal: React.FC<AddCompetenceModalProps> = ({
                     <div>
                         <label className="block text-sm mb-1">{t('effects')}</label>
                         <input
-                            className="w-full px-2 py-1 rounded bg-gray-800 text-white"
+                            className="w-full px-2 py-1 rounded bg-gray-800 text-white placeholder-white"
                             value={effets}
                             onChange={e => setEffets(e.target.value)}
                             placeholder={t('effectDesc')}
@@ -99,7 +99,7 @@ export const AddCompetenceModal: React.FC<AddCompetenceModalProps> = ({
                     <div>
                         <label className="block text-sm mb-1">{t('damageOptional')}</label>
                         <input
-                            className="w-full px-2 py-1 rounded bg-gray-800 text-white"
+                            className="w-full px-2 py-1 rounded bg-gray-800 text-white placeholder-white"
                             value={degats}
                             onChange={e => setDegats(e.target.value)}
                             placeholder="Ex: 2d6+3"
