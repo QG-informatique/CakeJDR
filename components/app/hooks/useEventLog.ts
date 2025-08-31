@@ -18,7 +18,15 @@ const prefix = 'jdr_events_'
 export default function useEventLog(roomId: string) {
   const liveList = useStorage(root => root.events)
   const addLive = useMutation(({ storage }, e: SessionEvent) => {
-    storage.get('events').push(e)
+    const list = storage.get('events')
+    const exists = (Array.from(list) as SessionEvent[]).some(ev =>
+      ev.ts === e.ts &&
+      ev.kind === e.kind &&
+      (e.kind === 'chat'
+        ? ev.author === e.author && ev.text === e.text
+        : ev.player === e.player && ev.dice === e.dice && ev.result === e.result)
+    )
+    if (!exists) list.push(e)
   }, [])
   const events = useMemo(() => {
     return liveList ? (Array.from(liveList) as SessionEvent[]) : []
@@ -34,9 +42,18 @@ export default function useEventLog(roomId: string) {
   function addEvent(e: SessionEvent) {
     try {
       const raw = localStorage.getItem(prefix + roomId)
-      const arr = raw ? JSON.parse(raw) : []
-      arr.push(e)
-      localStorage.setItem(prefix + roomId, JSON.stringify(arr))
+      const arr: SessionEvent[] = raw ? JSON.parse(raw) : []
+      const exists = arr.some(ev =>
+        ev.ts === e.ts &&
+        ev.kind === e.kind &&
+        (e.kind === 'chat'
+          ? ev.author === e.author && ev.text === e.text
+          : ev.player === e.player && ev.dice === e.dice && ev.result === e.result)
+      )
+      if (!exists) {
+        arr.push(e)
+        localStorage.setItem(prefix + roomId, JSON.stringify(arr))
+      }
     } catch {}
     addLive(e)
   }
