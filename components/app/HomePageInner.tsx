@@ -36,6 +36,7 @@ export default function HomePageInner() {
   const [history, setHistory] = useDiceHistory(roomId)
   const { addEvent } = useEventLog(roomId)
   const chatBoxRef = useRef<HTMLDivElement>(null)
+  const lastRollTs = useRef<number | null>(null)
   const [cooldown, setCooldown] = useState(false)
   // total durée d'indisponibilité du bouton (animation + hold + cooldown)
   const ROLL_TOTAL_MS = 2000 + 300 + 2000 + 1000
@@ -49,8 +50,9 @@ export default function HomePageInner() {
     if (event.type === 'dice-roll') {
 
       const ts = typeof event.ts === 'number' ? event.ts : Date.now()
+      if (ts === lastRollTs.current) return
       setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result, ts }])
-      addEvent({ id: crypto.randomUUID(), kind: 'dice', player: event.player, dice: event.dice, result: event.result, ts })
+      // sender already stored the event, so avoid adding duplicates
       debug('dice-roll received', event)
 
     } else if (event.type === 'gm-select') {
@@ -172,9 +174,10 @@ export default function HomePageInner() {
 
     const ts = Date.now()
     const entry = { player: nom, dice, result, ts }
+    lastRollTs.current = ts
     setHistory((h) => [...h, entry])
+    addEvent({ id: crypto.randomUUID(), kind: 'dice', ...entry })
     broadcast({ type: 'dice-roll', player: nom, dice, result, ts } as Liveblocks['RoomEvent'])
-    addEvent({ id: crypto.randomUUID(), kind: 'dice', player: nom, dice, result, ts })
     debug('dice-roll send', entry)
     setPendingRoll(null)
 
