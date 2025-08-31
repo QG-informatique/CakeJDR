@@ -6,9 +6,11 @@ interface Props {
   size?: number
 }
 
-export default function LiveAvatarStack({ className = 'fixed bottom-4 right-4 z-40 flex flex-row-reverse gap-2', size = 24 }: Props) {
+export default function LiveAvatarStack({ className = 'fixed bottom-4 right-4 z-40 flex flex-row-reverse gap-2 items-center', size = 24 }: Props) {
   const others = useOthers()
   if (others.length === 0) return null
+
+  const gmView = others.find((o) => o.presence?.gmView)?.presence?.gmView as { name?: string } | undefined
 
   const getTextColor = (hex: string) => {
     const c = hex.replace('#', '')
@@ -40,6 +42,11 @@ export default function LiveAvatarStack({ className = 'fixed bottom-4 right-4 z-
           </div>
         )
       })}
+      {gmView?.name && (
+        <div className="px-2 py-1 rounded bg-black/70 text-white text-xs mr-2">
+          MJ consulte {gmView.name}
+        </div>
+      )}
     </div>
   )
 }
