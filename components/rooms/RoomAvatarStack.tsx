@@ -9,6 +9,7 @@ export default function RoomAvatarStack({ id }: { id: string }) {
       <RoomProvider
         id={id}
         initialPresence={{}}
+
           initialStorage={{
             characters: new LiveMap(),
             images: new LiveMap(),
@@ -18,6 +19,7 @@ export default function RoomAvatarStack({ id }: { id: string }) {
             events: new LiveList([]),
             rooms: new LiveList([]),
           }}
+
       >
         <ClientSideSuspense fallback={null}>
           <LiveAvatarStack className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-row-reverse gap-1" size={20} />
