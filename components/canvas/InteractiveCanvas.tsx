@@ -19,6 +19,16 @@ import MusicPanel from './MusicPanel'
 import ImageItem, { ImageData } from './ImageItem'
 import SideNotes from '@/components/misc/SideNotes'
 
+interface StrokeSegment {
+  x1: number
+  y1: number
+  x2: number
+  y2: number
+  color: string
+  width: number
+  mode: ToolMode
+}
+
 export default function InteractiveCanvas() {
   // `images` map is created by RoomProvider but may be null until ready
   const imagesMap = useStorage((root) => root.images)
@@ -80,6 +90,7 @@ export default function InteractiveCanvas() {
   const playerRef = useRef<YouTubePlayer | null>(null)
   const t = useT()
   const initializedRef = useRef(false)
+  const strokesRef = useRef<StrokeSegment[]>([])
 
   useEffect(() => {
     return () => {
@@ -106,7 +117,9 @@ export default function InteractiveCanvas() {
     })
   }, [])
 
+
   // Mutation musique: gère l'état global (id, lecture)
+
   const updateMusic = useMutation(
     (
       { storage },
@@ -133,6 +146,15 @@ export default function InteractiveCanvas() {
       ctxRef.current.moveTo(x1, y1)
       ctxRef.current.lineTo(x2, y2)
       ctxRef.current.stroke()
+      strokesRef.current.push({
+        x1,
+        y1,
+        x2,
+        y2,
+        color: c,
+        width,
+        mode,
+      })
     }
   })
 
@@ -148,10 +170,12 @@ export default function InteractiveCanvas() {
   const ERASE_MIN = DRAW_MIN * 4
   const ERASE_MAX = DRAW_MAX * 4
 
+
   function clampImage(img: ImageData, rect: DOMRect) {
     return {
       x: Math.max(0, Math.min(img.x, rect.width - img.width)),
       y: Math.max(0, Math.min(img.y, rect.height - img.height)),
+
     }
   }
 
@@ -169,6 +193,7 @@ export default function InteractiveCanvas() {
           ctx.lineCap = 'round'
           ctx.lineJoin = 'round'
           ctxRef.current = ctx
+
         }
         images.forEach((img) => {
           const clamped = clampImage(img, rect)
@@ -181,7 +206,9 @@ export default function InteractiveCanvas() {
     resize()
     window.addEventListener('resize', resize)
     return () => window.removeEventListener('resize', resize)
+
   }, [toolsVisible, audioVisible, images, updateImage])
+
 
   useEffect(() => {
     const canvas = drawingCanvasRef.current
@@ -189,6 +216,30 @@ export default function InteractiveCanvas() {
     canvas.style.zIndex = '2'
     canvas.style.pointerEvents = drawMode === 'images' ? 'none' : 'auto'
   }, [drawMode])
+
+  useEffect(() => {
+    const handleResize = () => {
+      const rect = drawingCanvasRef.current?.getBoundingClientRect()
+      if (!rect) return
+      imagesRef.current.forEach((img) => {
+        const clamped = clampImage(img, rect)
+        if (
+          clamped.x !== img.x ||
+          clamped.y !== img.y ||
+          clamped.width !== img.width ||
+          clamped.height !== img.height
+        ) {
+          updateImage(clamped)
+        }
+      })
+    }
+    window.addEventListener('resize', handleResize)
+    window.addEventListener('orientationchange', handleResize)
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      window.removeEventListener('orientationchange', handleResize)
+    }
+  }, [updateImage])
 
   useEffect(() => {
     if (drawMode === 'erase') {
@@ -230,6 +281,7 @@ export default function InteractiveCanvas() {
     file: File,
     dropX: number,
     dropY: number,
+    rect: DOMRect,
   ) {
     const localUrl = fileToObjectURL(file)
     const tempId = Date.now() + Math.random()
@@ -241,7 +293,8 @@ export default function InteractiveCanvas() {
       width: 200,
       height: 200,
     }
-    addImage(tempImg)
+    const clamped = clampImage(tempImg, rect)
+    addImage(clamped)
 
     try {
       const form = new FormData()
@@ -260,7 +313,7 @@ export default function InteractiveCanvas() {
         throw new Error('No URL returned by Cloudinary endpoint')
       }
 
-      updateImage({ ...tempImg, src: finalUrl })
+      updateImage({ ...clamped, src: finalUrl })
     } catch (err) {
       deleteImage(tempId)
       console.error(err)
@@ -281,6 +334,7 @@ export default function InteractiveCanvas() {
         file,
         e.clientX - rect.left,
         e.clientY - rect.top,
+        rect,
       )
     }
   }
@@ -334,6 +388,7 @@ export default function InteractiveCanvas() {
     if (!rect) return
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
+    const prev = mousePos
     setMousePos({ x, y })
     updateMyPresence({ cursor: { x, y } })
 
@@ -344,14 +399,22 @@ export default function InteractiveCanvas() {
     ) {
       ctxRef.current.lineTo(x, y)
       ctxRef.current.stroke()
-      const { x: px, y: py } = mousePos
+      strokesRef.current.push({
+        x1: prev.x,
+        y1: prev.y,
+        x2: x,
+        y2: y,
+        color,
+        width: brushSize,
+        mode: drawMode,
+      })
       const now = Date.now()
       if (THROTTLE === 0 || now - lastSend.current > THROTTLE) {
         lastSend.current = now
         broadcast({
           type: 'draw-line',
-          x1: px,
-          y1: py,
+          x1: prev.x,
+          y1: prev.y,
           x2: x,
           y2: y,
           color,
@@ -367,17 +430,9 @@ export default function InteractiveCanvas() {
     if (!img) return
     const updated =
       type === 'move'
-        ? {
-            ...img,
-            x: Math.max(0, Math.min(x - offsetX, rect.width - img.width)),
-            y: Math.max(0, Math.min(y - offsetY, rect.height - img.height)),
-          }
-        : {
-            ...img,
-            width: Math.max(50, x - img.x),
-            height: Math.max(50, y - img.y),
-          }
-    updateImage(updated)
+        ? { ...img, x: x - offsetX, y: y - offsetY }
+        : { ...img, width: x - img.x, height: y - img.y }
+    updateImage(clampImage(updated, rect))
   }
 
   const handlePointerUp = () => {
@@ -392,21 +447,24 @@ export default function InteractiveCanvas() {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (drawMode !== 'images' || selectedImageId === null) return
     const img = images.find((i) => i.id === selectedImageId)
-    if (!img) return
+    const rect = drawingCanvasRef.current?.getBoundingClientRect()
+    if (!img || !rect) return
     const step = 5
-    const updates: Partial<ImageData> = {}
-    if (e.key === 'ArrowUp') updates.y = Math.max(0, img.y - step)
-    else if (e.key === 'ArrowDown') updates.y = img.y + step
-    else if (e.key === 'ArrowLeft') updates.x = Math.max(0, img.x - step)
-    else if (e.key === 'ArrowRight') updates.x = img.x + step
-    if (Object.keys(updates).length) {
+    let updated = { ...img }
+    if (e.key === 'ArrowUp') updated.y -= step
+    else if (e.key === 'ArrowDown') updated.y += step
+    else if (e.key === 'ArrowLeft') updated.x -= step
+    else if (e.key === 'ArrowRight') updated.x += step
+    updated = clampImage(updated, rect)
+    if (updated.x !== img.x || updated.y !== img.y) {
       e.preventDefault()
-      updateImage({ ...img, ...updates })
+      updateImage(updated)
     }
   }
 
   const clearCanvas = (broadcastChange = true) => {
     clearImages()
+    strokesRef.current = []
     const ctx = ctxRef.current
     if (ctx && drawingCanvasRef.current) {
       ctx.clearRect(

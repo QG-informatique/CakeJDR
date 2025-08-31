@@ -12,8 +12,12 @@ export default function RoomAvatarStack({ id }: { id: string }) {
         initialStorage={{
           characters: new LiveMap(),
           images: new LiveMap(),
+
             music: new LiveObject({ id: '', playing: false }),
+
           summary: new LiveObject({ acts: [] }),
+          quickNote: new LiveObject({ text: '', updatedAt: 0 }),
+
           editor: new LiveMap(),
           events: new LiveList([]),
           rooms: new LiveList([])
