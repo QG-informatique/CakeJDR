@@ -268,7 +268,7 @@ export default function Login({ onLogin }: { onLogin: (p: string) => void }) {
                     value={pseudo}
                     onChange={(e) => setPseudo(e.target.value)}
                     placeholder={t('username')}
-                    className="px-2 py-1 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-pink-400"
+                    className="px-2 py-1 rounded bg-gray-700 text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-pink-400"
                     style={{
                       width: CUBE_SIZE * 0.6,
                       textAlign: 'center',

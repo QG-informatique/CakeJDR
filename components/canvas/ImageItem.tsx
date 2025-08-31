@@ -25,7 +25,7 @@ interface Props {
 
 const ImageItem: React.FC<Props> = ({ img, drawMode, onPointerDown, onDelete }) => (
   <div
-    className="absolute border border-white/20 rounded-2xl shadow-md group touch-none"
+    className="absolute border border-white/20 rounded-2xl shadow-md group touch-none transition-all duration-300"
     style={{ top: img.y, left: img.x, width: img.width, height: img.height, zIndex: 1 }}
   >
     {drawMode === 'images' && (
@@ -64,4 +64,7 @@ const ImageItem: React.FC<Props> = ({ img, drawMode, onPointerDown, onDelete }) 
   </div>
 )
 
-export default ImageItem
+export default React.memo(
+  ImageItem,
+  (prev, next) => prev.img === next.img && prev.drawMode === next.drawMode,
+)
