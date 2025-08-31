@@ -21,7 +21,9 @@ import { useT } from '@/lib/useT'
 
 // ====== Liveblocks (collaboratif) ======
 import { useStorage, useMutation, useStatus } from '@liveblocks/react'
+
 import { LiveList, LiveMap, LiveObject } from '@liveblocks/client'
+
 import type { LsonObject } from '@liveblocks/client'
 
 // ====== Lexical ======
@@ -402,6 +404,7 @@ function LiveSummary({
     rawEditor instanceof LiveMap ? (rawEditor as LiveMap<string, string>) : null
 
   // Normalisation pages / currentId
+
   const pages = summary
     ? (summary.get('acts') as LiveList<Page>).toArray()
     : undefined
@@ -410,13 +413,15 @@ function LiveSummary({
     ? ((summary.get('currentId') as string | undefined) ?? undefined)
     : undefined
 
+
   const [editorKey, setEditorKey] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Mutations sûres (créent les structures si nécessaires)
   const ensureStorageShape = useMutation(({ storage }) => {
-    const s = storage.get('summary')
+    let s = storage.get('summary')
     if (!(s instanceof LiveObject)) {
+
       storage.set(
         'summary',
         new LiveObject<Summary>({
@@ -424,6 +429,7 @@ function LiveSummary({
           currentId: undefined,
         }),
       )
+
     }
     const e = storage.get('editor')
     if (!(e instanceof LiveMap)) {
@@ -432,10 +438,11 @@ function LiveSummary({
   }, [])
 
   useEffect(() => {
+    if (status !== 'connected') return
     ensureStorageShape()
-  }, [ensureStorageShape])
+  }, [ensureStorageShape, status])
 
-  const updatePages = useMutation(({ storage }, acts: Page[]) => {
+  const addPage = useMutation(({ storage }, page: Page) => {
     let s = storage.get('summary')
     if (!(s instanceof LiveObject)) {
       s = new LiveObject<Summary>({
@@ -444,10 +451,12 @@ function LiveSummary({
       })
       storage.set('summary', s)
     }
+
     ;(s as LiveObject<Summary>).set('acts', new LiveList<Page>(acts))
+
   }, [])
 
-  const updateCurrentId = useMutation(({ storage }, id: string | undefined) => {
+  const setCurrentId = useMutation(({ storage }, id: string | undefined) => {
     let s = storage.get('summary')
     if (!(s instanceof LiveObject)) {
       s = new LiveObject<Summary>({
@@ -456,10 +465,43 @@ function LiveSummary({
       })
       storage.set('summary', s)
     }
-    ;(s as LiveObject<Summary>).update({ currentId: id })
+    ;(s as LiveObject<Summary>).set('currentId', id)
   }, [])
 
-  const deletePage = useMutation(({ storage }, id: string) => {
+  const updatePageTitle = useMutation(
+    ({ storage }, data: { id: string; title: string }) => {
+      let s = storage.get('summary')
+      if (!(s instanceof LiveObject)) {
+        s = new LiveObject<Summary>({
+          acts: new LiveList<Page>([]),
+          currentId: undefined,
+        })
+        storage.set('summary', s)
+      }
+      let list = (s as LiveObject<Summary>).get('acts')
+      if (!(list instanceof LiveList)) {
+        list = new LiveList<Page>([])
+        ;(s as LiveObject<Summary>).set('acts', list)
+      }
+      const arr = (list as LiveList<Page>).toArray()
+      let target: Page | undefined
+      let idx = -1
+      arr.some((p, i) => {
+        if (p.id === data.id) {
+          target = p
+          idx = i
+          return true
+        }
+        return false
+      })
+      if (target && idx !== -1) {
+        ;(list as LiveList<Page>).set(idx, { ...target, title: data.title })
+      }
+    },
+    [],
+  )
+
+  const removePage = useMutation(({ storage }, id: string) => {
     let s = storage.get('summary')
     if (!(s instanceof LiveObject)) {
       s = new LiveObject<Summary>({
@@ -468,9 +510,11 @@ function LiveSummary({
       })
       storage.set('summary', s)
     }
+
     const list = (s as LiveObject<Summary>).get('acts') as LiveList<Page>
     const index = list.toArray().findIndex((p) => p.id === id)
     if (index !== -1) list.delete(index)
+
   }, [])
 
   const updateEditor = useMutation(
@@ -487,26 +531,26 @@ function LiveSummary({
 
   // Bootstrapping pages / currentId
   useEffect(() => {
-    if (!pages) return
+    if (status !== 'connected' || !pages) return
     if (pages.length === 0) {
       const title = (t('pageNamePrompt') as string) || 'New page'
       const newPage = { id: crypto.randomUUID(), title }
-      updatePages([newPage])
+      addPage(newPage)
       updateEditor({ id: newPage.id, content: '' })
-      updateCurrentId(newPage.id)
+      setCurrentId(newPage.id)
       setEditorKey((k) => k + 1)
     } else if (!currentId) {
-      updateCurrentId(pages[0]!.id)
+      setCurrentId(pages[0]!.id)
       setEditorKey((k) => k + 1)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pages, currentId])
+  }, [pages, currentId, status])
 
   const current = pages?.find((p) => p.id === currentId)
 
   // S’assurer qu’on a un slot texte pour la page courante
   useEffect(() => {
-    if (!current) return
+    if (!current || status !== 'connected') return
     if (editorMap instanceof LiveMap) {
       if (!editorMap.has(current.id)) {
         updateEditor({ id: current.id, content: '' })
@@ -514,27 +558,25 @@ function LiveSummary({
     } else {
       updateEditor({ id: current.id, content: '' })
     }
-  }, [current, editorMap, updateEditor])
+  }, [current, editorMap, updateEditor, status])
 
   // Actions UI
   const createPage = (title: string) => {
+    if (status !== 'connected') return
     const newPage = { id: crypto.randomUUID(), title }
-    updatePages([...(pages || []), newPage])
+    addPage(newPage)
     updateEditor({ id: newPage.id, content: '' })
-    updateCurrentId(newPage.id)
+    setCurrentId(newPage.id)
     setEditorKey((k) => k + 1)
   }
 
   const handleTitleChange = (title: string) => {
-    if (!pages || !current) return
-    const updatedPages = pages.map((p) =>
-      p.id === current.id ? { ...p, title } : p,
-    )
-    updatePages(updatedPages)
+    if (status !== 'connected' || !pages || !current) return
+    updatePageTitle({ id: current.id, title })
   }
 
   const handleDelete = () => {
-    if (!pages || !current) return
+    if (status !== 'connected' || !pages || !current) return
     if (pages.length <= 1) {
       alert(
         (t('lastPageDeleteError') as string) ||
@@ -547,12 +589,13 @@ function LiveSummary({
     )
       return
     const rest = pages.filter((p) => p.id !== current.id)
-    deletePage(current.id)
-    updateCurrentId(rest[0]?.id)
+    removePage(current.id)
+    setCurrentId(rest[0]?.id)
     setEditorKey((k) => k + 1)
   }
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (status !== 'connected') return
     const file = e.target.files?.[0]
     if (!file) return
     file
@@ -568,12 +611,13 @@ function LiveSummary({
             'New page'
           const content = contentLines.join('\n').trim()
           const id = crypto.randomUUID()
-          newPages.push({ id, title })
+          const page = { id, title }
+          newPages.push(page)
+          addPage(page)
           updateEditor({ id, content })
         })
         if (newPages.length > 0) {
-          updatePages([...(pages || []), ...newPages])
-          updateCurrentId(newPages[0]!.id)
+          setCurrentId(newPages[0]!.id)
           setEditorKey((k) => k + 1)
         }
         if (fileInputRef.current) fileInputRef.current.value = ''
@@ -622,7 +666,8 @@ function LiveSummary({
         pages={pages || []}
         currentId={currentId}
         onSwitch={(id) => {
-          updateCurrentId(id)
+          if (status !== 'connected') return
+          setCurrentId(id)
           setEditorKey((k) => k + 1)
         }}
         onDelete={handleDelete}
@@ -665,7 +710,7 @@ function LiveSummary({
           <InitialContentPlugin text={initialText} />
           <AutoSavePlugin
             onChange={(txt) => {
-              if (!current) return
+              if (!current || status !== 'connected') return
               updateEditor({ id: current.id, content: txt })
             }}
           />
