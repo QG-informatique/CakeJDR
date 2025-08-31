@@ -7,6 +7,8 @@ import {
   useStorage,
   useMutation,
   useMyPresence,
+  useRoom,
+  useSelf,
 } from '@liveblocks/react'
 import LiveCursors from './LiveCursors'
 import YouTube from 'react-youtube'
@@ -27,6 +29,10 @@ export default function InteractiveCanvas() {
   const musicObj = useStorage((root) => root.music) // peut être null au démarrage
   const storageReady = Boolean(musicObj)
 
+  const room = useRoom()
+  const self = useSelf()
+  const volumeKey = room && self ? `volume-${room.id}-${self.id}` : undefined
+
   const [isDrawing, setIsDrawing] = useState(false)
   const [drawMode, setDrawMode] = useState<ToolMode>('images')
   const [color, setColor] = useState('#000000')
@@ -43,12 +49,24 @@ export default function InteractiveCanvas() {
   // Lecture: synchro globale
   const [isPlaying, setIsPlaying] = useState(false)
 
-  // Volume: synchro globale (0..100), défaut 5%
+  // Volume: local (0..100), défaut 5%
   const [volume, setVolumeState] = useState(5)
   const setVolume = (v: number) => {
     setVolumeState(v)
-    if (storageReady) updateMusic({ volume: v })
+    if (volumeKey) localStorage.setItem(volumeKey, String(v))
   }
+
+  useEffect(() => {
+    if (!volumeKey) return
+    const stored = localStorage.getItem(volumeKey)
+    if (stored !== null) {
+      const v = parseInt(stored, 10)
+      setVolumeState(Number.isNaN(v) ? 5 : v)
+    } else {
+      setVolumeState(5)
+      localStorage.setItem(volumeKey, '5')
+    }
+  }, [volumeKey])
 
   const broadcast = useBroadcastEvent()
   const lastSend = useRef(0)
@@ -87,11 +105,11 @@ export default function InteractiveCanvas() {
     })
   }, [])
 
-  // Mutation musique: gère l'état global (id, lecture, volume)
+  // Mutation musique: gère l'état global (id, lecture)
   const updateMusic = useMutation(
     (
       { storage },
-      updates: { id?: string; playing?: boolean; volume?: number },
+      updates: { id?: string; playing?: boolean },
     ) => {
       storage.get('music').update(updates)
     },
@@ -186,7 +204,6 @@ export default function InteractiveCanvas() {
     if (!musicObj) return
     setYtId(musicObj.id)
     setIsPlaying(!!musicObj.playing)
-    setVolumeState(musicObj.volume ?? 5)
   }, [musicObj])
 
   // --------- DnD images: aperçu instantané + swap vers Cloudinary optimisé ---------
