@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import { useBroadcastEvent, useOthers } from '@liveblocks/react'
+import { useOthers } from '@liveblocks/react'
 import { useT } from '@/lib/useT'
 import { User2 } from 'lucide-react'
 
@@ -21,7 +21,6 @@ export default function GMCharacterSelector({
   const [open, setOpen] = useState(false)
   const [selectedId, setSelectedId] = useState<string | number | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
-  const broadcast = useBroadcastEvent()
   const t = useT()
 
   // Récupère les personnages en temps réel via les presences
@@ -51,10 +50,6 @@ export default function GMCharacterSelector({
 
     setSelectedId(id)
     onSelect(found)
-    broadcast({
-      type: 'gm-select',
-      character: found,
-    })
     setOpen(false)
   }
 
