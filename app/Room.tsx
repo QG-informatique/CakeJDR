@@ -1,6 +1,12 @@
 "use client";
-import { ReactNode } from "react";
-import { LiveblocksProvider, RoomProvider, ClientSideSuspense } from "@liveblocks/react/suspense";
+import { ReactNode, useEffect } from "react";
+import {
+  LiveblocksProvider,
+  RoomProvider,
+  ClientSideSuspense,
+  useMutation,
+  useStorage,
+} from "@liveblocks/react/suspense";
 import { LiveMap, LiveObject, LiveList } from '@liveblocks/client'
 
 export function Room({
@@ -24,23 +30,46 @@ export function Room({
 
   return (
     <LiveblocksProvider authEndpoint="/api/liveblocks-auth" {...devtoolsProps}>
-      <RoomProvider
-        id={id}
-        initialPresence={{}}
-        initialStorage={{
-          characters: new LiveMap(),
-          images: new LiveMap(),
-            music: new LiveObject({ id: '', playing: false, volume: 5 }),
-          summary: new LiveObject({ acts: [], currentId: '' }),
-          editor: new LiveMap(),
-          events: new LiveList([]),
-          rooms: new LiveList([])
-        }}
-      >
+      <RoomProvider id={id} initialPresence={{}}>
         <ClientSideSuspense fallback={<div>Loading…</div>}>
-          {children}
+          <StorageInitializer>{children}</StorageInitializer>
         </ClientSideSuspense>
       </RoomProvider>
     </LiveblocksProvider>
   );
+}
+
+function StorageInitializer({ children }: { children: ReactNode }) {
+  const init = useMutation(({ storage }) => {
+    if (!storage.get('characters')) storage.set('characters', new LiveMap());
+    if (!storage.get('images')) storage.set('images', new LiveMap());
+    if (!storage.get('music'))
+      storage.set('music', new LiveObject({ id: '', playing: false, volume: 5 }));
+    if (!storage.get('summary'))
+      storage.set('summary', new LiveObject({ acts: [], currentId: '' }));
+    if (!storage.get('editor')) storage.set('editor', new LiveMap());
+    if (!storage.get('events')) storage.set('events', new LiveList([]));
+    if (!storage.get('rooms')) storage.set('rooms', new LiveList([]));
+  }, []);
+
+  const ready = useStorage(
+    root =>
+      !!root.characters &&
+      !!root.images &&
+      !!root.music &&
+      !!root.summary &&
+      !!root.editor &&
+      !!root.events &&
+      !!root.rooms,
+  );
+
+  useEffect(() => {
+    if (!ready) init();
+  }, [ready, init]);
+
+  if (!ready) {
+    return <div>Loading…</div>;
+  }
+
+  return <>{children}</>;
 }
