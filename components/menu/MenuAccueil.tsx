@@ -91,8 +91,8 @@ export default function MenuAccueil() {
             setRoomLoading(true)
             fetch(`/api/roomstorage?roomId=${encodeURIComponent(r.id)}`)
               .then((res) => res.json())
-              .then((data) => setRemoteChars(data.characters || {}))
-              .catch(() => setRemoteChars({}))
+          .then((data) => setRemoteChars(data.characters || {}))
+          .catch(() => setRemoteChars({}))
               .finally(() => setRoomLoading(false))
           }
         } catch {}
@@ -226,8 +226,10 @@ export default function MenuAccueil() {
       owner: user.pseudo,
       updatedAt: Date.now(),
     }
-    const updated = characters.find((c) => c.id === id)
-      ? characters.map((c) => (c.id === id ? toSave : c))
+    const updated = characters.some((c) => c.id === id && c.owner === toSave.owner)
+      ? characters.map((c) =>
+          c.id === id && c.owner === toSave.owner ? toSave : c,
+        )
       : [...characters, toSave]
     saveCharacters(updated)
     localStorage.setItem(SELECTED_KEY, String(id))
@@ -270,9 +272,16 @@ export default function MenuAccueil() {
         const id = imported.id || crypto.randomUUID()
         if (!imported.owner && user) imported.owner = user.pseudo
         const withId = { ...imported, id }
-        saveCharacters([...characters, withId])
+        const idx = characters.findIndex(
+          (c) => String(c.id) === String(id) && c.owner === withId.owner,
+        )
+        const updated =
+          idx !== -1
+            ? characters.map((c, i) => (i === idx ? withId : c))
+            : [...characters, withId]
+        saveCharacters(updated)
         localStorage.setItem(SELECTED_KEY, String(id))
-        setSelectedIdx(characters.length)
+        setSelectedIdx(idx !== -1 ? idx : characters.length)
         setStatusMessage(t('importSuccess'))
       } catch {
         setStatusMessage(t('invalidFile'))
@@ -301,20 +310,23 @@ export default function MenuAccueil() {
   }
 
   const handleUploadChar = async (char: Character) => {
-    if (!selectedRoom) return
+    if (!selectedRoom || !user) return
+    if (char.owner !== user.pseudo && !user.isMJ) return
     try {
+      const updatedChar = { ...char, updatedAt: Date.now() }
       await fetch('/api/roomstorage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           roomId: selectedRoom.id,
           id: char.id,
-          character: { ...char, updatedAt: Date.now() },
+          owner: char.owner,
+          character: updatedChar,
         }),
       })
       setRemoteChars((r) => ({
         ...r,
-        [String(char.id)]: { ...char, updatedAt: Date.now() },
+        [`${char.owner}:${String(char.id)}`]: updatedChar,
       }))
       setStatusMessage(t('saveCloud'))
     } catch {
@@ -323,7 +335,9 @@ export default function MenuAccueil() {
   }
 
   const handleDownloadChar = (char: Character) => {
-    const idx = characters.findIndex((c) => String(c.id) === String(char.id))
+    const idx = characters.findIndex(
+      (c) => String(c.id) === String(char.id) && c.owner === char.owner,
+    )
     const updated =
       idx !== -1
         ? characters.map((c, i) => (i === idx ? char : c))
@@ -331,16 +345,16 @@ export default function MenuAccueil() {
     saveCharacters(updated)
   }
 
-  const handleDeleteCloudChar = async (id: string | number) => {
+  const handleDeleteCloudChar = async (char: Character) => {
     if (!selectedRoom) return
     if (!window.confirm('Delete from cloud?')) return
     await fetch(
-      `/api/roomstorage?roomId=${encodeURIComponent(selectedRoom.id)}&id=${encodeURIComponent(String(id))}`,
+      `/api/roomstorage?roomId=${encodeURIComponent(selectedRoom.id)}&owner=${encodeURIComponent(char.owner)}&id=${encodeURIComponent(String(char.id))}`,
       { method: 'DELETE' },
     )
     setRemoteChars((r) => {
       const next = { ...r }
-      delete next[String(id)]
+      delete next[`${char.owner}:${String(char.id)}`]
       return next
     })
   }

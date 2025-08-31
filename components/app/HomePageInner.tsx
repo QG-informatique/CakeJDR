@@ -52,13 +52,18 @@ export default function HomePageInner() {
       if (!char.id) char.id = crypto.randomUUID()
       setPerso(char)
       updateMyPresence({ character: char })
-      setCharacters(prev => {
-        const idx = prev.findIndex(c => String(c.id) === String(char.id))
-        const next = idx !== -1 ? prev.map((c,i)=> i===idx ? char : c) : [...prev, char]
-        localStorage.setItem('jdr_characters', JSON.stringify(next))
-        localStorage.setItem('selectedCharacterId', String(char.id))
-        return next
-      })
+      if (profile?.isMJ || char.owner === profile?.pseudo) {
+        setCharacters(prev => {
+          const idx = prev.findIndex(
+            c => String(c.id) === String(char.id) && c.owner === char.owner,
+          )
+          const next =
+            idx !== -1 ? prev.map((c,i)=> i===idx ? char : c) : [...prev, char]
+          localStorage.setItem('jdr_characters', JSON.stringify(next))
+          localStorage.setItem('selectedCharacterId', String(char.id))
+          return next
+        })
+      }
     }
   })
 
@@ -117,20 +122,22 @@ export default function HomePageInner() {
     newPerso = { ...newPerso, updatedAt: Date.now() }
     setPerso(newPerso)
     updateMyPresence({ character: newPerso })
-    setCharacters((prevChars) => {
-      let found = false
-      const next = prevChars.map((c) => {
-        if (c.id === id) {
-          found = true
-          return { ...c, ...newPerso }
-        }
-        return c
+    if (profile?.isMJ || newPerso.owner === profile?.pseudo) {
+      setCharacters((prevChars) => {
+        let found = false
+        const next = prevChars.map((c) => {
+          if (c.id === id && c.owner === newPerso.owner) {
+            found = true
+            return { ...c, ...newPerso }
+          }
+          return c
+        })
+        if (!found) next.push(newPerso)
+        localStorage.setItem('jdr_characters', JSON.stringify(next))
+        localStorage.setItem('selectedCharacterId', id)
+        return next
       })
-      if (!found) next.push(newPerso)
-      localStorage.setItem('jdr_characters', JSON.stringify(next))
-      localStorage.setItem('selectedCharacterId', id)
-      return next
-    })
+    }
   }
 
   if (!user) {
