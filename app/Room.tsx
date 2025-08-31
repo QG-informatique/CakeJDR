@@ -33,7 +33,9 @@ export function Room({
       <RoomProvider
         id={id}
         initialPresence={{}}
+
         initialStorage={undefined as unknown as Liveblocks['Storage']}
+
       >
         <ClientSideSuspense fallback={<div>Loading…</div>}>
           <StorageInitializer>{children}</StorageInitializer>
