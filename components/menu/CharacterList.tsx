@@ -110,17 +110,9 @@ const CharacterList: FC<Props> = ({
                 return (
                   <motion.li
                     key={`${ch.owner}:${ch.id}`}
-                    onClick={() =>
-                      onSelect(
-                        local
-                          ? filtered.findIndex(
-                              (c) =>
-                                String(c.id) === String(ch.id) &&
-                                c.owner === ch.owner,
-                            )
-                          : -1,
-                      )
-                    }
+                    onClick={() => {
+                      onSelect(local ? localIdx : -1)
+                    }}
                     className={`
                   group relative rounded-lg p-3 cursor-pointer
                   flex flex-col gap-2 min-h-[120px]
