@@ -21,7 +21,9 @@ import { useT } from '@/lib/useT'
 
 // ====== Liveblocks (collaboratif) ======
 import { useStorage, useMutation, useStatus } from '@liveblocks/react'
-import { LiveMap, LiveObject, LiveList } from '@liveblocks/client'
+
+import { LiveList, LiveMap, LiveObject } from '@liveblocks/client'
+
 import type { LsonObject } from '@liveblocks/client'
 
 // ====== Lexical ======
@@ -47,8 +49,6 @@ interface Props {
   onClose: () => void
 }
 
-// [FIX] Déclaration manquante : le type Summary était utilisé mais non défini.
-//      Ajout d'un simple LsonObject avec acts/currentId pour typer LiveObject<Summary>.
 interface Summary extends LsonObject {
   acts: LiveList<Page>
   currentId?: string
@@ -272,8 +272,7 @@ function LocalSummary({
         editor[id] = content
       })
 
-      // [FIX] Fin manquante : mise à jour de l'état + reset input
-      const next = {
+        const next = {
         ...state,
         acts: [...state.acts, ...incoming],
         currentId: incoming[0]?.id ?? state.currentId,
@@ -405,36 +404,37 @@ function LiveSummary({
     rawEditor instanceof LiveMap ? (rawEditor as LiveMap<string, string>) : null
 
   // Normalisation pages / currentId
-  const pages =
-    summary instanceof LiveObject
-      ? ((summary.get('acts') as LiveList<Page> | undefined)?.toArray() ?? undefined)
-      : undefined
 
-  const currentId =
-    summary instanceof LiveObject
-      ? ((summary.get('currentId') as string | undefined) ?? undefined)
-      : undefined
+  const pages = summary
+    ? (summary.get('acts') as LiveList<Page>).toArray()
+    : undefined
+
+  const currentId = summary
+    ? ((summary.get('currentId') as string | undefined) ?? undefined)
+    : undefined
+
 
   const [editorKey, setEditorKey] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const getOrInitSummary = (storage: LiveObject<any>) => {
+    const existing = storage.get('summary')
+    if (existing instanceof LiveObject) return existing as LiveObject<Summary>
+    const summary = new LiveObject<Summary>({
+      acts: new LiveList<Page>([]),
+      currentId: undefined,
+    })
+    storage.set('summary', summary)
+    return summary
+  }
+
   // Mutations sûres (créent les structures si nécessaires)
   const ensureStorageShape = useMutation(({ storage }) => {
-    let s = storage.get('summary')
-    if (!(s instanceof LiveObject)) {
-      s = new LiveObject<Summary>({
-        acts: new LiveList<Page>([]),
-        currentId: undefined,
-      })
-      storage.set('summary', s)
-    }
-    let acts = (s as LiveObject<Summary>).get('acts')
-    if (!(acts instanceof LiveList)) {
-      acts = new LiveList<Page>([])
-      ;(s as LiveObject<Summary>).set('acts', acts)
-    }
-    const e = storage.get('editor')
-    if (!(e instanceof LiveMap)) {
+
+    getOrInitSummary(storage)
+    if (!(storage.get('editor') instanceof LiveMap)) {
+
       storage.set('editor', new LiveMap<string, string>())
     }
   }, [])
@@ -445,86 +445,30 @@ function LiveSummary({
   }, [ensureStorageShape, status])
 
   const addPage = useMutation(({ storage }, page: Page) => {
-    let s = storage.get('summary')
-    if (!(s instanceof LiveObject)) {
-      s = new LiveObject<Summary>({
-        acts: new LiveList<Page>([]),
-        currentId: undefined,
-      })
-      storage.set('summary', s)
-    }
-    let list = (s as LiveObject<Summary>).get('acts')
-    if (!(list instanceof LiveList)) {
-      list = new LiveList<Page>([])
-      ;(s as LiveObject<Summary>).set('acts', list)
-    }
-    ;(list as LiveList<Page>).push(page)
+
+    const summary = getOrInitSummary(storage)
+    const list = summary.get('acts') as LiveList<Page>
+    list.push(page)
   }, [])
 
-  const setCurrentId = useMutation(({ storage }, id: string | undefined) => {
-    let s = storage.get('summary')
-    if (!(s instanceof LiveObject)) {
-      s = new LiveObject<Summary>({
-        acts: new LiveList<Page>([]),
-        currentId: undefined,
-      })
-      storage.set('summary', s)
-    }
-    ;(s as LiveObject<Summary>).set('currentId', id)
+  const renamePage = useMutation(({ storage }, page: Page) => {
+    const summary = getOrInitSummary(storage)
+    const list = summary.get('acts') as LiveList<Page>
+    const index = list.toArray().findIndex((p) => p.id === page.id)
+    if (index !== -1) list.set(index, page)
   }, [])
 
-  const updatePageTitle = useMutation(
-    ({ storage }, data: { id: string; title: string }) => {
-      let s = storage.get('summary')
-      if (!(s instanceof LiveObject)) {
-        s = new LiveObject<Summary>({
-          acts: new LiveList<Page>([]),
-          currentId: undefined,
-        })
-        storage.set('summary', s)
-      }
-      let list = (s as LiveObject<Summary>).get('acts')
-      if (!(list instanceof LiveList)) {
-        list = new LiveList<Page>([])
-        ;(s as LiveObject<Summary>).set('acts', list)
-      }
-      const arr = (list as LiveList<Page>).toArray()
-      let target: Page | undefined
-      let idx = -1
-      arr.some((p, i) => {
-        if (p.id === data.id) {
-          target = p
-          idx = i
-          return true
-        }
-        return false
-      })
-      if (target && idx !== -1) {
-        ;(list as LiveList<Page>).set(idx, { ...target, title: data.title })
-      }
-    },
-    [],
-  )
+  const updateCurrentId = useMutation(({ storage }, id: string | undefined) => {
+    const summary = getOrInitSummary(storage)
+    summary.update({ currentId: id })
+  }, [])
 
-  const removePage = useMutation(({ storage }, id: string) => {
-    let s = storage.get('summary')
-    if (!(s instanceof LiveObject)) {
-      s = new LiveObject<Summary>({
-        acts: new LiveList<Page>([]),
-        currentId: undefined,
-      })
-      storage.set('summary', s)
-    }
-    let list = (s as LiveObject<Summary>).get('acts')
-    if (!(list instanceof LiveList)) {
-      list = new LiveList<Page>([])
-      ;(s as LiveObject<Summary>).set('acts', list)
-    }
-    const arr = (list as LiveList<Page>).toArray()
-    const index = arr.findIndex((p) => p.id === id)
-    if (index !== -1) {
-      ;(list as LiveList<Page>).delete(index)
-    }
+  const deletePage = useMutation(({ storage }, id: string) => {
+    const summary = getOrInitSummary(storage)
+    const list = summary.get('acts') as LiveList<Page>
+    const index = list.toArray().findIndex((p) => p.id === id)
+    if (index !== -1) list.delete(index)
+
   }, [])
 
   const updateEditor = useMutation(
@@ -581,8 +525,10 @@ function LiveSummary({
   }
 
   const handleTitleChange = (title: string) => {
-    if (status !== 'connected' || !pages || !current) return
-    updatePageTitle({ id: current.id, title })
+
+    if (!pages || !current) return
+    renamePage({ ...current, title })
+
   }
 
   const handleDelete = () => {
@@ -612,7 +558,7 @@ function LiveSummary({
       .text()
       .then((text) => {
         const parts = text.split(/=== Page: /).slice(1)
-        const newPages: Page[] = []
+        let firstId: string | undefined
         parts.forEach((part) => {
           const [titleLine = '', ...contentLines] = part.split('\n')
           const title =
@@ -621,13 +567,16 @@ function LiveSummary({
             'New page'
           const content = contentLines.join('\n').trim()
           const id = crypto.randomUUID()
-          const page = { id, title }
-          newPages.push(page)
-          addPage(page)
+
+          addPage({ id, title })
+
           updateEditor({ id, content })
+          if (!firstId) firstId = id
         })
-        if (newPages.length > 0) {
-          setCurrentId(newPages[0]!.id)
+
+        if (firstId) {
+          updateCurrentId(firstId)
+
           setEditorKey((k) => k + 1)
         }
         if (fileInputRef.current) fileInputRef.current.value = ''
