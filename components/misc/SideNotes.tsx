@@ -39,7 +39,7 @@ export default function SideNotes() {
   const t = useT()
 
   const status = useStatus() as string
-  const liveObj = useStorage(root => root.quickNote) as LiveObject<NoteData> | undefined
+  const liveNote = useStorage(root => root.quickNote)
 
   const updateLive = useMutation(({ storage }, data: NoteData) => {
     const obj = storage.get(LIVE_KEY)
@@ -59,7 +59,7 @@ export default function SideNotes() {
   // Connection guard & resync
   useEffect(() => {
     if (status === 'connected') {
-      const remote = liveObj ? liveObj.toObject() : { text: '', updatedAt: 0 }
+      const remote = liveNote ?? { text: '', updatedAt: 0 }
       const local = loadLocal()
       if (local.updatedAt > remote.updatedAt) {
         updateLive(local)
@@ -84,17 +84,17 @@ export default function SideNotes() {
       }, 3000)
       return () => clearTimeout(id)
     }
-  }, [status, liveObj, updateLive])
+  }, [status, liveNote, updateLive])
 
   // Sync remote changes to local
   useEffect(() => {
-    if (status === 'connected' && liveObj) {
-      const { text, updatedAt } = liveObj.toObject()
+    if (status === 'connected' && liveNote) {
+      const { text, updatedAt } = liveNote
       setNotes(text)
       setUpdated(updatedAt)
       saveLocal({ text, updatedAt })
     }
-  }, [liveObj, status])
+  }, [liveNote, status])
 
   // Save height
   useEffect(() => {
