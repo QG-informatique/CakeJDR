@@ -2,14 +2,18 @@
 // https://liveblocks.io/docs/api-reference/liveblocks-react#Typing-your-data
 import type { LiveMap, LiveObject, LiveList } from '@liveblocks/client'
 
+// Canvas images stored in Liveblocks. Keep in sync with components/canvas/ImageItem.tsx
+// but defined here to satisfy Liveblocks Lson constraints.
 type CanvasImage = {
-  id: number
-  src: string
+  id: string
+  url: string
   x: number
   y: number
   width: number
   height: number
-  local?: boolean
+  scale: number
+  rotation: number
+  createdAt: number
 }
 
 type SessionEvent = {
@@ -52,7 +56,7 @@ declare global {
     Storage: {
       characters: LiveMap<string, CharacterData>
       images: LiveMap<string, CanvasImage>
-        music: LiveObject<{ id: string; playing: boolean; volume: number }>
+      music: LiveObject<{ id: string; playing: boolean; volume: number }>
 
       summary: LiveObject<{ acts: LiveList<{ id: string; title: string }>; currentId?: string }>
       quickNote: LiveObject<{ text: string; updatedAt: number }>
@@ -72,7 +76,7 @@ declare global {
     RoomEvent:
       | { type: 'add-image'; image: CanvasImage }
       | { type: 'update-image'; image: CanvasImage }
-      | { type: 'delete-image'; id: number }
+      | { type: 'delete-image'; id: string }
       | { type: 'clear-canvas' }
       | {
           type: 'draw-line'

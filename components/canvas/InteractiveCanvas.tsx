@@ -482,9 +482,9 @@ export default function InteractiveCanvas() {
 
     const { id, type, offsetX, offsetY } = dragState.current
     if (!id || !type) return
-    const base =
-      localTransforms.current.get(id) || images.find((i) => i.id === id)
-    if (!base) return
+    const original = images.find((i) => i.id === id)
+    if (!original) return
+    const base = { ...original, ...localTransforms.current.get(id) }
     const updated =
       type === 'move'
         ? { ...base, x: x - offsetX, y: y - offsetY }
@@ -538,7 +538,6 @@ export default function InteractiveCanvas() {
 
   const clearCanvas = (broadcastChange = true) => {
     clearImages()
-    setDragImages(null)
     strokesRef.current = []
     const ctx = ctxRef.current
     if (ctx && drawingCanvasRef.current) {
