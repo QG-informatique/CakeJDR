@@ -16,8 +16,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { roomId, id, character } = await req.json()
-    if (!roomId || !id || !character) {
+    const { roomId, id, owner, character } = await req.json()
+    if (!roomId || !id || !owner || !character) {
       return NextResponse.json({ error: 'missing data' }, { status: 400 })
     }
     const secret = process.env.LIVEBLOCKS_SECRET_KEY
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     await client.mutateStorage(roomId, ({ root }) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const map = (root as any).get('characters') as LiveMap<string, Lson>
-      map.set(String(id), character as Lson)
+      map.set(`${owner}:${id}`, character as Lson)
     })
     return NextResponse.json({ ok: true })
   } catch {
@@ -38,7 +38,8 @@ export async function DELETE(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const roomId = searchParams.get('roomId')
   const id = searchParams.get('id')
-  if (!roomId || !id) {
+  const owner = searchParams.get('owner')
+  if (!roomId || !id || !owner) {
     return NextResponse.json({ error: 'missing data' }, { status: 400 })
   }
   const secret = process.env.LIVEBLOCKS_SECRET_KEY
@@ -48,7 +49,7 @@ export async function DELETE(req: NextRequest) {
     await client.mutateStorage(roomId, ({ root }) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const map = (root as any).get('characters') as LiveMap<string, Lson>
-      map.delete(String(id))
+      map.delete(`${owner}:${id}`)
     })
     return NextResponse.json({ ok: true })
   } catch {
