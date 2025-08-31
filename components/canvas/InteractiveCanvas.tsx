@@ -399,10 +399,15 @@ export default function InteractiveCanvas() {
     setMousePos({ x, y })
     updateMyPresence({ cursor: { x, y } })
 
+    if (drawMode !== 'draw' && drawMode !== 'erase' && isDrawing) {
+      setIsDrawing(false)
+    }
+
     if (
       isDrawing &&
       (drawMode === 'draw' || drawMode === 'erase') &&
-      ctxRef.current
+      ctxRef.current &&
+      e.buttons === 1
     ) {
       ctxRef.current.lineTo(x, y)
       ctxRef.current.stroke()
@@ -429,6 +434,8 @@ export default function InteractiveCanvas() {
           mode: drawMode,
         } as Liveblocks['RoomEvent'])
       }
+    } else if (isDrawing && e.buttons !== 1) {
+      setIsDrawing(false)
     }
 
     const { id, type, offsetX, offsetY } = dragState.current
