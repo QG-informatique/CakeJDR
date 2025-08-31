@@ -33,6 +33,8 @@ export default function InteractiveCanvas() {
   const images = imagesMap
     ? (Array.from(imagesMap.values()) as ImageData[])
     : []
+  const [dragImages, setDragImages] = useState<ImageData[] | null>(null)
+  const imagesToRender = dragImages ?? images
 
   const musicObj = useStorage((root) => root.music) // peut être null au démarrage
   const storageReady = Boolean(musicObj)
@@ -109,7 +111,7 @@ export default function InteractiveCanvas() {
   }
 
   const imagesRef = useRef<ImageData[]>([])
-  imagesRef.current = images
+  imagesRef.current = imagesToRender
 
   // Mutation musique: gère l'état global (id, lecture, volume)
   const updateMusic = useMutation(
@@ -361,7 +363,7 @@ export default function InteractiveCanvas() {
     }
 
     if (drawMode === 'images' && id && type) {
-      const img = images.find((i) => i.id === id)
+      const img = imagesToRender.find((i) => i.id === id)
       if (!img) return
 
       dragState.current = {
@@ -370,6 +372,7 @@ export default function InteractiveCanvas() {
         offsetX: e.clientX - rect.left - img.x,
         offsetY: e.clientY - rect.top - img.y,
       }
+      setDragImages(images.map((i) => ({ ...i })))
       setSelectedImageId(id)
     }
   }
@@ -416,28 +419,38 @@ export default function InteractiveCanvas() {
     }
 
     const { id, type, offsetX, offsetY } = dragState.current
-    if (!id || !type) return
-    const img = images.find((i) => i.id === id)
+    if (!id || !type || !dragImages) return
+    const img = dragImages.find((i) => i.id === id)
     if (!img) return
     const updated =
       type === 'move'
         ? { ...img, x: x - offsetX, y: y - offsetY }
         : { ...img, width: x - img.x, height: y - img.y }
-    updateImage(clampImage(updated, rect))
+    const clamped = clampImage(updated, rect)
+    setDragImages((prev) =>
+      prev ? prev.map((i) => (i.id === id ? clamped : i)) : prev,
+    )
   }
 
   const handlePointerUp = () => {
     setIsDrawing(false)
+    const { id } = dragState.current
+    if (id && dragImages) {
+      const img = dragImages.find((i) => i.id === id)
+      if (img) updateImage(img)
+    }
+    setDragImages(null)
     dragState.current = { id: null, type: null, offsetX: 0, offsetY: 0 }
   }
 
   const handlePointerLeave = () => {
     updateMyPresence({ cursor: null })
+    if (dragState.current.id) handlePointerUp()
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (drawMode !== 'images' || selectedImageId === null) return
-    const img = images.find((i) => i.id === selectedImageId)
+    const img = imagesToRender.find((i) => i.id === selectedImageId)
     const rect = drawingCanvasRef.current?.getBoundingClientRect()
     if (!img || !rect) return
     const step = 5
@@ -455,6 +468,7 @@ export default function InteractiveCanvas() {
 
   const clearCanvas = (broadcastChange = true) => {
     clearImages()
+    setDragImages(null)
     strokesRef.current = []
     const ctx = ctxRef.current
     if (ctx && drawingCanvasRef.current) {
@@ -588,7 +602,7 @@ export default function InteractiveCanvas() {
             className="absolute top-0 left-0 w-full h-full"
           />
 
-          {images.map((img) => (
+          {imagesToRender.map((img) => (
             <ImageItem
               key={img.id}
               img={img}
