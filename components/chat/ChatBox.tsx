@@ -44,15 +44,17 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
   }, [collapsed])
 
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (inputValue.trim() === '') return
 
     const msg = { author, text: inputValue.trim(), isMJ: profile?.isMJ }
+
     const ts = Date.now()
 
     broadcast({ type: 'chat', author: msg.author, text: msg.text, isMJ: msg.isMJ, ts } as Liveblocks['RoomEvent'])
     addEvent({ id: crypto.randomUUID(), kind: 'chat', author: msg.author, text: msg.text, ts, isMJ: msg.isMJ })
     debug('chat', msg)
+
     setInputValue('')
   }
 
