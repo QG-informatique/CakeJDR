@@ -9,15 +9,15 @@ export default function RoomAvatarStack({ id }: { id: string }) {
       <RoomProvider
         id={id}
         initialPresence={{}}
-        initialStorage={{
-          characters: new LiveMap(),
-          images: new LiveMap(),
-            music: new LiveObject({ id: '', playing: false, volume: 5 }),
-          summary: new LiveObject({ acts: [] }),
-          editor: new LiveMap(),
-          events: new LiveList([]),
-          rooms: new LiveList([])
-        }}
+          initialStorage={{
+            characters: new LiveMap(),
+            images: new LiveMap(),
+            music: new LiveObject({ id: '', playing: false }),
+            summary: new LiveObject({ acts: [], currentId: '' }),
+            editor: new LiveMap(),
+            events: new LiveList([]),
+            rooms: new LiveList([]),
+          }}
       >
         <ClientSideSuspense fallback={null}>
           <LiveAvatarStack className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-row-reverse gap-1" size={20} />
