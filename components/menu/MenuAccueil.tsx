@@ -395,8 +395,13 @@ export default function MenuAccueil() {
     : []
 
   const handleSelectChar = (idx: number) => {
+    if (idx === -1) {
+      setSelectedIdx(null)
+      localStorage.removeItem(SELECTED_KEY)
+      return
+    }
     setSelectedIdx(idx)
-      const ch = filteredCharacters.at(idx)
+    const ch = filteredCharacters.at(idx)
     if (ch?.id !== undefined) {
       localStorage.setItem(SELECTED_KEY, String(ch.id))
     }
