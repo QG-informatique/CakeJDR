@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useCallback, useMemo } from 'react'
 import {
   useBroadcastEvent,
   useEventListener,
@@ -16,16 +16,19 @@ import { useT } from '@/lib/useT'
 import MusicPanel from './MusicPanel'
 import ImageItem, { ImageData } from './ImageItem'
 import SideNotes from '@/components/misc/SideNotes'
+import type { Stroke } from '@/liveblocks.config'
 
 export default function InteractiveCanvas() {
   // `images` map is created by RoomProvider but may be null until ready
   const imagesMap = useStorage((root) => root.images)
-  const images = imagesMap
-    ? (Array.from(imagesMap.values()) as ImageData[])
-    : []
+  const images = useMemo(
+    () => (imagesMap ? (Array.from(imagesMap.values()) as ImageData[]) : []),
+    [imagesMap],
+  )
 
   const musicObj = useStorage((root) => root.music) // peut être null au démarrage
   const storageReady = Boolean(musicObj)
+  const strokesList = useStorage((root) => root.strokes)
 
   const [isDrawing, setIsDrawing] = useState(false)
   const [drawMode, setDrawMode] = useState<ToolMode>('images')
@@ -87,6 +90,41 @@ export default function InteractiveCanvas() {
     })
   }, [])
 
+  const appendStroke = useMutation(({ storage }, stroke: Stroke) => {
+    storage.get('strokes').push(stroke)
+  }, [])
+
+  const clearStrokes = useMutation(({ storage }) => {
+    storage.get('strokes').clear()
+  }, [])
+
+  const drawStroke = useCallback(
+    ({ x1, y1, x2, y2, color: c, width, mode }: Stroke) => {
+      if (!ctxRef.current) return
+      ctxRef.current.strokeStyle = mode === 'erase' ? 'rgba(0,0,0,1)' : c
+      ctxRef.current.lineWidth = width
+      ctxRef.current.globalCompositeOperation =
+        mode === 'erase' ? 'destination-out' : 'source-over'
+      ctxRef.current.beginPath()
+      ctxRef.current.moveTo(x1, y1)
+      ctxRef.current.lineTo(x2, y2)
+      ctxRef.current.stroke()
+    },
+    [],
+  )
+
+  const rebuildCanvas = useCallback(() => {
+    const ctx = ctxRef.current
+    const canvas = drawingCanvasRef.current
+    if (!ctx || !canvas) return
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    strokesList?.forEach(drawStroke)
+  }, [strokesList, drawStroke])
+
+  useEffect(() => {
+    rebuildCanvas()
+  }, [rebuildCanvas])
+
   // Mutation musique: gère l'état global (id, lecture, volume)
   const updateMusic = useMutation(
     (
@@ -103,17 +141,9 @@ export default function InteractiveCanvas() {
   useEventListener((payload: any) => {
     const { event } = payload
     if (event.type === 'clear-canvas') {
-      clearCanvas(false)
-    } else if (event.type === 'draw-line' && ctxRef.current) {
-      const { x1, y1, x2, y2, color: c, width, mode } = event
-      ctxRef.current.strokeStyle = mode === 'erase' ? 'rgba(0,0,0,1)' : c
-      ctxRef.current.lineWidth = width
-      ctxRef.current.globalCompositeOperation =
-        mode === 'erase' ? 'destination-out' : 'source-over'
-      ctxRef.current.beginPath()
-      ctxRef.current.moveTo(x1, y1)
-      ctxRef.current.lineTo(x2, y2)
-      ctxRef.current.stroke()
+      clearCanvas(false, false)
+    } else if (event.type === 'draw-line') {
+      drawStroke(event)
     }
   })
 
@@ -143,13 +173,14 @@ export default function InteractiveCanvas() {
             ctx.lineCap = 'round'
             ctx.lineJoin = 'round'
             ctxRef.current = ctx
+            rebuildCanvas()
           }
         }
       }
       resize()
       window.addEventListener('resize', resize)
       return () => window.removeEventListener('resize', resize)
-    }, [toolsVisible, audioVisible])
+    }, [toolsVisible, audioVisible, rebuildCanvas])
 
   useEffect(() => {
     const canvas = drawingCanvasRef.current
@@ -165,6 +196,21 @@ export default function InteractiveCanvas() {
       setPenSize((s) => Math.min(Math.max(s, DRAW_MIN), DRAW_MAX))
     }
   }, [drawMode, DRAW_MIN, DRAW_MAX, ERASE_MIN, ERASE_MAX])
+
+  useEffect(() => {
+    const rect = drawingCanvasRef.current?.getBoundingClientRect()
+    if (!rect) return
+    images.forEach((img) => {
+      const clamped = {
+        ...img,
+        x: Math.min(Math.max(img.x, 0), rect.width - img.width),
+        y: Math.min(Math.max(img.y, 0), rect.height - img.height),
+      }
+      if (clamped.x !== img.x || clamped.y !== img.y) {
+        updateImage(clamped)
+      }
+    })
+  }, [images, updateImage])
 
   // Volume: applique seulement au player
   useEffect(() => {
@@ -317,8 +363,8 @@ export default function InteractiveCanvas() {
       const now = Date.now()
       if (THROTTLE === 0 || now - lastSend.current > THROTTLE) {
         lastSend.current = now
-        broadcast({
-          type: 'draw-line',
+        const stroke: Stroke = {
+          id: crypto.randomUUID(),
           x1: px,
           y1: py,
           x2: x,
@@ -326,7 +372,9 @@ export default function InteractiveCanvas() {
           color,
           width: brushSize,
           mode: drawMode,
-        } as Liveblocks['RoomEvent'])
+        }
+        broadcast({ type: 'draw-line', ...stroke } as Liveblocks['RoomEvent'])
+        appendStroke(stroke)
       }
     }
 
@@ -374,8 +422,11 @@ export default function InteractiveCanvas() {
     }
   }
 
-  const clearCanvas = (broadcastChange = true) => {
+  const clearCanvas = (broadcastChange = true, updateStorage = true) => {
     clearImages()
+    if (updateStorage) {
+      clearStrokes()
+    }
     const ctx = ctxRef.current
     if (ctx && drawingCanvasRef.current) {
       ctx.clearRect(
