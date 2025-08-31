@@ -7,7 +7,6 @@
 //
 // ───────────────────────────────────────────────────────────────────────────────────────────
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import React, {
@@ -22,7 +21,7 @@ import { useT } from '@/lib/useT'
 
 // ====== Liveblocks (collaboratif) ======
 import { useStorage, useMutation, useStatus } from '@liveblocks/react'
-import { LiveMap, LiveObject } from '@liveblocks/client'
+import { LiveList, LiveMap, LiveObject } from '@liveblocks/client'
 import type { LsonObject } from '@liveblocks/client'
 
 // ====== Lexical ======
@@ -48,10 +47,8 @@ interface Props {
   onClose: () => void
 }
 
-// [FIX] Déclaration manquante : le type Summary était utilisé mais non défini.
-//      Ajout d'un simple LsonObject avec acts/currentId pour typer LiveObject<Summary>.
 interface Summary extends LsonObject {
-  acts: Page[]
+  acts: LiveList<Page>
   currentId?: string
 }
 
@@ -273,8 +270,7 @@ function LocalSummary({
         editor[id] = content
       })
 
-      // [FIX] Fin manquante : mise à jour de l'état + reset input
-      const next = {
+        const next = {
         ...state,
         acts: [...state.acts, ...incoming],
         currentId: incoming[0]?.id ?? state.currentId,
@@ -398,24 +394,21 @@ function LiveSummary({
 
   // Sélecteurs Liveblocks (peuvent être undefined avant init)
   const summary = useStorage((root) => root.summary) as
-    | Summary
     | LiveObject<Summary>
-    | undefined
+    | null
 
   const rawEditor = useStorage((root) => root.editor)
   const editorMap =
     rawEditor instanceof LiveMap ? (rawEditor as LiveMap<string, string>) : null
 
   // Normalisation pages / currentId
-  const pages =
-    summary instanceof LiveObject
-      ? ((summary.get('acts') as Page[] | undefined) ?? undefined)
-      : (summary?.acts as Page[] | undefined)
+  const pages = summary
+    ? (summary.get('acts') as LiveList<Page>).toArray()
+    : undefined
 
-  const currentId =
-    summary instanceof LiveObject
-      ? ((summary.get('currentId') as string | undefined) ?? undefined)
-      : (summary?.currentId as string | undefined)
+  const currentId = summary
+    ? ((summary.get('currentId') as string | undefined) ?? undefined)
+    : undefined
 
   const [editorKey, setEditorKey] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -426,7 +419,10 @@ function LiveSummary({
     if (!(s instanceof LiveObject)) {
       storage.set(
         'summary',
-        new LiveObject<Summary>({ acts: [], currentId: undefined }),
+        new LiveObject<Summary>({
+          acts: new LiveList<Page>([]),
+          currentId: undefined,
+        }),
       )
     }
     const e = storage.get('editor')
@@ -442,16 +438,22 @@ function LiveSummary({
   const updatePages = useMutation(({ storage }, acts: Page[]) => {
     let s = storage.get('summary')
     if (!(s instanceof LiveObject)) {
-      s = new LiveObject<Summary>({ acts: [], currentId: undefined })
+      s = new LiveObject<Summary>({
+        acts: new LiveList<Page>([]),
+        currentId: undefined,
+      })
       storage.set('summary', s)
     }
-    ;(s as LiveObject<Summary>).update({ acts })
+    ;(s as LiveObject<Summary>).set('acts', new LiveList<Page>(acts))
   }, [])
 
   const updateCurrentId = useMutation(({ storage }, id: string | undefined) => {
     let s = storage.get('summary')
     if (!(s instanceof LiveObject)) {
-      s = new LiveObject<Summary>({ acts: [], currentId: undefined })
+      s = new LiveObject<Summary>({
+        acts: new LiveList<Page>([]),
+        currentId: undefined,
+      })
       storage.set('summary', s)
     }
     ;(s as LiveObject<Summary>).update({ currentId: id })
@@ -460,12 +462,16 @@ function LiveSummary({
   const deletePage = useMutation(({ storage }, id: string) => {
     let s = storage.get('summary')
     if (!(s instanceof LiveObject)) {
-      s = new LiveObject<Summary>({ acts: [], currentId: undefined })
+      s = new LiveObject<Summary>({
+        acts: new LiveList<Page>([]),
+        currentId: undefined,
+      })
       storage.set('summary', s)
     }
-    const acts = ((s as LiveObject<any>).get('acts') as Page[]) || []
-    ;(s as LiveObject<any>).update({ acts: acts.filter((p: Page) => p.id !== id) })
-  }, []) // [FIX] accolade + tableau de dépendances manquants
+    const list = (s as LiveObject<Summary>).get('acts') as LiveList<Page>
+    const index = list.toArray().findIndex((p) => p.id === id)
+    if (index !== -1) list.delete(index)
+  }, [])
 
   const updateEditor = useMutation(
     ({ storage }, data: { id: string; content: string }) => {
