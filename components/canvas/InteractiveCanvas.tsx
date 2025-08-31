@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useReducer } from 'react'
 import {
   useBroadcastEvent,
   useEventListener,
@@ -33,8 +33,25 @@ export default function InteractiveCanvas() {
   const images = imagesMap
     ? (Array.from(imagesMap.values()) as ImageData[])
     : []
-  const [dragImages, setDragImages] = useState<ImageData[] | null>(null)
-  const imagesToRender = dragImages ?? images
+  const [pendingImages, setPendingImages] = useState<ImageData[]>([])
+  const localTransforms = useRef<Map<string, Partial<ImageData>>>(new Map())
+  const [, forceRender] = useReducer((x: number) => x + 1, 0)
+  const rafPending = useRef(false)
+  const scheduleRender = () => {
+    if (rafPending.current) return
+    rafPending.current = true
+    requestAnimationFrame(() => {
+      rafPending.current = false
+      forceRender()
+    })
+  }
+  const imagesToRender = [
+    ...images.map((img) => {
+      const local = localTransforms.current.get(img.id)
+      return local ? { ...img, ...local } : img
+    }),
+    ...pendingImages,
+  ]
 
   const musicObj = useStorage((root) => root.music) // peut être null au démarrage
   const storageReady = Boolean(musicObj)
@@ -65,6 +82,8 @@ export default function InteractiveCanvas() {
   const broadcast = useBroadcastEvent()
   const lastSend = useRef(0)
   const THROTTLE = 0
+  const lastMutation = useRef(0)
+  const MUTATION_THROTTLE = 100
   const [, updateMyPresence] = useMyPresence()
 
   const canvasRef = useRef<HTMLDivElement>(null)
@@ -82,15 +101,26 @@ export default function InteractiveCanvas() {
   }, [updateMyPresence])
 
   const addImage = useMutation(({ storage }, img: ImageData) => {
-    storage.get('images').set(String(img.id), img)
+    storage.get('images').set(img.id, img)
   }, [])
 
-  const updateImage = useMutation(({ storage }, img: ImageData) => {
-    storage.get('images').set(String(img.id), img)
-  }, [])
+  const updateImageTransform = useMutation(
+    (
+      { storage },
+      id: string,
+      updates: Partial<ImageData>,
+    ) => {
+      const map = storage.get('images')
+      const current = map.get(id)
+      if (current) {
+        map.set(id, { ...current, ...updates })
+      }
+    },
+    [],
+  )
 
-  const deleteImage = useMutation(({ storage }, id: number) => {
-    storage.get('images').delete(String(id))
+  const removeImage = useMutation(({ storage }, id: string) => {
+    storage.get('images').delete(id)
   }, [])
 
   const clearImages = useMutation(({ storage }) => {
@@ -101,6 +131,8 @@ export default function InteractiveCanvas() {
   }, [])
 
   const IMAGE_MIN_SIZE = 50
+  const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
+  const MAX_SIZE_MB = 5
 
   const clampImage = (img: ImageData, rect: DOMRect): ImageData => {
     const width = Math.min(Math.max(img.width, IMAGE_MIN_SIZE), rect.width - img.x)
@@ -153,7 +185,7 @@ export default function InteractiveCanvas() {
   })
 
   const dragState = useRef({
-    id: null as number | null,
+    id: null as string | null,
     type: null as 'move' | 'resize' | null,
     offsetX: 0,
     offsetY: 0,
@@ -221,7 +253,7 @@ export default function InteractiveCanvas() {
           clamped.width !== img.width ||
           clamped.height !== img.height
         ) {
-          updateImage(clamped)
+          updateImageTransform(img.id, clamped)
         }
       })
     }
@@ -231,7 +263,7 @@ export default function InteractiveCanvas() {
       window.removeEventListener('resize', handleResize)
       window.removeEventListener('orientationchange', handleResize)
     }
-  }, [updateImage])
+  }, [updateImageTransform])
 
   useEffect(() => {
     if (drawMode === 'erase') {
@@ -276,54 +308,60 @@ export default function InteractiveCanvas() {
     dropY: number,
     rect: DOMRect,
   ) {
-    const localUrl = fileToObjectURL(file)
-    const tempId = Date.now() + Math.random()
-    const tempImg: ImageData = {
-      id: tempId,
-      src: localUrl,
-      x: dropX - 100,
-      y: dropY - 100,
-      width: 200,
-      height: 200,
+    if (!ALLOWED_TYPES.includes(file.type) || file.size > MAX_SIZE_MB * 1024 * 1024) {
+      alert('Invalid image file')
+      return
     }
-    const clampedTemp = clampImage(tempImg, rect)
-    setDragImages((prev) => [ ...(prev ?? images), clampedTemp ])
-
+    const localUrl = fileToObjectURL(file)
+    const id = crypto.randomUUID()
+    const tempImg: ImageData = clampImage(
+      {
+        id,
+        url: localUrl,
+        x: dropX - 100,
+        y: dropY - 100,
+        width: 200,
+        height: 200,
+        scale: 1,
+        rotation: 0,
+        createdAt: Date.now(),
+      },
+      rect,
+    )
+    setPendingImages((prev) => [...prev, tempImg])
     try {
       const form = new FormData()
       form.append('file', file)
       form.append('upload_preset', 'cakejdr-images')
-
       const res = await fetch('/api/cloudinary', { method: 'POST', body: form })
       const data = await res.json().catch(() => null)
-
       if (!res.ok || !data) {
         throw new Error(data?.error || 'Upload failed')
       }
-
       const finalUrl: string = data.deliveryUrl || data.url
       if (!finalUrl) {
         throw new Error('No URL returned by Cloudinary endpoint')
       }
-
-      const width: number = data.width ?? clampedTemp.width
-      const height: number = data.height ?? clampedTemp.height
+      const width: number = data.width ?? tempImg.width
+      const height: number = data.height ?? tempImg.height
       const finalImg: ImageData = clampImage(
         {
-          id: tempId,
-          src: finalUrl,
+          ...tempImg,
+          url: finalUrl,
           x: dropX - width / 2,
           y: dropY - height / 2,
           width,
           height,
+          createdAt: Date.now(),
         },
         rect,
       )
       addImage(finalImg)
     } catch (err) {
       console.error(err)
+      alert('Image upload failed')
     } finally {
-      setDragImages(null)
+      setPendingImages((prev) => prev.filter((i) => i.id !== id))
       URL.revokeObjectURL(localUrl)
     }
   }
@@ -347,11 +385,11 @@ export default function InteractiveCanvas() {
 
   // --------------------------------------------------------------------------
 
-  const [selectedImageId, setSelectedImageId] = useState<number | null>(null)
+  const [selectedImageId, setSelectedImageId] = useState<string | null>(null)
 
   const handlePointerDown = (
     e: React.PointerEvent,
-    id?: number,
+    id?: string,
     type?: 'move' | 'resize',
   ) => {
     e.preventDefault()
@@ -376,7 +414,7 @@ export default function InteractiveCanvas() {
     }
 
     if (drawMode === 'images' && id && type) {
-      const img = imagesToRender.find((i) => i.id === id)
+      const img = images.find((i) => i.id === id)
       if (!img) return
 
       dragState.current = {
@@ -385,7 +423,18 @@ export default function InteractiveCanvas() {
         offsetX: e.clientX - rect.left - img.x,
         offsetY: e.clientY - rect.top - img.y,
       }
-      setDragImages(images.map((i) => ({ ...i })))
+      localTransforms.current.set(id, {
+        x: img.x,
+        y: img.y,
+        width: img.width,
+        height: img.height,
+        scale: img.scale,
+        rotation: img.rotation,
+        createdAt: img.createdAt,
+        url: img.url,
+        id: img.id,
+      })
+      scheduleRender()
       setSelectedImageId(id)
     }
   }
@@ -439,28 +488,33 @@ export default function InteractiveCanvas() {
     }
 
     const { id, type, offsetX, offsetY } = dragState.current
-    if (!id || !type || !dragImages) return
-    const img = dragImages.find((i) => i.id === id)
-    if (!img) return
+    if (!id || !type) return
+    const original = images.find((i) => i.id === id)
+    if (!original) return
+    const base = { ...original, ...localTransforms.current.get(id) }
     const updated =
       type === 'move'
-        ? { ...img, x: x - offsetX, y: y - offsetY }
-        : { ...img, width: x - img.x, height: y - img.y }
-    const clamped = clampImage(updated, rect)
-    setDragImages((prev) =>
-      prev ? prev.map((i) => (i.id === id ? clamped : i)) : prev,
-    )
-    updateImage(clamped)
+        ? { ...base, x: x - offsetX, y: y - offsetY }
+        : { ...base, width: x - base.x, height: y - base.y }
+    const clamped = clampImage(updated as ImageData, rect)
+    localTransforms.current.set(id, clamped)
+    scheduleRender()
+    const now = Date.now()
+    if (now - lastMutation.current > MUTATION_THROTTLE) {
+      lastMutation.current = now
+      updateImageTransform(id, clamped)
+    }
   }
 
   const handlePointerUp = () => {
     setIsDrawing(false)
     const { id } = dragState.current
-    if (id && dragImages) {
-      const img = dragImages.find((i) => i.id === id)
-      if (img) updateImage(img)
+    if (id) {
+      const local = localTransforms.current.get(id)
+      if (local) updateImageTransform(id, local)
+      localTransforms.current.delete(id)
+      scheduleRender()
     }
-    setDragImages(null)
     dragState.current = { id: null, type: null, offsetX: 0, offsetY: 0 }
   }
 
@@ -483,13 +537,14 @@ export default function InteractiveCanvas() {
     updated = clampImage(updated, rect)
     if (updated.x !== img.x || updated.y !== img.y) {
       e.preventDefault()
-      updateImage(updated)
+      localTransforms.current.set(img.id, updated)
+      scheduleRender()
+      updateImageTransform(img.id, updated)
     }
   }
 
   const clearCanvas = (broadcastChange = true) => {
     clearImages()
-    setDragImages(null)
     strokesRef.current = []
     const ctx = ctxRef.current
     if (ctx && drawingCanvasRef.current) {
@@ -505,8 +560,13 @@ export default function InteractiveCanvas() {
     }
   }
 
-  const handleDeleteImage = (id: number) => {
-    deleteImage(id)
+  const handleDeleteImage = (id: string) => {
+    removeImage(id)
+  }
+
+  const handleImageError = (id: string) => {
+    removeImage(id)
+    alert('Image failed to load')
   }
 
   const handleYtSubmit = () => {
@@ -630,6 +690,8 @@ export default function InteractiveCanvas() {
               drawMode={drawMode}
               onPointerDown={handlePointerDown}
               onDelete={handleDeleteImage}
+              onError={handleImageError}
+              pending={pendingImages.some((p) => p.id === img.id)}
             />
           ))}
 
