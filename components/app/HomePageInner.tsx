@@ -18,6 +18,7 @@ import useEventLog from './hooks/useEventLog'
 import useProfile from './hooks/useProfile'
 import useOnlineStatus from './hooks/useOnlineStatus'
 import ErrorBoundary from '@/components/misc/ErrorBoundary'
+import { debug } from '@/lib/debug'
 
 export default function HomePageInner() {
   const router = useRouter()
@@ -42,11 +43,14 @@ export default function HomePageInner() {
   const broadcast = useBroadcastEvent()
   const [, updateMyPresence] = useMyPresence()
 
-  // listen for remote dice rolls
+  // listen for remote events
   useEventListener((payload: any) => {
     const { event } = payload
     if (event.type === 'dice-roll') {
-      setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result, ts: Date.now() }])
+      const ts = typeof event.ts === 'number' ? event.ts : Date.now()
+      setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result, ts }])
+      addEvent({ id: crypto.randomUUID(), kind: 'dice', player: event.player, dice: event.dice, result: event.result, ts })
+      debug('dice-roll received', event)
     } else if (event.type === 'gm-select') {
       const char = event.character || defaultPerso
       if (!char.id) char.id = crypto.randomUUID()
@@ -150,10 +154,12 @@ export default function HomePageInner() {
   const handlePopupReveal = () => {
     if (!pendingRoll) return
     const { nom, dice, result } = pendingRoll
-    const entry = { player: nom, dice, result, ts: Date.now() }
+    const ts = Date.now()
+    const entry = { player: nom, dice, result, ts }
     setHistory((h) => [...h, entry])
-    broadcast({ type: 'dice-roll', player: nom, dice, result } as Liveblocks['RoomEvent'])
-    addEvent({ id: crypto.randomUUID(), kind: 'dice', player: nom, dice, result, ts: entry.ts })
+    broadcast({ type: 'dice-roll', player: nom, dice, result, ts } as Liveblocks['RoomEvent'])
+    addEvent({ id: crypto.randomUUID(), kind: 'dice', player: nom, dice, result, ts })
+    debug('dice-roll send', entry)
     setPendingRoll(null)
   }
 
