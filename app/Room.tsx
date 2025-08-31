@@ -34,7 +34,8 @@ export function Room({
           summary: new LiveObject({ acts: [], currentId: '' }),
           editor: new LiveMap(),
           events: new LiveList([]),
-          rooms: new LiveList([])
+          rooms: new LiveList([]),
+          strokes: new LiveList([])
         }}
       >
         <ClientSideSuspense fallback={<div>Loading…</div>}>
