@@ -34,6 +34,7 @@ export default function InteractiveCanvas() {
     ? (Array.from(imagesMap.values()) as ImageData[])
     : []
   const [pendingImages, setPendingImages] = useState<ImageData[]>([])
+  // Local drag transforms applied in rAF for 60fps rendering
   const localTransforms = useRef<Map<string, Partial<ImageData>>>(new Map())
   const [, forceRender] = useReducer((x: number) => x + 1, 0)
   const rafPending = useRef(false)
@@ -83,7 +84,8 @@ export default function InteractiveCanvas() {
   const lastSend = useRef(0)
   const THROTTLE = 0
   const lastMutation = useRef(0)
-  const MUTATION_THROTTLE = 100
+  // Throttle Liveblocks writes (~12 fps) to avoid network spam
+  const MUTATION_THROTTLE = 80
   const [, updateMyPresence] = useMyPresence()
 
   const canvasRef = useRef<HTMLDivElement>(null)
@@ -130,16 +132,19 @@ export default function InteractiveCanvas() {
     })
   }, [])
 
-  const IMAGE_MIN_SIZE = 50
+  const SCALE_MIN = 0.1
+  const SCALE_MAX = 1
   const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
   const MAX_SIZE_MB = 5
 
+  // Clamp image position/scale to keep it visible inside the canvas
   const clampImage = (img: ImageData, rect: DOMRect): ImageData => {
-    const width = Math.min(Math.max(img.width, IMAGE_MIN_SIZE), rect.width - img.x)
-    const height = Math.min(Math.max(img.height, IMAGE_MIN_SIZE), rect.height - img.y)
+    const scale = Math.min(Math.max(img.scale, SCALE_MIN), SCALE_MAX)
+    const width = img.naturalWidth * scale
+    const height = img.naturalHeight * scale
     const x = Math.min(Math.max(img.x, 0), rect.width - width)
     const y = Math.min(Math.max(img.y, 0), rect.height - height)
-    return { ...img, x, y, width, height }
+    return { ...img, x, y, scale }
   }
 
   const imagesRef = useRef<ImageData[]>([])
@@ -250,8 +255,7 @@ export default function InteractiveCanvas() {
         if (
           clamped.x !== img.x ||
           clamped.y !== img.y ||
-          clamped.width !== img.width ||
-          clamped.height !== img.height
+          clamped.scale !== img.scale
         ) {
           updateImageTransform(img.id, clamped)
         }
@@ -302,28 +306,41 @@ export default function InteractiveCanvas() {
     return URL.createObjectURL(file)
   }
 
-  async function uploadImage(
-    file: File,
-    dropX: number,
-    dropY: number,
-    rect: DOMRect,
-  ) {
+  function loadImage(url: string): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+      const img = new Image()
+      img.onload = () => resolve(img)
+      img.onerror = reject
+      img.src = url
+    })
+  }
+
+  async function uploadImage(file: File, rect: DOMRect) {
     if (!ALLOWED_TYPES.includes(file.type) || file.size > MAX_SIZE_MB * 1024 * 1024) {
       alert('Invalid image file')
       return
     }
     const localUrl = fileToObjectURL(file)
     const id = crypto.randomUUID()
+    const localEl = await loadImage(localUrl)
+    const naturalWidth = localEl.naturalWidth
+    const naturalHeight = localEl.naturalHeight
+    // Compute initial scale to fit inside canvas with a 25% margin
+    const fitScale =
+      Math.min(rect.width / naturalWidth, rect.height / naturalHeight, 1) * 0.75
+    const scale = Math.min(Math.max(fitScale, SCALE_MIN), SCALE_MAX)
+    const x = (rect.width - naturalWidth * scale) / 2
+    const y = (rect.height - naturalHeight * scale) / 2
     const tempImg: ImageData = clampImage(
       {
         id,
         url: localUrl,
-        x: dropX - 100,
-        y: dropY - 100,
-        width: 200,
-        height: 200,
-        scale: 1,
+        x,
+        y,
+        scale,
         rotation: 0,
+        naturalWidth,
+        naturalHeight,
         createdAt: Date.now(),
       },
       rect,
@@ -342,16 +359,24 @@ export default function InteractiveCanvas() {
       if (!finalUrl) {
         throw new Error('No URL returned by Cloudinary endpoint')
       }
-      const width: number = data.width ?? tempImg.width
-      const height: number = data.height ?? tempImg.height
+      const finalEl = await loadImage(finalUrl)
+      const w = finalEl.naturalWidth
+      const h = finalEl.naturalHeight
+      // Recompute scale with final Cloudinary URL
+      const fit = Math.min(rect.width / w, rect.height / h, 1) * 0.75
+      const s = Math.min(Math.max(fit, SCALE_MIN), SCALE_MAX)
+      const fx = (rect.width - w * s) / 2
+      const fy = (rect.height - h * s) / 2
       const finalImg: ImageData = clampImage(
         {
-          ...tempImg,
+          id,
           url: finalUrl,
-          x: dropX - width / 2,
-          y: dropY - height / 2,
-          width,
-          height,
+          x: fx,
+          y: fy,
+          scale: s,
+          rotation: 0,
+          naturalWidth: w,
+          naturalHeight: h,
           createdAt: Date.now(),
         },
         rect,
@@ -374,12 +399,7 @@ export default function InteractiveCanvas() {
 
     for (const file of files) {
       if (!file.type.startsWith('image/')) continue
-      await uploadImage(
-        file,
-        e.clientX - rect.left,
-        e.clientY - rect.top,
-        rect,
-      )
+      await uploadImage(file, rect)
     }
   }
 
@@ -392,7 +412,9 @@ export default function InteractiveCanvas() {
     id?: string,
     type?: 'move' | 'resize',
   ) => {
+    if (!e.isPrimary) return
     e.preventDefault()
+    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
     const rect = drawingCanvasRef.current?.getBoundingClientRect()
     if (!rect) return
 
@@ -423,16 +445,11 @@ export default function InteractiveCanvas() {
         offsetX: e.clientX - rect.left - img.x,
         offsetY: e.clientY - rect.top - img.y,
       }
+      // Track local transform separately so dragging doesn't spam network
       localTransforms.current.set(id, {
         x: img.x,
         y: img.y,
-        width: img.width,
-        height: img.height,
         scale: img.scale,
-        rotation: img.rotation,
-        createdAt: img.createdAt,
-        url: img.url,
-        id: img.id,
       })
       scheduleRender()
       setSelectedImageId(id)
@@ -440,6 +457,7 @@ export default function InteractiveCanvas() {
   }
 
   const handlePointerMove = (e: React.PointerEvent) => {
+    if (!e.isPrimary) return
     const rect = drawingCanvasRef.current?.getBoundingClientRect()
     if (!rect) return
     const x = e.clientX - rect.left
@@ -495,14 +513,30 @@ export default function InteractiveCanvas() {
     const updated =
       type === 'move'
         ? { ...base, x: x - offsetX, y: y - offsetY }
-        : { ...base, width: x - base.x, height: y - base.y }
+        : {
+            ...base,
+            // Derive scale from pointer position while keeping aspect ratio
+            scale: Math.max(
+              (x - base.x) / base.naturalWidth,
+              (y - base.y) / base.naturalHeight,
+            ),
+          }
     const clamped = clampImage(updated as ImageData, rect)
-    localTransforms.current.set(id, clamped)
+    localTransforms.current.set(id, {
+      x: clamped.x,
+      y: clamped.y,
+      scale: clamped.scale,
+    })
     scheduleRender()
     const now = Date.now()
     if (now - lastMutation.current > MUTATION_THROTTLE) {
       lastMutation.current = now
-      updateImageTransform(id, clamped)
+      updateImageTransform(
+        id,
+        type === 'move'
+          ? { x: clamped.x, y: clamped.y }
+          : { x: clamped.x, y: clamped.y, scale: clamped.scale },
+      )
     }
   }
 
@@ -511,7 +545,13 @@ export default function InteractiveCanvas() {
     const { id } = dragState.current
     if (id) {
       const local = localTransforms.current.get(id)
-      if (local) updateImageTransform(id, local)
+      if (local)
+        updateImageTransform(
+          id,
+          dragState.current.type === 'move'
+            ? { x: local.x, y: local.y }
+            : { x: local.x, y: local.y, scale: local.scale },
+        )
       localTransforms.current.delete(id)
       scheduleRender()
     }
@@ -537,9 +577,15 @@ export default function InteractiveCanvas() {
     updated = clampImage(updated, rect)
     if (updated.x !== img.x || updated.y !== img.y) {
       e.preventDefault()
-      localTransforms.current.set(img.id, updated)
+      localTransforms.current.set(img.id, {
+        x: updated.x,
+        y: updated.y,
+      })
       scheduleRender()
-      updateImageTransform(img.id, updated)
+      updateImageTransform(img.id, {
+        x: updated.x,
+        y: updated.y,
+      })
     }
   }
 
@@ -595,7 +641,7 @@ export default function InteractiveCanvas() {
 
   return (
     <>
-      <div className="relative w-full h-full select-none">
+      <div className="relative w-full h-full select-none touch-none overflow-hidden">
         {/* TOOLBAR BUTTON */}
         <div className="absolute top-3 left-3 z-30 pointer-events-auto">
           <button
