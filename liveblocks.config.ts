@@ -9,10 +9,12 @@ type CanvasImage = {
   url: string
   x: number
   y: number
-  width: number
-  height: number
+  // Display scale of the image relative to its natural size
   scale: number
   rotation: number
+  // Natural dimensions of the uploaded asset. Persisted to avoid reflow.
+  naturalWidth: number
+  naturalHeight: number
   createdAt: number
 }
 

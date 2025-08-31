@@ -1,20 +1,20 @@
 'use client'
 
-import Image from 'next/image'
 import { Trash2 } from 'lucide-react'
 import React from 'react'
 import { ToolMode } from './CanvasTools'
 
 // Single image element on canvas with move/resize handles.
+// Metadata for a canvas image. Width/height are derived from natural size * scale.
 export interface ImageData {
   id: string
   url: string
   x: number
   y: number
-  width: number
-  height: number
   scale: number
   rotation: number
+  naturalWidth: number
+  naturalHeight: number
   createdAt: number
 }
 
@@ -41,11 +41,13 @@ const ImageItem: React.FC<Props> = ({
 }) => (
   <div
     className="absolute border border-white/20 rounded-2xl shadow-md group touch-none transition-all duration-300"
+    // Keep a single GPU-friendly transform for position & scale
     style={{
-      top: img.y,
-      left: img.x,
-      width: img.width,
-      height: img.height,
+      width: img.naturalWidth,
+      height: img.naturalHeight,
+      transform: `translate3d(${img.x}px, ${img.y}px, 0) scale(${img.scale}) rotate(${img.rotation}deg)`,
+      transformOrigin: 'top left',
+      willChange: 'transform',
       zIndex: 1,
     }}
   >
@@ -59,15 +61,13 @@ const ImageItem: React.FC<Props> = ({
         <Trash2 size={18} />
       </button>
     )}
-    <Image
+    <img
       src={img.url}
       alt="Dropped"
-      width={img.width}
-      height={img.height}
-      className="w-full h-full object-contain pointer-events-none select-none rounded-2xl"
-      style={{ borderRadius: '1rem' }}
+      width={img.naturalWidth}
+      height={img.naturalHeight}
+      className="pointer-events-none select-none rounded-2xl"
       onError={() => onError(img.id)}
-      unoptimized
     />
     {drawMode === 'images' && !pending && (
       <>
