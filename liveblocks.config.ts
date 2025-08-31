@@ -52,10 +52,9 @@ declare global {
     Storage: {
       characters: LiveMap<string, CharacterData>
       images: LiveMap<string, CanvasImage>
-        music: LiveObject<{ id: string; playing: boolean; volume: number }>
 
-      summary: LiveObject<{ acts: LiveList<{ id: string; title: string }>; currentId?: string }>
-      quickNote: LiveObject<{ text: string; updatedAt: number }>
+      music: LiveObject<{ id: string; playing: boolean }>
+      summary: LiveObject<{ acts: Array<{ id: string; title: string }>; currentId?: string }>
 
       editor: LiveMap<string, string>
       events: LiveList<SessionEvent>
