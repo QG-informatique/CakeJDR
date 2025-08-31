@@ -16,7 +16,8 @@ export default function RoomAvatarStack({ id }: { id: string }) {
           summary: new LiveObject({ acts: [] }),
           editor: new LiveMap(),
           events: new LiveList([]),
-          rooms: new LiveList([])
+          rooms: new LiveList([]),
+          strokes: new LiveList([])
         }}
       >
         <ClientSideSuspense fallback={null}>

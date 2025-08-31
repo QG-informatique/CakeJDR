@@ -7,10 +7,8 @@
     "build": "next build",
     "build:analyze": "ANALYZE=true next build",
     "start": "next start",
-
     "type-check": "tsc --noEmit",
     "lint": "next lint",
-
     "test": "npm run lint"
   },
   "dependencies": {
@@ -33,7 +31,8 @@
     "next-cloudinary": "^6.16.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "react-youtube": "^10.1.0"
+    "react-youtube": "^10.1.0",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
