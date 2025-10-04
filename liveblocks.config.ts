@@ -53,18 +53,18 @@ declare global {
     }
 
     // The Storage tree for the room, for useMutation, useStorage, etc.
-    Storage: {
-      characters: LiveMap<string, CharacterData>
-      images: LiveMap<string, CanvasImage>
-      music: LiveObject<{ id: string; playing: boolean; volume: number }>
-
-      summary: LiveObject<{ acts: LiveList<{ id: string; title: string }>; currentId?: string }>
-      quickNote: LiveObject<{ text: string; updatedAt: number }>
-
-      editor: LiveMap<string, string>
-      events: LiveList<SessionEvent>
-      rooms: LiveList<Room>
-    }
+      Storage: {
+        characters: LiveMap<string, CharacterData>;
+        images: LiveMap<string, CanvasImage>;
+        music: LiveObject<{ id: string; playing: boolean; volume: number }>;
+        summary: LiveObject<{
+          acts: LiveList<{ id: string; title: string }>;
+          currentId?: string;
+        }>;
+        editor: LiveMap<string, string>;
+        events: LiveList<SessionEvent>;
+        rooms: LiveList<Room>;
+      };
 
     // Custom user info set when authenticating with a secret key
     UserMeta: {
