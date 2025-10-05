@@ -60,7 +60,7 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
       <div onClick={e => e.stopPropagation()} className="bg-black/80 text-white rounded-2xl border border-white/10 shadow-2xl backdrop-blur-md p-5 w-80">
         <h2 className="text-lg font-semibold mb-2">{t('createRoom')}</h2>
         <input
-          className="w-full mb-2 px-2 py-1 rounded bg-gray-800 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-pink-400/30"
+          className="w-full mb-2 px-2 py-1 rounded bg-gray-800 text-white placeholder-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-pink-400/30"
           placeholder={t('name')}
           value={name}
           onChange={e => setName(e.target.value)}
@@ -77,7 +77,7 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
         {withPassword && (
           <input
             type="password"
-            className="w-full mb-2 px-2 py-1 rounded bg-gray-800 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-pink-400/30"
+            className="w-full mb-2 px-2 py-1 rounded bg-gray-800 text-white placeholder-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-pink-400/30"
             placeholder={t('password')}
             value={password}
             onChange={e => setPassword(e.target.value)}
