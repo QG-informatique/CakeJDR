@@ -24,7 +24,7 @@ interface Props {
   onSelect: (idx: number) => void
   onEdit: (id: string | number) => void
   onDelete: (id: string | number) => void
-  onDeleteCloud: (id: string | number) => void
+  onDeleteCloud: (char: Character) => void
   onNew: () => void
   onImportClick: () => void
   onExport: () => void
@@ -74,7 +74,10 @@ const CharacterList: FC<Props> = ({
 
       {(() => {
         const remoteOnly = Object.values(remote).filter(
-          (r) => !filtered.some((c) => String(c.id) === String(r.id)),
+          (r) =>
+            !filtered.some(
+              (c) => String(c.id) === String(r.id) && c.owner === r.owner,
+            ),
         )
         const all = [...filtered, ...remoteOnly]
         if (all.length === 0) {
@@ -85,13 +88,15 @@ const CharacterList: FC<Props> = ({
             <AnimatePresence initial={false}>
               {all.map((ch) => {
                 const isSelected =
-                  selectedIdx !== null && filtered.at(selectedIdx)?.id === ch.id
+                  selectedIdx !== null &&
+                  filtered.at(selectedIdx)?.id === ch.id &&
+                  filtered.at(selectedIdx)?.owner === ch.owner
                 const localIdx = filtered.findIndex(
-                  (c) => String(c.id) === String(ch.id),
+                  (c) => String(c.id) === String(ch.id) && c.owner === ch.owner,
                 )
                 const local = localIdx !== -1
                 const localChar = local ? filtered.at(localIdx) : null
-                const cloudChar = remoteMap.get(String(ch.id))
+                const cloudChar = remoteMap.get(`${ch.owner}:${String(ch.id)}`)
                 const cloud = !!cloudChar
                 const needsDownload =
                   (!local && cloud) ||
@@ -104,16 +109,10 @@ const CharacterList: FC<Props> = ({
                     (localChar?.updatedAt || 0) > (cloudChar?.updatedAt || 0))
                 return (
                   <motion.li
-                    key={ch.id}
-                    onClick={() =>
-                      onSelect(
-                        local
-                          ? filtered.findIndex(
-                              (c) => String(c.id) === String(ch.id),
-                            )
-                          : -1,
-                      )
-                    }
+                    key={`${ch.owner}:${ch.id}`}
+                    onClick={() => {
+                      onSelect(local ? localIdx : -1)
+                    }}
                     className={`
                   group relative rounded-lg p-3 cursor-pointer
                   flex flex-col gap-2 min-h-[120px]
@@ -249,7 +248,7 @@ const CharacterList: FC<Props> = ({
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            onDeleteCloud(ch.id)
+                            onDeleteCloud(ch)
                           }}
                           className={
                             btnBase +

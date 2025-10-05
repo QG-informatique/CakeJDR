@@ -1,6 +1,8 @@
+export const runtime = 'nodejs'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { put, del, list } from '@vercel/blob'
 import { NextResponse } from 'next/server'
+import { debug } from '@/lib/debug'
 
 const CACHE_TTL = 60000
 const listCache = new Map<string, { ts: number; files: any }>()
@@ -18,6 +20,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   try {
     const body = request.body as any
     const blob = await put(filename, body, { access: 'public' })
+    debug('blob upload', filename)
     invalidate(filename.substring(0, filename.lastIndexOf('/') + 1) || '')
     return NextResponse.json(blob)
   } catch {
@@ -33,6 +36,7 @@ export async function DELETE(request: Request): Promise<NextResponse> {
 
   try {
     await del(filename)
+    debug('blob delete', filename)
     invalidate(filename.substring(0, filename.lastIndexOf('/') + 1) || '')
     return NextResponse.json({ success: true })
   } catch {
@@ -46,11 +50,13 @@ export async function GET(request: Request): Promise<NextResponse> {
   const prefix = searchParams.get('prefix') || 'FichePerso/'
   const cached = listCache.get(prefix)
   if (cached && Date.now() - cached.ts < CACHE_TTL) {
+    debug('blob list cache hit', prefix)
     return NextResponse.json({ files: cached.files })
   }
   try {
     const files = await list({ prefix })
     listCache.set(prefix, { files, ts: Date.now() })
+    debug('blob list', prefix, files?.blobs?.length)
     return NextResponse.json({ files })
   } catch {
     return NextResponse.json({ error: 'list failed' }, { status: 500 })

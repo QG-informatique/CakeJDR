@@ -161,15 +161,26 @@ export default function InteractiveCanvas() {
   }, [updateMyPresence])
 
   const addImage = useMutation(({ storage }, img: ImageData) => {
-    storage.get('images').set(String(img.id), img)
+    storage.get('images').set(img.id, img)
   }, [])
 
-  const updateImage = useMutation(({ storage }, img: ImageData) => {
-    storage.get('images').set(String(img.id), img)
-  }, [])
+  const updateImageTransform = useMutation(
+    (
+      { storage },
+      id: string,
+      updates: Partial<ImageData>,
+    ) => {
+      const map = storage.get('images')
+      const current = map.get(id)
+      if (current) {
+        map.set(id, { ...current, ...updates })
+      }
+    },
+    [],
+  )
 
-  const deleteImage = useMutation(({ storage }, id: number) => {
-    storage.get('images').delete(String(id))
+  const removeImage = useMutation(({ storage }, id: string) => {
+    storage.get('images').delete(id)
   }, [])
 
   const clearImages = useMutation(({ storage }) => {
@@ -201,7 +212,7 @@ export default function InteractiveCanvas() {
   // Events canvas (compatibilitÃƒÂ© avec les anciennes diffusions d''ÃƒÂ©vÃƒÂ©nements)\r\n  // eslint-disable-next-line @typescript-eslint/no-explicit-any\r\n  useEventListener((payload: any) => {\r\n    const { event } = payload\r\n    if (event.type === 'clear-canvas') {\r\n      clearCanvas()\r\n    } else if (event.type === 'draw-line') {\r\n      addStrokeSegment({\r\n        id: createStrokeId(),\r\n        x1: event.x1,\r\n        y1: event.y1,\r\n        x2: event.x2,\r\n        y2: event.y2,\r\n        color: event.color,\r\n        width: event.width,\r\n        mode: event.mode,\r\n      })\r\n    }\r\n  })
 
   const dragState = useRef({
-    id: null as number | null,
+    id: null as string | null,
     type: null as 'move' | 'resize' | null,
     offsetX: 0,
     offsetY: 0,
@@ -212,6 +223,21 @@ export default function InteractiveCanvas() {
   const ERASE_MIN = DRAW_MIN * 4
   const ERASE_MAX = DRAW_MAX * 4
 
+  const redrawStrokes = () => {
+    const ctx = ctxRef.current
+    if (!ctx) return
+    for (const s of strokesRef.current) {
+      ctx.strokeStyle = s.mode === 'erase' ? 'rgba(0,0,0,1)' : s.color
+      ctx.lineWidth = s.width
+      ctx.globalCompositeOperation =
+        s.mode === 'erase' ? 'destination-out' : 'source-over'
+      ctx.beginPath()
+      ctx.moveTo(s.x1, s.y1)
+      ctx.lineTo(s.x2, s.y2)
+      ctx.stroke()
+    }
+  }
+
 
 
   useEffect(() => {
@@ -220,6 +246,30 @@ export default function InteractiveCanvas() {
     canvas.style.zIndex = '2'
     canvas.style.pointerEvents = drawMode === 'images' ? 'none' : 'auto'
   }, [drawMode])
+
+  useEffect(() => {
+    const handleResize = () => {
+      const rect = drawingCanvasRef.current?.getBoundingClientRect()
+      if (!rect) return
+      imagesRef.current.forEach((img) => {
+        const clamped = clampImage(img, rect)
+        if (
+          clamped.x !== img.x ||
+          clamped.y !== img.y ||
+          clamped.width !== img.width ||
+          clamped.height !== img.height
+        ) {
+          updateImageTransform(img.id, clamped)
+        }
+      })
+    }
+    window.addEventListener('resize', handleResize)
+    window.addEventListener('orientationchange', handleResize)
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      window.removeEventListener('orientationchange', handleResize)
+    }
+  }, [updateImageTransform])
 
   useEffect(() => {
     if (drawMode === 'erase') {
@@ -257,11 +307,16 @@ export default function InteractiveCanvas() {
     return URL.createObjectURL(file)
   }
 
-  async function uploadImageOptimistic(
+  async function uploadImage(
     file: File,
     dropX: number,
     dropY: number,
+    rect: DOMRect,
   ) {
+    if (!ALLOWED_TYPES.includes(file.type) || file.size > MAX_SIZE_MB * 1024 * 1024) {
+      alert('Invalid image file')
+      return
+    }
     const localUrl = fileToObjectURL(file)
     const tempId = Date.now() + Math.random()
     const baseImg: ImageData = {
@@ -278,14 +333,11 @@ export default function InteractiveCanvas() {
       const form = new FormData()
       form.append('file', file)
       form.append('upload_preset', 'cakejdr-images')
-
       const res = await fetch('/api/cloudinary', { method: 'POST', body: form })
       const data = await res.json().catch(() => null)
-
       if (!res.ok || !data) {
         throw new Error(data?.error || 'Upload failed')
       }
-
       const finalUrl: string = data.deliveryUrl || data.url
       if (!finalUrl) {
         throw new Error('No URL returned by Cloudinary endpoint')
@@ -294,6 +346,7 @@ export default function InteractiveCanvas() {
       addImage({ ...baseImg, src: finalUrl })
     } catch (err) {
       console.error(err)
+      alert('Image upload failed')
     } finally {
       setPendingImages((prev) => prev.filter((img) => img.id !== tempId))
       URL.revokeObjectURL(localUrl)
@@ -308,21 +361,22 @@ export default function InteractiveCanvas() {
 
     for (const file of files) {
       if (!file.type.startsWith('image/')) continue
-      await uploadImageOptimistic(
+      await uploadImage(
         file,
         e.clientX - rect.left,
         e.clientY - rect.top,
+        rect,
       )
     }
   }
 
   // --------------------------------------------------------------------------
 
-  const [selectedImageId, setSelectedImageId] = useState<number | null>(null)
+  const [selectedImageId, setSelectedImageId] = useState<string | null>(null)
 
   const handlePointerDown = (
     e: React.PointerEvent,
-    id?: number,
+    id?: string,
     type?: 'move' | 'resize',
   ) => {
     e.preventDefault()
@@ -354,6 +408,18 @@ export default function InteractiveCanvas() {
         offsetX: e.clientX - rect.left - img.x,
         offsetY: e.clientY - rect.top - img.y,
       }
+      localTransforms.current.set(id, {
+        x: img.x,
+        y: img.y,
+        width: img.width,
+        height: img.height,
+        scale: img.scale,
+        rotation: img.rotation,
+        createdAt: img.createdAt,
+        url: img.url,
+        id: img.id,
+      })
+      scheduleRender()
       setSelectedImageId(id)
     }
   }
@@ -363,27 +429,32 @@ export default function InteractiveCanvas() {
     if (!rect) return
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
+    const prev = mousePos
     setMousePos({ x, y })
     updateMyPresence({ cursor: { x, y } })
+
+    if (drawMode !== 'draw' && drawMode !== 'erase' && isDrawing) {
+      setIsDrawing(false)
+    }
 
     if (\r\n      isDrawing &&\r\n      (drawMode === 'draw' || drawMode === 'erase') &&\r\n      ctxRef.current\r\n    ) {\r\n      const previous = lastPointRef.current\r\n      ctxRef.current.lineTo(x, y)\r\n      ctxRef.current.stroke()\r\n      if (!previous || previous.x !== x || previous.y !== y) {\r\n        addStrokeSegment({\r\n          id: createStrokeId(),\r\n          x1: previous?.x ?? x,\r\n          y1: previous?.y ?? y,\r\n          x2: x,\r\n          y2: y,\r\n          color,\r\n          width: brushSize,\r\n          mode: drawMode,\r\n        })\r\n      }\r\n      lastPointRef.current = { x, y }\r\n    }\r\n
     const { id, type, offsetX, offsetY } = dragState.current
     if (!id || !type) return
-    const img = images.find((i) => i.id === id)
-    if (!img) return
+    const original = images.find((i) => i.id === id)
+    if (!original) return
+    const base = { ...original, ...localTransforms.current.get(id) }
     const updated =
       type === 'move'
-        ? {
-            ...img,
-            x: Math.max(0, Math.min(x - offsetX, rect.width - img.width)),
-            y: Math.max(0, Math.min(y - offsetY, rect.height - img.height)),
-          }
-        : {
-            ...img,
-            width: Math.max(50, x - img.x),
-            height: Math.max(50, y - img.y),
-          }
-    updateImage(updated)
+        ? { ...base, x: x - offsetX, y: y - offsetY }
+        : { ...base, width: x - base.x, height: y - base.y }
+    const clamped = clampImage(updated as ImageData, rect)
+    localTransforms.current.set(id, clamped)
+    scheduleRender()
+    const now = Date.now()
+    if (now - lastMutation.current > MUTATION_THROTTLE) {
+      lastMutation.current = now
+      updateImageTransform(id, clamped)
+    }
   }
 
   const handlePointerUp = () => {\r\n    setIsDrawing(false)\r\n    lastPointRef.current = null\r\n    dragState.current = { id: null, type: null, offsetX: 0, offsetY: 0 }\r\n  }
@@ -392,24 +463,33 @@ export default function InteractiveCanvas() {
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (drawMode !== 'images' || selectedImageId === null) return
-    const img = images.find((i) => i.id === selectedImageId)
-    if (!img) return
+    const img = imagesToRender.find((i) => i.id === selectedImageId)
+    const rect = drawingCanvasRef.current?.getBoundingClientRect()
+    if (!img || !rect) return
     const step = 5
-    const updates: Partial<ImageData> = {}
-    if (e.key === 'ArrowUp') updates.y = Math.max(0, img.y - step)
-    else if (e.key === 'ArrowDown') updates.y = img.y + step
-    else if (e.key === 'ArrowLeft') updates.x = Math.max(0, img.x - step)
-    else if (e.key === 'ArrowRight') updates.x = img.x + step
-    if (Object.keys(updates).length) {
+    let updated = { ...img }
+    if (e.key === 'ArrowUp') updated.y -= step
+    else if (e.key === 'ArrowDown') updated.y += step
+    else if (e.key === 'ArrowLeft') updated.x -= step
+    else if (e.key === 'ArrowRight') updated.x += step
+    updated = clampImage(updated, rect)
+    if (updated.x !== img.x || updated.y !== img.y) {
       e.preventDefault()
-      updateImage({ ...img, ...updates })
+      localTransforms.current.set(img.id, updated)
+      scheduleRender()
+      updateImageTransform(img.id, updated)
     }
   }
 
   const clearCanvas = () => {\r\n    clearImages()\r\n    clearStrokes()\r\n    setPendingImages([])\r\n    const ctx = ctxRef.current\r\n    if (ctx && drawingCanvasRef.current) {\r\n      ctx.clearRect(\r\n        0,\r\n        0,\r\n        drawingCanvasRef.current.width,\r\n        drawingCanvasRef.current.height,\r\n      )\r\n      ctx.beginPath()\r\n    }\r\n  }
 
-  const handleDeleteImage = (id: number) => {
-    deleteImage(id)
+  const handleDeleteImage = (id: string) => {
+    removeImage(id)
+  }
+
+  const handleImageError = (id: string) => {
+    removeImage(id)
+    alert('Image failed to load')
   }
 
   const handleYtSubmit = () => {
@@ -547,6 +627,8 @@ export default function InteractiveCanvas() {
               drawMode={drawMode}
               onPointerDown={handlePointerDown}
               onDelete={handleDeleteImage}
+              onError={handleImageError}
+              pending={pendingImages.some((p) => p.id === img.id)}
             />
           ))}
 

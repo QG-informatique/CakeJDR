@@ -1,12 +1,13 @@
 'use client'
-import { FC, RefObject, useRef, useState, useEffect } from 'react'
+import { FC, RefObject, useRef, useState, useEffect, useMemo } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useBroadcastEvent, useRoom } from '@liveblocks/react'
 import useProfile from '../app/hooks/useProfile'
 import SessionSummary from './SessionSummary'
 import DiceStats from './DiceStats'
-import useEventLog from '../app/hooks/useEventLog'
+import useEventLog, { SessionEvent } from '../app/hooks/useEventLog'
 import { useT } from '@/lib/useT'
+import { debug } from '@/lib/debug'
 
 type Roll = { player: string, dice: number, result: number }
 
@@ -19,7 +20,20 @@ interface Props {
 const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
   const room = useRoom()
   const { events, addEvent } = useEventLog(room.id)
-  const sortedEvents = [...events].sort((a, b) => a.ts - b.ts)
+  const sortedEvents = useMemo(() => {
+    const seen = new Set<string>()
+    const unique: SessionEvent[] = []
+    for (const ev of events as SessionEvent[]) {
+      const key = ev.kind === 'chat'
+        ? `${ev.kind}-${ev.ts}-${ev.author}-${ev.text}`
+        : `${ev.kind}-${ev.ts}-${ev.player}-${ev.dice}-${ev.result}`
+      if (!seen.has(key)) {
+        seen.add(key)
+        unique.push(ev)
+      }
+    }
+    return unique.sort((a, b) => a.ts - b.ts)
+  }, [events])
   const [inputValue, setInputValue] = useState('')
   const endRef = useRef<HTMLDivElement>(null)
   const [showSummary, setShowSummary] = useState(false)
@@ -43,13 +57,17 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
   }, [collapsed])
 
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (inputValue.trim() === '') return
 
     const msg = { author, text: inputValue.trim(), isMJ: profile?.isMJ }
 
-    broadcast({ type: 'chat', author: msg.author, text: msg.text, isMJ: msg.isMJ } as Liveblocks['RoomEvent'])
-    addEvent({ id: crypto.randomUUID(), kind: 'chat', author: msg.author, text: msg.text, ts: Date.now(), isMJ: msg.isMJ })
+    const ts = Date.now()
+
+    broadcast({ type: 'chat', author: msg.author, text: msg.text, isMJ: msg.isMJ, ts } as Liveblocks['RoomEvent'])
+    addEvent({ id: crypto.randomUUID(), kind: 'chat', author: msg.author, text: msg.text, ts, isMJ: msg.isMJ })
+    debug('chat', msg)
+
     setInputValue('')
   }
 
