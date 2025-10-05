@@ -1,7 +1,8 @@
 "use client"
 
-import { useRef, useState, useEffect, useMemo, useCallback } from 'react'
+import { useRef, useState, useEffect, useReducer } from 'react'
 import {
+  useBroadcastEvent,
   useEventListener,
   useStorage,
   useMutation,
@@ -251,69 +252,7 @@ export default function InteractiveCanvas() {
   const playerRef = useRef<YouTubePlayer | null>(null)
   const t = useT()
   const initializedRef = useRef(false)
-
-  const createStrokeId = useCallback(() => {
-    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-      return crypto.randomUUID()
-    }
-    return `${Date.now()}-${Math.random().toString(36).slice(2)}`
-  }, [])
-
-  const redrawCanvas = useCallback(() => {
-    const canvas = drawingCanvasRef.current
-    const ctx = ctxRef.current
-    if (!canvas || !ctx) return
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-    ctx.beginPath()
-
-    strokes.forEach((segment) => {
-      ctx.save()
-      ctx.lineWidth = segment.width
-      ctx.strokeStyle = segment.mode === 'erase' ? 'rgba(0,0,0,1)' : segment.color
-      ctx.globalCompositeOperation =
-        segment.mode === 'erase' ? 'destination-out' : 'source-over'
-      ctx.beginPath()
-      ctx.moveTo(segment.x1, segment.y1)
-      ctx.lineTo(segment.x2, segment.y2)
-      ctx.stroke()
-      ctx.restore()
-    })
-
-    ctx.globalCompositeOperation = 'source-over'
-    ctx.beginPath()
-  }, [strokes])
-
-  useEffect(() => {
-    redrawCanvas()
-  }, [redrawCanvas])
-
-  useEffect(() => {
-    const resize = () => {
-      const canvas = drawingCanvasRef.current
-      if (!canvas) return
-
-      const rect = canvas.getBoundingClientRect()
-      const dpr = window.devicePixelRatio || 1
-      canvas.width = rect.width * dpr
-      canvas.height = rect.height * dpr
-      setCanvasSize((prev) => (prev.width === rect.width && prev.height === rect.height ? prev : { width: rect.width, height: rect.height }))
-
-      const ctx = canvas.getContext('2d')
-      if (ctx) {
-        ctx.scale(dpr, dpr)
-        ctx.lineCap = 'round'
-        ctx.lineJoin = 'round'
-        ctxRef.current = ctx
-      }
-
-      redrawCanvas()
-    }
-
-    resize()
-    window.addEventListener('resize', resize)
-    return () => window.removeEventListener('resize', resize)
-  }, [toolsVisible, audioVisible, redrawCanvas])
+  const strokesRef = useRef<StrokeSegment[]>([])
 
   useEffect(() => {
     return () => {
@@ -351,13 +290,20 @@ export default function InteractiveCanvas() {
     })
   }, [])
 
-  const addStrokeSegment = useMutation(({ storage }, segment: StrokeSegment) => {
-    storage.get('strokes').push(segment as StrokeSegment)
-  }, [])
+  const IMAGE_MIN_SIZE = 50
+  const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
+  const MAX_SIZE_MB = 5
 
-  const clearStrokes = useMutation(({ storage }) => {
-    storage.get('strokes').clear()
-  }, [])
+  const clampImage = (img: ImageData, rect: DOMRect): ImageData => {
+    const width = Math.min(Math.max(img.width, IMAGE_MIN_SIZE), rect.width - img.x)
+    const height = Math.min(Math.max(img.height, IMAGE_MIN_SIZE), rect.height - img.y)
+    const x = Math.min(Math.max(img.x, 0), rect.width - width)
+    const y = Math.min(Math.max(img.y, 0), rect.height - height)
+    return { ...img, x, y, width, height }
+  }
+
+  const imagesRef = useRef<ImageData[]>([])
+  imagesRef.current = imagesToRender
 
   useEffect(() => {
     const rect = drawingCanvasRef.current?.getBoundingClientRect()
@@ -388,7 +334,7 @@ export default function InteractiveCanvas() {
   const updateMusic = useMutation(
     (
       { storage },
-      updates: { id?: string; playing?: boolean },
+      updates: { id?: string; playing?: boolean; volume?: number },
     ) => {
       storage.get('music').update(updates)
     },
@@ -498,6 +444,7 @@ export default function InteractiveCanvas() {
     if (!musicObj) return
     setYtId(musicObj.id)
     setIsPlaying(!!musicObj.playing)
+    setVolumeState(musicObj.volume ?? 5)
   }, [musicObj])
 
   // --------- DnD images: aperu instantan + swap vers Cloudinary optimis ---------
@@ -552,7 +499,7 @@ export default function InteractiveCanvas() {
       console.error(err)
       alert('Image upload failed')
     } finally {
-      setPendingImages((prev) => prev.filter((img) => img.id !== tempId))
+      setPendingImages((prev) => prev.filter((i) => i.id !== id))
       URL.revokeObjectURL(localUrl)
     }
   }
@@ -979,32 +926,3 @@ export default function InteractiveCanvas() {
     </>
   )
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
