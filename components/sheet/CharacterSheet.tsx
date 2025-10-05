@@ -52,13 +52,24 @@ export const defaultPerso = {
   background: '',
   champs_perso: [],
   notes: '',
+  owner: '',
 }
 
-// Fonction utilitaire pour récupérer l’ID sélectionné en localStorage
-const loadSelectedCharacterId = (): string | null => {
-  return typeof window !== 'undefined'
-    ? localStorage.getItem('selectedCharacterId')
-    : null
+const SELECTED_CHARACTER_KEY = 'selectedCharacterId'
+
+type StoredSelection = { owner: string | null; id: string | null }
+
+const loadSelectedCharacter = (): StoredSelection => {
+  if (typeof window === 'undefined') {
+    return { owner: null, id: null }
+  }
+  const raw = localStorage.getItem(SELECTED_CHARACTER_KEY)
+  if (!raw) return { owner: null, id: null }
+  const [owner, id] = raw.includes('::') ? raw.split('::', 2) : [null, raw]
+  return {
+    owner: owner && owner.length ? owner : null,
+    id: id ?? null,
+  }
 }
 
 const CharacterSheet: FC<Props> = ({
@@ -94,15 +105,21 @@ const CharacterSheet: FC<Props> = ({
 
   // On met à jour la fiche sélectionnée au chargement/changement
   useEffect(() => {
-    const selectedId = loadSelectedCharacterId()
-    if (selectedId && allCharacters.length > 0) {
-      const found = allCharacters.find((c) => c.id?.toString() === selectedId)
+    const { owner, id } = loadSelectedCharacter()
+    if (id && allCharacters.length > 0) {
+      const found = allCharacters.find(
+        (c) =>
+          c.id?.toString() === id && (!owner || c.owner === owner),
+      )
       if (found) {
-        setLocalPerso(found)
+        setLocalPerso({ ...found })
         return
       }
     }
-    setLocalPerso(Object.keys(perso || {}).length ? perso : defaultPerso)
+    const fallback = Object.keys(perso || {}).length
+      ? { ...perso }
+      : { ...defaultPerso }
+    setLocalPerso(fallback)
   }, [perso, allCharacters])
 
   // Quand on QUITTE le mode édition, on recharge depuis les props
