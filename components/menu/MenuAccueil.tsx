@@ -19,6 +19,23 @@ import ProfileColorPicker from './ProfileColorPicker'
 
 const PROFILE_KEY = 'jdr_profile'
 const SELECTED_KEY = 'selectedCharacterId'
+type StoredSelection = { owner: string | null; id: string | null }
+
+const buildSelectionKey = (id: string | number | undefined, owner?: string) => {
+  if (!id) return ''
+  const idStr = String(id)
+  const ownerStr = owner ? String(owner) : ''
+  return ownerStr ? `${ownerStr}::${idStr}` : idStr
+}
+
+const parseSelectionKey = (raw: string | null): StoredSelection => {
+  if (!raw) return { owner: null, id: null }
+  const [owner, id] = raw.includes('::') ? raw.split('::', 2) : [null, raw]
+  return {
+    owner: owner && owner.length ? owner : null,
+    id: id ?? null,
+  }
+}
 // Dice button size consistent with main repo
 const DICE_SIZE = 44
 
@@ -74,10 +91,12 @@ export default function MenuAccueil() {
       )
       if (Array.isArray(savedChars)) {
         setCharacters(savedChars)
-        const selId = localStorage.getItem(SELECTED_KEY)
-        if (selId) {
+        const selection = parseSelectionKey(localStorage.getItem(SELECTED_KEY))
+        if (selection.id) {
           const idx = savedChars.findIndex(
-            (c: any) => c.id?.toString() === selId,
+            (c: any) =>
+              c.id?.toString() === selection.id &&
+              (!selection.owner || c.owner === selection.owner),
           )
           if (idx !== -1) setSelectedIdx(idx)
         }
@@ -157,6 +176,9 @@ export default function MenuAccueil() {
   const saveCharacters = (chars: Character[]) => {
     localStorage.setItem('jdr_characters', JSON.stringify(chars))
     setCharacters(chars)
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('jdr_characters_change'))
+    }
   }
 
   const handleLogout = () => {
@@ -232,7 +254,7 @@ export default function MenuAccueil() {
         )
       : [...characters, toSave]
     saveCharacters(updated)
-    localStorage.setItem(SELECTED_KEY, String(id))
+    localStorage.setItem(SELECTED_KEY, buildSelectionKey(id, toSave.owner))
     setModalOpen(false)
     setSelectedIdx(updated.findIndex((c) => c.id === id))
   }
@@ -244,20 +266,23 @@ export default function MenuAccueil() {
     const toDelete = characters.at(idx)
     const remaining = characters.filter((_, i) => i !== idx)
     saveCharacters(remaining)
+    const selection = parseSelectionKey(localStorage.getItem(SELECTED_KEY))
     if (
-      toDelete?.id &&
-      localStorage.getItem(SELECTED_KEY) === String(toDelete.id)
+      selection.id &&
+      selection.id === String(toDelete?.id ?? '') &&
+      (!selection.owner || selection.owner === toDelete?.owner)
     ) {
       localStorage.removeItem(SELECTED_KEY)
       setSelectedIdx(null)
+    } else if (selection.id) {
+      const newIdx = remaining.findIndex(
+        (c) =>
+          c.id?.toString() === selection.id &&
+          (!selection.owner || c.owner === selection.owner),
+      )
+      setSelectedIdx(newIdx !== -1 ? newIdx : null)
     } else {
-      const id = localStorage.getItem(SELECTED_KEY)
-      if (id) {
-        const newIdx = remaining.findIndex((c) => String(c.id) === id)
-        setSelectedIdx(newIdx !== -1 ? newIdx : null)
-      } else {
-        setSelectedIdx(null)
-      }
+      setSelectedIdx(null)
     }
   }
 
@@ -280,7 +305,10 @@ export default function MenuAccueil() {
             ? characters.map((c, i) => (i === idx ? withId : c))
             : [...characters, withId]
         saveCharacters(updated)
-        localStorage.setItem(SELECTED_KEY, String(id))
+        localStorage.setItem(
+          SELECTED_KEY,
+          buildSelectionKey(id, withId.owner),
+        )
         setSelectedIdx(idx !== -1 ? idx : characters.length)
         setStatusMessage(t('importSuccess'))
       } catch {
@@ -403,7 +431,10 @@ export default function MenuAccueil() {
     setSelectedIdx(idx)
     const ch = filteredCharacters.at(idx)
     if (ch?.id !== undefined) {
-      localStorage.setItem(SELECTED_KEY, String(ch.id))
+      localStorage.setItem(
+        SELECTED_KEY,
+        buildSelectionKey(ch.id, ch.owner),
+      )
     }
   }
 

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useStorage, useMutation, useStatus } from '@liveblocks/react'
 import { LiveObject } from '@liveblocks/client'
 import { useT } from '@/lib/useT'
@@ -39,7 +39,15 @@ export default function SideNotes() {
   const t = useT()
 
   const status = useStatus() as string
-  const liveNote = useStorage(root => root.quickNote)
+  const liveNoteObject = useStorage((root) => root.quickNote) as
+    | LiveObject<NoteData>
+    | null
+  const liveNote = useMemo<NoteData | null>(() => {
+    if (liveNoteObject instanceof LiveObject) {
+      return liveNoteObject.toObject() as NoteData
+    }
+    return liveNoteObject ?? null
+  }, [liveNoteObject])
 
   const updateLive = useMutation(({ storage }, data: NoteData) => {
     const obj = storage.get(LIVE_KEY)

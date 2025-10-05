@@ -1,4 +1,4 @@
-﻿// Define Liveblocks types for your application
+// Define Liveblocks types for your application
 // https://liveblocks.io/docs/api-reference/liveblocks-react#Typing-your-data
 import type { LiveMap, LiveObject, LiveList } from '@liveblocks/client'
 
@@ -11,6 +11,10 @@ type CanvasImage = {
   y: number
   width: number
   height: number
+  xRatio?: number
+  yRatio?: number
+  widthRatio?: number
+  heightRatio?: number
   local?: boolean
 }
 
