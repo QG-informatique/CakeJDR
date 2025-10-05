@@ -67,7 +67,11 @@ declare global {
       images: LiveMap<string, CanvasImage>
       strokes: LiveList<StrokeSegment>
       music: LiveObject<{ id: string; playing: boolean; volume?: number }>
-      summary: LiveObject<{ acts: Array<{ id: string; title: string }> }>
+      summary: LiveObject<{
+        acts: LiveList<{ id: string; title: string }>
+        currentId?: string
+      }>
+      quickNote: LiveObject<{ text: string; updatedAt: number }>
       editor: LiveMap<string, string>
       events: LiveList<SessionEvent>
       rooms: LiveList<Room>
