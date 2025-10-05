@@ -1,4 +1,4 @@
-// Define Liveblocks types for your application
+﻿// Define Liveblocks types for your application
 // https://liveblocks.io/docs/api-reference/liveblocks-react#Typing-your-data
 import type { LiveMap, LiveObject, LiveList } from '@liveblocks/client'
 
@@ -10,6 +10,17 @@ type CanvasImage = {
   width: number
   height: number
   local?: boolean
+}
+
+type StrokeSegment = {
+  id: string
+  x1: number
+  y1: number
+  x2: number
+  y2: number
+  color: string
+  width: number
+  mode: 'draw' | 'erase'
 }
 
 type SessionEvent = {
@@ -50,7 +61,8 @@ declare global {
     Storage: {
       characters: LiveMap<string, CharacterData>
       images: LiveMap<string, CanvasImage>
-        music: LiveObject<{ id: string; playing: boolean; volume: number }>
+      strokes: LiveList<StrokeSegment>
+      music: LiveObject<{ id: string; playing: boolean; volume?: number }>
       summary: LiveObject<{ acts: Array<{ id: string; title: string }> }>
       editor: LiveMap<string, string>
       events: LiveList<SessionEvent>
@@ -81,7 +93,7 @@ declare global {
         }
       | { type: 'chat'; author: string; text: string; isMJ?: boolean }
       | { type: 'dice-roll'; player: string; dice: number; result: number }
-      | { type: 'gm-select'; character: CharacterData }
+      | { type: 'gm-select'; character: CharacterData; targetConnectionId?: number | null }
 
     // Custom metadata set on threads, for useThreads, useCreateThread, etc.
     ThreadMetadata: Record<string, never>
@@ -92,3 +104,4 @@ declare global {
 }
 
 export {}
+

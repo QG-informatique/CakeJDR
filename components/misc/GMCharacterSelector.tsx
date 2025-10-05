@@ -1,11 +1,11 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState, useRef } from 'react'
 import { useBroadcastEvent, useOthers } from '@liveblocks/react'
 import { useT } from '@/lib/useT'
 import { User2 } from 'lucide-react'
 
-type Character = { id: string | number; name?: string; nom?: string }
+type Character = { id: string | number; name?: string; nom?: string; ownerConnectionId?: number }
 
 type Props = {
   onSelect: (char: Character) => void
@@ -24,7 +24,7 @@ export default function GMCharacterSelector({
   const broadcast = useBroadcastEvent()
   const t = useT()
 
-  // Récupère les personnages en temps réel via les presences
+  // RÃ©cupÃ¨re les personnages en temps rÃ©el via les presences
   useEffect(() => {
     const list = Array.from(others)
       .map((o) => o.presence?.character as Character | undefined)
@@ -44,7 +44,7 @@ export default function GMCharacterSelector({
     return () => window.removeEventListener('mousedown', handler)
   }, [open])
 
-  // Sélection du personnage
+  // SÃ©lection du personnage
   const handleSelect = (id: string | number) => {
     const found = chars.find((c) => c.id === id)
     if (!found) return
@@ -119,3 +119,4 @@ export default function GMCharacterSelector({
     </div>
   )
 }
+

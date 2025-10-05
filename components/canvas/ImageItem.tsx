@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Image from 'next/image'
 import { Trash2 } from 'lucide-react'
@@ -65,3 +65,4 @@ const ImageItem: React.FC<Props> = ({ img, drawMode, onPointerDown, onDelete }) 
 )
 
 export default ImageItem
+
