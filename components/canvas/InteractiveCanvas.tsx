@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { useRef, useState, useEffect, useMemo, useCallback } from 'react'
 import {
@@ -7,6 +7,7 @@ import {
   useMutation,
   useMyPresence,
 } from '@liveblocks/react'
+import type { LiveList } from '@liveblocks/client'
 import LiveCursors from './LiveCursors'
 import YouTube from 'react-youtube'
 import type { YouTubePlayer } from 'youtube-player/dist/types'
@@ -14,43 +15,129 @@ import CanvasTools, { ToolMode } from './CanvasTools'
 import { useT } from '@/lib/useT'
 import MusicPanel from './MusicPanel'
 import ImageItem, { ImageData } from './ImageItem'
-import SideNotes from '@/components/misc/SideNotes'\r\n\r\ntype StrokeSegment = {\r\n  id: string\r\n  x1: number\r\n  y1: number\r\n  x2: number\r\n  y2: number\r\n  color: string\r\n  width: number\r\n  mode: 'draw' | 'erase'\r\n}\r\n\r\nconst MIN_IMAGE_SIZE = 40\r\n\r\nconst clamp = (value: number, min: number, max: number) => {\r\n  if (Number.isNaN(value)) return min\r\n  if (max < min) return min\r\n  return Math.min(Math.max(value, min), max)\r\n}\r\n\r\nconst roundRatio = (value: number) => Math.round(value * 1000) / 1000\r\n\r\nconst normalizeImageRect = (img: ImageData, canvasWidth: number, canvasHeight: number): ImageData => {\r\n  if (!canvasWidth || !canvasHeight) {\r\n    return { ...img }\r\n  }\r\n  const width = clamp(img.width, MIN_IMAGE_SIZE, canvasWidth)\r\n  const height = clamp(img.height, MIN_IMAGE_SIZE, canvasHeight)\r\n  const x = clamp(img.x, 0, canvasWidth - width)\r\n  const y = clamp(img.y, 0, canvasHeight - height)\r\n\r\n  return {\r\n    ...img,\r\n    x,\r\n    y,\r\n    width,\r\n    height,\r\n    xRatio: roundRatio(x / canvasWidth),\r\n    yRatio: roundRatio(y / canvasHeight),\r\n    widthRatio: roundRatio(width / canvasWidth),\r\n    heightRatio: roundRatio(height / canvasHeight),\r\n  }\r\n}\r\n\r\nconst resolveImageRect = (img: ImageData, canvasWidth: number, canvasHeight: number): ImageData => {\r\n  if (!canvasWidth || !canvasHeight) {\r\n    return { ...img }\r\n  }\r\n\r\n  if (\r\n    img.xRatio === undefined ||\r\n    img.yRatio === undefined ||\r\n    img.widthRatio === undefined ||\r\n    img.heightRatio === undefined\r\n  ) {\r\n    const width = clamp(img.width, MIN_IMAGE_SIZE, canvasWidth)\r\n    const height = clamp(img.height, MIN_IMAGE_SIZE, canvasHeight)\r\n    const x = clamp(img.x, 0, canvasWidth - width)\r\n    const y = clamp(img.y, 0, canvasHeight - height)\r\n    return { ...img, x, y, width, height }\r\n  }\r\n\r\n  const width = clamp(img.widthRatio * canvasWidth, MIN_IMAGE_SIZE, canvasWidth)\r\n  const height = clamp(img.heightRatio * canvasHeight, MIN_IMAGE_SIZE, canvasHeight)\r\n  const x = clamp(img.xRatio * canvasWidth, 0, canvasWidth - width)\r\n  const y = clamp(img.yRatio * canvasHeight, 0, canvasHeight - height)\r\n\r\n  return {\r\n    ...img,\r\n    x,\r\n    y,\r\n    width,\r\n    height,\r\n  }\r\n}\r\n
+import SideNotes from '@/components/misc/SideNotes'
+
+type StrokeSegment = {
+  id: string
+  x1: number
+  y1: number
+  x2: number
+  y2: number
+  color: string
+  width: number
+  mode: 'draw' | 'erase'
+}
+
+const MIN_IMAGE_SIZE = 40
+const ALLOWED_TYPES = [
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'image/gif',
+  'image/svg+xml',
+]
+const MAX_SIZE_MB = 8
+
+const clamp = (value: number, min: number, max: number) => {
+  if (Number.isNaN(value)) return min
+  if (max < min) return min
+  return Math.min(Math.max(value, min), max)
+}
+
+const roundRatio = (value: number) => Math.round(value * 1000) / 1000
+
+const MUTATION_THROTTLE = 120
+
+const clampImage = (img: ImageData, rect: DOMRect): ImageData => {
+  const width = clamp(img.width ?? MIN_IMAGE_SIZE, MIN_IMAGE_SIZE, rect.width)
+  const height = clamp(img.height ?? MIN_IMAGE_SIZE, MIN_IMAGE_SIZE, rect.height)
+  const x = clamp(img.x ?? 0, 0, rect.width - width)
+  const y = clamp(img.y ?? 0, 0, rect.height - height)
+  return { ...img, x, y, width, height }
+}
+
+const normalizeImageRect = (img: ImageData, canvasWidth: number, canvasHeight: number): ImageData => {
+  if (!canvasWidth || !canvasHeight) {
+    return { ...img }
+  }
+  const width = clamp(img.width, MIN_IMAGE_SIZE, canvasWidth)
+  const height = clamp(img.height, MIN_IMAGE_SIZE, canvasHeight)
+  const x = clamp(img.x, 0, canvasWidth - width)
+  const y = clamp(img.y, 0, canvasHeight - height)
+
+  return {
+    ...img,
+    x,
+    y,
+    width,
+    height,
+    xRatio: roundRatio(x / canvasWidth),
+    yRatio: roundRatio(y / canvasHeight),
+    widthRatio: roundRatio(width / canvasWidth),
+    heightRatio: roundRatio(height / canvasHeight),
+  }
+}
+
+const resolveImageRect = (img: ImageData, canvasWidth: number, canvasHeight: number): ImageData => {
+  if (!canvasWidth || !canvasHeight) {
+    return { ...img }
+  }
+
+  if (
+    img.xRatio === undefined ||
+    img.yRatio === undefined ||
+    img.widthRatio === undefined ||
+    img.heightRatio === undefined
+  ) {
+    const width = clamp(img.width, MIN_IMAGE_SIZE, canvasWidth)
+    const height = clamp(img.height, MIN_IMAGE_SIZE, canvasHeight)
+    const x = clamp(img.x, 0, canvasWidth - width)
+    const y = clamp(img.y, 0, canvasHeight - height)
+    return { ...img, x, y, width, height }
+  }
+
+  const width = clamp(img.widthRatio * canvasWidth, MIN_IMAGE_SIZE, canvasWidth)
+  const height = clamp(img.heightRatio * canvasHeight, MIN_IMAGE_SIZE, canvasHeight)
+  const x = clamp(img.xRatio * canvasWidth, 0, canvasWidth - width)
+  const y = clamp(img.yRatio * canvasHeight, 0, canvasHeight - height)
+
+  return {
+    ...img,
+    x,
+    y,
+    width,
+    height,
+  }
+}
+
 
 export default function InteractiveCanvas() {
   // `images` map is created by RoomProvider but may be null until ready
   const imagesMap = useStorage((root) => root.images)
-  const images = imagesMap
-    ? (Array.from(imagesMap.values()) as ImageData[])
-    : []
+  const images = useMemo(() => {
+    if (!imagesMap) return [] as ImageData[]
+    return Array.from(imagesMap.values()) as ImageData[]
+  }, [imagesMap])
 
-  const strokesList = useStorage((root) => root.strokes)
+  const strokesList = useStorage((root) => root.strokes) as
+    | LiveList<StrokeSegment>
+    | null
   const strokes = useMemo<StrokeSegment[]>(() => {
     if (!strokesList) return []
-    const result: StrokeSegment[] = []
-
-  const displayImages = useMemo(() => {
-    if (!canvasSize.width || !canvasSize.height) {
-      return images.map((img) => ({ ...img }))
+    if (typeof (strokesList as LiveList<StrokeSegment>).toArray === 'function') {
+      return (strokesList as LiveList<StrokeSegment>).toArray()
     }
-    return images.map((img) => resolveImageRect(img, canvasSize.width, canvasSize.height))
-  }, [images, canvasSize])
-
-  const displayImageMap = useMemo(() => {
-    const map = new Map<number, ImageData>()
-    displayImages.forEach((img) => map.set(img.id, img))
-    return map
-  }, [displayImages])
-
-    for (let i = 0; i < strokesList.length; i += 1) {
-      const entry = strokesList.get(i)
+    const fallback = [] as StrokeSegment[]
+    for (let i = 0; i < (strokesList as LiveList<StrokeSegment>).length; i += 1) {
+      const entry = (strokesList as LiveList<StrokeSegment>).get(i)
       if (entry) {
-        result.push(entry as StrokeSegment)
+        fallback.push(entry as StrokeSegment)
       }
     }
-    return result
+    return fallback
   }, [strokesList])
 
-  const musicObj = useStorage((root) => root.music) // peut ÃƒÆ’Ã‚Âªtre null au dÃƒÆ’Ã‚Â©marrage
+  const musicObj = useStorage((root) => root.music) // peut tre null au dmarrage
   const storageReady = Boolean(musicObj)
 
   const [isDrawing, setIsDrawing] = useState(false)
@@ -61,8 +148,15 @@ export default function InteractiveCanvas() {
   const brushSize = drawMode === 'erase' ? eraserSize : penSize
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
   const [toolsVisible, setToolsVisible] = useState(false)
-  const [audioVisible, setAudioVisible] = useState(false)\r\n  const [pendingImages, setPendingImages] = useState<ImageData[]>([])
+  const [audioVisible, setAudioVisible] = useState(false)
+  const [pendingImages, setPendingImages] = useState<ImageData[]>([])
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
+
+  const [renderVersion, setRenderVersion] = useState(0)
+  const imagesRef = useRef<ImageData[]>([])
+  const localTransforms = useRef(new Map<string, Partial<ImageData>>())
+  const renderFrame = useRef<number | null>(null)
+  const lastMutation = useRef(0)
 
   const [ytUrl, setYtUrl] = useState('')
   const [ytId, setYtId] = useState('')
@@ -70,10 +164,29 @@ export default function InteractiveCanvas() {
   // Lecture: synchro globale
   const [isPlaying, setIsPlaying] = useState(false)
 
-  // Volume: gestion locale du volume (0..100), valeur par dÃ©faut 30%\r\n  const [volume, setVolumeState] = useState(30)\r\n  const setVolume = useCallback((value: number) => {\r\n    const clamped = Math.max(0, Math.min(100, Math.round(value)))\r\n    setVolumeState(clamped)\r\n    if (typeof window !== 'undefined') {\r\n      window.localStorage.setItem('canvas_volume', String(clamped))\r\n    }\r\n  }, [])
+  // Volume: gestion locale du volume (0..100), valeur par dfaut 30%
+  const [volume, setVolumeState] = useState(30)
+  const setVolume = useCallback((value: number) => {
+    const clamped = Math.max(0, Math.min(100, Math.round(value)))
+    setVolumeState(clamped)
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('canvas_volume', String(clamped))
+    }
+  }, [])
 
-  const [, updateMyPresence] = useMyPresence()\r\n  const lastPointRef = useRef<{ x: number; y: number } | null>(null)\r\n
+  const [, updateMyPresence] = useMyPresence()
+  const lastPointRef = useRef<{ x: number; y: number } | null>(null)
+
   const canvasRef = useRef<HTMLDivElement>(null)
+
+  const scheduleRender = useCallback(() => {
+    if (renderFrame.current) cancelAnimationFrame(renderFrame.current)
+    renderFrame.current = requestAnimationFrame(() => {
+      renderFrame.current = null
+      setRenderVersion((v) => v + 1)
+    })
+  }, [])
+
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -84,6 +197,54 @@ export default function InteractiveCanvas() {
       setVolumeState(Math.max(0, Math.min(100, Math.round(parsed))))
     }
   }, [])
+
+
+  useEffect(() => () => {
+    if (renderFrame.current) cancelAnimationFrame(renderFrame.current)
+  }, [])
+
+  const storedImageMap = useMemo(() => {
+    const map = new Map<string, ImageData>()
+    images.forEach((img) => map.set(String(img.id), img))
+    return map
+  }, [images])
+
+  const imagesToRender = useMemo(() => {
+    void renderVersion
+    return images.map((img) => {
+      const key = String(img.id)
+      const overrides = localTransforms.current.get(key)
+      const merged = overrides ? { ...img, ...overrides } : img
+      return resolveImageRect(
+        merged as ImageData,
+        canvasSize.width,
+        canvasSize.height,
+      )
+    })
+  }, [images, canvasSize, renderVersion])
+
+  const renderedImageMap = useMemo(() => {
+    const map = new Map<string, ImageData>()
+    imagesToRender.forEach((img) => map.set(String(img.id), img))
+    return map
+  }, [imagesToRender])
+
+  useEffect(() => {
+    imagesRef.current = imagesToRender
+  }, [imagesToRender])
+
+  useEffect(() => {
+    const ids = new Set(images.map((img) => String(img.id)))
+    const transforms = localTransforms.current
+    let changed = false
+    for (const key of Array.from(transforms.keys())) {
+      if (!ids.has(key)) {
+        transforms.delete(key)
+        changed = true
+      }
+    }
+    if (changed) scheduleRender()
+  }, [images, scheduleRender])
 
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null)
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null)
@@ -161,7 +322,7 @@ export default function InteractiveCanvas() {
   }, [updateMyPresence])
 
   const addImage = useMutation(({ storage }, img: ImageData) => {
-    storage.get('images').set(img.id, img)
+    storage.get('images').set(String(img.id), img)
   }, [])
 
   const updateImageTransform = useMutation(
@@ -180,7 +341,7 @@ export default function InteractiveCanvas() {
   )
 
   const removeImage = useMutation(({ storage }, id: string) => {
-    storage.get('images').delete(id)
+    storage.get('images').delete(String(id))
   }, [])
 
   const clearImages = useMutation(({ storage }) => {
@@ -198,7 +359,32 @@ export default function InteractiveCanvas() {
     storage.get('strokes').clear()
   }, [])
 
-  // Mutation musique: gÃƒÆ’Ã‚Â¨re l'ÃƒÆ’Ã‚Â©tat global (id, lecture, volume)
+  useEffect(() => {
+    const rect = drawingCanvasRef.current?.getBoundingClientRect()
+    if (!rect) return
+    images.forEach((img) => {
+      if (
+        img.xRatio === undefined ||
+        img.yRatio === undefined ||
+        img.widthRatio === undefined ||
+        img.heightRatio === undefined
+      ) {
+        const normalized = normalizeImageRect(img, rect.width, rect.height)
+        updateImageTransform(String(img.id), {
+          x: normalized.x,
+          y: normalized.y,
+          width: normalized.width,
+          height: normalized.height,
+          xRatio: normalized.xRatio,
+          yRatio: normalized.yRatio,
+          widthRatio: normalized.widthRatio,
+          heightRatio: normalized.heightRatio,
+        })
+      }
+    })
+  }, [images, updateImageTransform])
+
+  // Mutation musique: gre l'tat global (id, lecture, volume)
   const updateMusic = useMutation(
     (
       { storage },
@@ -209,7 +395,25 @@ export default function InteractiveCanvas() {
     [],
   )
 
-  // Events canvas (compatibilitÃƒÂ© avec les anciennes diffusions d''ÃƒÂ©vÃƒÂ©nements)\r\n  // eslint-disable-next-line @typescript-eslint/no-explicit-any\r\n  useEventListener((payload: any) => {\r\n    const { event } = payload\r\n    if (event.type === 'clear-canvas') {\r\n      clearCanvas()\r\n    } else if (event.type === 'draw-line') {\r\n      addStrokeSegment({\r\n        id: createStrokeId(),\r\n        x1: event.x1,\r\n        y1: event.y1,\r\n        x2: event.x2,\r\n        y2: event.y2,\r\n        color: event.color,\r\n        width: event.width,\r\n        mode: event.mode,\r\n      })\r\n    }\r\n  })
+  // Events canvas (compatibilit avec les anciennes diffusions d''vnements)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  useEventListener((payload: any) => {
+    const { event } = payload
+    if (event.type === 'clear-canvas') {
+      clearCanvas()
+    } else if (event.type === 'draw-line') {
+      addStrokeSegment({
+        id: createStrokeId(),
+        x1: event.x1,
+        y1: event.y1,
+        x2: event.x2,
+        y2: event.y2,
+        color: event.color,
+        width: event.width,
+        mode: event.mode,
+      })
+    }
+  })
 
   const dragState = useRef({
     id: null as string | null,
@@ -223,22 +427,6 @@ export default function InteractiveCanvas() {
   const ERASE_MIN = DRAW_MIN * 4
   const ERASE_MAX = DRAW_MAX * 4
 
-  const redrawStrokes = () => {
-    const ctx = ctxRef.current
-    if (!ctx) return
-    for (const s of strokesRef.current) {
-      ctx.strokeStyle = s.mode === 'erase' ? 'rgba(0,0,0,1)' : s.color
-      ctx.lineWidth = s.width
-      ctx.globalCompositeOperation =
-        s.mode === 'erase' ? 'destination-out' : 'source-over'
-      ctx.beginPath()
-      ctx.moveTo(s.x1, s.y1)
-      ctx.lineTo(s.x2, s.y2)
-      ctx.stroke()
-    }
-  }
-
-
 
   useEffect(() => {
     const canvas = drawingCanvasRef.current
@@ -251,16 +439,27 @@ export default function InteractiveCanvas() {
     const handleResize = () => {
       const rect = drawingCanvasRef.current?.getBoundingClientRect()
       if (!rect) return
+      const map = new Map<string, ImageData>()
+      images.forEach((img) => map.set(String(img.id), img))
       imagesRef.current.forEach((img) => {
-        const clamped = clampImage(img, rect)
-        if (
-          clamped.x !== img.x ||
-          clamped.y !== img.y ||
-          clamped.width !== img.width ||
-          clamped.height !== img.height
-        ) {
-          updateImageTransform(img.id, clamped)
-        }
+        const key = String(img.id)
+        const stored = map.get(key)
+        if (!stored) return
+        const normalized = normalizeImageRect(
+          { ...stored, ...img },
+          rect.width,
+          rect.height,
+        )
+        updateImageTransform(key, {
+          x: normalized.x,
+          y: normalized.y,
+          width: normalized.width,
+          height: normalized.height,
+          xRatio: normalized.xRatio,
+          yRatio: normalized.yRatio,
+          widthRatio: normalized.widthRatio,
+          heightRatio: normalized.heightRatio,
+        })
       })
     }
     window.addEventListener('resize', handleResize)
@@ -269,7 +468,7 @@ export default function InteractiveCanvas() {
       window.removeEventListener('resize', handleResize)
       window.removeEventListener('orientationchange', handleResize)
     }
-  }, [updateImageTransform])
+  }, [images, updateImageTransform])
 
   useEffect(() => {
     if (drawMode === 'erase') {
@@ -286,7 +485,7 @@ export default function InteractiveCanvas() {
     }
   }, [volume])
 
-  // Lecture: contrÃƒÆ’Ã‚Â´le global (synchro via musicObj)
+  // Lecture: contrle global (synchro via musicObj)
   useEffect(() => {
     const player = playerRef.current
     if (!player) return
@@ -294,14 +493,14 @@ export default function InteractiveCanvas() {
     else player.pauseVideo()
   }, [isPlaying])
 
-  // Quand lÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã‚Â©tat global musique change (depuis Liveblocks), on sÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢aligne
+  // Quand ltat global musique change (depuis Liveblocks), on saligne
   useEffect(() => {
     if (!musicObj) return
     setYtId(musicObj.id)
     setIsPlaying(!!musicObj.playing)
   }, [musicObj])
 
-  // --------- DnD images: aperÃƒÆ’Ã‚Â§u instantanÃƒÆ’Ã‚Â© + swap vers Cloudinary optimisÃƒÆ’Ã‚Â© ---------
+  // --------- DnD images: aperu instantan + swap vers Cloudinary optimis ---------
 
   function fileToObjectURL(file: File) {
     return URL.createObjectURL(file)
@@ -318,10 +517,10 @@ export default function InteractiveCanvas() {
       return
     }
     const localUrl = fileToObjectURL(file)
-    const tempId = Date.now() + Math.random()
+    const tempId = `${Date.now()}-${Math.random().toString(36).slice(2)}`
     const baseImg: ImageData = {
       id: tempId,
-      src: localUrl,
+      url: localUrl,
       x: dropX - 100,
       y: dropY - 100,
       width: 200,
@@ -343,7 +542,12 @@ export default function InteractiveCanvas() {
         throw new Error('No URL returned by Cloudinary endpoint')
       }
 
-      addImage({ ...baseImg, src: finalUrl })
+      const normalized = normalizeImageRect(
+        { ...baseImg, url: finalUrl, createdAt: Date.now() },
+        rect.width,
+        rect.height,
+      )
+      addImage(normalized)
     } catch (err) {
       console.error(err)
       alert('Image upload failed')
@@ -352,7 +556,6 @@ export default function InteractiveCanvas() {
       URL.revokeObjectURL(localUrl)
     }
   }
-
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault()
     const files = Array.from(e.dataTransfer.files)
@@ -395,32 +598,31 @@ export default function InteractiveCanvas() {
         ctx.globalCompositeOperation =
           drawMode === 'erase' ? 'destination-out' : 'source-over'
         ctx.beginPath()
-        ctx.moveTo(x, y)\r\n      }\r\n      lastPointRef.current = { x, y }\r\n      return
+        ctx.moveTo(x, y)
+      }
+      lastPointRef.current = { x, y }
+      return
     }
 
     if (drawMode === 'images' && id && type) {
-      const img = images.find((i) => i.id === id)
+      const key = String(id)
+      const img = renderedImageMap.get(key)
       if (!img) return
 
       dragState.current = {
-        id,
+        id: key,
         type,
         offsetX: e.clientX - rect.left - img.x,
         offsetY: e.clientY - rect.top - img.y,
       }
-      localTransforms.current.set(id, {
+      localTransforms.current.set(key, {
         x: img.x,
         y: img.y,
         width: img.width,
         height: img.height,
-        scale: img.scale,
-        rotation: img.rotation,
-        createdAt: img.createdAt,
-        url: img.url,
-        id: img.id,
       })
       scheduleRender()
-      setSelectedImageId(id)
+      setSelectedImageId(key)
     }
   }
 
@@ -429,7 +631,6 @@ export default function InteractiveCanvas() {
     if (!rect) return
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
-    const prev = mousePos
     setMousePos({ x, y })
     updateMyPresence({ cursor: { x, y } })
 
@@ -437,12 +638,42 @@ export default function InteractiveCanvas() {
       setIsDrawing(false)
     }
 
-    if (\r\n      isDrawing &&\r\n      (drawMode === 'draw' || drawMode === 'erase') &&\r\n      ctxRef.current\r\n    ) {\r\n      const previous = lastPointRef.current\r\n      ctxRef.current.lineTo(x, y)\r\n      ctxRef.current.stroke()\r\n      if (!previous || previous.x !== x || previous.y !== y) {\r\n        addStrokeSegment({\r\n          id: createStrokeId(),\r\n          x1: previous?.x ?? x,\r\n          y1: previous?.y ?? y,\r\n          x2: x,\r\n          y2: y,\r\n          color,\r\n          width: brushSize,\r\n          mode: drawMode,\r\n        })\r\n      }\r\n      lastPointRef.current = { x, y }\r\n    }\r\n
+    if (
+      isDrawing &&
+      (drawMode === 'draw' || drawMode === 'erase') &&
+      ctxRef.current
+    ) {
+      const previous = lastPointRef.current
+      ctxRef.current.lineTo(x, y)
+      ctxRef.current.stroke()
+      if (!previous || previous.x !== x || previous.y !== y) {
+        addStrokeSegment({
+          id: createStrokeId(),
+          x1: previous?.x ?? x,
+          y1: previous?.y ?? y,
+          x2: x,
+          y2: y,
+          color,
+          width: brushSize,
+          mode: drawMode,
+        })
+      }
+      lastPointRef.current = { x, y }
+    }
+
     const { id, type, offsetX, offsetY } = dragState.current
     if (!id || !type) return
-    const original = images.find((i) => i.id === id)
-    if (!original) return
-    const base = { ...original, ...localTransforms.current.get(id) }
+    const stored = storedImageMap.get(id)
+    const baseSource =
+      localTransforms.current.get(id) ?? renderedImageMap.get(id)
+    if (!stored || !baseSource) return
+    const base = {
+      ...baseSource,
+      x: baseSource.x ?? stored.x ?? 0,
+      y: baseSource.y ?? stored.y ?? 0,
+      width: baseSource.width ?? stored.width ?? MIN_IMAGE_SIZE,
+      height: baseSource.height ?? stored.height ?? MIN_IMAGE_SIZE,
+    }
     const updated =
       type === 'move'
         ? { ...base, x: x - offsetX, y: y - offsetY }
@@ -453,17 +684,60 @@ export default function InteractiveCanvas() {
     const now = Date.now()
     if (now - lastMutation.current > MUTATION_THROTTLE) {
       lastMutation.current = now
-      updateImageTransform(id, clamped)
+      const normalized = normalizeImageRect(
+        { ...stored, ...clamped },
+        rect.width,
+        rect.height,
+      )
+      updateImageTransform(id, {
+        x: normalized.x,
+        y: normalized.y,
+        width: normalized.width,
+        height: normalized.height,
+        xRatio: normalized.xRatio,
+        yRatio: normalized.yRatio,
+        widthRatio: normalized.widthRatio,
+        heightRatio: normalized.heightRatio,
+      })
     }
   }
 
-  const handlePointerUp = () => {\r\n    setIsDrawing(false)\r\n    lastPointRef.current = null\r\n    dragState.current = { id: null, type: null, offsetX: 0, offsetY: 0 }\r\n  }
+  const handlePointerUp = () => {
+    setIsDrawing(false)
+    const { id } = dragState.current
+    lastPointRef.current = null
+    dragState.current = { id: null, type: null, offsetX: 0, offsetY: 0 }
+    if (!id) return
+    const rect = drawingCanvasRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const stored = storedImageMap.get(id)
+    const override = localTransforms.current.get(id)
+    if (!stored || !override) return
+    const normalized = normalizeImageRect(
+      { ...stored, ...override },
+      rect.width,
+      rect.height,
+    )
+    updateImageTransform(id, {
+      x: normalized.x,
+      y: normalized.y,
+      width: normalized.width,
+      height: normalized.height,
+      xRatio: normalized.xRatio,
+      yRatio: normalized.yRatio,
+      widthRatio: normalized.widthRatio,
+      heightRatio: normalized.heightRatio,
+    })
+  }
 
-  const handlePointerLeave = () => {\r\n    lastPointRef.current = null\r\n    updateMyPresence({ cursor: null })\r\n  }
+  const handlePointerLeave = () => {
+    lastPointRef.current = null
+    updateMyPresence({ cursor: null })
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (drawMode !== 'images' || selectedImageId === null) return
-    const img = imagesToRender.find((i) => i.id === selectedImageId)
+    const img = renderedImageMap.get(selectedImageId)
     const rect = drawingCanvasRef.current?.getBoundingClientRect()
     if (!img || !rect) return
     const step = 5
@@ -475,15 +749,47 @@ export default function InteractiveCanvas() {
     updated = clampImage(updated, rect)
     if (updated.x !== img.x || updated.y !== img.y) {
       e.preventDefault()
-      localTransforms.current.set(img.id, updated)
+      localTransforms.current.set(selectedImageId, updated)
       scheduleRender()
-      updateImageTransform(img.id, updated)
+      const stored = storedImageMap.get(selectedImageId)
+      if (stored) {
+        const normalized = normalizeImageRect(
+          { ...stored, ...updated },
+          rect.width,
+          rect.height,
+        )
+        updateImageTransform(selectedImageId, {
+          x: normalized.x,
+          y: normalized.y,
+          width: normalized.width,
+          height: normalized.height,
+          xRatio: normalized.xRatio,
+          yRatio: normalized.yRatio,
+          widthRatio: normalized.widthRatio,
+          heightRatio: normalized.heightRatio,
+        })
+      }
     }
   }
 
-  const clearCanvas = () => {\r\n    clearImages()\r\n    clearStrokes()\r\n    setPendingImages([])\r\n    const ctx = ctxRef.current\r\n    if (ctx && drawingCanvasRef.current) {\r\n      ctx.clearRect(\r\n        0,\r\n        0,\r\n        drawingCanvasRef.current.width,\r\n        drawingCanvasRef.current.height,\r\n      )\r\n      ctx.beginPath()\r\n    }\r\n  }
+  const clearCanvas = () => {
+    clearImages()
+    clearStrokes()
+    setPendingImages([])
+    const ctx = ctxRef.current
+    if (ctx && drawingCanvasRef.current) {
+      ctx.clearRect(
+        0,
+        0,
+        drawingCanvasRef.current.width,
+        drawingCanvasRef.current.height,
+      )
+      ctx.beginPath()
+    }
+  }
 
   const handleDeleteImage = (id: string) => {
+    localTransforms.current.delete(String(id))
     removeImage(id)
   }
 
@@ -495,7 +801,7 @@ export default function InteractiveCanvas() {
   const handleYtSubmit = () => {
     const match = ytUrl.match(/(?:youtube\.com.*v=|youtu\.be\/)([^&\n?#]+)/)
     if (match) {
-      setYtId(match[1] ?? '') // local immÃƒÆ’Ã‚Â©diat
+      setYtId(match[1] ?? '') // local immdiat
       setIsPlaying(true)
       if (storageReady) {
         updateMusic({ id: match[1], playing: true })
@@ -525,7 +831,7 @@ export default function InteractiveCanvas() {
             onClick={() => setToolsVisible(!toolsVisible)}
             className="rounded-xl px-5 py-2 text-base font-semibold shadow border-none bg-black/30 text-white/90 hover:bg-emerald-600 hover:text-white transition duration-100 flex items-center justify-center min-h-[38px]"
           >
-            <span className="mr-1">ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂºÃ‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â</span>{' '}
+            <span className="mr-1"></span>{' '}
             <span className="text-sm">{toolsVisible ? t('tools') : ''}</span>
           </button>
         </div>
@@ -552,7 +858,7 @@ export default function InteractiveCanvas() {
             {isPlaying && (
               <span className="absolute inset-0 rounded-xl pointer-events-none animate-pulse-ring" />
             )}
-            <span className="relative">ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Âµ</span>
+            <span className="relative"></span>
           </button>
         </div>
         {audioVisible && (
@@ -566,7 +872,7 @@ export default function InteractiveCanvas() {
             setVolume={setVolume}
           />
         )}
-        {/* Player YouTube (toujours montÃƒÆ’Ã‚Â© pour conserver la lecture) */}
+        {/* Player YouTube (toujours mont pour conserver la lecture) */}
         {ytId && (
           <YouTube
             videoId={ytId}
@@ -613,14 +919,14 @@ export default function InteractiveCanvas() {
               style={{ top: img.y, left: img.x, width: img.width, height: img.height, zIndex: 2 }}
             >
               <img
-                src={img.src}
+                src={img.url}
                 alt="Envoi en cours"
                 className="w-full h-full object-contain rounded-2xl opacity-80"
               />
             </div>
           ))}
 
-          {images.map((img) => (
+          {imagesToRender.map((img) => (
             <ImageItem
               key={img.id}
               img={img}
@@ -649,9 +955,9 @@ export default function InteractiveCanvas() {
           <LiveCursors />
           <SideNotes />
 
-          {/* DiceHub supprimÃƒÆ’Ã‚Â© : les lancers de dÃƒÆ’Ã‚Â©s ne sont plus synchronisÃƒÆ’Ã‚Â©s globalement */}
+          {/* DiceHub supprim : les lancers de ds ne sont plus synchroniss globalement */}
         </div>{' '}
-        {/* ÃƒÂ¢Ã¢â‚¬Â Ã‚Â fin du conteneur relatif */}
+        {/*  fin du conteneur relatif */}
       </div>
 
       <style jsx>{`

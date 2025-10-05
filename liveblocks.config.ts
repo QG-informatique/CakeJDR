@@ -1,4 +1,4 @@
-﻿// Define Liveblocks types for your application
+// Define Liveblocks types for your application
 // https://liveblocks.io/docs/api-reference/liveblocks-react#Typing-your-data
 import type { LiveMap, LiveObject, LiveList } from '@liveblocks/client'
 
@@ -11,6 +11,10 @@ type CanvasImage = {
   y: number
   width: number
   height: number
+  xRatio?: number
+  yRatio?: number
+  widthRatio?: number
+  heightRatio?: number
   local?: boolean
 }
 
@@ -67,7 +71,11 @@ declare global {
       images: LiveMap<string, CanvasImage>
       strokes: LiveList<StrokeSegment>
       music: LiveObject<{ id: string; playing: boolean; volume?: number }>
-      summary: LiveObject<{ acts: Array<{ id: string; title: string }> }>
+      summary: LiveObject<{
+        acts: LiveList<{ id: string; title: string }>
+        currentId?: string
+      }>
+      quickNote: LiveObject<{ text: string; updatedAt: number }>
       editor: LiveMap<string, string>
       events: LiveList<SessionEvent>
       rooms: LiveList<Room>
