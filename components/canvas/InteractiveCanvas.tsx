@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState, useEffect, useReducer } from 'react'
+import { useRef, useState, useEffect, useReducer, useMemo, useCallback } from 'react'
 import {
   useBroadcastEvent,
   useEventListener,
@@ -46,6 +46,13 @@ const clamp = (value: number, min: number, max: number) => {
 }
 
 const roundRatio = (value: number) => Math.round(value * 1000) / 1000
+
+const createStrokeId = () => {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID()
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`
+}
 
 const MUTATION_THROTTLE = 120
 
@@ -224,14 +231,12 @@ export default function InteractiveCanvas() {
     })
   }, [images, canvasSize, renderVersion])
 
+  imagesRef.current = imagesToRender
+
   const renderedImageMap = useMemo(() => {
     const map = new Map<string, ImageData>()
     imagesToRender.forEach((img) => map.set(String(img.id), img))
     return map
-  }, [imagesToRender])
-
-  useEffect(() => {
-    imagesRef.current = imagesToRender
   }, [imagesToRender])
 
   useEffect(() => {
@@ -259,6 +264,44 @@ export default function InteractiveCanvas() {
       updateMyPresence({ cursor: null })
     }
   }, [updateMyPresence])
+
+  useEffect(() => {
+    strokesRef.current = strokes
+  }, [strokes])
+
+  const addStrokeSegment = useMutation(
+    ({ storage }, segment: StrokeSegment) => {
+      const list = storage.get('strokes') as LiveList<StrokeSegment> | null
+      if (!list) return
+      if (typeof list.push === 'function') {
+        list.push(segment)
+      } else if (typeof (list as unknown as { insert?: (index: number, value: StrokeSegment) => void }).insert === 'function') {
+        const helper = list as unknown as {
+          insert: (index: number, value: StrokeSegment) => void
+          length?: number
+        }
+        helper.insert((helper.length ?? 0) as number, segment)
+      }
+      strokesRef.current = [...strokesRef.current, segment]
+    },
+    [strokesRef],
+  )
+
+  const clearStrokes = useMutation(({ storage }) => {
+    const list = storage.get('strokes') as LiveList<StrokeSegment> | null
+    if (!list) {
+      strokesRef.current = []
+      return
+    }
+    if (typeof list.clear === 'function') {
+      list.clear()
+    } else if (typeof list.delete === 'function') {
+      for (let i = (list.length ?? 0) - 1; i >= 0; i -= 1) {
+        list.delete(i)
+      }
+    }
+    strokesRef.current = []
+  }, [])
 
   const addImage = useMutation(({ storage }, img: ImageData) => {
     storage.get('images').set(String(img.id), img)
@@ -301,9 +344,6 @@ export default function InteractiveCanvas() {
     const y = Math.min(Math.max(img.y, 0), rect.height - height)
     return { ...img, x, y, width, height }
   }
-
-  const imagesRef = useRef<ImageData[]>([])
-  imagesRef.current = imagesToRender
 
   useEffect(() => {
     const rect = drawingCanvasRef.current?.getBoundingClientRect()
@@ -499,7 +539,7 @@ export default function InteractiveCanvas() {
       console.error(err)
       alert('Image upload failed')
     } finally {
-      setPendingImages((prev) => prev.filter((i) => i.id !== id))
+      setPendingImages((prev) => prev.filter((i) => i.id !== tempId))
       URL.revokeObjectURL(localUrl)
     }
   }
