@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useRef, useState } from 'react'
-import { useBroadcastEvent, useEventListener, useMyPresence } from '@liveblocks/react'
+import { useBroadcastEvent, useEventListener, useMyPresence, useSelf } from '@liveblocks/react'
 import { useRouter, useParams } from 'next/navigation'
 import CharacterSheet, { defaultPerso } from '@/components/sheet/CharacterSheet'
 import DiceRoller from '@/components/dice/DiceRoller'
@@ -20,10 +20,29 @@ import useOnlineStatus from './hooks/useOnlineStatus'
 import ErrorBoundary from '@/components/misc/ErrorBoundary'
 import { debug } from '@/lib/debug'
 
+const SELECTED_CHARACTER_KEY = 'selectedCharacterId'
+
+type StoredSelection = { owner: string | null; id: string | null }
+
+const buildSelectionKey = (id: string | number | undefined, owner?: string | null) => {
+  if (!id) return ''
+  const idStr = String(id)
+  const ownerStr = owner ? String(owner) : ''
+  return ownerStr ? `${ownerStr}::${idStr}` : idStr
+}
+
+const parseSelectionKey = (raw: string | null): StoredSelection => {
+  if (!raw) return { owner: null, id: null }
+  const [owner, id] = raw.includes('::') ? raw.split('::', 2) : [null, raw]
+  return { owner: owner && owner.length ? owner : null, id: id ?? null }
+}
+
 export default function HomePageInner() {
   const router = useRouter()
   const [user, setUser] = useState<string | null>(null)
   const profile = useProfile()
+  const self = useSelf()
+  const myConnectionId = self?.connectionId ?? null
   const [perso, setPerso] = useState(defaultPerso)
   const [characters, setCharacters] = useState<any[]>([])
 
@@ -48,31 +67,69 @@ export default function HomePageInner() {
   useEventListener((payload: any) => {
     const { event } = payload
     if (event.type === 'dice-roll') {
-
       const ts = typeof event.ts === 'number' ? event.ts : Date.now()
       if (ts === lastRollTs.current) return
       setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result, ts }])
-      // sender already stored the event, so avoid adding duplicates
       debug('dice-roll received', event)
+      return
+    }
 
-    } else if (event.type === 'gm-select') {
-      const char = event.character || defaultPerso
-      if (!char.id) char.id = crypto.randomUUID()
-      setPerso(char)
-      updateMyPresence({ character: char })
-      if (profile?.isMJ || char.owner === profile?.pseudo) {
-        setCharacters(prev => {
+    if (event.type === 'gm-select') {
+      const selectionTarget: number | null =
+        typeof event.targetConnectionId === 'number'
+          ? event.targetConnectionId
+          : null
+      const incomingChar = event.character || defaultPerso
+      const safeChar = { ...incomingChar }
+      if (!safeChar.id) safeChar.id = crypto.randomUUID()
+      const owner = safeChar.owner ? String(safeChar.owner) : null
+      const belongsToMe =
+        !!owner && profile?.pseudo
+          ? String(profile.pseudo) === owner
+          : false
+      const isForMe =
+        selectionTarget === null || selectionTarget === myConnectionId
+      if (!profile?.isMJ && !belongsToMe && !isForMe) {
+        return
+      }
+
+      const finalChar = {
+        ...safeChar,
+        owner: owner || profile?.pseudo || safeChar.owner || null,
+      }
+
+      setPerso(finalChar)
+
+      if (belongsToMe || profile?.isMJ) {
+        if (belongsToMe) {
+          updateMyPresence({
+            character: {
+              ...finalChar,
+              ownerConnectionId: myConnectionId ?? undefined,
+            },
+          })
+        }
+        setCharacters((prev) => {
           const idx = prev.findIndex(
-            c => String(c.id) === String(char.id) && c.owner === char.owner,
+            (c) =>
+              String(c.id) === String(finalChar.id) &&
+              c.owner === finalChar.owner,
           )
           const next =
-            idx !== -1 ? prev.map((c,i)=> i===idx ? char : c) : [...prev, char]
-          localStorage.setItem('jdr_characters', JSON.stringify(next))
-          localStorage.setItem('selectedCharacterId', String(char.id))
+            idx !== -1
+              ? prev.map((c, i) => (i === idx ? { ...c, ...finalChar } : c))
+              : [...prev, finalChar]
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('jdr_characters', JSON.stringify(next))
+            localStorage.setItem(
+              SELECTED_CHARACTER_KEY,
+              buildSelectionKey(finalChar.id, finalChar.owner ?? null),
+            )
+            window.dispatchEvent(new Event('jdr_characters_change'))
+          }
           return next
         })
       }
-
     }
   })
 
@@ -99,59 +156,101 @@ export default function HomePageInner() {
 
   useEffect(() => {
     const savedChars = localStorage.getItem('jdr_characters')
-    let chars = []
+    let chars: any[] = []
     if (savedChars) {
       try {
-        chars = JSON.parse(savedChars)
-        setCharacters(chars)
+        const parsed = JSON.parse(savedChars)
+        if (Array.isArray(parsed)) {
+          chars = parsed
+          setCharacters(parsed)
+        }
       } catch {}
     }
-    const selectedId = localStorage.getItem('selectedCharacterId')
-    if (selectedId && chars.length) {
-      const found = chars.find((c: any) => c.id?.toString() === selectedId)
-      if (found) {
-        setPerso(found)
-        updateMyPresence({ character: found })
-      } else {
-        setPerso(defaultPerso)
-        updateMyPresence({ character: defaultPerso })
-      }
-    } else {
-      setPerso(defaultPerso)
-      updateMyPresence({ character: defaultPerso })
-    }
-  }, [updateMyPresence])
 
-  const handleUpdatePerso = (newPerso: any) => {
-    let id = newPerso.id
+    const { owner, id } = parseSelectionKey(
+      localStorage.getItem(SELECTED_CHARACTER_KEY),
+    )
+
+    const found =
+      id && chars.length
+        ? chars.find(
+            (c: any) =>
+              c.id?.toString() === id && (!owner || c.owner === owner),
+          )
+        : null
+
+    const nextChar = found
+      ? { ...found }
+      : { ...defaultPerso, owner: profile?.pseudo || defaultPerso.owner }
+
+    setPerso(nextChar)
+    updateMyPresence({
+      character: {
+        ...nextChar,
+        ownerConnectionId: myConnectionId ?? undefined,
+      },
+    })
+
+    if (!found && typeof window !== 'undefined') {
+      localStorage.removeItem(SELECTED_CHARACTER_KEY)
+    }
+  }, [profile?.pseudo, myConnectionId, updateMyPresence])
+
+  const handleUpdatePerso = (incoming: any) => {
+    const ensuredOwner = incoming.owner || profile?.pseudo || incoming.owner || null
+    let id = incoming.id
     if (!id) {
       id = crypto.randomUUID()
-      newPerso = { ...newPerso, id }
     }
-    newPerso = { ...newPerso, updatedAt: Date.now() }
-    setPerso(newPerso)
-    updateMyPresence({ character: newPerso })
-    if (profile?.isMJ || newPerso.owner === profile?.pseudo) {
+    const updatedPerso = {
+      ...incoming,
+      id,
+      owner: ensuredOwner,
+      updatedAt: Date.now(),
+    }
+
+    setPerso(updatedPerso)
+    updateMyPresence({
+      character: {
+        ...updatedPerso,
+        ownerConnectionId: myConnectionId ?? undefined,
+      },
+    })
+
+    if (profile?.isMJ || updatedPerso.owner === profile?.pseudo) {
       setCharacters((prevChars) => {
         let found = false
         const next = prevChars.map((c) => {
-          if (c.id === id && c.owner === newPerso.owner) {
+          if (
+            String(c.id) === String(id) &&
+            c.owner === updatedPerso.owner
+          ) {
             found = true
-            return { ...c, ...newPerso }
+            return { ...c, ...updatedPerso }
           }
           return c
         })
-        if (!found) next.push(newPerso)
-        localStorage.setItem('jdr_characters', JSON.stringify(next))
-        localStorage.setItem('selectedCharacterId', id)
+        if (!found) next.push(updatedPerso)
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('jdr_characters', JSON.stringify(next))
+          localStorage.setItem(
+            SELECTED_CHARACTER_KEY,
+            buildSelectionKey(id, updatedPerso.owner ?? null),
+          )
+          window.dispatchEvent(new Event('jdr_characters_change'))
+        }
         return next
       })
     }
   }
 
   const handleGMSelect = (char: any) => {
-    setPerso(char)
-    updateMyPresence({ gmView: { id: char.id, name: char.nom || char.name } })
+    const next = {
+      ...char,
+      owner: char.owner || profile?.pseudo || char.owner || null,
+    }
+    setPerso(next)
+    updateMyPresence({ gmView: { id: next.id, name: next.nom || next.name } })
   }
 
   if (!user) {
