@@ -1,11 +1,17 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useState, useRef } from 'react'
 import { useOthers } from '@liveblocks/react'
 import { useT } from '@/lib/useT'
 import { User2 } from 'lucide-react'
 
-type Character = { id: string | number; name?: string; nom?: string; ownerConnectionId?: number }
+type Character = {
+  id: string | number
+  name?: string
+  nom?: string
+  owner?: string
+  ownerConnectionId?: number
+}
 
 type Props = {
   onSelect: (char: Character) => void
@@ -23,11 +29,19 @@ export default function GMCharacterSelector({
   const dropdownRef = useRef<HTMLDivElement>(null)
   const t = useT()
 
-  // RÃ©cupÃ¨re les personnages en temps rÃ©el via les presences
+  // Récupère les personnages en temps réel via les présences
   useEffect(() => {
     const list = Array.from(others)
-      .map((o) => o.presence?.character as Character | undefined)
-      .filter((c): c is Character => !!c && c.id !== undefined)
+      .map((o): Character | null => {
+        const char = o.presence?.character as Character | undefined
+        if (!char || char.id === undefined) return null
+        return {
+          ...char,
+          ownerConnectionId:
+            char.ownerConnectionId ?? o.connectionId ?? undefined,
+        }
+      })
+      .filter((c): c is Character => c !== null)
     setChars(list)
   }, [others])
 
@@ -43,7 +57,7 @@ export default function GMCharacterSelector({
     return () => window.removeEventListener('mousedown', handler)
   }, [open])
 
-  // SÃ©lection du personnage
+  // Sélection du personnage
   const handleSelect = (id: string | number) => {
     const found = chars.find((c) => c.id === id)
     if (!found) return
