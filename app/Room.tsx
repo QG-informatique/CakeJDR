@@ -32,10 +32,14 @@ export function Room({
           images: new LiveMap(),
           strokes: new LiveList([]),
           music: new LiveObject({ id: '', playing: false, volume: 5 }),
-          summary: new LiveObject({ acts: [], currentId: '' }),
+          summary: new LiveObject({
+            acts: new LiveList<{ id: string; title: string }>([]),
+            currentId: undefined,
+          }),
+          quickNote: new LiveObject({ text: '', updatedAt: 0 }),
           editor: new LiveMap(),
           events: new LiveList([]),
-          rooms: new LiveList([])
+          rooms: new LiveList([]),
         }}
       >
         <ClientSideSuspense fallback={<div>Loading…</div>}>

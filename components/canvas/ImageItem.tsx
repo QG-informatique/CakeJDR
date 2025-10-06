@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import Image from 'next/image'
 import { Trash2 } from 'lucide-react'
@@ -13,9 +13,13 @@ export interface ImageData {
   y: number
   width: number
   height: number
-  scale: number
-  rotation: number
-  createdAt: number
+  scale?: number
+  rotation?: number
+  createdAt?: number
+  xRatio?: number
+  yRatio?: number
+  widthRatio?: number
+  heightRatio?: number
 }
 
 interface Props {
@@ -60,7 +64,7 @@ const ImageItem: React.FC<Props> = ({
       </button>
     )}
     <Image
-      src={img.url}
+      src={img.url || (img as unknown as { src?: string }).src || ''}
       alt="Dropped"
       width={img.width}
       height={img.height}
