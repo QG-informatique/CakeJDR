@@ -12,14 +12,16 @@ export default function RoomAvatarStack({ id }: { id: string }) {
         initialStorage={{
           characters: new LiveMap(),
           images: new LiveMap(),
-            music: new LiveObject({ id: '', playing: false, volume: 5 }),
-
-          summary: new LiveObject({ acts: new LiveList<{ id: string; title: string }>([]) }),
+          music: new LiveObject({ id: '', playing: false, volume: 5 }),
+          strokes: new LiveList([]),
+          summary: new LiveObject({
+            acts: new LiveList<{ id: string; title: string }>([]),
+            currentId: undefined,
+          }),
           quickNote: new LiveObject({ text: '', updatedAt: 0 }),
-
           editor: new LiveMap(),
           events: new LiveList([]),
-          rooms: new LiveList([])
+          rooms: new LiveList([]),
         }}
       >
         <ClientSideSuspense fallback={null}>
