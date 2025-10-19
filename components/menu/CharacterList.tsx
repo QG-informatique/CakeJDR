@@ -20,8 +20,8 @@ interface Props {
   remote: Record<string, Character>
   onDownload: (char: Character) => void
   onUpload: (char: Character) => void
-  selectedIdx: number | null
-  onSelect: (idx: number) => void
+  selectedKey: string | null
+  onSelect: (char: Character) => void
   onEdit: (id: string | number) => void
   onDelete: (id: string | number) => void
   onDeleteCloud: (char: Character) => void
@@ -31,6 +31,12 @@ interface Props {
   fileInputRef: RefObject<HTMLInputElement | null>
   onImportFile: (e: React.ChangeEvent<HTMLInputElement>) => void
   canEdit: (char: Character) => boolean
+}
+
+const makeSelectionKey = (char: Character) => {
+  const id = String(char.id)
+  const owner = char.owner ? String(char.owner) : ''
+  return owner ? `${owner}::${id}` : id
 }
 
 const btnBase =
@@ -44,7 +50,7 @@ const CharacterList: FC<Props> = ({
   remote,
   onDownload,
   onUpload,
-  selectedIdx,
+  selectedKey,
   onSelect,
   onEdit,
   onDelete,
@@ -89,10 +95,8 @@ const CharacterList: FC<Props> = ({
           <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <AnimatePresence initial={false}>
               {all.map((ch) => {
-                const isSelected =
-                  selectedIdx !== null &&
-                  filtered.at(selectedIdx)?.id === ch.id &&
-                  filtered.at(selectedIdx)?.owner === ch.owner
+                const key = makeSelectionKey(ch)
+                const isSelected = selectedKey === key
                 const localIdx = filtered.findIndex(
                   (c) => String(c.id) === String(ch.id) && c.owner === ch.owner,
                 )
@@ -115,7 +119,7 @@ const CharacterList: FC<Props> = ({
                   <motion.li
                     key={`${ch.owner}:${ch.id}`}
                     onClick={() => {
-                      onSelect(local ? localIdx : -1)
+                      onSelect(local ? filtered.at(localIdx)! : ch)
                     }}
                     className={`
                   group relative rounded-lg p-3 cursor-pointer
@@ -290,11 +294,11 @@ const CharacterList: FC<Props> = ({
         </button>
         <button
           onClick={onExport}
-          disabled={selectedIdx === null}
+          disabled={!selectedKey}
           className={
             btnBase +
             ' hover:bg-emerald-600/80 text-emerald-100' +
-            (selectedIdx === null ? ' opacity-50 pointer-events-none' : '')
+            (!selectedKey ? ' opacity-50 pointer-events-none' : '')
           }
         >
           <Download size={17} /> {t('exportBtn')}

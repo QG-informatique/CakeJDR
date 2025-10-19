@@ -21,6 +21,9 @@ const PROFILE_KEY = 'jdr_profile'
 const SELECTED_KEY = 'selectedCharacterId'
 type StoredSelection = { owner: string | null; id: string | null }
 
+const hasOwn = (obj: Record<string, unknown>, key: string) =>
+  Object.prototype.hasOwnProperty.call(obj, key)
+
 const buildSelectionKey = (id: string | number | undefined, owner?: string) => {
   if (!id) return ''
   const idStr = String(id)
@@ -57,7 +60,7 @@ export default function MenuAccueil() {
     color: string
   } | null>(null)
   const [characters, setCharacters] = useState<Character[]>([])
-  const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
+  const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [draftChar, setDraftChar] = useState<Character>(
     defaultPerso as unknown as Character,
@@ -91,15 +94,8 @@ export default function MenuAccueil() {
       )
       if (Array.isArray(savedChars)) {
         setCharacters(savedChars)
-        const selection = parseSelectionKey(localStorage.getItem(SELECTED_KEY))
-        if (selection.id) {
-          const idx = savedChars.findIndex(
-            (c: any) =>
-              c.id?.toString() === selection.id &&
-              (!selection.owner || c.owner === selection.owner),
-          )
-          if (idx !== -1) setSelectedIdx(idx)
-        }
+        const rawSelection = localStorage.getItem(SELECTED_KEY)
+        if (rawSelection) setSelectedKey(rawSelection)
       }
       const roomRaw = localStorage.getItem(ROOM_KEY)
       if (roomRaw) {
@@ -110,8 +106,8 @@ export default function MenuAccueil() {
             setRoomLoading(true)
             fetch(`/api/roomstorage?roomId=${encodeURIComponent(r.id)}`)
               .then((res) => res.json())
-          .then((data) => setRemoteChars(data.characters || {}))
-          .catch(() => setRemoteChars({}))
+              .then((data) => setRemoteChars(data.characters || {}))
+              .catch(() => setRemoteChars({}))
               .finally(() => setRoomLoading(false))
           }
         } catch {}
@@ -143,6 +139,28 @@ export default function MenuAccueil() {
       window.removeEventListener('storage', update)
     }
   }, [])
+
+  useEffect(() => {
+    if (!selectedKey) return
+    const selection = parseSelectionKey(selectedKey)
+    if (!selection.id) {
+      setSelectedKey(null)
+      localStorage.removeItem(SELECTED_KEY)
+      return
+    }
+    const localExists = characters.some(
+      (c) =>
+        String(c.id) === selection.id &&
+        (!selection.owner || c.owner === selection.owner),
+    )
+    const remoteExists = selection.owner
+      ? hasOwn(remoteChars, `${selection.owner}:${selection.id}`)
+      : false
+    if (!localExists && !remoteExists) {
+      setSelectedKey(null)
+      localStorage.removeItem(SELECTED_KEY)
+    }
+  }, [characters, remoteChars, selectedKey])
 
   useEffect(() => {
     if (loggingOut) return
@@ -196,7 +214,7 @@ export default function MenuAccueil() {
     } catch {}
 
     setUser(null)
-    setSelectedIdx(null)
+    setSelectedKey(null)
     requestAnimationFrame(() => {
       router.replace('/menu')
     })
@@ -259,9 +277,10 @@ export default function MenuAccueil() {
         )
       : [...characters, toSave]
     saveCharacters(updated)
-    localStorage.setItem(SELECTED_KEY, buildSelectionKey(id, toSave.owner))
+    const key = buildSelectionKey(id, toSave.owner)
+    localStorage.setItem(SELECTED_KEY, key)
     setModalOpen(false)
-    setSelectedIdx(updated.findIndex((c) => c.id === id))
+    setSelectedKey(key)
   }
 
   const handleDeleteChar = (id: string | number) => {
@@ -278,17 +297,13 @@ export default function MenuAccueil() {
       selection.id === String(toDelete?.id ?? '') &&
       (!selection.owner || selection.owner === toDelete?.owner)
     ) {
-      localStorage.removeItem(SELECTED_KEY)
-      setSelectedIdx(null)
-    } else if (selection.id) {
-      const newIdx = remaining.findIndex(
-        (c) =>
-          c.id?.toString() === selection.id &&
-          (!selection.owner || c.owner === selection.owner),
-      )
-      setSelectedIdx(newIdx !== -1 ? newIdx : null)
-    } else {
-      setSelectedIdx(null)
+      const remoteKey = selection.owner
+        ? `${selection.owner}:${selection.id}`
+        : selection.id
+      if (!hasOwn(remoteChars, remoteKey)) {
+        localStorage.removeItem(SELECTED_KEY)
+        setSelectedKey(null)
+      }
     }
   }
 
@@ -311,11 +326,9 @@ export default function MenuAccueil() {
             ? characters.map((c, i) => (i === idx ? withId : c))
             : [...characters, withId]
         saveCharacters(updated)
-        localStorage.setItem(
-          SELECTED_KEY,
-          buildSelectionKey(id, withId.owner),
-        )
-        setSelectedIdx(idx !== -1 ? idx : characters.length)
+        const key = buildSelectionKey(id, withId.owner)
+        localStorage.setItem(SELECTED_KEY, key)
+        setSelectedKey(key)
         setStatusMessage(t('importSuccess'))
       } catch {
         setStatusMessage(t('invalidFile'))
@@ -325,9 +338,31 @@ export default function MenuAccueil() {
     e.target.value = ''
   }
 
+  const resolveSelection = (key: string | null) => {
+    if (!key) return { local: null, remote: null }
+    const selection = parseSelectionKey(key)
+    if (!selection.id) return { local: null, remote: null }
+    const localIdx = characters.findIndex(
+      (c) =>
+        String(c.id) === selection.id &&
+        (!selection.owner || c.owner === selection.owner),
+    )
+    const local = localIdx !== -1 ? characters.at(localIdx)! : null
+    const remoteKey = selection.owner
+      ? `${selection.owner}:${selection.id}`
+      : selection.id
+    const remoteEntry = Object.entries(remoteChars).find(
+      ([key]) => key === remoteKey,
+    )
+    const remote = remoteEntry ? (remoteEntry[1] as Character) : null
+    return { local, remote }
+  }
+
   const handleExportChar = () => {
-    if (selectedIdx === null) return
-    const char = characters.at(selectedIdx)!
+    if (!selectedKey) return
+    const { local, remote } = resolveSelection(selectedKey)
+    const char = local ?? remote
+    if (!char) return
     const blob = new Blob([JSON.stringify(char, null, 2)], {
       type: 'text/plain',
     })
@@ -383,15 +418,36 @@ export default function MenuAccueil() {
     if (!selectedRoom) return
     if (!canManageCharacter(char)) return
     if (!window.confirm('Delete from cloud?')) return
+    const remoteKey = `${char.owner}:${String(char.id)}`
     await fetch(
       `/api/roomstorage?roomId=${encodeURIComponent(selectedRoom.id)}&owner=${encodeURIComponent(char.owner)}&id=${encodeURIComponent(String(char.id))}`,
       { method: 'DELETE' },
     )
     setRemoteChars((r) => {
       const next = { ...r }
-      delete next[`${char.owner}:${String(char.id)}`]
+      if (hasOwn(next, remoteKey)) {
+        Reflect.deleteProperty(next, remoteKey)
+      }
       return next
     })
+    if (selectedKey) {
+      const selection = parseSelectionKey(selectedKey)
+      if (
+        selection.id &&
+        selection.owner &&
+        `${selection.owner}:${selection.id}` === remoteKey
+      ) {
+        const stillLocal = characters.some(
+          (c) =>
+            String(c.id) === selection.id &&
+            (!selection.owner || c.owner === selection.owner),
+        )
+        if (!stillLocal) {
+          localStorage.removeItem(SELECTED_KEY)
+          setSelectedKey(null)
+        }
+      }
+    }
   }
 
   const handleChangeColor = (color: string) => {
@@ -425,20 +481,15 @@ export default function MenuAccueil() {
 
   const filteredCharacters = user ? characters : []
 
-  const handleSelectChar = (idx: number) => {
-    if (idx === -1) {
-      setSelectedIdx(null)
+  const handleSelectChar = (char: Character) => {
+    const key = buildSelectionKey(char.id, char.owner)
+    if (selectedKey === key) {
+      setSelectedKey(null)
       localStorage.removeItem(SELECTED_KEY)
       return
     }
-    setSelectedIdx(idx)
-    const ch = filteredCharacters.at(idx)
-    if (ch?.id !== undefined) {
-      localStorage.setItem(
-        SELECTED_KEY,
-        buildSelectionKey(ch.id, ch.owner),
-      )
-    }
+    setSelectedKey(key)
+    localStorage.setItem(SELECTED_KEY, key)
   }
 
   if (loggingOut) {
@@ -613,7 +664,7 @@ export default function MenuAccueil() {
                 remote={remoteChars}
                 onDownload={handleDownloadChar}
                 onUpload={handleUploadChar}
-                selectedIdx={selectedIdx}
+                selectedKey={selectedKey}
                 onSelect={handleSelectChar}
                 onEdit={handleEditCharacter}
                 onDelete={handleDeleteChar}
