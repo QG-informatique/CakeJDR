@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef, useState, useEffect, useReducer, useMemo, useCallback } from 'react'
+import { Music, Wrench } from 'lucide-react'
 import {
   useBroadcastEvent,
   useEventListener,
@@ -1152,11 +1153,13 @@ export default function InteractiveCanvas() {
         <div className="absolute top-3 left-3 z-30 pointer-events-auto">
           <button
             onClick={() => setToolsVisible(!toolsVisible)}
-            className="rounded-xl px-5 py-2 text-base font-semibold shadow border-none bg-black/30 text-white/90 hover:bg-emerald-600 hover:text-white transition duration-100 flex items-center justify-center min-h-[38px]"
+            className="rounded-xl px-5 py-2 text-base font-semibold shadow border-none bg-black/30 text-white/90 hover:bg-emerald-600 hover:text-white transition duration-100 flex items-center justify-center min-h-[38px] gap-2"
+            aria-label={t('tools')}
           >
-            <span className="mr-1"></span>{' '}
-            <span className="mr-1"></span>{' '}
-            <span className="text-sm">{toolsVisible ? t('tools') : ''}</span>
+            <Wrench aria-hidden className="h-5 w-5" />
+            {toolsVisible && (
+              <span className="text-sm">{t('tools')}</span>
+            )}
           </button>
         </div>
         {toolsVisible && (
@@ -1178,12 +1181,12 @@ export default function InteractiveCanvas() {
           <button
             onClick={() => setAudioVisible(!audioVisible)}
             className="relative rounded-xl px-5 py-2 text-base font-semibold shadow border-none bg-black/30 text-white/90 hover:bg-purple-600 hover:text-white transition duration-100 flex items-center justify-center min-h-[38px]"
+            aria-label={t('music')}
           >
             {isPlaying && (
               <span className="absolute inset-0 rounded-xl pointer-events-none animate-pulse-ring" />
             )}
-            <span className="relative"></span>
-            <span className="relative"></span>
+            <Music aria-hidden className="relative h-5 w-5" />
           </button>
         </div>
         {audioVisible && (
