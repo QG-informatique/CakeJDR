@@ -171,6 +171,64 @@ export default function InteractiveCanvas() {
 
   const canvasRef = useRef<HTMLDivElement>(null)
 
+  const redrawStrokes = useCallback(
+    (explicitCtx?: CanvasRenderingContext2D | null) => {
+      const ctx = explicitCtx ?? ctxRef.current
+      const canvas = drawingCanvasRef.current
+      if (!ctx || !canvas) return
+
+      ctx.save()
+      ctx.setTransform(1, 0, 0, 1, 0, 0)
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      ctx.restore()
+
+      strokes.forEach((segment) => {
+        ctx.beginPath()
+        ctx.globalCompositeOperation =
+          segment.mode === 'erase' ? 'destination-out' : 'source-over'
+        ctx.strokeStyle =
+          segment.mode === 'erase' ? 'rgba(0,0,0,1)' : segment.color
+        ctx.lineWidth = segment.width
+        ctx.moveTo(segment.x1, segment.y1)
+        ctx.lineTo(segment.x2, segment.y2)
+        ctx.stroke()
+      })
+
+      ctx.globalCompositeOperation = 'source-over'
+      ctx.beginPath()
+    },
+    [strokes],
+  )
+
+  const updateCanvasMetrics = useCallback(() => {
+    const container = canvasRef.current
+    const canvas = drawingCanvasRef.current
+    if (!container || !canvas) return null
+
+    const rect = container.getBoundingClientRect()
+    const width = rect.width
+    const height = rect.height
+    const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
+
+    canvas.style.width = `${width}px`
+    canvas.style.height = `${height}px`
+    canvas.width = Math.max(1, Math.round(width * dpr))
+    canvas.height = Math.max(1, Math.round(height * dpr))
+
+    setCanvasSize({ width, height })
+
+    const ctx = canvas.getContext('2d')
+    if (ctx) {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      ctx.lineCap = 'round'
+      ctx.lineJoin = 'round'
+      ctxRef.current = ctx
+      redrawStrokes(ctx)
+    }
+
+    return rect
+  }, [redrawStrokes])
+
   const scheduleRender = useCallback(() => {
     if (renderFrame.current) cancelAnimationFrame(renderFrame.current)
     renderFrame.current = requestAnimationFrame(() => {
@@ -252,6 +310,10 @@ export default function InteractiveCanvas() {
   useEffect(() => {
     strokesRef.current = strokes
   }, [strokes])
+
+  useEffect(() => {
+    redrawStrokes()
+  }, [redrawStrokes])
 
   const addStrokeSegment = useMutation(
     ({ storage }, segment: StrokeSegment) => {
@@ -405,40 +467,42 @@ export default function InteractiveCanvas() {
     canvas.style.pointerEvents = drawMode === 'images' ? 'none' : 'auto'
   }, [drawMode])
 
-  useEffect(() => {
-    const handleResize = () => {
-      const rect = drawingCanvasRef.current?.getBoundingClientRect()
-      if (!rect) return
-      const map = new Map<string, ImageData>()
-      images.forEach((img) => map.set(String(img.id), img))
-      imagesRef.current.forEach((img) => {
-        const key = String(img.id)
-        const stored = map.get(key)
-        if (!stored) return
-        const normalized = normalizeImageRect(
-          { ...stored, ...img },
-          rect.width,
-          rect.height,
-        )
-        updateImageTransform(key, {
-          x: normalized.x,
-          y: normalized.y,
-          width: normalized.width,
-          height: normalized.height,
-          xRatio: normalized.xRatio,
-          yRatio: normalized.yRatio,
-          widthRatio: normalized.widthRatio,
-          heightRatio: normalized.heightRatio,
-        })
+  const handleResize = useCallback(() => {
+    const rect = updateCanvasMetrics() ?? canvasRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const map = new Map<string, ImageData>()
+    images.forEach((img) => map.set(String(img.id), img))
+    imagesRef.current.forEach((img) => {
+      const key = String(img.id)
+      const stored = map.get(key)
+      if (!stored) return
+      const normalized = normalizeImageRect(
+        { ...stored, ...img },
+        rect.width,
+        rect.height,
+      )
+      updateImageTransform(key, {
+        x: normalized.x,
+        y: normalized.y,
+        width: normalized.width,
+        height: normalized.height,
+        xRatio: normalized.xRatio,
+        yRatio: normalized.yRatio,
+        widthRatio: normalized.widthRatio,
+        heightRatio: normalized.heightRatio,
       })
-    }
+    })
+  }, [images, updateCanvasMetrics, updateImageTransform])
+
+  useEffect(() => {
+    handleResize()
     window.addEventListener('resize', handleResize)
     window.addEventListener('orientationchange', handleResize)
     return () => {
       window.removeEventListener('resize', handleResize)
       window.removeEventListener('orientationchange', handleResize)
     }
-  }, [images, updateImageTransform])
+  }, [handleResize])
 
   useEffect(() => {
     if (drawMode === 'erase') {
@@ -675,6 +739,10 @@ export default function InteractiveCanvas() {
 
   const handlePointerUp = () => {
     setIsDrawing(false)
+    if (ctxRef.current) {
+      ctxRef.current.globalCompositeOperation = 'source-over'
+      ctxRef.current.beginPath()
+    }
     const { id } = dragState.current
     lastPointRef.current = null
     dragState.current = { id: null, type: null, offsetX: 0, offsetY: 0 }
@@ -749,12 +817,16 @@ export default function InteractiveCanvas() {
     setPendingImages([])
     const ctx = ctxRef.current
     if (ctx && drawingCanvasRef.current) {
+      ctx.save()
+      ctx.setTransform(1, 0, 0, 1, 0, 0)
       ctx.clearRect(
         0,
         0,
         drawingCanvasRef.current.width,
         drawingCanvasRef.current.height,
       )
+      ctx.restore()
+      ctx.globalCompositeOperation = 'source-over'
       ctx.beginPath()
     }
   }
