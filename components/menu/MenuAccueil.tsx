@@ -230,9 +230,14 @@ export default function MenuAccueil() {
     })
     setModalOpen(true)
   }
+  const canManageCharacter = (char: Character | undefined | null) => {
+    if (!char || !user) return false
+    return user.isMJ || char.owner === user.pseudo
+  }
+
   const handleEditCharacter = (id: string | number) => {
     const idx = characters.findIndex((c) => String(c.id) === String(id))
-    if (idx !== -1) {
+    if (idx !== -1 && canManageCharacter(characters.at(idx))) {
       setDraftChar(characters.at(idx)!)
       setModalOpen(true)
     }
@@ -260,10 +265,11 @@ export default function MenuAccueil() {
   }
 
   const handleDeleteChar = (id: string | number) => {
-    if (!window.confirm(t('deleteSheetConfirm'))) return
     const idx = characters.findIndex((c) => String(c.id) === String(id))
     if (idx === -1) return
     const toDelete = characters.at(idx)
+    if (!canManageCharacter(toDelete)) return
+    if (!window.confirm(t('deleteSheetConfirm'))) return
     const remaining = characters.filter((_, i) => i !== idx)
     saveCharacters(remaining)
     const selection = parseSelectionKey(localStorage.getItem(SELECTED_KEY))
@@ -321,7 +327,7 @@ export default function MenuAccueil() {
 
   const handleExportChar = () => {
     if (selectedIdx === null) return
-      const char = characters.at(selectedIdx)!
+    const char = characters.at(selectedIdx)!
     const blob = new Blob([JSON.stringify(char, null, 2)], {
       type: 'text/plain',
     })
@@ -339,7 +345,7 @@ export default function MenuAccueil() {
 
   const handleUploadChar = async (char: Character) => {
     if (!selectedRoom || !user) return
-    if (char.owner !== user.pseudo && !user.isMJ) return
+    if (!canManageCharacter(char)) return
     try {
       const updatedChar = { ...char, updatedAt: Date.now() }
       await fetch('/api/roomstorage', {
@@ -375,6 +381,7 @@ export default function MenuAccueil() {
 
   const handleDeleteCloudChar = async (char: Character) => {
     if (!selectedRoom) return
+    if (!canManageCharacter(char)) return
     if (!window.confirm('Delete from cloud?')) return
     await fetch(
       `/api/roomstorage?roomId=${encodeURIComponent(selectedRoom.id)}&owner=${encodeURIComponent(char.owner)}&id=${encodeURIComponent(String(char.id))}`,
@@ -416,11 +423,7 @@ export default function MenuAccueil() {
 
   if (!hydrated) return <div className="w-full h-full" />
 
-  const filteredCharacters = user
-    ? user.isMJ
-      ? characters
-      : characters.filter((c) => c.owner === user.pseudo)
-    : []
+  const filteredCharacters = user ? characters : []
 
   const handleSelectChar = (idx: number) => {
     if (idx === -1) {
@@ -620,6 +623,7 @@ export default function MenuAccueil() {
                 onExport={handleExportChar}
                 fileInputRef={fileInputRef}
                 onImportFile={handleImportFile}
+                canEdit={canManageCharacter}
               />
             </div>
 

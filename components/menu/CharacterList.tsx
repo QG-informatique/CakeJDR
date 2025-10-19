@@ -30,6 +30,7 @@ interface Props {
   onExport: () => void
   fileInputRef: RefObject<HTMLInputElement | null>
   onImportFile: (e: React.ChangeEvent<HTMLInputElement>) => void
+  canEdit: (char: Character) => boolean
 }
 
 const btnBase =
@@ -53,6 +54,7 @@ const CharacterList: FC<Props> = ({
   onExport,
   fileInputRef,
   onImportFile,
+  canEdit,
 }) => {
   const t = useT()
   const remoteMap = useMemo(() => new Map(Object.entries(remote)), [remote])
@@ -107,6 +109,8 @@ const CharacterList: FC<Props> = ({
                   local &&
                   (!cloud ||
                     (localChar?.updatedAt || 0) > (cloudChar?.updatedAt || 0))
+                const canEditChar = canEdit(ch)
+                const allowUpload = canEditChar && needsUpload
                 return (
                   <motion.li
                     key={`${ch.owner}:${ch.id}`}
@@ -145,7 +149,7 @@ const CharacterList: FC<Props> = ({
                       >
                         {ch.nom || 'No name'}
                       </span>
-                      {local && (
+                      {local && canEditChar && (
                         <div className="flex items-center gap-1 shrink-0">
                           <button
                             onClick={(e) => {
@@ -209,16 +213,19 @@ const CharacterList: FC<Props> = ({
                           {ch.race}
                         </div>
                       )}
+                      <div className="text-white/60 text-[11px]">
+                        {t('creator')}: {ch.owner}
+                      </div>
                     </div>
                     <div className="flex items-center gap-1 justify-end mt-auto">
                       {cloud && (
                         <Cloud size={14} className="text-blue-200/80" />
                       )}
-                      {needsUpload && (
+                      {allowUpload && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                              onUpload(local ? filtered.at(localIdx)! : ch)
+                            onUpload(local ? filtered.at(localIdx)! : ch)
                           }}
                           className={
                             btnBase +
@@ -244,7 +251,7 @@ const CharacterList: FC<Props> = ({
                           <Download size={16} />
                         </button>
                       )}
-                      {cloud && (
+                      {cloud && canEditChar && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
