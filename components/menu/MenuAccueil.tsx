@@ -14,6 +14,7 @@ import Login from '../login/Login'
 import { defaultPerso } from '../sheet/CharacterSheet'
 import MenuHeader from './MenuHeader'
 import CharacterList from './CharacterList'
+import CharacterCloudModal from './CharacterCloudModal'
 import CharacterModal from './CharacterModal'
 import ProfileColorPicker from './ProfileColorPicker'
 
@@ -69,6 +70,7 @@ export default function MenuAccueil() {
   const [remoteChars, setRemoteChars] = useState<Record<string, Character>>({})
   const [roomLoading, setRoomLoading] = useState(false)
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
+  const [cloudOpen, setCloudOpen] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -372,6 +374,23 @@ export default function MenuAccueil() {
     saveCharacters(updated)
   }
 
+  // FIX: Import depuis le Cloud (BLOB) vers le local et sélectionner
+  const handleImportFromBlob = (char: Character) => {
+    const idx = characters.findIndex(
+      (c) => String(c.id) === String(char.id) && c.owner === char.owner,
+    )
+    const updated =
+      idx !== -1
+        ? characters.map((c, i) => (i === idx ? char : c))
+        : [...characters, char]
+    saveCharacters(updated)
+    const newIdx = updated.findIndex(
+      (c) => String(c.id) === String(char.id) && c.owner === char.owner,
+    )
+    setSelectedIdx(newIdx === -1 ? null : newIdx)
+    setStatusMessage(t('loadCloudSuccess'))
+  }
+
   const handleDeleteCloudChar = async (char: Character) => {
     if (!selectedRoom) return
     if (!window.confirm('Delete from cloud?')) return
@@ -615,6 +634,7 @@ export default function MenuAccueil() {
                 onExport={handleExportChar}
                 fileInputRef={fileInputRef}
                 onImportFile={handleImportFile}
+                onOpenCloud={() => setCloudOpen(true)}
               />
             </div>
 
@@ -624,6 +644,13 @@ export default function MenuAccueil() {
               onUpdate={setDraftChar}
               onSave={handleSaveDraft}
               onClose={() => setModalOpen(false)}
+            />
+            <CharacterCloudModal
+              open={cloudOpen}
+              onClose={() => setCloudOpen(false)}
+              roomId={selectedRoom?.id || null}
+              localChars={characters}
+              onImported={handleImportFromBlob}
             />
           </>
         )}

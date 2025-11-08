@@ -30,6 +30,7 @@ interface Props {
   onExport: () => void
   fileInputRef: RefObject<HTMLInputElement | null>
   onImportFile: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onOpenCloud: () => void // FIX: open cloud modal
 }
 
 const btnBase =
@@ -291,6 +292,13 @@ const CharacterList: FC<Props> = ({
           }
         >
           <Download size={17} /> {t('exportBtn')}
+        </button>
+        <button
+          onClick={onOpenCloud}
+          className={btnBase + ' hover:bg-blue-600/80 text-blue-100'}
+          title="Cloud"
+        >
+          <Cloud size={17} /> Cloud
         </button>
         <input
           type="file"

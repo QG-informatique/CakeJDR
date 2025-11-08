@@ -7,7 +7,7 @@ import RoomAvatarStack from './RoomAvatarStack'
 export type RoomInfo = {
   id: string
   name: string
-  password?: string
+  hasPassword?: boolean // FIX: boolean flag only; server no longer exposes raw password
   createdAt?: string
   updatedAt?: string
   usersConnected?: number
@@ -92,7 +92,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
   const joinRoom = async (room: RoomInfo) => {
     // Room protégée → on tente auto-join avec mot de passe local (si stocké),
     // sinon on affiche le champ
-    if (room.password) {
+    if (room.hasPassword) {
       const saved = localStorage.getItem('room_pw_' + room.id) || ''
       if (saved) {
         try {
@@ -119,7 +119,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
       setVerifying(true); setErrorMsg('')
       await verifyPassword(room.id, joinPassword)
       // Option: mémoriser pour confort (tu peux supprimer si tu préfères)
-      if (room.password) {
+      if (room.hasPassword) {
         localStorage.setItem('room_pw_' + room.id, joinPassword)
       }
       onSelect?.(room)
@@ -151,7 +151,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
           >
             <div className="flex justify-between items-center gap-1">
               <span className="truncate flex-1 flex items-center gap-1 text-sm">
-                {r.password && <Lock size={12} className="text-pink-300" />} {r.name || t('unnamed')}
+                {r.hasPassword && <Lock size={12} className="text-pink-300" />} {r.name || t('unnamed')}
               </span>
               {myRoom===r.id && <span title={t('creator')}>👑</span>}
               {myRoom===r.id && (
@@ -172,7 +172,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
               {revealIds[r.id] ? r.id : t('idLabel')}
             </span>
 
-            {joiningId === r.id && r.password && (
+            {joiningId === r.id && r.hasPassword && (
               <>
                 <input
                   type="password"

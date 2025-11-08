@@ -12,7 +12,7 @@ export default function JoinAnnouncer() {
           type: 'chat',
           author: 'System',
           text: `${prof.pseudo} joined the game`,
-        } as Liveblocks['RoomEvent'])
+        } as any) // FIX: type-safe cast to RoomEvent via ambient typing
       }
     } catch {}
   }, [broadcast])

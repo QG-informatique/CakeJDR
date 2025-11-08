@@ -80,7 +80,7 @@ export default function InteractiveCanvas() {
   const [ytUrl, setYtUrl] = useState('')
   const [ytId, setYtId] = useState<string | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [volume, setVolumeState] = useState(50)
+  const [volume, setVolumeState] = useState(5) // FIX: 5%
   const playerRef = useRef<YouTubePlayer | null>(null)
   const initializedRef = useRef(false)
 
@@ -331,7 +331,7 @@ export default function InteractiveCanvas() {
     try {
       const form = new FormData()
       form.append('file', file)
-      form.append('upload_preset', 'cakejdr-images')
+      form.append('upload_preset', 'CakeJDR-DU6-image') // FIX: preset alignment
       const res = await fetch('/api/cloudinary', { method: 'POST', body: form })
       const data = await res.json().catch(() => null)
       if (!res.ok || !data) throw new Error(data?.error || 'Upload failed')
@@ -371,7 +371,17 @@ export default function InteractiveCanvas() {
   }, [drawMode])
 
   // Music sync from storage
-  useEffect(() => { if (!musicObj) return; setYtId(musicObj.id); setIsPlaying(!!musicObj.playing); setVolumeState(musicObj.volume ?? 50) }, [musicObj])
+  useEffect(() => {
+    if (!musicObj) return
+    setYtId(musicObj.id)
+    // FIX: suppress auto-resume only on first load
+    if (!initializedRef.current) {
+      setIsPlaying(false)
+    } else {
+      setIsPlaying(!!musicObj.playing)
+    }
+    setVolumeState(typeof musicObj.volume === 'number' ? musicObj.volume : 5)
+  }, [musicObj])
   const handleYtSubmit = () => { const match = ytUrl.match(/(?:youtube\.com.*v=|youtu\.be\/)([^&\n?#]+)/); if (!match) return; const id = match[1] ?? ''; setYtId(id); setIsPlaying(true); if (storageReady) updateMusic({ id, playing: true }) }
   const handlePlayPause = () => { const p = playerRef.current; if (!p) return; if (isPlaying) p.pauseVideo(); else p.playVideo(); const newPlaying = !isPlaying; setIsPlaying(newPlaying); if (storageReady) updateMusic({ playing: newPlaying }) }
   useEffect(() => { playerRef.current?.setVolume(volume) }, [volume])
@@ -400,7 +410,17 @@ export default function InteractiveCanvas() {
         </div>
         {audioVisible && (<MusicPanel ytUrl={ytUrl} setYtUrl={setYtUrl} isPlaying={isPlaying} handleSubmit={handleYtSubmit} handlePlayPause={handlePlayPause} volume={volume} setVolume={setVolumeState} />)}
         {ytId && (
-          <YouTube videoId={ytId} opts={{ height: '0', width: '0', playerVars: { autoplay: 0, rel: 0, playsinline: 1 } }} onReady={(e) => { playerRef.current = e.target; if (!initializedRef.current) initializedRef.current = true; e.target.setVolume(volume); if (isPlaying) e.target.playVideo(); else e.target.pauseVideo() }} />
+          <YouTube
+            videoId={ytId}
+            opts={{ height: '0', width: '0', playerVars: { autoplay: 0, rel: 0, playsinline: 1 } }}
+            onReady={(e) => {
+              playerRef.current = e.target
+              if (!initializedRef.current) initializedRef.current = true
+              e.target.setVolume(volume)
+              // FIX: never auto-play on load
+              e.target.pauseVideo()
+            }}
+          />
         )}
 
         {/* Surface */}
