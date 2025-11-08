@@ -1,7 +1,8 @@
 export const runtime = 'nodejs'
 import { NextRequest, NextResponse } from 'next/server'
 import { Liveblocks } from '@liveblocks/node'
-import type { LiveMap, Lson } from '@liveblocks/core'
+import type { LiveMap as LiveMapType, Lson } from '@liveblocks/core'
+import { LiveMap as LiveMapValue } from '@liveblocks/client' // FIX: use ESM import instead of require
 import { debug } from '@/lib/debug'
 
 export async function GET(req: NextRequest) {
@@ -28,13 +29,12 @@ export async function POST(req: NextRequest) {
     const client = new Liveblocks({ secret })
     await client.mutateStorage(roomId, ({ root }) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let map = (root as any).get('characters') as LiveMap<string, Lson> | undefined
+      let map = (root as any).get('characters') as LiveMapType<string, Lson> | undefined
       if (!map) {
-        const { LiveMap } = require('@liveblocks/client') as typeof import('@liveblocks/client')
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ;(root as any).set('characters', new LiveMap<string, Lson>())
+        ;(root as any).set('characters', new LiveMapValue<string, Lson>()) // FIX: ESM value
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        map = (root as any).get('characters') as LiveMap<string, Lson>
+        map = (root as any).get('characters') as LiveMapType<string, Lson>
       }
       map.set(`${owner}:${id}`, character as Lson)
     })
@@ -59,7 +59,7 @@ export async function DELETE(req: NextRequest) {
   try {
     await client.mutateStorage(roomId, ({ root }) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const map = (root as any).get('characters') as LiveMap<string, Lson> | undefined
+      const map = (root as any).get('characters') as LiveMapType<string, Lson> | undefined
       if (map) map.delete(`${owner}:${id}`)
     })
     debug('roomstorage delete', roomId, id)

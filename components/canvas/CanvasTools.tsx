@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { useT } from '@/lib/useT'
-import { Image as ImageIcon, Pencil, Eraser, Upload, Trash2 } from 'lucide-react'
+import { Image as ImageIcon, Pencil, Eraser, Trash2 } from 'lucide-react' // FIX: remove unused Upload
 
 export type ToolMode = 'images' | 'draw' | 'erase'
 
