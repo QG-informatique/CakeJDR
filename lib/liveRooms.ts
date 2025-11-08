@@ -40,7 +40,7 @@ export async function listRooms() {
           ? true
           : typeof meta.passwordHash === 'string' && meta.passwordHash.length > 0
             ? true
-            : meta.hasPassword === true
+            : meta.hasPassword === true || meta.hasPassword === '1'
       rooms.push({
         id: r.id,
         name: roomName,
@@ -81,7 +81,10 @@ export async function createRoom(name: string, password?: string) {
   // FIX: mark hasPassword in metadata, but never expose raw password via listRooms
   const room = await client.getOrCreateRoom(stableId, {
     defaultAccesses: ['room:write'],
-    metadata: { name, ...(password ? { password, hasPassword: true } : {}) }, // FIX: hasPassword flag
+    metadata: {
+      name,
+      ...(password ? { password, hasPassword: '1' } : {}),
+    }, // FIX: hasPassword stored as string to satisfy metadata signature
   })
 
   return room.id
