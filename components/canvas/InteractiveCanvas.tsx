@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useRef, useState, useEffect, useMemo, useCallback } from 'react'
 import { useStorage, useMutation, useMyPresence } from '@liveblocks/react'
@@ -291,7 +291,7 @@ export default function InteractiveCanvas() {
   const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
   const MAX_SIZE_MB = 20
   const fileToObjectURL = (file: File) => URL.createObjectURL(file)
-  async function uploadOneImage(file: File, dropX: number, dropY: number, rect: DOMRect) {
+  async function uploadOneImage(file: File, dropX: number, dropY: number) {
     if (!ALLOWED_TYPES.includes(file.type) || file.size > MAX_SIZE_MB * 1024 * 1024) { alert('Invalid image file'); return }
     const localUrl = fileToObjectURL(file)
     const tempId = `${Date.now()}-${Math.random().toString(36).slice(2)}`
@@ -323,7 +323,7 @@ export default function InteractiveCanvas() {
     const files = Array.from(e.dataTransfer.files)
     for (const file of files) {
       if (!file.type.startsWith('image/')) continue
-      await uploadOneImage(file, e.clientX - rect.left, e.clientY - rect.top, rect)
+      await uploadOneImage(,,)
     }
   }
 
@@ -374,7 +374,7 @@ export default function InteractiveCanvas() {
 
         {/* Surface */}
         <div ref={canvasRef} tabIndex={0} onDrop={handleDrop} onDragOver={(e) => e.preventDefault()} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerLeave} onKeyDown={handleKeyDown} onWheel={(e) => e.preventDefault()} className="w-full h-full relative overflow-hidden z-0 touch-none" style={{ background: 'none', border: 'none', borderRadius: 0 }}>
-          <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; e.currentTarget.value = ''; if (!file) return; const rect = drawingCanvasRef.current?.getBoundingClientRect(); if (!rect) return; await uploadOneImage(file, rect.width / 2, rect.height / 2, rect) }} />
+          <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; e.currentTarget.value = ''; if (!file) return; const rect = drawingCanvasRef.current?.getBoundingClientRect(); if (!rect) return; await uploadOneImage(,,) }} />
           <canvas ref={drawingCanvasRef} className="absolute top-0 left-0 w-full h-full" />
           {pendingImages.map((img) => (
             <div key={`pending-${img.id}`} className="absolute rounded-2xl border border-dashed border-white/30 bg-black/30 pointer-events-none animate-pulse" style={{ top: img.y, left: img.x, width: img.width, height: img.height, zIndex: 2 }}>
@@ -398,3 +398,4 @@ export default function InteractiveCanvas() {
     </>
   )
 }
+

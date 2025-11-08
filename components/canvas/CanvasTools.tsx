@@ -90,9 +90,9 @@ const CanvasTools: React.FC<CanvasToolsProps> = ({
         <button
           onClick={onAddImage}
           className="rounded-xl px-3 py-2 text-xs font-semibold shadow border border-white/10 bg-black/20 hover:bg-blue-900/30 text-blue-100/85 ml-2"
-          title={t('importImage') || 'Add image'}
+          title={t('importBtn')}
         >
-          <span className="inline-flex items-center gap-1"><Upload size={14} /> {t('importImage') || 'Upload'}</span>
+          <span className="inline-flex items-center gap-1"><Upload size={14} /> {t('importBtn')}</span>
         </button>
       )}
       <button
