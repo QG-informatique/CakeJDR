@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { FC, RefObject, useRef, useState, useEffect, useMemo } from 'react'
 import { ChevronLeft, ChevronRight, BarChart3, MessageSquare } from 'lucide-react'
@@ -182,7 +182,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
       <><strong>{ev.author}{ev.isMJ && ' (MJ)'} :</strong> {ev.text}</>
     )}
     {ev.kind === 'dice' && (
-      <span>{ev.player} : D{ev.dice} -> {ev.result}</span>
+      <span>{ev.player} : D{ev.dice} → {ev.result}</span>
     )}
   </p>
 ))}
@@ -214,4 +214,5 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
 }
 
 export default ChatBox
+
 
