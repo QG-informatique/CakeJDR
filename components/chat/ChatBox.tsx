@@ -71,11 +71,11 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
   }
 
   // Receive remote chat events and persist them to storage
-  useEventListener((payload: any) => {
+  useEventListener((payload: { event: { type: string; author?: string; text?: string; ts?: number; isMJ?: boolean } }) => {
     const { event } = payload
-    if (event?.type === 'chat') {
+    if (event && event.type === 'chat') {
       const ts = typeof event.ts === 'number' ? event.ts : Date.now()
-      addEvent({ id: crypto.randomUUID(), kind: 'chat', author: event.author, text: event.text, ts, isMJ: !!event.isMJ })
+      addEvent({ id: crypto.randomUUID(), kind: 'chat', author: event.author || 'Unknown', text: event.text || '', ts, isMJ: !!event.isMJ })
     }
   })
 
