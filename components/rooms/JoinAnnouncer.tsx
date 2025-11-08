@@ -3,8 +3,7 @@ import { useEffect } from 'react'
 import { useBroadcastEvent } from '@liveblocks/react'
 
 export default function JoinAnnouncer() {
-  // FIX: strongly type RoomEvent to avoid any
-  const broadcast = useBroadcastEvent<Liveblocks['RoomEvent']>()
+  const broadcast = useBroadcastEvent()
   useEffect(() => {
     try {
       const prof = JSON.parse(localStorage.getItem('jdr_profile') || '{}')
