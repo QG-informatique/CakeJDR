@@ -39,6 +39,19 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
       .catch(() => setRooms([]))
   }, [])
 
+  const verifyPassword = async (roomId: string, password: string) => {
+    const res = await fetch('/api/rooms/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: roomId, password })
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => null)
+      throw new Error(data?.error || 'Invalid password')
+    }
+    return true
+  }
+
   const createRoom = async () => {
     if (!name) return
     if (localStorage.getItem('jdr_my_room')) { setErrorMsg(t('alreadyCreatedRoom')); return }
@@ -61,7 +74,7 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
       }
     } catch {}
     onClose?.()
-    onSelect?.({ id: data.id, name, password: password || undefined, createdAt: new Date().toISOString() })
+    onSelect?.({ id: data.id, name, hasPassword: Boolean(password), createdAt: new Date().toISOString() })
   }
 
   const joinRoom = (room: RoomInfo) => {
@@ -186,16 +199,3 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
   </div>
   )
 }
-  // FIX: server-side verification endpoint
-  const verifyPassword = async (roomId: string, password: string) => {
-    const res = await fetch('/api/rooms/verify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: roomId, password })
-    })
-    if (!res.ok) {
-      const data = await res.json().catch(() => null)
-      throw new Error(data?.error || 'Invalid password')
-    }
-    return true
-  }
