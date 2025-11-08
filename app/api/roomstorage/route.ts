@@ -28,7 +28,14 @@ export async function POST(req: NextRequest) {
     const client = new Liveblocks({ secret })
     await client.mutateStorage(roomId, ({ root }) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const map = (root as any).get('characters') as LiveMap<string, Lson>
+      let map = (root as any).get('characters') as LiveMap<string, Lson> | undefined
+      if (!map) {
+        const { LiveMap } = require('@liveblocks/client') as typeof import('@liveblocks/client')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(root as any).set('characters', new LiveMap<string, Lson>())
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        map = (root as any).get('characters') as LiveMap<string, Lson>
+      }
       map.set(`${owner}:${id}`, character as Lson)
     })
     debug('roomstorage upsert', roomId, id)
@@ -52,8 +59,8 @@ export async function DELETE(req: NextRequest) {
   try {
     await client.mutateStorage(roomId, ({ root }) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const map = (root as any).get('characters') as LiveMap<string, Lson>
-      map.delete(`${owner}:${id}`)
+      const map = (root as any).get('characters') as LiveMap<string, Lson> | undefined
+      if (map) map.delete(`${owner}:${id}`)
     })
     debug('roomstorage delete', roomId, id)
     return NextResponse.json({ ok: true })
