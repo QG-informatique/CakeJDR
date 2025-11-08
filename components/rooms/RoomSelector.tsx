@@ -6,7 +6,7 @@ import { Lock } from 'lucide-react'
 export type RoomInfo = {
   id: string
   name: string
-  password?: string
+  hasPassword?: boolean // FIX: boolean flag only
   createdAt?: string
   updatedAt?: string
 }
@@ -65,7 +65,7 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
   }
 
   const joinRoom = (room: RoomInfo) => {
-    if (room.password) {
+    if (room.hasPassword) {
       setJoiningId(room.id)
       setJoinPassword('')
       return
@@ -74,10 +74,17 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
     onSelect?.(room)
   }
 
-  const confirmJoin = (room: RoomInfo) => {
-    if (room.password && joinPassword !== room.password) return
-    onClose?.()
-    onSelect?.(room)
+  const confirmJoin = async (room: RoomInfo) => {
+    try {
+      if (room.hasPassword) {
+        await verifyPassword(room.id, joinPassword)
+      }
+      onClose?.()
+      onSelect?.(room)
+    } catch {
+      // keep modal open
+      return
+    }
   }
 
   return (
@@ -100,9 +107,9 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
             <li key={r.id} className="flex flex-col gap-1">
               <div className="flex justify-between items-center gap-2">
                 <span className="truncate flex-1 flex items-center gap-1">
-                  {r.password && <Lock size={12} className="text-pink-300" />} {r.name || t('unnamed')}
+                  {r.hasPassword && <Lock size={12} className="text-pink-300" />} {r.name || t('unnamed')}
                 </span>
-                {joiningId === r.id && r.password ? (
+                {joiningId === r.id && r.hasPassword ? (
                   <button
                     className="px-2 py-1 bg-emerald-600/70 hover:bg-emerald-600 rounded text-sm"
                     onClick={() => confirmJoin(r)}
@@ -117,7 +124,7 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
               <span className="text-xs text-white/60">
                 {r.updatedAt ? new Date(r.updatedAt).toLocaleDateString() : new Date(r.createdAt ?? '').toLocaleDateString()}
               </span>
-              {joiningId === r.id && r.password && (
+              {joiningId === r.id && r.hasPassword && (
                 <input
                   type="password"
                   value={joinPassword}
@@ -179,3 +186,16 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
   </div>
   )
 }
+  // FIX: server-side verification endpoint
+  const verifyPassword = async (roomId: string, password: string) => {
+    const res = await fetch('/api/rooms/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: roomId, password })
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => null)
+      throw new Error(data?.error || 'Invalid password')
+    }
+    return true
+  }

@@ -15,7 +15,8 @@ export async function listRooms() {
   const rooms: Array<{
     id: string
     name: string
-    password?: string
+    // FIX: Do not expose raw passwords; only expose a boolean flag
+    hasPassword?: boolean
     createdAt: string
     updatedAt?: string
     usersConnected: number
@@ -32,10 +33,18 @@ export async function listRooms() {
           : r.id.includes('-')
             ? r.id.substring(0, r.id.lastIndexOf('-'))
             : r.id
+      const meta = (r.metadata ?? {}) as Record<string, unknown>
+      // FIX: compute boolean without leaking value
+      const hasPassword =
+        typeof meta.password === 'string' && meta.password.length > 0
+          ? true
+          : typeof meta.passwordHash === 'string' && meta.passwordHash.length > 0
+            ? true
+            : meta.hasPassword === true
       rooms.push({
         id: r.id,
         name: roomName,
-        password: typeof r.metadata?.password === 'string' ? r.metadata.password : undefined,
+        hasPassword,
         createdAt: r.createdAt.toISOString(),
         updatedAt: r.lastConnectionAt ? r.lastConnectionAt.toISOString() : undefined,
         usersConnected: typeof count === 'number' ? count : 0
@@ -69,9 +78,10 @@ export async function createRoom(name: string, password?: string) {
   const stableId = `${base}-${Buffer.from(name).toString('hex').slice(0, 8)}`
 
   // 3) Idempotence côté serveur
+  // FIX: mark hasPassword in metadata, but never expose raw password via listRooms
   const room = await client.getOrCreateRoom(stableId, {
     defaultAccesses: ['room:write'],
-    metadata: { name, ...(password ? { password } : {}) },
+    metadata: { name, ...(password ? { password, hasPassword: true } : {}) }, // FIX: hasPassword flag
   })
 
   return room.id
