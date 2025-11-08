@@ -161,19 +161,23 @@ export default function InteractiveCanvas() {
 
   // Mutations
   const addImage = useMutation(({ storage }, img: ImageData) => {
-    // @ts-expect-error Liveblocks Lson typing vs runtime value
-    storage.get('images').set(String(img.id), img)
+    const imagesMap = storage.get('images') as unknown as {
+      set: (key: string, value: ImageData) => void
+    }
+    imagesMap.set(String(img.id), img)
   }, [])
   const updateImageTransform = useMutation(({ storage }, id: string, patch: Partial<ImageData>) => {
-    // @ts-expect-error Liveblocks Lson typing vs runtime value
-    const map = storage.get('images')
-    const prev = map.get(id) as ImageData | undefined
+    const map = storage.get('images') as unknown as {
+      get: (key: string) => ImageData | undefined
+      set: (key: string, value: ImageData) => void
+    }
+    const prev = map.get(id)
     if (!prev) return
     map.set(id, { ...prev, ...patch })
   }, [])
   const deleteImage = useMutation(({ storage }, id: string) => {
-    // @ts-expect-error Liveblocks Lson typing vs runtime value
-    storage.get('images').delete(id)
+    const map = storage.get('images') as unknown as { delete: (key: string) => void }
+    map.delete(id)
   }, [])
   const addStrokeSegment = useMutation(({ storage }, segment: StrokeSegment) => {
     const list = storage.get('strokes') as LiveList<StrokeSegment> | null
@@ -185,12 +189,14 @@ export default function InteractiveCanvas() {
     const list = storage.get('strokes') as LiveList<StrokeSegment> | null
     if (!list) return
     if (typeof list.clear === 'function') list.clear()
-    else if (typeof list.delete === 'function') { for (let i = (list.length ?? 0) - 1; i >= 0; i -= 1) { /* @ts-expect-error Liveblocks delete signature */ list.delete(i) } }
+    else if (typeof (list as unknown as { delete: (idx: number) => void }).delete === 'function') {
+      const helper = list as unknown as { delete: (idx: number) => void; length?: number }
+      for (let i = (helper.length ?? 0) - 1; i >= 0; i -= 1) helper.delete(i)
+    }
   }, [])
   const updateMusic = useMutation(({ storage }, patch: Partial<{ id: string; playing: boolean; volume: number }>) => {
-    // @ts-expect-error Liveblocks Lson typing vs runtime value
-    const obj = storage.get('music')
-    Object.entries(patch).forEach(([k, v]) => { obj.set(k, v as never) })
+    const obj = storage.get('music') as unknown as { set: (k: string, v: unknown) => void }
+    Object.entries(patch).forEach(([k, v]) => { obj.set(k, v) })
   }, [])
 
   // Drawing handlers
