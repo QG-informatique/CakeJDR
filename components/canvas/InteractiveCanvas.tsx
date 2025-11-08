@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect, useMemo, useCallback } from 'react'
 import { useStorage, useMutation, useMyPresence } from '@liveblocks/react'
-import type { LiveList } from '@liveblocks/client'
+import { LiveList } from '@liveblocks/client'
 import YouTube from 'react-youtube'
 import type { YouTubePlayer } from 'youtube-player/dist/types'
 import CanvasTools, { ToolMode } from './CanvasTools'
@@ -180,19 +180,34 @@ export default function InteractiveCanvas() {
     map.delete(id)
   }, [])
   const addStrokeSegment = useMutation(({ storage }, segment: StrokeSegment) => {
-    const list = storage.get('strokes') as LiveList<StrokeSegment> | null
-    if (!list) return
-    if (typeof list.push === 'function') list.push(segment)
-    else { const helper = list as unknown as { insert: (idx: number, value: StrokeSegment) => void, length?: number }; helper.insert((helper.length ?? 0) as number, segment) }
+    let list = storage.get('strokes') as unknown
+    const hasPush = !!(list && typeof (list as { push?: unknown }).push === 'function')
+    const hasInsert = !!(list && typeof (list as { insert?: unknown }).insert === 'function')
+    if (!list || (!hasPush && !hasInsert)) {
+      storage.set('strokes', new LiveList<StrokeSegment>([]))
+      list = storage.get('strokes') as unknown
+    }
+    if (typeof (list as { push?: (v: StrokeSegment) => void }).push === 'function') {
+      ;(list as { push: (v: StrokeSegment) => void }).push(segment)
+    } else if (typeof (list as { insert?: (i: number, v: StrokeSegment) => void; length?: number }).insert === 'function') {
+      const helper = list as { insert: (i: number, v: StrokeSegment) => void; length?: number }
+      helper.insert((helper.length ?? 0) as number, segment)
+    }
   }, [])
   const clearStrokes = useMutation(({ storage }) => {
-    const list = storage.get('strokes') as LiveList<StrokeSegment> | null
+    const list = storage.get('strokes') as unknown
     if (!list) return
-    if (typeof list.clear === 'function') list.clear()
-    else if (typeof (list as unknown as { delete: (idx: number) => void }).delete === 'function') {
-      const helper = list as unknown as { delete: (idx: number) => void; length?: number }
-      for (let i = (helper.length ?? 0) - 1; i >= 0; i -= 1) helper.delete(i)
+    if (typeof (list as { clear?: () => void }).clear === 'function') {
+      ;(list as { clear: () => void }).clear()
+      return
     }
+    if (typeof (list as { delete?: (idx: number) => void; length?: number }).delete === 'function') {
+      const helper = list as { delete: (idx: number) => void; length?: number }
+      for (let i = (helper.length ?? 0) - 1; i >= 0; i -= 1) helper.delete(i)
+      return
+    }
+    // As a fallback, reset the list
+    storage.set('strokes', new LiveList<StrokeSegment>([]))
   }, [])
   const updateMusic = useMutation(({ storage }, patch: Partial<{ id: string; playing: boolean; volume: number }>) => {
     const obj = storage.get('music') as unknown as { set: (k: string, v: unknown) => void }

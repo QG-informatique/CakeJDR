@@ -86,15 +86,7 @@ const CanvasTools: React.FC<CanvasToolsProps> = ({
           title={c}
         />
       ))}
-      {drawMode === 'images' && (
-        <button
-          onClick={onAddImage}
-          className="rounded-xl px-3 py-2 text-xs font-semibold shadow border border-white/10 bg-black/20 hover:bg-blue-900/30 text-blue-100/85 ml-2"
-          title={t('importBtn')}
-        >
-          <span className="inline-flex items-center gap-1"><Upload size={14} /> {t('importBtn')}</span>
-        </button>
-      )}
+      {/* Import button removed; Images button already opens picker */}
       <button
         onClick={clearCanvas}
         className="rounded-xl px-3 py-2 text-xs font-semibold shadow border-none bg-red-600 text-white hover:bg-red-700 ml-4"

@@ -302,19 +302,19 @@ export default function HomePageInner() {
           <div className="flex-1 m-4 flex flex-col justify-center items-center relative min-h-0">
             <ErrorBoundary
               key={canvasKey}
-              fallback={
+              fallbackRender={({ error, reset }) => (
                 <div className="p-4 text-red-500 flex flex-col items-center gap-2">
-                  <div>Canvas error</div>
+                  <div>Canvas error: {String(error?.message || 'Unknown')}</div>
                   <button
                     className="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700"
-                    onClick={() => setCanvasKey((k) => k + 1)}
+                    onClick={() => { reset(); setCanvasKey((k) => k + 1) }}
                   >Reload canvas</button>
                   <button
                     className="px-3 py-1 rounded bg-gray-700 text-white hover:bg-gray-600"
                     onClick={() => window.location.reload()}
                   >Reload page</button>
                 </div>
-              }
+              )}
             >
               <InteractiveCanvas />
             </ErrorBoundary>
