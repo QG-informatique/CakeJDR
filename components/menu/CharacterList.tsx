@@ -54,6 +54,7 @@ const CharacterList: FC<Props> = ({
   onExport,
   fileInputRef,
   onImportFile,
+  onOpenCloud,
 }) => {
   const t = useT()
   const remoteMap = useMemo(() => new Map(Object.entries(remote)), [remote])
