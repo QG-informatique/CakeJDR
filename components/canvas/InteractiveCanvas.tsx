@@ -5,12 +5,15 @@ import { useStorage, useMutation, useMyPresence } from '@liveblocks/react'
 import type { LiveList } from '@liveblocks/client'
 import YouTube from 'react-youtube'
 import type { YouTubePlayer } from 'youtube-player/dist/types'
+
 import CanvasTools, { ToolMode } from './CanvasTools'
+import LiveCursors from './LiveCursors'
 import LiveCursors from './LiveCursors'
 import MusicPanel from './MusicPanel'
 import { Wrench, Music2 } from 'lucide-react'
 import ImageItem, { ImageData } from './ImageItem'
 import SideNotes from '@/components/misc/SideNotes'
+import { useT } from '@/lib/useT'
 import { useT } from '@/lib/useT'
 
 type StrokeSegment = {
@@ -215,10 +218,35 @@ export default function InteractiveCanvas() {
     e.preventDefault()
     const rect = drawingCanvasRef.current?.getBoundingClientRect()
     if (!rect) return
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
+
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) continue
+      await uploadImage(
+        file,
+        e.clientX - rect.left,
+        e.clientY - rect.top,
+        rect,
+      )
+    }
+  }
+
+  // --------------------------------------------------------------------------
+
+  const [selectedImageId, setSelectedImageId] = useState<string | null>(null)
+
+  const handlePointerDown = (
+    e: React.PointerEvent,
+    id?: string,
+    type?: 'move' | 'resize',
+  ) => {
+    e.preventDefault()
+    const rect = drawingCanvasRef.current?.getBoundingClientRect()
+    if (!rect) return
+
     if ((drawMode === 'draw' || drawMode === 'erase') && !id) {
       setIsDrawing(true)
+      const x = e.clientX - rect.left
+      const y = e.clientY - rect.top
       setMousePos({ x, y })
       lastPointRef.current = { x, y }
       const ctx = ctxRef.current
@@ -254,7 +282,7 @@ export default function InteractiveCanvas() {
     ctx.restore()
   }
 
-  const handlePointerMove = (e: React.PointerEvent) => {
+  const handlePointerMove = (e: PointerEvent<HTMLDivElement>) => {
     const rect = drawingCanvasRef.current?.getBoundingClientRect()
     if (!rect) return
     const x = e.clientX - rect.left
