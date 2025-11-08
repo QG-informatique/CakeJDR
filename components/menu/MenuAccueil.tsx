@@ -339,7 +339,6 @@ export default function MenuAccueil() {
 
   const handleUploadChar = async (char: Character) => {
     if (!selectedRoom || !user) return
-    if (char.owner !== user.pseudo && !user.isMJ) return
     try {
       const updatedChar = { ...char, updatedAt: Date.now() }
       await fetch('/api/roomstorage', {
@@ -416,11 +415,7 @@ export default function MenuAccueil() {
 
   if (!hydrated) return <div className="w-full h-full" />
 
-  const filteredCharacters = user
-    ? user.isMJ
-      ? characters
-      : characters.filter((c) => c.owner === user.pseudo)
-    : []
+  const filteredCharacters = user ? characters : []
 
   const handleSelectChar = (idx: number) => {
     if (idx === -1) {

@@ -45,8 +45,8 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
         return r.id || 'global'
       } catch { return 'global' }
     })()
-    const owner = perso.owner || 'anon'
-    const prefix = `FichePerso/${roomId}_${owner}_`
+    // Lister tous les fichiers de la room, peu importe l'owner
+    const prefix = `FichePerso/${roomId}_`
     if (modal === 'import' || modal === 'delete') {
       fetch(`/api/blob?prefix=${encodeURIComponent(prefix)}`)
         .then(res => res.json())
