@@ -1,7 +1,7 @@
 'use client'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { X, Cloud, Download, Upload, Trash2, RefreshCw } from 'lucide-react'
 import { useT } from '@/lib/useT'
@@ -49,7 +49,7 @@ export default function CharacterCloudModal({ open, onClose, roomId, localChars,
 
   const prefix = useMemo(() => `FichePerso/${roomId || 'global'}_`, [roomId])
 
-  async function refresh() {
+  const refresh = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
@@ -63,12 +63,12 @@ export default function CharacterCloudModal({ open, onClose, roomId, localChars,
     } finally {
       setLoading(false)
     }
-  }
+  }, [prefix])
 
   useEffect(() => {
     if (!open) return
-    refresh()
-  }, [open])
+    void refresh()
+  }, [open, refresh])
 
   const uploadable = useMemo(() => localChars.map((c) => ({
     key: `${c.owner}:${String(c.id)}`,
@@ -240,4 +240,3 @@ export default function CharacterCloudModal({ open, onClose, roomId, localChars,
     </AnimatePresence>
   )
 }
-
