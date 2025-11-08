@@ -38,12 +38,22 @@ export default function InteractiveCanvas() {
   const images = useMemo(() => (imagesMap ? Array.from(imagesMap.values()) as ImageData[] : []), [imagesMap])
   const strokes = useMemo<StrokeSegment[]>(() => {
     if (!strokesList) return []
+    const anyList = strokesList as unknown as { toArray?: () => unknown; get?: (i: number) => unknown; length?: number }
+    try {
+      if (typeof anyList.toArray === 'function') {
+        return (anyList.toArray() as unknown as StrokeSegment[]) || []
+      }
+    } catch {}
     const out: StrokeSegment[] = []
-    for (let i = 0; i < (strokesList.length ?? 0); i += 1) {
-      const entry = (strokesList as unknown as { get: (idx: number) => StrokeSegment | undefined }).get(i)
-      if (entry) out.push(entry)
+    if (typeof anyList.get === 'function' && typeof anyList.length === 'number') {
+      for (let i = 0; i < (anyList.length ?? 0); i += 1) {
+        const entry = anyList.get(i) as StrokeSegment | undefined
+        if (entry) out.push(entry)
+      }
+      return out
     }
-    return out
+    if (Array.isArray(strokesList)) return strokesList as unknown as StrokeSegment[]
+    return []
   }, [strokesList])
 
   // Presence
