@@ -40,8 +40,7 @@ export default function InteractiveCanvas() {
     if (!strokesList) return []
     const out: StrokeSegment[] = []
     for (let i = 0; i < (strokesList.length ?? 0); i += 1) {
-      // @ts-ignore
-      const entry = (strokesList as any).get(i) as StrokeSegment | undefined
+      const entry = (strokesList as unknown as { get: (idx: number) => StrokeSegment | undefined }).get(i)
       if (entry) out.push(entry)
     }
     return out
@@ -162,18 +161,18 @@ export default function InteractiveCanvas() {
 
   // Mutations
   const addImage = useMutation(({ storage }, img: ImageData) => {
-    // @ts-ignore
+    // @ts-expect-error Liveblocks Lson typing vs runtime value
     storage.get('images').set(String(img.id), img)
   }, [])
   const updateImageTransform = useMutation(({ storage }, id: string, patch: Partial<ImageData>) => {
-    // @ts-ignore
+    // @ts-expect-error Liveblocks Lson typing vs runtime value
     const map = storage.get('images')
     const prev = map.get(id) as ImageData | undefined
     if (!prev) return
     map.set(id, { ...prev, ...patch })
   }, [])
   const deleteImage = useMutation(({ storage }, id: string) => {
-    // @ts-ignore
+    // @ts-expect-error Liveblocks Lson typing vs runtime value
     storage.get('images').delete(id)
   }, [])
   const addStrokeSegment = useMutation(({ storage }, segment: StrokeSegment) => {
@@ -186,10 +185,10 @@ export default function InteractiveCanvas() {
     const list = storage.get('strokes') as LiveList<StrokeSegment> | null
     if (!list) return
     if (typeof list.clear === 'function') list.clear()
-    else if (typeof list.delete === 'function') { for (let i = (list.length ?? 0) - 1; i >= 0; i -= 1) { /* @ts-ignore */ list.delete(i) } }
+    else if (typeof list.delete === 'function') { for (let i = (list.length ?? 0) - 1; i >= 0; i -= 1) { /* @ts-expect-error Liveblocks delete signature */ list.delete(i) } }
   }, [])
   const updateMusic = useMutation(({ storage }, patch: Partial<{ id: string; playing: boolean; volume: number }>) => {
-    // @ts-ignore
+    // @ts-expect-error Liveblocks Lson typing vs runtime value
     const obj = storage.get('music')
     Object.entries(patch).forEach(([k, v]) => { obj.set(k, v as never) })
   }, [])
@@ -399,4 +398,3 @@ export default function InteractiveCanvas() {
     </>
   )
 }
-
