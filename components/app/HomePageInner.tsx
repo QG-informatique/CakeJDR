@@ -13,6 +13,7 @@ import InteractiveCanvas from '@/components/canvas/InteractiveCanvas'
 import LiveAvatarStack from '@/components/chat/LiveAvatarStack'
 import Login from '@/components/login/Login'
 import GMCharacterSelector from '@/components/misc/GMCharacterSelector'
+import ImportExportMenu from '@/components/character/ImportExportMenu'
 import useDiceHistory from './hooks/useDiceHistory'
 import useEventLog from './hooks/useEventLog'
 import useProfile from './hooks/useProfile'
@@ -55,6 +56,7 @@ export default function HomePageInner() {
   const [history, setHistory] = useDiceHistory(roomId)
   const { addEvent } = useEventLog(roomId)
   const chatBoxRef = useRef<HTMLDivElement>(null)
+  const [canvasKey, setCanvasKey] = useState(0)
   const lastRollTs = useRef<number | null>(null)
   const [cooldown, setCooldown] = useState(false)
   // total durée d'indisponibilité du bouton (animation + hold + cooldown)
@@ -71,27 +73,22 @@ export default function HomePageInner() {
       if (ts === lastRollTs.current) return
       setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result, ts }])
       debug('dice-roll received', event)
+      addEvent({ id: crypto.randomUUID(), kind: 'dice', player: event.player, dice: event.dice, result: event.result, ts })
       return
     }
 
     if (event.type === 'gm-select') {
       const selectionTarget: number | null =
-        typeof event.targetConnectionId === 'number'
-          ? event.targetConnectionId
-          : null
+        typeof event.targetConnectionId === 'number' ? event.targetConnectionId : null
+      // Ne change jamais la fiche des autres sauf si explicitement ciblé
+      if (selectionTarget === null || selectionTarget !== myConnectionId) {
+        return
+      }
+
       const incomingChar = event.character || defaultPerso
       const safeChar = { ...incomingChar }
       if (!safeChar.id) safeChar.id = crypto.randomUUID()
       const owner = safeChar.owner ? String(safeChar.owner) : null
-      const belongsToMe =
-        !!owner && profile?.pseudo
-          ? String(profile.pseudo) === owner
-          : false
-      const isForMe =
-        selectionTarget === null || selectionTarget === myConnectionId
-      if (!profile?.isMJ && !belongsToMe && !isForMe) {
-        return
-      }
 
       const finalChar = {
         ...safeChar,
@@ -99,37 +96,33 @@ export default function HomePageInner() {
       }
 
       setPerso(finalChar)
+      updateMyPresence({
+        character: {
+          ...finalChar,
+          ownerConnectionId: myConnectionId ?? undefined,
+        },
+      })
 
-      if (belongsToMe || profile?.isMJ) {
-        if (belongsToMe) {
-          updateMyPresence({
-            character: {
-              ...finalChar,
-              ownerConnectionId: myConnectionId ?? undefined,
-            },
-          })
-        }
-        setCharacters((prev) => {
-          const idx = prev.findIndex(
-            (c) =>
-              String(c.id) === String(finalChar.id) &&
-              c.owner === finalChar.owner,
+      setCharacters((prev) => {
+        const idx = prev.findIndex(
+          (c) =>
+            String(c.id) === String(finalChar.id) &&
+            c.owner === finalChar.owner,
+        )
+        const next =
+          idx !== -1
+            ? prev.map((c, i) => (i === idx ? { ...c, ...finalChar } : c))
+            : [...prev, finalChar]
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('jdr_characters', JSON.stringify(next))
+          localStorage.setItem(
+            SELECTED_CHARACTER_KEY,
+            buildSelectionKey(finalChar.id, finalChar.owner ?? null),
           )
-          const next =
-            idx !== -1
-              ? prev.map((c, i) => (i === idx ? { ...c, ...finalChar } : c))
-              : [...prev, finalChar]
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('jdr_characters', JSON.stringify(next))
-            localStorage.setItem(
-              SELECTED_CHARACTER_KEY,
-              buildSelectionKey(finalChar.id, finalChar.owner ?? null),
-            )
-            window.dispatchEvent(new Event('jdr_characters_change'))
-          }
-          return next
-        })
-      }
+          window.dispatchEvent(new Event('jdr_characters_change'))
+        }
+        return next
+      })
     }
   })
 
@@ -217,31 +210,29 @@ export default function HomePageInner() {
       },
     })
 
-    if (profile?.isMJ || updatedPerso.owner === profile?.pseudo) {
-      setCharacters((prevChars) => {
-        let found = false
-        const next = prevChars.map((c) => {
-          if (
-            String(c.id) === String(id) &&
-            c.owner === updatedPerso.owner
-          ) {
-            found = true
-            return { ...c, ...updatedPerso }
-          }
-          return c
-        })
-        if (!found) next.push(updatedPerso)
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('jdr_characters', JSON.stringify(next))
-          localStorage.setItem(
-            SELECTED_CHARACTER_KEY,
-            buildSelectionKey(id, updatedPerso.owner ?? null),
-          )
-          window.dispatchEvent(new Event('jdr_characters_change'))
+    setCharacters((prevChars) => {
+      let found = false
+      const next = prevChars.map((c) => {
+        if (
+          String(c.id) === String(id) &&
+          c.owner === updatedPerso.owner
+        ) {
+          found = true
+          return { ...c, ...updatedPerso }
         }
-        return next
+        return c
       })
-    }
+      if (!found) next.push(updatedPerso)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('jdr_characters', JSON.stringify(next))
+        localStorage.setItem(
+          SELECTED_CHARACTER_KEY,
+          buildSelectionKey(id, updatedPerso.owner ?? null),
+        )
+        window.dispatchEvent(new Event('jdr_characters_change'))
+      }
+      return next
+    })
   }
 
   const handleGMSelect = (char: any) => {
@@ -251,6 +242,8 @@ export default function HomePageInner() {
     }
     setPerso(next)
     updateMyPresence({ gmView: { id: next.id, name: next.nom || next.name } })
+    // Diffuse un événement d'observation (sans ciblage) pour information uniquement
+    broadcast({ type: 'gm-select', character: next, targetConnectionId: null } as Liveblocks['RoomEvent'])
   }
 
   if (!user) {
@@ -297,16 +290,32 @@ export default function HomePageInner() {
     <div className="relative w-screen h-dvh font-sans overflow-hidden bg-transparent">
       <div className="relative z-10 flex flex-col lg:flex-row w-full h-full">
         <CharacterSheet perso={perso} onUpdate={handleUpdatePerso} chatBoxRef={chatBoxRef} allCharacters={characters} logoOnly>
-          {profile?.isMJ && (
-            <span className="ml-2">
-              <GMCharacterSelector onSelect={handleGMSelect} />
-            </span>
-          )}
+          <span className="ml-2">
+            <GMCharacterSelector onSelect={handleGMSelect} />
+          </span>
+          <span className="ml-1">
+            <ImportExportMenu perso={perso} onUpdate={handleUpdatePerso} />
+          </span>
         </CharacterSheet>
 
         <main className="flex-1 flex flex-col min-h-0">
           <div className="flex-1 m-4 flex flex-col justify-center items-center relative min-h-0">
-            <ErrorBoundary fallback={<div className="p-4 text-red-500">Canvas error</div>}>
+            <ErrorBoundary
+              key={canvasKey}
+              fallback={
+                <div className="p-4 text-red-500 flex flex-col items-center gap-2">
+                  <div>Canvas error</div>
+                  <button
+                    className="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700"
+                    onClick={() => setCanvasKey((k) => k + 1)}
+                  >Reload canvas</button>
+                  <button
+                    className="px-3 py-1 rounded bg-gray-700 text-white hover:bg-gray-600"
+                    onClick={() => window.location.reload()}
+                  >Reload page</button>
+                </div>
+              }
+            >
               <InteractiveCanvas />
             </ErrorBoundary>
             <ErrorBoundary fallback={<div className="p-4 text-red-500">Dice display error</div>}>
