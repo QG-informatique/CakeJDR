@@ -291,7 +291,7 @@ export default function InteractiveCanvas() {
   const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
   const MAX_SIZE_MB = 20
   const fileToObjectURL = (file: File) => URL.createObjectURL(file)
-  async function uploadOneImage(file: File, dropX: number, dropY: number) {
+  async function uploadOneImage(file: File, dropX: number, dropY: number) {
     if (!ALLOWED_TYPES.includes(file.type) || file.size > MAX_SIZE_MB * 1024 * 1024) { alert('Invalid image file'); return }
     const localUrl = fileToObjectURL(file)
     const tempId = `${Date.now()}-${Math.random().toString(36).slice(2)}`
@@ -398,4 +398,5 @@ export default function InteractiveCanvas() {
     </>
   )
 }
+
 
