@@ -16,20 +16,14 @@ interface RoomMetadata {
 const sha256 = (s: string) => crypto.createHash("sha256").update(s).digest("hex");
 
 function sanitizeMetadata(meta: RoomMetadata): LiveblocksMetadata {
-  const out: LiveblocksMetadata = {};
-  for (const [k, v] of Object.entries(meta)) {
-    if (v === undefined) continue;
-    // Drop any legacy plaintext password value from metadata
-    if (k === "password") continue;
-    if (v === null) {
-      out[k] = null;
-    } else if (typeof v === "string") {
-      out[k] = v;
-    } else if (typeof v === "boolean") {
-      out[k] = v ? "1" : "0";
-    }
-  }
-  return out;
+  return {
+    passwordHash:
+      typeof meta.passwordHash === "string" && meta.passwordHash.length
+        ? meta.passwordHash
+        : null,
+    hasPassword:
+      meta.hasPassword === true || meta.hasPassword === "1" ? "1" : null,
+  };
 }
 
 function bad(msg: string, code = 400) {

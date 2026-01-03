@@ -6,11 +6,12 @@
     "dev": "next dev --turbopack",
     "dev:turbo": "next dev --turbopack",
     "dev:webpack": "next dev",
-    "build": "next build",
+    "build": "npm run typecheck && next build",
     "build:analyze": "ANALYZE=true next build",
     "start": "next start",
 
     "type-check": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "lint": "next lint",
 
     "test": "npm run lint"

@@ -1,7 +1,6 @@
 import { FC, useRef, useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, type Transition } from 'framer-motion'
 import { useT } from '@/lib/useT'
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 const BUTTON_WIDTH = '160px'
 
@@ -174,8 +173,8 @@ const LevelUpPanel: FC<Props> = ({
   let shadow = '0 0 48px 20px #34d399, 0 0 200px 120px #34d39977'
   let stroke = '#fff'
   let pulse = 'animate-pulse'
-  let extraEffect: any = {}
-  let motionTransition: any = { duration: 0.85, type: 'tween' }
+  let extraEffect: Partial<Record<'rotate' | 'scale' | 'x', number | number[]>> = {}
+  let motionTransition: Transition = { duration: 0.85, type: 'tween' }
 
   if (isMax) {
     textColor = 'text-yellow-300'

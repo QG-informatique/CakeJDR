@@ -1,27 +1,40 @@
 'use client'
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { FC, useRef, useState, useEffect } from 'react'
 import { useT } from '@/lib/useT'
 import { Folder } from 'lucide-react'
 import { defaultPerso } from '../sheet/CharacterSheet'
+import {
+  type Character,
+  buildCharacterKey,
+  normalizeCharacter,
+} from '@/types/character'
 
 type Props = {
-  perso: any,
-  onUpdate: (perso: any) => void
+  perso: Character
+  onUpdate: (perso: Character) => void
 }
 
 const LOCAL_KEY = 'cakejdr_perso'
 const CHAR_LIST_KEY = 'jdr_characters'
 
-const addToList = (char: any) => {
+const addToList = (char: Character) => {
   try {
-    const list = JSON.parse(localStorage.getItem(CHAR_LIST_KEY) || '[]')
-    const withName = { ...char, name: char.name || char.nom }
-    const exists = list.find((c: any) => c.id === withName.id)
-    const updated = exists
-      ? list.map((c: any) => c.id === withName.id ? withName : c)
-      : [...list, withName]
+    const listRaw = localStorage.getItem(CHAR_LIST_KEY) || '[]'
+    const parsed = JSON.parse(listRaw)
+    const current = Array.isArray(parsed)
+      ? parsed.map((c) => normalizeCharacter(c))
+      : []
+    const normalized = normalizeCharacter({
+      ...char,
+      name: (char as { name?: string }).name || char.nom,
+    })
+    const key = buildCharacterKey(normalized)
+    const idx = current.findIndex((c) => buildCharacterKey(c) === key)
+    const updated =
+      idx !== -1
+        ? current.map((c, i) => (i === idx ? normalized : c))
+        : [...current, normalized]
     localStorage.setItem(CHAR_LIST_KEY, JSON.stringify(updated))
     window.dispatchEvent(new Event('jdr_characters_change'))
   } catch {
@@ -33,7 +46,7 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
   const [open, setOpen] = useState(false)
   const [modal, setModal] = useState<'import' | 'export' | 'delete' | null>(null)
   const [cloudFiles, setCloudFiles] = useState<string[]>([])
-  const [localChars, setLocalChars] = useState<any[]>([])
+  const [localChars, setLocalChars] = useState<Character[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
   const t = useT()
 
@@ -50,13 +63,17 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
     if (modal === 'import' || modal === 'delete') {
       fetch(`/api/blob?prefix=${encodeURIComponent(prefix)}`)
         .then(res => res.json())
-        .then(data => setCloudFiles(data.files?.blobs?.map((b:any)=>b.pathname) || []))
+        .then(data => setCloudFiles(data.files?.blobs?.map((b: { pathname: string }) => b.pathname) || []))
         .catch(() => setCloudFiles([]))
     }
     if (modal === 'export') {
       try {
         const list = JSON.parse(localStorage.getItem(CHAR_LIST_KEY) || '[]')
-        setLocalChars(Array.isArray(list) ? list : [])
+        setLocalChars(
+          Array.isArray(list)
+            ? list.map((c: Character) => normalizeCharacter(c))
+            : [],
+        )
       } catch { setLocalChars([]) }
     }
   }, [modal, perso.owner])
@@ -84,8 +101,12 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
         const txt = ev.target?.result as string
         const data = JSON.parse(txt)
         if (!data || typeof data !== "object") throw new Error()
-        onUpdate(data)
-        addToList({ ...data, id: data.id || crypto.randomUUID() })
+        const normalized = normalizeCharacter({
+          ...data,
+          id: (data as Character).id || crypto.randomUUID(),
+        })
+        onUpdate(normalized)
+        addToList(normalized)
         alert(t('importSuccess'))
       } catch {
         alert(t('importFail'))
@@ -98,7 +119,8 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
 
   // Sauvegarde locale
   const handleLocalSave = () => {
-    localStorage.setItem(LOCAL_KEY, JSON.stringify(perso))
+    const normalized = normalizeCharacter(perso)
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(normalized))
     alert(t('saveLocallyMsg'))
     setOpen(false)
   }
@@ -110,8 +132,12 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
       try {
         const obj = JSON.parse(data)
         if (!obj || typeof obj !== "object") throw new Error()
-        onUpdate(obj)
-        addToList({ ...obj, id: obj.id || crypto.randomUUID() })
+        const normalized = normalizeCharacter({
+          ...obj,
+          id: (obj as Character).id || crypto.randomUUID(),
+        })
+        onUpdate(normalized)
+        addToList(normalized)
         alert(t('loadLocalSuccess'))
       } catch {
         alert(t('loadLocalFail'))
@@ -123,19 +149,23 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
     setOpen(false)
   }
 
-  const saveToCloud = async (char: any) => {
-    const slug = (char.nom || char.name || 'sans_nom').replace(/[^a-zA-Z0-9-_]/g, '_')
+  const saveToCloud = async (char: Character) => {
+    const normalized = normalizeCharacter(
+      { ...char, updatedAt: Date.now() },
+      char.owner,
+    )
+    const slug = (normalized.nom || (normalized as { name?: string }).name || 'sans_nom').replace(/[^a-zA-Z0-9-_]/g, '_')
     const roomId = (() => {
       try {
         const r = JSON.parse(localStorage.getItem('jdr_selected_room') || '{}')
         return r.id || 'global'
       } catch { return 'global' }
     })()
-    const owner = char.owner || 'anon'
-    const filename = `FichePerso/${roomId}_${owner}_${char.id}_${slug}.json`
+    const owner = normalized.owner || 'anon'
+    const filename = `FichePerso/${roomId}_${owner}_${normalized.id}_${slug}.json`
     await fetch(`/api/blob?filename=${encodeURIComponent(filename)}`, {
       method: 'POST',
-      body: JSON.stringify(char),
+      body: JSON.stringify(normalized),
     })
     alert(t('saveCloud'))
     setModal(null)
@@ -144,13 +174,17 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
   const loadFromCloud = async (filename: string) => {
     const res = await fetch(`/api/blob?prefix=${encodeURIComponent(filename)}`)
     const data = await res.json()
-    const item = data.files?.blobs?.find((b:any)=>b.pathname===filename)
+    const item = data.files?.blobs?.find((b: { pathname: string }) => b.pathname===filename)
     if (!item) return
     const txt = await fetch(item.downloadUrl || item.url).then(r=>r.text())
     try {
       const obj = JSON.parse(txt)
-      onUpdate(obj)
-      addToList({ ...obj, id: obj.id || crypto.randomUUID() })
+      const normalized = normalizeCharacter({
+        ...obj,
+        id: (obj as Character).id || crypto.randomUUID(),
+      })
+      onUpdate(normalized)
+      addToList(normalized)
       alert(t('loadCloudSuccess'))
     } catch {
       alert(t('loadCloudFail'))
@@ -168,7 +202,9 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
   // Reset sheet
   const handleReset = () => {
     if (window.confirm("Really reset the sheet? (This will delete it)")) {
-      onUpdate({ ...defaultPerso })
+      onUpdate(
+        normalizeCharacter({ ...defaultPerso, id: crypto.randomUUID() }),
+      )
       setOpen(false)
     }
   }

@@ -1,18 +1,14 @@
 'use client'
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { X, Cloud, Download, Upload, Trash2, RefreshCw } from 'lucide-react'
 import { useT } from '@/lib/useT'
-
-export type CloudCharacter = {
-  id: string | number
-  nom: string
-  owner: string
-  updatedAt?: number
-  [key: string]: any
-}
+import {
+  type Character as CloudCharacter,
+  buildCharacterKey,
+  normalizeCharacter,
+} from '@/types/character'
 
 type CloudEntry = {
   pathname: string
@@ -39,7 +35,13 @@ interface Props {
   onImported: (char: CloudCharacter) => void
 }
 
-export default function CharacterCloudModal({ open, onClose, roomId, localChars, onImported }: Props) {
+export default function CharacterCloudModal({
+  open,
+  onClose,
+  roomId,
+  localChars,
+  onImported,
+}: Props) {
   const t = useT()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -70,24 +72,30 @@ export default function CharacterCloudModal({ open, onClose, roomId, localChars,
     void refresh()
   }, [open, refresh])
 
-  const uploadable = useMemo(() => localChars.map((c) => ({
-    key: `${c.owner}:${String(c.id)}`,
-    label: `${c.nom || 'sans_nom'} — ${c.owner} #${String(c.id)}`,
-  })), [localChars])
+  const uploadable = useMemo(
+    () =>
+      localChars.map((c) => ({
+        key: buildCharacterKey(c),
+        label: `${c.nom || 'sans_nom'} @ ${c.owner} #${String(c.id)}`,
+      })),
+    [localChars],
+  )
 
   async function handleImport(pathname: string) {
     try {
       setBusyAction(`import:${pathname}`)
       const res = await fetch(`/api/blob?prefix=${encodeURIComponent(pathname)}`)
       const data = await res.json()
-      const item = (data?.files?.blobs || []).find((b: CloudEntry) => b.pathname === pathname) as CloudEntry | undefined
+      const item = (data?.files?.blobs || []).find(
+        (b: CloudEntry) => b.pathname === pathname,
+      ) as CloudEntry | undefined
       if (!item) throw new Error('Not found')
       const url = item.downloadUrl || item.url
       if (!url) throw new Error('No URL available')
       const txt = await fetch(url).then((r) => r.text())
       const obj = JSON.parse(txt)
       if (!obj || typeof obj !== 'object') throw new Error('Invalid file')
-      onImported(obj as CloudCharacter)
+      onImported(normalizeCharacter(obj))
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Import failed')
     } finally {
@@ -96,18 +104,26 @@ export default function CharacterCloudModal({ open, onClose, roomId, localChars,
   }
 
   async function handleUpload() {
-    const target = localChars.find((c) => `${c.owner}:${String(c.id)}` === uploadId)
+    const target = localChars.find((c) => buildCharacterKey(c) === uploadId)
     if (!target) return
     const slugName = slug(target.nom || 'sans_nom')
-    const filename = `FichePerso/${roomId || 'global'}_${target.owner}_${String(target.id)}_${slugName}.json`
+    const filename = `FichePerso/${roomId || 'global'}_${target.owner}_${String(
+      target.id,
+    )}_${slugName}.json`
     try {
       setBusyAction(`upload:${filename}`)
-      const updated = { ...target, updatedAt: Date.now() }
-      const res = await fetch(`/api/blob?filename=${encodeURIComponent(filename)}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updated),
-      })
+      const updated = normalizeCharacter(
+        { ...target, updatedAt: Date.now() },
+        target.owner,
+      )
+      const res = await fetch(
+        `/api/blob?filename=${encodeURIComponent(filename)}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updated),
+        },
+      )
       if (!res.ok) throw new Error('Upload failed')
       await refresh()
     } catch (e) {
@@ -121,7 +137,10 @@ export default function CharacterCloudModal({ open, onClose, roomId, localChars,
     if (!confirm('Delete this cloud file?')) return
     try {
       setBusyAction(`delete:${pathname}`)
-      const res = await fetch(`/api/blob?filename=${encodeURIComponent(pathname)}`, { method: 'DELETE' })
+      const res = await fetch(
+        `/api/blob?filename=${encodeURIComponent(pathname)}`,
+        { method: 'DELETE' },
+      )
       if (!res.ok) throw new Error('Delete failed')
       setEntries((prev) => prev.filter((e) => e.pathname !== pathname))
     } catch (e) {
@@ -159,7 +178,10 @@ export default function CharacterCloudModal({ open, onClose, roomId, localChars,
             <div className="flex items-center gap-2">
               <button
                 className="px-2 py-1 rounded bg-black/40 border border-white/10 text-white/80 hover:text-white"
-                onClick={(e) => { e.preventDefault(); refresh() }}
+                onClick={(e) => {
+                  e.preventDefault()
+                  refresh()
+                }}
                 title="Refresh"
               >
                 <RefreshCw size={16} />
@@ -184,7 +206,9 @@ export default function CharacterCloudModal({ open, onClose, roomId, localChars,
               >
                 <option value="">-- {t('select')} --</option>
                 {uploadable.map((o) => (
-                  <option key={o.key} value={o.key}>{o.label}</option>
+                  <option key={o.key} value={o.key}>
+                    {o.label}
+                  </option>
                 ))}
               </select>
               <button
@@ -199,7 +223,7 @@ export default function CharacterCloudModal({ open, onClose, roomId, localChars,
 
           {/* List section */}
           <div className="space-y-2">
-            {loading && <div className="text-white/70 text-sm">Loading…</div>}
+            {loading && <div className="text-white/70 text-sm">Loading...</div>}
             {error && <div className="text-red-400 text-sm">{error}</div>}
             {!loading && !error && entries.length === 0 && (
               <div className="text-white/60 text-sm italic">{t('noFile')}</div>
@@ -207,10 +231,20 @@ export default function CharacterCloudModal({ open, onClose, roomId, localChars,
             {!loading && !error && entries.length > 0 && (
               <ul className="divide-y divide-white/10">
                 {entries.map((e) => (
-                  <li key={e.pathname} className="py-2 flex items-center justify-between gap-2">
+                  <li
+                    key={e.pathname}
+                    className="py-2 flex items-center justify-between gap-2"
+                  >
                     <div className="truncate">
-                      <div className="font-mono text-xs truncate">{e.pathname.replace('FichePerso/','')}</div>
-                      <div className="text-[11px] text-white/50">{e.size ? `${(e.size/1024).toFixed(1)} KB` : ''} {e.uploadedAt ? `• ${new Date(e.uploadedAt).toLocaleString()}` : ''}</div>
+                      <div className="font-mono text-xs truncate">
+                        {e.pathname.replace('FichePerso/', '')}
+                      </div>
+                      <div className="text-[11px] text-white/50">
+                        {e.size ? `${(e.size / 1024).toFixed(1)} KB` : ''}{' '}
+                        {e.uploadedAt
+                          ? ` · ${new Date(e.uploadedAt).toLocaleString()}`
+                          : ''}
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <button
@@ -219,7 +253,11 @@ export default function CharacterCloudModal({ open, onClose, roomId, localChars,
                         disabled={!!busyAction}
                         title="Import to local"
                       >
-                        <Download size={14} className="inline -mt-0.5 mr-1" /> Import
+                        <Download
+                          size={14}
+                          className="inline -mt-0.5 mr-1"
+                        />{' '}
+                        Import
                       </button>
                       <button
                         onClick={() => handleDelete(e.pathname)}
@@ -227,7 +265,8 @@ export default function CharacterCloudModal({ open, onClose, roomId, localChars,
                         disabled={!!busyAction}
                         title="Delete from cloud"
                       >
-                        <Trash2 size={14} className="inline -mt-0.5 mr-1" /> Delete
+                        <Trash2 size={14} className="inline -mt-0.5 mr-1" />{' '}
+                        Delete
                       </button>
                     </div>
                   </li>

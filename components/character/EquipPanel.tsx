@@ -1,21 +1,19 @@
 'use client'
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { FC, useState } from 'react'
 import { useT } from '@/lib/useT'
-
-type Objet = { id: string; nom: string; quantite: number }
+import { type CharacterChangeHandler, type Objet } from '@/types/character'
 
 type Props = {
   edit: boolean,
   armes: string,
   armure: string,
   degats_armes: string,      // snake_case partout
-  modif_armure: number,
+  modif_armure: number | string,
   objets: Objet[],
   onAddObj: (obj: Objet) => void,
   onDelObj: (id: string) => void,
-  onChange: (field: string, value: any) => void,
+  onChange: CharacterChangeHandler,
 }
 
 const EquipPanel: FC<Props> = ({

@@ -1,5 +1,4 @@
 'use client'
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { FC, useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
@@ -8,68 +7,36 @@ import EquipTab from './EquipTab'
 import DescriptionPanel from '../character/DescriptionPanel'
 import CharacterSheetHeader from '../character/CharacterSheetHeader'
 import { useT } from '@/lib/useT'
+import {
+  type Character,
+  type CharacterSelection,
+  type CharacterChangeHandler,
+  type CustomField,
+  defaultCharacter,
+  normalizeCharacter,
+  parseSelectionKey,
+} from '@/types/character'
 
 type Props = {
-  perso: any // Fiche perso initiale
-  onUpdate: (perso: any) => void
+  perso: Character // Fiche perso initiale
+  onUpdate: (perso: Character) => void
   chatBoxRef?: React.RefObject<HTMLDivElement | null>
   creation?: boolean
   children?: React.ReactNode
-  allCharacters?: any[] // facultatif, si tu veux passer la liste complète
+  allCharacters?: Character[] // facultatif, si tu veux passer la liste complète
   logoOnly?: boolean
 }
 
-export const defaultPerso = {
-  nom: '',
-  race: '',
-  classe: '',
-  sexe: '',
-  age: '',
-  taille: '',
-  poids: '',
-  capacite_raciale: '',
-  niveau: 1,
-  pv: 10,
-  pv_max: 10,
-  force: 1,
-  dexterite: 1,
-  constitution: 1,
-  intelligence: 1,
-  sagesse: 1,
-  charisme: 1,
-  bourse: 0,
-  armes: '',
-  armure: '',
-  degats_armes: '',
-  modif_armure: 0,
-  competences: [],
-  objets: [],
-  traits: '',
-  ideal: '',
-  obligations: '',
-  failles: '',
-  avantages: '',
-  background: '',
-  champs_perso: [],
-  notes: '',
-  owner: '',
-}
+export const defaultPerso: Character = { ...defaultCharacter }
 
 const SELECTED_CHARACTER_KEY = 'selectedCharacterId'
 
-type StoredSelection = { owner: string | null; id: string | null }
-
-const loadSelectedCharacter = (): StoredSelection => {
+const loadSelectedCharacter = (): CharacterSelection => {
   if (typeof window === 'undefined') {
     return { owner: null, id: null }
   }
   const raw = localStorage.getItem(SELECTED_CHARACTER_KEY)
-  if (!raw) return { owner: null, id: null }
-  const [owner, id] = raw.includes('::') ? raw.split('::', 2) : [null, raw]
-  return {
-    owner: owner && owner.length ? owner : null,
-    id: id ?? null,
-  }
+  return parseSelectionKey(raw)
 }
 
 const CharacterSheet: FC<Props> = ({
@@ -84,7 +51,9 @@ const CharacterSheet: FC<Props> = ({
   // NE PAS relier edit à creation sauf à l'init
   const [edit, setEdit] = useState(!!creation)
   const [tab, setTab] = useState('main')
-  const [localPerso, setLocalPerso] = useState<any>(defaultPerso)
+  const [localPerso, setLocalPerso] = useState<Character>(() =>
+    normalizeCharacter(perso),
+  )
   const t = useT()
   const TABS = [
     { key: 'main', label: t('statsTab') },
@@ -112,24 +81,25 @@ const CharacterSheet: FC<Props> = ({
           c.id?.toString() === id && (!owner || c.owner === owner),
       )
       if (found) {
-        setLocalPerso({ ...found })
+        setLocalPerso(normalizeCharacter(found))
         return
       }
     }
     const fallback = Object.keys(perso || {}).length
       ? { ...perso }
       : { ...defaultPerso }
-    setLocalPerso(fallback)
+    setLocalPerso(normalizeCharacter(fallback))
   }, [perso, allCharacters])
 
   // Quand on QUITTE le mode édition, on recharge depuis les props
   useEffect(() => {
     if (!edit) {
-      setLocalPerso(Object.keys(perso || {}).length ? perso : defaultPerso)
+      const next = Object.keys(perso || {}).length ? perso : defaultPerso
+      setLocalPerso(normalizeCharacter(next))
     }
   }, [edit, perso])
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange: CharacterChangeHandler = (field, value) => {
     setLocalPerso({ ...localPerso, [field]: value })
   }
 
@@ -146,7 +116,7 @@ const CharacterSheet: FC<Props> = ({
   const [lastGain, setLastGain] = useState<number | null>(null)
   const [animKey, setAnimKey] = useState(0)
 
-  const cFiche = edit
+  const cFiche: Character = edit
     ? localPerso
     : Object.keys(perso || {}).length
       ? perso
@@ -155,10 +125,10 @@ const CharacterSheet: FC<Props> = ({
   const handleLevelUp = async () => {
     if (processing) return
     setProcessing(true)
-    let updatedPerso = {
+    let updatedPerso: Character = {
       ...cFiche,
       niveau: Number(cFiche.niveau) + 1,
-    } as Record<string, any>
+    }
     const pvMaxKey =
       updatedPerso.pv_max !== undefined
         ? 'pv_max'
@@ -218,7 +188,9 @@ const CharacterSheet: FC<Props> = ({
 
   const save = () => {
     setEdit(false)
-    onUpdate(localPerso)
+    const normalized = normalizeCharacter(localPerso)
+    setLocalPerso(normalized)
+    onUpdate(normalized)
   }
 
   // When collapsed, render only an expand button so the panel frees all space
@@ -332,15 +304,15 @@ const CharacterSheet: FC<Props> = ({
             setLocalPerso({
               ...localPerso,
               champs_perso: (localPerso.champs_perso || []).filter(
-                (c: any) => c.id !== id,
+                (c: CustomField) => c.id !== id,
               ),
             })
           }}
           onUpdateChamp={(id, champ) => {
             setLocalPerso({
               ...localPerso,
-              champs_perso: (localPerso.champs_perso || []).map((c: any) =>
-                c.id === id ? champ : c,
+              champs_perso: (localPerso.champs_perso || []).map(
+                (c: CustomField) => (c.id === id ? champ : c),
               ),
             })
           }}

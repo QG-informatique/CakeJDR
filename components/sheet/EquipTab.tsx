@@ -1,13 +1,17 @@
 'use client'
 import { FC } from 'react'
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import EquipPanel from '../character/EquipPanel'
+import {
+  type Character,
+  type CharacterChangeHandler,
+  type Objet,
+} from '@/types/character'
 
 interface Props {
   edit: boolean
-  localPerso: any
-  setLocalPerso: (p: any) => void
-  onChange: (field: string, value: any) => void
+  localPerso: Character
+  setLocalPerso: (p: Character) => void
+  onChange: CharacterChangeHandler
 }
 
 const EquipTab: FC<Props> = ({ edit, localPerso, setLocalPerso, onChange }) => (
@@ -21,13 +25,16 @@ const EquipTab: FC<Props> = ({ edit, localPerso, setLocalPerso, onChange }) => (
     onAddObj={(obj) =>
       setLocalPerso({
         ...localPerso,
-        objets: [...(localPerso.objets || []), { ...obj, id: crypto.randomUUID() }],
+        objets: [
+          ...(localPerso.objets || []),
+          { ...(obj as Objet), id: crypto.randomUUID() },
+        ],
       })
     }
     onDelObj={(id) =>
       setLocalPerso({
         ...localPerso,
-        objets: (localPerso.objets || []).filter((o: any) => o.id !== id),
+        objets: (localPerso.objets || []).filter((o) => o.id !== id),
       })
     }
     onChange={onChange}

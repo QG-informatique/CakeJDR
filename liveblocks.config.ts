@@ -1,6 +1,7 @@
 // Define Liveblocks types for your application
 // https://liveblocks.io/docs/api-reference/liveblocks-react#Typing-your-data
 import type { LiveMap, LiveObject, LiveList } from '@liveblocks/client'
+import type { Character } from '@/types/character'
 
 // Canvas images stored in Liveblocks. Keep in sync with components/canvas/ImageItem.tsx
 // but defined here to satisfy Liveblocks Lson constraints.
@@ -49,8 +50,7 @@ type Room = {
   owner?: string | null
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type CharacterData = any
+type CharacterData = Character
 declare global {
   interface Liveblocks {
     // Each user's Presence, for useMyPresence, useOthers, etc.
@@ -58,7 +58,7 @@ declare global {
       // Currently selected character data
       character?: CharacterData
       // Optional information about which character the GM is consulting
-      gmView?: { id: string | number; name?: string }
+      gmView?: { id: string; name?: string }
       // Cursor position in canvas coordinates
       cursor?: { x: number; y: number } | null
       // Display name and color for cursors

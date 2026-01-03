@@ -1,39 +1,41 @@
 'use client'
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { FC, useState } from 'react'
 import { useT } from '@/lib/useT'
 import type { TranslationKey } from '@/lib/translations'
+import {
+  type Character,
+  type CharacterChangeHandler,
+  type CustomField,
+} from '@/types/character'
 
-type CustomField = { id: string; label: string; value: string }
-
-type DescriptionValues = {
-  race: string,
-  classe: string,
-  sexe: string,
-  age: string | number,
-  taille: string,
-  poids: string,
-  capacite_raciale: string,
-  bourse: string | number,
-  traits: string,
-  ideal: string,
-  obligations: string,
-  failles: string,
-  avantages: string,
-  background: string,
-  champs_perso: CustomField[],
-  [key: string]: any
-}
+type DescriptionValues = Pick<
+  Character,
+  | 'race'
+  | 'classe'
+  | 'sexe'
+  | 'age'
+  | 'taille'
+  | 'poids'
+  | 'capacite_raciale'
+  | 'bourse'
+  | 'traits'
+  | 'ideal'
+  | 'obligations'
+  | 'failles'
+  | 'avantages'
+  | 'background'
+  | 'champs_perso'
+>
 
 type DescriptionPanelProps = {
-  edit: boolean,
-  values: DescriptionValues,
-  onChange: (field: string, value: any) => void,
-  champsPerso: CustomField[],
-  onAddChamp: (champ: CustomField) => void,
-  onDelChamp: (id: string) => void,
-  onUpdateChamp: (id: string, champ: CustomField) => void,
+  edit: boolean
+  values: DescriptionValues
+  onChange: CharacterChangeHandler
+  champsPerso: CustomField[]
+  onAddChamp: (champ: CustomField) => void
+  onDelChamp: (id: string) => void
+  onUpdateChamp: (id: string, champ: CustomField) => void
 }
 
 // See more / close with translation
