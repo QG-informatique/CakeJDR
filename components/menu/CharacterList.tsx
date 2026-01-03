@@ -2,18 +2,7 @@ import { FC, RefObject, useMemo } from 'react'
 import { Edit2, Trash2, Plus, Upload, Download, Cloud } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useT } from '@/lib/useT'
-
-export type Character = {
-  id: string | number
-  nom: string
-  owner: string
-  updatedAt?: number
-  niveau?: number
-  classe?: string
-  sexe?: string
-  race?: string
-  [key: string]: unknown
-}
+import { type Character, buildCharacterKey } from '@/types/character'
 
 interface Props {
   filtered: Character[]
@@ -98,7 +87,7 @@ const CharacterList: FC<Props> = ({
                 )
                 const local = localIdx !== -1
                 const localChar = local ? filtered.at(localIdx) : null
-                const cloudChar = remoteMap.get(`${ch.owner}:${String(ch.id)}`)
+                const cloudChar = remoteMap.get(buildCharacterKey(ch))
                 const cloud = !!cloudChar
                 const needsDownload =
                   (!local && cloud) ||
@@ -111,7 +100,7 @@ const CharacterList: FC<Props> = ({
                     (localChar?.updatedAt || 0) > (cloudChar?.updatedAt || 0))
                 return (
                   <motion.li
-                    key={`${ch.owner}:${ch.id}`}
+                    key={buildCharacterKey(ch)}
                     onClick={async () => {
                       if (local) {
                         onSelect(localIdx)

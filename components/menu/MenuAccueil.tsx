@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
@@ -17,37 +16,20 @@ import CharacterList from './CharacterList'
 import CharacterCloudModal from './CharacterCloudModal'
 import CharacterModal from './CharacterModal'
 import ProfileColorPicker from './ProfileColorPicker'
+import {
+  type Character,
+  buildCharacterKey,
+  buildSelectionKey,
+  normalizeCharacter,
+  parseSelectionKey,
+} from '@/types/character'
 
 const PROFILE_KEY = 'jdr_profile'
 const SELECTED_KEY = 'selectedCharacterId'
-type StoredSelection = { owner: string | null; id: string | null }
-
-const buildSelectionKey = (id: string | number | undefined, owner?: string) => {
-  if (!id) return ''
-  const idStr = String(id)
-  const ownerStr = owner ? String(owner) : ''
-  return ownerStr ? `${ownerStr}::${idStr}` : idStr
-}
-
-const parseSelectionKey = (raw: string | null): StoredSelection => {
-  if (!raw) return { owner: null, id: null }
-  const [owner, id] = raw.includes('::') ? raw.split('::', 2) : [null, raw]
-  return {
-    owner: owner && owner.length ? owner : null,
-    id: id ?? null,
-  }
-}
 // Dice button size consistent with main repo
 const DICE_SIZE = 44
 
 const ROOM_KEY = 'jdr_selected_room'
-
-type Character = {
-  id: string | number
-  nom: string
-  owner: string
-  [key: string]: any
-}
 
 export default function MenuAccueil() {
   const router = useRouter()
@@ -61,7 +43,7 @@ export default function MenuAccueil() {
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [draftChar, setDraftChar] = useState<Character>(
-    defaultPerso as unknown as Character,
+    normalizeCharacter(defaultPerso),
   )
   const [hydrated, setHydrated] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
@@ -77,6 +59,7 @@ export default function MenuAccueil() {
   useEffect(() => {
     setHydrated(true)
     try {
+      let fallbackOwner: string | undefined
       const raw = localStorage.getItem(PROFILE_KEY)
       if (raw) {
         const prof = JSON.parse(raw)
@@ -86,17 +69,20 @@ export default function MenuAccueil() {
             isMJ: !!prof.isMJ,
             color: prof.color || '#1d4ed8',
           })
+          fallbackOwner = prof.pseudo
         }
       }
-      const savedChars = JSON.parse(
-        localStorage.getItem('jdr_characters') || '[]',
-      )
+      const savedCharsRaw = localStorage.getItem('jdr_characters') || '[]'
+      const savedChars = JSON.parse(savedCharsRaw)
       if (Array.isArray(savedChars)) {
-        setCharacters(savedChars)
+        const normalized = savedChars.map((c: Character) =>
+          normalizeCharacter(c, fallbackOwner ?? null),
+        )
+        setCharacters(normalized)
         const selection = parseSelectionKey(localStorage.getItem(SELECTED_KEY))
         if (selection.id) {
-          const idx = savedChars.findIndex(
-            (c: any) =>
+          const idx = normalized.findIndex(
+            (c) =>
               c.id?.toString() === selection.id &&
               (!selection.owner || c.owner === selection.owner),
           )
@@ -106,17 +92,24 @@ export default function MenuAccueil() {
       const roomRaw = localStorage.getItem(ROOM_KEY)
       if (roomRaw) {
         try {
-          const r = JSON.parse(roomRaw)
-          if (r?.id) {
-            setSelectedRoom(r)
-            setRoomLoading(true)
-            fetch(`/api/roomstorage?roomId=${encodeURIComponent(r.id)}`)
+            const r = JSON.parse(roomRaw)
+            if (r?.id) {
+              setSelectedRoom(r)
+              setRoomLoading(true)
+              fetch(`/api/roomstorage?roomId=${encodeURIComponent(r.id)}`)
               .then((res) => res.json())
-          .then((data) => setRemoteChars(data.characters || {}))
+          .then((data) => {
+            const map: Record<string, Character> = {}
+            Object.values(data?.characters || {}).forEach((c) => {
+              const normalized = normalizeCharacter(c as Character, fallbackOwner ?? null)
+              map[buildCharacterKey(normalized)] = normalized
+            })
+            setRemoteChars(map)
+          })
           .catch(() => setRemoteChars({}))
               .finally(() => setRoomLoading(false))
-          }
-        } catch {}
+            }
+          } catch {}
       }
     } catch {}
   }, [])
@@ -176,8 +169,11 @@ export default function MenuAccueil() {
   }, [loggingOut])
 
   const saveCharacters = (chars: Character[]) => {
-    localStorage.setItem('jdr_characters', JSON.stringify(chars))
-    setCharacters(chars)
+    const normalized = chars.map((c) =>
+      normalizeCharacter(c, user?.pseudo ?? null),
+    )
+    localStorage.setItem('jdr_characters', JSON.stringify(normalized))
+    setCharacters(normalized)
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('jdr_characters_change'))
     }
@@ -218,18 +214,29 @@ export default function MenuAccueil() {
     localStorage.setItem(ROOM_KEY, JSON.stringify(room))
     fetch(`/api/roomstorage?roomId=${encodeURIComponent(room.id)}`)
       .then((res) => res.json())
-      .then((data) => setRemoteChars(data.characters || {}))
+      .then((data) => {
+        const map: Record<string, Character> = {}
+        Object.values(data?.characters || {}).forEach((c) => {
+          const normalized = normalizeCharacter(
+            c as Character,
+            user?.pseudo ?? null,
+          )
+          map[buildCharacterKey(normalized)] = normalized
+        })
+        setRemoteChars(map)
+      })
       .catch(() => setRemoteChars({}))
       .finally(() => setRoomLoading(false))
   }
 
   const handleNewCharacter = () => {
     if (!user) return
-    setDraftChar({
-      ...defaultPerso,
-      id: crypto.randomUUID(),
-      owner: user.pseudo,
-    })
+    setDraftChar(
+      normalizeCharacter(
+        { ...defaultPerso, id: crypto.randomUUID(), owner: user.pseudo },
+        user.pseudo,
+      ),
+    )
     setModalOpen(true)
   }
   const handleEditCharacter = (id: string | number) => {
@@ -243,22 +250,24 @@ export default function MenuAccueil() {
   const handleSaveDraft = () => {
     if (!user) return
     const id = draftChar.id || crypto.randomUUID()
-    const toSave = {
-      ...draftChar,
-      id,
-      nom: draftChar.nom || t('unnamed'),
-      owner: user.pseudo,
-      updatedAt: Date.now(),
-    }
-    const updated = characters.some((c) => c.id === id && c.owner === toSave.owner)
-      ? characters.map((c) =>
-          c.id === id && c.owner === toSave.owner ? toSave : c,
-        )
+    const toSave = normalizeCharacter(
+      {
+        ...draftChar,
+        id,
+        nom: draftChar.nom || t('unnamed'),
+        owner: user.pseudo,
+        updatedAt: Date.now(),
+      },
+      user.pseudo,
+    )
+    const key = buildCharacterKey(toSave)
+    const updated = characters.some((c) => buildCharacterKey(c) === key)
+      ? characters.map((c) => (buildCharacterKey(c) === key ? toSave : c))
       : [...characters, toSave]
     saveCharacters(updated)
-    localStorage.setItem(SELECTED_KEY, buildSelectionKey(id, toSave.owner))
+    localStorage.setItem(SELECTED_KEY, buildSelectionKey(toSave.id, toSave.owner))
     setModalOpen(false)
-    setSelectedIdx(updated.findIndex((c) => c.id === id))
+    setSelectedIdx(updated.findIndex((c) => buildCharacterKey(c) === key))
   }
 
   const handleDeleteChar = (id: string | number) => {
@@ -296,22 +305,32 @@ export default function MenuAccueil() {
     reader.onload = (evt) => {
       try {
         const imported = JSON.parse(evt.target?.result as string)
-        const id = imported.id || crypto.randomUUID()
-        if (!imported.owner && user) imported.owner = user.pseudo
-        const withId = { ...imported, id }
+        const normalized = normalizeCharacter(
+          {
+            ...imported,
+            id: imported.id || crypto.randomUUID(),
+            owner: imported.owner || user?.pseudo || '',
+          },
+          user?.pseudo ?? null,
+        )
+        const key = buildCharacterKey(normalized)
         const idx = characters.findIndex(
-          (c) => String(c.id) === String(id) && c.owner === withId.owner,
+          (c) => buildCharacterKey(c) === key,
         )
         const updated =
           idx !== -1
-            ? characters.map((c, i) => (i === idx ? withId : c))
-            : [...characters, withId]
+            ? characters.map((c, i) => (i === idx ? normalized : c))
+            : [...characters, normalized]
         saveCharacters(updated)
+        const newIdx =
+          idx !== -1
+            ? idx
+            : updated.findIndex((c) => buildCharacterKey(c) === key)
         localStorage.setItem(
           SELECTED_KEY,
-          buildSelectionKey(id, withId.owner),
+          buildSelectionKey(normalized.id, normalized.owner),
         )
-        setSelectedIdx(idx !== -1 ? idx : characters.length)
+        setSelectedIdx(newIdx !== -1 ? newIdx : updated.length - 1)
         setStatusMessage(t('importSuccess'))
       } catch {
         setStatusMessage(t('invalidFile'))
@@ -342,7 +361,10 @@ export default function MenuAccueil() {
   const handleUploadChar = async (char: Character) => {
     if (!selectedRoom || !user) return
     try {
-      const updatedChar = { ...char, updatedAt: Date.now() }
+      const updatedChar = normalizeCharacter(
+        { ...char, updatedAt: Date.now() },
+        user.pseudo,
+      )
       await fetch('/api/roomstorage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -355,7 +377,7 @@ export default function MenuAccueil() {
       })
       setRemoteChars((r) => ({
         ...r,
-        [`${char.owner}:${String(char.id)}`]: updatedChar,
+        [buildCharacterKey(updatedChar)]: updatedChar,
       }))
       setStatusMessage(t('saveCloud'))
     } catch {
@@ -364,40 +386,39 @@ export default function MenuAccueil() {
   }
 
   const handleDownloadChar = async (char: Character) => {
-    const idx = characters.findIndex(
-      (c) => String(c.id) === String(char.id) && c.owner === char.owner,
-    )
+    const normalized = normalizeCharacter(char, user?.pseudo ?? null)
+    const key = buildCharacterKey(normalized)
+    const idx = characters.findIndex((c) => buildCharacterKey(c) === key)
     const updated =
       idx !== -1
-        ? characters.map((c, i) => (i === idx ? char : c))
-        : [...characters, char]
+        ? characters.map((c, i) => (i === idx ? normalized : c))
+        : [...characters, normalized]
     saveCharacters(updated)
-    const newIdx = updated.findIndex(
-      (c) => String(c.id) === String(char.id) && c.owner === char.owner,
-    )
+    const newIdx = updated.findIndex((c) => buildCharacterKey(c) === key)
     if (newIdx !== -1) {
       setSelectedIdx(newIdx)
-      localStorage.setItem(
-        SELECTED_KEY,
-        buildSelectionKey(updated[newIdx]!.id, updated[newIdx]!.owner),
-      )
+      const selected = updated.at(newIdx)
+      if (selected) {
+        localStorage.setItem(
+          SELECTED_KEY,
+          buildSelectionKey(selected.id, selected.owner),
+        )
+      }
     }
     return newIdx
   }
 
   // FIX: Import depuis le Cloud (BLOB) vers le local et sélectionner
   const handleImportFromBlob = (char: Character) => {
-    const idx = characters.findIndex(
-      (c) => String(c.id) === String(char.id) && c.owner === char.owner,
-    )
+    const normalized = normalizeCharacter(char, user?.pseudo ?? null)
+    const key = buildCharacterKey(normalized)
+    const idx = characters.findIndex((c) => buildCharacterKey(c) === key)
     const updated =
       idx !== -1
-        ? characters.map((c, i) => (i === idx ? char : c))
-        : [...characters, char]
+        ? characters.map((c, i) => (i === idx ? normalized : c))
+        : [...characters, normalized]
     saveCharacters(updated)
-    const newIdx = updated.findIndex(
-      (c) => String(c.id) === String(char.id) && c.owner === char.owner,
-    )
+    const newIdx = updated.findIndex((c) => buildCharacterKey(c) === key)
     setSelectedIdx(newIdx === -1 ? null : newIdx)
     setStatusMessage(t('loadCloudSuccess'))
   }
@@ -411,7 +432,7 @@ export default function MenuAccueil() {
     )
     setRemoteChars((r) => {
       const next = { ...r }
-      delete next[`${char.owner}:${String(char.id)}`]
+      delete next[buildCharacterKey(char)]
       return next
     })
   }

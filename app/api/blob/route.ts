@@ -1,11 +1,11 @@
 export const runtime = 'nodejs'
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { put, del, list } from '@vercel/blob'
 import { NextResponse } from 'next/server'
 import { debug } from '@/lib/debug'
 
 const CACHE_TTL = 60000
-const listCache = new Map<string, { ts: number; files: any }>()
+type BlobList = Awaited<ReturnType<typeof list>>
+const listCache = new Map<string, { ts: number; files: BlobList }>()
 
 function invalidate(prefix: string) {
   listCache.delete(prefix)
@@ -18,7 +18,8 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (!filename) return NextResponse.json({ error: 'filename missing' }, { status: 400 })
 
   try {
-    const body = request.body as any
+    const body = request.body
+    if (!body) return NextResponse.json({ error: 'missing body' }, { status: 400 })
     const blob = await put(filename, body, { access: 'public' })
     debug('blob upload', filename)
     invalidate(filename.substring(0, filename.lastIndexOf('/') + 1) || '')

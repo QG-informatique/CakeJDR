@@ -1,6 +1,10 @@
 import { FC } from 'react'
 import { useT } from '@/lib/useT'
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import {
+  type Character,
+  type CharacterChangeHandler,
+} from '@/types/character'
+import type { TranslationKey } from '@/lib/translations'
 
 const STATS = [
   { key: 'force', label: 'strength' },
@@ -34,8 +38,8 @@ const getPvColor = (pv: number, pvMax: number) => {
 
 type Props = {
   edit: boolean
-  perso: any
-  onChange: (field: string, value: any) => void
+  perso: Character
+  onChange: CharacterChangeHandler
 }
 
 const StatsPanel: FC<Props> = ({ edit, perso, onChange }) => {
@@ -119,7 +123,7 @@ const StatsPanel: FC<Props> = ({ edit, perso, onChange }) => {
           <div className="font-semibold text-base mb-1">{t('attributes')}</div>
 {STATS.map(stat =>
   <div key={stat.key} className="flex gap-3 items-center mb-1">
-    <strong className="w-28 text-right">{t(stat.label as any)} :</strong>
+    <strong className="w-28 text-right">{t(stat.label as TranslationKey)} :</strong>
     {edit
       ? <>
           <input type="text" value={perso[stat.key] ?? ''} onChange={e => onChange(stat.key, e.target.value)} className="ml-2 px-1 py-0.5 rounded bg-white border w-10 text-sm text-black" />
@@ -149,7 +153,7 @@ const StatsPanel: FC<Props> = ({ edit, perso, onChange }) => {
           <div className="font-semibold text-base mb-1">{t('attackMods')}</div>
           {ATTACKS.map(att =>
             <div key={att.key} className="flex items-center mb-2 w-full justify-end">
-              <strong className="w-16 text-right">{t(att.label as any)}</strong>
+              <strong className="w-16 text-right">{t(att.label as TranslationKey)}</strong>
               {edit
                 ? <input type="text" value={perso[att.key] ?? ''} onChange={e => onChange(att.key, e.target.value)} className="ml-2 px-1 py-0.5 rounded bg-white border w-10 text-sm text-black text-right" />
                 : <span className="ml-3 px-2 py-0.5 rounded text-base font-bold bg-gray-700 text-white text-right">{perso[att.key] ?? 0}</span>

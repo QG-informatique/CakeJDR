@@ -4,14 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useOthers } from '@liveblocks/react'
 import { useT } from '@/lib/useT'
 import { User2 } from 'lucide-react'
-
-type Character = {
-  id: string | number
-  name?: string
-  nom?: string
-  owner?: string
-  ownerConnectionId?: number
-}
+import { type Character, normalizeCharacter } from '@/types/character'
 
 type Props = {
   onSelect: (char: Character) => void
@@ -25,7 +18,7 @@ export default function GMCharacterSelector({
   const others = useOthers()
   const [chars, setChars] = useState<Character[]>([])
   const [open, setOpen] = useState(false)
-  const [selectedId, setSelectedId] = useState<string | number | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const t = useT()
 
@@ -33,13 +26,12 @@ export default function GMCharacterSelector({
   useEffect(() => {
     const list = Array.from(others)
       .map((o): Character | null => {
-        const char = o.presence?.character as Character | undefined
-        if (!char || char.id === undefined) return null
-        return {
-          ...char,
-          ownerConnectionId:
-            char.ownerConnectionId ?? o.connectionId ?? undefined,
-        }
+        const raw = o.presence?.character as Character | undefined
+        if (!raw || raw.id === undefined) return null
+        return normalizeCharacter({
+          ...raw,
+          ownerConnectionId: raw.ownerConnectionId ?? o.connectionId ?? undefined,
+        })
       })
       .filter((c): c is Character => c !== null)
     setChars(list)
@@ -58,7 +50,7 @@ export default function GMCharacterSelector({
   }, [open])
 
   // Sélection du personnage
-  const handleSelect = (id: string | number) => {
+  const handleSelect = (id: string) => {
     const found = chars.find((c) => c.id === id)
     if (!found) return
 

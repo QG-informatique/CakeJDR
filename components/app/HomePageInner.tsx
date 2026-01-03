@@ -1,5 +1,4 @@
 'use client'
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useBroadcastEvent, useEventListener, useMyPresence, useSelf } from '@liveblocks/react'
@@ -20,23 +19,15 @@ import useProfile from './hooks/useProfile'
 import useOnlineStatus from './hooks/useOnlineStatus'
 import ErrorBoundary from '@/components/misc/ErrorBoundary'
 import { debug } from '@/lib/debug'
+import {
+  type Character,
+  buildCharacterKey,
+  buildSelectionKey,
+  normalizeCharacter,
+  parseSelectionKey,
+} from '@/types/character'
 
 const SELECTED_CHARACTER_KEY = 'selectedCharacterId'
-
-type StoredSelection = { owner: string | null; id: string | null }
-
-const buildSelectionKey = (id: string | number | undefined, owner?: string | null) => {
-  if (!id) return ''
-  const idStr = String(id)
-  const ownerStr = owner ? String(owner) : ''
-  return ownerStr ? `${ownerStr}::${idStr}` : idStr
-}
-
-const parseSelectionKey = (raw: string | null): StoredSelection => {
-  if (!raw) return { owner: null, id: null }
-  const [owner, id] = raw.includes('::') ? raw.split('::', 2) : [null, raw]
-  return { owner: owner && owner.length ? owner : null, id: id ?? null }
-}
 
 export default function HomePageInner() {
   const router = useRouter()
@@ -44,8 +35,10 @@ export default function HomePageInner() {
   const profile = useProfile()
   const self = useSelf()
   const myConnectionId = self?.connectionId ?? null
-  const [perso, setPerso] = useState(defaultPerso)
-  const [characters, setCharacters] = useState<any[]>([])
+  const [perso, setPerso] = useState<Character>(() =>
+    normalizeCharacter(defaultPerso),
+  )
+  const [characters, setCharacters] = useState<Character[]>([])
 
   const [showPopup, setShowPopup] = useState(false)
   const [diceType, setDiceType] = useState(6)
@@ -66,19 +59,20 @@ export default function HomePageInner() {
   const broadcast = useBroadcastEvent()
   const [, updateMyPresence] = useMyPresence()
 
-  const saveCharacterToCloud = useCallback(async (char: any) => {
+  const saveCharacterToCloud = useCallback(async (char: Character) => {
     if (!roomId) return
-    const owner = char.owner || profile?.pseudo
-    if (!owner || !char.id) return
+    const normalized = normalizeCharacter(char, profile?.pseudo ?? null)
+    const owner = normalized.owner || profile?.pseudo
+    if (!owner || !normalized.id) return
     try {
       await fetch('/api/roomstorage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           roomId,
-          id: char.id,
+          id: normalized.id,
           owner,
-          character: { ...char, owner },
+          character: { ...normalized, owner },
         }),
       })
     } catch {
@@ -87,7 +81,7 @@ export default function HomePageInner() {
   }, [roomId, profile?.pseudo])
 
   // listen for remote events
-  useEventListener((payload: any) => {
+  useEventListener((payload) => {
     const { event } = payload
     if (event.type === 'dice-roll') {
       const ts = typeof event.ts === 'number' ? event.ts : Date.now()
@@ -106,15 +100,12 @@ export default function HomePageInner() {
         return
       }
 
-      const incomingChar = event.character || defaultPerso
-      const safeChar = { ...incomingChar }
-      if (!safeChar.id) safeChar.id = crypto.randomUUID()
-      const owner = safeChar.owner ? String(safeChar.owner) : null
-
-      const finalChar = {
-        ...safeChar,
-        owner: owner || profile?.pseudo || safeChar.owner || null,
-      }
+      const incomingChar = normalizeCharacter(
+        event.character ?? defaultPerso,
+        profile?.pseudo ?? null,
+      )
+      const owner = incomingChar.owner || profile?.pseudo || ''
+      const finalChar: Character = { ...incomingChar, owner }
 
       setPerso(finalChar)
       updateMyPresence({
@@ -127,9 +118,7 @@ export default function HomePageInner() {
 
       setCharacters((prev) => {
         const idx = prev.findIndex(
-          (c) =>
-            String(c.id) === String(finalChar.id) &&
-            c.owner === finalChar.owner,
+          (c) => c.id === finalChar.id && c.owner === finalChar.owner,
         )
         const next =
           idx !== -1
@@ -171,13 +160,15 @@ export default function HomePageInner() {
 
   useEffect(() => {
     const savedChars = localStorage.getItem('jdr_characters')
-    let chars: any[] = []
+    let chars: Character[] = []
     if (savedChars) {
       try {
         const parsed = JSON.parse(savedChars)
         if (Array.isArray(parsed)) {
-          chars = parsed
-          setCharacters(parsed)
+          chars = parsed.map((c) =>
+            normalizeCharacter(c, profile?.pseudo ?? null),
+          )
+          setCharacters(chars)
         }
       } catch {}
     }
@@ -189,14 +180,17 @@ export default function HomePageInner() {
     const found =
       id && chars.length
         ? chars.find(
-            (c: any) =>
+            (c) =>
               c.id?.toString() === id && (!owner || c.owner === owner),
           )
         : null
 
     const nextChar = found
-      ? { ...found }
-      : { ...defaultPerso, owner: profile?.pseudo || defaultPerso.owner }
+      ? found
+      : normalizeCharacter(
+          { ...defaultPerso, owner: profile?.pseudo || defaultPerso.owner },
+          profile?.pseudo ?? null,
+        )
 
     setPerso(nextChar)
     updateMyPresence({
@@ -220,21 +214,26 @@ export default function HomePageInner() {
         const res = await fetch(`/api/roomstorage?roomId=${encodeURIComponent(roomId)}`)
         if (!res.ok) return
         const data = await res.json().catch(() => null)
-        const charsObj = (data?.characters as Record<string, any> | undefined) ?? {}
+        const charsObj = (data?.characters as Record<string, Character> | undefined) ?? {}
         const values = Object.values(charsObj)
         if (!values.length) return
         remoteLoadedRef.current = true
+        const normalizedValues = values.map((c) =>
+          normalizeCharacter(
+            { ...c, owner: c.owner || profile?.pseudo || 'anon' },
+            profile?.pseudo ?? null,
+          ),
+        )
         setCharacters((prev) => {
-          const map = new Map<string, any>()
-          prev.forEach((c) => map.set(`${c.owner ?? ''}:${String(c.id ?? '')}`, c))
-          values.forEach((c: any) => {
-            const owner = c.owner || profile?.pseudo || 'anon'
-            const key = `${owner}:${String(c.id ?? '')}`
+          const map = new Map<string, Character>()
+          prev.forEach((c) => map.set(buildCharacterKey(c), c))
+          normalizedValues.forEach((c) => {
+            const key = buildCharacterKey(c)
             const current = map.get(key)
             const currentTs = Number(current?.updatedAt ?? 0)
-            const incomingTs = Number(c?.updatedAt ?? 0)
+            const incomingTs = Number(c.updatedAt ?? 0)
             if (!current || incomingTs > currentTs) {
-              map.set(key, { ...c, owner })
+              map.set(key, c)
             }
           })
           const merged = Array.from(map.values())
@@ -244,13 +243,13 @@ export default function HomePageInner() {
           return merged
         })
         const preferred = (!perso?.id || characters.length === 0)
-          ? values.find((c: any) => c.owner === profile?.pseudo) ?? values[0]
+          ? normalizedValues.find((c) => c.owner === profile?.pseudo) ?? normalizedValues[0]
           : null
         if (preferred && !cancelled) {
-          const ensured = { ...preferred }
-          if (!ensured.id) ensured.id = crypto.randomUUID()
-          const owner = ensured.owner || profile?.pseudo || ensured.owner || null
-          const finalChar = { ...ensured, owner }
+          const finalChar = normalizeCharacter(
+            { ...preferred, owner: preferred.owner || profile?.pseudo || '' },
+            profile?.pseudo ?? null,
+          )
           setPerso(finalChar)
           updateMyPresence({
             character: {
@@ -280,18 +279,16 @@ export default function HomePageInner() {
     void saveCharacterToCloud(perso)
   }, [roomId, perso, saveCharacterToCloud])
 
-  const handleUpdatePerso = (incoming: any) => {
-    const ensuredOwner = incoming.owner || profile?.pseudo || incoming.owner || null
-    let id = incoming.id
-    if (!id) {
-      id = crypto.randomUUID()
-    }
-    const updatedPerso = {
-      ...incoming,
-      id,
-      owner: ensuredOwner,
-      updatedAt: Date.now(),
-    }
+  const handleUpdatePerso = (incoming: Character) => {
+    const updatedPerso = normalizeCharacter(
+      {
+        ...incoming,
+        owner: incoming.owner || profile?.pseudo || '',
+        updatedAt: Date.now(),
+      },
+      profile?.pseudo ?? null,
+    )
+    const characterKey = buildCharacterKey(updatedPerso)
 
     setPerso(updatedPerso)
     updateMyPresence({
@@ -304,34 +301,31 @@ export default function HomePageInner() {
     setCharacters((prevChars) => {
       let found = false
       const next = prevChars.map((c) => {
-        if (
-          String(c.id) === String(id) &&
-          c.owner === updatedPerso.owner
-        ) {
+        if (buildCharacterKey(c) === characterKey) {
           found = true
           return { ...c, ...updatedPerso }
         }
         return c
       })
-      if (!found) next.push(updatedPerso)
+      const finalList = found ? next : [...next, updatedPerso]
       if (typeof window !== 'undefined') {
-        localStorage.setItem('jdr_characters', JSON.stringify(next))
+        localStorage.setItem('jdr_characters', JSON.stringify(finalList))
         localStorage.setItem(
           SELECTED_CHARACTER_KEY,
-          buildSelectionKey(id, updatedPerso.owner ?? null),
+          buildSelectionKey(updatedPerso.id, updatedPerso.owner ?? null),
         )
         window.dispatchEvent(new Event('jdr_characters_change'))
       }
-      return next
+      return finalList
     })
     void saveCharacterToCloud(updatedPerso)
   }
 
-  const handleGMSelect = (char: any) => {
-    const next = {
-      ...char,
-      owner: char.owner || profile?.pseudo || char.owner || null,
-    }
+  const handleGMSelect = (char: Character) => {
+    const next = normalizeCharacter(
+      { ...char, owner: char.owner || profile?.pseudo || '' },
+      profile?.pseudo ?? null,
+    )
     setPerso(next)
     updateMyPresence({ gmView: { id: next.id, name: next.nom || next.name } })
     // Diffuse un événement d'observation (sans ciblage) pour information uniquement

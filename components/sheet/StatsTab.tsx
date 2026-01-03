@@ -1,16 +1,20 @@
 'use client'
 import { FC } from 'react'
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import StatsPanel from '../character/StatsPanel'
 import CompetencesPanel from '../character/CompetencesPanel'
 import LevelUpPanel from '../character/LevelUpPanel'
+import {
+  type Character,
+  type CharacterChangeHandler,
+  type Competence,
+} from '@/types/character'
 
 interface Props {
   edit: boolean
-  perso: any
-  onChange: (field: string, value: any) => void
-  setLocalPerso: (p: any) => void
-  localPerso: any
+  perso: Character
+  onChange: CharacterChangeHandler
+  setLocalPerso: (p: Character) => void
+  localPerso: Character
   dice: string
   setDice: (d: string) => void
   onLevelUp: () => Promise<void>
@@ -42,13 +46,18 @@ const StatsTab: FC<Props> = ({
       onAdd={(comp) =>
         setLocalPerso({
           ...localPerso,
-          competences: [...(localPerso.competences || []), comp],
+          competences: [
+            ...(localPerso.competences || []),
+            comp as Competence,
+          ],
         })
       }
       onDelete={(id) =>
         setLocalPerso({
           ...localPerso,
-          competences: (localPerso.competences || []).filter((c: any) => c.id !== id),
+          competences: (localPerso.competences || []).filter(
+            (c) => c.id !== id,
+          ),
         })
       }
     />

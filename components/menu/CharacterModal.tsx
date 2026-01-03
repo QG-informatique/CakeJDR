@@ -1,31 +1,14 @@
 'use client'
 import { FC } from "react"
 import { useT } from '@/lib/useT'
-import { Character } from "./CharacterList"
+import {
+  type Character,
+  type CharacterChangeHandler,
+} from '@/types/character'
 import StatsPanel from "../character/StatsPanel"
 import EquipPanel from "../character/EquipPanel"
 import DescriptionPanel from "../character/DescriptionPanel"
 import CompetencesPanel from "../character/CompetencesPanel" // ← Le bon nom !
-type Competence = { id: string; nom: string; type: string; effets: string; degats?: string }
-type Objet = { id: string; nom: string; quantite: number }
-type DescriptionValues = {
-  race: string
-  classe: string
-  sexe: string
-  age: string | number
-  taille: string
-  poids: string
-  capacite_raciale: string
-  bourse: string | number
-  traits: string
-  ideal: string
-  obligations: string
-  failles: string
-  avantages: string
-  background: string
-  champs_perso: { id: string; label: string; value: string }[]
-  [key: string]: unknown
-}
 
 interface Props {
   open: boolean
@@ -45,7 +28,7 @@ const CharacterModal: FC<Props> = ({
   const t = useT()
   if (!open || !character) return null
 
-  const handlePanelChange = (field: string, value: unknown) => {
+  const handlePanelChange: CharacterChangeHandler = (field, value) => {
     onUpdate({ ...character, [field]: value })
   }
 
@@ -98,18 +81,23 @@ const CharacterModal: FC<Props> = ({
                 </h3>
                 <EquipPanel
                   edit={true}
-                  armes={(character.armes as string) || ''}
-                  degats_armes={(character.degats_armes as string) || ''}
-                  armure={(character.armure as string) || ''}
-                  modif_armure={(character.modif_armure as number) ?? 0}
-                  objets={(character.objets as Objet[]) || []}
+                  armes={character.armes || ''}
+                  degats_armes={character.degats_armes || ''}
+                  armure={character.armure || ''}
+                  modif_armure={character.modif_armure ?? 0}
+                  objets={character.objets || []}
                   onChange={handlePanelChange}
                   onAddObj={(obj) => {
-                    const objets = [...((character.objets as Objet[]) || []), { ...obj, id: crypto.randomUUID() }]
+                    const objets = [
+                      ...(character.objets || []),
+                      { ...obj, id: crypto.randomUUID() },
+                    ]
                     handlePanelChange("objets", objets)
                   }}
                   onDelObj={(id) => {
-                    const objets = ((character.objets as Objet[]) || []).filter((o) => o.id !== id)
+                    const objets = (character.objets || []).filter(
+                      (o) => o.id !== id,
+                    )
                     handlePanelChange("objets", objets)
                   }}
                 />
@@ -120,14 +108,16 @@ const CharacterModal: FC<Props> = ({
                   {t('skills')}
                 </h3>
                 <CompetencesPanel
-                  competences={(character.competences as Competence[]) || []}
+                  competences={character.competences || []}
                   edit={true}
                   onAdd={(comp) => {
-                    const nv = [...((character.competences as Competence[]) || []), comp]
+                    const nv = [...(character.competences || []), comp]
                     handlePanelChange("competences", nv)
                   }}
                   onDelete={(id) => {
-                    const nv = ((character.competences as Competence[]) || []).filter((c) => c.id !== id)
+                    const nv = (character.competences || []).filter(
+                      (c) => c.id !== id,
+                    )
                     handlePanelChange("competences", nv)
                   }}
                 />
@@ -142,26 +132,26 @@ const CharacterModal: FC<Props> = ({
                 {t('description')}
               </h3>
               <DescriptionPanel
-                values={character as unknown as DescriptionValues}
+                values={character}
                 edit={true}
                 onChange={handlePanelChange}
-                champsPerso={(character.champs_perso as { id: string; label: string; value: string }[]) ?? []}
+                champsPerso={character.champs_perso || []}
                 onAddChamp={champ =>
                   handlePanelChange(
                     "champs_perso",
-                    [...((character.champs_perso as { id: string; label: string; value: string }[]) ?? []), champ]
+                    [...(character.champs_perso || []), champ]
                   )
                 }
                 onDelChamp={id =>
                   handlePanelChange(
                     "champs_perso",
-                    ((character.champs_perso as { id: string; label: string; value: string }[]) ?? []).filter(c => c.id !== id)
+                    (character.champs_perso || []).filter(c => c.id !== id)
                   )
                 }
                 onUpdateChamp={(id, champ) =>
                   handlePanelChange(
                     "champs_perso",
-                    ((character.champs_perso as { id: string; label: string; value: string }[]) ?? []).map(c =>
+                    (character.champs_perso || []).map(c =>
                       c.id === id ? champ : c
                     )
                   )
@@ -213,3 +203,4 @@ const CharacterModal: FC<Props> = ({
 }
 
 export default CharacterModal
+
