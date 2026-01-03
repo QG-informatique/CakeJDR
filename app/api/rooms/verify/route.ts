@@ -5,6 +5,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { Liveblocks } from "@liveblocks/node";
 import crypto from "node:crypto";
 
+type LiveblocksMetadata = Record<string, string | string[] | null>;
+
 interface RoomMetadata {
   password?: string | null;
   passwordHash?: string | null;
@@ -13,13 +15,19 @@ interface RoomMetadata {
 
 const sha256 = (s: string) => crypto.createHash("sha256").update(s).digest("hex");
 
-function sanitizeMetadata(meta: RoomMetadata): Record<string, unknown> {
-  const out: Record<string, unknown> = {};
+function sanitizeMetadata(meta: RoomMetadata): LiveblocksMetadata {
+  const out: LiveblocksMetadata = {};
   for (const [k, v] of Object.entries(meta)) {
     if (v === undefined) continue;
     // Drop any legacy plaintext password value from metadata
     if (k === "password") continue;
-    out[k] = v;
+    if (v === null) {
+      out[k] = null;
+    } else if (typeof v === "string") {
+      out[k] = v;
+    } else if (typeof v === "boolean") {
+      out[k] = v ? "1" : "0";
+    }
   }
   return out;
 }
@@ -42,7 +50,7 @@ export async function POST(req: NextRequest) {
     const room = await lb.getRoom(id).catch(() => null);
     if (!room) return bad("Room not found", 404);
 
-    const meta = (room as { metadata?: RoomMetadata })?.metadata ?? {};
+    const meta = ((room as { metadata?: RoomMetadata })?.metadata ?? {}) as RoomMetadata;
     const storedPlain = typeof meta.password === "string" && meta.password.length ? meta.password : null;
     let storedHash = typeof meta.passwordHash === "string" && meta.passwordHash.length ? meta.passwordHash : null;
     const hasPassword =
@@ -63,7 +71,7 @@ export async function POST(req: NextRequest) {
       storedHash = sha256(storedPlain);
       const nextMeta = sanitizeMetadata(meta);
       nextMeta.passwordHash = storedHash;
-      nextMeta.hasPassword = true;
+      nextMeta.hasPassword = "1";
       try {
         await lb.updateRoom(id, { metadata: nextMeta });
       } catch {
