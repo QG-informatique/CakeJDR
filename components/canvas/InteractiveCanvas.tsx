@@ -88,9 +88,18 @@ export default function InteractiveCanvas() {
   const [pendingImages, setPendingImages] = useState<ImageData[]>([])
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
   const [renderVersion, setRenderVersion] = useState(0)
-  const scheduleRender = useCallback(() => setRenderVersion((v) => v + 1), [])
+  const renderRaf = useRef<number | null>(null)
+  const scheduleRender = useCallback(() => {
+    if (renderRaf.current !== null) return
+    renderRaf.current = requestAnimationFrame(() => {
+      renderRaf.current = null
+      setRenderVersion((v) => v + 1)
+    })
+  }, [])
   const localTransforms = useRef(new Map<string, Partial<ImageData>>())
   const imagesRef = useRef<ImageData[]>([])
+  const prevCanvasSizeRef = useRef({ width: 0, height: 0 })
+  useEffect(() => () => { if (renderRaf.current !== null) cancelAnimationFrame(renderRaf.current) }, [])
 
   const imagesToRender = useMemo(() => {
     void renderVersion
@@ -136,11 +145,11 @@ export default function InteractiveCanvas() {
 
   // Canvas sizing + redraw
   useEffect(() => {
-    const handleResize = () => {
-      const rect = drawingCanvasRef.current?.getBoundingClientRect()
-      if (!rect) return
-      const ratio = window.devicePixelRatio || 1
-      const canvas = drawingCanvasRef.current!
+  const handleResize = () => {
+    const rect = drawingCanvasRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const ratio = window.devicePixelRatio || 1
+    const canvas = drawingCanvasRef.current!
       canvas.width = Math.max(1, Math.floor(rect.width * ratio))
       canvas.height = Math.max(1, Math.floor(rect.height * ratio))
       setCanvasSize({ width: rect.width, height: rect.height })
@@ -168,6 +177,31 @@ export default function InteractiveCanvas() {
     ctx.clearRect(0, 0, rect.width, rect.height)
     strokes.forEach((s) => drawStrokeSegment(ctx, s))
   }, [strokes])
+
+  // Recenter canvas content when the available surface changes size (e.g., window resize)
+  useEffect(() => {
+    const prev = prevCanvasSizeRef.current
+    const { width, height } = canvasSize
+    if (!width || !height) {
+      prevCanvasSizeRef.current = canvasSize
+      return
+    }
+    if (prev.width === width && prev.height === height) return
+    const dx = (width - prev.width) / 2
+    const dy = (height - prev.height) / 2
+    prevCanvasSizeRef.current = canvasSize
+    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return
+    imagesToRender.forEach((img) => {
+      const nx = clamp((img.x ?? 0) + dx, 0, Math.max(0, width - (img.width ?? 0)))
+      const ny = clamp((img.y ?? 0) + dy, 0, Math.max(0, height - (img.height ?? 0)))
+      updateImageTransform(String(img.id), {
+        x: nx,
+        y: ny,
+        xRatio: roundRatio(width ? nx / width : 0),
+        yRatio: roundRatio(height ? ny / height : 0),
+      })
+    })
+  }, [canvasSize, imagesToRender, updateImageTransform])
 
   // Mutations
   const addImage = useMutation(({ storage }, img: ImageData) => {
@@ -265,8 +299,9 @@ export default function InteractiveCanvas() {
     if (!rect) return
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
-    setMousePos({ x, y })
-    updateMyPresence({ cursor: { x, y } })
+    const pos = { x, y }
+    if (drawMode === 'draw' || drawMode === 'erase') setMousePos(pos)
+    updateMyPresence({ cursor: pos })
     if ((drawMode === 'draw' || drawMode === 'erase') && isDrawing && lastPointRef.current) {
       const prev = lastPointRef.current
       const seg: StrokeSegment = { id: crypto.randomUUID(), x1: prev.x, y1: prev.y, x2: x, y2: y, color, width: brushSize, mode: drawMode }

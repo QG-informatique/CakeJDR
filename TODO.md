@@ -2,7 +2,6 @@ TODO (prochaines itérations)
 
 Bloquants / Build
 - Vérifier le build Next 15/React 19 avec TypeScript et ESLint après installation locale (npm indisponible ici). Corriger tout warning critique d’hydratation si présent.
-- Mettre à jour l’endpoint `/api/cloudinary` pour définir par défaut le preset « CakeJDR-DU6-image » (si variable d’env absente). Note: patch côté serveur à appliquer localement si nécessaire.
 
 Rooms / Auth
 - Ajouter un petit loader « jeu vidéo » lors de la vérification du mot de passe (RoomList/RoomsPage montrent déjà un indicateur minimal; possibilité d’améliorer via framer-motion + progress bar).

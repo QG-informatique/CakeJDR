@@ -1,7 +1,7 @@
 'use client'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useBroadcastEvent, useEventListener, useMyPresence, useSelf } from '@liveblocks/react'
 import { useRouter, useParams } from 'next/navigation'
 import CharacterSheet, { defaultPerso } from '@/components/sheet/CharacterSheet'
@@ -59,11 +59,32 @@ export default function HomePageInner() {
   const [canvasKey, setCanvasKey] = useState(0)
   const lastRollTs = useRef<number | null>(null)
   const [cooldown, setCooldown] = useState(false)
+  const remoteLoadedRef = useRef(false)
   // total durée d'indisponibilité du bouton (animation + hold + cooldown)
   const ROLL_TOTAL_MS = 2000 + 300 + 2000 + 1000
 
   const broadcast = useBroadcastEvent()
   const [, updateMyPresence] = useMyPresence()
+
+  const saveCharacterToCloud = useCallback(async (char: any) => {
+    if (!roomId) return
+    const owner = char.owner || profile?.pseudo
+    if (!owner || !char.id) return
+    try {
+      await fetch('/api/roomstorage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roomId,
+          id: char.id,
+          owner,
+          character: { ...char, owner },
+        }),
+      })
+    } catch {
+      // best-effort : ne bloque pas l'UI en cas d'échec réseau
+    }
+  }, [roomId, profile?.pseudo])
 
   // listen for remote events
   useEventListener((payload: any) => {
@@ -102,6 +123,7 @@ export default function HomePageInner() {
           ownerConnectionId: myConnectionId ?? undefined,
         },
       })
+      void saveCharacterToCloud(finalChar)
 
       setCharacters((prev) => {
         const idx = prev.findIndex(
@@ -189,6 +211,75 @@ export default function HomePageInner() {
     }
   }, [profile?.pseudo, myConnectionId, updateMyPresence])
 
+  // Chargement automatique des fiches stockées côté serveur (Liveblocks storage)
+  useEffect(() => {
+    if (!roomId || remoteLoadedRef.current) return
+    let cancelled = false
+    const loadRemote = async () => {
+      try {
+        const res = await fetch(`/api/roomstorage?roomId=${encodeURIComponent(roomId)}`)
+        if (!res.ok) return
+        const data = await res.json().catch(() => null)
+        const charsObj = (data?.characters as Record<string, any> | undefined) ?? {}
+        const values = Object.values(charsObj)
+        if (!values.length) return
+        remoteLoadedRef.current = true
+        setCharacters((prev) => {
+          const map = new Map<string, any>()
+          prev.forEach((c) => map.set(`${c.owner ?? ''}:${String(c.id ?? '')}`, c))
+          values.forEach((c: any) => {
+            const owner = c.owner || profile?.pseudo || 'anon'
+            const key = `${owner}:${String(c.id ?? '')}`
+            const current = map.get(key)
+            const currentTs = Number(current?.updatedAt ?? 0)
+            const incomingTs = Number(c?.updatedAt ?? 0)
+            if (!current || incomingTs > currentTs) {
+              map.set(key, { ...c, owner })
+            }
+          })
+          const merged = Array.from(map.values())
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('jdr_characters', JSON.stringify(merged))
+          }
+          return merged
+        })
+        const preferred = (!perso?.id || characters.length === 0)
+          ? values.find((c: any) => c.owner === profile?.pseudo) ?? values[0]
+          : null
+        if (preferred && !cancelled) {
+          const ensured = { ...preferred }
+          if (!ensured.id) ensured.id = crypto.randomUUID()
+          const owner = ensured.owner || profile?.pseudo || ensured.owner || null
+          const finalChar = { ...ensured, owner }
+          setPerso(finalChar)
+          updateMyPresence({
+            character: {
+              ...finalChar,
+              ownerConnectionId: myConnectionId ?? undefined,
+            },
+          })
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(
+              SELECTED_CHARACTER_KEY,
+              buildSelectionKey(finalChar.id, finalChar.owner ?? null),
+            )
+          }
+        }
+      } catch {
+        // réseau indisponible : on ne bloque pas l'UX
+      }
+    }
+    void loadRemote()
+    return () => { cancelled = true }
+  }, [roomId, profile?.pseudo, updateMyPresence, myConnectionId, perso?.id, characters.length])
+
+  // Sauvegarde initiale silencieuse dans le cloud pour éviter la perte de fiche
+  useEffect(() => {
+    if (!roomId || !perso?.id || initialBackupDone.current) return
+    initialBackupDone.current = true
+    void saveCharacterToCloud(perso)
+  }, [roomId, perso, saveCharacterToCloud])
+
   const handleUpdatePerso = (incoming: any) => {
     const ensuredOwner = incoming.owner || profile?.pseudo || incoming.owner || null
     let id = incoming.id
@@ -233,6 +324,7 @@ export default function HomePageInner() {
       }
       return next
     })
+    void saveCharacterToCloud(updatedPerso)
   }
 
   const handleGMSelect = (char: any) => {
@@ -345,3 +437,8 @@ export default function HomePageInner() {
     </div>
   )
 }
+
+
+
+
+

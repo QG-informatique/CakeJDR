@@ -10,7 +10,7 @@ const CLOUD_NAME =
 const UPLOAD_PRESET =
   process.env.CLOUDINARY_UPLOAD_PRESET ||
   process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET ||
-  "cakejdr-images"; // preset non signé
+  "CakeJDR-DU6-image"; // preset non signe, aligne sur le client
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const ALLOWED_TYPES = new Set([
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     if (file.size > MAX_BYTES) return bad(`File too large (max ${Math.round(MAX_BYTES / (1024 * 1024))}MB)`);
     if (file.type && !ALLOWED_TYPES.has(file.type)) return bad(`Unsupported file type: ${file.type}`);
 
-    // Upload non signé (pas d'option 'eager' autorisée ici)
+    // Upload non signe (pas d'option 'eager' autorisee ici)
     const cloudForm = new FormData();
     cloudForm.append("file", file);
     cloudForm.append("upload_preset", UPLOAD_PRESET);
@@ -58,7 +58,7 @@ export async function POST(req: Request) {
 
     const publicId: string = data.public_id;
 
-    // Delivery URLs optimisées (générées à la demande par le CDN)
+    // Delivery URLs optimisees (generees a la demande par le CDN)
     const deliveryUrl = buildDeliveryUrl(
       publicId,
       "f_auto,q_auto:good,c_limit,w_1600,dpr_auto"
