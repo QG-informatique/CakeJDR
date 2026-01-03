@@ -37,14 +37,14 @@ export async function listRooms() {
           : r.id.includes('-')
             ? r.id.substring(0, r.id.lastIndexOf('-'))
             : r.id
-      const meta = (r.metadata ?? {}) as Record<string, string | string[] | null>
+      const meta = (r.metadata ?? {}) as Record<string, string | string[]>
       // FIX: compute boolean without leaking value
       const hasPassword =
-        typeof meta.password === 'string' && meta.password.length > 0
-          ? true
-          : typeof meta.passwordHash === 'string' && meta.passwordHash.length > 0
-            ? true
-            : meta.hasPassword === true || meta.hasPassword === '1'
+        (typeof meta.password === 'string' && meta.password.length > 0) ||
+        (typeof meta.passwordHash === 'string' && meta.passwordHash.length > 0) ||
+        (typeof meta.hasPassword === 'string' &&
+          (meta.hasPassword === '1' ||
+            meta.hasPassword.toLowerCase() === 'true'))
       rooms.push({
         id: r.id,
         name: roomName,
@@ -83,7 +83,7 @@ export async function createRoom(name: string, password?: string) {
 
   // 3) Idempotence côté serveur
   // FIX: only keep a password hash in metadata
-  const metadata: Record<string, string | string[] | null> = { name }
+  const metadata: Record<string, string | string[]> = { name }
   if (password) {
     metadata.passwordHash = hashPassword(password)
     metadata.hasPassword = '1'
@@ -108,14 +108,12 @@ export async function renameRoom(id: string, name: string) {
   if (!secret) throw new Error('Liveblocks key missing')
   const client = new Liveblocks({ secret })
   const room = await client.getRoom(id)
-  const metadata: Record<string, string | string[] | null> = {}
+  const metadata: Record<string, string | string[]> = {}
   if (typeof room.metadata === 'object' && room.metadata !== null) {
-    for (const [k, v] of Object.entries(room.metadata as Record<string, string | string[] | null>)) {
+    for (const [k, v] of Object.entries(room.metadata as Record<string, unknown>)) {
       if (typeof v === 'string') metadata[k] = v
       else if (Array.isArray(v) && v.every((x) => typeof x === 'string')) {
-        metadata[k] = v
-      } else if (v === null) {
-        metadata[k] = null
+        metadata[k] = v as string[]
       }
     }
   }

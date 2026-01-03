@@ -20,6 +20,8 @@ const ALLOWED_TYPES = new Set([
   "image/gif",
   "image/svg+xml",
 ]);
+const BASE_TRANSFORM = "f_auto,q_auto,c_limit,w_2048,h_2048";
+const THUMB_TRANSFORM = `${BASE_TRANSFORM}/e_blur:1000,w_256,h_256`;
 
 function bad(msg: string, code = 400) {
   return NextResponse.json({ error: msg }, { status: code });
@@ -61,11 +63,11 @@ export async function POST(req: Request) {
     // Delivery URLs optimisees (generees a la demande par le CDN)
     const deliveryUrl = buildDeliveryUrl(
       publicId,
-      "f_auto,q_auto:good,c_limit,w_1600,dpr_auto"
+      BASE_TRANSFORM
     );
     const thumbUrl = buildDeliveryUrl(
       publicId,
-      "f_auto,q_auto:eco,c_limit,w_64,e_blur:1000"
+      THUMB_TRANSFORM
     );
 
     return NextResponse.json({

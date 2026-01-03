@@ -11,6 +11,11 @@ import MusicPanel from './MusicPanel'
 import ImageItem, { ImageData } from './ImageItem'
 import SideNotes from '@/components/misc/SideNotes'
 import { useT } from '@/lib/useT'
+import {
+  extractUploadErrorInfo,
+  uploadImageToCloudinary,
+  UploadError,
+} from '@/lib/uploadImage'
 
 type StrokeSegment = {
   id: string
@@ -29,6 +34,7 @@ const roundRatio = (v: number) => Math.round(v * 1000) / 1000
 
 export default function InteractiveCanvas() {
   const t = useT()
+  const isDev = process.env.NODE_ENV !== 'production'
   // Storage
   const imagesMap = useStorage((root) => root.images)
   const strokesList = useStorage((root) => root.strokes) as LiveList<StrokeSegment> | null
@@ -86,6 +92,8 @@ export default function InteractiveCanvas() {
 
   // Images helpers
   const [pendingImages, setPendingImages] = useState<ImageData[]>([])
+  const [uploadMessage, setUploadMessage] = useState<string | null>(null)
+  const [uploadDebug, setUploadDebug] = useState<string | null>(null)
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
   const [renderVersion, setRenderVersion] = useState(0)
   const renderRaf = useRef<number | null>(null)
@@ -354,29 +362,57 @@ export default function InteractiveCanvas() {
   const handleImageError = (id: string) => deleteImage(id)
 
   // Upload helpers
-  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-  const MAX_SIZE_MB = 20
   const fileToObjectURL = (file: File) => URL.createObjectURL(file)
+  const resetUploadFeedback = useCallback(() => {
+    setUploadMessage(null)
+    setUploadDebug(null)
+  }, [])
+  const handleUploadError = useCallback(
+    (error: unknown) => {
+      const info = extractUploadErrorInfo(error)
+      setUploadMessage(info.userMessage)
+      const debugParts: string[] = []
+      if (info.step) debugParts.push(info.step)
+      if (info.code) debugParts.push(info.code)
+      const debugMessage = debugParts.length ? debugParts.join(' · ') : null
+      setUploadDebug(isDev ? debugMessage : null)
+      if (isDev) {
+        console.error('Image upload failed', error, info.details ?? info)
+      }
+    },
+    [isDev],
+  )
   async function uploadOneImage(file: File, dropX: number, dropY: number) {
-    if (!ALLOWED_TYPES.includes(file.type) || file.size > MAX_SIZE_MB * 1024 * 1024) { alert('Invalid image file'); return }
+    resetUploadFeedback()
     const localUrl = fileToObjectURL(file)
     const tempId = `${Date.now()}-${Math.random().toString(36).slice(2)}`
     const baseImg: ImageData = { id: tempId, url: localUrl, x: dropX - 100, y: dropY - 100, width: 200, height: 200 }
     setPendingImages((prev) => [...prev, baseImg])
     try {
-      const form = new FormData()
-      form.append('file', file)
-      form.append('upload_preset', 'CakeJDR-DU6-image') // FIX: preset alignment
-      const res = await fetch('/api/cloudinary', { method: 'POST', body: form })
-      const data = await res.json().catch(() => null)
-      if (!res.ok || !data) throw new Error(data?.error || 'Upload failed')
-      const finalUrl: string = data.deliveryUrl || data.url
-      if (!finalUrl) throw new Error('No URL returned by Cloudinary endpoint')
-      const normalized = { ...baseImg, url: finalUrl, createdAt: Date.now() }
-      addImage(normalized)
-    } catch (err) {
-      console.error(err)
-      alert('Image upload failed')
+      const uploadResult = await uploadImageToCloudinary(file)
+      const finalUrl = uploadResult.deliveryUrl ?? uploadResult.url
+      const normalized: ImageData = {
+        ...baseImg,
+        url: finalUrl,
+        width: uploadResult.width ?? baseImg.width,
+        height: uploadResult.height ?? baseImg.height,
+        createdAt: Date.now(),
+      }
+      try {
+        addImage(normalized)
+        resetUploadFeedback()
+      } catch (integrationError) {
+        const message =
+          integrationError instanceof Error ? integrationError.message : 'Integration failed'
+        throw new UploadError({
+          code: 'UNKNOWN_UPLOAD_ERROR',
+          step: 'POST_UPLOAD',
+          userMessage: "Impossible d'ajouter l'image au canvas.",
+          details: { message },
+        })
+      }
+    } catch (error) {
+      handleUploadError(error)
     } finally {
       setPendingImages((prev) => prev.filter((i) => i.id !== tempId))
       URL.revokeObjectURL(localUrl)
@@ -388,7 +424,6 @@ export default function InteractiveCanvas() {
     if (!rect) return
     const files = Array.from(e.dataTransfer.files)
     for (const file of files) {
-      if (!file.type.startsWith('image/')) continue
       await uploadOneImage(file, e.clientX - rect.left, e.clientY - rect.top)
     }
   }
@@ -431,6 +466,14 @@ export default function InteractiveCanvas() {
             <span className="text-sm">{t('tools')}</span>
           </button>
         </div>
+        {uploadMessage && (
+          <div className="absolute top-3 right-3 z-40 max-w-sm pointer-events-auto rounded-xl bg-black/80 text-white px-4 py-3 shadow-lg border border-white/10 backdrop-blur-sm">
+            <p className="text-sm font-semibold leading-snug">{uploadMessage}</p>
+            {isDev && uploadDebug && (
+              <p className="mt-1 text-xs text-amber-100/80">[{uploadDebug}]</p>
+            )}
+          </div>
+        )}
         {toolsVisible && (
           <div className="absolute top-3 left-36 z-30 origin-top-left pointer-events-auto">
             <CanvasTools drawMode={drawMode} setDrawMode={setDrawMode} color={color} setColor={setColor} brushSize={brushSize} setPenSize={setPenSize} setEraserSize={setEraserSize} clearCanvas={clearStrokes} onAddImage={() => imageInputRef.current?.click()} />
