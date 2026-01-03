@@ -37,7 +37,7 @@ export async function listRooms() {
           : r.id.includes('-')
             ? r.id.substring(0, r.id.lastIndexOf('-'))
             : r.id
-      const meta = (r.metadata ?? {}) as Record<string, unknown>
+      const meta = (r.metadata ?? {}) as Record<string, string | string\[\] | null>
       // FIX: compute boolean without leaking value
       const hasPassword =
         typeof meta.password === 'string' && meta.password.length > 0
@@ -83,7 +83,7 @@ export async function createRoom(name: string, password?: string) {
 
   // 3) Idempotence côté serveur
   // FIX: only keep a password hash in metadata
-  const metadata: Record<string, unknown> = { name }
+  const metadata: Record<string, string | string\[\] | null> = { name }
   if (password) {
     metadata.passwordHash = hashPassword(password)
     metadata.hasPassword = '1'
@@ -110,7 +110,7 @@ export async function renameRoom(id: string, name: string) {
   const room = await client.getRoom(id)
   const metadata: Record<string, string | string[] | null> = {}
   if (typeof room.metadata === 'object' && room.metadata !== null) {
-    for (const [k, v] of Object.entries(room.metadata as Record<string, unknown>)) {
+    for (const [k, v] of Object.entries(room.metadata as Record<string, string | string\[\] | null>)) {
       if (typeof v === 'string') metadata[k] = v
       else if (Array.isArray(v) && v.every((x) => typeof x === 'string')) {
         metadata[k] = v
