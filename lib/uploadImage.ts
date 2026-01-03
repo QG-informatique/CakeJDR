@@ -234,7 +234,7 @@ export const uploadImageToCloudinary = async (
     throw buildUploadError(
       'UNKNOWN_UPLOAD_ERROR',
       'CLOUDINARY_RESULT',
-      'Échec inattendu de l’upload.',
+      "Échec inattendu de l'upload.",
       { message },
     )
   }
