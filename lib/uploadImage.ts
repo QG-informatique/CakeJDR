@@ -30,6 +30,7 @@ export type UploadErrorCode =
   | 'CLOUDINARY_UPLOAD_FAILED'
   | 'CLOUDINARY_MISSING_URL'
   | 'RESPONSE_PARSE_ERROR'
+  | 'POST_UPLOAD_FAILED'
   | 'UNKNOWN_UPLOAD_ERROR'
 
 export type CloudinaryResult = {
@@ -193,13 +194,29 @@ const normalizeResult = (body: Record<string, unknown>): CloudinaryResult => {
   }
 }
 
+const readServerErrorMessage = (body: Record<string, unknown>): string | undefined => {
+  const rawError = body.error
+  if (typeof rawError === 'string' && rawError.trim().length > 0) {
+    return rawError
+  }
+  if (isRecord(rawError) && typeof rawError.message === 'string' && rawError.message.trim().length > 0) {
+    return rawError.message
+  }
+  return undefined
+}
+
 const mapHttpError = (status: number, body: Record<string, unknown>): UploadError => {
   const code: UploadErrorCode = status >= 500 ? 'API_HTTP_5XX' : 'API_HTTP_4XX'
-  const userMessage =
+  const baseMessage =
     status >= 500
       ? 'Le serveur Cloudinary a rencontré une erreur.'
       : "La requête d'upload a été refusée."
-  return buildUploadError(code, 'REPONSE_SERVEUR', userMessage, { status, body })
+  const serverMessage = readServerErrorMessage(body)
+  const userMessage = serverMessage ? `${baseMessage} (${serverMessage})` : baseMessage
+  const details: UploadErrorDetails = serverMessage
+    ? { status, body, serverMessage }
+    : { status, body }
+  return buildUploadError(code, 'REPONSE_SERVEUR', userMessage, details)
 }
 
 export const uploadImageToCloudinary = async (
