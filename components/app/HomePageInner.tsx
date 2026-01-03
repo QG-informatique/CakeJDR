@@ -53,6 +53,7 @@ export default function HomePageInner() {
   const lastRollTs = useRef<number | null>(null)
   const [cooldown, setCooldown] = useState(false)
   const remoteLoadedRef = useRef(false)
+  const initialBackupDone = useRef(false)
   // total durée d'indisponibilité du bouton (animation + hold + cooldown)
   const ROLL_TOTAL_MS = 2000 + 300 + 2000 + 1000
 
@@ -84,7 +85,10 @@ export default function HomePageInner() {
   useEventListener((payload) => {
     const { event } = payload
     if (event.type === 'dice-roll') {
-      const ts = typeof event.ts === 'number' ? event.ts : Date.now()
+      const ts =
+        typeof (event as { ts?: number }).ts === 'number'
+          ? (event as { ts: number }).ts
+          : Date.now()
       if (ts === lastRollTs.current) return
       setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result, ts }])
       debug('dice-roll received', event)

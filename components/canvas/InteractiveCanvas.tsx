@@ -178,31 +178,6 @@ export default function InteractiveCanvas() {
     strokes.forEach((s) => drawStrokeSegment(ctx, s))
   }, [strokes])
 
-  // Recenter canvas content when the available surface changes size (e.g., window resize)
-  useEffect(() => {
-    const prev = prevCanvasSizeRef.current
-    const { width, height } = canvasSize
-    if (!width || !height) {
-      prevCanvasSizeRef.current = canvasSize
-      return
-    }
-    if (prev.width === width && prev.height === height) return
-    const dx = (width - prev.width) / 2
-    const dy = (height - prev.height) / 2
-    prevCanvasSizeRef.current = canvasSize
-    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return
-    imagesToRender.forEach((img) => {
-      const nx = clamp((img.x ?? 0) + dx, 0, Math.max(0, width - (img.width ?? 0)))
-      const ny = clamp((img.y ?? 0) + dy, 0, Math.max(0, height - (img.height ?? 0)))
-      updateImageTransform(String(img.id), {
-        x: nx,
-        y: ny,
-        xRatio: roundRatio(width ? nx / width : 0),
-        yRatio: roundRatio(height ? ny / height : 0),
-      })
-    })
-  }, [canvasSize, imagesToRender, updateImageTransform])
-
   // Mutations
   const addImage = useMutation(({ storage }, img: ImageData) => {
     const imagesMap = storage.get('images') as unknown as {
@@ -257,6 +232,31 @@ export default function InteractiveCanvas() {
     const obj = storage.get('music') as unknown as { set: (k: string, v: unknown) => void }
     Object.entries(patch).forEach(([k, v]) => { obj.set(k, v) })
   }, [])
+
+  // Recenter canvas content when the available surface changes size (e.g., window resize)
+  useEffect(() => {
+    const prev = prevCanvasSizeRef.current
+    const { width, height } = canvasSize
+    if (!width || !height) {
+      prevCanvasSizeRef.current = canvasSize
+      return
+    }
+    if (prev.width === width && prev.height === height) return
+    const dx = (width - prev.width) / 2
+    const dy = (height - prev.height) / 2
+    prevCanvasSizeRef.current = canvasSize
+    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return
+    imagesToRender.forEach((img) => {
+      const nx = clamp((img.x ?? 0) + dx, 0, Math.max(0, width - (img.width ?? 0)))
+      const ny = clamp((img.y ?? 0) + dy, 0, Math.max(0, height - (img.height ?? 0)))
+      updateImageTransform(String(img.id), {
+        x: nx,
+        y: ny,
+        xRatio: roundRatio(width ? nx / width : 0),
+        yRatio: roundRatio(height ? ny / height : 0),
+      })
+    })
+  }, [canvasSize, imagesToRender, updateImageTransform])
 
   // Drawing handlers
   const drawStrokeSegment = (ctx: CanvasRenderingContext2D, s: StrokeSegment) => {

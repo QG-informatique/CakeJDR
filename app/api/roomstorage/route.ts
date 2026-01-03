@@ -1,7 +1,7 @@
 export const runtime = 'nodejs'
 import { NextRequest, NextResponse } from 'next/server'
 import { Liveblocks } from '@liveblocks/node'
-import type { LiveMap as LiveMapType, Lson } from '@liveblocks/core'
+import type { LiveMap as LiveMapType } from '@liveblocks/core'
 import { LiveMap as LiveMapValue } from '@liveblocks/client' // FIX: use ESM import instead of require
 import { debug } from '@/lib/debug'
 import type { Character } from '@/types/character'
@@ -34,12 +34,12 @@ export async function POST(req: NextRequest) {
     if (!secret) return NextResponse.json({ error: 'Liveblocks key missing' }, { status: 500 })
     const client = new Liveblocks({ secret })
     await client.mutateStorage(roomId, ({ root }) => {
-      let map = root.get('characters') as LiveMapType<string, Lson> | undefined
+      let map = root.get('characters') as LiveMapType<string, Character> | undefined
       if (!map) {
-        root.set('characters', new LiveMapValue<string, Lson>())
-        map = root.get('characters') as LiveMapType<string, Lson>
+        root.set('characters', new LiveMapValue<string, Character>())
+        map = root.get('characters') as LiveMapType<string, Character>
       }
-      map.set(`${owner}:${id}`, character as Lson)
+      map.set(`${owner}:${id}`, character)
     })
     debug('roomstorage upsert', roomId, id)
     return NextResponse.json({ ok: true })
@@ -61,7 +61,7 @@ export async function DELETE(req: NextRequest) {
   const client = new Liveblocks({ secret })
   try {
     await client.mutateStorage(roomId, ({ root }) => {
-      const map = root.get('characters') as LiveMapType<string, Lson> | undefined
+      const map = root.get('characters') as LiveMapType<string, Character> | undefined
       if (map) map.delete(`${owner}:${id}`)
     })
     debug('roomstorage delete', roomId, id)
