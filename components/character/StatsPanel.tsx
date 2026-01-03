@@ -131,18 +131,28 @@ const StatsPanel: FC<Props> = ({ edit, perso, onChange }) => {
           <input type="text" value={perso[`${stat.key}_mod`] ?? ''} onChange={e => onChange(`${stat.key}_mod`, e.target.value)} className="px-1 py-0.5 rounded bg-white border w-10 text-sm text-black" placeholder={t('mod')} />
         </>
       : <>
+          {(() => {
+            const statValue = Number(perso[stat.key] ?? 0)
+            const modValue = Number(
+              (perso as Record<string, unknown>)[`${stat.key}_mod`] ?? 0,
+            )
+            return (
+              <>
           <span
-            className={`ml-2 px-2 py-0.5 rounded text-base font-bold ${getStatColor(Number(perso[stat.key]))} bg-opacity-80`}
+            className={`ml-2 px-2 py-0.5 rounded text-base font-bold ${getStatColor(statValue)} bg-opacity-80`}
             style={{ display: 'inline-block', width: '36px', textAlign: 'center' }} // fixed width
           >
-            {perso[stat.key]}
+            {statValue}
           </span>
           <span
             className="ml-2 text-gray-300 text-base font-semibold"
             style={{ display: 'inline-block', width: '50px', textAlign: 'left' }} // fixed width for all mods
           >
-            ({perso[`${stat.key}_mod`] >= 0 ? '+' : ''}{perso[`${stat.key}_mod`]})
+            ({modValue >= 0 ? '+' : ''}{modValue})
           </span>
+              </>
+            )
+          })()}
         </>
     }
   </div>

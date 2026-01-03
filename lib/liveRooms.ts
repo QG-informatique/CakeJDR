@@ -108,6 +108,16 @@ export async function renameRoom(id: string, name: string) {
   if (!secret) throw new Error('Liveblocks key missing')
   const client = new Liveblocks({ secret })
   const room = await client.getRoom(id)
-  const metadata = typeof room.metadata === 'object' && room.metadata !== null ? room.metadata : {}
+  const metadata: Record<string, string | string[] | null> = {}
+  if (typeof room.metadata === 'object' && room.metadata !== null) {
+    for (const [k, v] of Object.entries(room.metadata as Record<string, unknown>)) {
+      if (typeof v === 'string') metadata[k] = v
+      else if (Array.isArray(v) && v.every((x) => typeof x === 'string')) {
+        metadata[k] = v
+      } else if (v === null) {
+        metadata[k] = null
+      }
+    }
+  }
   await client.updateRoom(id, { metadata: { ...metadata, name } })
 }
