@@ -175,17 +175,21 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
             >
               {showHistory ? t('hideHistory') : t('showHistory')}
             </button>
-            {displayedEvents.map(ev => (
-              <p key={ev.id}>
-                <span className="mr-1">{ev.kind === 'chat' ? '[chat]' : '[dice]'}</span>
-                {ev.kind === 'chat' && (
-                  <><strong>{ev.author}{ev.isMJ && ' (MJ)'} :</strong> {ev.text}</>
-                )}
-                {ev.kind === 'dice' && (
-                  <span>{ev.player} : D{ev.dice} -> {ev.result}</span>
-                )}
-              </p>
-            ))}
+            {displayedEvents.map(ev => {
+              const isChat = ev.kind === 'chat'
+              return (
+                <p key={ev.id} className="leading-snug">
+                  <span className="mr-1">{isChat ? '[chat]' : '[dice]'}</span>
+                  {isChat ? (
+                    <>
+                      <strong>{ev.author}{ev.isMJ && ' (MJ)'} :</strong> {ev.text}
+                    </>
+                  ) : (
+                    <span>{`${ev.player} : D${ev.dice} -> ${ev.result}`}</span>
+                  )}
+                </p>
+              )
+            })}
             <div ref={endRef} />
           </div>
 

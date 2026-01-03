@@ -18,7 +18,7 @@ export type Character = {
 interface Props {
   filtered: Character[]
   remote: Record<string, Character>
-  onDownload: (char: Character) => void
+  onDownload: (char: Character) => Promise<number | null | void> | number | null | void
   onUpload: (char: Character) => void
   selectedIdx: number | null
   onSelect: (idx: number) => void
@@ -112,8 +112,13 @@ const CharacterList: FC<Props> = ({
                 return (
                   <motion.li
                     key={`${ch.owner}:${ch.id}`}
-                    onClick={() => {
-                      onSelect(local ? localIdx : -1)
+                    onClick={async () => {
+                      if (local) {
+                        onSelect(localIdx)
+                      } else {
+                        const idx = await onDownload(ch)
+                        if (typeof idx === 'number' && idx >= 0) onSelect(idx)
+                      }
                     }}
                     className={`
                   group relative rounded-lg p-3 cursor-pointer
@@ -233,9 +238,12 @@ const CharacterList: FC<Props> = ({
                       )}
                       {needsDownload && (
                         <button
-                          onClick={(e) => {
+                          onClick={async (e) => {
                             e.stopPropagation()
-                            onDownload(cloudChar || ch)
+                            const idx = await onDownload(cloudChar || ch)
+                            if (typeof idx === 'number' && idx >= 0) {
+                              onSelect(idx)
+                            }
                           }}
                           className={
                             btnBase +

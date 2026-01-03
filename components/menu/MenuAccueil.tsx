@@ -363,7 +363,7 @@ export default function MenuAccueil() {
     }
   }
 
-  const handleDownloadChar = (char: Character) => {
+  const handleDownloadChar = async (char: Character) => {
     const idx = characters.findIndex(
       (c) => String(c.id) === String(char.id) && c.owner === char.owner,
     )
@@ -372,6 +372,17 @@ export default function MenuAccueil() {
         ? characters.map((c, i) => (i === idx ? char : c))
         : [...characters, char]
     saveCharacters(updated)
+    const newIdx = updated.findIndex(
+      (c) => String(c.id) === String(char.id) && c.owner === char.owner,
+    )
+    if (newIdx !== -1) {
+      setSelectedIdx(newIdx)
+      localStorage.setItem(
+        SELECTED_KEY,
+        buildSelectionKey(updated[newIdx]!.id, updated[newIdx]!.owner),
+      )
+    }
+    return newIdx
   }
 
   // FIX: Import depuis le Cloud (BLOB) vers le local et sélectionner
