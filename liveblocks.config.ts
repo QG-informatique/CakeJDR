@@ -44,7 +44,8 @@ type SessionEvent = {
 type Room = {
   id: string
   name: string
-  password?: string
+  passwordHash?: string
+  hasPassword?: boolean | string
   owner?: string | null
 }
 
@@ -116,4 +117,3 @@ declare global {
 }
 
 export {}
-

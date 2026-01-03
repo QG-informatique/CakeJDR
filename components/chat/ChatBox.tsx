@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { FC, RefObject, useRef, useState, useEffect, useMemo } from 'react'
 import { ChevronLeft, ChevronRight, BarChart3, MessageSquare } from 'lucide-react'
@@ -176,16 +176,16 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
               {showHistory ? t('hideHistory') : t('showHistory')}
             </button>
             {displayedEvents.map(ev => (
-  <p key={ev.id}>
-    <span className="mr-1">{ev.kind === 'chat' ? '[chat]' : '[dice]'}</span>
-    {ev.kind === 'chat' && (
-      <><strong>{ev.author}{ev.isMJ && ' (MJ)'} :</strong> {ev.text}</>
-    )}
-    {ev.kind === 'dice' && (
-      <span>{ev.player} : D{ev.dice} → {ev.result}</span>
-    )}
-  </p>
-))}
+              <p key={ev.id}>
+                <span className="mr-1">{ev.kind === 'chat' ? '[chat]' : '[dice]'}</span>
+                {ev.kind === 'chat' && (
+                  <><strong>{ev.author}{ev.isMJ && ' (MJ)'} :</strong> {ev.text}</>
+                )}
+                {ev.kind === 'dice' && (
+                  <span>{ev.player} : D{ev.dice} -> {ev.result}</span>
+                )}
+              </p>
+            ))}
             <div ref={endRef} />
           </div>
 
@@ -214,5 +214,6 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
 }
 
 export default ChatBox
+
 
 
