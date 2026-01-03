@@ -1,4 +1,5 @@
 import { Liveblocks } from '@liveblocks/node'
+import { createHash } from 'crypto'
 
 function slugify(str: string) {
   return str
@@ -7,6 +8,9 @@ function slugify(str: string) {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
 }
+
+const hashPassword = (password: string) =>
+  createHash('sha256').update(password).digest('hex')
 
 export async function listRooms() {
   const secret = process.env.LIVEBLOCKS_SECRET_KEY
@@ -78,13 +82,15 @@ export async function createRoom(name: string, password?: string) {
   const stableId = `${base}-${Buffer.from(name).toString('hex').slice(0, 8)}`
 
   // 3) Idempotence côté serveur
-  // FIX: mark hasPassword in metadata, but never expose raw password via listRooms
+  // FIX: only keep a password hash in metadata
+  const metadata: Record<string, unknown> = { name }
+  if (password) {
+    metadata.passwordHash = hashPassword(password)
+    metadata.hasPassword = '1'
+  }
   const room = await client.getOrCreateRoom(stableId, {
     defaultAccesses: ['room:write'],
-    metadata: {
-      name,
-      ...(password ? { password, hasPassword: '1' } : {}),
-    }, // FIX: hasPassword stored as string to satisfy metadata signature
+    metadata,
   })
 
   return room.id

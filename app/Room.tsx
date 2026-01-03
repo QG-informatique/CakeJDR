@@ -42,10 +42,11 @@ export function Room({
           rooms: new LiveList([]),
         }}
       >
-        <ClientSideSuspense fallback={<div>Loading…</div>}>
+        <ClientSideSuspense fallback={<div>Loading...</div>}>
           {children}
         </ClientSideSuspense>
       </RoomProvider>
     </LiveblocksProvider>
   );
 }
+

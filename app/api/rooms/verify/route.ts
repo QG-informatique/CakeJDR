@@ -6,12 +6,23 @@ import { Liveblocks } from "@liveblocks/node";
 import crypto from "node:crypto";
 
 interface RoomMetadata {
-  password?: string;
-  passwordHash?: string;
-  hasPassword?: boolean;
+  password?: string | null;
+  passwordHash?: string | null;
+  hasPassword?: boolean | string;
 }
 
 const sha256 = (s: string) => crypto.createHash("sha256").update(s).digest("hex");
+
+function sanitizeMetadata(meta: RoomMetadata): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(meta)) {
+    if (v === undefined) continue;
+    // Drop any legacy plaintext password value from metadata
+    if (k === "password") continue;
+    out[k] = v;
+  }
+  return out;
+}
 
 function bad(msg: string, code = 400) {
   return NextResponse.json({ error: msg }, { status: code });
@@ -32,18 +43,33 @@ export async function POST(req: NextRequest) {
     if (!room) return bad("Room not found", 404);
 
     const meta = (room as { metadata?: RoomMetadata })?.metadata ?? {};
-    const storedPlain = typeof meta.password === "string" ? meta.password : null;
-    const storedHash = typeof meta.passwordHash === "string" ? meta.passwordHash : null;
+    const storedPlain = typeof meta.password === "string" && meta.password.length ? meta.password : null;
+    let storedHash = typeof meta.passwordHash === "string" && meta.passwordHash.length ? meta.passwordHash : null;
     const hasPassword =
-      !!storedPlain || !!storedHash || meta.hasPassword === true;
+      !!storedPlain || !!storedHash || meta.hasPassword === true || meta.hasPassword === "1";
 
-    // Pas de mot de passe → accès OK
+    // Pas de mot de passe -> acces OK
     if (!hasPassword) return NextResponse.json({ ok: true, guarded: false });
 
-    // Vérif (plain OU hash)
-    const ok =
-      (storedPlain && password && password === storedPlain) ||
-      (storedHash && password && sha256(password) === storedHash);
+    if (!password) return bad("Invalid password", 401);
+    const hashedInput = sha256(password);
+
+    // Verifie le hash et migre les anciens mots de passe en clair
+    let ok = false;
+    if (storedHash && hashedInput === storedHash) {
+      ok = true;
+    } else if (storedPlain && password === storedPlain) {
+      ok = true;
+      storedHash = sha256(storedPlain);
+      const nextMeta = sanitizeMetadata(meta);
+      nextMeta.passwordHash = storedHash;
+      nextMeta.hasPassword = true;
+      try {
+        await lb.updateRoom(id, { metadata: nextMeta });
+      } catch {
+        // best-effort; on ne bloque pas l'utilisateur
+      }
+    }
 
     if (!ok) return bad("Invalid password", 401);
 

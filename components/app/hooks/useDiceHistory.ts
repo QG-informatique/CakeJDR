@@ -21,8 +21,12 @@ export default function useDiceHistory(roomId: string) {
   }, [HISTORY_KEY])
 
   useEffect(() => {
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(history))
-    lastLen.current = history.length
+    try {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history))
+      lastLen.current = history.length
+    } catch {
+      // ignore write errors (quota, private mode, etc.)
+    }
   }, [history, HISTORY_KEY])
 
   return [history, setHistory] as const
