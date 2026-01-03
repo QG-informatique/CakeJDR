@@ -374,7 +374,7 @@ export default function InteractiveCanvas() {
       const debugParts: string[] = []
       if (info.step) debugParts.push(info.step)
       if (info.code) debugParts.push(info.code)
-      const debugMessage = debugParts.length ? debugParts.join(' · ') : null
+      const debugMessage = debugParts.length ? debugParts.join(' | ') : null
       setUploadDebug(isDev ? debugMessage : null)
       if (isDev) {
         console.error('Image upload failed', error, info.details ?? info)
@@ -405,7 +405,7 @@ export default function InteractiveCanvas() {
         const message =
           integrationError instanceof Error ? integrationError.message : 'Integration failed'
         throw new UploadError({
-          code: 'UNKNOWN_UPLOAD_ERROR',
+          code: 'POST_UPLOAD_FAILED',
           step: 'POST_UPLOAD',
           userMessage: "Impossible d'ajouter l'image au canvas.",
           details: { message },
@@ -527,5 +527,3 @@ export default function InteractiveCanvas() {
     </>
   )
 }
-
-
