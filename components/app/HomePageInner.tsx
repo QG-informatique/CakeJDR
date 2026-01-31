@@ -60,6 +60,12 @@ export default function HomePageInner() {
   const broadcast = useBroadcastEvent()
   const [, updateMyPresence] = useMyPresence()
 
+  // Reset room-scoped flags when navigating between rooms
+  useEffect(() => {
+    remoteLoadedRef.current = false
+    initialBackupDone.current = false
+  }, [roomId])
+
   const saveCharacterToCloud = useCallback(async (char: Character) => {
     if (!roomId) return
     const normalized = normalizeCharacter(char, profile?.pseudo ?? null)
