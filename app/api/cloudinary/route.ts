@@ -1,11 +1,16 @@
 // src/app/api/cloudinary/route.ts
 export const runtime = "nodejs";
 
+import crypto from "crypto";
 import { NextResponse } from "next/server";
 
 const CLOUD_NAME =
   process.env.CLOUDINARY_CLOUD_NAME ||
   process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+
+const CLOUDINARY_URL = process.env.CLOUDINARY_URL;
+const API_KEY = process.env.CLOUDINARY_API_KEY;
+const API_SECRET = process.env.CLOUDINARY_API_SECRET;
 
 const UPLOAD_PRESET =
   process.env.CLOUDINARY_UPLOAD_PRESET ||
@@ -27,15 +32,50 @@ function bad(msg: string, code = 400) {
   return NextResponse.json({ error: msg }, { status: code });
 }
 
+function resolveCloudinaryConfig() {
+  let cloudName = CLOUD_NAME;
+  let apiKey = API_KEY;
+  let apiSecret = API_SECRET;
+
+  if (CLOUDINARY_URL) {
+    try {
+      const parsed = new URL(CLOUDINARY_URL);
+      if (!cloudName) cloudName = parsed.hostname;
+      if (!apiKey) apiKey = decodeURIComponent(parsed.username);
+      if (!apiSecret) apiSecret = decodeURIComponent(parsed.password);
+    } catch {
+      // ignore invalid CLOUDINARY_URL
+    }
+  }
+
+  return { cloudName, apiKey, apiSecret };
+}
+
+function signUpload(
+  params: Record<string, string | number>,
+  apiSecret: string,
+) {
+  const toSign = Object.entries(params)
+    .filter(([, value]) => value !== undefined && value !== null && value !== "")
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, value]) => `${key}=${value}`)
+    .join("&");
+  return crypto.createHash("sha1").update(toSign + apiSecret).digest("hex");
+}
+
 // Construit une URL Cloudinary de delivery avec transformations
-function buildDeliveryUrl(publicId: string, transform: string) {
-  return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/${transform}/${publicId}`;
+function buildDeliveryUrl(
+  cloudName: string,
+  publicId: string,
+  transform: string,
+) {
+  return `https://res.cloudinary.com/${cloudName}/image/upload/${transform}/${publicId}`;
 }
 
 export async function POST(req: Request) {
   try {
-    if (!CLOUD_NAME) return bad("Missing CLOUDINARY_CLOUD_NAME env", 500);
-    if (!UPLOAD_PRESET) return bad("Missing CLOUDINARY_UPLOAD_PRESET env", 500);
+    const { cloudName, apiKey, apiSecret } = resolveCloudinaryConfig();
+    if (!cloudName) return bad("Missing CLOUDINARY_CLOUD_NAME env", 500);
 
     const form = await req.formData();
     const file = form.get("file");
@@ -44,13 +84,25 @@ export async function POST(req: Request) {
     if (file.size > MAX_BYTES) return bad(`File too large (max ${Math.round(MAX_BYTES / (1024 * 1024))}MB)`);
     if (file.type && !ALLOWED_TYPES.has(file.type)) return bad(`Unsupported file type: ${file.type}`);
 
-    // Upload non signe (pas d'option 'eager' autorisee ici)
+    const folder = "cakejdr";
+    const useSignedUpload = Boolean(apiKey && apiSecret);
+
+    // Upload signe si possible (plus robuste que le preset)
     const cloudForm = new FormData();
     cloudForm.append("file", file);
-    cloudForm.append("upload_preset", UPLOAD_PRESET);
-    cloudForm.append("folder", "cakejdr");
+    cloudForm.append("folder", folder);
 
-    const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+    if (useSignedUpload) {
+      const timestamp = Math.floor(Date.now() / 1000);
+      const signature = signUpload({ folder, timestamp }, apiSecret!);
+      cloudForm.append("api_key", apiKey!);
+      cloudForm.append("timestamp", String(timestamp));
+      cloudForm.append("signature", signature);
+    } else {
+      cloudForm.append("upload_preset", UPLOAD_PRESET);
+    }
+
+    const url = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
     const res = await fetch(url, { method: "POST", body: cloudForm });
     const data = await res.json();
 
@@ -62,10 +114,12 @@ export async function POST(req: Request) {
 
     // Delivery URLs optimisees (generees a la demande par le CDN)
     const deliveryUrl = buildDeliveryUrl(
+      cloudName,
       publicId,
       BASE_TRANSFORM
     );
     const thumbUrl = buildDeliveryUrl(
+      cloudName,
       publicId,
       THUMB_TRANSFORM
     );
