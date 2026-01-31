@@ -105,7 +105,7 @@ declare global {
           width: number
           mode: 'draw' | 'erase'
         }
-      | { type: 'chat'; author: string; text: string; isMJ?: boolean }
+      | { type: 'chat'; author: string; text: string; isMJ?: boolean; ts?: number }
       | { type: 'dice-roll'; player: string; dice: number; result: number; ts?: number }
       | { type: 'gm-select'; character: CharacterData; targetConnectionId?: number | null }
 
