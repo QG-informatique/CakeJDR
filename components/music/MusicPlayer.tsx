@@ -8,6 +8,10 @@ import type { YouTubePlayer } from 'youtube-player/dist/types'
 import { Plus, Pause, Play, SkipForward, Music2 } from 'lucide-react'
 
 type QueueItem = { id: string }
+type PlayerVideoData = { title?: string }
+type PlayerWithData = YouTubePlayer & {
+  getVideoData?: () => PlayerVideoData | Promise<PlayerVideoData>
+}
 
 const VOLUME_STORAGE_KEY = 'jdr_music_volume'
 const DEFAULT_VOLUME = 5
@@ -52,28 +56,35 @@ export default function MusicPlayer() {
 
   const [volume, setVolume] = useState<number>(() => {
     if (typeof window === 'undefined') return DEFAULT_VOLUME
-    const raw = localStorage.getItem(VOLUME_STORAGE_KEY)
-    const parsed = raw ? Number(raw) : Number.NaN
-    if (!Number.isFinite(parsed)) return DEFAULT_VOLUME
-    return clamp(parsed, 0, 100)
+    try {
+      const raw = localStorage.getItem(VOLUME_STORAGE_KEY)
+      const parsed = raw ? Number(raw) : Number.NaN
+      if (!Number.isFinite(parsed)) return DEFAULT_VOLUME
+      return clamp(parsed, 0, 100)
+    } catch {
+      return DEFAULT_VOLUME
+    }
   })
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    localStorage.setItem(VOLUME_STORAGE_KEY, String(volume))
+    try {
+      localStorage.setItem(VOLUME_STORAGE_KEY, String(volume))
+    } catch {}
   }, [volume])
 
-  const music = (() => {
-    if (!musicObj) return null
-    if (musicObj instanceof LiveObject) {
-      return musicObj.toObject() as { id?: string; playing?: boolean }
-    }
-    return musicObj as { id?: string; playing?: boolean }
-  })()
+  const musicReady = !!musicObj
+  const musicId =
+    musicObj instanceof LiveObject
+      ? ((musicObj.get('id') as string | undefined) ?? undefined)
+      : (musicObj as { id?: string } | null)?.id
+  const musicPlaying =
+    musicObj instanceof LiveObject
+      ? ((musicObj.get('playing') as boolean | undefined) ?? undefined)
+      : (musicObj as { playing?: boolean } | null)?.playing
 
   const queueCount = (() => {
     if (queueObj instanceof LiveList) return queueObj.length
-    if (Array.isArray(queueObj)) return queueObj.length
     return 0
   })()
 
@@ -130,17 +141,17 @@ export default function MusicPlayer() {
   }, [])
 
   useEffect(() => {
-    if (!music) return
+    if (!musicReady) return
     const nextId =
-      typeof music.id === 'string' && music.id.length > 0 ? music.id : null
+      typeof musicId === 'string' && musicId.length > 0 ? musicId : null
     setCurrentId(nextId)
     if (!hasSyncedRef.current) {
       hasSyncedRef.current = true
       setIsPlaying(false)
     } else {
-      setIsPlaying(!!music.playing)
+      setIsPlaying(!!musicPlaying)
     }
-  }, [music])
+  }, [musicReady, musicId, musicPlaying])
 
   useEffect(() => {
     setCurrentTitle('')
@@ -161,25 +172,43 @@ export default function MusicPlayer() {
 
   useEffect(() => {
     if (!currentId) return
-    const id = window.setInterval(() => {
+    let cancelled = false
+    const tick = async () => {
       if (seeking) return
       const p = playerRef.current
       if (!p) return
-      const nextDuration = p.getDuration?.() ?? 0
-      const nextTime = p.getCurrentTime?.() ?? 0
-      if (Number.isFinite(nextDuration) && nextDuration > 0) {
-        setDuration(nextDuration)
-      }
-      if (Number.isFinite(nextTime)) {
-        setCurrentTime(nextTime)
-      }
+      try {
+        const [nextDuration, nextTime] = await Promise.all([
+          p.getDuration(),
+          p.getCurrentTime(),
+        ])
+        if (cancelled) return
+        if (Number.isFinite(nextDuration) && nextDuration > 0) {
+          setDuration(nextDuration)
+        }
+        if (Number.isFinite(nextTime)) {
+          setCurrentTime(nextTime)
+        }
+      } catch {}
+    }
+    const id = window.setInterval(() => {
+      void tick()
     }, 500)
-    return () => window.clearInterval(id)
+    return () => {
+      cancelled = true
+      window.clearInterval(id)
+    }
   }, [currentId, seeking])
 
   const syncTitleFromPlayer = () => {
-    const data = playerRef.current?.getVideoData?.()
-    if (data?.title) setCurrentTitle(data.title)
+    const player = playerRef.current as PlayerWithData | null
+    const result = player?.getVideoData?.()
+    if (!result) return
+    void Promise.resolve(result)
+      .then((data) => {
+        if (data?.title) setCurrentTitle(data.title)
+      })
+      .catch(() => {})
   }
 
   const handlePlayNow = () => {
@@ -208,6 +237,7 @@ export default function MusicPlayer() {
     if (!currentId) {
       if (queueCount > 0) {
         hasSyncedRef.current = true
+        setIsPlaying(true)
         playNextFromQueue()
       }
       return
@@ -221,6 +251,7 @@ export default function MusicPlayer() {
   const handleNext = () => {
     if (queueCount === 0) return
     hasSyncedRef.current = true
+    setIsPlaying(true)
     playNextFromQueue()
   }
 
@@ -309,8 +340,10 @@ export default function MusicPlayer() {
               onChange={(e) => handleSeek(Number(e.target.value))}
               onMouseDown={() => setSeeking(true)}
               onMouseUp={() => setSeeking(false)}
+              onMouseLeave={() => setSeeking(false)}
               onTouchStart={() => setSeeking(true)}
               onTouchEnd={() => setSeeking(false)}
+              onTouchCancel={() => setSeeking(false)}
               className="flex-1"
               disabled={!currentId || duration === 0}
             />
@@ -351,10 +384,14 @@ export default function MusicPlayer() {
             }
             if (e.data === 1 || e.data === 5) {
               syncTitleFromPlayer()
-              const nextDuration = e.target.getDuration?.() ?? 0
-              if (Number.isFinite(nextDuration) && nextDuration > 0) {
-                setDuration(nextDuration)
-              }
+              void e.target
+                .getDuration()
+                .then((nextDuration) => {
+                  if (Number.isFinite(nextDuration) && nextDuration > 0) {
+                    setDuration(nextDuration)
+                  }
+                })
+                .catch(() => {})
             }
           }}
         />
