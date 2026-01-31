@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { useMutation, useStorage } from '@liveblocks/react'
 import { LiveList, LiveObject } from '@liveblocks/client'
 import YouTube from 'react-youtube'
 import type { YouTubePlayer } from 'youtube-player/dist/types'
-import { Plus, Pause, Play, SkipForward, Music2 } from 'lucide-react'
+import { ChevronDown, ChevronUp, Music2, Pause, Play, Plus, SkipForward } from 'lucide-react'
 
 type QueueItem = { id: string }
 type PlayerVideoData = { title?: string }
@@ -51,8 +51,10 @@ export default function MusicPlayer() {
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [seeking, setSeeking] = useState(false)
+  const [optionsOpen, setOptionsOpen] = useState(false)
   const playerRef = useRef<YouTubePlayer | null>(null)
   const hasSyncedRef = useRef(false)
+  const optionsPanelId = useId()
 
   const [volume, setVolume] = useState<number>(() => {
     if (typeof window === 'undefined') return DEFAULT_VOLUME
@@ -267,102 +269,121 @@ export default function MusicPlayer() {
 
   return (
     <div className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-black/20 backdrop-blur-sm px-3 py-2 shadow-md min-w-[240px] max-w-[640px] w-full sm:w-auto">
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-          <Music2 size={16} className="text-purple-300 shrink-0" />
-          <input
-            type="text"
-            placeholder="Lien YouTube"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handlePlayNow()
-            }}
-            className="w-full px-3 py-2 rounded-lg bg-black/40 text-white border border-white/20 placeholder:text-white/40"
-          />
-        </div>
-        <button
-          onClick={handlePlayNow}
-          className="rounded-xl px-3 py-2 text-xs font-semibold shadow border-none bg-blue-600 text-white hover:bg-blue-700"
-        >
-          Lire
-        </button>
-        <button
-          onClick={handleAddToQueue}
-          className="rounded-xl px-3 py-2 text-xs font-semibold shadow border border-white/10 bg-black/30 text-white/90 hover:bg-purple-600 hover:text-white inline-flex items-center gap-1"
-        >
-          <Plus size={14} />
-          Ajouter a la suite
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={() => setOptionsOpen((open) => !open)}
+        aria-expanded={optionsOpen}
+        aria-controls={optionsPanelId}
+        className="w-full rounded-xl px-3 py-2 text-xs font-semibold shadow border border-white/10 bg-black/30 text-white/90 hover:bg-purple-600 hover:text-white flex items-center justify-between gap-2"
+      >
+        <span className="inline-flex items-center gap-2">
+          <Music2 size={14} className="text-purple-300 shrink-0" />
+          {optionsOpen ? 'Fermer les options YouTube' : 'Options YouTube'}
+        </span>
+        {optionsOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+      </button>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          onClick={handlePlayPause}
-          className="rounded-xl px-3 py-2 text-xs font-semibold shadow border border-white/10 bg-black/30 text-white/90 hover:bg-purple-600 hover:text-white inline-flex items-center gap-1"
-          disabled={!currentId && queueCount === 0}
-        >
-          {isPlaying ? (
-            <>
-              <Pause size={14} /> Pause
-            </>
-          ) : (
-            <>
-              <Play size={14} /> Lecture
-            </>
-          )}
-        </button>
-        <button
-          onClick={handleNext}
-          disabled={queueCount === 0}
-          className={`rounded-xl px-3 py-2 text-xs font-semibold shadow border border-white/10 bg-black/30 text-white/90 hover:bg-emerald-600 hover:text-white inline-flex items-center gap-1 ${
-            queueCount === 0 ? 'opacity-50 cursor-not-allowed' : ''
-          }`}
-          title={queueCount > 0 ? `Prochaine piste (${queueCount})` : 'Queue vide'}
-        >
-          <SkipForward size={14} />
-          Next
-        </button>
-
-        <div className="flex flex-col flex-1 min-w-[220px]">
-          <div className="text-xs text-white/80 truncate">
-            {currentTitle || 'Aucune musique'}
+      <div
+        id={optionsPanelId}
+        className={`${optionsOpen ? 'flex' : 'hidden'} flex-col gap-2`}
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+            <Music2 size={16} className="text-purple-300 shrink-0" />
+            <input
+              type="text"
+              placeholder="Lien YouTube"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handlePlayNow()
+              }}
+              className="w-full px-3 py-2 rounded-lg bg-black/40 text-white border border-white/20 placeholder:text-white/40"
+            />
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] text-white/60 tabular-nums">
-              {formatTime(currentTime)}
-            </span>
+          <button
+            onClick={handlePlayNow}
+            className="rounded-xl px-3 py-2 text-xs font-semibold shadow border-none bg-blue-600 text-white hover:bg-blue-700"
+          >
+            Lire
+          </button>
+          <button
+            onClick={handleAddToQueue}
+            className="rounded-xl px-3 py-2 text-xs font-semibold shadow border border-white/10 bg-black/30 text-white/90 hover:bg-purple-600 hover:text-white inline-flex items-center gap-1"
+          >
+            <Plus size={14} />
+            Ajouter a la suite
+          </button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={handlePlayPause}
+            className="rounded-xl px-3 py-2 text-xs font-semibold shadow border border-white/10 bg-black/30 text-white/90 hover:bg-purple-600 hover:text-white inline-flex items-center gap-1"
+            disabled={!currentId && queueCount === 0}
+          >
+            {isPlaying ? (
+              <>
+                <Pause size={14} /> Pause
+              </>
+            ) : (
+              <>
+                <Play size={14} /> Lecture
+              </>
+            )}
+          </button>
+          <button
+            onClick={handleNext}
+            disabled={queueCount === 0}
+            className={`rounded-xl px-3 py-2 text-xs font-semibold shadow border border-white/10 bg-black/30 text-white/90 hover:bg-emerald-600 hover:text-white inline-flex items-center gap-1 ${
+              queueCount === 0 ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+            title={queueCount > 0 ? `Prochaine piste (${queueCount})` : 'Queue vide'}
+          >
+            <SkipForward size={14} />
+            Next
+          </button>
+
+          <div className="flex flex-col flex-1 min-w-[220px]">
+            <div className="text-xs text-white/80 truncate">
+              {currentTitle || 'Aucune musique'}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-white/60 tabular-nums">
+                {formatTime(currentTime)}
+              </span>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={progress}
+                onChange={(e) => handleSeek(Number(e.target.value))}
+                onMouseDown={() => setSeeking(true)}
+                onMouseUp={() => setSeeking(false)}
+                onMouseLeave={() => setSeeking(false)}
+                onTouchStart={() => setSeeking(true)}
+                onTouchEnd={() => setSeeking(false)}
+                onTouchCancel={() => setSeeking(false)}
+                className="flex-1"
+                disabled={!currentId || duration === 0}
+              />
+              <span className="text-[11px] text-white/60 tabular-nums">
+                {formatTime(duration)}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 min-w-[120px]">
+            <span className="text-[11px] text-white/60">Vol</span>
             <input
               type="range"
               min={0}
               max={100}
-              value={progress}
-              onChange={(e) => handleSeek(Number(e.target.value))}
-              onMouseDown={() => setSeeking(true)}
-              onMouseUp={() => setSeeking(false)}
-              onMouseLeave={() => setSeeking(false)}
-              onTouchStart={() => setSeeking(true)}
-              onTouchEnd={() => setSeeking(false)}
-              onTouchCancel={() => setSeeking(false)}
-              className="flex-1"
-              disabled={!currentId || duration === 0}
+              value={volume}
+              onChange={(e) => setVolume(clamp(Number(e.target.value), 0, 100))}
+              className="w-24"
             />
-            <span className="text-[11px] text-white/60 tabular-nums">
-              {formatTime(duration)}
-            </span>
           </div>
-        </div>
-
-        <div className="flex items-center gap-2 min-w-[120px]">
-          <span className="text-[11px] text-white/60">Vol</span>
-          <input
-            type="range"
-            min={0}
-            max={100}
-            value={volume}
-            onChange={(e) => setVolume(clamp(Number(e.target.value), 0, 100))}
-            className="w-24"
-          />
         </div>
       </div>
 
