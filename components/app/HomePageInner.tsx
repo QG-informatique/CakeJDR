@@ -7,8 +7,8 @@ import CharacterSheet, { defaultPerso } from '@/components/sheet/CharacterSheet'
 import DiceRoller from '@/components/dice/DiceRoller'
 import ChatBox from '@/components/chat/ChatBox'
 import PopupResult from '@/components/dice/PopupResult'
-import Head from 'next/head'
 import InteractiveCanvas from '@/components/canvas/InteractiveCanvas'
+import MusicPlayer from '@/components/music/MusicPlayer'
 import LiveAvatarStack from '@/components/chat/LiveAvatarStack'
 import Login from '@/components/login/Login'
 import GMCharacterSelector from '@/components/misc/GMCharacterSelector'
@@ -339,7 +339,7 @@ export default function HomePageInner() {
     setPerso(next)
     updateMyPresence({ gmView: { id: next.id, name: next.nom || next.name } })
     // Diffuse un événement d'observation (sans ciblage) pour information uniquement
-    broadcast({ type: 'gm-select', character: next, targetConnectionId: null } as Liveblocks['RoomEvent'])
+    broadcast({ type: 'gm-select', character: next, targetConnectionId: null })
   }
 
   if (!user) {
@@ -367,7 +367,7 @@ export default function HomePageInner() {
     setHistory((h) => [...h, entry])
     addEvent({ id: crypto.randomUUID(), kind: 'dice', ...entry })
 
-    broadcast({ type: 'dice-roll', player: nom, dice, result, ts } as Liveblocks['RoomEvent'])
+    broadcast({ type: 'dice-roll', player: nom, dice, result, ts })
     debug('dice-roll send', entry)
     setPendingRoll(null)
 
@@ -419,7 +419,15 @@ export default function HomePageInner() {
             </ErrorBoundary>
           </div>
           <ErrorBoundary fallback={<div className="p-4 text-red-500">Dice roller error</div>}>
-            <DiceRoller diceType={diceType} onChange={setDiceType} onRoll={rollDice} disabled={diceDisabled} cooldown={cooldown} cooldownDuration={ROLL_TOTAL_MS}>
+            <DiceRoller
+              diceType={diceType}
+              onChange={setDiceType}
+              onRoll={rollDice}
+              disabled={diceDisabled}
+              cooldown={cooldown}
+              cooldownDuration={ROLL_TOTAL_MS}
+              afterRoll={<MusicPlayer />}
+            >
               <LiveAvatarStack />
             </DiceRoller>
           </ErrorBoundary>
@@ -435,9 +443,6 @@ export default function HomePageInner() {
           />
         </ErrorBoundary>
       </div>
-      <Head>
-        <title>CakeJDR</title>
-      </Head>
     </div>
   )
 }

@@ -149,7 +149,10 @@ const CharacterSheet: FC<Props> = ({
 
       if (chatBoxRef?.current) {
         const message = document.createElement('p')
-        message.innerHTML = `<strong>🎲 ${cFiche.nom} - ${dice.toUpperCase()} - ${stat} :</strong> ${gain}`
+        const strong = document.createElement('strong')
+        strong.textContent = `🎲 ${cFiche.nom} - ${dice.toUpperCase()} - ${stat} :`
+        message.appendChild(strong)
+        message.append(` ${gain}`)
         chatBoxRef.current.appendChild(message)
         chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight
       }

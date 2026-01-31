@@ -15,6 +15,7 @@ export type RoomInfo = {
 
 interface Props {
   onSelect?: (room: RoomInfo) => void
+  onEnter?: (room: RoomInfo) => void
   selectedId?: string | null
   onCreateClick?: () => void
 }
@@ -26,7 +27,7 @@ export async function fetchRooms() {
   return Array.isArray(data.rooms) ? (data.rooms as RoomInfo[]) : []
 }
 
-export default function RoomList({ onSelect, selectedId, onCreateClick }: Props) {
+export default function RoomList({ onSelect, onEnter, selectedId, onCreateClick }: Props) {
   const [rooms, setRooms] = useState<RoomInfo[]>([])
   const [joiningId, setJoiningId] = useState<string | null>(null)
   const [joinPassword, setJoinPassword] = useState('')
@@ -89,6 +90,11 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
     return true
   }
 
+  const handleEnter = (room: RoomInfo) => {
+    onSelect?.(room)
+    onEnter?.(room)
+  }
+
   const joinRoom = async (room: RoomInfo) => {
     // Room protégée → on tente auto-join avec mot de passe local (si stocké),
     // sinon on affiche le champ
@@ -98,7 +104,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
         try {
           setVerifying(true); setErrorMsg('')
           await verifyPassword(room.id, saved)
-          onSelect?.(room)
+          handleEnter(room)
           return
         } catch {
           // mauvais mot de passe stocké → on demande à l’utilisateur
@@ -111,7 +117,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
       setErrorMsg('')
       return
     }
-    onSelect?.(room)
+    handleEnter(room)
   }
 
   const confirmJoin = async (room: RoomInfo) => {
@@ -122,7 +128,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
       if (room.hasPassword) {
         localStorage.setItem('room_pw_' + room.id, joinPassword)
       }
-      onSelect?.(room)
+      handleEnter(room)
       setJoiningId(null)
       setErrorMsg('')
     } catch {
@@ -147,7 +153,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
           <div
             key={r.id}
             className={`relative p-3 rounded-lg cursor-pointer flex flex-col gap-1 ${selectedId===r.id ? 'ring-2 ring-emerald-400/90 shadow-[0_0_12px_2px_rgba(16,185,129,0.6)]' : 'bg-black/30 hover:ring-2 hover:ring-emerald-300/40'}`}
-            onClick={() => joinRoom(r)}
+            onDoubleClick={() => joinRoom(r)}
           >
             <div className="flex justify-between items-center gap-1">
               <span className="truncate flex-1 flex items-center gap-1 text-sm">
@@ -162,7 +168,11 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
               )}
             </div>
             <span className="text-xs text-white/60 truncate">
-              {r.updatedAt ? new Date(r.updatedAt).toLocaleDateString() : new Date(r.createdAt ?? '').toLocaleDateString()}
+              {r.updatedAt
+                ? new Date(r.updatedAt).toLocaleDateString()
+                : r.createdAt
+                  ? new Date(r.createdAt).toLocaleDateString()
+                  : ''}
             </span>
             <RoomAvatarStack id={r.id} />
             <span
@@ -186,7 +196,7 @@ export default function RoomList({ onSelect, selectedId, onCreateClick }: Props)
                 {errorMsg && <p className="text-red-400 text-xs">{errorMsg}</p>}
                 {verifying && (
                   <p className="text-emerald-300 text-[10px]">
-                    {t('verifying' as unknown as Parameters<typeof t>[0]) ?? 'Vérification…'}
+                    {t('verifying')}
                   </p>
                 )}
               </>

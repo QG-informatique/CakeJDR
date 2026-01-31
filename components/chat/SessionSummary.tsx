@@ -337,7 +337,7 @@ function LocalSummary({
             onChange={(e) => handleTitleChange(e.target.value)}
             className="text-center font-semibold mb-2 bg-transparent outline-none w-full text-white placeholder-white/50"
             placeholder={
-              (t('untitled' as unknown as Parameters<typeof t>[0]) as string) ||
+              (t('untitled') as string) ||
               'Sans titre'
             }
           />
@@ -700,7 +700,7 @@ function LiveSummary({
             onChange={(e) => handleTitleChange(e.target.value)}
             className="text-center font-semibold mb-2 bg-transparent outline-none w-full text-white placeholder-white/50"
             placeholder={
-              (t('untitled' as unknown as Parameters<typeof t>[0]) as string) ||
+              (t('untitled') as string) ||
               'Sans titre'
             }
           />
@@ -799,7 +799,7 @@ function TopBar({
       <button
         onClick={onDelete}
         className="bg-black/40 text-white px-2 py-1 rounded text-sm"
-        title={t('deletePage' as unknown as Parameters<typeof t>[0]) as string}
+        title={t('deletePage') as string}
       >
         🗑️
       </button>
@@ -809,7 +809,7 @@ function TopBar({
           ref={btnRef}
           onClick={() => setShowFileMenu((m) => !m)}
           className="bg-black/40 text-white px-2 py-1 rounded text-sm"
-          title={t('fileMenu' as unknown as Parameters<typeof t>[0]) as string}
+          title={t('fileMenu') as string}
         >
           📁
         </button>

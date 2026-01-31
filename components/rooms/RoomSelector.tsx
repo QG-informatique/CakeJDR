@@ -53,28 +53,40 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
   }
 
   const createRoom = async () => {
-    if (!name) return
+    if (!name || creating) return
     if (localStorage.getItem('jdr_my_room')) { setErrorMsg(t('alreadyCreatedRoom')); return }
     setCreating(true)
-    const res = await fetch('/api/rooms', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, password })
-    })
-    if (!res.ok) { setCreating(false); return }
-    const data = await res.json()
-    localStorage.setItem('jdr_my_room', data.id)
+    setErrorMsg('')
+    const payload = { name, password: withPassword ? password : '' }
     try {
-      const raw = localStorage.getItem('jdr_profile')
-      if (raw) {
-        const prof = JSON.parse(raw)
-        prof.isMJ = true
-        localStorage.setItem('jdr_profile', JSON.stringify(prof))
-        window.dispatchEvent(new Event('jdr_profile_change'))
+      const res = await fetch('/api/rooms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setErrorMsg(data?.error || t('creationFailed'))
+        return
       }
-    } catch {}
-    onClose?.()
-    onSelect?.({ id: data.id, name, hasPassword: Boolean(password), createdAt: new Date().toISOString() })
+      const data = await res.json()
+      localStorage.setItem('jdr_my_room', data.id)
+      try {
+        const raw = localStorage.getItem('jdr_profile')
+        if (raw) {
+          const prof = JSON.parse(raw)
+          prof.isMJ = true
+          localStorage.setItem('jdr_profile', JSON.stringify(prof))
+          window.dispatchEvent(new Event('jdr_profile_change'))
+        }
+      } catch {}
+      onClose?.()
+      onSelect?.({ id: data.id, name, hasPassword: Boolean(payload.password), createdAt: new Date().toISOString() })
+    } catch {
+      setErrorMsg(t('creationFailed'))
+    } finally {
+      setCreating(false)
+    }
   }
 
   const joinRoom = (room: RoomInfo) => {
@@ -135,7 +147,11 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
                 )}
               </div>
               <span className="text-xs text-white/60">
-                {r.updatedAt ? new Date(r.updatedAt).toLocaleDateString() : new Date(r.createdAt ?? '').toLocaleDateString()}
+                {r.updatedAt
+                  ? new Date(r.updatedAt).toLocaleDateString()
+                  : r.createdAt
+                    ? new Date(r.createdAt).toLocaleDateString()
+                    : ''}
               </span>
               {joiningId === r.id && r.hasPassword && (
                 <input
