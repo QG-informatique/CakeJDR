@@ -6,7 +6,7 @@ import React from 'react'
 import { ToolMode } from './CanvasTools'
 
 // Single image element on canvas with move/resize handles.
-export interface ImageData {
+export interface ImageRenderData {
   id: string
   url: string
   x: number
@@ -16,14 +16,10 @@ export interface ImageData {
   scale?: number
   rotation?: number
   createdAt?: number
-  xRatio?: number
-  yRatio?: number
-  widthRatio?: number
-  heightRatio?: number
 }
 
 interface Props {
-  img: ImageData
+  img: ImageRenderData
   drawMode: ToolMode
   onPointerDown: (
     e: React.PointerEvent,
@@ -91,4 +87,3 @@ const ImageItem: React.FC<Props> = ({
 )
 
 export default ImageItem
-

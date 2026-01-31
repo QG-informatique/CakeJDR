@@ -5,7 +5,7 @@ import { useStorage, useMutation, useMyPresence } from '@liveblocks/react'
 import { LiveList } from '@liveblocks/client'
 import CanvasTools, { ToolMode } from './CanvasTools'
 import LiveCursors from './LiveCursors'
-import ImageItem, { ImageData } from './ImageItem'
+import ImageItem, { ImageRenderData } from './ImageItem'
 import SideNotes from '@/components/misc/SideNotes'
 import { useT } from '@/lib/useT'
 import {
@@ -23,10 +23,30 @@ type StrokeSegment = {
   color: string
   width: number
   mode: 'draw' | 'erase'
+  space?: 'world' | 'px'
 }
+
+type StoredImageData = {
+  id: string
+  url: string
+  x: number
+  y: number
+  width: number
+  height: number
+  scale?: number
+  rotation?: number
+  createdAt?: number
+  xRatio?: number
+  yRatio?: number
+  widthRatio?: number
+  heightRatio?: number
+}
+
+type CanvasSize = { width: number; height: number }
 
 const MIN_IMAGE_SIZE = 40
 const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max)
+const clamp01 = (v: number) => Math.min(Math.max(v, 0), 1)
 const roundRatio = (v: number) => Math.round(v * 1000) / 1000
 
 export default function InteractiveCanvas() {
@@ -35,7 +55,7 @@ export default function InteractiveCanvas() {
   // Storage
   const imagesMap = useStorage((root) => root.images)
   const strokesList = useStorage((root) => root.strokes) as LiveList<StrokeSegment> | null
-  const images = useMemo(() => (imagesMap ? Array.from(imagesMap.values()) as ImageData[] : []), [imagesMap])
+  const images = useMemo(() => (imagesMap ? Array.from(imagesMap.values()) as StoredImageData[] : []), [imagesMap])
   const strokes = useMemo<StrokeSegment[]>(() => {
     if (!strokesList) return []
     const anyList = strokesList as unknown as { toArray?: () => unknown; get?: (i: number) => unknown; length?: number }
@@ -55,6 +75,8 @@ export default function InteractiveCanvas() {
     if (Array.isArray(strokesList)) return strokesList as unknown as StrokeSegment[]
     return []
   }, [strokesList])
+  const strokesRef = useRef<StrokeSegment[]>([])
+  useEffect(() => { strokesRef.current = strokes }, [strokes])
 
   // Presence
   const [, updateMyPresence] = useMyPresence()
@@ -64,6 +86,7 @@ export default function InteractiveCanvas() {
   const canvasRef = useRef<HTMLDivElement>(null)
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null)
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null)
+  const canvasSizeRef = useRef<CanvasSize>({ width: 0, height: 0 })
   const [drawMode, setDrawMode] = useState<ToolMode>('images')
   const [color, setColor] = useState('#ffffff')
   const [penSize, setPenSize] = useState(6)
@@ -76,10 +99,10 @@ export default function InteractiveCanvas() {
   const imageInputRef = useRef<HTMLInputElement>(null)
 
   // Images helpers
-  const [pendingImages, setPendingImages] = useState<ImageData[]>([])
+  const [pendingImages, setPendingImages] = useState<ImageRenderData[]>([])
   const [uploadMessage, setUploadMessage] = useState<string | null>(null)
   const [uploadDebug, setUploadDebug] = useState<string | null>(null)
-  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
+  const [canvasSize, setCanvasSize] = useState<CanvasSize>({ width: 0, height: 0 })
   const [renderVersion, setRenderVersion] = useState(0)
   const renderRaf = useRef<number | null>(null)
   const scheduleRender = useCallback(() => {
@@ -89,38 +112,131 @@ export default function InteractiveCanvas() {
       setRenderVersion((v) => v + 1)
     })
   }, [])
-  const localTransforms = useRef(new Map<string, Partial<ImageData>>())
-  const imagesRef = useRef<ImageData[]>([])
-  const prevCanvasSizeRef = useRef({ width: 0, height: 0 })
+  const localTransforms = useRef(new Map<string, Partial<ImageRenderData>>())
   useEffect(() => () => { if (renderRaf.current !== null) cancelAnimationFrame(renderRaf.current) }, [])
 
-  const imagesToRender = useMemo(() => {
+  const resolveSize = useCallback((size?: CanvasSize) => {
+    const current = size ?? canvasSizeRef.current
+    return {
+      width: current.width || canvasSize.width,
+      height: current.height || canvasSize.height,
+    }
+  }, [canvasSize])
+  const getMinDim = useCallback((size?: CanvasSize) => {
+    const { width, height } = resolveSize(size)
+    return Math.max(1, Math.min(width, height))
+  }, [resolveSize])
+  const screenToWorldPoint = useCallback((x: number, y: number, size?: CanvasSize) => {
+    const { width, height } = resolveSize(size)
+    return {
+      x: width ? clamp01(x / width) : 0,
+      y: height ? clamp01(y / height) : 0,
+    }
+  }, [resolveSize])
+  const worldToScreenPoint = useCallback((x: number, y: number, size?: CanvasSize) => {
+    const { width, height } = resolveSize(size)
+    return {
+      x: x * width,
+      y: y * height,
+    }
+  }, [resolveSize])
+  const screenToWorldSize = useCallback((w: number, h: number, size?: CanvasSize) => {
+    const { width, height } = resolveSize(size)
+    return {
+      w: width ? w / width : 0,
+      h: height ? h / height : 0,
+    }
+  }, [resolveSize])
+  const worldToScreenSize = useCallback((w: number, h: number, size?: CanvasSize) => {
+    const { width, height } = resolveSize(size)
+    return {
+      w: w * width,
+      h: h * height,
+    }
+  }, [resolveSize])
+  const screenToWorldStroke = useCallback((w: number, size?: CanvasSize) => w / getMinDim(size), [getMinDim])
+  const resolveImageWorld = useCallback((img: StoredImageData, size?: CanvasSize) => {
+    const hasWorld =
+      Number.isFinite(img.x) &&
+      Number.isFinite(img.y) &&
+      Number.isFinite(img.width) &&
+      Number.isFinite(img.height) &&
+      img.x >= 0 &&
+      img.y >= 0 &&
+      img.width >= 0 &&
+      img.height >= 0 &&
+      img.x <= 1 &&
+      img.y <= 1 &&
+      img.width <= 1 &&
+      img.height <= 1
+    if (hasWorld) {
+      return { x: img.x, y: img.y, width: img.width, height: img.height }
+    }
+    const hasRatio =
+      Number.isFinite(img.xRatio) &&
+      Number.isFinite(img.yRatio) &&
+      Number.isFinite(img.widthRatio) &&
+      Number.isFinite(img.heightRatio)
+    if (hasRatio) {
+      return {
+        x: clamp01(img.xRatio ?? 0),
+        y: clamp01(img.yRatio ?? 0),
+        width: clamp01(img.widthRatio ?? 0),
+        height: clamp01(img.heightRatio ?? 0),
+      }
+    }
+    const { width, height } = resolveSize(size)
+    const safeX = Number.isFinite(img.x) ? img.x : 0
+    const safeY = Number.isFinite(img.y) ? img.y : 0
+    const safeW = Number.isFinite(img.width) ? img.width : 0
+    const safeH = Number.isFinite(img.height) ? img.height : 0
+    return {
+      x: width ? clamp01(safeX / width) : 0,
+      y: height ? clamp01(safeY / height) : 0,
+      width: width ? clamp01(safeW / width) : 0,
+      height: height ? clamp01(safeH / height) : 0,
+    }
+  }, [resolveSize])
+
+  const imagesToRender = useMemo<ImageRenderData[]>(() => {
     void renderVersion
+    const size = resolveSize()
+    const minWorldW = size.width ? MIN_IMAGE_SIZE / size.width : 0
+    const minWorldH = size.height ? MIN_IMAGE_SIZE / size.height : 0
     return images.map((img) => {
       const key = String(img.id)
+      const world = resolveImageWorld(img, size)
+      const wWorld = clamp(world.width, minWorldW, 1)
+      const hWorld = clamp(world.height, minWorldH, 1)
+      const xWorld = clamp(world.x, 0, Math.max(0, 1 - wWorld))
+      const yWorld = clamp(world.y, 0, Math.max(0, 1 - hWorld))
+      let { w, h } = worldToScreenSize(wWorld, hWorld, size)
+      let { x, y } = worldToScreenPoint(xWorld, yWorld, size)
       const overrides = localTransforms.current.get(key)
-      const merged = overrides ? { ...img, ...overrides } : img
-      const w = clamp(merged.width, MIN_IMAGE_SIZE, canvasSize.width || merged.width)
-      const h = clamp(merged.height, MIN_IMAGE_SIZE, canvasSize.height || merged.height)
-      const x = clamp(merged.x, 0, Math.max(0, (canvasSize.width || merged.x + w) - w))
-      const y = clamp(merged.y, 0, Math.max(0, (canvasSize.height || merged.y + h) - h))
+      if (overrides) {
+        x = overrides.x ?? x
+        y = overrides.y ?? y
+        w = overrides.width ?? w
+        h = overrides.height ?? h
+      }
+      if (size.width || size.height) {
+        w = clamp(w, MIN_IMAGE_SIZE, size.width || w)
+        h = clamp(h, MIN_IMAGE_SIZE, size.height || h)
+        x = clamp(x, 0, Math.max(0, (size.width || x + w) - w))
+        y = clamp(y, 0, Math.max(0, (size.height || y + h) - h))
+      }
       return {
-        ...merged,
+        ...img,
         x,
         y,
         width: w,
         height: h,
-        xRatio: canvasSize.width ? roundRatio(x / canvasSize.width) : merged.xRatio,
-        yRatio: canvasSize.height ? roundRatio(y / canvasSize.height) : merged.yRatio,
-        widthRatio: canvasSize.width ? roundRatio(w / canvasSize.width) : merged.widthRatio,
-        heightRatio: canvasSize.height ? roundRatio(h / canvasSize.height) : merged.heightRatio,
       }
     })
-  }, [images, canvasSize, renderVersion])
-  imagesRef.current = imagesToRender
+  }, [images, canvasSize, renderVersion, resolveSize, resolveImageWorld, worldToScreenSize, worldToScreenPoint])
 
   const renderedImageMap = useMemo(() => {
-    const map = new Map<string, ImageData>()
+    const map = new Map<string, ImageRenderData>()
     imagesToRender.forEach((img) => map.set(String(img.id), img))
     return map
   }, [imagesToRender])
@@ -136,52 +252,17 @@ export default function InteractiveCanvas() {
     if (changed) scheduleRender()
   }, [images, scheduleRender])
 
-  // Canvas sizing + redraw
-  useEffect(() => {
-  const handleResize = () => {
-    const rect = drawingCanvasRef.current?.getBoundingClientRect()
-    if (!rect) return
-    const ratio = window.devicePixelRatio || 1
-    const canvas = drawingCanvasRef.current!
-      canvas.width = Math.max(1, Math.floor(rect.width * ratio))
-      canvas.height = Math.max(1, Math.floor(rect.height * ratio))
-      setCanvasSize({ width: rect.width, height: rect.height })
-      const ctx = canvas.getContext('2d')!
-      ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
-      ctx.lineCap = 'round'
-      ctx.lineJoin = 'round'
-      ctxRef.current = ctx
-      ctx.clearRect(0, 0, rect.width, rect.height)
-      strokes.forEach((s) => drawStrokeSegment(ctx, s))
-    }
-    handleResize()
-    window.addEventListener('resize', handleResize)
-    window.addEventListener('orientationchange', handleResize)
-    return () => {
-      window.removeEventListener('resize', handleResize)
-      window.removeEventListener('orientationchange', handleResize)
-    }
-  }, [strokes])
-
-  useEffect(() => {
-    const rect = drawingCanvasRef.current?.getBoundingClientRect()
-    const ctx = ctxRef.current
-    if (!rect || !ctx) return
-    ctx.clearRect(0, 0, rect.width, rect.height)
-    strokes.forEach((s) => drawStrokeSegment(ctx, s))
-  }, [strokes])
-
   // Mutations
-  const addImage = useMutation(({ storage }, img: ImageData) => {
+  const addImage = useMutation(({ storage }, img: StoredImageData) => {
     const imagesMap = storage.get('images') as unknown as {
-      set: (key: string, value: ImageData) => void
+      set: (key: string, value: StoredImageData) => void
     }
     imagesMap.set(String(img.id), img)
   }, [])
-  const updateImageTransform = useMutation(({ storage }, id: string, patch: Partial<ImageData>) => {
+  const updateImageTransform = useMutation(({ storage }, id: string, patch: Partial<StoredImageData>) => {
     const map = storage.get('images') as unknown as {
-      get: (key: string) => ImageData | undefined
-      set: (key: string, value: ImageData) => void
+      get: (key: string) => StoredImageData | undefined
+      set: (key: string, value: StoredImageData) => void
     }
     const prev = map.get(id)
     if (!prev) return
@@ -221,53 +302,83 @@ export default function InteractiveCanvas() {
     // As a fallback, reset the list
     storage.set('strokes', new LiveList<StrokeSegment>([]))
   }, [])
-  // Recenter canvas content when the available surface changes size (e.g., window resize)
-  useEffect(() => {
-    const prev = prevCanvasSizeRef.current
-    const { width, height } = canvasSize
-    if (!width || !height) {
-      prevCanvasSizeRef.current = canvasSize
-      return
-    }
-    if (prev.width === width && prev.height === height) return
-    const dx = (width - prev.width) / 2
-    const dy = (height - prev.height) / 2
-    prevCanvasSizeRef.current = canvasSize
-    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return
-    imagesToRender.forEach((img) => {
-      const nx = clamp((img.x ?? 0) + dx, 0, Math.max(0, width - (img.width ?? 0)))
-      const ny = clamp((img.y ?? 0) + dy, 0, Math.max(0, height - (img.height ?? 0)))
-      updateImageTransform(String(img.id), {
-        x: nx,
-        y: ny,
-        xRatio: roundRatio(width ? nx / width : 0),
-        yRatio: roundRatio(height ? ny / height : 0),
-      })
-    })
-  }, [canvasSize, imagesToRender, updateImageTransform])
-
   // Drawing handlers
-  const drawStrokeSegment = (ctx: CanvasRenderingContext2D, s: StrokeSegment) => {
-    ctx.save()
-    ctx.strokeStyle = s.mode === 'erase' ? 'rgba(0,0,0,1)' : s.color
-    ctx.lineWidth = s.width
-    ctx.globalCompositeOperation = s.mode === 'erase' ? 'destination-out' : 'source-over'
-    ctx.beginPath()
-    ctx.moveTo(s.x1, s.y1)
-    ctx.lineTo(s.x2, s.y2)
-    ctx.stroke()
-    ctx.restore()
-  }
+  const drawStrokeSegment = useCallback(
+    (ctx: CanvasRenderingContext2D, s: StrokeSegment, sizeOverride?: CanvasSize) => {
+      const size = sizeOverride ?? canvasSizeRef.current
+      if (!size.width || !size.height) return
+      const isWorld =
+        s.space === 'world' ||
+        (s.x1 >= 0 && s.x1 <= 1 && s.y1 >= 0 && s.y1 <= 1 && s.x2 >= 0 && s.x2 <= 1 && s.y2 >= 0 && s.y2 <= 1)
+      const x1 = isWorld ? s.x1 * size.width : s.x1
+      const y1 = isWorld ? s.y1 * size.height : s.y1
+      const x2 = isWorld ? s.x2 * size.width : s.x2
+      const y2 = isWorld ? s.y2 * size.height : s.y2
+      const minDim = Math.max(1, Math.min(size.width, size.height))
+      const lineWidth = isWorld ? s.width * minDim : s.width
+      ctx.save()
+      ctx.strokeStyle = s.mode === 'erase' ? 'rgba(0,0,0,1)' : s.color
+      ctx.lineWidth = lineWidth
+      ctx.globalCompositeOperation = s.mode === 'erase' ? 'destination-out' : 'source-over'
+      ctx.beginPath()
+      ctx.moveTo(x1, y1)
+      ctx.lineTo(x2, y2)
+      ctx.stroke()
+      ctx.restore()
+    },
+    [],
+  )
+  const resizeCanvas = useCallback(() => {
+    const rect = drawingCanvasRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const ratio = window.devicePixelRatio || 1
+    const canvas = drawingCanvasRef.current!
+    canvas.width = Math.max(1, Math.floor(rect.width * ratio))
+    canvas.height = Math.max(1, Math.floor(rect.height * ratio))
+    const nextSize = { width: rect.width, height: rect.height }
+    canvasSizeRef.current = nextSize
+    setCanvasSize(nextSize)
+    const ctx = canvas.getContext('2d')!
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+    ctxRef.current = ctx
+    ctx.clearRect(0, 0, rect.width, rect.height)
+    strokesRef.current.forEach((s) => drawStrokeSegment(ctx, s, nextSize))
+  }, [drawStrokeSegment])
+
+  useEffect(() => {
+    resizeCanvas()
+    const onResize = () => resizeCanvas()
+    window.addEventListener('resize', onResize)
+    window.addEventListener('orientationchange', onResize)
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => resizeCanvas()) : null
+    if (observer && canvasRef.current) observer.observe(canvasRef.current)
+    return () => {
+      window.removeEventListener('resize', onResize)
+      window.removeEventListener('orientationchange', onResize)
+      if (observer) observer.disconnect()
+    }
+  }, [resizeCanvas])
+
+  useEffect(() => {
+    const ctx = ctxRef.current
+    const size = canvasSizeRef.current
+    if (!ctx || !size.width || !size.height) return
+    ctx.clearRect(0, 0, size.width, size.height)
+    strokes.forEach((s) => drawStrokeSegment(ctx, s, size))
+  }, [strokes, drawStrokeSegment])
   const handlePointerDown = (e: React.PointerEvent, id?: string, type?: 'move' | 'resize') => {
     e.preventDefault()
     const rect = drawingCanvasRef.current?.getBoundingClientRect()
     if (!rect) return
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
+    const world = screenToWorldPoint(x, y, { width: rect.width, height: rect.height })
     if ((drawMode === 'draw' || drawMode === 'erase') && !id) {
       setIsDrawing(true)
       setMousePos({ x, y })
-      lastPointRef.current = { x, y }
+      lastPointRef.current = world
       const ctx = ctxRef.current
       if (ctx) { ctx.strokeStyle = drawMode === 'erase' ? 'rgba(0,0,0,1)' : color; ctx.lineWidth = brushSize; ctx.globalCompositeOperation = drawMode === 'erase' ? 'destination-out' : 'source-over'; ctx.beginPath(); ctx.moveTo(x, y) }
       return
@@ -287,16 +398,27 @@ export default function InteractiveCanvas() {
     if (!rect) return
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
+    const world = screenToWorldPoint(x, y, { width: rect.width, height: rect.height })
     const pos = { x, y }
     if (drawMode === 'draw' || drawMode === 'erase') setMousePos(pos)
-    updateMyPresence({ cursor: pos })
+    updateMyPresence({ cursor: world })
     if ((drawMode === 'draw' || drawMode === 'erase') && isDrawing && lastPointRef.current) {
       const prev = lastPointRef.current
-      const seg: StrokeSegment = { id: crypto.randomUUID(), x1: prev.x, y1: prev.y, x2: x, y2: y, color, width: brushSize, mode: drawMode }
+      const seg: StrokeSegment = {
+        id: crypto.randomUUID(),
+        x1: prev.x,
+        y1: prev.y,
+        x2: world.x,
+        y2: world.y,
+        color,
+        width: screenToWorldStroke(brushSize, { width: rect.width, height: rect.height }),
+        mode: drawMode,
+        space: 'world',
+      }
       const ctx = ctxRef.current
-      if (ctx) drawStrokeSegment(ctx, seg)
+      if (ctx) drawStrokeSegment(ctx, seg, { width: rect.width, height: rect.height })
       addStrokeSegment(seg)
-      lastPointRef.current = { x, y }
+      lastPointRef.current = world
     }
     if (drawMode === 'images' && dragState.current.id) {
       const key = dragState.current.id
@@ -323,12 +445,22 @@ export default function InteractiveCanvas() {
       scheduleRender()
       dragState.current = { id: null, type: null, offsetX: 0, offsetY: 0 }
       if (img) {
-        const patch: Partial<ImageData> = {
-          x: img.x!, y: img.y!, width: img.width!, height: img.height!,
-          xRatio: roundRatio((img.x! / (canvasSize.width || 1))),
-          yRatio: roundRatio((img.y! / (canvasSize.height || 1))),
-          widthRatio: roundRatio((img.width! / (canvasSize.width || 1))),
-          heightRatio: roundRatio((img.height! / (canvasSize.height || 1))),
+        const size = resolveSize()
+        const minWorldW = size.width ? MIN_IMAGE_SIZE / size.width : 0
+        const minWorldH = size.height ? MIN_IMAGE_SIZE / size.height : 0
+        const rawWorldX = size.width ? img.x! / size.width : 0
+        const rawWorldY = size.height ? img.y! / size.height : 0
+        const rawWorldW = size.width ? img.width! / size.width : 0
+        const rawWorldH = size.height ? img.height! / size.height : 0
+        const widthWorld = clamp(rawWorldW, minWorldW, 1)
+        const heightWorld = clamp(rawWorldH, minWorldH, 1)
+        const xWorld = clamp(rawWorldX, 0, Math.max(0, 1 - widthWorld))
+        const yWorld = clamp(rawWorldY, 0, Math.max(0, 1 - heightWorld))
+        const patch: Partial<StoredImageData> = {
+          x: roundRatio(xWorld),
+          y: roundRatio(yWorld),
+          width: roundRatio(widthWorld),
+          height: roundRatio(heightWorld),
         }
         updateImageTransform(key, patch)
       }
@@ -362,20 +494,53 @@ export default function InteractiveCanvas() {
     },
     [isDev],
   )
-  async function uploadOneImage(file: File, dropX: number, dropY: number) {
+  async function uploadOneImage(file: File, dropX: number, dropY: number, rect: { width: number; height: number }) {
     resetUploadFeedback()
     const localUrl = fileToObjectURL(file)
     const tempId = `${Date.now()}-${Math.random().toString(36).slice(2)}`
-    const baseImg: ImageData = { id: tempId, url: localUrl, x: dropX - 100, y: dropY - 100, width: 200, height: 200 }
-    setPendingImages((prev) => [...prev, baseImg])
+    const baseSize = 200
+    const worldDrop = screenToWorldPoint(dropX, dropY, rect)
+    const baseWorldSize = screenToWorldSize(baseSize, baseSize, rect)
+    const minWorldW = rect.width ? MIN_IMAGE_SIZE / rect.width : 0
+    const minWorldH = rect.height ? MIN_IMAGE_SIZE / rect.height : 0
+    const baseWidthWorld = clamp(baseWorldSize.w, minWorldW, 1)
+    const baseHeightWorld = clamp(baseWorldSize.h, minWorldH, 1)
+    const baseXWorld = clamp(worldDrop.x - baseWidthWorld / 2, 0, Math.max(0, 1 - baseWidthWorld))
+    const baseYWorld = clamp(worldDrop.y - baseHeightWorld / 2, 0, Math.max(0, 1 - baseHeightWorld))
+    const baseImgWorld: StoredImageData = {
+      id: tempId,
+      url: localUrl,
+      x: baseXWorld,
+      y: baseYWorld,
+      width: baseWidthWorld,
+      height: baseHeightWorld,
+    }
+    const baseImgRender: ImageRenderData = {
+      id: tempId,
+      url: localUrl,
+      x: dropX - baseSize / 2,
+      y: dropY - baseSize / 2,
+      width: baseSize,
+      height: baseSize,
+    }
+    setPendingImages((prev) => [...prev, baseImgRender])
     try {
       const uploadResult = await uploadImageToCloudinary(file)
       const finalUrl = uploadResult.deliveryUrl ?? uploadResult.url
-      const normalized: ImageData = {
-        ...baseImg,
+      const uploadWorldSize = screenToWorldSize(
+        uploadResult.width ?? baseSize,
+        uploadResult.height ?? baseSize,
+        rect,
+      )
+      const widthWorld = clamp(uploadWorldSize.w, minWorldW, 1)
+      const heightWorld = clamp(uploadWorldSize.h, minWorldH, 1)
+      const normalized: StoredImageData = {
+        ...baseImgWorld,
         url: finalUrl,
-        width: uploadResult.width ?? baseImg.width,
-        height: uploadResult.height ?? baseImg.height,
+        width: widthWorld,
+        height: heightWorld,
+        x: clamp(baseImgWorld.x, 0, Math.max(0, 1 - widthWorld)),
+        y: clamp(baseImgWorld.y, 0, Math.max(0, 1 - heightWorld)),
         createdAt: Date.now(),
       }
       try {
@@ -404,7 +569,7 @@ export default function InteractiveCanvas() {
     if (!rect) return
     const files = Array.from(e.dataTransfer.files)
     for (const file of files) {
-      await uploadOneImage(file, e.clientX - rect.left, e.clientY - rect.top)
+      await uploadOneImage(file, e.clientX - rect.left, e.clientY - rect.top, rect)
     }
   }
 
@@ -444,7 +609,7 @@ export default function InteractiveCanvas() {
         )}
         {/* Surface */}
         <div ref={canvasRef} tabIndex={0} onDrop={handleDrop} onDragOver={(e) => e.preventDefault()} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerLeave} onKeyDown={handleKeyDown} onWheel={(e) => e.preventDefault()} className="w-full h-full relative overflow-hidden z-0 touch-none" style={{ background: 'none', border: 'none', borderRadius: 0 }}>
-          <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; e.currentTarget.value = ''; if (!file) return; const rect = drawingCanvasRef.current?.getBoundingClientRect(); if (!rect) return; await uploadOneImage(file, rect.width / 2, rect.height / 2) }} />
+          <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; e.currentTarget.value = ''; if (!file) return; const rect = drawingCanvasRef.current?.getBoundingClientRect(); if (!rect) return; await uploadOneImage(file, rect.width / 2, rect.height / 2, rect) }} />
           <canvas ref={drawingCanvasRef} className="absolute top-0 left-0 w-full h-full" />
           {pendingImages.map((img) => (
             <div key={`pending-${img.id}`} className="absolute rounded-2xl border border-dashed border-white/30 bg-black/30 pointer-events-none animate-pulse" style={{ top: img.y, left: img.x, width: img.width, height: img.height, zIndex: 2 }}>
@@ -457,7 +622,7 @@ export default function InteractiveCanvas() {
           {(drawMode === 'draw' || drawMode === 'erase') && !dragState.current.id && (
             <div className="absolute rounded-full border border-emerald-500 pointer-events-none" style={{ top: mousePos.y - brushSize / 2, left: mousePos.x - brushSize / 2, width: brushSize, height: brushSize, zIndex: 2 }} />
           )}
-          <LiveCursors />
+          <LiveCursors canvasSize={canvasSize} />
           <SideNotes />
         </div>
       </div>
