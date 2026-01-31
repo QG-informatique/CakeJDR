@@ -12,6 +12,7 @@ type Props = {
   disabled: boolean
   cooldown: boolean
   cooldownDuration: number
+  afterRoll?: React.ReactNode
   children?: React.ReactNode
 }
 
@@ -22,6 +23,7 @@ const DiceRoller: FC<Props> = ({
   disabled,
   cooldown,
   cooldownDuration,
+  afterRoll,
   children
 }) => {
   const t = useT()
@@ -55,20 +57,24 @@ const DiceRoller: FC<Props> = ({
   // When collapsed, show only a centered expand button
   if (collapsed) {
     return (
-      <button
-        onClick={() => setCollapsed(false)}
-        aria-label="Expand dice panel"
-        className="absolute bottom-2 left-1/2 -translate-x-1/2 z-50 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
-      >
-        <ChevronUp size={20} />
-      </button>
+      <>
+        <button
+          onClick={() => setCollapsed(false)}
+          aria-label="Expand dice panel"
+          className="absolute bottom-2 left-1/2 -translate-x-1/2 z-50 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
+        >
+          <ChevronUp size={20} />
+        </button>
+        {afterRoll && <div className="hidden">{afterRoll}</div>}
+        {children && <div className="hidden">{children}</div>}
+      </>
     )
   }
 
   return (
     <div
       className="
-        relative w-full p-4 flex items-center gap-2 justify-between
+        relative w-full p-4 flex flex-wrap items-center gap-3
         rounded-xl
         border border-white/10
         bg-black/15
@@ -90,25 +96,27 @@ const DiceRoller: FC<Props> = ({
           <ChevronDown size={20} />
         </button>
       </div>
-      <label htmlFor="diceType" className="mr-2 font-semibold text-white/85">
-        {t('diceType')}:
-      </label>
+      <div className="flex items-center gap-2 flex-wrap">
+        <label htmlFor="diceType" className="mr-2 font-semibold text-white/85">
+          {t('diceType')}:
+        </label>
 
-      <select
-        id="diceType"
-        className="border p-1 rounded text-white bg-gray-800/70"
-        value={diceType}
-        onChange={(e) => onChange(Number(e.target.value))}
-        disabled={disabled}
-      >
-        {[4, 6, 8, 10, 12, 20, 100].map((val) => (
-          <option key={val} value={val}>
-            D{val}
-          </option>
-        ))}
-      </select>
+        <select
+          id="diceType"
+          className="border p-1 rounded text-white bg-gray-800/70"
+          value={diceType}
+          onChange={(e) => onChange(Number(e.target.value))}
+          disabled={disabled}
+        >
+          {[4, 6, 8, 10, 12, 20, 100].map((val) => (
+            <option key={val} value={val}>
+              D{val}
+            </option>
+          ))}
+        </select>
+      </div>
 
-      <div className="ml-4">
+      <div className="flex items-center gap-3 flex-wrap">
         <button
           onClick={handleRollClick}
           className={`
@@ -140,9 +148,10 @@ const DiceRoller: FC<Props> = ({
             />
           )}
         </button>
+        {afterRoll && <div className="flex items-center">{afterRoll}</div>}
       </div>
 
-      {children && <div className="ml-auto flex gap-1">{children}</div>}
+      {children && <div className="ml-auto flex items-center gap-1">{children}</div>}
     </div>
   )
 }

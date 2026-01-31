@@ -31,7 +31,8 @@ export function Room({
           characters: new LiveMap(),
           images: new LiveMap(),
           strokes: new LiveList([]),
-          music: new LiveObject({ id: '', playing: false, volume: 5 }),
+          music: new LiveObject({ id: '', playing: false }),
+          musicQueue: new LiveList([]),
           summary: new LiveObject({
             acts: new LiveList<{ id: string; title: string }>([]),
             currentId: undefined,

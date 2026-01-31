@@ -7,23 +7,37 @@ import crypto from "node:crypto";
 
 type LiveblocksMetadata = Record<string, string | string[] | null>;
 
-interface RoomMetadata {
+type RoomMetadata = Record<string, unknown> & {
   password?: string | null;
   passwordHash?: string | null;
   hasPassword?: boolean | string;
-}
+};
 
 const sha256 = (s: string) => crypto.createHash("sha256").update(s).digest("hex");
 
 function sanitizeMetadata(meta: RoomMetadata): LiveblocksMetadata {
-  return {
-    passwordHash:
-      typeof meta.passwordHash === "string" && meta.passwordHash.length
-        ? meta.passwordHash
-        : null,
-    hasPassword:
-      meta.hasPassword === true || meta.hasPassword === "1" ? "1" : null,
-  };
+  const cleaned: LiveblocksMetadata = {};
+  for (const [key, value] of Object.entries(meta)) {
+    if (key === "password" || key === "passwordHash" || key === "hasPassword") {
+      continue;
+    }
+    if (typeof value === "string") {
+      cleaned[key] = value;
+    } else if (Array.isArray(value) && value.every((v) => typeof v === "string")) {
+      cleaned[key] = value;
+    }
+  }
+  const passwordHash =
+    typeof meta.passwordHash === "string" && meta.passwordHash.length
+      ? meta.passwordHash
+      : null;
+  const hasPassword =
+    meta.hasPassword === true || meta.hasPassword === "1" || meta.hasPassword === "true"
+      ? "1"
+      : null;
+  if (passwordHash) cleaned.passwordHash = passwordHash;
+  if (hasPassword) cleaned.hasPassword = hasPassword;
+  return cleaned;
 }
 
 function bad(msg: string, code = 400) {

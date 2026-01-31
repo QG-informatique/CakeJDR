@@ -208,6 +208,15 @@ export default function MenuAccueil() {
     router.push(`/room/${selectedRoom.id}`)
   }
 
+  const handleEnterRoom = (room: RoomInfo) => {
+    setSelectedRoom(room)
+    localStorage.setItem(ROOM_KEY, JSON.stringify(room))
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('visitedMenu', 'true')
+    }
+    router.push(`/room/${room.id}`)
+  }
+
   const handleRoomSelect = (room: RoomInfo) => {
     setSelectedRoom(room)
     setRoomLoading(true)
@@ -637,11 +646,12 @@ export default function MenuAccueil() {
               </div>
             </section>
             <div className="mb-4">
-              <RoomList
-                selectedId={selectedRoom?.id || null}
-                onSelect={handleRoomSelect}
-                onCreateClick={() => setCreateRoomOpen(true)}
-              />
+            <RoomList
+              selectedId={selectedRoom?.id || null}
+              onSelect={handleRoomSelect}
+              onEnter={handleEnterRoom}
+              onCreateClick={() => setCreateRoomOpen(true)}
+            />
             </div>
             <RoomCreateModal
               open={createRoomOpen}

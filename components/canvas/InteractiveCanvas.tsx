@@ -3,11 +3,8 @@
 import { useRef, useState, useEffect, useMemo, useCallback } from 'react'
 import { useStorage, useMutation, useMyPresence } from '@liveblocks/react'
 import { LiveList } from '@liveblocks/client'
-import YouTube from 'react-youtube'
-import type { YouTubePlayer } from 'youtube-player/dist/types'
 import CanvasTools, { ToolMode } from './CanvasTools'
 import LiveCursors from './LiveCursors'
-import MusicPanel from './MusicPanel'
 import ImageItem, { ImageData } from './ImageItem'
 import SideNotes from '@/components/misc/SideNotes'
 import { useT } from '@/lib/useT'
@@ -38,9 +35,6 @@ export default function InteractiveCanvas() {
   // Storage
   const imagesMap = useStorage((root) => root.images)
   const strokesList = useStorage((root) => root.strokes) as LiveList<StrokeSegment> | null
-  const musicObj = useStorage((root) => root.music)
-  const storageReady = !!imagesMap && !!strokesList
-
   const images = useMemo(() => (imagesMap ? Array.from(imagesMap.values()) as ImageData[] : []), [imagesMap])
   const strokes = useMemo<StrokeSegment[]>(() => {
     if (!strokesList) return []
@@ -79,16 +73,7 @@ export default function InteractiveCanvas() {
   const [isDrawing, setIsDrawing] = useState(false)
   const lastPointRef = useRef<{ x: number; y: number } | null>(null)
   const [toolsVisible, setToolsVisible] = useState(true)
-  const [audioVisible, setAudioVisible] = useState(false)
   const imageInputRef = useRef<HTMLInputElement>(null)
-
-  // Music state
-  const [ytUrl, setYtUrl] = useState('')
-  const [ytId, setYtId] = useState<string | null>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [volume, setVolumeState] = useState(5) // FIX: 5%
-  const playerRef = useRef<YouTubePlayer | null>(null)
-  const initializedRef = useRef(false)
 
   // Images helpers
   const [pendingImages, setPendingImages] = useState<ImageData[]>([])
@@ -236,11 +221,6 @@ export default function InteractiveCanvas() {
     // As a fallback, reset the list
     storage.set('strokes', new LiveList<StrokeSegment>([]))
   }, [])
-  const updateMusic = useMutation(({ storage }, patch: Partial<{ id: string; playing: boolean; volume: number }>) => {
-    const obj = storage.get('music') as unknown as { set: (k: string, v: unknown) => void }
-    Object.entries(patch).forEach(([k, v]) => { obj.set(k, v) })
-  }, [])
-
   // Recenter canvas content when the available surface changes size (e.g., window resize)
   useEffect(() => {
     const prev = prevCanvasSizeRef.current
@@ -440,23 +420,6 @@ export default function InteractiveCanvas() {
     if (canvas) { canvas.style.zIndex = '2'; canvas.style.pointerEvents = drawMode === 'images' ? 'none' : 'auto' }
   }, [drawMode])
 
-  // Music sync from storage
-  useEffect(() => {
-    if (!musicObj) return
-    setYtId(musicObj.id)
-    // FIX: suppress auto-resume only on first load
-    if (!initializedRef.current) {
-      setIsPlaying(false)
-    } else {
-      setIsPlaying(!!musicObj.playing)
-    }
-    setVolumeState(typeof musicObj.volume === 'number' ? musicObj.volume : 5)
-  }, [musicObj])
-  const handleYtSubmit = () => { const match = ytUrl.match(/(?:youtube\.com.*v=|youtu\.be\/)([^&\n?#]+)/); if (!match) return; const id = match[1] ?? ''; setYtId(id); setIsPlaying(true); if (storageReady) updateMusic({ id, playing: true }) }
-  const handlePlayPause = () => { const p = playerRef.current; if (!p) return; if (isPlaying) p.pauseVideo(); else p.playVideo(); const newPlaying = !isPlaying; setIsPlaying(newPlaying); if (storageReady) updateMusic({ playing: newPlaying }) }
-  useEffect(() => { playerRef.current?.setVolume(volume) }, [volume])
-  useEffect(() => { const p = playerRef.current; if (!p) return; if (isPlaying) p.playVideo(); else p.pauseVideo() }, [isPlaying])
-
   return (
     <>
       <div className="relative w-full h-full select-none">
@@ -479,28 +442,6 @@ export default function InteractiveCanvas() {
             <CanvasTools drawMode={drawMode} setDrawMode={setDrawMode} color={color} setColor={setColor} brushSize={brushSize} setPenSize={setPenSize} setEraserSize={setEraserSize} clearCanvas={clearStrokes} onAddImage={() => imageInputRef.current?.click()} />
           </div>
         )}
-        {/* Music */}
-        <div className="absolute bottom-3 right-3 z-30 pointer-events-auto">
-          <button onClick={() => setAudioVisible(!audioVisible)} className="relative rounded-xl px-5 py-2 text-base font-semibold shadow border-none bg-black/30 text-white/90 hover:bg-purple-600 hover:text-white transition duration-100 flex items-center justify-center min-h-[38px]">
-            {isPlaying && (<span className="absolute inset-0 rounded-xl pointer-events-none animate-pulse-ring" />)}
-            <span className="relative">Musique</span>
-          </button>
-        </div>
-        {audioVisible && (<MusicPanel ytUrl={ytUrl} setYtUrl={setYtUrl} isPlaying={isPlaying} handleSubmit={handleYtSubmit} handlePlayPause={handlePlayPause} volume={volume} setVolume={setVolumeState} />)}
-        {ytId && (
-          <YouTube
-            videoId={ytId}
-            opts={{ height: '0', width: '0', playerVars: { autoplay: 0, rel: 0, playsinline: 1 } }}
-            onReady={(e) => {
-              playerRef.current = e.target
-              if (!initializedRef.current) initializedRef.current = true
-              e.target.setVolume(volume)
-              // FIX: never auto-play on load
-              e.target.pauseVideo()
-            }}
-          />
-        )}
-
         {/* Surface */}
         <div ref={canvasRef} tabIndex={0} onDrop={handleDrop} onDragOver={(e) => e.preventDefault()} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerLeave} onKeyDown={handleKeyDown} onWheel={(e) => e.preventDefault()} className="w-full h-full relative overflow-hidden z-0 touch-none" style={{ background: 'none', border: 'none', borderRadius: 0 }}>
           <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; e.currentTarget.value = ''; if (!file) return; const rect = drawingCanvasRef.current?.getBoundingClientRect(); if (!rect) return; await uploadOneImage(file, rect.width / 2, rect.height / 2) }} />
@@ -520,10 +461,6 @@ export default function InteractiveCanvas() {
           <SideNotes />
         </div>
       </div>
-      <style jsx>{`
-        @keyframes pulseRing { 0% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.6);} 70% { box-shadow: 0 0 0 12px rgba(168, 85, 247, 0);} 100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0);} }
-        .animate-pulse-ring { animation: pulseRing 1.6s cubic-bezier(0.4,0,0.6,1) infinite; }
-      `}</style>
     </>
   )
 }

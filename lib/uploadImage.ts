@@ -9,14 +9,19 @@ const ALLOWED_TYPES = new Set([
   'image/svg+xml',
 ])
 const API_ENDPOINT = '/api/cloudinary'
+const SIGNATURE_ENDPOINT = '/api/cloudinary/signature'
+const BASE_TRANSFORM = 'f_auto,q_auto,c_limit,w_2048,h_2048'
+const THUMB_TRANSFORM = `${BASE_TRANSFORM}/e_blur:1000,w_256,h_256`
 
 export type UploadStep =
   | 'VALIDATION_FICHIER'
   | 'PREPARATION_FORMDATA'
+  | 'SIGNATURE_REQUEST'
   | 'ENVOI_RESEAU'
   | 'REPONSE_SERVEUR'
   | 'CLOUDINARY_RESULT'
   | 'POST_UPLOAD'
+  | 'UPLOAD_DIRECT'
 
 export type UploadErrorCode =
   | 'FILE_MISSING'
@@ -24,6 +29,8 @@ export type UploadErrorCode =
   | 'IMAGE_INVALID_TYPE'
   | 'IMAGE_TOO_LARGE'
   | 'FORMDATA_FAILED'
+  | 'SIGNATURE_FETCH_FAILED'
+  | 'SIGNATURE_INVALID'
   | 'NETWORK_ERROR'
   | 'API_HTTP_4XX'
   | 'API_HTTP_5XX'
@@ -46,6 +53,14 @@ export type CloudinaryResult = {
 }
 
 export type UploadErrorDetails = Record<string, unknown>
+
+type CloudinarySignature = {
+  cloudName: string
+  apiKey: string
+  timestamp: number
+  signature: string
+  folder?: string
+}
 
 export class UploadError extends Error {
   code: UploadErrorCode
@@ -86,6 +101,9 @@ const buildUploadError = (
   userMessage: string,
   details?: UploadErrorDetails,
 ) => new UploadError({ code, step, userMessage, details })
+
+const buildDeliveryUrl = (cloudName: string, publicId: string, transform: string) =>
+  `https://res.cloudinary.com/${cloudName}/image/upload/${transform}/${publicId}`
 
 const validateFile = (file: File): void => {
   if (!file) {
@@ -138,19 +156,37 @@ const prepareFormData = (file: File): FormData => {
 }
 
 const parseResponse = async (res: Response): Promise<Record<string, unknown>> => {
+  let text = ''
   try {
-    const json = await res.json()
+    text = await res.text()
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Invalid response payload'
+    throw buildUploadError(
+      'RESPONSE_PARSE_ERROR',
+      'REPONSE_SERVEUR',
+      'Reponse serveur illisible.',
+      { status: res.status, message },
+    )
+  }
+
+  if (!text) return {}
+
+  try {
+    const json = JSON.parse(text)
     if (!isRecord(json)) {
       throw new Error('Payload is not an object')
     }
     return json
   } catch (error) {
+    if (!res.ok) {
+      return { _rawText: text }
+    }
     const message = error instanceof Error ? error.message : 'Invalid JSON payload'
     throw buildUploadError(
       'RESPONSE_PARSE_ERROR',
       'REPONSE_SERVEUR',
-      'Réponse Cloudinary illisible.',
-      { status: res.status, message },
+      'Reponse serveur illisible.',
+      { status: res.status, message, text: text.slice(0, 400) },
     )
   }
 }
@@ -202,10 +238,25 @@ const readServerErrorMessage = (body: Record<string, unknown>): string | undefin
   if (isRecord(rawError) && typeof rawError.message === 'string' && rawError.message.trim().length > 0) {
     return rawError.message
   }
+  const rawText = readString(body._rawText)
+  if (rawText) {
+    const trimmed = rawText.trim()
+    if (!trimmed.startsWith('<')) {
+      return trimmed.slice(0, 200)
+    }
+  }
   return undefined
 }
 
 const mapHttpError = (status: number, body: Record<string, unknown>): UploadError => {
+  if (status === 413) {
+    return buildUploadError(
+      'IMAGE_TOO_LARGE',
+      'REPONSE_SERVEUR',
+      'Image trop lourde (limite serveur).',
+      { status, body },
+    )
+  }
   const code: UploadErrorCode = status >= 500 ? 'API_HTTP_5XX' : 'API_HTTP_4XX'
   const baseMessage =
     status >= 500
@@ -219,30 +270,123 @@ const mapHttpError = (status: number, body: Record<string, unknown>): UploadErro
   return buildUploadError(code, 'REPONSE_SERVEUR', userMessage, details)
 }
 
+const parseSignaturePayload = (body: Record<string, unknown>): CloudinarySignature => {
+  const cloudName = readString(body.cloudName)
+  const apiKey = readString(body.apiKey)
+  const signature = readString(body.signature)
+  const timestamp = readNumber(body.timestamp)
+  const folder = readString(body.folder)
+
+  if (!cloudName || !apiKey || !signature || !timestamp) {
+    throw buildUploadError(
+      'SIGNATURE_INVALID',
+      'SIGNATURE_REQUEST',
+      'Signature upload invalide.',
+      { body },
+    )
+  }
+
+  return { cloudName, apiKey, signature, timestamp, folder }
+}
+
+const tryFetchSignature = async (): Promise<CloudinarySignature | null> => {
+  let res: Response
+  try {
+    res = await fetch(SIGNATURE_ENDPOINT, { method: 'POST', cache: 'no-store' })
+  } catch (error) {
+    return null
+  }
+
+  const body = await parseResponse(res)
+  if (!res.ok) {
+    return null
+  }
+
+  try {
+    return parseSignaturePayload(body)
+  } catch {
+    return null
+  }
+}
+
+const uploadDirectToCloudinary = async (
+  file: File,
+  signature: CloudinarySignature,
+): Promise<CloudinaryResult> => {
+  const form = new FormData()
+  form.append('file', file)
+  form.append('api_key', signature.apiKey)
+  form.append('timestamp', String(signature.timestamp))
+  form.append('signature', signature.signature)
+  if (signature.folder) form.append('folder', signature.folder)
+
+  let res: Response
+  try {
+    res = await fetch(
+      `https://api.cloudinary.com/v1_1/${signature.cloudName}/image/upload`,
+      { method: 'POST', body: form },
+    )
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Network error'
+    throw buildUploadError(
+      'NETWORK_ERROR',
+      'UPLOAD_DIRECT',
+      'Impossible de contacter le service upload.',
+      { message },
+    )
+  }
+
+  const body = await parseResponse(res)
+  if (!res.ok) {
+    throw mapHttpError(res.status, body)
+  }
+
+  const publicId = readString(body.public_id) ?? readString(body.publicId)
+  const deliveryUrl = publicId
+    ? buildDeliveryUrl(signature.cloudName, publicId, BASE_TRANSFORM)
+    : undefined
+  const thumbUrl = publicId
+    ? buildDeliveryUrl(signature.cloudName, publicId, THUMB_TRANSFORM)
+    : undefined
+
+  const enrichedBody = publicId
+    ? { ...body, deliveryUrl, thumbUrl }
+    : body
+  return normalizeResult(enrichedBody)
+}
+
+const uploadViaApi = async (file: File): Promise<CloudinaryResult> => {
+  const form = prepareFormData(file)
+  let res: Response
+  try {
+    res = await fetch(API_ENDPOINT, { method: 'POST', body: form, cache: 'no-store' })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Network error'
+    throw buildUploadError(
+      'NETWORK_ERROR',
+      'ENVOI_RESEAU',
+      'Impossible de contacter le service upload.',
+      { message },
+    )
+  }
+
+  const body = await parseResponse(res)
+  if (!res.ok) {
+    throw mapHttpError(res.status, body)
+  }
+  return normalizeResult(body)
+}
+
 export const uploadImageToCloudinary = async (
   file: File,
 ): Promise<CloudinaryResult> => {
   try {
     validateFile(file)
-    const form = prepareFormData(file)
-    let res: Response
-    try {
-      res = await fetch(API_ENDPOINT, { method: 'POST', body: form, cache: 'no-store' })
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Network error'
-      throw buildUploadError(
-        'NETWORK_ERROR',
-        'ENVOI_RESEAU',
-        'Impossible de contacter le service upload.',
-        { message },
-      )
+    const signature = await tryFetchSignature()
+    if (signature) {
+      return await uploadDirectToCloudinary(file, signature)
     }
-
-    const body = await parseResponse(res)
-    if (!res.ok) {
-      throw mapHttpError(res.status, body)
-    }
-    return normalizeResult(body)
+    return await uploadViaApi(file)
   } catch (error) {
     if (error instanceof UploadError) {
       throw error
@@ -281,3 +425,5 @@ export const extractUploadErrorInfo = (
     details: typeof error === 'object' && error ? { error } : undefined,
   }
 }
+
+
