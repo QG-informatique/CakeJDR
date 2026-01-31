@@ -8,16 +8,20 @@ export default function useDiceHistory(roomId: string) {
   const lastLen = useRef(0)
 
   useEffect(() => {
+    // Reset state when switching rooms to avoid leaking previous history
+    lastLen.current = 0
+    setHistory([])
     try {
       const raw = localStorage.getItem(HISTORY_KEY)
-      if (raw) {
-        const arr = JSON.parse(raw)
-        if (Array.isArray(arr) && arr.length !== lastLen.current) {
-          setHistory(arr)
-          lastLen.current = arr.length
-        }
+      if (!raw) return
+      const arr = JSON.parse(raw)
+      if (Array.isArray(arr)) {
+        setHistory(arr)
+        lastLen.current = arr.length
       }
-    } catch {}
+    } catch {
+      // ignore parse errors; keep empty state
+    }
   }, [HISTORY_KEY])
 
   useEffect(() => {
