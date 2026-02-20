@@ -233,7 +233,7 @@ export default function InteractiveCanvas() {
         height: h,
       }
     })
-  }, [images, canvasSize, renderVersion, resolveSize, resolveImageWorld, worldToScreenSize, worldToScreenPoint])
+  }, [images, renderVersion, resolveSize, resolveImageWorld, worldToScreenSize, worldToScreenPoint])
 
   const renderedImageMap = useMemo(() => {
     const map = new Map<string, ImageRenderData>()

@@ -43,7 +43,7 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
       const room = {
         id: data.id,
         name,
-        password: payload.password || undefined,
+        hasPassword: Boolean(payload.password),
         createdAt: new Date().toISOString(),
       }
       localStorage.setItem('jdr_my_room', data.id)

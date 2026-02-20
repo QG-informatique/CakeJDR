@@ -293,7 +293,7 @@ const tryFetchSignature = async (): Promise<CloudinarySignature | null> => {
   let res: Response
   try {
     res = await fetch(SIGNATURE_ENDPOINT, { method: 'POST', cache: 'no-store' })
-  } catch (error) {
+  } catch {
     return null
   }
 
