@@ -11,6 +11,12 @@ function slugify(str: string) {
 
 const hashPassword = (password: string) =>
   createHash('sha256').update(password).digest('hex')
+const SAFE_METADATA_KEY = /^[a-zA-Z0-9:_-]{1,64}$/
+const BLOCKED_METADATA_KEYS = new Set(['__proto__', 'prototype', 'constructor'])
+
+function isSafeMetadataKey(key: string) {
+  return SAFE_METADATA_KEY.test(key) && !BLOCKED_METADATA_KEYS.has(key)
+}
 
 export async function listRooms() {
   const secret = process.env.LIVEBLOCKS_SECRET_KEY
@@ -108,14 +114,16 @@ export async function renameRoom(id: string, name: string) {
   if (!secret) throw new Error('Liveblocks key missing')
   const client = new Liveblocks({ secret })
   const room = await client.getRoom(id)
-  const metadata: Record<string, string | string[]> = {}
+  const entries: Array<[string, string | string[]]> = []
   if (typeof room.metadata === 'object' && room.metadata !== null) {
     for (const [k, v] of Object.entries(room.metadata as Record<string, unknown>)) {
-      if (typeof v === 'string') metadata[k] = v
+      if (!isSafeMetadataKey(k)) continue
+      if (typeof v === 'string') entries.push([k, v])
       else if (Array.isArray(v) && v.every((x) => typeof x === 'string')) {
-        metadata[k] = v as string[]
+        entries.push([k, v as string[]])
       }
     }
   }
+  const metadata = Object.fromEntries(entries) as Record<string, string | string[]>
   await client.updateRoom(id, { metadata: { ...metadata, name } })
 }

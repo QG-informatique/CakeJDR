@@ -163,21 +163,29 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
     })()
     const owner = normalized.owner || 'anon'
     const filename = `FichePerso/${roomId}_${owner}_${normalized.id}_${slug}.json`
-    await fetch(`/api/blob?filename=${encodeURIComponent(filename)}`, {
-      method: 'POST',
-      body: JSON.stringify(normalized),
-    })
-    alert(t('saveCloud'))
-    setModal(null)
+    try {
+      const res = await fetch(`/api/blob?filename=${encodeURIComponent(filename)}`, {
+        method: 'POST',
+        body: JSON.stringify(normalized),
+      })
+      if (!res.ok) throw new Error('upload failed')
+      alert(t('saveCloud'))
+      setModal(null)
+    } catch {
+      alert(t('saveCloudFail'))
+    }
   }
 
   const loadFromCloud = async (filename: string) => {
-    const res = await fetch(`/api/blob?prefix=${encodeURIComponent(filename)}`)
-    const data = await res.json()
-    const item = data.files?.blobs?.find((b: { pathname: string }) => b.pathname===filename)
-    if (!item) return
-    const txt = await fetch(item.downloadUrl || item.url).then(r=>r.text())
     try {
+      const res = await fetch(`/api/blob?prefix=${encodeURIComponent(filename)}`)
+      if (!res.ok) throw new Error('list failed')
+      const data = await res.json()
+      const item = data.files?.blobs?.find((b: { pathname: string }) => b.pathname===filename)
+      if (!item) throw new Error('file not found')
+      const blobRes = await fetch(item.downloadUrl || item.url)
+      if (!blobRes.ok) throw new Error('download failed')
+      const txt = await blobRes.text()
       const obj = JSON.parse(txt)
       const normalized = normalizeCharacter({
         ...obj,
@@ -193,10 +201,17 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
   }
 
   const deleteFromCloud = async (filename: string) => {
-    await fetch(`/api/blop/delete?filename=${encodeURIComponent(filename)}`)
-    setCloudFiles(f => f.filter(fl => fl !== filename))
-    alert(t('deleted'))
-    setModal(null)
+    try {
+      const res = await fetch(`/api/blob?filename=${encodeURIComponent(filename)}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) throw new Error('delete failed')
+      setCloudFiles(f => f.filter(fl => fl !== filename))
+      alert(t('deleted'))
+      setModal(null)
+    } catch {
+      alert(t('deleteCloudFail'))
+    }
   }
 
   // Reset sheet

@@ -3,7 +3,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { del } from '@vercel/blob'
 import { debug } from '@/lib/debug'
 
-export async function GET(req: NextRequest) {
+export async function GET() {
+  return NextResponse.json({ error: 'method not allowed' }, { status: 405 })
+}
+
+export async function DELETE(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const filename = searchParams.get('filename')
   if (!filename) {
