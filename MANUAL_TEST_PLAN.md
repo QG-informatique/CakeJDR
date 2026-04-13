@@ -1,30 +1,62 @@
-# Plan de tests manuels
+# Manual Release Checklist
 
-Scénario de vérification pour une session complète avec un **MJ**, deux **joueurs** sur ordinateurs et une **tablette** (portrait et paysage).
+Manual validation for a full CakeJDR session with one GM, two desktop players, and one tablet client.
 
-## Préparation
-1. Démarrer l'application avec `NEXT_PUBLIC_DEBUG=1` pour voir les logs.
-2. Ouvrir trois navigateurs (MJ + 2 joueurs) sur ordinateur et un quatrième sur tablette.
-3. Depuis la page menu, créer une nouvelle room depuis le compte MJ et noter son lien.
-4. Les joueurs et la tablette rejoignent la room via ce lien.
+## Preparation
+1. Start the app with `NEXT_PUBLIC_DEBUG=1`.
+2. Open four clients:
+   1. GM desktop
+   2. Player desktop A
+   3. Player desktop B
+   4. Tablet
+3. Confirm `.env.local` is populated for Liveblocks, Cloudinary, and Vercel Blob.
+4. Create one fresh room from the GM account and share the room link with the other clients.
 
-## Cycle menu ↔ room
-1. Chaque participant retourne au menu puis revient dans la room deux fois.
-2. Vérifier qu'aucun état (personnage, chat, jets) n'est perdu après chaque aller‑retour.
+## Login And Menu
+1. Log in from each client and verify the profile state persists after refresh.
+2. Change the profile color on one client and verify it is retained locally.
+3. Cycle background themes from the menu and verify the selected theme survives a reload.
+4. Confirm room creation, selection, rename, and deletion all surface clear success or failure behavior.
 
-## Chat et jets de dés
-1. MJ et joueurs envoient plusieurs messages de chat et effectuent des jets de dés.
-2. Confirmer que l'ordre chronologique est identique pour tous et que les timestamps sont cohérents.
-3. Activer/désactiver les panneaux (chat, stats, résumé) et vérifier qu'ils se ré-ouvrent correctement.
+## Room Lifecycle
+1. Join the same room from all clients.
+2. Leave the room to the menu and re-enter twice from each client.
+3. Refresh one client while staying in the room and confirm the client can recover without selecting a different room.
+4. If the room is password-protected, verify:
+   1. valid password joins successfully
+   2. invalid password is rejected cleanly
+   3. remembered password allows re-entry without a prompt
 
-## Tablette
-1. Sur tablette, tester les modes **portrait** et **paysage** : rotation de l'écran et vérification de la mise en page.
-2. Réaliser les mêmes actions de chat et de jets ; l'ordre et l'état doivent rester corrects.
+## Realtime Session
+1. Send chat messages from every client and confirm identical ordering everywhere.
+2. Roll dice from every client and confirm:
+   1. result popup appears
+   2. history is synchronized
+   3. stats update consistently
+3. Toggle chat, stats, summary, notes, and any side panels repeatedly and verify panel state remains coherent.
+4. Confirm live presence indicators and avatar stacks update as clients join and leave.
 
-## Resize et reconnexions
-1. Redimensionner la fenêtre des navigateurs (ordinateurs) à plusieurs tailles. Aucune perte d'état.
-2. Déconnecter la connexion réseau d'un joueur puis la rétablir. Le joueur doit retrouver la room et l'historique sans incohérence.
+## Character And Storage
+1. Create, edit, select, and delete local character sheets.
+2. Import and export a character locally and verify no data loss.
+3. Save a character to room storage and verify another client can load the same state.
+4. Save, list, import, and delete a character through Blob cloud storage.
+5. Confirm the selected character persists correctly after menu-to-room round trips.
 
-## Résultats attendus
-- Les logs utiles apparaissent uniquement lorsque `NEXT_PUBLIC_DEBUG=1`.
-- Aucun ordre incohérent ni perte d'état durant tous les scénarios.
+## Canvas, Media, And Music
+1. Draw on the shared canvas from two clients at once and confirm strokes remain synchronized.
+2. Upload at least one image and confirm the uploaded asset appears for all connected clients.
+3. Move or interact with uploaded canvas elements and verify shared state remains stable.
+4. Test YouTube music controls and verify playback state, queue state, and initial volume behavior stay consistent across reloads.
+
+## Responsive And Recovery
+1. Test the tablet in portrait and landscape.
+2. Resize desktop windows through several widths and confirm no unusable layouts or hidden critical actions.
+3. Disconnect one client from the network, reconnect it, and verify the room state, chat history, and character state recover cleanly.
+4. Confirm debug logs appear only when `NEXT_PUBLIC_DEBUG=1`.
+
+## Release Criteria
+- No blocking console, runtime, or route errors during the checklist.
+- No state loss when navigating menu to room, refreshing, or reconnecting.
+- No leaked secrets or raw passwords in API responses visible from browser tools.
+- Any remaining issue must be documented as explicitly non-blocking before release.

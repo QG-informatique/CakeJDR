@@ -1,4 +1,5 @@
 export const runtime = 'nodejs';
+import { ok } from '@/lib/api-response'
 
 let last = 0;
 
@@ -9,5 +10,5 @@ export async function GET() {
   } else {
     last = now;
   }
-  return Response.json({ ts: last });
+  return ok({ ts: last });
 }

@@ -12,7 +12,8 @@
     "type-check": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "lint": "next lint",
-    "test": "npm run lint"
+    "test": "npm run lint",
+    "test:e2e": "npm run build && playwright test"
   },
   "dependencies": {
     "@lexical/react": "0.24.0",
@@ -37,6 +38,7 @@
     "react-youtube": "^10.1.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.54.2",
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",

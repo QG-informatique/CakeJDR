@@ -2,11 +2,11 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { verifyRoomPassword } from '@/lib/roomsApi'
 
 type Props = {
   roomId: string
   hasPassword?: boolean
-  // Optionnel: callback après succès (sinon navigate par défaut)
   onSuccessNavigate?: boolean
 }
 
@@ -18,17 +18,10 @@ export default function RoomJoinGuard({ roomId, hasPassword = false, onSuccessNa
   const router = useRouter()
 
   async function verifyAndJoin() {
-    setBusy(true); setErr(null)
+    setBusy(true)
+    setErr(null)
     try {
-      const res = await fetch('/api/rooms/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: roomId, password: pwd }),
-      })
-      const data = await res.json().catch(() => null)
-      if (!res.ok || !data?.ok) {
-        throw new Error(data?.error || 'Mot de passe incorrect')
-      }
+      await verifyRoomPassword(roomId, pwd)
       if (onSuccessNavigate) router.push(`/room/${roomId}`)
       setOpen(false)
     } catch (e: unknown) {
@@ -39,9 +32,6 @@ export default function RoomJoinGuard({ roomId, hasPassword = false, onSuccessNa
     }
   }
 
-  // Bouton à utiliser dans ta liste de rooms
-  // - si pas de mot de passe → join direct
-  // - si protégé → ouvre la modal
   return (
     <>
       <button
@@ -63,14 +53,14 @@ export default function RoomJoinGuard({ roomId, hasPassword = false, onSuccessNa
               placeholder="Entrez le mot de passe"
               value={pwd}
               onChange={(e) => setPwd(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') verifyAndJoin() }}
+              onKeyDown={(e) => { if (e.key === 'Enter') void verifyAndJoin() }}
               disabled={busy}
             />
             {err && <p className="text-sm text-red-600 mb-2">{err}</p>}
             <div className="flex gap-2 justify-end">
               <button className="px-3 py-1 rounded border" onClick={() => setOpen(false)} disabled={busy}>Annuler</button>
-              <button className="px-3 py-1 rounded bg-black text-white disabled:opacity-50" onClick={verifyAndJoin} disabled={busy || !pwd.trim()}>
-                {busy ? 'Vérif…' : 'Entrer'}
+              <button className="px-3 py-1 rounded bg-black text-white disabled:opacity-50" onClick={() => void verifyAndJoin()} disabled={busy || !pwd.trim()}>
+                {busy ? 'Vérif...' : 'Entrer'}
               </button>
             </div>
           </div>
