@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useT } from '@/lib/useT'
 import LanguageSwitcher from '../ui/LanguageSwitcher'
-import { Crown, LogOut, Dice6 } from 'lucide-react'
+import { Crown, LogIn, LogOut } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import SmallSpinner from '../ui/SmallSpinner'
 import RoomList, { RoomInfo } from '../rooms/RoomList'
@@ -538,36 +538,41 @@ export default function MenuAccueil() {
                   type="button"
                   aria-label="Enter room"
                   onClick={handlePlay}
-                  className={`relative inline-flex items-center justify-center rounded-md border-2 border-pink-300/40 shadow-md shadow-pink-200/20 transition focus:outline-none focus:ring-2 focus:ring-pink-200/40 focus:ring-offset-2 focus:ring-offset-black ${selectedRoom ? 'animate-pulse' : ''}`}
+                  className={`relative inline-flex items-center justify-center gap-2 rounded-lg border-2 px-4 shadow-md transition focus:outline-none focus:ring-2 focus:ring-pink-200/40 focus:ring-offset-2 focus:ring-offset-black ${selectedRoom ? 'animate-pulse' : ''}`}
                   style={{
-                    width: DICE_SIZE,
                     height: DICE_SIZE,
+                    minWidth: selectedRoom ? 180 : DICE_SIZE,
                     background: selectedRoom
-                      ? 'rgba(38,16,56,0.2)'
+                      ? 'linear-gradient(135deg, rgba(110,231,183,0.95), rgba(52,211,153,0.95))'
                       : 'rgba(38,16,56,0.14)',
-                    borderColor: selectedRoom ? '#ff90cc' : '#f7bbf7',
+                    color: selectedRoom ? '#052e16' : '#ffffff',
+                    borderColor: selectedRoom ? '#86efac' : '#f7bbf7',
                     boxShadow: selectedRoom
-                      ? '0 0 12px 2px #ffb0e366, 0 2px 20px 8px #fff2'
+                      ? '0 0 16px 2px rgba(110,231,183,0.45), 0 6px 24px rgba(16,185,129,0.25)'
                       : '0 0 4px 1px #ffe5fa44, 0 2px 8px 2px #fff2',
                   }}
                   disabled={!selectedRoom}
                   whileHover={{
                     scale: 1.1,
-                    rotate: -8,
                     boxShadow: selectedRoom
-                      ? '0 0 18px 4px #ffb0e399, 0 4px 24px 8px #fff4'
+                      ? '0 0 18px 4px rgba(110,231,183,0.55), 0 8px 28px rgba(16,185,129,0.3)'
                       : '0 0 6px 2px #ffe5fa66, 0 4px 12px 3px #fff3',
                   }}
                   transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                 >
-                  <Dice6 className="w-5 h-5 text-white drop-shadow-[0_2px_5px_rgba(255,70,190,0.45)]" />
+                  <LogIn className={`w-5 h-5 ${selectedRoom ? 'text-emerald-950' : 'text-white'}`} />
+                  {selectedRoom && (
+                    <span className="truncate text-sm font-bold">
+                      Enter {selectedRoom.name || t('unnamedRoom')}
+                    </span>
+                  )}
                 </motion.button>
-                {selectedRoom && (
-                  <span className="text-sm text-white/80 flex items-center gap-2">
-                    {roomLoading && <SmallSpinner />}
-                    {selectedRoom.name || t('unnamedRoom')}
+                {!selectedRoom && (
+                  <span className="text-sm text-white/65">
+                    Select a room
                   </span>
                 )}
+                {selectedRoom && roomLoading && <SmallSpinner />}
               </div>
 
               <div className="flex-1 flex items-center justify-center">

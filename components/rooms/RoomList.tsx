@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useT } from '@/lib/useT'
-import { Lock } from 'lucide-react'
+import { CheckCircle2, Lock, LogIn } from 'lucide-react'
 import RoomAvatarStack from './RoomAvatarStack'
 import {
   deleteRoomById,
@@ -87,6 +87,12 @@ export default function RoomList({
     onEnter?.(room)
   }
 
+  const handleSelect = (room: RoomInfo) => {
+    setJoiningId(null)
+    setErrorMsg('')
+    onSelect?.(room)
+  }
+
   const joinRoom = async (room: RoomInfo) => {
     if (room.hasPassword) {
       const saved = localStorage.getItem('room_pw_' + room.id) || ''
@@ -143,10 +149,17 @@ export default function RoomList({
         {rooms.map((r) => (
           <div
             key={r.id}
-            className={`relative p-3 rounded-lg cursor-pointer flex flex-col gap-1 ${selectedId === r.id ? 'ring-2 ring-emerald-400/90 shadow-[0_0_12px_2px_rgba(16,185,129,0.6)]' : 'bg-black/30 hover:ring-2 hover:ring-emerald-300/40'}`}
-            onDoubleClick={() => joinRoom(r)}
+            className={`relative p-3 rounded-xl border cursor-pointer flex flex-col gap-2 transition ${selectedId === r.id ? 'bg-emerald-500/15 border-emerald-300 ring-2 ring-emerald-300 shadow-[0_0_16px_2px_rgba(110,231,183,0.35)]' : 'bg-black/30 border-white/10 hover:border-emerald-300/60 hover:ring-2 hover:ring-emerald-300/30'}`}
+            onClick={() => handleSelect(r)}
+            onDoubleClick={() => void joinRoom(r)}
           >
-            <div className="flex justify-between items-center gap-1">
+            {selectedId === r.id && (
+              <div className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-emerald-300 px-2 py-0.5 text-[11px] font-semibold text-emerald-950">
+                <CheckCircle2 size={12} />
+                Selected
+              </div>
+            )}
+            <div className="flex justify-between items-center gap-1 pt-6">
               <span className="truncate flex-1 flex items-center gap-1 text-sm">
                 {r.hasPassword && <Lock size={12} className="text-pink-300" />} {r.name || t('unnamed')}
               </span>
@@ -172,6 +185,18 @@ export default function RoomList({
             >
               {revealIds[r.id] ? r.id : t('idLabel')}
             </span>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                void joinRoom(r)
+              }}
+              className={`mt-1 inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition ${selectedId === r.id ? 'bg-emerald-400 text-emerald-950 hover:bg-emerald-300 shadow-[0_0_14px_rgba(110,231,183,0.35)]' : 'bg-white/10 text-white hover:bg-white/20'}`}
+            >
+              <LogIn size={16} />
+              {selectedId === r.id ? 'Enter selected room' : t('enter')}
+            </button>
 
             {joiningId === r.id && r.hasPassword && (
               <>
