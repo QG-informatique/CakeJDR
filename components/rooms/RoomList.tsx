@@ -1,13 +1,20 @@
 'use client'
+
 import { useEffect, useState } from 'react'
 import { useT } from '@/lib/useT'
 import { Lock } from 'lucide-react'
 import RoomAvatarStack from './RoomAvatarStack'
+import {
+  deleteRoomById,
+  fetchRooms as fetchRoomsApi,
+  renameRoomById,
+  verifyRoomPassword,
+} from '@/lib/roomsApi'
 
 export type RoomInfo = {
   id: string
   name: string
-  hasPassword?: boolean // FIX: boolean flag only; server no longer exposes raw password
+  hasPassword?: boolean
   createdAt?: string
   updatedAt?: string
   usersConnected?: number
@@ -21,13 +28,15 @@ interface Props {
 }
 
 export async function fetchRooms() {
-  const res = await fetch('/api/rooms/list')
-  if (!res.ok) throw new Error('failed')
-  const data = await res.json()
-  return Array.isArray(data.rooms) ? (data.rooms as RoomInfo[]) : []
+  return (await fetchRoomsApi()) as RoomInfo[]
 }
 
-export default function RoomList({ onSelect, onEnter, selectedId, onCreateClick }: Props) {
+export default function RoomList({
+  onSelect,
+  onEnter,
+  selectedId,
+  onCreateClick,
+}: Props) {
   const [rooms, setRooms] = useState<RoomInfo[]>([])
   const [joiningId, setJoiningId] = useState<string | null>(null)
   const [joinPassword, setJoinPassword] = useState('')
@@ -51,12 +60,8 @@ export default function RoomList({ onSelect, onEnter, selectedId, onCreateClick 
 
   const deleteRoom = async (room: RoomInfo) => {
     if (!window.confirm(t('deleteRoomConfirm'))) return
-    await fetch('/api/rooms', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: room.id })
-    })
-    setRooms(r => r.filter(x => x.id !== room.id))
+    await deleteRoomById(room.id)
+    setRooms((r) => r.filter((x) => x.id !== room.id))
     window.dispatchEvent(new Event('jdr_rooms_change'))
     if (room.id === myRoom) {
       localStorage.removeItem('jdr_my_room')
@@ -67,26 +72,13 @@ export default function RoomList({ onSelect, onEnter, selectedId, onCreateClick 
   const renameRoom = async (room: RoomInfo) => {
     const newName = window.prompt('Nouveau nom ?', room.name)
     if (!newName || newName === room.name) return
-    await fetch('/api/rooms', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: room.id, name: newName })
-    })
-    setRooms(r => r.map(x => x.id === room.id ? { ...x, name: newName } : x))
+    await renameRoomById(room.id, newName)
+    setRooms((r) => r.map((x) => (x.id === room.id ? { ...x, name: newName } : x)))
     window.dispatchEvent(new Event('jdr_rooms_change'))
   }
 
-  // --- NEW: vérification côté serveur
   const verifyPassword = async (roomId: string, password: string) => {
-    const res = await fetch('/api/rooms/verify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: roomId, password })
-    })
-    if (!res.ok) {
-      const data = await res.json().catch(() => null)
-      throw new Error(data?.error || 'Invalid password')
-    }
+    await verifyRoomPassword(roomId, password)
     return true
   }
 
@@ -96,18 +88,17 @@ export default function RoomList({ onSelect, onEnter, selectedId, onCreateClick 
   }
 
   const joinRoom = async (room: RoomInfo) => {
-    // Room protégée → on tente auto-join avec mot de passe local (si stocké),
-    // sinon on affiche le champ
     if (room.hasPassword) {
       const saved = localStorage.getItem('room_pw_' + room.id) || ''
       if (saved) {
         try {
-          setVerifying(true); setErrorMsg('')
+          setVerifying(true)
+          setErrorMsg('')
           await verifyPassword(room.id, saved)
           handleEnter(room)
           return
         } catch {
-          // mauvais mot de passe stocké → on demande à l’utilisateur
+          // Fall through and show the password prompt.
         } finally {
           setVerifying(false)
         }
@@ -122,9 +113,9 @@ export default function RoomList({ onSelect, onEnter, selectedId, onCreateClick 
 
   const confirmJoin = async (room: RoomInfo) => {
     try {
-      setVerifying(true); setErrorMsg('')
+      setVerifying(true)
+      setErrorMsg('')
       await verifyPassword(room.id, joinPassword)
-      // Option: mémoriser pour confort (tu peux supprimer si tu préfères)
       if (room.hasPassword) {
         localStorage.setItem('room_pw_' + room.id, joinPassword)
       }
@@ -149,21 +140,21 @@ export default function RoomList({ onSelect, onEnter, selectedId, onCreateClick 
           <span className="text-2xl">🧁</span>
           <span className="text-sm font-semibold mt-1">{t('createRoom')}</span>
         </button>
-        {rooms.map(r => (
+        {rooms.map((r) => (
           <div
             key={r.id}
-            className={`relative p-3 rounded-lg cursor-pointer flex flex-col gap-1 ${selectedId===r.id ? 'ring-2 ring-emerald-400/90 shadow-[0_0_12px_2px_rgba(16,185,129,0.6)]' : 'bg-black/30 hover:ring-2 hover:ring-emerald-300/40'}`}
+            className={`relative p-3 rounded-lg cursor-pointer flex flex-col gap-1 ${selectedId === r.id ? 'ring-2 ring-emerald-400/90 shadow-[0_0_12px_2px_rgba(16,185,129,0.6)]' : 'bg-black/30 hover:ring-2 hover:ring-emerald-300/40'}`}
             onDoubleClick={() => joinRoom(r)}
           >
             <div className="flex justify-between items-center gap-1">
               <span className="truncate flex-1 flex items-center gap-1 text-sm">
                 {r.hasPassword && <Lock size={12} className="text-pink-300" />} {r.name || t('unnamed')}
               </span>
-              {myRoom===r.id && <span title={t('creator')}>👑</span>}
-              {myRoom===r.id && (
+              {myRoom === r.id && <span title={t('creator')}>👑</span>}
+              {myRoom === r.id && (
                 <>
-                  <button onClick={(e)=>{e.stopPropagation();renameRoom(r)}} className="ml-1 text-yellow-300" title={t('rename')}>✏️</button>
-                  <button onClick={(e)=>{e.stopPropagation();deleteRoom(r)}} className="ml-1 text-red-400" title={t('delete')}>🗑️</button>
+                  <button onClick={(e) => { e.stopPropagation(); void renameRoom(r) }} className="ml-1 text-yellow-300" title={t('rename')}>✏️</button>
+                  <button onClick={(e) => { e.stopPropagation(); void deleteRoom(r) }} className="ml-1 text-red-400" title={t('delete')}>🗑️</button>
                 </>
               )}
             </div>
@@ -177,7 +168,7 @@ export default function RoomList({ onSelect, onEnter, selectedId, onCreateClick 
             <RoomAvatarStack id={r.id} />
             <span
               className="text-[10px] text-white/40 cursor-pointer select-none"
-              onClick={e => { e.stopPropagation(); setRevealIds(prev => ({ ...prev, [r.id]: !prev[r.id] })) }}
+              onClick={(e) => { e.stopPropagation(); setRevealIds((prev) => ({ ...prev, [r.id]: !prev[r.id] })) }}
             >
               {revealIds[r.id] ? r.id : t('idLabel')}
             </span>
@@ -187,10 +178,10 @@ export default function RoomList({ onSelect, onEnter, selectedId, onCreateClick 
                 <input
                   type="password"
                   value={joinPassword}
-                  onChange={e => setJoinPassword(e.target.value)}
+                  onChange={(e) => setJoinPassword(e.target.value)}
                   className="w-full px-1 py-1 rounded bg-gray-800 text-white border border-white/20 text-xs"
                   placeholder={t('password')}
-                  onKeyDown={e => { if (e.key==='Enter') confirmJoin(r) }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') void confirmJoin(r) }}
                   disabled={verifying}
                 />
                 {errorMsg && <p className="text-red-400 text-xs">{errorMsg}</p>}
