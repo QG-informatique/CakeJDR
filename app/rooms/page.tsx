@@ -1,8 +1,14 @@
 'use client'
+
 import { useEffect, useState } from 'react'
 import { useT } from '@/lib/useT'
 import { useRouter } from 'next/navigation'
 import RoomAvatarStack from '@/components/rooms/RoomAvatarStack'
+import {
+  createRoom as createRoomApi,
+  fetchRooms,
+  verifyRoomPassword,
+} from '@/lib/roomsApi'
 
 export default function RoomsPage() {
   const [rooms, setRooms] = useState<Array<{ id: string; name: string; hasPassword?: boolean; createdAt?: string; updatedAt?: string; usersConnected?: number }>>([])
@@ -20,27 +26,18 @@ export default function RoomsPage() {
   const t = useT()
 
   useEffect(() => {
-    fetch('/api/rooms/list')
-      .then(res => res.json())
-      .then(data => {
-        setRooms(Array.isArray(data.rooms) ? data.rooms : [])
-        const saved = localStorage.getItem('jdr_my_room')
-        if (saved) {
-          const match = data.rooms?.find((r: { id: string }) => r.id === saved)
-          if (match) setSelectedId(saved)
-        }
-      })
+    fetchRooms().then((data) => {
+      setRooms(data)
+      const saved = localStorage.getItem('jdr_my_room')
+      if (saved) {
+        const match = data.find((r: { id: string }) => r.id === saved)
+        if (match) setSelectedId(saved)
+      }
+    })
   }, [])
 
-  // FIX: server-side password verification
   const verifyPassword = async (roomId: string, pwd: string) => {
-    const res = await fetch('/api/rooms/verify', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: roomId, password: pwd })
-    })
-    if (!res.ok) {
-      const data = await res.json().catch(() => null)
-      throw new Error(data?.error || 'Invalid password')
-    }
+    await verifyRoomPassword(roomId, pwd)
     return true
   }
 
@@ -52,24 +49,16 @@ export default function RoomsPage() {
     }
     setCreating(true)
     try {
-      const res = await fetch('/api/rooms', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, password })
-      })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        setErrorMsg(data.error || t('creationFailed'))
-        return
-      }
-      const data = await res.json()
+      const data = await createRoomApi({ name, password: withPassword ? password : '' })
       const newRoom = { id: data.id, name, createdAt: new Date().toISOString() }
-      setRooms(r => (r.some(x => x.id === newRoom.id) ? r : [...r, newRoom]))
+      setRooms((r) => (r.some((x) => x.id === newRoom.id) ? r : [...r, newRoom]))
       setSelectedId(newRoom.id)
       localStorage.setItem('jdr_my_room', newRoom.id)
       setName('')
       setPassword('')
       setShowCreate(false)
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : t('creationFailed'))
     } finally {
       setCreating(false)
     }
@@ -110,18 +99,15 @@ export default function RoomsPage() {
 
   return (
     <div className="p-6 text-white">
-
       <h1 className="text-2xl mb-4">{t('availableRooms')}</h1>
 
-
-
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-6 pb-1">
-        {rooms.map(r => (
+        {rooms.map((r) => (
           <div
             key={r.id}
             onClick={() => { setSelectedId(r.id); localStorage.setItem('jdr_my_room', r.id) }}
             onDoubleClick={() => joinRoom(r)}
-            className={`p-3 rounded-lg flex flex-col gap-2 cursor-pointer ${selectedId===r.id ? 'ring-2 ring-emerald-400/90 shadow-[0_0_12px_2px_rgba(16,185,129,0.6)]' : 'bg-black/30 hover:ring-2 hover:ring-emerald-300/40'}`}
+            className={`p-3 rounded-lg flex flex-col gap-2 cursor-pointer ${selectedId === r.id ? 'ring-2 ring-emerald-400/90 shadow-[0_0_12px_2px_rgba(16,185,129,0.6)]' : 'bg-black/30 hover:ring-2 hover:ring-emerald-300/40'}`}
           >
             <span className="truncate block flex items-center gap-1">{r.hasPassword ? '🔒' : null} {r.name || t('unnamed')}</span>
             <span className="text-xs text-white/60">{r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ''}</span>
@@ -130,7 +116,7 @@ export default function RoomsPage() {
 
             <button
               className="text-sm underline"
-              onClick={e => { e.stopPropagation(); joinRoom(r) }}
+              onClick={(e) => { e.stopPropagation(); joinRoom(r) }}
             >
               {t('enter')}
             </button>
@@ -140,10 +126,10 @@ export default function RoomsPage() {
                 <input
                   type="password"
                   value={joinPassword}
-                  onChange={e => setJoinPassword(e.target.value)}
+                  onChange={(e) => setJoinPassword(e.target.value)}
                   className="w-full px-2 py-1 rounded bg-gray-800 text-white border border-white/20 text-xs"
                   placeholder={t('password')}
-                  onKeyDown={e => { if (e.key==='Enter') confirmJoin(r) }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') void confirmJoin(r) }}
                   disabled={verifying}
                 />
                 {errorMsg && <p className="text-red-400 text-xs">{errorMsg}</p>}
@@ -156,52 +142,40 @@ export default function RoomsPage() {
       <details className="mb-4" open={showCreate}>
         <summary
           className="cursor-pointer select-none py-1 px-2 bg-purple-700/60 rounded"
-          onClick={() => setShowCreate(v => !v)}
+          onClick={() => setShowCreate((v) => !v)}
         >
-
           {t('createRoom')}
-
-
-
         </summary>
         {showCreate && (
           <div className="mt-3 space-y-2 text-black">
             <input
-
               placeholder={t('roomName')}
-
-
               value={name}
-              onChange={e => setName(e.target.value)}
+              onChange={(e) => setName(e.target.value)}
               className="px-2 py-1 w-full"
             />
             <label className="flex items-center gap-2 text-white">
               <input
                 type="checkbox"
                 checked={withPassword}
-                onChange={e => {
+                onChange={(e) => {
                   setWithPassword(e.target.checked)
                   if (!e.target.checked) setPassword('')
                 }}
               />
-
               {t('passwordProtected')}
-
             </label>
             {withPassword && (
               <input
                 type="password"
-
                 placeholder={t('password')}
-
-
                 value={password}
-                onChange={e => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
                 className="px-2 py-1 w-full"
               />
             )}
             <button
-              onClick={createRoom}
+              onClick={() => void createRoom()}
               disabled={creating}
               className="px-4 py-2 bg-blue-600 rounded text-white w-full disabled:opacity-50"
             >

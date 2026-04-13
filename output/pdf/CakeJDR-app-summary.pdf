@@ -1,0 +1,198 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Count 1 /Kids [3 0 R] >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+6 0 obj
+<< /Length 3805 >>
+stream
+0.2 w
+42 770 m 553 770 l S
+BT
+/F2 22 Tf
+1 0 0 1 42 800 Tm
+(CakeJDR) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 42 784 Tm
+(One-page app summary generated from repo evidence only) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 42 754 Tm
+(What It Is) Tj
+ET
+BT
+/F1 10.5 Tf
+1 0 0 1 42 738 Tm
+(CakeJDR is a Next.js app for playing tabletop RPGs online with shared rooms, real-time collaboration,) Tj
+ET
+BT
+/F1 10.5 Tf
+1 0 0 1 42 724 Tm
+(character sheets, chat, and dice tools. README notes online features are still incomplete and local run only.) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 42 696 Tm
+(Who It's For) Tj
+ET
+BT
+/F1 10.5 Tf
+1 0 0 1 42 680 Tm
+(Primary users are tabletop RPG groups: players and a game master sharing rooms, sheets, chat, dice, and a board.) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 42 652 Tm
+(What It Does) Tj
+ET
+BT
+/F1 10.5 Tf
+1 0 0 1 52 636 Tm
+(- Lets users log in locally with a saved profile and room selection stored in browser storage.) Tj
+ET
+BT
+/F1 10.5 Tf
+1 0 0 1 52 622 Tm
+(- Creates, lists, joins, renames, and deletes rooms, including password-protected rooms.) Tj
+ET
+BT
+/F1 10.5 Tf
+1 0 0 1 52 608 Tm
+(- Provides a collaborative canvas with drawing, erasing, live cursors, and image upload/placement.) Tj
+ET
+BT
+/F1 10.5 Tf
+1 0 0 1 52 594 Tm
+(- Supports real-time chat, dice rolling, dice history, and live participant/avatar presence.) Tj
+ET
+BT
+/F1 10.5 Tf
+1 0 0 1 52 580 Tm
+(- Manages character sheets with stats, equipment, description tabs, leveling, and GM selection.) Tj
+ET
+BT
+/F1 10.5 Tf
+1 0 0 1 52 566 Tm
+(- Imports/exports character sheets locally or from cloud storage; README says Blob storage is menu-page only.) Tj
+ET
+BT
+/F1 10.5 Tf
+1 0 0 1 52 552 Tm
+(- Includes music playback/queue, side notes, and session-summary structures in room state.) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 42 522 Tm
+(How It Works) Tj
+ET
+BT
+/F1 10.5 Tf
+1 0 0 1 52 506 Tm
+(- UI: Next.js App Router routes users from / to /menu, then into /menu-accueil, /rooms, and /room/[id].) Tj
+ET
+BT
+/F1 10.5 Tf
+1 0 0 1 52 492 Tm
+(- Real-time room shell: app/Room.tsx wraps each room in LiveblocksProvider and RoomProvider with storage for) Tj
+ET
+BT
+/F1 10.5 Tf
+1 0 0 1 66 478 Tm
+(characters, images, strokes, music, summary, quick notes, editor data, events, and rooms.) Tj
+ET
+BT
+/F1 10.5 Tf
+1 0 0 1 52 464 Tm
+(- Services: /api/liveblocks-auth authorizes room access; /api/rooms and lib/liveRooms manage room records;) Tj
+ET
+BT
+/F1 10.5 Tf
+1 0 0 1 66 450 Tm
+(/api/roomstorage persists character data in Liveblocks storage; /api/cloudinary uploads canvas images;) Tj
+ET
+BT
+/F1 10.5 Tf
+1 0 0 1 66 436 Tm
+(/api/blob uploads/lists/deletes character-sheet files in Vercel Blob.) Tj
+ET
+BT
+/F1 10.5 Tf
+1 0 0 1 52 422 Tm
+(- Data flow: browser localStorage keeps profile, theme, and current selections; Liveblocks syncs room state;) Tj
+ET
+BT
+/F1 10.5 Tf
+1 0 0 1 66 408 Tm
+(Cloudinary stores image assets; Vercel Blob stores character-sheet files. Database: Not found in repo.) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 42 378 Tm
+(How To Run) Tj
+ET
+BT
+/F1 10.5 Tf
+1 0 0 1 52 362 Tm
+(- Install dependencies: npm install) Tj
+ET
+BT
+/F1 10.5 Tf
+1 0 0 1 52 348 Tm
+(- Copy .env.example to .env.local and set CLOUDINARY_*, LIVEBLOCKS_SECRET_KEY, BLOB_READ_WRITE_TOKEN,) Tj
+ET
+BT
+/F1 10.5 Tf
+1 0 0 1 66 334 Tm
+(and VERCEL_OIDC_TOKEN.) Tj
+ET
+BT
+/F1 10.5 Tf
+1 0 0 1 52 320 Tm
+(- Start the dev server: npm run dev) Tj
+ET
+BT
+/F1 10.5 Tf
+1 0 0 1 52 306 Tm
+(- Open http://localhost:3000) Tj
+ET
+BT
+/F1 9 Tf
+1 0 0 1 42 54 Tm
+(Repo evidence used: README.md, package.json, app/Room.tsx, app/room/[id]/page.tsx, HomePageInner.tsx,) Tj
+ET
+BT
+/F1 9 Tf
+1 0 0 1 42 42 Tm
+(InteractiveCanvas.tsx, CharacterSheet.tsx, lib/liveRooms.ts, and app/api routes.) Tj
+ET
+
+endstream
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000251 00000 n 
+0000000321 00000 n 
+0000000396 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+4253
+%%EOF

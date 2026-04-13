@@ -1,9 +1,10 @@
 // src/app/api/rooms/verify/route.ts
 export const runtime = "nodejs";
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { Liveblocks } from "@liveblocks/node";
 import crypto from "node:crypto";
+import { fail, ok } from '@/lib/api-response'
 
 type LiveblocksMetadata = Record<string, string | string[] | null>;
 
@@ -54,7 +55,7 @@ function sanitizeMetadata(meta: RoomMetadata): LiveblocksMetadata {
 }
 
 function bad(msg: string, code = 400) {
-  return NextResponse.json({ error: msg }, { status: code });
+  return fail(msg, code);
 }
 
 export async function POST(req: NextRequest) {
@@ -82,17 +83,17 @@ export async function POST(req: NextRequest) {
       meta.hasPassword === "true";
 
     // Pas de mot de passe -> acces OK
-    if (!hasPassword) return NextResponse.json({ ok: true, guarded: false });
+    if (!hasPassword) return ok({ guarded: false });
 
     if (!password) return bad("Invalid password", 401);
     const hashedInput = sha256(password);
 
     // Verifie le hash et migre les anciens mots de passe en clair
-    let ok = false;
+    let isValid = false;
     if (storedHash && hashedInput === storedHash) {
-      ok = true;
+      isValid = true;
     } else if (storedPlain && password === storedPlain) {
-      ok = true;
+      isValid = true;
       storedHash = sha256(storedPlain);
       const nextMeta = sanitizeMetadata(meta);
       nextMeta.passwordHash = storedHash;
@@ -104,9 +105,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if (!ok) return bad("Invalid password", 401);
+    if (!isValid) return bad("Invalid password", 401);
 
-    return NextResponse.json({ ok: true, guarded: true });
+    return ok({ guarded: true });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "verify failed";
     return bad(message, 500);
