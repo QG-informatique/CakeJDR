@@ -1,12 +1,18 @@
 'use client'
+
 import { useState, useEffect, useRef } from 'react'
 import { useT } from '@/lib/useT'
 import { Lock } from 'lucide-react'
+import {
+  createRoom as createRoomApi,
+  fetchRooms as fetchRoomsApi,
+  verifyRoomPassword,
+} from '@/lib/roomsApi'
 
 export type RoomInfo = {
   id: string
   name: string
-  hasPassword?: boolean // FIX: boolean flag only
+  hasPassword?: boolean
   createdAt?: string
   updatedAt?: string
 }
@@ -28,48 +34,28 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
   const panelRef = useRef<HTMLDivElement>(null)
   const t = useT()
 
-
-  // Fetch the list of existing rooms
-
-
   useEffect(() => {
-    fetch('/api/rooms/list')
-      .then(res => (res.ok ? res.json() : Promise.reject()))
-      .then(data => setRooms(data.rooms || []))
+    fetchRoomsApi()
+      .then(setRooms)
       .catch(() => setRooms([]))
   }, [])
 
-  const verifyPassword = async (roomId: string, password: string) => {
-    const res = await fetch('/api/rooms/verify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: roomId, password })
-    })
-    if (!res.ok) {
-      const data = await res.json().catch(() => null)
-      throw new Error(data?.error || 'Invalid password')
-    }
+  const verifyPassword = async (roomId: string, passwordValue: string) => {
+    await verifyRoomPassword(roomId, passwordValue)
     return true
   }
 
   const createRoom = async () => {
     if (!name || creating) return
-    if (localStorage.getItem('jdr_my_room')) { setErrorMsg(t('alreadyCreatedRoom')); return }
+    if (localStorage.getItem('jdr_my_room')) {
+      setErrorMsg(t('alreadyCreatedRoom'))
+      return
+    }
     setCreating(true)
     setErrorMsg('')
     const payload = { name, password: withPassword ? password : '' }
     try {
-      const res = await fetch('/api/rooms', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        setErrorMsg(data?.error || t('creationFailed'))
-        return
-      }
-      const data = await res.json()
+      const data = await createRoomApi(payload)
       localStorage.setItem('jdr_my_room', data.id)
       try {
         const raw = localStorage.getItem('jdr_profile')
@@ -81,9 +67,14 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
         }
       } catch {}
       onClose?.()
-      onSelect?.({ id: data.id, name, hasPassword: Boolean(payload.password), createdAt: new Date().toISOString() })
-    } catch {
-      setErrorMsg(t('creationFailed'))
+      onSelect?.({
+        id: data.id,
+        name,
+        hasPassword: Boolean(payload.password),
+        createdAt: new Date().toISOString(),
+      })
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : t('creationFailed'))
     } finally {
       setCreating(false)
     }
@@ -107,7 +98,6 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
       onClose?.()
       onSelect?.(room)
     } catch {
-      // keep modal open
       return
     }
   }
@@ -120,98 +110,95 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
     >
       <div
         ref={panelRef}
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
         className="bg-black/80 text-white rounded-2xl border border-white/10 shadow-2xl backdrop-blur-md p-5 w-80"
       >
+        <h2 className="text-lg font-semibold mb-2">{t('availableRooms')}</h2>
 
-      <h2 className="text-lg font-semibold mb-2">{t('availableRooms')}</h2>
-
-      <div className="max-h-48 overflow-y-auto mb-3 pr-1">
-        <ul className="space-y-1">
-          {rooms.map(r => (
-            <li key={r.id} className="flex flex-col gap-1">
-              <div className="flex justify-between items-center gap-2">
-                <span className="truncate flex-1 flex items-center gap-1">
-                  {r.hasPassword && <Lock size={12} className="text-pink-300" />} {r.name || t('unnamed')}
+        <div className="max-h-48 overflow-y-auto mb-3 pr-1">
+          <ul className="space-y-1">
+            {rooms.map((r) => (
+              <li key={r.id} className="flex flex-col gap-1">
+                <div className="flex justify-between items-center gap-2">
+                  <span className="truncate flex-1 flex items-center gap-1">
+                    {r.hasPassword && <Lock size={12} className="text-pink-300" />} {r.name || t('unnamed')}
+                  </span>
+                  {joiningId === r.id && r.hasPassword ? (
+                    <button
+                      className="px-2 py-1 bg-emerald-600/70 hover:bg-emerald-600 rounded text-sm"
+                      onClick={() => void confirmJoin(r)}
+                    >{t('enter')}</button>
+                  ) : (
+                    <button
+                      className="px-2 py-1 bg-pink-700/50 hover:bg-pink-700/70 rounded text-sm"
+                      onClick={() => joinRoom(r)}
+                    >{t('select')}</button>
+                  )}
+                </div>
+                <span className="text-xs text-white/60">
+                  {r.updatedAt
+                    ? new Date(r.updatedAt).toLocaleDateString()
+                    : r.createdAt
+                      ? new Date(r.createdAt).toLocaleDateString()
+                      : ''}
                 </span>
-                {joiningId === r.id && r.hasPassword ? (
-                  <button
-                    className="px-2 py-1 bg-emerald-600/70 hover:bg-emerald-600 rounded text-sm"
-                    onClick={() => confirmJoin(r)}
-                  >{t('enter')}</button>
-                ) : (
-                  <button
-                    className="px-2 py-1 bg-pink-700/50 hover:bg-pink-700/70 rounded text-sm"
-                    onClick={() => joinRoom(r)}
-                  >{t('select')}</button>
+                {joiningId === r.id && r.hasPassword && (
+                  <input
+                    type="password"
+                    value={joinPassword}
+                    onChange={(e) => setJoinPassword(e.target.value)}
+                    className="w-full px-2 py-1 rounded bg-gray-800 text-white border border-white/20"
+                    placeholder={t('password')}
+                    onKeyDown={(e) => { if (e.key === 'Enter') void confirmJoin(r) }}
+                  />
                 )}
-              </div>
-              <span className="text-xs text-white/60">
-                {r.updatedAt
-                  ? new Date(r.updatedAt).toLocaleDateString()
-                  : r.createdAt
-                    ? new Date(r.createdAt).toLocaleDateString()
-                    : ''}
-              </span>
-              {joiningId === r.id && r.hasPassword && (
-                <input
-                  type="password"
-                  value={joinPassword}
-                  onChange={e => setJoinPassword(e.target.value)}
-                  className="w-full px-2 py-1 rounded bg-gray-800 text-white border border-white/20"
-                  placeholder={t('password')}
-                  onKeyDown={e => { if (e.key==='Enter') confirmJoin(r) }}
-                />
-              )}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div className="border-t border-white/20 pt-3">
-        <input
-          className="w-full mb-2 px-2 py-1 rounded bg-gray-800 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-pink-400/30"
-          placeholder={t('roomName')}
-          value={name}
-          onChange={e => setName(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') createRoom() }}
-        />
-        <label className="text-sm flex items-center gap-2 mb-2">
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="border-t border-white/20 pt-3">
           <input
-            type="checkbox"
-            checked={withPassword}
-            onChange={e => { setWithPassword(e.target.checked); if(!e.target.checked) setPassword('') }}
-          />
-
-          {t('password')}?
-
-        </label>
-        {withPassword && (
-          <input
-            type="password"
             className="w-full mb-2 px-2 py-1 rounded bg-gray-800 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-pink-400/30"
-            placeholder={t('password')}
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            onKeyDown={e => { if (e.key==='Enter') createRoom() }}
+            placeholder={t('roomName')}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') void createRoom() }}
           />
-        )}
-        {creating ? (
-          <div className="w-full h-2 bg-gray-700 rounded overflow-hidden mb-2">
-            <div className="h-full bg-emerald-500 animate-pulse" style={{ width: '100%' }} />
-          </div>
-        ) : (
-          <button
-            className="w-full px-3 py-2 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-semibold"
-            onClick={createRoom}
-          >
-            {t('create')}
-          </button>
-        )}
-        {errorMsg && (
-          <p className="text-red-400 text-sm mt-2 text-center">{errorMsg}</p>
-        )}
+          <label className="text-sm flex items-center gap-2 mb-2">
+            <input
+              type="checkbox"
+              checked={withPassword}
+              onChange={(e) => { setWithPassword(e.target.checked); if (!e.target.checked) setPassword('') }}
+            />
+            {t('password')}?
+          </label>
+          {withPassword && (
+            <input
+              type="password"
+              className="w-full mb-2 px-2 py-1 rounded bg-gray-800 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-pink-400/30"
+              placeholder={t('password')}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') void createRoom() }}
+            />
+          )}
+          {creating ? (
+            <div className="w-full h-2 bg-gray-700 rounded overflow-hidden mb-2">
+              <div className="h-full bg-emerald-500 animate-pulse" style={{ width: '100%' }} />
+            </div>
+          ) : (
+            <button
+              className="w-full px-3 py-2 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-semibold"
+              onClick={() => void createRoom()}
+            >
+              {t('create')}
+            </button>
+          )}
+          {errorMsg && (
+            <p className="text-red-400 text-sm mt-2 text-center">{errorMsg}</p>
+          )}
+        </div>
       </div>
     </div>
-  </div>
   )
 }

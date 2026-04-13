@@ -1,7 +1,9 @@
 'use client'
+
 import { useState } from 'react'
 import type { RoomInfo } from './RoomList'
 import { useT } from '@/lib/useT'
+import { createRoom as createRoomApi } from '@/lib/roomsApi'
 
 interface Props {
   open: boolean
@@ -29,17 +31,7 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
     setErrorMsg('')
     const payload = { name, password: withPassword ? password : '' }
     try {
-      const res = await fetch('/api/rooms', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        setErrorMsg(data?.error || t('creationFailed'))
-        return
-      }
-      const data = await res.json()
+      const data = await createRoomApi(payload)
       const room = {
         id: data.id,
         name,
@@ -59,29 +51,29 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
       window.dispatchEvent(new Event('jdr_rooms_change'))
       onCreated?.(room)
       onClose()
-    } catch {
-      setErrorMsg(t('creationFailed'))
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : t('creationFailed'))
     } finally {
       setCreating(false)
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose} style={{ background:'rgba(0,0,0,0.45)', backdropFilter:'blur(2px)' }}>
-      <div onClick={e => e.stopPropagation()} className="bg-black/80 text-white rounded-2xl border border-white/10 shadow-2xl backdrop-blur-md p-5 w-80">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose} style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(2px)' }}>
+      <div onClick={(e) => e.stopPropagation()} className="bg-black/80 text-white rounded-2xl border border-white/10 shadow-2xl backdrop-blur-md p-5 w-80">
         <h2 className="text-lg font-semibold mb-2">{t('createRoom')}</h2>
         <input
           className="w-full mb-2 px-2 py-1 rounded bg-gray-800 text-white placeholder-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-pink-400/30"
           placeholder={t('name')}
           value={name}
-          onChange={e => setName(e.target.value)}
-          onKeyDown={e => { if (e.key==='Enter') createRoom() }}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') void createRoom() }}
         />
         <label className="text-sm flex items-center gap-2 mb-2">
           <input
             type="checkbox"
             checked={withPassword}
-            onChange={e => { setWithPassword(e.target.checked); if(!e.target.checked) setPassword('') }}
+            onChange={(e) => { setWithPassword(e.target.checked); if (!e.target.checked) setPassword('') }}
           />
           {t('password')} ?
         </label>
@@ -91,18 +83,18 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
             className="w-full mb-2 px-2 py-1 rounded bg-gray-800 text-white placeholder-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-pink-400/30"
             placeholder={t('password')}
             value={password}
-            onChange={e => setPassword(e.target.value)}
-            onKeyDown={e => { if (e.key==='Enter') createRoom() }}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') void createRoom() }}
           />
         )}
         {creating ? (
           <div className="w-full h-2 bg-gray-700 rounded overflow-hidden mb-2">
-            <div className="h-full bg-emerald-500 animate-pulse" style={{ width:'100%' }} />
+            <div className="h-full bg-emerald-500 animate-pulse" style={{ width: '100%' }} />
           </div>
         ) : (
           <button
             className="w-full px-3 py-2 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-semibold"
-            onClick={createRoom}
+            onClick={() => void createRoom()}
           >
             {t('createRoom')}
           </button>
