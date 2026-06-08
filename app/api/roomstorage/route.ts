@@ -20,6 +20,9 @@ export async function GET(req: NextRequest) {
   return ok({ characters: data?.characters || {} })
 }
 
+/** Regex permissive pour valider owner/id : alphanum, tirets, underscores, points, espaces limités. */
+const SAFE_ID = /^[\w\-.@: ]{1,120}$/
+
 export async function POST(req: NextRequest) {
   try {
     const { roomId, id, owner, character } = (await req.json()) as {
@@ -30,6 +33,14 @@ export async function POST(req: NextRequest) {
     }
     if (!roomId || !id || !owner || !character) {
       return fail('missing data', 400)
+    }
+    // Validation basique d'ownership : les champs déclarés doivent correspondre
+    // à ce qui est dans l'objet character, et respecter un format sûr.
+    if (!SAFE_ID.test(String(id)) || !SAFE_ID.test(String(owner))) {
+      return fail('invalid id or owner format', 400)
+    }
+    if (String(character.id) !== String(id) || String(character.owner) !== String(owner)) {
+      return fail('id/owner mismatch between params and character data', 400)
     }
     const secret = process.env.LIVEBLOCKS_SECRET_KEY
     if (!secret) return fail('Liveblocks key missing', 500)

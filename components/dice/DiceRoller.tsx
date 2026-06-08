@@ -97,23 +97,26 @@ const DiceRoller: FC<Props> = ({
         </button>
       </div>
       <div className="flex items-center gap-2 flex-wrap">
-        <label htmlFor="diceType" className="mr-2 font-semibold text-white/85">
-          {t('diceType')}:
-        </label>
+        <span className="text-xs font-semibold text-white/50 uppercase tracking-wider">{t('diceType')}</span>
 
-        <select
-          id="diceType"
-          className="border p-1 rounded text-white bg-gray-800/70"
-          value={diceType}
-          onChange={(e) => onChange(Number(e.target.value))}
-          disabled={disabled}
-        >
+        <div className="flex gap-1 flex-wrap">
           {[4, 6, 8, 10, 12, 20, 100].map((val) => (
-            <option key={val} value={val}>
+            <button
+              key={val}
+              onClick={() => !disabled && onChange(val)}
+              disabled={disabled}
+              className={`
+                px-2 py-1 rounded-lg text-xs font-bold border transition-all duration-150 active:scale-90
+                ${diceType === val
+                  ? 'bg-indigo-600/70 border-indigo-400/60 text-white shadow-[0_0_8px_2px_rgba(99,102,241,0.3)]'
+                  : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10 hover:text-white/90 hover:border-white/20'}
+                ${disabled ? 'opacity-40 cursor-not-allowed' : ''}
+              `}
+            >
               D{val}
-            </option>
+            </button>
           ))}
-        </select>
+        </div>
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
@@ -121,27 +124,27 @@ const DiceRoller: FC<Props> = ({
           onClick={handleRollClick}
           className={`
             relative flex items-center gap-2
-            px-7 py-2 rounded-2xl
-            font-bold text-base
+            px-8 py-2.5 rounded-2xl
+            font-bold text-base tracking-wide
             text-white
-            shadow
-            border border-white/10
-            bg-[#253053]/60
-            hover:bg-[#253053]/80
+            border border-white/15
+            bg-gradient-to-br from-indigo-600/70 to-violet-700/60
+            hover:from-indigo-500/80 hover:to-violet-600/70
+            hover:border-white/25
             active:scale-95
-            transition
-            backdrop-blur-sm
-            ${(disabled || cooldown) ? 'opacity-50 cursor-not-allowed' : ''}
+            transition-all duration-150
+            shadow-[0_2px_16px_-4px_rgba(99,102,241,0.5)]
+            hover:shadow-[0_4px_24px_-4px_rgba(99,102,241,0.7)]
+            ${(disabled || cooldown) ? 'opacity-50 cursor-not-allowed !shadow-none' : ''}
           `}
-          style={{ boxShadow: '0 2px 12px 0 #1115' }}
           disabled={disabled || cooldown}
         >
-          <Dice3 className="inline -mt-0.5 text-white/80" size={20} />
+          <Dice3 className="inline -mt-0.5" size={18} />
           {t('roll')}
 
           {cooldown && (
             <motion.span
-              className="absolute inset-0 rounded-2xl bg-black/40 origin-left pointer-events-none"
+              className="absolute inset-0 rounded-2xl bg-black/50 origin-left pointer-events-none"
               initial={{ scaleX: 1 }}
               animate={{ scaleX: 0 }}
               transition={{ duration: Math.max(0.1, cooldownDuration / 1000), ease: 'linear' }}
