@@ -31,7 +31,12 @@ export async function verifyRoomPassword(roomId: string, password: string) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ id: roomId, password }),
   })
-  return requireOk<ApiSuccess<{ guarded: boolean }>>(res)
+  return requireOk<ApiSuccess<{
+    guarded: boolean
+    /** Token HMAC signé côté serveur, valide 10 minutes. Présent seulement si guarded=true. */
+    accessToken?: string
+    ts?: number
+  }>>(res)
 }
 
 export async function createRoom(payload: { name: string; password?: string }) {

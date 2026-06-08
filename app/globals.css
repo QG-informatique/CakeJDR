@@ -24,46 +24,87 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ─── Scrollbars fines & discrètes ─────────────────────────────────────── */
 :root {
   --scrollbar-bg: transparent;
-  --scrollbar-thumb: rgba(30, 60, 120, 0.20);
-  --scrollbar-thumb-hover: rgba(30, 60, 120, 0.38);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.12);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.28);
 }
 
-/* Chrome, Edge, Opera */
-body::-webkit-scrollbar,
-.scrollable::-webkit-scrollbar {
-  width: 4px;        /* largeur super fine */
+*::-webkit-scrollbar {
+  width: 4px;
   height: 4px;
   background: var(--scrollbar-bg);
 }
-
-body::-webkit-scrollbar-thumb,
-.scrollable::-webkit-scrollbar-thumb {
+*::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb);
   border-radius: 8px;
-  transition: background 0.2s;
 }
-
-body::-webkit-scrollbar-thumb:hover,
-.scrollable::-webkit-scrollbar-thumb:hover {
+*::-webkit-scrollbar-thumb:hover {
   background: var(--scrollbar-thumb-hover);
 }
-
-/* Pour masquer la piste sauf au hover (optionnel) */
-body::-webkit-scrollbar-track,
-.scrollable::-webkit-scrollbar-track {
+*::-webkit-scrollbar-track {
   background: transparent;
 }
-
-/* Firefox */
-body, .scrollable {
-  scrollbar-width: thin;   /* "thin" c'est 4-6px selon le navigateur, mais c'est le plus fin possible */
+* {
+  scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-bg);
 }
 
-/* Highlight active toolbar toggles */
+/* ─── Sélection de texte ────────────────────────────────────────────────── */
+::selection {
+  background: rgba(99, 102, 241, 0.35);
+  color: #fff;
+}
+
+/* ─── Focus visible global (accessible) ────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid rgba(99, 102, 241, 0.7);
+  outline-offset: 2px;
+}
+
+/* ─── Animations utilitaires ─────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0); }
+  50%       { box-shadow: 0 0 16px 4px rgba(99,102,241,0.35); }
+}
+@keyframes shimmer {
+  from { background-position: -200% center; }
+  to   { background-position:  200% center; }
+}
+
+.animate-fadeIn      { animation: fadeIn      0.25s ease both; }
+.animate-fadeInScale { animation: fadeInScale 0.22s ease both; }
+.animate-slideUp     { animation: slideUp     0.3s  ease both; }
+.animate-pulseGlow   { animation: pulseGlow   2s ease-in-out infinite; }
+
+/* ─── Liveblocks toolbar toggle ─────────────────────────────────────────── */
 .lb-lexical-toolbar [data-state='on'] {
   background-color: rgba(250, 204, 21, 0.2);
   outline: 1px solid #facc15;
+}
+
+/* ─── Glass card utilitaire ─────────────────────────────────────────────── */
+.glass-card {
+  background: rgba(0,0,0,0.18);
+  border: 1px solid rgba(255,255,255,0.09);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 1rem;
+  box-shadow:
+    0 4px 24px -8px rgba(0,0,0,0.4),
+    0 0 0 1px rgba(255,255,255,0.04);
 }

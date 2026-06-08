@@ -1,9 +1,9 @@
-// SessionSummary.tsx
+﻿// SessionSummary.tsx
 // ================== PAGE COMPLÈTE AVEC FALLBACK LOCAL + INDICATEUR & LOGS ==================
 //
 // [CHANGEMENTS VISUELS SEULEMENT]
-// - Le badge d’état n’est plus dans la TopBar.
-// - Il s’affiche désormais à côté du bouton "Voir logs", au même emplacement (absolute, top-16, right-3).
+// - Le badge d'état n'est plus dans la TopBar.
+// - Il s'affiche désormais à côté du bouton "Voir logs", au même emplacement (absolute, top-16, right-3).
 //
 // ───────────────────────────────────────────────────────────────────────────────────────────
 
@@ -18,6 +18,8 @@ import React, {
   useState,
 } from 'react'
 import { useT } from '@/lib/useT'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
+import { useConfirm } from '@/lib/useConfirm'
 
 // ====== Liveblocks (collaboratif) ======
 import { useStorage, useMutation, useStatus } from '@liveblocks/react'
@@ -29,12 +31,11 @@ import { LexicalComposer } from '@lexical/react/LexicalComposer'
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin'
 import { ContentEditable } from '@lexical/react/LexicalContentEditable'
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary'
-import {
-  LiveblocksPlugin,
-  Toolbar,
-  liveblocksConfig,
-  useIsEditorReady,
-} from '@liveblocks/react-lexical'
+import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin'
+// Note: LiveblocksPlugin/liveblocksConfig retirés intentionnellement.
+// LiveblocksPlugin gère lui-même le contenu Lexical et entre en conflit
+// avec nos plugins InitialContent/AutoSave → boucle infinie setState.
+// On utilise notre editor LiveMap pour le partage multi-pages.
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import { $createParagraphNode, $createTextNode, $getRoot } from 'lexical'
 
@@ -54,25 +55,7 @@ interface Summary extends LsonObject {
   currentId?: string
 }
 
-// ===================== Plugins Lexical communs =====================
-function InitialContentPlugin({ text }: { text: string }) {
-  const [editor] = useLexicalComposerContext()
-  const isReady = useIsEditorReady()
-  useEffect(() => {
-    if (!isReady) return
-    editor.update(() => {
-      const root = $getRoot()
-      root.clear()
-      text.split('\n').forEach((line) => {
-        const p = $createParagraphNode()
-        p.append($createTextNode(line))
-        root.append(p)
-      })
-    })
-  }, [isReady, editor, text])
-  return null
-}
-
+// ===================== Plugins Lexical =====================
 function AutoSavePlugin({ onChange }: { onChange: (text: string) => void }) {
   const [editor] = useLexicalComposerContext()
   useEffect(() => {
@@ -83,6 +66,28 @@ function AutoSavePlugin({ onChange }: { onChange: (text: string) => void }) {
       })
     })
   }, [editor, onChange])
+  return null
+}
+
+// Plugin d'initialisation pour le mode LOCAL : pas de useIsEditorReady (requiert LiveblocksPlugin)
+function LocalInitContentPlugin({ text }: { text: string }) {
+  const [editor] = useLexicalComposerContext()
+  useEffect(() => {
+    editor.update(() => {
+      const root = $getRoot()
+      root.clear()
+      if (text) {
+        text.split('\n').forEach((line) => {
+          const p = $createParagraphNode()
+          p.append($createTextNode(line))
+          root.append(p)
+        })
+      } else {
+        root.append($createParagraphNode())
+      }
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Intentionnellement sans dépendances : ne s'exécute qu'à la création de l'instance (editorKey change)
   return null
 }
 
@@ -155,6 +160,7 @@ function LocalSummary({
   pushLog: (msg: string) => void
 }) {
   const t = useT() as (key: string) => string
+  const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm()
 
   const [state, setState] = useState(loadLocal())
   const [currentId, setCurrentId] = useState<string | undefined>(
@@ -225,20 +231,21 @@ function LocalSummary({
     setEditorKey((k) => k + 1)
   }
 
-  // Supprimer page
-  const handleDelete = () => {
+  // Supprimer page (async pour attendre la réponse du ConfirmDialog)
+  const handleDelete = useCallback(async () => {
     if (!current) return
     if (state.acts.length <= 1) {
-      alert(
-        (t('lastPageDeleteError') as string) ||
-          'Impossible de supprimer la dernière page.',
+      await confirm(
+        (t('lastPageDeleteError') as string) || 'Impossible de supprimer la dernière page.',
+        { title: t('deletePage') as string },
       )
       return
     }
-    if (
-      !confirm((t('deletePageConfirm') as string) || 'Supprimer cette page ?')
+    const ok = await confirm(
+      (t('deletePageConfirm') as string) || 'Supprimer cette page ?',
+      { title: t('deletePage') as string, danger: true },
     )
-      return
+    if (!ok) return
     const acts = state.acts.filter((p) => p.id !== current.id)
     const nextId = acts[0]?.id
     const editor = { ...state.editor }
@@ -248,7 +255,7 @@ function LocalSummary({
     setCurrentId(nextId)
     saveLocal(next)
     setEditorKey((k) => k + 1)
-  }
+  }, [current, state, confirm, t])
 
   // Import
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -303,15 +310,29 @@ function LocalSummary({
 
   const initialText = current ? state.editor[current.id] || '' : ''
 
-  const editorConfig = liveblocksConfig({
+  // Mode local : config Lexical simple, sans liveblocksConfig (pas de LiveblocksPlugin)
+  const editorConfig = {
     namespace: `session-summary-local-${current ? current.id : 'global'}`,
-    onError: (e) =>
+    nodes: [] as [],
+    onError: (e: Error) =>
       pushLog('Lexical error (local): ' + (e?.message ?? String(e))),
-  })
+  }
 
   return (
     <div className="flex flex-col h-full" style={{ minHeight: 0 }}>
-      {/* Barre d’actions */}
+      {/* ConfirmDialog — remplace window.confirm / window.alert */}
+      <ConfirmDialog
+        open={!!confirmState}
+        message={confirmState?.message ?? ''}
+        title={confirmState?.title}
+        danger={confirmState?.danger}
+        confirmLabel={confirmState?.confirmLabel}
+        cancelLabel={confirmState?.cancelLabel}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+      />
+
+      {/* Barre d'actions */}
       <TopBar
         onNewPage={() => createPage((t('newPage') as string) || 'New page')}
         pages={state.acts}
@@ -327,10 +348,8 @@ function LocalSummary({
       {/* Editeur */}
       {current && (
         <LexicalComposer key={editorKey} initialConfig={editorConfig}>
-          {/* Pas de LiveblocksPlugin en local */}
-          <Toolbar className="mb-2 w-full flex-shrink-0 !opacity-100">
-            <Toolbar.SectionInline />
-          </Toolbar>
+          {/* Mode local : pas de LiveblocksPlugin, pas de Toolbar Liveblocks */}
+          <HistoryPlugin />
 
           <input
             value={current.title}
@@ -354,7 +373,7 @@ function LocalSummary({
             ErrorBoundary={LexicalErrorBoundary}
           />
 
-          <InitialContentPlugin text={initialText} />
+          <LocalInitContentPlugin text={initialText} />
           <AutoSavePlugin onChange={handleAutoSave} />
         </LexicalComposer>
       )}
@@ -374,6 +393,7 @@ function LiveSummary({
 }) {
   const t = useT() as (key: string) => string
   const status = useStatus() as string // 'initializing' | 'connected' | 'reconnecting' | 'disconnected'
+  const { confirm, confirmState, handleConfirm: confirmOk, handleCancel: confirmNo } = useConfirm()
 
   // Timeout 3s si pas connecté -> bascule local
   useEffect(() => {
@@ -395,25 +415,20 @@ function LiveSummary({
     }
   }, [status, pushLog, tripToLocal])
 
-  // Sélecteurs Liveblocks (peuvent être undefined avant init)
-  const summary = useStorage((root) => root.summary) as
-    | LiveObject<Summary>
-    | null
+  // Sélecteurs Liveblocks — useStorage retourne des objets JS purs (auto-sérialisés),
+  // PAS des LiveObject/LiveList/LiveMap → ne jamais appeler .get()/.toArray() ici
+  const summaryPlain = useStorage((root) => root.summary) as {
+    acts: Page[]
+    currentId?: string
+  } | null
 
-  const rawEditor = useStorage((root) => root.editor)
-  const editorMap =
-    rawEditor instanceof LiveMap ? (rawEditor as LiveMap<string, string>) : null
+  const editorPlain = useStorage((root) => root.editor) as Record<
+    string,
+    string
+  > | null
 
-  // Normalisation pages / currentId
-  const pages =
-    summary instanceof LiveObject
-      ? ((summary.get('acts') as LiveList<Page> | undefined)?.toArray() ?? undefined)
-      : undefined
-
-  const currentId =
-    summary instanceof LiveObject
-      ? ((summary.get('currentId') as string | undefined) ?? undefined)
-      : undefined
+  const pages = summaryPlain?.acts ?? undefined
+  const currentId = summaryPlain?.currentId ?? undefined
 
   const [editorKey, setEditorKey] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -558,17 +573,13 @@ function LiveSummary({
 
   const current = pages?.find((p) => p.id === currentId)
 
-  // S’assurer qu’on a un slot texte pour la page courante
+  // S'assurer qu'on a un slot texte pour la page courante
   useEffect(() => {
     if (!current || status !== 'connected') return
-    if (editorMap instanceof LiveMap) {
-      if (!editorMap.has(current.id)) {
-        updateEditor({ id: current.id, content: '' })
-      }
-    } else {
+    if (!editorPlain || !(current.id in editorPlain)) {
       updateEditor({ id: current.id, content: '' })
     }
-  }, [current, editorMap, updateEditor, status])
+  }, [current, editorPlain, updateEditor, status])
 
   // Actions UI
   const createPage = (title: string) => {
@@ -585,24 +596,25 @@ function LiveSummary({
     updatePageTitle({ id: current.id, title })
   }
 
-  const handleDelete = () => {
+  const handleDelete = useCallback(async () => {
     if (status !== 'connected' || !pages || !current) return
     if (pages.length <= 1) {
-      alert(
-        (t('lastPageDeleteError') as string) ||
-          'Impossible de supprimer la dernière page.',
+      await confirm(
+        (t('lastPageDeleteError') as string) || 'Impossible de supprimer la dernière page.',
+        { title: t('deletePage') as string },
       )
       return
     }
-    if (
-      !confirm((t('deletePageConfirm') as string) || 'Supprimer cette page ?')
+    const ok = await confirm(
+      (t('deletePageConfirm') as string) || 'Supprimer cette page ?',
+      { title: t('deletePage') as string, danger: true },
     )
-      return
+    if (!ok) return
     const rest = pages.filter((p) => p.id !== current.id)
     removePage(current.id)
     setCurrentId(rest[0]?.id)
     setEditorKey((k) => k + 1)
-  }
+  }, [status, pages, current, confirm, t, removePage, setCurrentId])
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (status !== 'connected') return
@@ -640,12 +652,7 @@ function LiveSummary({
   const handleExport = () => {
     if (!pages) return
     const txt = pages
-      .map(
-        (p) =>
-          `=== Page: ${p.title} ===\n${
-            editorMap instanceof LiveMap ? editorMap.get(p.id) || '' : ''
-          }\n`,
-      )
+      .map((p) => `=== Page: ${p.title} ===\n${editorPlain?.[p.id] || ''}\n`)
       .join('\n')
     const blob = new Blob([txt], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
@@ -656,21 +663,43 @@ function LiveSummary({
     URL.revokeObjectURL(url)
   }
 
-  const initialText = current
-    ? editorMap instanceof LiveMap
-      ? editorMap.get(current.id) || ''
-      : ''
-    : ''
+  // On attend que editorPlain soit chargé ET que le slot de la page existe
+  // avant de monter l'éditeur. Ça garantit que LocalInitContentPlugin reçoit
+  // le bon texte initial dès le premier rendu (pas de loop isReady/autosave).
+  const editorReady = Boolean(current && editorPlain && current.id in editorPlain)
+  const initialText = editorReady ? (editorPlain![current!.id] || '') : ''
 
-  const editorConfig = liveblocksConfig({
-    namespace: `session-summary-${current ? current.id : 'global'}`,
-    onError: (e) =>
+  // Callback stable pour AutoSavePlugin (évite de re-register le listener à chaque rendu)
+  const handleAutoSave = useCallback((txt: string) => {
+    if (!current || status !== 'connected') return
+    updateEditor({ id: current.id, content: txt })
+  }, [current, status, updateEditor])
+
+  // Config Lexical simple — pas de liveblocksConfig car LiveblocksPlugin crée
+  // sa propre boucle de sync qui conflicte avec AutoSavePlugin + notre editor LiveMap.
+  // Le partage se fait via l'editor LiveMap (contenu mis à jour à chaque frappe).
+  const editorConfig = {
+    namespace: `session-summary-live-${current ? current.id : 'global'}`,
+    nodes: [] as [],
+    onError: (e: Error) =>
       pushLog('Lexical error (live): ' + (e?.message ?? String(e))),
-  })
+  }
 
   return (
     <div className="flex flex-col h-full" style={{ minHeight: 0 }}>
-      {/* Barre d’actions */}
+      {/* ConfirmDialog — remplace window.confirm / window.alert */}
+      <ConfirmDialog
+        open={!!confirmState}
+        message={confirmState?.message ?? ''}
+        title={confirmState?.title}
+        danger={confirmState?.danger}
+        confirmLabel={confirmState?.confirmLabel}
+        cancelLabel={confirmState?.cancelLabel}
+        onConfirm={confirmOk}
+        onCancel={confirmNo}
+      />
+
+      {/* Barre d'actions */}
       <TopBar
         onNewPage={() => createPage((t('newPage') as string) || 'New page')}
         pages={pages || []}
@@ -687,22 +716,17 @@ function LiveSummary({
         fileInputRef={fileInputRef}
       />
 
-      {/* Editeur */}
-      {current && (
+      {/* Éditeur — monté seulement quand le slot est prêt dans editorPlain */}
+      {current && editorReady ? (
         <LexicalComposer key={editorKey} initialConfig={editorConfig}>
-          <LiveblocksPlugin />
-          <Toolbar className="mb-2 w-full flex-shrink-0 !opacity-100">
-            <Toolbar.SectionInline />
-          </Toolbar>
+          {/* HistoryPlugin pour undo/redo local */}
+          <HistoryPlugin />
 
           <input
             value={current.title}
             onChange={(e) => handleTitleChange(e.target.value)}
             className="text-center font-semibold mb-2 bg-transparent outline-none w-full text-white placeholder-white/50"
-            placeholder={
-              (t('untitled') as string) ||
-              'Sans titre'
-            }
+            placeholder={(t('untitled') as string) || 'Sans titre'}
           />
 
           <RichTextPlugin
@@ -717,15 +741,16 @@ function LiveSummary({
             ErrorBoundary={LexicalErrorBoundary}
           />
 
-          <InitialContentPlugin text={initialText} />
-          <AutoSavePlugin
-            onChange={(txt) => {
-              if (!current || status !== 'connected') return
-              updateEditor({ id: current.id, content: txt })
-            }}
-          />
+          {/* LocalInitContentPlugin : s'exécute UNE FOIS au montage (deps=[]),
+              pas de dépendance à useIsEditorReady → pas de boucle */}
+          <LocalInitContentPlugin text={initialText} />
+          <AutoSavePlugin onChange={handleAutoSave} />
         </LexicalComposer>
-      )}
+      ) : current ? (
+        <div className="flex-1 flex items-center justify-center text-white/30 text-sm gap-2">
+          <span className="animate-pulse">⟳</span> Synchronisation…
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -864,9 +889,9 @@ function LogsPanel({
   const [open, setOpen] = useState(false)
   const badgeColor = isLocal ? 'bg-red-600' : 'bg-green-600'
 
+  // Positionné en bas à droite pour ne pas couvrir le titre de page
   return (
-    // [CHANGEMENT VISUEL] — même position qu’avant, mais on ajoute le badge juste à côté
-    <div className="absolute right-3 top-16 z-50 flex items-center gap-2">
+    <div className="absolute right-3 bottom-3 z-50 flex items-center gap-2">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -876,7 +901,6 @@ function LogsPanel({
         {open ? 'Masquer logs' : 'Voir logs'}
       </button>
 
-      {/* Badge déplacé ici, collé au bouton logs */}
       <span
         className={`inline-flex items-center ${badgeColor} text-white text-xs px-2 py-1 rounded`}
       >
@@ -890,7 +914,7 @@ function LogsPanel({
             onClick={() => setOpen(false)}
             aria-hidden="true"
           />
-          <div className="absolute right-0 top-full mt-2 z-50 w-[420px] max-h-[220px] overflow-auto bg-black/80 text-white text-xs rounded p-2 border border-white/10">
+          <div className="absolute right-0 bottom-full mb-2 z-50 w-[420px] max-h-[220px] overflow-auto bg-black/80 text-white text-xs rounded p-2 border border-white/10">
             <div className="flex items-center justify-between mb-2">
               <b>Logs de synchro</b>
               <button

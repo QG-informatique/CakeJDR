@@ -4,6 +4,7 @@ import React, { Suspense } from 'react'
 import dynamic from 'next/dynamic'
 import { BackgroundProvider } from '@/components/context/BackgroundContext'
 import { LanguageProvider } from '@/components/context/LanguageContext'
+import HtmlLangSync from '@/components/ui/HtmlLangSync'
 
 // Charge le fond uniquement côté client pour éviter les plantages SSR/hydration
 const BackgroundWrapper = dynamic(() => import('@/components/ui/BackgroundWrapper'), {
@@ -40,6 +41,8 @@ class BackgroundErrorBoundary extends React.Component<BackgroundBoundaryProps, B
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   return (
     <LanguageProvider>
+      {/* Synchronise document.documentElement.lang avec la langue active */}
+      <HtmlLangSync />
       <BackgroundProvider>
         <BackgroundErrorBoundary>
           <Suspense fallback={null}>
