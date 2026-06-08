@@ -218,6 +218,8 @@ export default function HomePageInner() {
   // Chargement automatique des fiches stockées côté serveur (Liveblocks storage)
   useEffect(() => {
     if (!roomId || remoteLoadedRef.current) return
+    // Guard posé AVANT le fetch pour éviter les doubles appels si l'effet re-fire
+    remoteLoadedRef.current = true
     let cancelled = false
     const loadRemote = async () => {
       try {
@@ -227,7 +229,6 @@ export default function HomePageInner() {
         const charsObj = (data?.characters as Record<string, Character> | undefined) ?? {}
         const values = Object.values(charsObj)
         if (!values.length) return
-        remoteLoadedRef.current = true
         const normalizedValues = values.map((c) =>
           normalizeCharacter(
             { ...c, owner: c.owner || profile?.pseudo || 'anon' },
@@ -280,7 +281,10 @@ export default function HomePageInner() {
     }
     void loadRemote()
     return () => { cancelled = true }
-  }, [roomId, profile?.pseudo, updateMyPresence, myConnectionId, perso?.id, characters.length])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // perso?.id et characters.length intentionnellement exclus : ils provoquaient
+  // une re-exécution après chaque mise à jour de fiche, annulant le guard remoteLoadedRef.
+  }, [roomId, profile?.pseudo, updateMyPresence, myConnectionId])
 
   // Sauvegarde initiale silencieuse dans le cloud pour éviter la perte de fiche
   useEffect(() => {

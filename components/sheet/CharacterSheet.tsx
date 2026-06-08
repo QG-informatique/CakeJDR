@@ -1,6 +1,6 @@
 'use client'
 
-import { FC, useState, useEffect } from 'react'
+import { FC, useState, useEffect, useCallback } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import StatsTab from './StatsTab'
 import EquipTab from './EquipTab'
@@ -122,7 +122,7 @@ const CharacterSheet: FC<Props> = ({
       ? perso
       : defaultPerso
 
-  const handleLevelUp = async () => {
+  const handleLevelUp = useCallback(async () => {
     if (processing) return
     setProcessing(true)
     let updatedPerso: Character = {
@@ -146,16 +146,6 @@ const CharacterSheet: FC<Props> = ({
       'charisme',
     ]) {
       const gain = rollDice(dice)
-
-      if (chatBoxRef?.current) {
-        const message = document.createElement('p')
-        const strong = document.createElement('strong')
-        strong.textContent = `🎲 ${cFiche.nom} - ${dice.toUpperCase()} - ${stat} :`
-        message.appendChild(strong)
-        message.append(` ${gain}`)
-        chatBoxRef.current.appendChild(message)
-        chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight
-      }
 
       setLastStat(stat)
       setLastGain(gain)
@@ -182,12 +172,15 @@ const CharacterSheet: FC<Props> = ({
         Reflect.set(updatedPerso, stat, prev + gain)
       }
 
+      // Mise à jour UI uniquement — pas de sauvegarde intermédiaire
       setLocalPerso({ ...updatedPerso })
-      onUpdate(updatedPerso)
       await new Promise((resolve) => setTimeout(resolve, 1200))
     }
+
+    // Une seule sauvegarde à la fin (au lieu de 7) → réduit les appels cloud × 7
+    onUpdate(updatedPerso)
     setProcessing(false)
-  }
+  }, [processing, cFiche, dice, rollDice, onUpdate])
 
   const save = () => {
     setEdit(false)

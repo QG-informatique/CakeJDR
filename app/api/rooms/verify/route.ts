@@ -3,8 +3,15 @@ export const runtime = "nodejs";
 
 import { NextRequest } from "next/server";
 import { Liveblocks } from "@liveblocks/node";
-import crypto from "node:crypto";
+import crypto, { createHmac } from "node:crypto";
 import { fail, ok } from '@/lib/api-response'
+
+/** Génère un token d'accès HMAC valable 10 minutes pour une room donnée. */
+function generateAccessToken(roomId: string, secret: string): { accessToken: string; ts: number } {
+  const ts = Date.now()
+  const accessToken = createHmac('sha256', secret).update(`${roomId}:${ts}`).digest('hex')
+  return { accessToken, ts }
+}
 
 type LiveblocksMetadata = Record<string, string | string[] | null>;
 
@@ -107,7 +114,10 @@ export async function POST(req: NextRequest) {
 
     if (!isValid) return bad("Invalid password", 401);
 
-    return ok({ guarded: true });
+    // Génère un token signé valable 10 min — le client le stocke en sessionStorage
+    // et le présente à /api/liveblocks-auth pour prouver qu'il a passé la vérif MDP.
+    const { accessToken, ts } = generateAccessToken(id, secret)
+    return ok({ guarded: true, accessToken, ts });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "verify failed";
     return bad(message, 500);

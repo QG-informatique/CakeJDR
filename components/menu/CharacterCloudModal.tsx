@@ -49,7 +49,8 @@ export default function CharacterCloudModal({
   const [uploadId, setUploadId] = useState<string>('')
   const [busyAction, setBusyAction] = useState<string | null>(null)
 
-  const prefix = useMemo(() => `FichePerso/${roomId || 'global'}_`, [roomId])
+  // List ALL saved character sheets regardless of room so users can always recover their data
+  const prefix = 'FichePerso/'
 
   const refresh = useCallback(async () => {
     setLoading(true)

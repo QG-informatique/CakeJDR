@@ -92,10 +92,10 @@ export default function PopupResult({ show, result, diceType, onFinish, onReveal
 
   const glowClass =
     result === diceType
-      ? 'shadow-[0_0_60px_rgba(253,224,71,0.8)]'
+      ? 'shadow-[0_0_80px_20px_rgba(253,197,0,0.55)]'
       : result === 1
-      ? 'shadow-[0_0_60px_rgba(239,68,68,0.8)]'
-      : 'shadow-[0_0_40px_rgba(96,165,250,0.6)]'
+      ? 'shadow-[0_0_80px_20px_rgba(220,38,38,0.55)]'
+      : 'shadow-[0_0_60px_12px_rgba(79,110,183,0.45)]'
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none">
@@ -106,20 +106,40 @@ export default function PopupResult({ show, result, diceType, onFinish, onReveal
           animate={{ rotateX: spin.x, rotateY: spin.y }}
           transition={{ duration: SPIN_DURATION / 1000, ease: 'easeOut' }}
         >
-          {['front','back','left','right','top','bottom'].map((face, i) => (
+          {['front','back','left','right','top','bottom'].map((face, i) => {
+            const isCrit   = result === diceType
+            const isFumble = result === 1
+            const faceBg = isCrit
+              ? 'linear-gradient(145deg, #2a1f06, #1a1200)'
+              : isFumble
+              ? 'linear-gradient(145deg, #200808, #100404)'
+              : 'linear-gradient(145deg, #131828, #0a0f1c)'
+            const faceBorder = isCrit
+              ? '#c9a227'
+              : isFumble
+              ? '#b91c1c'
+              : '#4f6eb7'
+            const textColor = isCrit
+              ? '#fde68a'
+              : isFumble
+              ? '#fca5a5'
+              : '#e0eaff'
+            return (
             <div
               key={face}
-              className={`face-${face} absolute w-full h-full
-                flex items-center justify-center
-                bg-white border-2 border-gray-300 rounded-xl
-                backface-hidden`}
+              className={`face-${face} absolute w-full h-full flex items-center justify-center rounded-xl backface-hidden`}
+              style={{
+                background: faceBg,
+                border: `2px solid ${faceBorder}`,
+                boxShadow: `inset 0 0 12px rgba(0,0,0,0.6), 0 0 6px rgba(0,0,0,0.4)`,
+              }}
             >
               <motion.div
                 initial={{ opacity: 1 }}
                 animate={{ opacity: showResult && i === faceIndex ? 0 : 1 }}
                 transition={{ delay: RESULT_DELAY / 1000, duration: 0.3 }}
-                className="text-5xl font-black text-black"
-                style={{ textShadow: '0 0 2px rgba(0,0,0,0.8)' }}
+                className="text-5xl font-black select-none"
+                style={{ color: 'rgba(255,255,255,0.15)', textShadow: 'none' }}
               >
                 ?
               </motion.div>
@@ -127,13 +147,14 @@ export default function PopupResult({ show, result, diceType, onFinish, onReveal
                 initial={{ opacity: 0 }}
                 animate={{ opacity: showResult && i === faceIndex ? 1 : 0 }}
                 transition={{ delay: (RESULT_DELAY + 200) / 1000, duration: 0.5 }}
-                className="absolute text-5xl font-black text-black"
-                style={{ textShadow: '0 0 2px rgba(0,0,0,0.8)' }}
+                className="absolute text-5xl font-black select-none"
+                style={{ color: textColor, textShadow: `0 0 16px ${faceBorder}` }}
               >
                 {result}
               </motion.div>
             </div>
-          ))}
+            )
+          })}
         </motion.div>
       </div>
 

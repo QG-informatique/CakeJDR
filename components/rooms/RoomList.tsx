@@ -199,7 +199,7 @@ export default function RoomList({
             </button>
 
             {joiningId === r.id && r.hasPassword && (
-              <>
+              <div onClick={(e) => e.stopPropagation()} className="flex flex-col gap-1">
                 <input
                   type="password"
                   value={joinPassword}
@@ -208,14 +208,17 @@ export default function RoomList({
                   placeholder={t('password')}
                   onKeyDown={(e) => { if (e.key === 'Enter') void confirmJoin(r) }}
                   disabled={verifying}
+                  autoFocus
                 />
+                <button
+                  onClick={() => void confirmJoin(r)}
+                  disabled={verifying}
+                  className="w-full px-2 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold disabled:opacity-50"
+                >
+                  {verifying ? t('verifying') : t('confirm')}
+                </button>
                 {errorMsg && <p className="text-red-400 text-xs">{errorMsg}</p>}
-                {verifying && (
-                  <p className="text-emerald-300 text-[10px]">
-                    {t('verifying')}
-                  </p>
-                )}
-              </>
+              </div>
             )}
           </div>
         ))}
