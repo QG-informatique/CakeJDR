@@ -48,7 +48,20 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
   const [cloudFiles, setCloudFiles] = useState<string[]>([])
   const [localChars, setLocalChars] = useState<Character[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const t = useT()
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    if (!open) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [open])
 
   useEffect(() => {
     if (!modal) return
@@ -225,7 +238,7 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
   }
 
   return (
-    <div className="relative inline-block ml-2">
+    <div ref={containerRef} className="relative inline-block ml-2">
       <button
         className="bg-gray-800 hover:bg-gray-700 text-white p-2 rounded shadow transition-all"
         onClick={() => setOpen(v => !v)}

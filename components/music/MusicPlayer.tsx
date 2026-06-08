@@ -52,6 +52,7 @@ export default function MusicPlayer() {
   const [duration, setDuration] = useState(0)
   const [seeking, setSeeking] = useState(false)
   const [optionsOpen, setOptionsOpen] = useState(false)
+  const [playerError, setPlayerError] = useState<string | null>(null)
   const playerRef = useRef<YouTubePlayer | null>(null)
   const hasSyncedRef = useRef(false)
   const optionsPanelId = useId()
@@ -159,6 +160,7 @@ export default function MusicPlayer() {
     setCurrentTitle('')
     setCurrentTime(0)
     setDuration(0)
+    setPlayerError(null)
   }, [currentId])
 
   useEffect(() => {
@@ -345,9 +347,15 @@ export default function MusicPlayer() {
           </button>
 
           <div className="flex flex-col flex-1 min-w-[220px]">
-            <div className="text-xs text-white/80 truncate">
-              {currentTitle || 'Aucune musique'}
-            </div>
+            {playerError ? (
+              <div className="text-xs text-red-400 truncate" title={playerError}>
+                ⚠ {playerError}
+              </div>
+            ) : (
+              <div className="text-xs text-white/80 truncate">
+                {currentTitle || 'Aucune musique'}
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <span className="text-[11px] text-white/60 tabular-nums">
                 {formatTime(currentTime)}
@@ -397,22 +405,42 @@ export default function MusicPlayer() {
             e.target.pauseVideo()
             syncTitleFromPlayer()
           }}
-          onStateChange={(e) => {
-            if (!playerRef.current) playerRef.current = e.target
-            if (e.data === 0) {
-              playNextFromQueue()
-              return
+          onError={(e) => {
+            // Codes d'erreur YouTube : 2=invalid id, 5=HTML5 error, 100=not found,
+            // 101/150=embed not allowed
+            const errorMessages: Record<number, string> = {
+              2:   'ID YouTube invalide.',
+              5:   'Erreur lecteur HTML5.',
+              100: 'Vidéo introuvable ou supprimée.',
+              101: "Intégration désactivée par l'auteur.",
+              150: "Intégration désactivée par l'auteur.",
             }
-            if (e.data === 1 || e.data === 5) {
-              syncTitleFromPlayer()
-              void e.target
-                .getDuration()
-                .then((nextDuration) => {
-                  if (Number.isFinite(nextDuration) && nextDuration > 0) {
-                    setDuration(nextDuration)
-                  }
-                })
-                .catch(() => {})
+            const code = typeof e.data === 'number' ? e.data : -1
+            setPlayerError(errorMessages[code] ?? `Erreur YouTube (code ${code}).`)
+            setIsPlaying(false)
+          }}
+          onStateChange={(e) => {
+            try {
+              if (!playerRef.current) playerRef.current = e.target
+              if (e.data === 0) {
+                playNextFromQueue()
+                return
+              }
+              if (e.data === 1 || e.data === 5) {
+                setPlayerError(null) // lecture OK → effacer une erreur précédente
+                syncTitleFromPlayer()
+                void e.target
+                  .getDuration()
+                  .then((nextDuration) => {
+                    if (Number.isFinite(nextDuration) && nextDuration > 0) {
+                      setDuration(nextDuration)
+                    }
+                  })
+                  .catch(() => {})
+              }
+            } catch {
+              // Le callback YouTube s'exécute hors du cycle React/Liveblocks,
+              // on absorbe silencieusement pour éviter l'erreur non gérée.
             }
           }}
         />

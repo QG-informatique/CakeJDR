@@ -105,7 +105,7 @@ export default function RoomsPage() {
         {rooms.map((r) => (
           <div
             key={r.id}
-            onClick={() => { setSelectedId(r.id); localStorage.setItem('jdr_my_room', r.id) }}
+            onClick={() => setSelectedId(r.id)}
             onDoubleClick={() => joinRoom(r)}
             className={`p-3 rounded-lg flex flex-col gap-2 cursor-pointer ${selectedId === r.id ? 'ring-2 ring-emerald-400/90 shadow-[0_0_12px_2px_rgba(16,185,129,0.6)]' : 'bg-black/30 hover:ring-2 hover:ring-emerald-300/40'}`}
           >
@@ -142,7 +142,7 @@ export default function RoomsPage() {
       <details className="mb-4" open={showCreate}>
         <summary
           className="cursor-pointer select-none py-1 px-2 bg-purple-700/60 rounded"
-          onClick={() => setShowCreate((v) => !v)}
+          onClick={(e) => { e.preventDefault(); setShowCreate((v) => !v) }}
         >
           {t('createRoom')}
         </summary>

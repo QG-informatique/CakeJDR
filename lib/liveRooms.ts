@@ -70,14 +70,14 @@ export async function createRoom(name: string, password?: string) {
   if (!secret) throw new Error('Liveblocks key missing')
   const client = new Liveblocks({ secret })
 
-  // 1) Si une room avec ce nom existe déjà (metadata.name), renvoyer son id
+  // 1) Si une room avec ce nom existe déjà, refuser la création
   let cursor: string | undefined
   do {
     const { data, nextCursor } = await client.getRooms({ startingAfter: cursor, limit: 50 })
     for (const r of data) {
       const metaName = typeof r.metadata?.name === 'string' ? r.metadata.name : undefined
       if (metaName && metaName.trim().toLowerCase() === name.trim().toLowerCase()) {
-        return r.id
+        throw new Error('name_exists')
       }
     }
     cursor = nextCursor ?? undefined

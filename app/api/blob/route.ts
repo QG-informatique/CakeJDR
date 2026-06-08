@@ -2,14 +2,9 @@ export const runtime = 'nodejs'
 import { put, del, list } from '@vercel/blob'
 import { debug } from '@/lib/debug'
 import { fail, ok } from '@/lib/api-response'
-
-const CACHE_TTL = 60000
-type BlobList = Awaited<ReturnType<typeof list>>
-const listCache = new Map<string, { ts: number; files: BlobList }>()
-
-function invalidate(prefix: string) {
-  listCache.delete(prefix)
-}
+// Note : le cache in-memory a été supprimé — en serverless (Vercel), chaque invocation
+// peut être un process isolé, donc le Map était systématiquement vide et créait une
+// illusion de cache sans bénéfice réel. Pour un vrai cache, utiliser Vercel KV / Redis.
 
 // Handler POST (upload)
 export async function POST(request: Request) {
@@ -22,7 +17,6 @@ export async function POST(request: Request) {
     if (!body) return fail('missing body', 400)
     const blob = await put(filename, body, { access: 'public' })
     debug('blob upload', filename)
-    invalidate(filename.substring(0, filename.lastIndexOf('/') + 1) || '')
     return ok({ blob, url: blob.url, pathname: blob.pathname })
   } catch {
     return fail('upload failed', 500)
@@ -36,9 +30,12 @@ export async function DELETE(request: Request) {
   if (!filename) return fail('filename missing', 400)
 
   try {
-    await del(filename)
+    // del() expects a full blob URL, not a pathname — look it up first
+    const blobList = await list({ prefix: filename })
+    const blob = blobList.blobs.find((b) => b.pathname === filename)
+    if (!blob) return fail('file not found', 404)
+    await del(blob.url)
     debug('blob delete', filename)
-    invalidate(filename.substring(0, filename.lastIndexOf('/') + 1) || '')
     return ok({ success: true })
   } catch {
     return fail('delete failed', 500)
@@ -49,14 +46,8 @@ export async function DELETE(request: Request) {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const prefix = searchParams.get('prefix') || 'FichePerso/'
-  const cached = listCache.get(prefix)
-  if (cached && Date.now() - cached.ts < CACHE_TTL) {
-    debug('blob list cache hit', prefix)
-    return ok({ files: cached.files })
-  }
   try {
     const files = await list({ prefix })
-    listCache.set(prefix, { files, ts: Date.now() })
     debug('blob list', prefix, files?.blobs?.length)
     return ok({ files })
   } catch {

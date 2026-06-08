@@ -2,7 +2,7 @@
 
 import { FC, RefObject, useRef, useState, useEffect, useMemo } from 'react'
 import { ChevronLeft, ChevronRight, BarChart3, MessageSquare } from 'lucide-react'
-import { useBroadcastEvent, useRoom, useEventListener } from '@liveblocks/react'
+import { useBroadcastEvent, useRoom, useEventListener, useSelf } from '@liveblocks/react'
 import useProfile from '../app/hooks/useProfile'
 import SessionSummary from './SessionSummary'
 import DiceStats from './DiceStats'
@@ -45,6 +45,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
     ? sortedEvents
     : sortedEvents.filter(ev => ev.ts >= sessionStart.current)
   const broadcast = useBroadcastEvent()
+  const self = useSelf()
   const profile = useProfile()
   const t = useT()
   const [collapsed, setCollapsed] = useState(() =>
@@ -70,10 +71,14 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
     setInputValue('')
   }
 
-  // Receive remote chat events and persist them to storage
-  useEventListener((payload: { event: { type: string; author?: string; text?: string; ts?: number; isMJ?: boolean } }) => {
-    const { event } = payload
+  // Receive remote chat events and persist them to storage.
+  // On ignore nos propres broadcasts (on a déjà appelé addEvent localement dans sendMessage)
+  // pour éviter la double-insertion dans la LiveList.
+  useEventListener((payload: { connectionId: number; event: { type: string; author?: string; text?: string; ts?: number; isMJ?: boolean } }) => {
+    const { event, connectionId } = payload
     if (event && event.type === 'chat') {
+      // Sauter les événements provenant de notre propre connexion
+      if (connectionId === self?.connectionId) return
       const ts = typeof event.ts === 'number' ? event.ts : Date.now()
       addEvent({ id: crypto.randomUUID(), kind: 'chat', author: event.author || 'Unknown', text: event.text || '', ts, isMJ: !!event.isMJ })
     }
@@ -129,24 +134,36 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
       </button>
 
       {/* Header buttons */}
-      <div className="flex justify-center items-center mb-2 gap-2">
+      <div className="flex justify-center items-center mb-3 gap-2">
         <button
-          className="px-5 py-2 rounded-xl font-semibold shadow border-none bg-black/30 text-white/90 hover:bg-yellow-400 hover:text-black transition duration-100 flex items-center justify-center min-h-[44px]"
-          style={{ minHeight: 44 }}
+          className="flex-1 px-3 py-2 rounded-xl font-semibold text-sm shadow
+            bg-gradient-to-b from-amber-500/20 to-amber-600/10
+            border border-amber-400/20
+            text-amber-200/90 hover:text-amber-100
+            hover:from-amber-500/30 hover:to-amber-600/20
+            hover:border-amber-400/40
+            active:scale-95 transition-all duration-150
+            flex items-center justify-center gap-1.5 min-h-[38px]"
           onClick={() => setShowSummary(true)}
         >
-          {t('sessionSummary')}
+          <span className="text-base leading-none">📖</span>
+          <span className="truncate">{t('sessionSummary')}</span>
         </button>
         <button
-          className="px-5 py-2 rounded-xl font-semibold shadow border-none bg-black/30 text-white/90 hover:bg-blue-600 hover:text-white transition duration-100 flex items-center justify-center min-h-[44px]"
-          style={{ minHeight: 44 }}
+          className={`px-3 py-2 rounded-xl font-semibold text-sm shadow
+            border active:scale-95 transition-all duration-150
+            flex items-center justify-center gap-1.5 min-h-[38px]
+            ${showStats
+              ? 'bg-blue-600/30 border-blue-400/30 text-blue-200 hover:bg-blue-600/40'
+              : 'bg-black/30 border-white/10 text-white/70 hover:bg-blue-900/30 hover:text-blue-200 hover:border-blue-400/20'
+            }`}
           onClick={() => setShowStats(s => !s)}
           title={t('diceStats')}
         >
           {showStats ? (
-            <span className="inline-flex items-center gap-1"><MessageSquare size={14} /> {t('chat')}</span>
+            <><MessageSquare size={14} /> <span>{t('chat')}</span></>
           ) : (
-            <span className="inline-flex items-center gap-1"><BarChart3 size={14} /> {t('diceStats')}</span>
+            <><BarChart3 size={14} /> <span>{t('diceStats')}</span></>
           )}
         </button>
       </div>
@@ -163,50 +180,85 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
         )}
 
         <div className={`flex-1 min-h-0 flex flex-col ${showStats ? '' : 'h-full'}`}>
-          <h2 className="text-xl font-bold mb-2 text-center">{t('chat')}</h2>
+          <h2 className="text-sm font-semibold mb-1.5 text-center text-white/50 tracking-widest uppercase">{t('chat')}</h2>
           <div
             ref={chatBoxRef}
-            className="relative flex-1 overflow-y-auto rounded-xl border border-white/10 bg-black/15 backdrop-blur-[2px] shadow p-2 min-h-0"
+            className="relative flex-1 overflow-y-auto rounded-xl border border-white/8 bg-black/20 backdrop-blur-[2px] shadow-inner p-2 min-h-0"
           >
             <button
               onClick={() => setShowHistory(h => !h)}
-              className="absolute left-1/2 -translate-x-1/2 top-1 text-xs opacity-20 hover:opacity-80 bg-black/20 px-2 py-1 rounded"
+              className="absolute left-1/2 -translate-x-1/2 top-1 text-xs opacity-20 hover:opacity-60 bg-black/30 px-2 py-0.5 rounded-full transition-opacity"
               title={showHistory ? t('hideHistory') : t('showHistory')}
             >
               {showHistory ? t('hideHistory') : t('showHistory')}
             </button>
+            <div className="pt-5 flex flex-col gap-1.5">
             {displayedEvents.map(ev => {
               const isChat = ev.kind === 'chat'
-              return (
-                <p key={ev.id} className="leading-snug">
-                  <span className="mr-1">{isChat ? '[chat]' : '[dice]'}</span>
-                  {isChat ? (
-                    <>
-                      <strong>{ev.author}{ev.isMJ && ' (MJ)'} :</strong> {ev.text}
-                    </>
-                  ) : (
-                    <span>{`${ev.player} : D${ev.dice} -> ${ev.result}`}</span>
-                  )}
-                </p>
-              )
+              if (isChat) {
+                const isMJ = ev.isMJ
+                return (
+                  <div key={ev.id} className="animate-fadeIn flex flex-col gap-0.5">
+                    <span className={`text-[10px] font-semibold px-1 ${isMJ ? 'text-amber-400/80' : 'text-white/40'}`}>
+                      {isMJ && '👑 '}{ev.author}
+                    </span>
+                    <div className={`
+                      px-2.5 py-1.5 rounded-xl rounded-tl-sm text-sm leading-snug max-w-[92%]
+                      ${isMJ
+                        ? 'bg-gradient-to-br from-amber-500/20 to-yellow-600/10 border border-amber-400/20 text-amber-100'
+                        : 'bg-white/8 border border-white/8 text-white/90'}
+                    `}>
+                      {ev.text}
+                    </div>
+                  </div>
+                )
+              } else {
+                // dice roll
+                const isCrit = ev.result !== undefined && ev.dice !== undefined && ev.result === ev.dice
+                const isFumble = ev.result === 1
+                const resultColor = isCrit
+                  ? 'text-yellow-300'
+                  : isFumble
+                  ? 'text-red-400'
+                  : 'text-blue-300'
+                const bgColor = isCrit
+                  ? 'from-yellow-500/15 to-amber-600/8 border-yellow-400/20'
+                  : isFumble
+                  ? 'from-red-500/15 to-red-600/8 border-red-400/20'
+                  : 'from-blue-500/10 to-indigo-600/5 border-blue-400/15'
+                return (
+                  <div key={ev.id} className={`animate-fadeIn flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-gradient-to-r ${bgColor} border text-sm`}>
+                    <span className="text-base leading-none">🎲</span>
+                    <span className="text-white/60 text-xs">{ev.player}</span>
+                    {ev.dice != null && <span className="text-white/40 text-xs">D{ev.dice}</span>}
+                    <span className="ml-auto font-bold text-base leading-none tabular-nums">
+                      <span className={resultColor}>{ev.result ?? '?'}</span>
+                    </span>
+                    {isCrit && <span className="text-xs">✨</span>}
+                    {isFumble && <span className="text-xs">💀</span>}
+                  </div>
+                )
+              }
             })}
+            </div>
             <div ref={endRef} />
           </div>
 
-          <div className="mt-2 flex items-center w-full max-w-full overflow-hidden">
+          <div className="mt-2 flex items-center w-full max-w-full overflow-hidden rounded-xl border border-white/10 bg-black/25 backdrop-blur-[2px] focus-within:border-white/20 focus-within:bg-black/35 transition-all">
             <input
               type="text"
               placeholder={t('yourMessage')}
               value={inputValue}
               onChange={e => setInputValue(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') sendMessage() }}
-              className="flex-1 border-none px-3 py-2 rounded-l-xl text-white bg-black/30 backdrop-blur-[2px] focus:outline-none transition shadow placeholder:text-white/50 text-base min-w-0"
-              style={{ minHeight: 44 }}
+              className="flex-1 border-none px-3 py-2.5 text-white bg-transparent focus:outline-none text-sm placeholder:text-white/30 min-w-0"
             />
             <button
               onClick={sendMessage}
-              className="rounded-r-xl px-5 py-2 text-base font-semibold shadow border-none bg-black/30 text-white/90 hover:bg-emerald-600 hover:text-white transition duration-100 flex items-center justify-center min-h-[44px] max-w-[120px] truncate"
-              style={{ minHeight: 44 }}
+              className="mr-1 px-3 py-1.5 rounded-lg text-sm font-semibold
+                bg-emerald-600/20 border border-emerald-500/20 text-emerald-300
+                hover:bg-emerald-500/30 hover:border-emerald-400/40 hover:text-emerald-100
+                active:scale-95 transition-all duration-150 flex-shrink-0"
             >
               {t('send')}
             </button>
