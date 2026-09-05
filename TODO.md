@@ -12,6 +12,7 @@
 - [x] Ajouter du rate-limit sur `/api/rooms/verify` (8 essais / 15 min / IP+room)
 
 ## Issu de la phase 0 — à finir plus tard
+- [x] Ajouter le crédit QG Informatique, absent du projet (règle `C:\DEV\CLAUDE.md`) — footer fixe rendu par `ClientLayout`
 - [ ] Corriger les 58 avertissements `react-hooks` (`purity`, `set-state-in-effect`, `refs`) concentrés dans les fonds animés, puis repasser ces trois règles en erreur dans `eslint.config.mjs` — phase 4
 - [ ] Restreindre les paramètres signés de `/api/cloudinary/signature` (formats, taille) après vérification de la doc Cloudinary — seule la limite de débit est en place
 - [ ] Donner une propriété par utilisateur aux fiches stockées dans Blob — aujourd'hui contraintes mais pas rattachées à un compte (phase 1)
