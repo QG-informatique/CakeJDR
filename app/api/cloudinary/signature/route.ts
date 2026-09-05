@@ -1,7 +1,8 @@
 export const runtime = "nodejs";
 
 import crypto from "crypto";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { clientIp, rateLimit } from "@/lib/rateLimit";
 
 const CLOUD_NAME =
   process.env.CLOUDINARY_CLOUD_NAME ||
@@ -11,6 +12,16 @@ const API_KEY = process.env.CLOUDINARY_API_KEY;
 const API_SECRET = process.env.CLOUDINARY_API_SECRET;
 
 const FOLDER = "cakejdr";
+
+/**
+ * Cette route délivre de quoi téléverser directement chez Cloudinary. Sans
+ * limite, elle offrait un droit d'upload illimité sur le compte à qui la
+ * demandait. La limite de débit ci-dessous est le contrôle sûr et vérifiable ;
+ * restreindre en plus les paramètres signés (formats, taille) suppose de
+ * confirmer leur comportement dans la doc Cloudinary — noté au TODO.
+ */
+const SIGN_LIMIT = 20;
+const SIGN_WINDOW_MS = 10 * 60 * 1000;
 
 function bad(msg: string, code = 500) {
   return NextResponse.json({ error: msg }, { status: code });
@@ -47,7 +58,14 @@ function signUpload(
   return crypto.createHash("sha1").update(toSign + apiSecret).digest("hex");
 }
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const limit = rateLimit(`cloudinary-sign:${clientIp(req)}`, SIGN_LIMIT, SIGN_WINDOW_MS);
+  if (!limit.allowed) {
+    const res = NextResponse.json({ error: "too many requests" }, { status: 429 });
+    res.headers.set("Retry-After", String(limit.retryAfter));
+    return res;
+  }
+
   const { cloudName, apiKey, apiSecret } = resolveCloudinaryConfig();
   if (!cloudName) return bad("Missing CLOUDINARY_CLOUD_NAME env", 500);
   if (!apiKey || !apiSecret) {

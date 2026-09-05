@@ -1,125 +1,142 @@
-// src/app/api/rooms/verify/route.ts
-export const runtime = "nodejs";
+export const runtime = 'nodejs'
 
-import { NextRequest } from "next/server";
-import { Liveblocks } from "@liveblocks/node";
-import crypto, { createHmac } from "node:crypto";
+import { NextRequest } from 'next/server'
+import { Liveblocks } from '@liveblocks/node'
+import {
+  checkRoomPassword,
+  issueRoomToken,
+  roomHasPassword,
+} from '@/lib/roomAuth'
+import { clientIp, rateLimit, resetRateLimit } from '@/lib/rateLimit'
 import { fail, ok } from '@/lib/api-response'
 
-/** Génère un token d'accès HMAC valable 10 minutes pour une room donnée. */
-function generateAccessToken(roomId: string, secret: string): { accessToken: string; ts: number } {
-  const ts = Date.now()
-  const accessToken = createHmac('sha256', secret).update(`${roomId}:${ts}`).digest('hex')
-  return { accessToken, ts }
-}
+/**
+ * Vérifie l'accès à une room et délivre un jeton d'accès.
+ *
+ * Le jeton est émis pour toute room à laquelle l'appelant a droit — protégée
+ * (après un mot de passe correct) comme ouverte (immédiatement). Les routes de
+ * données (`/api/roomstorage`, `/api/blob`) l'exigent : sans lui, une room
+ * ouverte ne fournirait aucune preuve d'accès à vérifier.
+ */
 
-type LiveblocksMetadata = Record<string, string | string[] | null>;
+/** Tentatives de mot de passe : 8 par quart d'heure, par IP et par room. */
+const PWD_ATTEMPTS = 8
+const PWD_WINDOW_MS = 15 * 60 * 1000
+
+/** Émission de jetons sur rooms ouvertes : large, juste pour borner l'abus. */
+const TOKEN_ATTEMPTS = 60
+const TOKEN_WINDOW_MS = 5 * 60 * 1000
 
 type RoomMetadata = Record<string, unknown> & {
-  password?: string | null;
-  passwordHash?: string | null;
-  hasPassword?: boolean | string;
-};
+  password?: string | null
+  passwordHash?: string | null
+  hasPassword?: boolean | string
+}
 
-const sha256 = (s: string) => crypto.createHash("sha256").update(s).digest("hex");
-const SAFE_METADATA_KEY = /^[a-zA-Z0-9:_-]{1,64}$/;
-const BLOCKED_METADATA_KEYS = new Set([
-  "__proto__",
-  "prototype",
-  "constructor",
-]);
+const SAFE_METADATA_KEY = /^[a-zA-Z0-9:_-]{1,64}$/
+const BLOCKED_METADATA_KEYS = new Set(['__proto__', 'prototype', 'constructor'])
 
 function isSafeMetadataKey(key: string) {
-  return SAFE_METADATA_KEY.test(key) && !BLOCKED_METADATA_KEYS.has(key);
+  return SAFE_METADATA_KEY.test(key) && !BLOCKED_METADATA_KEYS.has(key)
 }
 
-function sanitizeMetadata(meta: RoomMetadata): LiveblocksMetadata {
-  const entries: Array<[string, string | string[] | null]> = [];
+/**
+ * Reconstruit des métadonnées sûres en y plaçant le nouveau hash.
+ * Le mot de passe en clair est explicitement effacé (`null`) : c'est tout
+ * l'intérêt de la migration.
+ */
+function metadataWithUpgradedHash(
+  meta: RoomMetadata,
+  upgradedHash: string,
+): Record<string, string | string[] | null> {
+  const entries: Array<[string, string | string[] | null]> = []
   for (const [key, value] of Object.entries(meta)) {
-    if (key === "password" || key === "passwordHash" || key === "hasPassword") {
-      continue;
-    }
-    if (!isSafeMetadataKey(key)) {
-      continue;
-    }
-    if (typeof value === "string") {
-      entries.push([key, value]);
-    } else if (Array.isArray(value) && value.every((v) => typeof v === "string")) {
-      entries.push([key, value]);
+    if (key === 'password' || key === 'passwordHash' || key === 'hasPassword') continue
+    if (!isSafeMetadataKey(key)) continue
+    if (typeof value === 'string') entries.push([key, value])
+    else if (Array.isArray(value) && value.every((v) => typeof v === 'string')) {
+      entries.push([key, value])
     }
   }
-  const passwordHash =
-    typeof meta.passwordHash === "string" && meta.passwordHash.length
-      ? meta.passwordHash
-      : null;
-  const hasPassword =
-    meta.hasPassword === true || meta.hasPassword === "1" || meta.hasPassword === "true"
-      ? "1"
-      : null;
-  if (passwordHash) entries.push(["passwordHash", passwordHash]);
-  if (hasPassword) entries.push(["hasPassword", hasPassword]);
-  return Object.fromEntries(entries) as LiveblocksMetadata;
-}
-
-function bad(msg: string, code = 400) {
-  return fail(msg, code);
+  entries.push(['passwordHash', upgradedHash])
+  entries.push(['hasPassword', '1'])
+  entries.push(['password', null])
+  return Object.fromEntries(entries)
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json().catch(() => ({}));
-    const id = String(body?.id || "").trim();
-    const password = String(body?.password || "");
+    const body = (await req.json().catch(() => ({}))) as {
+      id?: unknown
+      password?: unknown
+    }
+    const id = typeof body.id === 'string' ? body.id.trim() : ''
+    const password = typeof body.password === 'string' ? body.password : ''
 
-    if (!id) return bad("Missing id");
-    const secret = process.env.LIVEBLOCKS_SECRET_KEY;
-    if (!secret) return bad("Server misconfigured", 500);
+    if (!id) return fail('Missing id', 400)
 
-    const lb = new Liveblocks({ secret });
-    const room = await lb.getRoom(id).catch(() => null);
-    if (!room) return bad("Room not found", 404);
+    const secret = process.env.LIVEBLOCKS_SECRET_KEY
+    if (!secret) return fail('Server misconfigured', 500)
 
-    const meta = ((room as { metadata?: RoomMetadata })?.metadata ?? {}) as RoomMetadata;
-    const storedPlain = typeof meta.password === "string" && meta.password.length ? meta.password : null;
-    let storedHash = typeof meta.passwordHash === "string" && meta.passwordHash.length ? meta.passwordHash : null;
-    const hasPassword =
-      !!storedPlain ||
-      !!storedHash ||
-      meta.hasPassword === true ||
-      meta.hasPassword === "1" ||
-      meta.hasPassword === "true";
+    const ip = clientIp(req)
+    const lb = new Liveblocks({ secret })
+    const room = await lb.getRoom(id).catch(() => null)
+    if (!room) return fail('Room not found', 404)
 
-    // Pas de mot de passe -> acces OK
-    if (!hasPassword) return ok({ guarded: false });
+    const meta = ((room as { metadata?: RoomMetadata })?.metadata ?? {}) as RoomMetadata
+    const guarded = roomHasPassword(meta)
 
-    if (!password) return bad("Invalid password", 401);
-    const hashedInput = sha256(password);
+    // Room ouverte : jeton immédiat, sous une limite large.
+    if (!guarded) {
+      const limit = rateLimit(`room-token:${ip}`, TOKEN_ATTEMPTS, TOKEN_WINDOW_MS)
+      if (!limit.allowed) {
+        const res = fail('Too many requests', 429)
+        res.headers.set('Retry-After', String(limit.retryAfter))
+        return res
+      }
+      const { accessToken, ts } = issueRoomToken(id, secret)
+      return ok({ guarded: false, accessToken, ts })
+    }
 
-    // Verifie le hash et migre les anciens mots de passe en clair
-    let isValid = false;
-    if (storedHash && hashedInput === storedHash) {
-      isValid = true;
-    } else if (storedPlain && password === storedPlain) {
-      isValid = true;
-      storedHash = sha256(storedPlain);
-      const nextMeta = sanitizeMetadata(meta);
-      nextMeta.passwordHash = storedHash;
-      nextMeta.hasPassword = "1";
+    // Room protégée : le mot de passe est requis, et les tentatives sont comptées.
+    const key = `room-pwd:${ip}:${id}`
+    const limit = rateLimit(key, PWD_ATTEMPTS, PWD_WINDOW_MS)
+    if (!limit.allowed) {
+      const res = fail('Too many attempts', 429)
+      res.headers.set('Retry-After', String(limit.retryAfter))
+      return res
+    }
+
+    if (!password) return fail('Invalid password', 401)
+
+    const storedHash =
+      typeof meta.passwordHash === 'string' && meta.passwordHash.length
+        ? meta.passwordHash
+        : null
+    const storedPlain =
+      typeof meta.password === 'string' && meta.password.length ? meta.password : null
+
+    const check = checkRoomPassword(password, storedHash, storedPlain)
+    if (!check.valid) return fail('Invalid password', 401)
+
+    resetRateLimit(key)
+
+    // Mot de passe stocké dans un ancien format : on le réécrit en scrypt.
+    // Best-effort — un échec de réécriture ne doit pas bloquer l'utilisateur.
+    if (check.upgradedHash) {
       try {
-        await lb.updateRoom(id, { metadata: nextMeta });
+        await lb.updateRoom(id, {
+          metadata: metadataWithUpgradedHash(meta, check.upgradedHash),
+        })
       } catch {
-        // best-effort; on ne bloque pas l'utilisateur
+        // ignoré volontairement
       }
     }
 
-    if (!isValid) return bad("Invalid password", 401);
-
-    // Génère un token signé valable 10 min — le client le stocke en sessionStorage
-    // et le présente à /api/liveblocks-auth pour prouver qu'il a passé la vérif MDP.
-    const { accessToken, ts } = generateAccessToken(id, secret)
-    return ok({ guarded: true, accessToken, ts });
+    const { accessToken, ts } = issueRoomToken(id, secret)
+    return ok({ guarded: true, accessToken, ts })
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : "verify failed";
-    return bad(message, 500);
+    console.error('rooms/verify', e)
+    return fail('verify failed', 500)
   }
 }

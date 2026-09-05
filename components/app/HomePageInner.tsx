@@ -19,6 +19,7 @@ import useProfile from './hooks/useProfile'
 import useOnlineStatus from './hooks/useOnlineStatus'
 import ErrorBoundary from '@/components/misc/ErrorBoundary'
 import { debug } from '@/lib/debug'
+import { roomAuthHeaders } from '@/lib/roomsApi'
 import {
   type Character,
   buildCharacterKey,
@@ -72,9 +73,11 @@ export default function HomePageInner() {
     const owner = normalized.owner || profile?.pseudo
     if (!owner || !normalized.id) return
     try {
+      const auth = await roomAuthHeaders(roomId)
+      if (!auth) return
       await fetch('/api/roomstorage', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...auth },
         body: JSON.stringify({
           roomId,
           id: normalized.id,
@@ -223,7 +226,12 @@ export default function HomePageInner() {
     let cancelled = false
     const loadRemote = async () => {
       try {
-        const res = await fetch(`/api/roomstorage?roomId=${encodeURIComponent(roomId)}`)
+        const auth = await roomAuthHeaders(roomId)
+        if (!auth) return
+        const res = await fetch(
+          `/api/roomstorage?roomId=${encodeURIComponent(roomId)}`,
+          { headers: auth },
+        )
         if (!res.ok) return
         const data = await res.json().catch(() => null)
         const charsObj = (data?.characters as Record<string, Character> | undefined) ?? {}

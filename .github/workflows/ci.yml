@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Vérifier les types
+        run: npm run typecheck
+
+      - name: Linter
+        run: npm run lint
+
+      # Échoue si une faille de sévérité haute ou critique apparaît dans les
+      # dépendances de production. Les dépendances de développement ne sont pas
+      # servies aux utilisateurs et bloqueraient la CI sans bénéfice.
+      - name: Auditer les dépendances
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Construire
+        run: npm run build
+        env:
+          # La build ne contacte aucun service, mais les routes attendent ces
+          # variables : des valeurs factices suffisent à la compilation.
+          LIVEBLOCKS_SECRET_KEY: sk_ci_placeholder
+          ADMIN_SESSION_SECRET: ci_placeholder_secret

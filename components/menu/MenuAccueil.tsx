@@ -11,6 +11,7 @@ import SmallSpinner from '../ui/SmallSpinner'
 import RoomList, { RoomInfo } from '../rooms/RoomList'
 import RoomCreateModal from '../rooms/RoomCreateModal'
 import { useRouter } from 'next/navigation'
+import { roomAuthHeaders } from '@/lib/roomsApi'
 import Login from '../login/Login'
 import { defaultPerso } from '../sheet/CharacterSheet'
 import MenuHeader from './MenuHeader'
@@ -99,7 +100,11 @@ export default function MenuAccueil() {
             if (r?.id) {
               setSelectedRoom(r)
               setRoomLoading(true)
-              fetch(`/api/roomstorage?roomId=${encodeURIComponent(r.id)}`)
+              roomAuthHeaders(r.id)
+              .then((auth) => {
+                if (!auth) throw new Error('room access denied')
+                return fetch(`/api/roomstorage?roomId=${encodeURIComponent(r.id)}`, { headers: auth })
+              })
               .then((res) => res.json())
           .then((data) => {
             const map: Record<string, Character> = {}
@@ -224,7 +229,11 @@ export default function MenuAccueil() {
     setSelectedRoom(room)
     setRoomLoading(true)
     localStorage.setItem(ROOM_KEY, JSON.stringify(room))
-    fetch(`/api/roomstorage?roomId=${encodeURIComponent(room.id)}`)
+    roomAuthHeaders(room.id)
+      .then((auth) => {
+        if (!auth) throw new Error('room access denied')
+        return fetch(`/api/roomstorage?roomId=${encodeURIComponent(room.id)}`, { headers: auth })
+      })
       .then((res) => res.json())
       .then((data) => {
         const map: Record<string, Character> = {}
@@ -385,9 +394,14 @@ export default function MenuAccueil() {
         { ...char, updatedAt: Date.now() },
         user.pseudo,
       )
+      const auth = await roomAuthHeaders(selectedRoom.id)
+      if (!auth) {
+        setStatusMessage(t('roomAccessDenied'))
+        return
+      }
       await fetch('/api/roomstorage', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...auth },
         body: JSON.stringify({
           roomId: selectedRoom.id,
           id: char.id,
@@ -447,9 +461,14 @@ export default function MenuAccueil() {
     if (!selectedRoom) return
     const ok = await confirm(t('deleteSheetConfirm'), { danger: true })
     if (!ok) return
+    const auth = await roomAuthHeaders(selectedRoom.id)
+    if (!auth) {
+      setStatusMessage(t('roomAccessDenied'))
+      return
+    }
     await fetch(
       `/api/roomstorage?roomId=${encodeURIComponent(selectedRoom.id)}&owner=${encodeURIComponent(char.owner)}&id=${encodeURIComponent(String(char.id))}`,
-      { method: 'DELETE' },
+      { method: 'DELETE', headers: auth },
     )
     setRemoteChars((r) => {
       const next = { ...r }
