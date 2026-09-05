@@ -12,10 +12,29 @@ test('rooms list exposes normalized response shape', async ({ request }) => {
   }
 })
 
-test('legacy blob delete route returns explicit status contract', async ({ request }) => {
+test('deprecated blob delete route is gone', async ({ request }) => {
+  // /api/blop/delete supprimait n'importe quel fichier sans aucun controle.
+  // Elle n'avait plus d'appelant : retiree plutot que verrouillee.
   const res = await request.get('/api/blop/delete')
-  expect(res.status()).toBe(405)
+  expect(res.status()).toBe(404)
+})
+
+test('roomstorage refuses access without a room token', async ({ request }) => {
+  const res = await request.get('/api/roomstorage?roomId=whatever')
+  expect(res.status()).toBe(403)
   const body = await res.json()
   expect(body.ok).toBe(false)
-  expect(typeof body.error).toBe('string')
+})
+
+test('blob rejects filenames outside the allowed namespace', async ({ request }) => {
+  const res = await request.delete('/api/blob?filename=../secret.txt')
+  expect(res.status()).toBe(400)
+})
+
+test('security headers are present', async ({ request }) => {
+  const res = await request.get('/menu')
+  const headers = res.headers()
+  expect(headers['content-security-policy']).toContain("default-src 'self'")
+  expect(headers['x-frame-options']).toBe('DENY')
+  expect(headers['x-content-type-options']).toBe('nosniff')
 })

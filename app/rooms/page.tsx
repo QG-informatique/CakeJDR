@@ -7,7 +7,7 @@ import RoomAvatarStack from '@/components/rooms/RoomAvatarStack'
 import {
   createRoom as createRoomApi,
   fetchRooms,
-  verifyRoomPassword,
+  verifyAndStoreRoomToken,
 } from '@/lib/roomsApi'
 
 export default function RoomsPage() {
@@ -36,8 +36,10 @@ export default function RoomsPage() {
     })
   }, [])
 
+  // Mémorise aussi le token d'accès signé, indispensable à la connexion
+  // Liveblocks d'une room protégée.
   const verifyPassword = async (roomId: string, pwd: string) => {
-    await verifyRoomPassword(roomId, pwd)
+    await verifyAndStoreRoomToken(roomId, pwd)
     return true
   }
 
@@ -66,14 +68,6 @@ export default function RoomsPage() {
 
   const joinRoom = (room: { id: string; hasPassword?: boolean }) => {
     if (room.hasPassword) {
-      const saved = localStorage.getItem('room_pw_' + room.id) || ''
-      if (saved) {
-        setVerifying(true)
-        verifyPassword(room.id, saved)
-          .then(() => { localStorage.setItem('jdr_my_room', room.id); router.push(`/room/${room.id}`) })
-          .catch(() => { setJoiningId(room.id); setJoinPassword(''); setVerifying(false) })
-        return
-      }
       setJoiningId(room.id)
       setJoinPassword('')
       return
@@ -86,8 +80,8 @@ export default function RoomsPage() {
     if (!joiningId || joiningId !== room.id) return
     try {
       setVerifying(true)
+      // Le mot de passe n'est jamais persisté côté client.
       await verifyPassword(room.id, joinPassword)
-      localStorage.setItem('room_pw_' + room.id, joinPassword)
       localStorage.setItem('jdr_my_room', room.id)
       router.push(`/room/${room.id}`)
     } catch {

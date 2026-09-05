@@ -2,7 +2,8 @@
 export const runtime = "nodejs";
 
 import crypto from "crypto";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { clientIp, rateLimit } from "@/lib/rateLimit";
 
 const CLOUD_NAME =
   process.env.CLOUDINARY_CLOUD_NAME ||
@@ -23,8 +24,11 @@ const ALLOWED_TYPES = new Set([
   "image/jpeg",
   "image/webp",
   "image/gif",
-  "image/svg+xml",
 ]);
+
+/** Uploads : 40 par tranche de dix minutes et par IP. */
+const UPLOAD_LIMIT = 40;
+const UPLOAD_WINDOW_MS = 10 * 60 * 1000;
 const BASE_TRANSFORM = "f_auto,q_auto,c_limit,w_2048,h_2048";
 const THUMB_TRANSFORM = `${BASE_TRANSFORM}/e_blur:1000,w_256,h_256`;
 
@@ -72,8 +76,15 @@ function buildDeliveryUrl(
   return `https://res.cloudinary.com/${cloudName}/image/upload/${transform}/${publicId}`;
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    const limit = rateLimit(`cloudinary-upload:${clientIp(req)}`, UPLOAD_LIMIT, UPLOAD_WINDOW_MS);
+    if (!limit.allowed) {
+      const res = NextResponse.json({ error: "too many uploads" }, { status: 429 });
+      res.headers.set("Retry-After", String(limit.retryAfter));
+      return res;
+    }
+
     const { cloudName, apiKey, apiSecret } = resolveCloudinaryConfig();
     if (!cloudName) return bad("Missing CLOUDINARY_CLOUD_NAME env", 500);
 

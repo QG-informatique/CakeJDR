@@ -6,7 +6,6 @@ const ALLOWED_TYPES = new Set([
   'image/jpeg',
   'image/webp',
   'image/gif',
-  'image/svg+xml',
 ])
 const API_ENDPOINT = '/api/cloudinary'
 const SIGNATURE_ENDPOINT = '/api/cloudinary/signature'

@@ -7,9 +7,11 @@ import RoomAvatarStack from './RoomAvatarStack'
 import {
   deleteRoomById,
   fetchRooms as fetchRoomsApi,
+  ownsRoom,
   renameRoomById,
-  verifyRoomPassword,
+  verifyAndStoreRoomToken,
 } from '@/lib/roomsApi'
+import { fetchAdminStatus } from '@/lib/adminApi'
 
 export type RoomInfo = {
   id: string
@@ -44,6 +46,7 @@ export default function RoomList({
   const [myRoom, setMyRoom] = useState<string | null>(null)
   const [revealIds, setRevealIds] = useState<Record<string, boolean>>({})
   const [verifying, setVerifying] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
   const t = useT()
 
   useEffect(() => {
@@ -58,9 +61,24 @@ export default function RoomList({
     return () => window.removeEventListener('jdr_rooms_change', update)
   }, [])
 
+  // Le badge admin ne sert qu'à afficher les boutons : le serveur revérifie tout.
+  useEffect(() => {
+    fetchAdminStatus()
+      .then((d) => setIsAdmin(d.isAdmin))
+      .catch(() => setIsAdmin(false))
+  }, [])
+
+  /** Gérable si on détient le secret de propriété de la room, ou si on est admin. */
+  const canManage = (roomId: string) => isAdmin || ownsRoom(roomId)
+
   const deleteRoom = async (room: RoomInfo) => {
     if (!window.confirm(t('deleteRoomConfirm'))) return
-    await deleteRoomById(room.id)
+    try {
+      await deleteRoomById(room.id)
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : 'Suppression refusée')
+      return
+    }
     setRooms((r) => r.filter((x) => x.id !== room.id))
     window.dispatchEvent(new Event('jdr_rooms_change'))
     if (room.id === myRoom) {
@@ -70,15 +88,22 @@ export default function RoomList({
   }
 
   const renameRoom = async (room: RoomInfo) => {
-    const newName = window.prompt('Nouveau nom ?', room.name)
+    const newName = window.prompt(t('newNamePrompt'), room.name)
     if (!newName || newName === room.name) return
-    await renameRoomById(room.id, newName)
+    try {
+      await renameRoomById(room.id, newName)
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : 'Renommage refusé')
+      return
+    }
     setRooms((r) => r.map((x) => (x.id === room.id ? { ...x, name: newName } : x)))
     window.dispatchEvent(new Event('jdr_rooms_change'))
   }
 
+  // Vérifie le mot de passe ET mémorise le token d'accès : sans lui, la
+  // connexion Liveblocks de la room protégée est rejetée en 401.
   const verifyPassword = async (roomId: string, password: string) => {
-    await verifyRoomPassword(roomId, password)
+    await verifyAndStoreRoomToken(roomId, password)
     return true
   }
 
@@ -95,22 +120,8 @@ export default function RoomList({
 
   const joinRoom = async (room: RoomInfo) => {
     if (room.hasPassword) {
-      const saved = localStorage.getItem('room_pw_' + room.id) || ''
-      if (saved) {
-        try {
-          setVerifying(true)
-          setErrorMsg('')
-          await verifyPassword(room.id, saved)
-          handleEnter(room)
-          return
-        } catch {
-          // Fall through and show the password prompt.
-        } finally {
-          setVerifying(false)
-        }
-      }
       setJoiningId(room.id)
-      setJoinPassword(saved)
+      setJoinPassword('')
       setErrorMsg('')
       return
     }
@@ -121,10 +132,9 @@ export default function RoomList({
     try {
       setVerifying(true)
       setErrorMsg('')
+      // Le mot de passe n'est jamais persisté : seul le token signé renvoyé
+      // par le serveur est conservé, en sessionStorage, pour 10 minutes.
       await verifyPassword(room.id, joinPassword)
-      if (room.hasPassword) {
-        localStorage.setItem('room_pw_' + room.id, joinPassword)
-      }
       handleEnter(room)
       setJoiningId(null)
       setErrorMsg('')
@@ -164,7 +174,7 @@ export default function RoomList({
                 {r.hasPassword && <Lock size={12} className="text-pink-300" />} {r.name || t('unnamed')}
               </span>
               {myRoom === r.id && <span title={t('creator')}>👑</span>}
-              {myRoom === r.id && (
+              {canManage(r.id) && (
                 <>
                   <button onClick={(e) => { e.stopPropagation(); void renameRoom(r) }} className="ml-1 text-yellow-300" title={t('rename')}>✏️</button>
                   <button onClick={(e) => { e.stopPropagation(); void deleteRoom(r) }} className="ml-1 text-red-400" title={t('delete')}>🗑️</button>

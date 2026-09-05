@@ -6,7 +6,7 @@ import { Lock } from 'lucide-react'
 import {
   createRoom as createRoomApi,
   fetchRooms as fetchRoomsApi,
-  verifyRoomPassword,
+  verifyAndStoreRoomToken,
 } from '@/lib/roomsApi'
 
 export type RoomInfo = {
@@ -41,7 +41,7 @@ export default function RoomSelector({ onClose, onSelect }: Props) {
   }, [])
 
   const verifyPassword = async (roomId: string, passwordValue: string) => {
-    await verifyRoomPassword(roomId, passwordValue)
+    await verifyAndStoreRoomToken(roomId, passwordValue)
     return true
   }
 
