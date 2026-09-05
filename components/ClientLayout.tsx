@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import { BackgroundProvider } from '@/components/context/BackgroundContext'
 import { LanguageProvider } from '@/components/context/LanguageContext'
 import HtmlLangSync from '@/components/ui/HtmlLangSync'
+import CreditQG from '@/components/ui/CreditQG'
 
 // Charge le fond uniquement côté client pour éviter les plantages SSR/hydration
 const BackgroundWrapper = dynamic(() => import('@/components/ui/BackgroundWrapper'), {
@@ -50,6 +51,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           </Suspense>
         </BackgroundErrorBoundary>
         <main className="relative z-10">{children}</main>
+        <CreditQG />
       </BackgroundProvider>
     </LanguageProvider>
   )
