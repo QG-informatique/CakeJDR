@@ -1,7 +1,31 @@
 # TODO
 
-## Plan 1.0 — à trancher avant de coder
-- [ ] Trancher les 4 décisions du plan 1.0 : base de données (Neon Postgres ?), mot de passe de table + invitations ou invitations seules, modèles de fiche liés à la table ou bibliothèque réutilisable, mode invité sans compte ou non
+## Plan 1.0 — décisions
+- [x] Base de données : Neon Postgres (offre gratuite, intégration Vercel native)
+- [x] Authentification : Clerk via la Marketplace Vercel, plutôt qu'Auth.js — identifiants OAuth partagés en développement, donc aucune application Discord/Google à créer pour démarrer
+- [x] Mode visiteur : retenu, sous forme de room de démonstration pré-remplie (revient sur la recommandation initiale de ne pas en faire)
+- [ ] Trancher : mot de passe de table **et** invitations, ou invitations seules
+- [ ] Trancher : modèles de fiche liés à la table, ou bibliothèque réutilisable entre tables
+
+## Phase 1 — identité (Clerk + Neon)
+- [ ] Créer la base Neon depuis Vercel → Storage, et reporter `DATABASE_URL` dans `.env.local` (ne pas utiliser `vercel env pull .env.local`, qui écrase le fichier)
+- [ ] Installer Clerk depuis Vercel → Marketplace, puis activer Discord, Google et email dans le tableau de bord Clerk
+- [ ] Cabler Clerk dans l'application : middleware, écrans de connexion, `userId` stable propage a `/api/liveblocks-auth`
+- [ ] Migrer la propriete des rooms de `ownerHash` (secret navigateur) vers `ownerId` (compte)
+- [ ] Rattacher les fiches de personnage au compte plutot qu'au `localStorage`
+- [ ] Faire du MJ le createur de la table, verifie serveur, au lieu d'un booleen client
+- [ ] Remplacer l'acces admin par mot de passe par un role sur le compte
+- [ ] Ajouter le bouton « Visiter sans compte » sur l'ecran de connexion
+
+## Phase 2 — room de démonstration
+- [ ] Creer la room de demonstration pre-remplie (fiches d'exemple, dessin, messages, musique) et son bandeau « session de demonstration »
+- [ ] Reinitialiser la room de demonstration toutes les heures via une tache planifiee Vercel
+- [ ] Interdire au visiteur : creer une table, sauvegarder dans le cloud, acceder a l'admin
+
+## Mise en ligne — à faire avant le premier deploiement en production
+- [ ] Creer l'application OAuth Discord et renseigner ses identifiants dans Clerk (obligatoire : l'instance de production n'utilise pas les identifiants partages)
+- [ ] Creer l'application OAuth Google et renseigner ses identifiants dans Clerk
+- [ ] Prevenir les testeurs que les comptes crees en preproduction ne sont pas transferes en production
 
 ## Sécurité — à faire avant toute mise en ligne publique
 - [ ] Définir un vrai `ADMIN_PASSWORD` dans `.env.local` (encore au placeholder `REMPLACE_MOI`) et sur Vercel avant tout déploiement — sans ça `/admin` reste inutilisable en prod
