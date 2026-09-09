@@ -5,6 +5,7 @@ import { useT } from '@/lib/useT'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { useConfirm } from '@/lib/useConfirm'
 import LanguageSwitcher from '../ui/LanguageSwitcher'
+import AuthControls from '../auth/AuthControls'
 import { Crown, LogIn, LogOut } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import SmallSpinner from '../ui/SmallSpinner'
@@ -545,6 +546,7 @@ export default function MenuAccueil() {
       {/* Header avec le bouton qui change de fond */}
       {user && <MenuHeader user={user} />}
       <LanguageSwitcher />
+      <AuthControls />
 
       <div className="w-full min-h-screen relative text-white px-6 pb-8 flex flex-col max-w-7xl mx-auto bg-transparent overflow-hidden">
         {!user ? (
