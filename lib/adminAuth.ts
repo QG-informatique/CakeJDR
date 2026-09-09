@@ -87,3 +87,21 @@ export function isAdmin(req: NextRequest) {
 
   return safeEqual(signature, sign(`${expStr}.${nonce}`, secret))
 }
+
+/**
+ * Variante asynchrone : accepte le cookie admin **ou** un compte Clerk marqué
+ * administrateur en base.
+ *
+ * Le mot de passe admin reste utilisable en secours, notamment avant qu'un
+ * compte existe. Il disparaîtra une fois l'identité par compte bien installée.
+ */
+export async function isAdminRequest(req: NextRequest): Promise<boolean> {
+  if (isAdmin(req)) return true
+  try {
+    const { syncCurrentUser } = await import('@/lib/db/users')
+    const account = await syncCurrentUser()
+    return account?.isAdmin === true
+  } catch {
+    return false
+  }
+}

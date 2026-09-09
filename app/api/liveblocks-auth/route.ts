@@ -3,6 +3,7 @@ export const runtime = 'nodejs'
 import { Liveblocks } from '@liveblocks/node'
 import { randomUUID } from 'node:crypto'
 import { roomHasPassword, verifyRoomToken } from '@/lib/roomAuth'
+import { syncCurrentUser } from '@/lib/db/users'
 
 const secret = process.env.LIVEBLOCKS_SECRET_KEY
 
@@ -36,9 +37,8 @@ export async function POST(request: Request) {
   const meta = (roomData.metadata ?? {}) as Record<string, unknown>
 
   // Le prédicat est partagé avec /api/rooms/verify. Cette route ne testait
-  // auparavant que le drapeau `hasPassword`, si bien qu'une room protégée par
-  // un `password`/`passwordHash` sans ce drapeau — le cas des rooms créées
-  // avant son introduction — laissait entrer sans mot de passe.
+  // auparavant qu'un drapeau, si bien qu'une room protégée créée avant
+  // l'introduction de ce drapeau laissait entrer sans mot de passe.
   if (roomHasPassword(meta)) {
     if (!verifyRoomToken(room, accessToken, ts, secret)) {
       return new Response('Password required — invalid or expired access token', {
@@ -47,11 +47,17 @@ export async function POST(request: Request) {
     }
   }
 
-  // Accès accordé : émettre le token Liveblocks.
-  // Note : userId aléatoire car l'app n'a pas encore d'authentification.
-  // La phase 1 le remplacera par l'identifiant du compte connecté.
-  const userId = randomUUID()
-  const session = liveblocks.prepareSession(userId)
+  // Identité : le compte Clerk s'il y en a un, sinon un visiteur anonyme.
+  // Le pseudo et la couleur sont posés ici, côté serveur, et non plus tirés
+  // du localStorage : un joueur ne peut donc plus se faire passer pour un autre.
+  const account = await syncCurrentUser().catch(() => null)
+
+  const userId = account?.id ?? `guest_${randomUUID()}`
+  const userInfo = account
+    ? { pseudo: account.pseudo, color: account.color, signedIn: true }
+    : { pseudo: 'Visiteur', color: '#9ca3af', signedIn: false }
+
+  const session = liveblocks.prepareSession(userId, { userInfo })
   session.allow(room, session.FULL_ACCESS)
   const { body: liveblocksBody, status } = await session.authorize()
   return new Response(liveblocksBody, { status })

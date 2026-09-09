@@ -85,8 +85,15 @@ declare global {
 
     // Custom user info set when authenticating with a secret key
     UserMeta: {
+      /** Identifiant Clerk pour un joueur connecte, aleatoire pour un visiteur. */
       id: string
-      info: Record<string, never>
+      /** Renseigne cote serveur : le client ne peut donc pas usurper un nom. */
+      info: {
+        pseudo: string
+        color: string
+        /** Faux pour un visiteur non connecte. */
+        signedIn: boolean
+      }
     }
 
     // Custom events, for useBroadcastEvent, useEventListener
