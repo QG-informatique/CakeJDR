@@ -15,6 +15,10 @@ export type RoomInfoResponse = {
   hasPassword?: boolean
   /** True si la room a un propriétaire enregistré (false pour les rooms d'avant l'ownership). */
   hasOwner?: boolean
+  /** Rôle de l'appelant dans cette table : `gm` ou `player`. */
+  role?: string
+  /** Code d'invitation, renvoyé uniquement au MJ de la table. */
+  joinCode?: string
   createdAt?: string
   updatedAt?: string
   usersConnected?: number

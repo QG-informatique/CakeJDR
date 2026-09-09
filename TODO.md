@@ -21,6 +21,13 @@
 - [x] Accepter un role admin sur le compte, en plus du mot de passe
 - [ ] Ajouter le bouton « Visiter sans compte » sur l'ecran de connexion
 
+## Phase 2 — accès aux tables
+- [x] Supprimer l'annuaire public : une table ne se voit que si on en est membre
+- [x] Ajouter un code d'invitation par table et la route pour rejoindre
+- [ ] Exiger d'être connecté pour atteindre le menu (aujourd'hui il s'ouvre sans compte)
+- [ ] Afficher dans le panel admin qui a accès à chaque table
+- [ ] Décider du sort des six tables antérieures à la base (sans propriétaire ni code)
+
 ## Phase 2 — room de démonstration
 - [ ] Creer la room de demonstration pre-remplie (fiches d'exemple, dessin, messages, musique) et son bandeau « session de demonstration »
 - [ ] Reinitialiser la room de demonstration toutes les heures via une tache planifiee Vercel

@@ -182,3 +182,13 @@ export async function renameRoomById(id: string, name: string) {
   })
   return requireOk<ApiSuccess<{ id?: string }>>(res)
 }
+
+/** Rejoint une table à partir de son code d'invitation. */
+export async function joinRoomByCode(code: string) {
+  const res = await fetch('/api/rooms/join', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code }),
+  })
+  return requireOk<ApiSuccess<{ id: string; name: string }>>(res)
+}
