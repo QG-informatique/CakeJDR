@@ -8,6 +8,7 @@ import {
   roomHasPassword,
 } from '@/lib/roomAuth'
 import { clientIp, rateLimit, resetRateLimit } from '@/lib/rateLimit'
+import { resetDemoRoomIfEmpty } from '@/lib/db/demo'
 import { fail, ok } from '@/lib/api-response'
 
 /**
@@ -85,6 +86,13 @@ export async function POST(req: NextRequest) {
 
     const meta = ((room as { metadata?: RoomMetadata })?.metadata ?? {}) as RoomMetadata
     const guarded = roomHasPassword(meta)
+
+    // Salle de démonstration vide : on la remet dans son état de référence
+    // avant de laisser entrer, pour que chaque visiteur la découvre intacte.
+    const connected = (room as { usersCount?: number }).usersCount ?? 0
+    await resetDemoRoomIfEmpty(id, connected).catch((e) =>
+      console.error('resetDemoRoomIfEmpty', e),
+    )
 
     // Room ouverte : jeton immédiat, sous une limite large.
     if (!guarded) {

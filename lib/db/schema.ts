@@ -53,6 +53,14 @@ export const rooms = pgTable(
      * Il n'y a pas d'annuaire public : sans ce code, une table est invisible.
      */
     joinCode: text('join_code').notNull().unique(),
+    /**
+     * État de référence d'une salle de démonstration.
+     *
+     * Un visiteur peut tout modifier — dessiner, supprimer les images, éditer
+     * la fiche. La salle est ensuite restaurée à partir de cet instantané,
+     * pour que le visiteur suivant retrouve la démonstration intacte.
+     */
+    demoSnapshot: jsonb('demo_snapshot'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     lastActiveAt: timestamp('last_active_at', { withTimezone: true }).notNull().defaultNow(),
   },

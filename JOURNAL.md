@@ -1,5 +1,15 @@
 # Journal
 
+## 2026-09-09 (suite 3) — Salle de demonstration
+
+- Cinq salles supprimees a la demande. `cakroom` conservee et adoptee comme salle de demonstration : proprietaire, drapeau `isDemo`, code d'invitation `5F3FCQ`. Choix verifie avant suppression en inspectant le contenu de chaque salle plutot qu'en se fiant au nom.
+- Fiche « Cake » installee, volontairement exhaustive : caracteristiques, quatre competences, sept objets, description complete et cinq champs personnalises — pour qu'un visiteur voie d'un coup tout ce qu'une fiche peut contenir.
+- Restauration automatique : un instantane de la salle sert d'etat de reference, et la salle y est ramenee quand un visiteur arrive alors qu'elle est vide. Declenchee a l'entree plutot que sur minuterie — c'est le seul moment ou l'on sait qu'un visiteur arrive, et restaurer une salle occupee effacerait le travail de ceux qui y sont. Tache quotidienne Vercel en filet de securite.
+- Verifie en conditions reelles : salle videe entierement (0 image, 0 trait, 0 fiche), un visiteur entre, tout revient — 2 images, 364 traits, fiche complete.
+
+Reste ouvert : le bouton « Visiter sans compte » n'existe pas encore, la salle de demonstration n'est donc pas atteignable sans son code. Menu toujours accessible sans etre connecte.
+
+
 ## 2026-09-09 (suite 2) — Fin de l'annuaire public, invitation par code
 
 - Une table ne se voit plus que si on en est membre. `/api/rooms/list` renvoie une liste vide a un visiteur, les tables du joueur s'il est connecte, et tout a un administrateur pour la moderation. Il n'y a plus aucune table publique : c'est le fonctionnement voulu, on invite les gens qu'on veut.

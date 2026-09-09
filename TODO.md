@@ -26,11 +26,13 @@
 - [x] Ajouter un code d'invitation par table et la route pour rejoindre
 - [ ] Exiger d'être connecté pour atteindre le menu (aujourd'hui il s'ouvre sans compte)
 - [ ] Afficher dans le panel admin qui a accès à chaque table
-- [ ] Décider du sort des six tables antérieures à la base (sans propriétaire ni code)
+- [x] Nettoyer les tables antérieures : cinq supprimées, `cakroom` gardée comme salle de démonstration
 
 ## Phase 2 — room de démonstration
-- [ ] Creer la room de demonstration pre-remplie (fiches d'exemple, dessin, messages, musique) et son bandeau « session de demonstration »
-- [ ] Reinitialiser la room de demonstration toutes les heures via une tache planifiee Vercel
+- [x] Creer la room de demonstration pre-remplie avec une fiche complete
+- [x] Restaurer la salle de demonstration a l'arrivee d'un visiteur quand elle est vide
+- [ ] Ajouter le bandeau « session de demonstration » dans la salle
+- [ ] Definir `CRON_SECRET` sur Vercel pour la tache quotidienne de secours
 - [ ] Interdire au visiteur : creer une table, sauvegarder dans le cloud, acceder a l'admin
 
 ## Mise en ligne — à faire avant le premier deploiement en production
