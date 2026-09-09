@@ -7,7 +7,10 @@ import {
   renameRoom,
   verifyRoomOwner,
 } from '@/lib/liveRooms'
-import { isAdmin } from '@/lib/adminAuth'
+import { isAdminRequest } from '@/lib/adminAuth'
+import { auth } from '@clerk/nextjs/server'
+import { forgetRoom, isRoomOwner, recordRoom, renameRoomRecord } from '@/lib/db/rooms'
+import { syncCurrentUser } from '@/lib/db/users'
 import { debug } from '@/lib/debug'
 import { fail, ok } from '@/lib/api-response'
 
@@ -16,7 +19,14 @@ import { fail, ok } from '@/lib/api-response'
  * ou s'il présente le secret de propriété reçu à la création.
  */
 async function canMutate(req: NextRequest, id: string, ownerSecret?: unknown) {
-  if (isAdmin(req)) return true
+  if (await isAdminRequest(req)) return true
+
+  // Propriétaire enregistré en base : le cas normal pour un joueur connecté.
+  const { userId } = await auth()
+  if (await isRoomOwner(id, userId)) return true
+
+  // Secours pour les tables créées sans compte : le secret conservé par le
+  // navigateur du créateur. Disparaîtra quand tout sera rattaché aux comptes.
   if (typeof ownerSecret !== 'string' || !ownerSecret) return false
   return verifyRoomOwner(id, ownerSecret)
 }
@@ -42,6 +52,15 @@ export async function POST(req: NextRequest) {
       name,
       typeof password === 'string' ? password : undefined,
     )
+    // Rattache la table au compte si le créateur est connecté. Best-effort :
+    // un échec de base ne doit pas empêcher la partie de démarrer.
+    const account = await syncCurrentUser().catch(() => null)
+    if (account) {
+      await recordRoom({ id, name, ownerId: account.id }).catch((e) =>
+        console.error('recordRoom', e),
+      )
+    }
+
     debug('room created', name, id)
     // ownerSecret n'est renvoyé qu'ici : le client doit le conserver
     // pour pouvoir renommer ou supprimer sa room plus tard.
@@ -69,6 +88,7 @@ export async function DELETE(req: NextRequest) {
       return fail('forbidden: you are not the owner of this room', 403)
     }
     await deleteRoom(id)
+    await forgetRoom(id).catch((e) => console.error('forgetRoom', e))
     debug('room deleted', id)
     return ok()
   } catch (e) {
@@ -91,6 +111,7 @@ export async function PATCH(req: NextRequest) {
       return fail('forbidden: you are not the owner of this room', 403)
     }
     await renameRoom(id, name)
+    await renameRoomRecord(id, name).catch((e) => console.error('renameRoomRecord', e))
     debug('room renamed', id, name)
     return ok()
   } catch (e) {

@@ -13,12 +13,12 @@
 - [x] Activer Google et email dans le tableau de bord Clerk — inscription verifiee dans le navigateur
 - [ ] Activer Discord dans Clerk (SSO Connections → Add connection → For all users) — gratuit, seul le SSO entreprise est payant
 - [x] Cabler Clerk : `proxy.ts`, `ClerkProvider`, boutons de connexion, CSP élargie
-- [ ] Propager le `userId` Clerk jusqu'à `/api/liveblocks-auth` (fin du `randomUUID()`)
-- [ ] Écrire le schéma de base (comptes, tables, membres, fiches) et le pousser sur Neon
-- [ ] Migrer la propriete des rooms de `ownerHash` (secret navigateur) vers `ownerId` (compte)
+- [x] Propager le `userId` Clerk jusqu'à `/api/liveblocks-auth` (fin du `randomUUID()`)
+- [x] Écrire le schéma de base et le pousser sur Neon
+- [x] Migrer la propriete des rooms vers `ownerId` (secret navigateur garde en secours)
 - [ ] Rattacher les fiches de personnage au compte plutot qu'au `localStorage`
 - [ ] Faire du MJ le createur de la table, verifie serveur, au lieu d'un booleen client
-- [ ] Remplacer l'acces admin par mot de passe par un role sur le compte
+- [x] Accepter un role admin sur le compte, en plus du mot de passe
 - [ ] Ajouter le bouton « Visiter sans compte » sur l'ecran de connexion
 
 ## Phase 2 — room de démonstration

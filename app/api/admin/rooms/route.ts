@@ -1,7 +1,7 @@
 export const runtime = 'nodejs'
 
 import { NextRequest } from 'next/server'
-import { isAdmin } from '@/lib/adminAuth'
+import { isAdminRequest } from '@/lib/adminAuth'
 import { clearRoomPassword, deleteRoom, renameRoom } from '@/lib/liveRooms'
 import { debug } from '@/lib/debug'
 import { fail, ok } from '@/lib/api-response'
@@ -11,7 +11,7 @@ import { fail, ok } from '@/lib/api-response'
 const MAX_BULK = 50
 
 export async function DELETE(req: NextRequest) {
-  if (!isAdmin(req)) return fail('forbidden', 403)
+  if (!(await isAdminRequest(req))) return fail('forbidden', 403)
 
   const body = (await req.json().catch(() => ({}))) as { ids?: unknown }
   const ids = Array.isArray(body.ids)
@@ -37,7 +37,7 @@ export async function DELETE(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!isAdmin(req)) return fail('forbidden', 403)
+  if (!(await isAdminRequest(req))) return fail('forbidden', 403)
 
   const body = (await req.json().catch(() => ({}))) as {
     action?: unknown
