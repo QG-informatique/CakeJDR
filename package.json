@@ -15,7 +15,10 @@
     "test": "npm run typecheck && npm run lint",
     "test:e2e": "npm run build && playwright test",
     "lint:fix": "eslint . --fix",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.1",
