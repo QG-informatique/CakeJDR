@@ -10,7 +10,8 @@
 ## Phase 1 — identité (Clerk + Neon)
 - [x] Créer la base Neon et reporter `DATABASE_URL` dans `.env.local`
 - [x] Installer Clerk depuis Vercel → Marketplace
-- [ ] Activer Discord, Google et email dans le tableau de bord Clerk (sans quoi la fenêtre d'inscription reste vide)
+- [x] Activer Google et email dans le tableau de bord Clerk — inscription verifiee dans le navigateur
+- [ ] Activer Discord dans Clerk (SSO Connections → Add connection → For all users) — gratuit, seul le SSO entreprise est payant
 - [x] Cabler Clerk : `proxy.ts`, `ClerkProvider`, boutons de connexion, CSP élargie
 - [ ] Propager le `userId` Clerk jusqu'à `/api/liveblocks-auth` (fin du `randomUUID()`)
 - [ ] Écrire le schéma de base (comptes, tables, membres, fiches) et le pousser sur Neon
