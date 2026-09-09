@@ -16,15 +16,17 @@
 - [x] Propager le `userId` Clerk jusqu'à `/api/liveblocks-auth` (fin du `randomUUID()`)
 - [x] Écrire le schéma de base et le pousser sur Neon
 - [x] Migrer la propriete des rooms vers `ownerId` (secret navigateur garde en secours)
+- [x] Remplacer le pseudo local par le compte Clerk dans toute l'application
 - [ ] Rattacher les fiches de personnage au compte plutot qu'au `localStorage`
-- [ ] Faire du MJ le createur de la table, verifie serveur, au lieu d'un booleen client
+- [x] Supprimer la bascule « mode MJ » cochable par n'importe qui
+- [ ] Brancher le role de MJ sur `room_members.role` (aujourd'hui `isMJ` vaut « est administrateur »)
 - [x] Accepter un role admin sur le compte, en plus du mot de passe
 - [x] Ajouter le bouton « Visiter sans compte » sur l'ecran de connexion
 
 ## Phase 2 — accès aux tables
 - [x] Supprimer l'annuaire public : une table ne se voit que si on en est membre
 - [x] Ajouter un code d'invitation par table et la route pour rejoindre
-- [ ] Exiger d'être connecté pour atteindre le menu (aujourd'hui il s'ouvre sans compte)
+- [x] Afficher un panneau de connexion au lieu du menu quand on n'a pas de compte
 - [ ] Afficher dans le panel admin qui a accès à chaque table
 - [x] Nettoyer les tables antérieures : cinq supprimées, `cakroom` gardée comme salle de démonstration
 

@@ -13,7 +13,9 @@ import RoomList, { RoomInfo } from '../rooms/RoomList'
 import RoomCreateModal from '../rooms/RoomCreateModal'
 import { useRouter } from 'next/navigation'
 import { fetchRooms as fetchRoomsApi, roomAuthHeaders } from '@/lib/roomsApi'
-import Login from '../login/Login'
+import { useClerk } from '@clerk/nextjs'
+import useProfile from '../app/hooks/useProfile'
+import SignedOutPanel from '../auth/SignedOutPanel'
 import { defaultPerso } from '../sheet/CharacterSheet'
 import MenuHeader from './MenuHeader'
 import CharacterList from './CharacterList'
@@ -39,11 +41,12 @@ export default function MenuAccueil() {
   const router = useRouter()
   const t = useT()
   const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm()
-  const [user, setUser] = useState<{
-    pseudo: string
-    isMJ: boolean
-    color: string
-  } | null>(null)
+  // L'identite vient de Clerk et de la base ; elle n'est plus modifiable
+  // depuis le navigateur. `useProfile` renvoie un profil « Visiteur » quand
+  // personne n'est connecte.
+  const profile = useProfile()
+  const user = profile?.signedIn ? profile : null
+  const { signOut } = useClerk()
   const [characters, setCharacters] = useState<Character[]>([])
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
@@ -64,19 +67,9 @@ export default function MenuAccueil() {
   useEffect(() => {
     setHydrated(true)
     try {
-      let fallbackOwner: string | undefined
-      const raw = localStorage.getItem(PROFILE_KEY)
-      if (raw) {
-        const prof = JSON.parse(raw)
-        if (prof.pseudo && prof.loggedIn) {
-          setUser({
-            pseudo: prof.pseudo,
-            isMJ: !!prof.isMJ,
-            color: prof.color || '#1d4ed8',
-          })
-          fallbackOwner = prof.pseudo
-        }
-      }
+      // Le pseudo sert de proprietaire par defaut aux fiches heritees, le
+      // temps qu'elles soient rattachees au compte.
+      const fallbackOwner: string | undefined = undefined
       const savedCharsRaw = localStorage.getItem('jdr_characters') || '[]'
       const savedChars = JSON.parse(savedCharsRaw)
       if (Array.isArray(savedChars)) {
@@ -169,35 +162,6 @@ export default function MenuAccueil() {
     }
   }, [])
 
-  useEffect(() => {
-    if (loggingOut) return
-    const update = () => {
-      try {
-        const raw = localStorage.getItem(PROFILE_KEY)
-        if (!raw) {
-          setUser(null)
-          return
-        }
-        const prof = JSON.parse(raw)
-        if (prof.pseudo && prof.loggedIn) {
-          setUser({
-            pseudo: prof.pseudo,
-            isMJ: !!prof.isMJ,
-            color: prof.color || '#1d4ed8',
-          })
-        } else setUser(null)
-      } catch {
-        setUser(null)
-      }
-    }
-    window.addEventListener('storage', update)
-    window.addEventListener('jdr_profile_change', update as EventListener)
-    return () => {
-      window.removeEventListener('storage', update)
-      window.removeEventListener('jdr_profile_change', update as EventListener)
-    }
-  }, [loggingOut])
-
   const saveCharacters = (chars: Character[]) => {
     const normalized = chars.map((c) =>
       normalizeCharacter(c, user?.pseudo ?? null),
@@ -212,22 +176,8 @@ export default function MenuAccueil() {
   const handleLogout = () => {
     if (loggingOut) return
     setLoggingOut(true)
-
-    try {
-      const raw = localStorage.getItem(PROFILE_KEY)
-      if (raw) {
-        const prof = JSON.parse(raw)
-        prof.loggedIn = false
-        localStorage.setItem(PROFILE_KEY, JSON.stringify(prof))
-        window.dispatchEvent(new Event('jdr_profile_change'))
-      }
-    } catch {}
-
-    setUser(null)
     setSelectedIdx(null)
-    requestAnimationFrame(() => {
-      router.replace('/menu')
-    })
+    void signOut(() => router.replace('/menu'))
   }
 
   const handlePlay = () => {
@@ -501,30 +451,20 @@ export default function MenuAccueil() {
 
   const handleChangeColor = (color: string) => {
     if (!user) return
-    setUser({ ...user, color })
-    try {
-      const raw = localStorage.getItem(PROFILE_KEY)
-      if (!raw) return
-      const prof = JSON.parse(raw)
-      prof.color = color
-      localStorage.setItem(PROFILE_KEY, JSON.stringify(prof))
-      window.dispatchEvent(new Event('jdr_profile_change'))
-    } catch {}
+    // La couleur est enregistree sur le compte : elle suit le joueur d'un
+    // navigateur a l'autre, et sert aussi a colorer son curseur pour les autres.
+    void fetch('/api/me', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ color }),
+    })
+      .then(() => window.dispatchEvent(new Event('jdr_profile_change')))
+      .catch(() => setStatusMessage(t('saveCloudFail')))
   }
 
-  const handleToggleMJ = () => {
-    if (!user) return
-    const newIsMJ = !user.isMJ
-    setUser({ ...user, isMJ: newIsMJ })
-    try {
-      const raw = localStorage.getItem(PROFILE_KEY)
-      if (!raw) return
-      const prof = JSON.parse(raw)
-      prof.isMJ = newIsMJ
-      localStorage.setItem(PROFILE_KEY, JSON.stringify(prof))
-      window.dispatchEvent(new Event('jdr_profile_change'))
-    } catch {}
-  }
+  // Le role de MJ n'est plus une case a cocher : il decoule du compte, et a
+  // terme de la table dont on est le createur. La bascule manuelle permettait
+  // a n'importe qui de s'attribuer les outils du MJ.
 
   if (!hydrated) return <div className="w-full h-full" />
 
@@ -567,25 +507,14 @@ export default function MenuAccueil() {
       {/* Header avec le bouton qui change de fond */}
       {user && <MenuHeader user={user} />}
       <LanguageSwitcher />
-      <AuthControls />
+      {/* Le panneau de connexion porte deja ces actions quand on est
+          deconnecte : on evite de les afficher deux fois. */}
+      {user && <AuthControls />}
 
       <div className="w-full min-h-screen relative text-white px-6 pb-8 flex flex-col max-w-7xl mx-auto bg-transparent overflow-hidden">
         {!user ? (
           <div className="flex-grow flex items-center justify-center">
-            <Login
-              onLogin={() => {
-                try {
-                  const prof = JSON.parse(
-                    localStorage.getItem(PROFILE_KEY) || '{}',
-                  )
-                  setUser({
-                    pseudo: prof.pseudo,
-                    isMJ: !!prof.isMJ,
-                    color: prof.color || '#1d4ed8',
-                  })
-                } catch {}
-              }}
-            />
+            <SignedOutPanel />
           </div>
         ) : (
           <>
@@ -660,10 +589,11 @@ export default function MenuAccueil() {
               </div>
 
               <div className="shrink-0 flex items-center justify-end w-[120px] gap-3">
-                <button
-                  onClick={handleToggleMJ}
+                <span
                   title={
-                    user.isMJ ? 'GM mode (click to revert)' : 'Enable GM mode'
+                    user.isMJ
+                      ? 'Outils de MJ actifs'
+                      : "Le role de MJ decoule du compte, il ne se coche plus"
                   }
                   className={`
                     relative inline-flex items-center justify-center
@@ -694,7 +624,7 @@ export default function MenuAccueil() {
                       `}
                     />
                   </span>
-                </button>
+                </span>
                 {/* Logout button with red hover */}
                 <button
                   onClick={handleLogout}
