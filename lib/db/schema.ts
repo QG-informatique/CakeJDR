@@ -48,6 +48,11 @@ export const rooms = pgTable(
     passwordHash: text('password_hash'),
     /** Table de démonstration : ouverte à tous, réinitialisée régulièrement. */
     isDemo: boolean('is_demo').notNull().default(false),
+    /**
+     * Code d'invitation, seul moyen de rejoindre une table.
+     * Il n'y a pas d'annuaire public : sans ce code, une table est invisible.
+     */
+    joinCode: text('join_code').notNull().unique(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     lastActiveAt: timestamp('last_active_at', { withTimezone: true }).notNull().defaultNow(),
   },

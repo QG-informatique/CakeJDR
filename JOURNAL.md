@@ -1,5 +1,15 @@
 # Journal
 
+## 2026-09-09 (suite 2) — Fin de l'annuaire public, invitation par code
+
+- Une table ne se voit plus que si on en est membre. `/api/rooms/list` renvoie une liste vide a un visiteur, les tables du joueur s'il est connecte, et tout a un administrateur pour la moderation. Il n'y a plus aucune table publique : c'est le fonctionnement voulu, on invite les gens qu'on veut.
+- Ajout d'un code d'invitation par table (`rooms.joinCode`, six caracteres sans 0/O ni 1/I/L), affiche au MJ seul et copiable d'un clic. Nouvelle route `/api/rooms/join`, limitee en debit — un code court se devine sinon par force brute.
+- Corrige le bouton « Entrer <nom> » qui proposait une table fantome : le menu affichait la derniere table memorisee dans le navigateur sans verifier qu'elle existait encore cote serveur.
+- Compte `CakeSama` passe administrateur en base.
+
+Reste ouvert : les six tables existantes sont anterieures a la base, donc sans proprietaire ni code — seul l'administrateur les voit. Le menu reste accessible sans etre connecte. Fiches de personnage pas encore rattachees au compte.
+
+
 ## 2026-09-09 (suite) — Identite serveur branchee sur Clerk
 
 - Schema cree sur Neon (`users`, `rooms`, `room_members`, `characters`) et synchronisation paresseuse du compte Clerk a la premiere visite (`lib/db/users.ts`) — pas de webhook, qui exigerait une URL publique donc impossible en local.

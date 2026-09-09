@@ -7,6 +7,7 @@ import RoomAvatarStack from './RoomAvatarStack'
 import {
   deleteRoomById,
   fetchRooms as fetchRoomsApi,
+  joinRoomByCode,
   ownsRoom,
   renameRoomById,
   verifyAndStoreRoomToken,
@@ -20,6 +21,10 @@ export type RoomInfo = {
   createdAt?: string
   updatedAt?: string
   usersConnected?: number
+  /** Rôle de l'appelant dans cette table : `gm` ou `player`. */
+  role?: string
+  /** Code d'invitation, renvoyé uniquement au MJ. */
+  joinCode?: string
 }
 
 interface Props {
@@ -47,6 +52,8 @@ export default function RoomList({
   const [revealIds, setRevealIds] = useState<Record<string, boolean>>({})
   const [verifying, setVerifying] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [inviteCode, setInviteCode] = useState('')
+  const [joining, setJoining] = useState(false)
   const t = useT()
 
   useEffect(() => {
@@ -70,6 +77,25 @@ export default function RoomList({
 
   /** Gérable si on détient le secret de propriété de la room, ou si on est admin. */
   const canManage = (roomId: string) => isAdmin || ownsRoom(roomId)
+
+  /** Rejoint une table via son code d'invitation : le seul moyen d'y accéder. */
+  const joinByCode = async () => {
+    const code = inviteCode.trim()
+    if (!code || joining) return
+    setJoining(true)
+    setErrorMsg('')
+    try {
+      await joinRoomByCode(code)
+      setInviteCode('')
+      const next = await fetchRooms()
+      setRooms(next)
+      window.dispatchEvent(new Event('jdr_rooms_change'))
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : 'Code invalide')
+    } finally {
+      setJoining(false)
+    }
+  }
 
   const deleteRoom = async (room: RoomInfo) => {
     if (!window.confirm(t('deleteRoomConfirm'))) return
@@ -148,6 +174,28 @@ export default function RoomList({
   return (
     <div className="rounded-xl backdrop-blur-md bg-black/20 p-4 border border-white/10 shadow-lg">
       <h2 className="text-lg font-semibold mb-2">{t('rooms')}</h2>
+
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <input
+          value={inviteCode}
+          onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+          onKeyDown={(e) => { if (e.key === 'Enter') void joinByCode() }}
+          placeholder="Code d'invitation"
+          aria-label="Code d'invitation"
+          maxLength={12}
+          className="w-44 rounded-lg border border-white/15 bg-black/30 px-3 py-1.5 font-mono text-sm tracking-widest uppercase placeholder:font-sans placeholder:tracking-normal placeholder:text-white/30 focus:border-emerald-400/40 focus:outline-none"
+        />
+        <button
+          onClick={() => void joinByCode()}
+          disabled={joining || !inviteCode.trim()}
+          className="rounded-lg bg-emerald-600/80 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-500/90 disabled:opacity-40"
+        >
+          {joining ? '...' : 'Rejoindre'}
+        </button>
+        <span className="text-xs text-white/40">
+          Une table ne se rejoint qu&apos;avec son code.
+        </span>
+      </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-96 overflow-y-auto p-3">
         <button
           onClick={onCreateClick}
@@ -189,12 +237,22 @@ export default function RoomList({
                   : ''}
             </span>
             <RoomAvatarStack id={r.id} />
-            <span
-              className="text-[10px] text-white/40 cursor-pointer select-none"
-              onClick={(e) => { e.stopPropagation(); setRevealIds((prev) => ({ ...prev, [r.id]: !prev[r.id] })) }}
-            >
-              {revealIds[r.id] ? r.id : t('idLabel')}
-            </span>
+            {r.joinCode ? (
+              <span
+                className="cursor-pointer select-none font-mono text-[11px] tracking-widest text-emerald-300/80"
+                title="Code d'invitation — partage-le pour inviter un joueur"
+                onClick={(e) => { e.stopPropagation(); void navigator.clipboard?.writeText(r.joinCode!) }}
+              >
+                {r.joinCode}
+              </span>
+            ) : (
+              <span
+                className="text-[10px] text-white/40 cursor-pointer select-none"
+                onClick={(e) => { e.stopPropagation(); setRevealIds((prev) => ({ ...prev, [r.id]: !prev[r.id] })) }}
+              >
+                {revealIds[r.id] ? r.id : t('idLabel')}
+              </span>
+            )}
 
             <button
               type="button"

@@ -12,7 +12,7 @@ import SmallSpinner from '../ui/SmallSpinner'
 import RoomList, { RoomInfo } from '../rooms/RoomList'
 import RoomCreateModal from '../rooms/RoomCreateModal'
 import { useRouter } from 'next/navigation'
-import { roomAuthHeaders } from '@/lib/roomsApi'
+import { fetchRooms as fetchRoomsApi, roomAuthHeaders } from '@/lib/roomsApi'
 import Login from '../login/Login'
 import { defaultPerso } from '../sheet/CharacterSheet'
 import MenuHeader from './MenuHeader'
@@ -122,6 +122,27 @@ export default function MenuAccueil() {
       }
     } catch {}
   }, [])
+
+  // La table selectionnee est memorisee dans le navigateur. Si elle a ete
+  // supprimee entre-temps, le menu continuait d'afficher « Entrer <nom> »
+  // pour une table fantome. On verifie qu'elle existe encore.
+  useEffect(() => {
+    if (!selectedRoom) return
+    let cancelled = false
+    fetchRoomsApi()
+      .then((list) => {
+        if (cancelled) return
+        if (!list.some((r) => r.id === selectedRoom.id)) {
+          localStorage.removeItem(ROOM_KEY)
+          setSelectedRoom(null)
+          setRemoteChars({})
+        }
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [selectedRoom])
 
   useEffect(() => {
     if (!statusMessage) return
