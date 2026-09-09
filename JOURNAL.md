@@ -1,5 +1,13 @@
 # Journal
 
+## 2026-09-09 (suite 4) — Entree visiteur et correction du chargement des fiches
+
+- Bouton « Visiter sans compte » sur l'ecran d'accueil, menant directement a la salle de demonstration, et bandeau dans la salle rappelant que rien n'y est conserve.
+- Creer une table exige desormais un compte : sans cela la table serait invisible a son propre createur, puisque la liste passe par l'appartenance.
+- **Bug de fond corrige** : une fiche chargee depuis le serveur etait recuperee puis jetee. L'effet de chargement s'annulait lui-meme quand le profil arrivait apres le montage, et le garde anti-double-appel empechait toute reprise. La fiche etait bien ecrite en cache local mais jamais affichee — un joueur retrouvait une fiche vide en entrant dans une salle. Trouve en testant le parcours visiteur, pas par lecture de code.
+- Verifie de bout en bout dans le navigateur : un visiteur sans compte arrive dans la salle et voit la fiche complete, niveau 5, competences et modificateurs compris.
+
+
 ## 2026-09-09 (suite 3) — Salle de demonstration
 
 - Cinq salles supprimees a la demande. `cakroom` conservee et adoptee comme salle de demonstration : proprietaire, drapeau `isDemo`, code d'invitation `5F3FCQ`. Choix verifie avant suppression en inspectant le contenu de chaque salle plutot qu'en se fiant au nom.

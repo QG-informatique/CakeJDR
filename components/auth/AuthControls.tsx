@@ -1,6 +1,7 @@
 'use client'
 
 import { Show, UserButton, useClerk } from '@clerk/nextjs'
+import VisitDemoButton from './VisitDemoButton'
 
 /**
  * Contrôles de compte Clerk.
@@ -19,6 +20,7 @@ export default function AuthControls() {
   return (
     <div className="fixed right-4 top-4 z-50 flex items-center gap-2">
       <Show when="signed-out">
+        <VisitDemoButton />
         <button
           onClick={() => openSignIn()}
           className="rounded-lg border border-white/15 bg-black/40 px-3 py-1.5 text-sm text-white/85 backdrop-blur transition hover:bg-white/10"

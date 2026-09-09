@@ -19,7 +19,7 @@
 - [ ] Rattacher les fiches de personnage au compte plutot qu'au `localStorage`
 - [ ] Faire du MJ le createur de la table, verifie serveur, au lieu d'un booleen client
 - [x] Accepter un role admin sur le compte, en plus du mot de passe
-- [ ] Ajouter le bouton « Visiter sans compte » sur l'ecran de connexion
+- [x] Ajouter le bouton « Visiter sans compte » sur l'ecran de connexion
 
 ## Phase 2 — accès aux tables
 - [x] Supprimer l'annuaire public : une table ne se voit que si on en est membre
@@ -31,9 +31,10 @@
 ## Phase 2 — room de démonstration
 - [x] Creer la room de demonstration pre-remplie avec une fiche complete
 - [x] Restaurer la salle de demonstration a l'arrivee d'un visiteur quand elle est vide
-- [ ] Ajouter le bandeau « session de demonstration » dans la salle
+- [x] Ajouter le bandeau « session de demonstration » dans la salle
 - [ ] Definir `CRON_SECRET` sur Vercel pour la tache quotidienne de secours
-- [ ] Interdire au visiteur : creer une table, sauvegarder dans le cloud, acceder a l'admin
+- [x] Interdire la creation de table sans compte
+- [ ] Interdire au visiteur la sauvegarde cloud des fiches
 
 ## Mise en ligne — à faire avant le premier deploiement en production
 - [ ] Creer l'application OAuth Discord et renseigner ses identifiants dans Clerk (obligatoire : l'instance de production n'utilise pas les identifiants partages)

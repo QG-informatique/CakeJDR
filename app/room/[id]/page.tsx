@@ -3,6 +3,7 @@ import { useParams } from 'next/navigation'
 import { Room } from '@/app/Room'
 import HomePageInner from '@/components/app/HomePageInner'
 import JoinAnnouncer from '@/components/rooms/JoinAnnouncer'
+import DemoBanner from '@/components/rooms/DemoBanner'
 
 export default function RoomPage() {
   const { id } = useParams<{ id: string }>()
@@ -10,6 +11,7 @@ export default function RoomPage() {
   return (
     <Room id={id}>
       <JoinAnnouncer />
+      <DemoBanner />
       <HomePageInner />
     </Room>
   )
