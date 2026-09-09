@@ -1,5 +1,16 @@
 # Journal
 
+## 2026-09-09 (suite 5) — Fin du double systeme d'identite
+
+- `useProfile` lit desormais le compte Clerk et les preferences en base au lieu du `localStorage`. L'interface renvoyee est inchangee, si bien que les composants qui l'utilisent n'ont pas eu a bouger — un seul fichier a change pour basculer toute l'application.
+- Nouvelles routes `/api/me` : lecture du profil, et modification du pseudo et de la couleur avec validation. Ces deux champs vivaient dans le navigateur, ou chacun pouvait se renommer, y compris en empruntant le nom d'un autre joueur.
+- L'ecran de saisie de pseudo est remplace par un panneau de connexion (`SignedOutPanel`) qui propose creer un compte, se connecter, ou visiter sans compte. `/menu` n'a plus de contenu propre et renvoie vers l'accueil.
+- La bascule « mode MJ » disparait : c'etait une case a cocher qui donnait les outils du MJ a n'importe qui. Le role decoule maintenant du compte, et decoulera de la table dont on est createur.
+- Verifie dans le navigateur, sans compte : panneau de connexion affiche, aucune erreur console, `/api/me` renvoie `user: null` et refuse toute modification.
+
+Reste ouvert : `isMJ` vaut aujourd'hui « est administrateur » ; le role de MJ par table reste a brancher sur `room_members.role`. Le visiteur peut encore sauvegarder une fiche dans le cloud.
+
+
 ## 2026-09-09 (suite 4) — Entree visiteur et correction du chargement des fiches
 
 - Bouton « Visiter sans compte » sur l'ecran d'accueil, menant directement a la salle de demonstration, et bandeau dans la salle rappelant que rien n'y est conserve.

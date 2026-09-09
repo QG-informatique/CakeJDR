@@ -10,7 +10,7 @@ import PopupResult from '@/components/dice/PopupResult'
 import InteractiveCanvas from '@/components/canvas/InteractiveCanvas'
 import MusicPlayer from '@/components/music/MusicPlayer'
 import LiveAvatarStack from '@/components/chat/LiveAvatarStack'
-import Login from '@/components/login/Login'
+import SignedOutPanel from '@/components/auth/SignedOutPanel'
 import GMCharacterSelector from '@/components/misc/GMCharacterSelector'
 import ImportExportMenu from '@/components/character/ImportExportMenu'
 import useDiceHistory from './hooks/useDiceHistory'
@@ -373,7 +373,13 @@ export default function HomePageInner() {
   }
 
   if (!user) {
-    return <Login onLogin={setUser} />
+    // Profil pas encore resolu : useProfile renvoie un profil « Visiteur »
+    // des qu'il a tranche, donc cet ecran ne s'affiche qu'a l'initialisation.
+    return (
+      <div className="flex h-dvh w-screen items-center justify-center p-6">
+        <SignedOutPanel />
+      </div>
+    )
   }
 
   const rollDice = () => {
