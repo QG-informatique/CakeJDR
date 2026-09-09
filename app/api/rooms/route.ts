@@ -44,6 +44,13 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    // Un compte est requis : la liste des tables passe par l'appartenance, donc
+    // une table creee anonymement serait invisible a son propre createur.
+    const account = await syncCurrentUser().catch(() => null)
+    if (!account) {
+      return fail('sign in to create a table', 401)
+    }
+
     const { name, password } = await req.json()
     if (!name || typeof name !== 'string') {
       return fail('missing name', 400)
@@ -52,14 +59,9 @@ export async function POST(req: NextRequest) {
       name,
       typeof password === 'string' ? password : undefined,
     )
-    // Rattache la table au compte si le créateur est connecté. Best-effort :
-    // un échec de base ne doit pas empêcher la partie de démarrer.
-    const account = await syncCurrentUser().catch(() => null)
-    if (account) {
-      await recordRoom({ id, name, ownerId: account.id }).catch((e) =>
-        console.error('recordRoom', e),
-      )
-    }
+    await recordRoom({ id, name, ownerId: account.id }).catch((e) =>
+      console.error('recordRoom', e),
+    )
 
     debug('room created', name, id)
     // ownerSecret n'est renvoyé qu'ici : le client doit le conserver

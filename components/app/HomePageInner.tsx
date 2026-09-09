@@ -54,6 +54,10 @@ export default function HomePageInner() {
   const lastRollTs = useRef<number | null>(null)
   const [cooldown, setCooldown] = useState(false)
   const remoteLoadedRef = useRef(false)
+  // Vrai des qu'une fiche venue du serveur a ete appliquee. Empeche l'effet de
+  // chargement local de la remplacer par la fiche vide quand le profil et la
+  // connexion se stabilisent, ce qui relance cet effet.
+  const remoteCharacterAppliedRef = useRef(false)
   const initialBackupDone = useRef(false)
   // total durée d'indisponibilité du bouton (animation + hold + cooldown)
   const ROLL_TOTAL_MS = 2000 + 300 + 2000 + 1000
@@ -64,6 +68,7 @@ export default function HomePageInner() {
   // Reset room-scoped flags when navigating between rooms
   useEffect(() => {
     remoteLoadedRef.current = false
+    remoteCharacterAppliedRef.current = false
     initialBackupDone.current = false
   }, [roomId])
 
@@ -172,6 +177,9 @@ export default function HomePageInner() {
   }, [profile, updateMyPresence])
 
   useEffect(() => {
+    // Une fiche du serveur a deja ete choisie : ne pas la remplacer.
+    if (remoteCharacterAppliedRef.current) return
+
     const savedChars = localStorage.getItem('jdr_characters')
     let chars: Character[] = []
     if (savedChars) {
@@ -223,7 +231,6 @@ export default function HomePageInner() {
     if (!roomId || remoteLoadedRef.current) return
     // Guard posé AVANT le fetch pour éviter les doubles appels si l'effet re-fire
     remoteLoadedRef.current = true
-    let cancelled = false
     const loadRemote = async () => {
       try {
         const auth = await roomAuthHeaders(roomId)
@@ -264,7 +271,12 @@ export default function HomePageInner() {
         const preferred = (!perso?.id || characters.length === 0)
           ? normalizedValues.find((c) => c.owner === profile?.pseudo) ?? normalizedValues[0]
           : null
-        if (preferred && !cancelled) {
+        // On applique meme si l'effet a ete relance entre-temps : le profil
+        // arrive apres le montage, ce qui suffisait a annuler le chargement et
+        // a laisser la fiche distante recuperee mais jamais affichee. Le drapeau
+        // ci-dessous suffit a empecher une double application.
+        if (preferred && !remoteCharacterAppliedRef.current) {
+          remoteCharacterAppliedRef.current = true
           const finalChar = normalizeCharacter(
             { ...preferred, owner: preferred.owner || profile?.pseudo || '' },
             profile?.pseudo ?? null,
@@ -288,11 +300,17 @@ export default function HomePageInner() {
       }
     }
     void loadRemote()
-    return () => { cancelled = true }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // perso?.id et characters.length intentionnellement exclus : ils provoquaient
-  // une re-exécution après chaque mise à jour de fiche, annulant le guard remoteLoadedRef.
-  }, [roomId, profile?.pseudo, updateMyPresence, myConnectionId])
+  // Volontairement limite a la salle et au pseudo.
+  //
+  // `myConnectionId` et `updateMyPresence` changeaient juste apres le montage,
+  // ce qui relancait l'effet, annulait le chargement en cours par sa fonction
+  // de nettoyage, et laissait `remoteLoadedRef` empecher toute reprise : la
+  // fiche distante etait bien recuperee mais jamais affichee.
+  //
+  // `perso?.id` et `characters.length` sont exclus pour la meme raison : ils
+  // changent a chaque modification de fiche.
+  }, [roomId, profile?.pseudo])
 
   // Sauvegarde initiale silencieuse dans le cloud pour éviter la perte de fiche
   useEffect(() => {
