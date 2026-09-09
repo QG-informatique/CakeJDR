@@ -16,13 +16,13 @@ const isDev = process.env.NODE_ENV !== "production";
 
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://www.youtube.com https://s.ytimg.com`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://www.youtube.com https://s.ytimg.com https://*.clerk.accounts.dev https://challenges.cloudflare.com`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com data:",
-  "img-src 'self' data: blob: https://res.cloudinary.com https://*.public.blob.vercel-storage.com https://i.ytimg.com https://img.youtube.com",
+  "img-src 'self' data: blob: https://res.cloudinary.com https://*.public.blob.vercel-storage.com https://i.ytimg.com https://img.youtube.com https://img.clerk.com",
   "media-src 'self' blob: https://res.cloudinary.com",
-  "connect-src 'self' https://api.liveblocks.io wss://api.liveblocks.io https://api.cloudinary.com https://*.public.blob.vercel-storage.com https://res.cloudinary.com",
-  "frame-src https://www.youtube.com https://www.youtube-nocookie.com",
+  "connect-src 'self' https://api.liveblocks.io wss://api.liveblocks.io https://api.cloudinary.com https://*.public.blob.vercel-storage.com https://res.cloudinary.com https://*.clerk.accounts.dev https://clerk-telemetry.com",
+  "frame-src https://www.youtube.com https://www.youtube-nocookie.com https://challenges.cloudflare.com",
   "worker-src 'self' blob:",
   "object-src 'none'",
   "base-uri 'self'",

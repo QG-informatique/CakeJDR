@@ -8,9 +8,12 @@
 - [ ] Trancher : modèles de fiche liés à la table, ou bibliothèque réutilisable entre tables
 
 ## Phase 1 — identité (Clerk + Neon)
-- [ ] Créer la base Neon depuis Vercel → Storage, et reporter `DATABASE_URL` dans `.env.local` (ne pas utiliser `vercel env pull .env.local`, qui écrase le fichier)
-- [ ] Installer Clerk depuis Vercel → Marketplace, puis activer Discord, Google et email dans le tableau de bord Clerk
-- [ ] Cabler Clerk dans l'application : middleware, écrans de connexion, `userId` stable propage a `/api/liveblocks-auth`
+- [x] Créer la base Neon et reporter `DATABASE_URL` dans `.env.local`
+- [x] Installer Clerk depuis Vercel → Marketplace
+- [ ] Activer Discord, Google et email dans le tableau de bord Clerk (sans quoi la fenêtre d'inscription reste vide)
+- [x] Cabler Clerk : `proxy.ts`, `ClerkProvider`, boutons de connexion, CSP élargie
+- [ ] Propager le `userId` Clerk jusqu'à `/api/liveblocks-auth` (fin du `randomUUID()`)
+- [ ] Écrire le schéma de base (comptes, tables, membres, fiches) et le pousser sur Neon
 - [ ] Migrer la propriete des rooms de `ownerHash` (secret navigateur) vers `ownerId` (compte)
 - [ ] Rattacher les fiches de personnage au compte plutot qu'au `localStorage`
 - [ ] Faire du MJ le createur de la table, verifie serveur, au lieu d'un booleen client
