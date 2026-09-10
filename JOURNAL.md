@@ -1,5 +1,13 @@
 # Journal
 
+## 2026-09-10 (suite 3) — Vrai roulement du de, francais par defaut
+
+- Retour a l'arrondi d'origine du de (14 px, sommets ouverts) : l'arrondi reduit paraissait trop carre.
+- Roulement refait sur le modele d'un vrai cube : il bascule par-dessus ses aretes, un quart de tour a la fois, dans le sens du lancer ; faute d'elan il retombe du cote ou il penchait, puis oscille avant de s'arreter. L'orientation est tenue en matrice dans le repere de la table : les angles d'Euler cumules tournaient dans le repere du de, d'ou un roulement de travers et un recalage parfois en arriere. Verifie par simulation de 5 000 bascules : aucune position invalide, les 24 positions d'un cube atteintes. Le rendu a l'oeil n'a pas pu etre observe (navigateur de test masque).
+- Francais par defaut, et 19 textes recents traduits (panneau de connexion, bandeau de demo, invitation, role de MJ). Bascule verifiee : francais, anglais, retour au francais.
+- Constate : la version en ligne date du 30 aout (`2bae680`) et 14 commits ne sont que locaux — le site public ne beneficie encore d'aucune des protections de la phase 0.
+
+
 ## 2026-09-10 (suite 2) — Coins du de et bouton de langue
 
 - Coins du de : le noyau rose ne bouchait les trous des sommets que sous certains angles, d'ou des coins tantot roses tantot vides. Retire au profit d'un arrondi des faces reduit de 14 a 6 px : le trou devient invisible sous tous les angles. Un de a la fois tres arrondi et sans trou n'est pas faisable proprement en CSS, qui ne manipule que des carres plats.

@@ -2,6 +2,7 @@
 
 import { Show, UserButton, useClerk } from '@clerk/nextjs'
 import VisitDemoButton from './VisitDemoButton'
+import { useT } from '@/lib/useT'
 
 /**
  * Contrôles de compte Clerk.
@@ -15,6 +16,7 @@ import VisitDemoButton from './VisitDemoButton'
  */
 export default function AuthControls() {
   const { openSignIn, openSignUp } = useClerk()
+  const t = useT()
 
   return (
     <div className="flex items-center gap-2">
@@ -24,13 +26,13 @@ export default function AuthControls() {
           onClick={() => openSignIn()}
           className="rounded-lg border border-white/15 bg-black/40 px-3 py-1.5 text-sm text-white/85 backdrop-blur transition hover:bg-white/10"
         >
-          Se connecter
+          {t('authSignIn')}
         </button>
         <button
           onClick={() => openSignUp()}
           className="rounded-lg bg-emerald-600/80 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-500/90"
         >
-          Créer un compte
+          {t('authCreateAccount')}
         </button>
       </Show>
 

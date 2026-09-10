@@ -44,6 +44,7 @@
 - [ ] Interdire au visiteur la sauvegarde cloud des fiches
 
 ## Mise en ligne — à faire avant le premier deploiement en production
+- [ ] Publier les commits locaux : la version en ligne date du 30 août et n'a aucune des protections de la phase 0 (suppression de tables ouverte à tous, notamment)
 - [ ] Creer l'application OAuth Discord et renseigner ses identifiants dans Clerk (obligatoire : l'instance de production n'utilise pas les identifiants partages)
 - [ ] Creer l'application OAuth Google et renseigner ses identifiants dans Clerk
 - [ ] Prevenir les testeurs que les comptes crees en preproduction ne sont pas transferes en production
@@ -83,8 +84,8 @@
 - [ ] Ajouter un petit loader « jeu vidéo » lors de la vérification du mot de passe (indicateur minimal déjà présent, à améliorer via framer-motion)
 
 ## Interface — langue
-- [ ] Traduire les textes ajoutés récemment (panneau de connexion, bandeau de démo, invitation par code), écrits en dur en français et qui ne suivent pas la bascule de langue
-- [ ] Choisir la langue par défaut de l'application (aujourd'hui l'anglais, pour un public francophone)
+- [x] Traduire les textes ajoutés récemment (panneau de connexion, bandeau de démo, invitation par code), écrits en dur en français et qui ne suivent pas la bascule de langue
+- [x] Passer l'application en français par défaut
 
 ## Canvas & temps réel
 - [ ] Throttler les segments de trait pour réduire le trafic Liveblocks lors de dessins rapides (coalescer via requestAnimationFrame)
