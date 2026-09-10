@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { Show, useClerk } from '@clerk/nextjs'
 import { Info, X } from 'lucide-react'
+import { useT } from '@/lib/useT'
 
 /**
  * Bandeau affiché dans la salle de démonstration.
@@ -17,6 +18,7 @@ export default function DemoBanner() {
   const [isDemo, setIsDemo] = useState(false)
   const [dismissed, setDismissed] = useState(false)
   const { openSignUp } = useClerk()
+  const t = useT()
 
   useEffect(() => {
     let cancelled = false
@@ -37,21 +39,21 @@ export default function DemoBanner() {
     <div className="pointer-events-auto fixed left-1/2 top-2 z-50 flex max-w-[92vw] -translate-x-1/2 items-center gap-3 rounded-xl border border-amber-400/25 bg-amber-500/12 px-3 py-2 text-amber-100 shadow-lg backdrop-blur">
       <Info size={16} className="shrink-0 text-amber-300" />
       <p className="m-0 text-xs leading-snug">
-        Session de démonstration — essaie tout ce que tu veux, rien n&apos;est conservé.
+        {t('demoBannerText')}
         <Show when="signed-out">
           {' '}
           <button
             onClick={() => openSignUp()}
             className="font-semibold underline underline-offset-2 hover:text-white"
           >
-            Crée un compte
+            {t('demoBannerCta')}
           </button>{' '}
-          pour garder ta partie.
+          {t('demoBannerCtaSuffix')}
         </Show>
       </p>
       <button
         onClick={() => setDismissed(true)}
-        aria-label="Masquer le bandeau"
+        aria-label={t('demoBannerHide')}
         className="shrink-0 rounded p-0.5 text-amber-200/70 transition hover:text-white"
       >
         <X size={14} />

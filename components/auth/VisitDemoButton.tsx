@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Eye } from 'lucide-react'
+import { useT } from '@/lib/useT'
 
 /**
  * Entrée visiteur.
@@ -18,6 +19,7 @@ export default function VisitDemoButton({ className = '' }: { className?: string
   const [roomId, setRoomId] = useState<string | null>(null)
   const [entering, setEntering] = useState(false)
   const router = useRouter()
+  const t = useT()
 
   useEffect(() => {
     let cancelled = false
@@ -52,7 +54,7 @@ export default function VisitDemoButton({ className = '' }: { className?: string
       className={`inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-sm text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-50 ${className}`}
     >
       <Eye size={15} />
-      {entering ? 'Ouverture…' : 'Visiter en invité'}
+      {entering ? t('authOpening') : t('authVisitGuest')}
     </button>
   )
 }

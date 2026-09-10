@@ -11,7 +11,9 @@ interface LangCtx {
 const LanguageContext = createContext<LangCtx | undefined>(undefined)
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Language>('en')
+  const [lang, setLangState] = // Francais par defaut : le public est francophone. Un choix explicite,
+  // memorise dans le navigateur, reste prioritaire.
+  useState<Language>('fr')
 
   useEffect(() => {
     const stored = localStorage.getItem('lang') as Language | null

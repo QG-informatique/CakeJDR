@@ -596,8 +596,8 @@ export default function MenuAccueil() {
                 <span
                   title={
                     user.isMJ
-                      ? 'Outils de MJ actifs'
-                      : "Le role de MJ decoule du compte, il ne se coche plus"
+                      ? t('gmToolsActive')
+                      : t('gmRoleFromAccount')
                   }
                   className={`
                     relative inline-flex items-center justify-center

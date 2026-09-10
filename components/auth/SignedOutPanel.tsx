@@ -5,6 +5,7 @@ import { LogIn, UserPlus } from 'lucide-react'
 import CakeLogo from '@/components/ui/CakeLogo'
 import HeroDie from '@/components/ui/HeroDie'
 import VisitDemoButton from './VisitDemoButton'
+import { useT } from '@/lib/useT'
 
 /**
  * Écran d'accueil pour qui n'a pas de compte.
@@ -18,6 +19,7 @@ const DOCK_ID = 'hero-die-dock'
 
 export default function SignedOutPanel() {
   const { openSignIn, openSignUp } = useClerk()
+  const t = useT()
 
   return (
     <>
@@ -33,8 +35,7 @@ export default function SignedOutPanel() {
       <div className="space-y-2">
         <h1 className="m-0 text-2xl font-bold text-white">CakeJDR</h1>
         <p className="m-0 text-sm text-white/60">
-          Ta table de jeu de rôle en ligne : fiches de personnage, dés, canvas
-          partagé et musique, au même endroit.
+          {t('authTagline')}
         </p>
       </div>
 
@@ -44,21 +45,20 @@ export default function SignedOutPanel() {
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600/85 px-4 py-2.5 font-semibold text-white transition hover:bg-emerald-500/90"
         >
           <UserPlus size={17} />
-          Créer un compte
+          {t('authCreateAccount')}
         </button>
         <button
           onClick={() => openSignIn()}
           className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-white/85 transition hover:bg-white/10"
         >
           <LogIn size={17} />
-          Se connecter
+          {t('authSignIn')}
         </button>
       </div>
 
       <div className="flex w-full flex-col items-center gap-2 border-t border-white/10 pt-5">
         <p className="m-0 text-xs text-white/50">
-          Pas encore de compte ? Découvre une partie de démonstration en
-          invité — tu peux tout essayer, rien n&apos;est conservé.
+          {t('authGuestPitch')}
         </p>
         <VisitDemoButton />
       </div>

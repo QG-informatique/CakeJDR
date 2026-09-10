@@ -91,7 +91,7 @@ export default function RoomList({
       setRooms(next)
       window.dispatchEvent(new Event('jdr_rooms_change'))
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : 'Code invalide')
+      setErrorMsg(e instanceof Error ? e.message : t('inviteInvalidCode'))
     } finally {
       setJoining(false)
     }
@@ -102,7 +102,7 @@ export default function RoomList({
     try {
       await deleteRoomById(room.id)
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : 'Suppression refusée')
+      setErrorMsg(e instanceof Error ? e.message : t('roomDeleteRefused'))
       return
     }
     setRooms((r) => r.filter((x) => x.id !== room.id))
@@ -119,7 +119,7 @@ export default function RoomList({
     try {
       await renameRoomById(room.id, newName)
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : 'Renommage refusé')
+      setErrorMsg(e instanceof Error ? e.message : t('roomRenameRefused'))
       return
     }
     setRooms((r) => r.map((x) => (x.id === room.id ? { ...x, name: newName } : x)))
@@ -180,8 +180,8 @@ export default function RoomList({
           value={inviteCode}
           onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
           onKeyDown={(e) => { if (e.key === 'Enter') void joinByCode() }}
-          placeholder="Code d'invitation"
-          aria-label="Code d'invitation"
+          placeholder={t('inviteCodePlaceholder')}
+          aria-label={t('inviteCodePlaceholder')}
           maxLength={12}
           className="w-44 rounded-lg border border-white/15 bg-black/30 px-3 py-1.5 font-mono text-sm tracking-widest uppercase placeholder:font-sans placeholder:tracking-normal placeholder:text-white/30 focus:border-emerald-400/40 focus:outline-none"
         />
@@ -190,10 +190,10 @@ export default function RoomList({
           disabled={joining || !inviteCode.trim()}
           className="rounded-lg bg-emerald-600/80 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-500/90 disabled:opacity-40"
         >
-          {joining ? '...' : 'Rejoindre'}
+          {joining ? '...' : t('inviteJoin')}
         </button>
         <span className="text-xs text-white/40">
-          Une table ne se rejoint qu&apos;avec son code.
+          {t('inviteOnlyHint')}
         </span>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-96 overflow-y-auto p-3">
@@ -240,7 +240,7 @@ export default function RoomList({
             {r.joinCode ? (
               <span
                 className="cursor-pointer select-none font-mono text-[11px] tracking-widest text-emerald-300/80"
-                title="Code d'invitation — partage-le pour inviter un joueur"
+                title={t('inviteCodeTitle')}
                 onClick={(e) => { e.stopPropagation(); void navigator.clipboard?.writeText(r.joinCode!) }}
               >
                 {r.joinCode}
