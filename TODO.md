@@ -30,6 +30,10 @@
 - [ ] Afficher dans le panel admin qui a accès à chaque table
 - [x] Nettoyer les tables antérieures : cinq supprimées, `cakroom` gardée comme salle de démonstration
 
+## Page d'accueil
+- [x] Remettre le dé en page d'accueil : lancer automatique, attrapable et lançable sur tout l'écran
+- [ ] Vérifier à l'œil, dans un vrai navigateur, que le dé revient bien à sa place après un lancer (arrivée non mesurée en test automatisé)
+
 ## Phase 2 — room de démonstration
 - [x] Creer la room de demonstration pre-remplie avec une fiche complete
 - [x] Restaurer la salle de demonstration a l'arrivee d'un visiteur quand elle est vide
