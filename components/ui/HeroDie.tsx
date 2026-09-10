@@ -48,16 +48,6 @@ const PIPS: Record<number, ReadonlyArray<readonly [number, number]>> = {
 
 const BORDER = 3
 
-/**
- * Noyau interieur. Les faces arrondies laissent un trou la ou trois d'entre
- * elles se rejoignent, et on voyait le fond a travers les sommets. Ce cube
- * plein, un peu plus petit, n'apparait que par ces trous : les coins
- * deviennent roses sans que le de perde sa forme arrondie. Sa demi-taille
- * (45 px) reste sous la limite (~46 px) au-dela de laquelle ses sommets
- * depasseraient de l'arrondi.
- */
-const CORE = SIZE - 14
-
 function Pips({ value }: { value: number }) {
   const inner = SIZE - BORDER * 2
   const dot = SIZE * 0.15
@@ -432,28 +422,16 @@ export default function HeroDie({ dockId }: { dockId: string }) {
         >
           {FACES.map((f) => (
             <div
-              key={`core-${f.value}`}
-              style={{
-                position: 'absolute',
-                left: (SIZE - CORE) / 2,
-                top: (SIZE - CORE) / 2,
-                width: CORE,
-                height: CORE,
-                background: 'linear-gradient(145deg,#e0457a,#b82a5c)',
-                transform: `rotateX(${f.rx}deg) rotateY(${f.ry}deg) translateZ(${CORE / 2}px)`,
-                backfaceVisibility: 'hidden',
-              }}
-            />
-          ))}
-          {FACES.map((f) => (
-            <div
               key={f.value}
               style={{
                 position: 'absolute',
                 inset: 0,
                 background: 'linear-gradient(145deg,#181818,#0f0f0f)',
                 border: `${BORDER}px solid #D6336C`,
-                borderRadius: 14,
+                // Arrondi volontairement faible : avec un rayon plus grand, les trois
+                // faces qui se rejoignent laissent un trou au sommet, visible selon
+                // l'angle. Un noyau interieur ne le bouchait que sous certains angles.
+                borderRadius: 6,
                 boxShadow: '0 4px 10px rgba(0,0,0,0.6), inset 0 0 12px rgba(214,51,108,0.15)',
                 transform: `rotateX(${f.rx}deg) rotateY(${f.ry}deg) translateZ(${HALF}px)`,
                 backfaceVisibility: 'hidden',

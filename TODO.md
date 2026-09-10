@@ -33,7 +33,7 @@
 ## Page d'accueil
 - [x] Remettre le dé en page d'accueil : lancer automatique, attrapable et lançable sur tout l'écran
 - [x] Vérifier à l'œil que le dé revient bien à sa place après un lancer
-- [ ] Valider à l'œil les coins roses du dé et sa nouvelle prise en main (soulevé, sans rouler)
+- [x] Valider à l'œil les coins roses du dé et sa nouvelle prise en main (soulevé, sans rouler)
 
 ## Phase 2 — room de démonstration
 - [x] Creer la room de demonstration pre-remplie avec une fiche complete
@@ -81,6 +81,10 @@
 - [x] Corriger le flux de connexion aux rooms protégées (le token d'accès n'était pas mémorisé, rendant ces rooms inaccessibles)
 - [x] Empêcher la suppression/renommage d'une room par un tiers (système de secret de propriété + accès admin)
 - [ ] Ajouter un petit loader « jeu vidéo » lors de la vérification du mot de passe (indicateur minimal déjà présent, à améliorer via framer-motion)
+
+## Interface — langue
+- [ ] Traduire les textes ajoutés récemment (panneau de connexion, bandeau de démo, invitation par code), écrits en dur en français et qui ne suivent pas la bascule de langue
+- [ ] Choisir la langue par défaut de l'application (aujourd'hui l'anglais, pour un public francophone)
 
 ## Canvas & temps réel
 - [ ] Throttler les segments de trait pour réduire le trafic Liveblocks lors de dessins rapides (coalescer via requestAnimationFrame)
