@@ -48,6 +48,16 @@ const PIPS: Record<number, ReadonlyArray<readonly [number, number]>> = {
 
 const BORDER = 3
 
+/**
+ * Noyau interieur. Les faces arrondies laissent un trou la ou trois d'entre
+ * elles se rejoignent, et on voyait le fond a travers les sommets. Ce cube
+ * plein, un peu plus petit, n'apparait que par ces trous : les coins
+ * deviennent roses sans que le de perde sa forme arrondie. Sa demi-taille
+ * (45 px) reste sous la limite (~46 px) au-dela de laquelle ses sommets
+ * depasseraient de l'arrondi.
+ */
+const CORE = SIZE - 14
+
 function Pips({ value }: { value: number }) {
   const inner = SIZE - BORDER * 2
   const dot = SIZE * 0.15
@@ -119,11 +129,14 @@ export default function HeroDie({ dockId }: { dockId: string }) {
       grab: { x: 0, y: 0 } as Vec,
       samples: [] as Array<{ x: number; y: number; t: number }>,
       pointerId: -1,
+      /** Inclinaison du de tenu en main, dans le sens du mouvement. */
+      lean: { x: 0, y: 0 } as Vec,
+      leanTarget: { x: 0, y: 0 } as Vec,
     }
 
     const render = () => {
       die.style.transform = `translate3d(${s.pos.x - HALF}px, ${s.pos.y - HALF - s.hop}px, 0)`
-      cube.style.transform = `rotateX(${s.rot.x + TILT_X}deg) rotateY(${s.rot.y + TILT_Y}deg)`
+      cube.style.transform = `rotateX(${s.rot.x + TILT_X + s.lean.x}deg) rotateY(${s.rot.y + TILT_Y + s.lean.y}deg)`
       // L'ombre reste au sol et s'estompe quand le dé s'élève.
       const k = 1 - Math.min(s.hop, 40) / 80
       shadow.style.transform = `translate3d(${s.pos.x - HALF}px, ${s.pos.y + HALF * 0.62}px, 0) scale(${k})`
@@ -287,6 +300,14 @@ export default function HeroDie({ dockId }: { dockId: string }) {
         s.pos.y = home.y
       }
 
+      // L'inclinaison suit le mouvement de la main puis se redresse d'elle-meme.
+      const follow = 1 - Math.exp(-12 * dt)
+      s.lean.x += (s.leanTarget.x - s.lean.x) * follow
+      s.lean.y += (s.leanTarget.y - s.lean.y) * follow
+      const relax = Math.exp(-8 * dt)
+      s.leanTarget.x *= relax
+      s.leanTarget.y *= relax
+
       render()
       raf = requestAnimationFrame(frame)
     }
@@ -304,7 +325,8 @@ export default function HeroDie({ dockId }: { dockId: string }) {
       }
       s.pointerId = e.pointerId
       s.mode = 'drag'
-      s.hop = 10
+      // Souleve : l'ombre retrecit, le de flotte au-dessus du sol.
+      s.hop = 18
       s.grab = { x: e.clientX - s.pos.x, y: e.clientY - s.pos.y }
       s.samples = [{ x: e.clientX, y: e.clientY, t: performance.now() }]
       die.style.cursor = 'grabbing'
@@ -314,9 +336,11 @@ export default function HeroDie({ dockId }: { dockId: string }) {
       if (s.mode !== 'drag' || e.pointerId !== s.pointerId) return
       const nx = e.clientX - s.grab.x
       const ny = e.clientY - s.grab.y
-      // Le dé tourne dans le sens où on le traîne.
-      s.rot.x -= (ny - s.pos.y) * 1.1
-      s.rot.y += (nx - s.pos.x) * 1.1
+      // Tenu en main, le de ne roule pas : il penche seulement un peu dans le
+      // sens du mouvement. Il ne tourne sur lui-meme qu'une fois lance.
+      const clamp = (v: number) => Math.max(-14, Math.min(14, v))
+      s.leanTarget.x = clamp(-(ny - s.pos.y) * 1.6)
+      s.leanTarget.y = clamp((nx - s.pos.x) * 1.6)
       s.pos.x = nx
       s.pos.y = ny
       s.samples.push({ x: e.clientX, y: e.clientY, t: performance.now() })
@@ -406,6 +430,21 @@ export default function HeroDie({ dockId }: { dockId: string }) {
             transformStyle: 'preserve-3d',
           }}
         >
+          {FACES.map((f) => (
+            <div
+              key={`core-${f.value}`}
+              style={{
+                position: 'absolute',
+                left: (SIZE - CORE) / 2,
+                top: (SIZE - CORE) / 2,
+                width: CORE,
+                height: CORE,
+                background: 'linear-gradient(145deg,#e0457a,#b82a5c)',
+                transform: `rotateX(${f.rx}deg) rotateY(${f.ry}deg) translateZ(${CORE / 2}px)`,
+                backfaceVisibility: 'hidden',
+              }}
+            />
+          ))}
           {FACES.map((f) => (
             <div
               key={f.value}

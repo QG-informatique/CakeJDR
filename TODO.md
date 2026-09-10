@@ -32,13 +32,14 @@
 
 ## Page d'accueil
 - [x] Remettre le dé en page d'accueil : lancer automatique, attrapable et lançable sur tout l'écran
-- [ ] Vérifier à l'œil, dans un vrai navigateur, que le dé revient bien à sa place après un lancer (arrivée non mesurée en test automatisé)
+- [x] Vérifier à l'œil que le dé revient bien à sa place après un lancer
+- [ ] Valider à l'œil les coins roses du dé et sa nouvelle prise en main (soulevé, sans rouler)
 
 ## Phase 2 — room de démonstration
 - [x] Creer la room de demonstration pre-remplie avec une fiche complete
 - [x] Restaurer la salle de demonstration a l'arrivee d'un visiteur quand elle est vide
 - [x] Ajouter le bandeau « session de demonstration » dans la salle
-- [ ] Definir `CRON_SECRET` sur Vercel pour la tache quotidienne de secours
+- [ ] Copier `CRON_SECRET` (déjà généré dans `.env.local`) dans Vercel → Settings → Environment Variables, environnement Production
 - [x] Interdire la creation de table sans compte
 - [ ] Interdire au visiteur la sauvegarde cloud des fiches
 
