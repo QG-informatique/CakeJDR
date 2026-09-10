@@ -1,5 +1,13 @@
 # Journal
 
+## 2026-09-10 (suite) — Finitions du de et CRON_SECRET
+
+- Coins du de : les faces arrondies laissaient un trou a chaque sommet, on voyait le fond au travers. Ajout d'un noyau rose interieur (90 px, a 45 px du centre), visible uniquement par ces trous : les coins deviennent roses sans perdre l'arrondi. Taille choisie sous la limite (~46 px) au-dela de laquelle ses sommets depasseraient.
+- Prise en main : le de ne roule plus quand on le tient — il se souleve, reste droit et penche seulement dans le sens du mouvement. Il ne tourne sur lui-meme qu'une fois lance.
+- `CRON_SECRET` genere directement dans `.env.local` pour ne pas l'afficher dans la conversation. Verifie dans la doc Vercel que la plateforme envoie bien `Authorization: Bearer <CRON_SECRET>` a chaque execution — c'est ce que verifie `/api/demo/reset`.
+- Verifie : structure du de rendue conforme (6 faces exterieures, 6 faces de noyau aux bonnes cotes). Aspect visuel non juge ici, le panneau du navigateur de test etant masqué.
+
+
 ## 2026-09-10 — Le de revient sur la page d'accueil
 
 - Nouveau `components/ui/HeroDie.tsx` : le de roule tout seul dans son emplacement, et on peut l'attraper, le trainer sur tout l'ecran et le lancer — il glisse, rebondit sur les bords, se pose sur une face puis revient a sa place. Anime par refs et `requestAnimationFrame`, sans etat React par image ; immobile si le systeme demande de reduire les animations.
