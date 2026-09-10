@@ -52,7 +52,7 @@ export default function VisitDemoButton({ className = '' }: { className?: string
       className={`inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-sm text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-50 ${className}`}
     >
       <Eye size={15} />
-      {entering ? 'Ouverture…' : 'Visiter sans compte'}
+      {entering ? 'Ouverture…' : 'Visiter en invité'}
     </button>
   )
 }

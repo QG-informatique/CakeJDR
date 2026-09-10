@@ -1,5 +1,13 @@
 # Journal
 
+## 2026-09-10 — Le de revient sur la page d'accueil
+
+- Nouveau `components/ui/HeroDie.tsx` : le de roule tout seul dans son emplacement, et on peut l'attraper, le trainer sur tout l'ecran et le lancer — il glisse, rebondit sur les bords, se pose sur une face puis revient a sa place. Anime par refs et `requestAnimationFrame`, sans etat React par image ; immobile si le systeme demande de reduire les animations.
+- Decision : cliquer sur le de ne lance **pas** la demonstration — genant pour les joueurs qui reviennent. La visite reste un bouton a part, renomme « Visiter en invite » avec une phrase qui precise que rien n'est conserve.
+- Trouve en testant : `setPointerCapture` peut etre refuse par le navigateur, et l'exception empechait d'attraper le de. Capture rendue optionnelle, mouvements ecoutes sur la fenetre. `components/login/Login.tsx`, l'ancien ecran de pseudo, supprime faute d'appelant.
+- Verifie dans le navigateur : placement exact sur l'emplacement, lancer automatique, lancer a la main avec rebond et ralentissement, aucune erreur console. Retour observe en cours de trajet ; l'arrivee n'a pas pu etre mesuree, le panneau du navigateur masque gelant l'animation.
+
+
 ## 2026-09-09 (suite 5) — Fin du double systeme d'identite
 
 - `useProfile` lit desormais le compte Clerk et les preferences en base au lieu du `localStorage`. L'interface renvoyee est inchangee, si bien que les composants qui l'utilisent n'ont pas eu a bouger — un seul fichier a change pour basculer toute l'application.
