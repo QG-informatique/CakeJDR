@@ -5,7 +5,7 @@ import type { NextConfig } from "next";
  *
  * La CSP autorise exactement les origines dont l'application a besoin :
  * Liveblocks (temps réel, en HTTPS et WebSocket), Cloudinary (images du
- * canvas), Vercel Blob (fiches de personnage), YouTube (lecteur musique) et
+ * canvas), YouTube (lecteur musique) et
  * Google Fonts. Tout le reste est refusé.
  *
  * `'unsafe-inline'` sur les styles est nécessaire : Next injecte des styles
@@ -19,9 +19,9 @@ const csp = [
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://www.youtube.com https://s.ytimg.com https://*.clerk.accounts.dev https://challenges.cloudflare.com`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com data:",
-  "img-src 'self' data: blob: https://res.cloudinary.com https://*.public.blob.vercel-storage.com https://i.ytimg.com https://img.youtube.com https://img.clerk.com",
+  "img-src 'self' data: blob: https://res.cloudinary.com https://i.ytimg.com https://img.youtube.com https://img.clerk.com",
   "media-src 'self' blob: https://res.cloudinary.com",
-  "connect-src 'self' https://api.liveblocks.io wss://api.liveblocks.io https://api.cloudinary.com https://*.public.blob.vercel-storage.com https://res.cloudinary.com https://*.clerk.accounts.dev https://clerk-telemetry.com",
+  "connect-src 'self' https://api.liveblocks.io wss://api.liveblocks.io https://api.cloudinary.com https://res.cloudinary.com https://*.clerk.accounts.dev https://clerk-telemetry.com",
   "frame-src https://www.youtube.com https://www.youtube-nocookie.com https://challenges.cloudflare.com",
   "worker-src 'self' blob:",
   "object-src 'none'",

@@ -2,7 +2,7 @@
 
 Table de jeu de rôle en ligne : Next.js + React, temps réel via Liveblocks,
 canvas partagé, dés 3D, éditeur Lexical, musique YouTube synchronisée.
-`npm run dev`. Cloudinary pour les images, Vercel Blob pour les personnages.
+`npm run dev`. Cloudinary pour les images ; comptes, tables et fiches de personnage en base (Neon), connexion par Clerk.
 
 `TODO.md` liste les chantiers ouverts (build Next 15/React 19 à vérifier, hashage des
 mots de passe de rooms, tests e2e Playwright). `CHANGES.md` garde le détail du lot de
