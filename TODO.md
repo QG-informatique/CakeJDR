@@ -20,7 +20,10 @@
 - [x] Remplacer la sauvegarde cloud (Vercel Blob, ouverte a tous) par des fiches rattachees au compte
 - [ ] Faire de la liste de fiches du menu une liste du compte, et non plus d'abord du navigateur (l'envoi vers le compte est aujourd'hui manuel)
 - [x] Supprimer la bascule « mode MJ » cochable par n'importe qui
-- [ ] Brancher le role de MJ sur `room_members.role` (aujourd'hui `isMJ` vaut « est administrateur »)
+- [x] Brancher le role de MJ sur `room_members.role`, fixe par le serveur dans la session Liveblocks
+- [x] Reserver l'acces aux tables a leurs membres : l'adresse seule ne suffit plus
+- [ ] Tester avec un second compte : invitation par code, couronne de MJ dans le chat, fiche imposee par le MJ
+- [ ] Aligner l'indicateur de MJ du menu sur le role par table (il reflete encore le role administrateur)
 - [x] Accepter un role admin sur le compte, en plus du mot de passe
 - [x] Ajouter le bouton « Visiter sans compte » sur l'ecran de connexion
 

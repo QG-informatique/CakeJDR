@@ -93,6 +93,8 @@ declare global {
         color: string
         /** Faux pour un visiteur non connecte. */
         signedIn: boolean
+        /** Role dans cette table, decide par le serveur a l'ouverture de la session. */
+        role: 'gm' | 'player'
       }
     }
 

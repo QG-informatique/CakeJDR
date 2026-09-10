@@ -3,7 +3,6 @@
 import { FC, RefObject, useRef, useState, useEffect, useMemo } from 'react'
 import { ChevronLeft, ChevronRight, BarChart3, MessageSquare } from 'lucide-react'
 import { useBroadcastEvent, useRoom, useEventListener, useSelf } from '@liveblocks/react'
-import useProfile from '../app/hooks/useProfile'
 import SessionSummary from './SessionSummary'
 import DiceStats from './DiceStats'
 import useEventLog, { SessionEvent } from '../app/hooks/useEventLog'
@@ -46,7 +45,6 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
     : sortedEvents.filter(ev => ev.ts >= sessionStart.current)
   const broadcast = useBroadcastEvent()
   const self = useSelf()
-  const profile = useProfile()
   const t = useT()
   const [collapsed, setCollapsed] = useState(() =>
     typeof window !== 'undefined' && localStorage.getItem('chatPanelCollapsed') === '1'
@@ -61,7 +59,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
   const sendMessage = async () => {
     if (inputValue.trim() === '') return
 
-    const msg = { author, text: inputValue.trim(), isMJ: !!profile?.isMJ }
+    const msg = { author, text: inputValue.trim(), isMJ: self?.info?.role === 'gm' }
     const ts = Date.now()
 
     broadcast({ type: 'chat', author: msg.author, text: msg.text, isMJ: msg.isMJ, ts })
@@ -74,13 +72,15 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
   // Receive remote chat events and persist them to storage.
   // On ignore nos propres broadcasts (on a déjà appelé addEvent localement dans sendMessage)
   // pour éviter la double-insertion dans la LiveList.
-  useEventListener((payload: { connectionId: number; event: { type: string; author?: string; text?: string; ts?: number; isMJ?: boolean } }) => {
+  useEventListener((payload: { connectionId: number; user?: { info?: { role?: string } } | null; event: { type: string; author?: string; text?: string; ts?: number; isMJ?: boolean } }) => {
     const { event, connectionId } = payload
     if (event && event.type === 'chat') {
       // Sauter les événements provenant de notre propre connexion
       if (connectionId === self?.connectionId) return
       const ts = typeof event.ts === 'number' ? event.ts : Date.now()
-      addEvent({ id: crypto.randomUUID(), kind: 'chat', author: event.author || 'Unknown', text: event.text || '', ts, isMJ: !!event.isMJ })
+      // La couronne vient du role de l'expediteur, fixe par le serveur, et non
+      // de ce qu'annonce le message : sinon n'importe qui pourrait se couronner.
+      addEvent({ id: crypto.randomUUID(), kind: 'chat', author: event.author || 'Unknown', text: event.text || '', ts, isMJ: payload.user?.info?.role === 'gm' })
     }
   })
 
