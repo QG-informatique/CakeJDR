@@ -1,62 +1,71 @@
-# Manual Release Checklist
+# Plan de test manuel
 
-Manual validation for a full CakeJDR session with one GM, two desktop players, and one tablet client.
+Parcours à suivre avant chaque mise en ligne, tant que les tests automatisés ne
+les couvrent pas. Il faut **deux comptes** (par exemple deux comptes Google, ou
+un Google et un email) et, si possible, une tablette ou un téléphone.
 
-## Preparation
-1. Start the app with `NEXT_PUBLIC_DEBUG=1`.
-2. Open four clients:
-   1. GM desktop
-   2. Player desktop A
-   3. Player desktop B
-   4. Tablet
-3. Confirm `.env.local` is populated for Liveblocks, Cloudinary, and Vercel Blob.
-4. Create one fresh room from the GM account and share the room link with the other clients.
+## Préparation
+1. Lancer l'application (`npm run dev`), ou utiliser l'adresse de prévisualisation Vercel.
+2. Ouvrir trois fenêtres :
+   1. **Compte A** — celui qui crée la table, et qui en sera donc le MJ
+   2. **Compte B** — dans une fenêtre de navigation privée
+   3. **Sans compte** — pour le parcours visiteur
+3. Vérifier que `.env.local` contient les clés Liveblocks, Cloudinary, Neon (`DATABASE_URL`) et Clerk.
 
-## Login And Menu
-1. Log in from each client and verify the profile state persists after refresh.
-2. Change the profile color on one client and verify it is retained locally.
-3. Cycle background themes from the menu and verify the selected theme survives a reload.
-4. Confirm room creation, selection, rename, and deletion all surface clear success or failure behavior.
+## Accueil et compte
+1. Déconnecté : le panneau d'accueil propose de créer un compte, de se connecter et de visiter en invité. Le dé roule tout seul ; on peut l'attraper, le lancer, et il revient à sa place.
+2. Le bouton de langue bascule toute la page entre FR et EN, et le choix survit à un rechargement.
+3. Se connecter avec le compte A (Google, Discord ou email) : le menu s'affiche, l'avatar apparaît en haut à droite à côté du bouton de langue, sans chevauchement.
+4. Changer la couleur du profil, recharger : elle est conservée. Se connecter depuis un autre navigateur : même couleur, puisqu'elle est enregistrée sur le compte.
+5. Se déconnecter depuis l'avatar : retour au panneau d'accueil.
 
-## Room Lifecycle
-1. Join the same room from all clients.
-2. Leave the room to the menu and re-enter twice from each client.
-3. Refresh one client while staying in the room and confirm the client can recover without selecting a different room.
-4. If the room is password-protected, verify:
-   1. valid password joins successfully
-   2. invalid password is rejected cleanly
-   3. remembered password allows re-entry without a prompt
+## Visiteur et salle de démonstration
+1. Sans compte, cliquer sur « Visiter en invité » : la salle de démonstration s'ouvre avec son bandeau, la fiche « Cake » complète, les images et le dessin.
+2. Dessiner, déplacer une image, modifier la fiche, puis quitter.
+3. Revenir en invité quand la salle est vide : tout est revenu à l'état d'origine.
+4. Dans la salle, le menu import/export ne propose aucune action cloud.
 
-## Realtime Session
-1. Send chat messages from every client and confirm identical ordering everywhere.
-2. Roll dice from every client and confirm:
-   1. result popup appears
-   2. history is synchronized
-   3. stats update consistently
-3. Toggle chat, stats, summary, notes, and any side panels repeatedly and verify panel state remains coherent.
-4. Confirm live presence indicators and avatar stacks update as clients join and leave.
+## Tables et invitations
+1. Le compte A crée une table : elle apparaît dans sa liste, avec un code d'invitation.
+2. Le compte B ne voit pas cette table dans sa liste.
+3. Le compte B ouvre directement l'adresse de la table, copiée depuis A : l'écran « Accès refusé » s'affiche et lui dit de demander le code.
+4. Le compte B saisit le code d'invitation sur l'accueil : la table apparaît, et il peut y entrer.
+5. Un mauvais code est refusé proprement.
+6. Table protégée par mot de passe : le bon mot de passe fait entrer, un mauvais est refusé proprement, et après plusieurs erreurs un blocage temporaire s'affiche.
+7. Le compte A renomme puis supprime la table ; le compte B ne peut faire ni l'un ni l'autre.
 
-## Character And Storage
-1. Create, edit, select, and delete local character sheets.
-2. Import and export a character locally and verify no data loss.
-3. Save a character to room storage and verify another client can load the same state.
-4. Save, list, import, and delete a character through Blob cloud storage.
-5. Confirm the selected character persists correctly after menu-to-room round trips.
+## Rôle de MJ
+1. Dans la table, les messages de A (le créateur) portent la couronne, ceux de B non.
+2. Seul A voit le sélecteur de fiches du MJ.
+3. Dans le menu, l'indicateur de MJ s'allume quand la table sélectionnée est une table dont on est MJ.
 
-## Canvas, Media, And Music
-1. Draw on the shared canvas from two clients at once and confirm strokes remain synchronized.
-2. Upload at least one image and confirm the uploaded asset appears for all connected clients.
-3. Move or interact with uploaded canvas elements and verify shared state remains stable.
-4. Test YouTube music controls and verify playback state, queue state, and initial volume behavior stay consistent across reloads.
+## Fiches de personnage
+1. Le compte A crée, modifie, sélectionne et supprime une fiche dans le menu.
+2. Se connecter avec A depuis un autre navigateur : les mêmes fiches sont là.
+3. Modifier sa fiche en jeu, revenir au menu, recharger : la modification est conservée.
+4. Fenêtre « Cloud » : enregistrer une fiche, la retrouver dans la liste, l'importer, la supprimer.
+5. Exporter puis réimporter une fiche en fichier : rien n'est perdu.
+6. Après être passé dans une table, les fiches des autres joueurs n'apparaissent pas sur son compte depuis un autre navigateur.
 
-## Responsive And Recovery
-1. Test the tablet in portrait and landscape.
-2. Resize desktop windows through several widths and confirm no unusable layouts or hidden critical actions.
-3. Disconnect one client from the network, reconnect it, and verify the room state, chat history, and character state recover cleanly.
-4. Confirm debug logs appear only when `NEXT_PUBLIC_DEBUG=1`.
+## Temps réel
+1. Messages de chat envoyés depuis A et B : même ordre chez tout le monde.
+2. Lancers de dés depuis les deux : la fenêtre de résultat apparaît, l'historique et les statistiques se synchronisent.
+3. Dessiner à deux en même temps : les traits restent synchronisés.
+4. Envoyer une image : elle apparaît chez l'autre.
+5. Musique YouTube : lecture, file d'attente et volume restent cohérents après un rechargement.
+6. Ouvrir et fermer plusieurs fois le chat, les statistiques, le résumé et les notes : les panneaux restent cohérents.
+7. Présence : les avatars apparaissent et disparaissent quand on entre et qu'on sort.
 
-## Release Criteria
-- No blocking console, runtime, or route errors during the checklist.
-- No state loss when navigating menu to room, refreshing, or reconnecting.
-- No leaked secrets or raw passwords in API responses visible from browser tools.
-- Any remaining issue must be documented as explicitly non-blocking before release.
+## Robustesse et affichage
+1. Couper le réseau d'une fenêtre puis le rétablir : le chat, la fiche et la table reviennent.
+2. Recharger en pleine partie : on revient dans la même table sans avoir à la resélectionner.
+3. Tablette ou téléphone, en portrait puis en paysage : aucune action indispensable n'est cachée. L'affichage mobile n'a pas encore été retravaillé : noter ce qui gêne.
+
+## Panel d'administration
+1. Connecté avec le compte administrateur, `/admin` liste toutes les tables et permet de les renommer, de retirer un mot de passe et de les supprimer.
+
+## Critères de mise en ligne
+- Aucune erreur bloquante dans la console ni dans les réponses de l'application.
+- Aucune perte de données en passant du menu à une table, en rechargeant ou en se reconnectant.
+- Aucun secret ni mot de passe visible dans les réponses du serveur.
+- Tout problème restant est noté dans `TODO.md` comme non bloquant avant de publier.

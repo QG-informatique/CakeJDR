@@ -18,12 +18,12 @@
 - [x] Migrer la propriete des rooms vers `ownerId` (secret navigateur garde en secours)
 - [x] Remplacer le pseudo local par le compte Clerk dans toute l'application
 - [x] Remplacer la sauvegarde cloud (Vercel Blob, ouverte a tous) par des fiches rattachees au compte
-- [ ] Faire de la liste de fiches du menu une liste du compte, et non plus d'abord du navigateur (l'envoi vers le compte est aujourd'hui manuel)
+- [x] Faire de la liste de fiches du menu une liste du compte, et non plus d'abord du navigateur (l'envoi vers le compte est aujourd'hui manuel)
 - [x] Supprimer la bascule « mode MJ » cochable par n'importe qui
 - [x] Brancher le role de MJ sur `room_members.role`, fixe par le serveur dans la session Liveblocks
 - [x] Reserver l'acces aux tables a leurs membres : l'adresse seule ne suffit plus
 - [ ] Tester avec un second compte : invitation par code, couronne de MJ dans le chat, fiche imposee par le MJ
-- [ ] Aligner l'indicateur de MJ du menu sur le role par table (il reflete encore le role administrateur)
+- [x] Aligner l'indicateur de MJ du menu sur le role par table (il reflete encore le role administrateur)
 - [x] Accepter un role admin sur le compte, en plus du mot de passe
 - [x] Ajouter le bouton « Visiter sans compte » sur l'ecran de connexion
 
@@ -48,6 +48,8 @@
 - [x] Interdire au visiteur la sauvegarde cloud des fiches
 
 ## Mise en ligne — à faire avant le premier deploiement en production
+- [ ] Obtenir une adresse de production à soi : Clerk refuse les adresses `.vercel.app`. Un sous-domaine d'un domaine existant suffit (par exemple `jdr.<domaine>`), avec les cinq enregistrements DNS que Clerk indique
+- [x] Réécrire `MANUAL_TEST_PLAN.md` pour les comptes, les invitations, les rôles, la salle de démonstration et les fiches du compte
 - [ ] Publier les commits locaux : la version en ligne date du 30 août et n'a aucune des protections de la phase 0 (suppression de tables ouverte à tous, notamment)
 - [ ] Creer l'application OAuth Discord et renseigner ses identifiants dans Clerk (obligatoire : l'instance de production n'utilise pas les identifiants partages)
 - [ ] Creer l'application OAuth Google et renseigner ses identifiants dans Clerk

@@ -20,6 +20,7 @@ import useOnlineStatus from './hooks/useOnlineStatus'
 import ErrorBoundary from '@/components/misc/ErrorBoundary'
 import { debug } from '@/lib/debug'
 import { roomAuthHeaders } from '@/lib/roomsApi'
+import { saveAccountCharacter } from '@/lib/charactersApi'
 import {
   type Character,
   buildCharacterKey,
@@ -61,6 +62,9 @@ export default function HomePageInner() {
   // connexion se stabilisent, ce qui relance cet effet.
   const remoteCharacterAppliedRef = useRef(false)
   const initialBackupDone = useRef(false)
+  // Enregistrement de la fiche sur le compte, regroupe sur deux secondes.
+  const accountSaveTimer = useRef<number | null>(null)
+  const pendingAccountSave = useRef<Character | null>(null)
   // total durée d'indisponibilité du bouton (animation + hold + cooldown)
   const ROLL_TOTAL_MS = 2000 + 300 + 2000 + 1000
 
@@ -365,7 +369,28 @@ export default function HomePageInner() {
       return finalList
     })
     void saveCharacterToCloud(updatedPerso)
+    // La fiche du joueur suit son compte : chaque modification faite en jeu y
+    // est enregistree, regroupee sur deux secondes pour ne pas envoyer une
+    // requete par champ modifie. Les fiches des autres joueurs ne sont pas
+    // concernees.
+    if (profile?.signedIn && updatedPerso.owner === profile.pseudo) {
+      pendingAccountSave.current = updatedPerso
+      if (accountSaveTimer.current) window.clearTimeout(accountSaveTimer.current)
+      accountSaveTimer.current = window.setTimeout(() => {
+        const pending = pendingAccountSave.current
+        pendingAccountSave.current = null
+        if (pending) void saveAccountCharacter(pending).catch(() => {})
+      }, 2000)
+    }
   }
+
+  // En quittant la table, une modification encore en attente est envoyee
+  // tout de suite plutot que perdue.
+  useEffect(() => () => {
+    if (accountSaveTimer.current) window.clearTimeout(accountSaveTimer.current)
+    const pending = pendingAccountSave.current
+    if (pending) void saveAccountCharacter(pending).catch(() => {})
+  }, [])
 
   const handleGMSelect = (char: Character) => {
     const next = normalizeCharacter(

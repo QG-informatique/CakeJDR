@@ -1,5 +1,15 @@
 # Journal
 
+## 2026-09-10 (suite 6) — Fiches du menu synchronisées avec le compte
+
+- La liste de fiches du menu suit le compte : à l'ouverture, les fiches du compte redescendent (la plus récente l'emporte) et celles du joueur qui n'existaient que dans ce navigateur montent une fois ; chaque ajout, modification ou suppression est ensuite répercuté. En jeu, les modifications de sa fiche sont enregistrées, regroupées sur deux secondes et envoyées aussi en quittant la table.
+- Piège évité : la liste locale contient aussi les fiches des autres joueurs, récupérées en passant dans leurs tables, et la fiche de démonstration. Seules les fiches dont le joueur est propriétaire vont sur son compte.
+- Indicateur de MJ du menu aligné sur le rôle dans la table sélectionnée ; `MANUAL_TEST_PLAN.md` réécrit en français pour les comptes, invitations, rôles et fiches (il parlait encore de Blob et d'un mot de passe mémorisé supprimé).
+- Vérifié : compilation, lint, build. Le parcours connecté n'a pas pu être testé faute de session de test : il est couvert par le plan de test.
+
+Reste ouvert : pour la mise en ligne, Clerk exige en production un domaine à soi (les adresses `.vercel.app` sont refusées) — vérifié dans la documentation Clerk.
+
+
 ## 2026-09-10 (suite 5) — Role de MJ par table, acces reserve aux membres
 
 - Le role de MJ est fixe par le serveur, table par table, dans les infos de session Liveblocks : MJ si l'on est inscrit comme tel dans la table, si l'on est administrateur, ou dans la salle de demonstration. La couronne du chat vient du role de l'expediteur et non plus de ce qu'annonce le message ; un evenement « MJ » qui impose une fiche est refuse s'il ne vient pas d'un MJ (un evenement fabrique a la main le permettait) ; le selecteur de fiche du MJ n'apparait qu'aux MJ.
