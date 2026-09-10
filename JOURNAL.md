@@ -1,5 +1,14 @@
 # Journal
 
+## 2026-09-10 (suite 2) — Coins du de et bouton de langue
+
+- Coins du de : le noyau rose ne bouchait les trous des sommets que sous certains angles, d'ou des coins tantot roses tantot vides. Retire au profit d'un arrondi des faces reduit de 14 a 6 px : le trou devient invisible sous tous les angles. Un de a la fois tres arrondi et sans trou n'est pas faisable proprement en CSS, qui ne manipule que des carres plats.
+- Bouton de langue : il n'avait pas change depuis aout 2025, mais affichait des drapeaux en emoji, que Windows ne sait pas dessiner (il ecrit « GB » ou « FR »). Drapeaux redessines en SVG, code FR/EN ajoute, bouton reduit.
+- Le bouton de langue et l'avatar etaient fixes chacun de leur cote et se chevauchaient une fois connecte : ils sont ranges dans une seule barre en haut a droite.
+
+Reste ouvert : les textes ajoutes recemment (panneau de connexion, bandeau de demo, invitation) sont ecrits en dur en francais et ne suivent pas la bascule de langue, dont la valeur par defaut est l'anglais.
+
+
 ## 2026-09-10 (suite) — Finitions du de et CRON_SECRET
 
 - Coins du de : les faces arrondies laissaient un trou a chaque sommet, on voyait le fond au travers. Ajout d'un noyau rose interieur (90 px, a 45 px du centre), visible uniquement par ces trous : les coins deviennent roses sans perdre l'arrondi. Taille choisie sous la limite (~46 px) au-dela de laquelle ses sommets depasseraient.

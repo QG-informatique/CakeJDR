@@ -506,10 +506,14 @@ export default function MenuAccueil() {
 
       {/* Header avec le bouton qui change de fond */}
       {user && <MenuHeader user={user} />}
-      <LanguageSwitcher />
-      {/* Le panneau de connexion porte deja ces actions quand on est
-          deconnecte : on evite de les afficher deux fois. */}
-      {user && <AuthControls />}
+      {/* Barre d'outils en haut a droite : la langue, puis le compte une fois
+          connecte. Un seul conteneur fixe : avant, chacun etait fixe de son
+          cote et le bouton de langue recouvrait l'avatar. */}
+      <div className="fixed right-3 top-3 z-50 flex items-center gap-2">
+        <LanguageSwitcher />
+        {/* Deconnecte, le panneau de connexion porte deja ces actions. */}
+        {user && <AuthControls />}
+      </div>
 
       <div className="w-full min-h-screen relative text-white px-6 pb-8 flex flex-col max-w-7xl mx-auto bg-transparent overflow-hidden">
         {!user ? (

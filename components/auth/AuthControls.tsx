@@ -10,15 +10,14 @@ import VisitDemoButton from './VisitDemoButton'
  * bouton dans `<SignInButton>` / `<SignUpButton>` : avec un enfant
  * personnalisé, ces composants ne transmettaient pas le clic.
  *
- * Étape intermédiaire de la phase 1 : ils cohabitent pour l'instant avec
- * l'ancien profil stocké dans le navigateur, le temps de basculer l'identité
- * côté serveur. L'ancien pseudo local disparaîtra ensuite.
+ * Pas de position fixe ici : la barre d'outils du menu les place, à côté du
+ * bouton de langue, pour que les deux ne se chevauchent pas.
  */
 export default function AuthControls() {
   const { openSignIn, openSignUp } = useClerk()
 
   return (
-    <div className="fixed right-4 top-4 z-50 flex items-center gap-2">
+    <div className="flex items-center gap-2">
       <Show when="signed-out">
         <VisitDemoButton />
         <button
