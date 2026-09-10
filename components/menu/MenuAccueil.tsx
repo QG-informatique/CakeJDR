@@ -15,6 +15,11 @@ import { useRouter } from 'next/navigation'
 import { fetchRooms as fetchRoomsApi, roomAuthHeaders } from '@/lib/roomsApi'
 import { useClerk } from '@clerk/nextjs'
 import useProfile from '../app/hooks/useProfile'
+import {
+  deleteAccountCharacter,
+  listAccountCharacters,
+  saveAccountCharacter,
+} from '@/lib/charactersApi'
 import SignedOutPanel from '../auth/SignedOutPanel'
 import { defaultPerso } from '../sheet/CharacterSheet'
 import MenuHeader from './MenuHeader'
@@ -61,6 +66,9 @@ export default function MenuAccueil() {
   const [roomLoading, setRoomLoading] = useState(false)
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const [cloudOpen, setCloudOpen] = useState(false)
+  // Le role de MJ est propre a chaque table : l'indicateur suit la table
+  // selectionnee (l'administrateur a les outils du MJ partout).
+  const isGMHere = !!user?.isMJ || selectedRoom?.role === 'gm'
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -125,10 +133,14 @@ export default function MenuAccueil() {
     fetchRoomsApi()
       .then((list) => {
         if (cancelled) return
-        if (!list.some((r) => r.id === selectedRoom.id)) {
+        const fresh = list.find((r) => r.id === selectedRoom.id)
+        if (!fresh) {
           localStorage.removeItem(ROOM_KEY)
           setSelectedRoom(null)
           setRemoteChars({})
+        } else if (fresh.role !== selectedRoom.role) {
+          // Role memorise perime ou absent : on reprend celui du serveur.
+          setSelectedRoom(fresh)
         }
       })
       .catch(() => {})
@@ -162,16 +174,82 @@ export default function MenuAccueil() {
     }
   }, [])
 
+  /**
+   * Les fiches du joueur suivent son compte. La liste locale contient aussi
+   * les fiches d'autres joueurs, recuperees en passant dans leurs tables :
+   * celles-la restent locales, sans quoi elles atterriraient sur son compte.
+   */
+  const isMine = (c: Character) => !c.owner || c.owner === user?.pseudo
+
   const saveCharacters = (chars: Character[]) => {
     const normalized = chars.map((c) =>
       normalizeCharacter(c, user?.pseudo ?? null),
     )
+    // On repercute sur le compte uniquement ce qui a change : une requete
+    // par fiche ajoutee, modifiee ou supprimee, pas la liste entiere.
+    if (user) {
+      const before = new Map(characters.map((c) => [String(c.id), c]))
+      const after = new Set(normalized.map((c) => String(c.id)))
+      for (const c of normalized) {
+        const prev = before.get(String(c.id))
+        if (isMine(c) && (!prev || JSON.stringify(prev) !== JSON.stringify(c))) {
+          void saveAccountCharacter(c).catch(() => setStatusMessage(t('saveCloudFail')))
+        }
+      }
+      for (const [id, c] of before) {
+        // Une fiche jamais envoyee renvoie 404 a la suppression : sans importance.
+        if (!after.has(id) && isMine(c)) void deleteAccountCharacter(id).catch(() => {})
+      }
+    }
     localStorage.setItem('jdr_characters', JSON.stringify(normalized))
     setCharacters(normalized)
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('jdr_characters_change'))
     }
   }
+
+  // A l'ouverture du menu : les fiches du compte redescendent dans la liste,
+  // et celles du joueur qui n'existaient que dans ce navigateur montent une
+  // fois. En cas de conflit, la version la plus recente l'emporte.
+  // Dependances limitees a des chaines stables : `user` est un nouvel objet a
+  // chaque rendu, et relancer l'effet annulerait la synchronisation en cours.
+  const accountId = user?.id
+  const accountPseudo = user?.pseudo
+  const accountSyncedRef = useRef(false)
+  useEffect(() => {
+    if (!accountId || accountSyncedRef.current) return
+    accountSyncedRef.current = true
+    listAccountCharacters()
+      .then(async (remote) => {
+        let local: Character[] = []
+        try {
+          const raw = JSON.parse(localStorage.getItem('jdr_characters') || '[]')
+          if (Array.isArray(raw)) local = raw.map((c: Character) => normalizeCharacter(c))
+        } catch {}
+        const byId = new Map<string, Character>()
+        for (const c of local) byId.set(String(c.id), c)
+        for (const r of remote) {
+          const l = byId.get(String(r.id))
+          if (!l || Number(r.updatedAt ?? 0) >= Number(l.updatedAt ?? 0)) byId.set(String(r.id), r)
+        }
+        const remoteIds = new Set(remote.map((r) => String(r.id)))
+        const toUpload = local.filter(
+          (c) => !remoteIds.has(String(c.id)) && (!c.owner || c.owner === accountPseudo),
+        )
+        await Promise.allSettled(toUpload.map((c) => saveAccountCharacter(c)))
+        const merged = Array.from(byId.values())
+        localStorage.setItem('jdr_characters', JSON.stringify(merged))
+        setCharacters(merged)
+        // L'ordre a pu changer : on retrouve la fiche selectionnee par son id.
+        const { id: selId } = parseSelectionKey(localStorage.getItem(SELECTED_KEY))
+        const idx = selId ? merged.findIndex((c) => String(c.id) === selId) : -1
+        setSelectedIdx(idx === -1 ? null : idx)
+        window.dispatchEvent(new Event('jdr_characters_change'))
+      })
+      .catch(() => {
+        // Hors ligne : on garde la liste locale telle quelle.
+      })
+  }, [accountId, accountPseudo])
 
   const handleLogout = () => {
     if (loggingOut) return
@@ -595,22 +673,24 @@ export default function MenuAccueil() {
               <div className="shrink-0 flex items-center justify-end w-[120px] gap-3">
                 <span
                   title={
-                    user.isMJ
-                      ? t('gmToolsActive')
-                      : t('gmRoleFromAccount')
+                    !selectedRoom
+                      ? t('gmPickTable')
+                      : isGMHere
+                        ? t('gmToolsActive')
+                        : t('gmPlayerHere')
                   }
                   className={`
                     relative inline-flex items-center justify-center
                     w-14 h-10 rounded-md font-semibold text-sm
                     transition border
                     ${
-                      user.isMJ
+                      isGMHere
                         ? 'bg-[#f472b6]/20 hover:bg-[#f472b6]/35 border-[#f472b6]/40'
                         : 'bg-gray-700/70 hover:bg-gray-600/70 border-gray-400/30'
                     }
                   `}
                   style={{
-                    boxShadow: user.isMJ
+                    boxShadow: isGMHere
                       ? '0 0 0 1px rgba(244,114,182,0.14), 0 0 12px -2px #f472b630'
                       : '0 0 0 1px rgba(255,255,255,0.05), 0 2px 8px -2px rgba(0,0,0,0.55)',
                   }}
@@ -621,7 +701,7 @@ export default function MenuAccueil() {
                       className={`
                         block w-2.5 h-2.5 rounded-full transition
                         ${
-                          user.isMJ
+                          isGMHere
                             ? 'bg-fuchsia-300 shadow-[0_0_6px_2px_rgba(217,70,239,0.5)]'
                             : 'bg-gray-300/80'
                         }

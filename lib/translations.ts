@@ -194,6 +194,8 @@ export const translations = {
     roomDeniedPassword: "This table is password-protected. Join it from the home screen.",
     roomDeniedOther: "This table could not be opened.",
     backToHome: "Back to home",
+    gmPickTable: "Select a table to see your role",
+    gmPlayerHere: "You are a player at this table",
   },
   fr: {
     addSkill: 'Ajouter une compétence',
@@ -390,6 +392,8 @@ export const translations = {
     roomDeniedPassword: "Cette table est protégée par un mot de passe. Rejoins-la depuis l'accueil.",
     roomDeniedOther: "Impossible d'ouvrir cette table.",
     backToHome: "Retour à l'accueil",
+    gmPickTable: "Sélectionne une table pour voir ton rôle",
+    gmPlayerHere: "Tu es joueur dans cette table",
   },
 } as const
 
