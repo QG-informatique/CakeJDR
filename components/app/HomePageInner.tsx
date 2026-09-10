@@ -36,6 +36,8 @@ export default function HomePageInner() {
   const profile = useProfile()
   const self = useSelf()
   const myConnectionId = self?.connectionId ?? null
+  // Rôle dans cette table, fixé par le serveur à l'ouverture de la session.
+  const isGM = self?.info?.role === 'gm'
   const [perso, setPerso] = useState<Character>(() =>
     normalizeCharacter(defaultPerso),
   )
@@ -111,6 +113,10 @@ export default function HomePageInner() {
     }
 
     if (event.type === 'gm-select') {
+      // Seul un MJ de la table peut imposer une fiche à un joueur. Le rôle de
+      // l'expéditeur vient des infos de session posées par le serveur : il ne
+      // peut pas être usurpé en fabriquant l'événement à la main.
+      if (payload.user?.info?.role !== 'gm') return
       const selectionTarget: number | null =
         typeof event.targetConnectionId === 'number' ? event.targetConnectionId : null
       // Ne change jamais la fiche des autres sauf si explicitement ciblé
@@ -423,7 +429,7 @@ export default function HomePageInner() {
       <div className="relative z-10 flex flex-col lg:flex-row w-full h-full">
         <CharacterSheet perso={perso} onUpdate={handleUpdatePerso} chatBoxRef={chatBoxRef} allCharacters={characters} logoOnly>
           <span className="ml-2">
-            <GMCharacterSelector onSelect={handleGMSelect} />
+            {isGM && <GMCharacterSelector onSelect={handleGMSelect} />}
           </span>
           <span className="ml-1">
             <ImportExportMenu perso={perso} onUpdate={handleUpdatePerso} />
@@ -473,8 +479,8 @@ export default function HomePageInner() {
           <ChatBox
             chatBoxRef={chatBoxRef}
             history={history}
-            author={profile?.isMJ
-              ? profile.pseudo
+            author={isGM
+              ? (profile?.pseudo ?? 'MJ')
               : perso.nom || profile?.pseudo || 'Anonymous'}
           />
         </ErrorBoundary>

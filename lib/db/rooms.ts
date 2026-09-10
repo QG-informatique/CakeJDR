@@ -130,3 +130,18 @@ export async function isRoomMember(roomId: string, userId: string | null | undef
     .limit(1)
   return rows.length > 0
 }
+
+/** Rôle du joueur dans la table, ou `null` s'il n'en est pas membre. */
+export async function getMemberRole(
+  roomId: string,
+  userId: string,
+): Promise<'gm' | 'player' | null> {
+  const rows = await db
+    .select({ role: roomMembers.role })
+    .from(roomMembers)
+    .where(and(eq(roomMembers.roomId, roomId), eq(roomMembers.userId, userId)))
+    .limit(1)
+  const role = rows[0]?.role
+  if (!role) return null
+  return role === 'gm' ? 'gm' : 'player'
+}

@@ -188,6 +188,12 @@ export const translations = {
     cloudImport: "Import",
     cloudDeleteConfirm: "Delete this sheet from your account?",
     cloudLoading: "Loading…",
+    roomDeniedTitle: "Access denied",
+    roomDeniedSignIn: "Sign in to join this table.",
+    roomDeniedNotMember: "You are not a member of this table. Ask the person who created it for its invitation code, then enter it on the home screen.",
+    roomDeniedPassword: "This table is password-protected. Join it from the home screen.",
+    roomDeniedOther: "This table could not be opened.",
+    backToHome: "Back to home",
   },
   fr: {
     addSkill: 'Ajouter une compétence',
@@ -378,6 +384,12 @@ export const translations = {
     cloudImport: "Importer",
     cloudDeleteConfirm: "Supprimer cette fiche de ton compte ?",
     cloudLoading: "Chargement…",
+    roomDeniedTitle: "Accès refusé",
+    roomDeniedSignIn: "Connecte-toi pour rejoindre cette table.",
+    roomDeniedNotMember: "Tu n'es pas membre de cette table. Demande son code d'invitation à la personne qui l'a créée, puis saisis-le sur l'accueil.",
+    roomDeniedPassword: "Cette table est protégée par un mot de passe. Rejoins-la depuis l'accueil.",
+    roomDeniedOther: "Impossible d'ouvrir cette table.",
+    backToHome: "Retour à l'accueil",
   },
 } as const
 

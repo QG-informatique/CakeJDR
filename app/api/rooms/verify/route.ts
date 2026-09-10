@@ -9,6 +9,8 @@ import {
 } from '@/lib/roomAuth'
 import { clientIp, rateLimit, resetRateLimit } from '@/lib/rateLimit'
 import { resetDemoRoomIfEmpty } from '@/lib/db/demo'
+import { syncCurrentUser } from '@/lib/db/users'
+import { resolveRoomAccess } from '@/lib/db/roomAccess'
 import { fail, ok } from '@/lib/api-response'
 
 /**
@@ -86,6 +88,20 @@ export async function POST(req: NextRequest) {
 
     const meta = ((room as { metadata?: RoomMetadata })?.metadata ?? {}) as RoomMetadata
     const guarded = roomHasPassword(meta)
+
+    // Seuls les membres de la table obtiennent un jeton (ainsi que tout le
+    // monde pour la salle de démonstration, et l'administrateur) : sinon,
+    // connaître l'adresse d'une table suffirait pour y entrer et lire ses fiches.
+    const account = await syncCurrentUser().catch(() => null)
+    const access = await resolveRoomAccess(id, account)
+    if (!access.allowed) {
+      return fail(
+        access.reason === 'sign-in-required'
+          ? 'sign in to join this table'
+          : 'not a member of this table — ask for its invitation code',
+        403,
+      )
+    }
 
     // Salle de démonstration vide : on la remet dans son état de référence
     // avant de laisser entrer, pour que chaque visiteur la découvre intacte.

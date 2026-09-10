@@ -1,5 +1,6 @@
 "use client";
-import { ReactNode, useCallback } from "react";
+import { ReactNode, useCallback, useState } from "react";
+import RoomAccessDenied, { type DeniedReason } from "@/components/rooms/RoomAccessDenied";
 import { LiveblocksProvider, RoomProvider, ClientSideSuspense } from "@liveblocks/react/suspense";
 import { LiveMap, LiveObject, LiveList } from '@liveblocks/client'
 
@@ -13,8 +14,10 @@ export function Room({
   /**
    * authEndpoint sous forme de fonction pour pouvoir passer le token d'accès
    * signé côté serveur lors de la vérification du mot de passe de room.
-   * Pour les rooms sans MDP, le token est absent et l'accès est accordé librement.
+   * L'accès reste réservé aux membres de la table : c'est le serveur qui décide.
    */
+  const [denied, setDenied] = useState<DeniedReason | null>(null)
+
   const authEndpoint = useCallback(async (roomId?: string) => {
     const room = roomId ?? ''
     const accessToken = typeof sessionStorage !== 'undefined'
@@ -28,8 +31,22 @@ export function Room({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ room, accessToken, ts }),
     })
+    if (!res.ok) {
+      // Refus d'accès. Avant, le message d'erreur partait dans res.json(), la
+      // connexion échouait sans explication et l'écran restait sur
+      // « Loading... » indéfiniment.
+      const text = await res.text().catch(() => '')
+      setDenied(
+        res.status === 403
+          ? text.startsWith('Sign in') ? 'sign-in' : 'not-member'
+          : res.status === 401 ? 'password' : 'other',
+      )
+      throw new Error(text || `Room access denied (${res.status})`)
+    }
     return res.json() as Promise<{ token: string }>
   }, [])
+
+  if (denied) return <RoomAccessDenied reason={denied} />
 
   return (
     <LiveblocksProvider authEndpoint={authEndpoint}>

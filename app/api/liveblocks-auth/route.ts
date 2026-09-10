@@ -4,6 +4,7 @@ import { Liveblocks } from '@liveblocks/node'
 import { randomUUID } from 'node:crypto'
 import { roomHasPassword, verifyRoomToken } from '@/lib/roomAuth'
 import { syncCurrentUser } from '@/lib/db/users'
+import { resolveRoomAccess } from '@/lib/db/roomAccess'
 
 const secret = process.env.LIVEBLOCKS_SECRET_KEY
 
@@ -34,6 +35,21 @@ export async function POST(request: Request) {
     return new Response('Room not found', { status: 404 })
   }
 
+  // Identité : le compte Clerk s'il y en a un, sinon un visiteur anonyme.
+  const account = await syncCurrentUser().catch(() => null)
+
+  // Connaître l'adresse d'une table ne suffit pas pour y entrer : il faut en
+  // être membre (créateur, ou invité avec son code d'invitation), sauf pour la
+  // salle de démonstration et pour l'administrateur.
+  const access = await resolveRoomAccess(room, account)
+  if (!access.allowed) {
+    const message =
+      access.reason === 'sign-in-required'
+        ? 'Sign in to join this table'
+        : 'Not a member of this table — ask for its invitation code'
+    return new Response(message, { status: 403 })
+  }
+
   const meta = (roomData.metadata ?? {}) as Record<string, unknown>
 
   // Le prédicat est partagé avec /api/rooms/verify. Cette route ne testait
@@ -47,15 +63,12 @@ export async function POST(request: Request) {
     }
   }
 
-  // Identité : le compte Clerk s'il y en a un, sinon un visiteur anonyme.
-  // Le pseudo et la couleur sont posés ici, côté serveur, et non plus tirés
-  // du localStorage : un joueur ne peut donc plus se faire passer pour un autre.
-  const account = await syncCurrentUser().catch(() => null)
-
+  // Pseudo, couleur et rôle sont posés ici, côté serveur : un joueur ne peut
+  // ni se faire passer pour un autre, ni se déclarer MJ.
   const userId = account?.id ?? `guest_${randomUUID()}`
   const userInfo = account
-    ? { pseudo: account.pseudo, color: account.color, signedIn: true }
-    : { pseudo: 'Visiteur', color: '#9ca3af', signedIn: false }
+    ? { pseudo: account.pseudo, color: account.color, signedIn: true, role: access.role }
+    : { pseudo: 'Visiteur', color: '#9ca3af', signedIn: false, role: access.role }
 
   const session = liveblocks.prepareSession(userId, { userInfo })
   session.allow(room, session.FULL_ACCESS)

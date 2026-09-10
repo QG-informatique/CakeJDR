@@ -1,5 +1,15 @@
 # Journal
 
+## 2026-09-10 (suite 5) — Role de MJ par table, acces reserve aux membres
+
+- Le role de MJ est fixe par le serveur, table par table, dans les infos de session Liveblocks : MJ si l'on est inscrit comme tel dans la table, si l'on est administrateur, ou dans la salle de demonstration. La couronne du chat vient du role de l'expediteur et non plus de ce qu'annonce le message ; un evenement « MJ » qui impose une fiche est refuse s'il ne vient pas d'un MJ (un evenement fabrique a la main le permettait) ; le selecteur de fiche du MJ n'apparait qu'aux MJ.
+- Acces aux tables reserve aux membres (`lib/db/roomAccess.ts`) : connaitre l'adresse d'une table suffisait pour y entrer, malgre la fin de l'annuaire public. La connexion Liveblocks et la verification des tables refusent desormais un non-membre, sauf salle de demonstration et administrateur.
+- Ecran « Acces refuse » qui explique quoi faire (se connecter, demander le code, passer par l'accueil pour une table a mot de passe) : un refus laissait la salle sur « Loading... » indefiniment.
+- Verifie : visiteur refuse sur une table sans membre (403), jeton de la salle de demo portant le role MJ, ecran de refus affiche, salle de demo intacte. Le parcours MJ avec deux vrais comptes (couronne, fiche imposee a un joueur) n'a pas pu etre teste faute de session de test.
+
+Reste ouvert : l'indicateur de MJ du menu reflete encore le role administrateur, pas le role par table.
+
+
 ## 2026-09-10 (suite 4) — Fiches de personnage rattachees au compte
 
 - La sauvegarde cloud des fiches passe de Vercel Blob a la base : nouvelle route `/api/characters` (lecture, enregistrement, suppression), qui exige un compte et ne montre a chacun que ses fiches. Blob exposait les fiches de tous a tous, meme sans compte. La cle en base combine le compte et l'identifiant de la fiche, pour que deux joueurs qui importent le meme fichier ne s'ecrasent pas.
