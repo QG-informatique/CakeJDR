@@ -26,9 +26,9 @@ test('roomstorage refuses access without a room token', async ({ request }) => {
   expect(body.ok).toBe(false)
 })
 
-test('blob rejects filenames outside the allowed namespace', async ({ request }) => {
-  const res = await request.delete('/api/blob?filename=../secret.txt')
-  expect(res.status()).toBe(400)
+test('character sheets require an account', async ({ request }) => {
+  const res = await request.get('/api/characters')
+  expect(res.status()).toBe(401)
 })
 
 test('security headers are present', async ({ request }) => {

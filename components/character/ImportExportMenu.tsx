@@ -1,6 +1,7 @@
 'use client'
 
 import { FC, useRef, useState, useEffect } from 'react'
+import { useUser } from '@clerk/nextjs'
 import { useT } from '@/lib/useT'
 import { Folder } from 'lucide-react'
 import { defaultPerso } from '../sheet/CharacterSheet'
@@ -9,6 +10,11 @@ import {
   buildCharacterKey,
   normalizeCharacter,
 } from '@/types/character'
+import {
+  deleteAccountCharacter,
+  listAccountCharacters,
+  saveAccountCharacter,
+} from '@/lib/charactersApi'
 
 type Props = {
   perso: Character
@@ -45,11 +51,15 @@ const addToList = (char: Character) => {
 const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
   const [open, setOpen] = useState(false)
   const [modal, setModal] = useState<'import' | 'export' | 'delete' | null>(null)
-  const [cloudFiles, setCloudFiles] = useState<string[]>([])
+  const [cloudChars, setCloudChars] = useState<Character[]>([])
   const [localChars, setLocalChars] = useState<Character[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const t = useT()
+  // La sauvegarde en ligne est rattachée au compte : un visiteur de la salle
+  // de démonstration n'y a pas accès. Le serveur le refuse de toute façon ;
+  // masquer les boutons évite juste de proposer une action vouée à l'échec.
+  const { isSignedIn } = useUser()
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -65,19 +75,10 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
 
   useEffect(() => {
     if (!modal) return
-    const roomId = (() => {
-      try {
-        const r = JSON.parse(localStorage.getItem('jdr_selected_room') || '{}')
-        return r.id || 'global'
-      } catch { return 'global' }
-    })()
-    // Lister tous les fichiers de la room, peu importe l'owner
-    const prefix = `FichePerso/${roomId}_`
     if (modal === 'import' || modal === 'delete') {
-      fetch(`/api/blob?prefix=${encodeURIComponent(prefix)}`)
-        .then(res => res.json())
-        .then(data => setCloudFiles(data.files?.blobs?.map((b: { pathname: string }) => b.pathname) || []))
-        .catch(() => setCloudFiles([]))
+      listAccountCharacters()
+        .then(setCloudChars)
+        .catch(() => setCloudChars([]))
     }
     if (modal === 'export') {
       try {
@@ -89,7 +90,7 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
         )
       } catch { setLocalChars([]) }
     }
-  }, [modal, perso.owner])
+  }, [modal])
 
   // Export fiche
   const handleExport = () => {
@@ -123,7 +124,6 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
         alert(t('importSuccess'))
       } catch {
         alert(t('importFail'))
-        // onUpdate({ ...defaultPerso }) // Optionnel : reset fiche si import KO
       }
     }
     reader.readAsText(file)
@@ -154,7 +154,6 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
         alert(t('loadLocalSuccess'))
       } catch {
         alert(t('loadLocalFail'))
-        // onUpdate({ ...defaultPerso }) // Optionnel : reset si load KO
       }
     } else {
       alert(t('noSave'))
@@ -163,25 +162,10 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
   }
 
   const saveToCloud = async (char: Character) => {
-    const normalized = normalizeCharacter(
-      { ...char, updatedAt: Date.now() },
-      char.owner,
-    )
-    const slug = (normalized.nom || (normalized as { name?: string }).name || 'sans_nom').replace(/[^a-zA-Z0-9-_]/g, '_')
-    const roomId = (() => {
-      try {
-        const r = JSON.parse(localStorage.getItem('jdr_selected_room') || '{}')
-        return r.id || 'global'
-      } catch { return 'global' }
-    })()
-    const owner = normalized.owner || 'anon'
-    const filename = `FichePerso/${roomId}_${owner}_${normalized.id}_${slug}.json`
     try {
-      const res = await fetch(`/api/blob?filename=${encodeURIComponent(filename)}`, {
-        method: 'POST',
-        body: JSON.stringify(normalized),
-      })
-      if (!res.ok) throw new Error('upload failed')
+      await saveAccountCharacter(
+        normalizeCharacter({ ...char, updatedAt: Date.now() }, char.owner),
+      )
       alert(t('saveCloud'))
       setModal(null)
     } catch {
@@ -189,37 +173,21 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
     }
   }
 
-  const loadFromCloud = async (filename: string) => {
-    try {
-      const res = await fetch(`/api/blob?prefix=${encodeURIComponent(filename)}`)
-      if (!res.ok) throw new Error('list failed')
-      const data = await res.json()
-      const item = data.files?.blobs?.find((b: { pathname: string }) => b.pathname===filename)
-      if (!item) throw new Error('file not found')
-      const blobRes = await fetch(item.downloadUrl || item.url)
-      if (!blobRes.ok) throw new Error('download failed')
-      const txt = await blobRes.text()
-      const obj = JSON.parse(txt)
-      const normalized = normalizeCharacter({
-        ...obj,
-        id: (obj as Character).id || crypto.randomUUID(),
-      })
-      onUpdate(normalized)
-      addToList(normalized)
-      alert(t('loadCloudSuccess'))
-    } catch {
-      alert(t('loadCloudFail'))
-    }
+  const loadFromCloud = (char: Character) => {
+    const normalized = normalizeCharacter({
+      ...char,
+      id: char.id || crypto.randomUUID(),
+    })
+    onUpdate(normalized)
+    addToList(normalized)
+    alert(t('loadCloudSuccess'))
     setModal(null)
   }
 
-  const deleteFromCloud = async (filename: string) => {
+  const deleteFromCloud = async (char: Character) => {
     try {
-      const res = await fetch(`/api/blob?filename=${encodeURIComponent(filename)}`, {
-        method: 'DELETE',
-      })
-      if (!res.ok) throw new Error('delete failed')
-      setCloudFiles(f => f.filter(fl => fl !== filename))
+      await deleteAccountCharacter(String(char.id))
+      setCloudChars((list) => list.filter((c) => c.id !== char.id))
       alert(t('deleted'))
       setModal(null)
     } catch {
@@ -256,9 +224,13 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
 
           <button onClick={handleLocalSave} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">💾 {t('saveLocally')}</button>
           <button onClick={handleLocalLoad} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">📂 {t('loadLocal')}</button>
-          <button onClick={() => { setModal('export'); setOpen(false) }} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">☁️ {t('exportCloud')}</button>
-          <button onClick={() => { setModal('import'); setOpen(false) }} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">☁️ {t('importCloud')}</button>
-          <button onClick={() => { setModal('delete'); setOpen(false) }} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">🗑 {t('deleteCloud')}</button>
+          {isSignedIn && (
+            <>
+              <button onClick={() => { setModal('export'); setOpen(false) }} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">☁️ {t('exportCloud')}</button>
+              <button onClick={() => { setModal('import'); setOpen(false) }} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">☁️ {t('importCloud')}</button>
+              <button onClick={() => { setModal('delete'); setOpen(false) }} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">🗑 {t('deleteCloud')}</button>
+            </>
+          )}
 
           <hr className="my-1 border-gray-600" />
           <button onClick={handleReset} className="w-full px-3 py-1 rounded hover:bg-red-700 bg-red-600 text-white text-left text-sm">🗑 {t('resetSheet')}</button>
@@ -287,17 +259,17 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
               <>
                 <h3 className="text-lg font-semibold mb-3">{t('importFromCloud')}</h3>
                 <ul className="space-y-1">
-                  {cloudFiles.map((f) => (
-                    <li key={f}>
+                  {cloudChars.map((c) => (
+                    <li key={String(c.id)}>
                       <button
-                        onClick={() => loadFromCloud(f)}
+                        onClick={() => loadFromCloud(c)}
                         className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm"
                       >
-                        {f.replace('FichePerso/', '')}
+                        {c.nom || c.name || `#${c.id}`}
                       </button>
                     </li>
                   ))}
-                  {cloudFiles.length === 0 && (
+                  {cloudChars.length === 0 && (
                     <li className="text-center text-sm text-gray-400">{t('noFile')}</li>
                   )}
                 </ul>
@@ -327,18 +299,18 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
               <>
                 <h3 className="text-lg font-semibold mb-3">{t('deleteFromCloud')}</h3>
                 <ul className="space-y-1">
-                  {cloudFiles.map((f) => (
-                    <li key={f} className="flex justify-between items-center gap-2">
-                      <span className="truncate flex-1">{f.replace('FichePerso/', '')}</span>
+                  {cloudChars.map((c) => (
+                    <li key={String(c.id)} className="flex justify-between items-center gap-2">
+                      <span className="truncate flex-1">{c.nom || c.name || `#${c.id}`}</span>
                       <button
-                        onClick={() => deleteFromCloud(f)}
+                        onClick={() => deleteFromCloud(c)}
                         className="px-2 py-1 bg-red-700/50 hover:bg-red-700/80 rounded text-sm"
                       >
                         {t('delete')}
                       </button>
                     </li>
                   ))}
-                  {cloudFiles.length === 0 && (
+                  {cloudChars.length === 0 && (
                     <li className="text-center text-sm text-gray-400">{t('noFile')}</li>
                   )}
                 </ul>

@@ -183,6 +183,11 @@ export const translations = {
     roomRenameRefused: "Rename refused",
     gmToolsActive: "GM tools enabled",
     gmRoleFromAccount: "The GM role comes from your account, it can't be toggled",
+    cloudAccountHint: "Sheets saved to your account",
+    cloudUpload: "Save to account",
+    cloudImport: "Import",
+    cloudDeleteConfirm: "Delete this sheet from your account?",
+    cloudLoading: "Loading…",
   },
   fr: {
     addSkill: 'Ajouter une compétence',
@@ -368,6 +373,11 @@ export const translations = {
     roomRenameRefused: "Renommage refusé",
     gmToolsActive: "Outils de MJ actifs",
     gmRoleFromAccount: "Le rôle de MJ découle du compte, il ne se coche plus",
+    cloudAccountHint: "Fiches enregistrées sur ton compte",
+    cloudUpload: "Enregistrer sur le compte",
+    cloudImport: "Importer",
+    cloudDeleteConfirm: "Supprimer cette fiche de ton compte ?",
+    cloudLoading: "Chargement…",
   },
 } as const
 

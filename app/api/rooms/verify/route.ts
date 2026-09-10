@@ -16,7 +16,7 @@ import { fail, ok } from '@/lib/api-response'
  *
  * Le jeton est émis pour toute room à laquelle l'appelant a droit — protégée
  * (après un mot de passe correct) comme ouverte (immédiatement). Les routes de
- * données (`/api/roomstorage`, `/api/blob`) l'exigent : sans lui, une room
+ * données (`/api/roomstorage`) l'exigent : sans lui, une room
  * ouverte ne fournirait aucune preuve d'accès à vérifier.
  */
 

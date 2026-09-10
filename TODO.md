@@ -17,7 +17,8 @@
 - [x] Écrire le schéma de base et le pousser sur Neon
 - [x] Migrer la propriete des rooms vers `ownerId` (secret navigateur garde en secours)
 - [x] Remplacer le pseudo local par le compte Clerk dans toute l'application
-- [ ] Rattacher les fiches de personnage au compte plutot qu'au `localStorage`
+- [x] Remplacer la sauvegarde cloud (Vercel Blob, ouverte a tous) par des fiches rattachees au compte
+- [ ] Faire de la liste de fiches du menu une liste du compte, et non plus d'abord du navigateur (l'envoi vers le compte est aujourd'hui manuel)
 - [x] Supprimer la bascule « mode MJ » cochable par n'importe qui
 - [ ] Brancher le role de MJ sur `room_members.role` (aujourd'hui `isMJ` vaut « est administrateur »)
 - [x] Accepter un role admin sur le compte, en plus du mot de passe
@@ -41,7 +42,7 @@
 - [x] Ajouter le bandeau « session de demonstration » dans la salle
 - [ ] Copier `CRON_SECRET` (déjà généré dans `.env.local`) dans Vercel → Settings → Environment Variables, environnement Production
 - [x] Interdire la creation de table sans compte
-- [ ] Interdire au visiteur la sauvegarde cloud des fiches
+- [x] Interdire au visiteur la sauvegarde cloud des fiches
 
 ## Mise en ligne — à faire avant le premier deploiement en production
 - [ ] Publier les commits locaux : la version en ligne date du 30 août et n'a aucune des protections de la phase 0 (suppression de tables ouverte à tous, notamment)
@@ -61,7 +62,7 @@
 - [x] Ajouter le crédit QG Informatique, absent du projet (règle `C:\DEV\CLAUDE.md`) — footer fixe rendu par `ClientLayout`
 - [ ] Corriger les 58 avertissements `react-hooks` (`purity`, `set-state-in-effect`, `refs`) concentrés dans les fonds animés, puis repasser ces trois règles en erreur dans `eslint.config.mjs` — phase 4
 - [ ] Restreindre les paramètres signés de `/api/cloudinary/signature` (formats, taille) après vérification de la doc Cloudinary — seule la limite de débit est en place
-- [ ] Donner une propriété par utilisateur aux fiches stockées dans Blob — aujourd'hui contraintes mais pas rattachées à un compte (phase 1)
+- [x] Donner une propriété par utilisateur aux fiches (Blob remplacé par la base)
 - [ ] Remplacer le jeton d'accès à la room par la session utilisateur une fois l'auth en place (phase 1)
 
 ## Qualité / outillage

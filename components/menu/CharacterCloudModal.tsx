@@ -9,28 +9,25 @@ import {
   buildCharacterKey,
   normalizeCharacter,
 } from '@/types/character'
+import {
+  deleteAccountCharacter,
+  listAccountCharacters,
+  saveAccountCharacter,
+} from '@/lib/charactersApi'
 
-type CloudEntry = {
-  pathname: string
-  size?: number
-  uploadedAt?: string
-  downloadUrl?: string
-  url?: string
-}
-
-function slug(str: string) {
-  return String(str || '')
-    .normalize('NFKD')
-    .replace(/[^\w\s-]/g, '')
-    .trim()
-    .replace(/[\s_-]+/g, '_')
-    .replace(/^_|_$/g, '')
-}
+/**
+ * Fiches enregistrées sur le compte du joueur.
+ *
+ * Elles vivaient dans Vercel Blob, sous un préfixe commun : n'importe qui
+ * listait, importait ou supprimait les fiches de tout le monde. Elles sont
+ * désormais en base, rattachées au compte, et chacun ne voit que les siennes.
+ */
 
 interface Props {
   open: boolean
   onClose: () => void
-  roomId: string | null
+  /** Conservé pour compatibilité : les fiches ne dépendent plus de la table. */
+  roomId?: string | null
   localChars: CloudCharacter[]
   onImported: (char: CloudCharacter) => void
 }
@@ -38,35 +35,28 @@ interface Props {
 export default function CharacterCloudModal({
   open,
   onClose,
-  roomId,
   localChars,
   onImported,
 }: Props) {
   const t = useT()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [entries, setEntries] = useState<CloudEntry[]>([])
+  const [entries, setEntries] = useState<CloudCharacter[]>([])
   const [uploadId, setUploadId] = useState<string>('')
   const [busyAction, setBusyAction] = useState<string | null>(null)
-
-  // List ALL saved character sheets regardless of room so users can always recover their data
-  const prefix = 'FichePerso/'
 
   const refresh = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`/api/blob?prefix=${encodeURIComponent(prefix)}`)
-      const data = await res.json()
-      const blobs = Array.isArray(data?.files?.blobs) ? data.files.blobs : []
-      setEntries(blobs as CloudEntry[])
+      setEntries(await listAccountCharacters())
     } catch (e) {
       setError(e instanceof Error ? e.message : 'List failed')
       setEntries([])
     } finally {
       setLoading(false)
     }
-  }, [prefix])
+  }, [])
 
   useEffect(() => {
     if (!open) return
@@ -77,55 +67,23 @@ export default function CharacterCloudModal({
     () =>
       localChars.map((c) => ({
         key: buildCharacterKey(c),
-        label: `${c.nom || 'sans_nom'} @ ${c.owner} #${String(c.id)}`,
+        label: `${c.nom || 'sans_nom'} #${String(c.id)}`,
       })),
     [localChars],
   )
 
-  async function handleImport(pathname: string) {
-    try {
-      setBusyAction(`import:${pathname}`)
-      const res = await fetch(`/api/blob?prefix=${encodeURIComponent(pathname)}`)
-      const data = await res.json()
-      const item = (data?.files?.blobs || []).find(
-        (b: CloudEntry) => b.pathname === pathname,
-      ) as CloudEntry | undefined
-      if (!item) throw new Error('Not found')
-      const url = item.downloadUrl || item.url
-      if (!url) throw new Error('No URL available')
-      const txt = await fetch(url).then((r) => r.text())
-      const obj = JSON.parse(txt)
-      if (!obj || typeof obj !== 'object') throw new Error('Invalid file')
-      onImported(normalizeCharacter(obj))
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Import failed')
-    } finally {
-      setBusyAction(null)
-    }
+  function handleImport(char: CloudCharacter) {
+    onImported(normalizeCharacter(char))
   }
 
   async function handleUpload() {
     const target = localChars.find((c) => buildCharacterKey(c) === uploadId)
     if (!target) return
-    const slugName = slug(target.nom || 'sans_nom')
-    const filename = `FichePerso/${roomId || 'global'}_${target.owner}_${String(
-      target.id,
-    )}_${slugName}.json`
     try {
-      setBusyAction(`upload:${filename}`)
-      const updated = normalizeCharacter(
-        { ...target, updatedAt: Date.now() },
-        target.owner,
+      setBusyAction(`upload:${target.id}`)
+      await saveAccountCharacter(
+        normalizeCharacter({ ...target, updatedAt: Date.now() }, target.owner),
       )
-      const res = await fetch(
-        `/api/blob?filename=${encodeURIComponent(filename)}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updated),
-        },
-      )
-      if (!res.ok) throw new Error('Upload failed')
       await refresh()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Upload failed')
@@ -134,16 +92,12 @@ export default function CharacterCloudModal({
     }
   }
 
-  async function handleDelete(pathname: string) {
-    if (!confirm('Delete this cloud file?')) return
+  async function handleDelete(char: CloudCharacter) {
+    if (!confirm(t('cloudDeleteConfirm'))) return
     try {
-      setBusyAction(`delete:${pathname}`)
-      const res = await fetch(
-        `/api/blob?filename=${encodeURIComponent(pathname)}`,
-        { method: 'DELETE' },
-      )
-      if (!res.ok) throw new Error('Delete failed')
-      setEntries((prev) => prev.filter((e) => e.pathname !== pathname))
+      setBusyAction(`delete:${char.id}`)
+      await deleteAccountCharacter(String(char.id))
+      setEntries((prev) => prev.filter((e) => e.id !== char.id))
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Delete failed')
     } finally {
@@ -174,16 +128,17 @@ export default function CharacterCloudModal({
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-lg font-semibold inline-flex items-center gap-2">
               <Cloud size={18} className="text-blue-300" /> Cloud
-              <span className="text-xs text-white/50">{prefix}</span>
+              <span className="text-xs font-normal text-white/50">{t('cloudAccountHint')}</span>
             </h3>
             <div className="flex items-center gap-2">
               <button
                 className="px-2 py-1 rounded bg-black/40 border border-white/10 text-white/80 hover:text-white"
                 onClick={(e) => {
                   e.preventDefault()
-                  refresh()
+                  void refresh()
                 }}
                 title="Refresh"
+                aria-label="Refresh"
               >
                 <RefreshCw size={16} />
               </button>
@@ -197,12 +152,13 @@ export default function CharacterCloudModal({
             </div>
           </div>
 
-          {/* Upload section */}
+          {/* Envoi d'une fiche locale vers le compte */}
           <div className="mb-4 p-3 rounded-xl border border-white/10 bg-black/30">
             <div className="flex items-center gap-2">
               <select
                 value={uploadId}
                 onChange={(e) => setUploadId(e.target.value)}
+                aria-label={t('cloudUpload')}
                 className="flex-1 px-2 py-1 rounded bg-gray-800 border border-white/20"
               >
                 <option value="">-- {t('select')} --</option>
@@ -217,14 +173,14 @@ export default function CharacterCloudModal({
                 disabled={!uploadId || !!busyAction}
                 onClick={handleUpload}
               >
-                <Upload size={16} className="inline -mt-0.5 mr-1" /> Upload
+                <Upload size={16} className="inline -mt-0.5 mr-1" /> {t('cloudUpload')}
               </button>
             </div>
           </div>
 
-          {/* List section */}
+          {/* Fiches du compte */}
           <div className="space-y-2">
-            {loading && <div className="text-white/70 text-sm">Loading...</div>}
+            {loading && <div className="text-white/70 text-sm">{t('cloudLoading')}</div>}
             {error && <div className="text-red-400 text-sm">{error}</div>}
             {!loading && !error && entries.length === 0 && (
               <div className="text-white/60 text-sm italic">{t('noFile')}</div>
@@ -233,41 +189,36 @@ export default function CharacterCloudModal({
               <ul className="divide-y divide-white/10">
                 {entries.map((e) => (
                   <li
-                    key={e.pathname}
+                    key={String(e.id)}
                     className="py-2 flex items-center justify-between gap-2"
                   >
                     <div className="truncate">
-                      <div className="font-mono text-xs truncate">
-                        {e.pathname.replace('FichePerso/', '')}
+                      <div className="text-sm font-semibold truncate">
+                        {e.nom || e.name || 'sans_nom'}
                       </div>
                       <div className="text-[11px] text-white/50">
-                        {e.size ? `${(e.size / 1024).toFixed(1)} KB` : ''}{' '}
-                        {e.uploadedAt
-                          ? ` · ${new Date(e.uploadedAt).toLocaleString()}`
+                        #{String(e.id)}
+                        {typeof e.updatedAt === 'number'
+                          ? ` · ${new Date(e.updatedAt).toLocaleString()}`
                           : ''}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => handleImport(e.pathname)}
+                        onClick={() => handleImport(e)}
                         className="px-2 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-xs disabled:opacity-50"
                         disabled={!!busyAction}
-                        title="Import to local"
                       >
-                        <Download
-                          size={14}
-                          className="inline -mt-0.5 mr-1"
-                        />{' '}
-                        Import
+                        <Download size={14} className="inline -mt-0.5 mr-1" />{' '}
+                        {t('cloudImport')}
                       </button>
                       <button
-                        onClick={() => handleDelete(e.pathname)}
+                        onClick={() => handleDelete(e)}
                         className="px-2 py-1 rounded bg-red-600 hover:bg-red-700 text-white text-xs disabled:opacity-50"
                         disabled={!!busyAction}
-                        title="Delete from cloud"
                       >
                         <Trash2 size={14} className="inline -mt-0.5 mr-1" />{' '}
-                        Delete
+                        {t('delete')}
                       </button>
                     </div>
                   </li>

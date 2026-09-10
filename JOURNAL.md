@@ -1,5 +1,14 @@
 # Journal
 
+## 2026-09-10 (suite 4) — Fiches de personnage rattachees au compte
+
+- La sauvegarde cloud des fiches passe de Vercel Blob a la base : nouvelle route `/api/characters` (lecture, enregistrement, suppression), qui exige un compte et ne montre a chacun que ses fiches. Blob exposait les fiches de tous a tous, meme sans compte. La cle en base combine le compte et l'identifiant de la fiche, pour que deux joueurs qui importent le meme fichier ne s'ecrasent pas.
+- Les deux ecrans cloud (fenetre du menu, menu import/export de la salle) sont reecrits sur cette route ; un visiteur n'y voit plus les boutons cloud. Blob est retire : route, dependance, mentions dans la CSP et la configuration.
+- Verifie : sans compte, lecture, enregistrement et suppression renvoient 401, l'ancienne route renvoie 404, et le menu de la salle de demo n'affiche plus le cloud a un visiteur. Le chemin connecte (enregistrer, lister, supprimer) n'a pas pu etre teste faute de session de test.
+
+Reste ouvert : la liste de fiches du menu reste d'abord locale (navigateur) ; l'envoi vers le compte est manuel.
+
+
 ## 2026-09-10 (suite 3) — Vrai roulement du de, francais par defaut
 
 - Retour a l'arrondi d'origine du de (14 px, sommets ouverts) : l'arrondi reduit paraissait trop carre.
