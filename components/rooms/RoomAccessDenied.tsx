@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useClerk } from '@clerk/nextjs'
+import { usePathname } from 'next/navigation'
 import { Home, Lock, LogIn } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import type { TranslationKey } from '@/lib/translations'
@@ -24,7 +24,8 @@ const MESSAGE: Record<DeniedReason, TranslationKey> = {
  */
 export default function RoomAccessDenied({ reason }: { reason: DeniedReason }) {
   const t = useT()
-  const { openSignIn } = useClerk()
+  // Après la connexion, on revient sur cette table plutôt qu'à l'accueil.
+  const pathname = usePathname()
 
   return (
     <div className="flex min-h-dvh w-full items-center justify-center p-6">
@@ -34,13 +35,13 @@ export default function RoomAccessDenied({ reason }: { reason: DeniedReason }) {
         <p className="m-0 text-sm text-white/70">{t(MESSAGE[reason])}</p>
         <div className="flex w-full flex-col gap-2">
           {reason === 'sign-in' && (
-            <button
-              onClick={() => openSignIn()}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600/85 px-4 py-2.5 font-semibold text-white transition hover:bg-emerald-500/90"
+            <Link
+              href={`/connexion?callbackUrl=${encodeURIComponent(pathname)}`}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600/85 px-4 py-2.5 font-semibold text-white no-underline transition hover:bg-emerald-500/90"
             >
               <LogIn size={17} aria-hidden="true" />
               {t('authSignIn')}
-            </button>
+            </Link>
           )}
           <Link
             href="/menu-accueil"

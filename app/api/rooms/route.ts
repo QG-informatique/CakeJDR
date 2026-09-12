@@ -8,9 +8,8 @@ import {
   verifyRoomOwner,
 } from '@/lib/liveRooms'
 import { isAdminRequest } from '@/lib/adminAuth'
-import { auth } from '@clerk/nextjs/server'
 import { forgetRoom, isRoomOwner, recordRoom, renameRoomRecord } from '@/lib/db/rooms'
-import { syncCurrentUser } from '@/lib/db/users'
+import { currentUserId, syncCurrentUser } from '@/lib/db/users'
 import { debug } from '@/lib/debug'
 import { fail, ok } from '@/lib/api-response'
 
@@ -22,7 +21,7 @@ async function canMutate(req: NextRequest, id: string, ownerSecret?: unknown) {
   if (await isAdminRequest(req)) return true
 
   // Propriétaire enregistré en base : le cas normal pour un joueur connecté.
-  const { userId } = await auth()
+  const userId = await currentUserId()
   if (await isRoomOwner(id, userId)) return true
 
   // Secours pour les tables créées sans compte : le secret conservé par le

@@ -85,7 +85,7 @@ declare global {
 
     // Custom user info set when authenticating with a secret key
     UserMeta: {
-      /** Identifiant Clerk pour un joueur connecte, aleatoire pour un visiteur. */
+      /** Identifiant du compte pour un joueur connecte, aleatoire pour un visiteur. */
       id: string
       /** Renseigne cote serveur : le client ne peut donc pas usurper un nom. */
       info: {

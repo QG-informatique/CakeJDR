@@ -21,7 +21,6 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@clerk/nextjs": "^7.9.1",
     "@lexical/react": "0.24.0",
     "@lexical/rich-text": "0.24.0",
     "@lexical/selection": "0.24.0",
@@ -38,6 +37,7 @@
     "lexical": "0.24.0",
     "lucide-react": "^0.525.0",
     "next": "^16.2.7",
+    "next-auth": "5.0.0-beta.32",
     "next-cloudinary": "^6.16.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",

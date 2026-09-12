@@ -89,7 +89,7 @@ export function isAdmin(req: NextRequest) {
 }
 
 /**
- * Variante asynchrone : accepte le cookie admin **ou** un compte Clerk marqué
+ * Variante asynchrone : accepte le cookie admin **ou** un compte marqué
  * administrateur en base.
  *
  * Le mot de passe admin reste utilisable en secours, notamment avant qu'un

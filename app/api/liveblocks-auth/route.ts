@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     return new Response('Room not found', { status: 404 })
   }
 
-  // Identité : le compte Clerk s'il y en a un, sinon un visiteur anonyme.
+  // Identité : le compte connecté s'il y en a un, sinon un visiteur anonyme.
   const account = await syncCurrentUser().catch(() => null)
 
   // Connaître l'adresse d'une table ne suffit pas pour y entrer : il faut en

@@ -1,5 +1,16 @@
 # Journal
 
+## 2026-09-12 — Clerk remplacé par Auth.js (Google et Discord)
+
+- Revirement sur la décision du 2026-09-06 : Clerk exige en production un nom de domaine à soi, et ni achat ni sous-domaine ne sont voulus. Auth.js fonctionne sur l'adresse `.vercel.app` : `auth.ts`, `app/api/auth/[...nextauth]/route.ts`, page `app/connexion`, `components/auth/SignInButtons.tsx`.
+- Connexion par email abandonnée : l'envoi des liens demanderait lui aussi un domaine vérifié. Pas d'inscription séparée, le compte est créé à la première connexion.
+- Identifiant de compte `google:…` ou `discord:…`, sessions en jeton signé de 7 jours : aucune table de plus. Un service sans identifiants n'est pas proposé (sinon le clic se perdait chez Discord). `proxy.ts` supprimé, CSP débarrassée des origines Clerk.
+- `scripts/transfer-account.mjs` reporte la salle démo, le pseudo et le rôle admin de l'ancien compte Clerk vers le nouveau.
+- Vérifié : types, lint, accueil, `/connexion`, session vide, message d'erreur, salle démo en invité. Connexion réelle non testée : les applications Google et Discord n'existent pas encore.
+
+Reste ouvert : créer les deux applications OAuth, copier `AUTH_SECRET` dans Vercel, transférer le compte admin après la première connexion.
+
+
 ## 2026-09-10 (suite 6) — Fiches du menu synchronisées avec le compte
 
 - La liste de fiches du menu suit le compte : à l'ouverture, les fiches du compte redescendent (la plus récente l'emporte) et celles du joueur qui n'existaient que dans ce navigateur montent une fois ; chaque ajout, modification ou suppression est ensuite répercuté. En jeu, les modifications de sa fiche sont enregistrées, regroupées sur deux secondes et envoyées aussi en quittant la table.

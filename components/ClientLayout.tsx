@@ -2,6 +2,7 @@
 
 import React, { Suspense } from 'react'
 import dynamic from 'next/dynamic'
+import { SessionProvider } from 'next-auth/react'
 import { BackgroundProvider } from '@/components/context/BackgroundContext'
 import { LanguageProvider } from '@/components/context/LanguageContext'
 import HtmlLangSync from '@/components/ui/HtmlLangSync'
@@ -41,6 +42,8 @@ class BackgroundErrorBoundary extends React.Component<BackgroundBoundaryProps, B
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   return (
+    // La session de connexion, lue par useSession() dans toute l'application.
+    <SessionProvider>
     <LanguageProvider>
       {/* Synchronise document.documentElement.lang avec la langue active */}
       <HtmlLangSync />
@@ -54,5 +57,6 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         <CreditQG />
       </BackgroundProvider>
     </LanguageProvider>
+    </SessionProvider>
   )
 }

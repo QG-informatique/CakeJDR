@@ -196,6 +196,12 @@ export const translations = {
     backToHome: "Back to home",
     gmPickTable: "Select a table to see your role",
     gmPlayerHere: "You are a player at this table",
+    authContinueDiscord: "Continue with Discord",
+    authContinueGoogle: "Continue with Google",
+    authRedirecting: "Redirecting…",
+    authSignInTitle: "Sign in to CakeJDR",
+    authSignInIntro: "No password to remember: your account is created the first time you sign in.",
+    authSignInError: "Sign-in failed. Try again, or use the other service.",
   },
   fr: {
     addSkill: 'Ajouter une compétence',
@@ -394,6 +400,12 @@ export const translations = {
     backToHome: "Retour à l'accueil",
     gmPickTable: "Sélectionne une table pour voir ton rôle",
     gmPlayerHere: "Tu es joueur dans cette table",
+    authContinueDiscord: "Continuer avec Discord",
+    authContinueGoogle: "Continuer avec Google",
+    authRedirecting: "Redirection…",
+    authSignInTitle: "Connexion à CakeJDR",
+    authSignInIntro: "Pas de mot de passe à retenir : ton compte est créé à ta première connexion.",
+    authSignInError: "La connexion a échoué. Réessaie, ou passe par l'autre service.",
   },
 } as const
 

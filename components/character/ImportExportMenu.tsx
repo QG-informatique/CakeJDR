@@ -1,7 +1,7 @@
 'use client'
 
 import { FC, useRef, useState, useEffect } from 'react'
-import { useUser } from '@clerk/nextjs'
+import { useSession } from 'next-auth/react'
 import { useT } from '@/lib/useT'
 import { Folder } from 'lucide-react'
 import { defaultPerso } from '../sheet/CharacterSheet'
@@ -59,7 +59,7 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
   // La sauvegarde en ligne est rattachée au compte : un visiteur de la salle
   // de démonstration n'y a pas accès. Le serveur le refuse de toute façon ;
   // masquer les boutons évite juste de proposer une action vouée à l'échec.
-  const { isSignedIn } = useUser()
+  const isSignedIn = useSession().status === 'authenticated'
 
   // Close dropdown when clicking outside
   useEffect(() => {

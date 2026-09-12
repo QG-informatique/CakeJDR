@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { Show, useClerk } from '@clerk/nextjs'
+import Link from 'next/link'
+import { useSession } from 'next-auth/react'
 import { Info, X } from 'lucide-react'
 import { useT } from '@/lib/useT'
 
@@ -17,7 +18,7 @@ export default function DemoBanner() {
   const { id } = useParams<{ id: string }>()
   const [isDemo, setIsDemo] = useState(false)
   const [dismissed, setDismissed] = useState(false)
-  const { openSignUp } = useClerk()
+  const { status } = useSession()
   const t = useT()
 
   useEffect(() => {
@@ -40,16 +41,18 @@ export default function DemoBanner() {
       <Info size={16} className="shrink-0 text-amber-300" />
       <p className="m-0 text-xs leading-snug">
         {t('demoBannerText')}
-        <Show when="signed-out">
-          {' '}
-          <button
-            onClick={() => openSignUp()}
-            className="font-semibold underline underline-offset-2 hover:text-white"
-          >
-            {t('demoBannerCta')}
-          </button>{' '}
-          {t('demoBannerCtaSuffix')}
-        </Show>
+        {status === 'unauthenticated' && (
+          <>
+            {' '}
+            <Link
+              href="/connexion"
+              className="font-semibold text-inherit underline underline-offset-2 hover:text-white"
+            >
+              {t('demoBannerCta')}
+            </Link>{' '}
+            {t('demoBannerCtaSuffix')}
+          </>
+        )}
       </p>
       <button
         onClick={() => setDismissed(true)}

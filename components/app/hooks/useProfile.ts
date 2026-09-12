@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useUser } from '@clerk/nextjs'
+import { useSession } from 'next-auth/react'
 
 export type Profile = {
   pseudo: string
@@ -28,13 +28,13 @@ const VISITOR: Profile = {
  *
  * Auparavant lu dans `localStorage`, ce qui permettait à n'importe qui de se
  * renommer ou de se déclarer MJ en éditant son navigateur. La source est
- * désormais le compte Clerk, complété par les préférences stockées en base.
- *
- * L'interface renvoyée est inchangée : les composants qui l'utilisent n'ont
- * pas eu à bouger.
+ * désormais la session de connexion, complétée par les préférences stockées
+ * en base.
  */
 export default function useProfile(): Profile | null {
-  const { isLoaded, isSignedIn } = useUser()
+  const { status } = useSession()
+  const isLoaded = status !== 'loading'
+  const isSignedIn = status === 'authenticated'
   const [account, setAccount] = useState<ApiUser | null>(null)
   const [checked, setChecked] = useState(false)
 
@@ -68,8 +68,8 @@ export default function useProfile(): Profile | null {
     id: account.id,
     pseudo: account.pseudo,
     color: account.color,
-    // Le rôle de MJ par table arrive avec les rôles de salle ; en attendant,
-    // seul l'administrateur dispose des outils du MJ.
+    // Le rôle de MJ est propre à chaque table ; seul l'administrateur dispose
+    // des outils du MJ partout.
     isMJ: account.isAdmin,
     signedIn: true,
   }

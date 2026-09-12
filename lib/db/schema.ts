@@ -11,15 +11,16 @@ import {
 /**
  * Schéma de la base.
  *
- * L'identité vient de Clerk : `users.id` est l'identifiant Clerk, pas une clé
- * générée ici. Cette table ne double pas Clerk, elle porte ce que Clerk ne
+ * L'identité vient de la connexion Google ou Discord : `users.id` est
+ * l'identifiant du compte chez ce service, pas une clé générée ici. Cette
+ * table porte ce que le service de connexion ne
  * connaît pas — la couleur du joueur, son rôle d'administrateur — et sert de
  * cible aux clés étrangères.
  */
 export const users = pgTable('users', {
-  /** Identifiant Clerk (`user_...`). */
+  /** Service et identifiant chez lui (`google:...`, `discord:...`). */
   id: text('id').primaryKey(),
-  /** Nom affiché en jeu, modifiable indépendamment du compte Clerk. */
+  /** Nom affiché en jeu, modifiable indépendamment du compte Google ou Discord. */
   pseudo: text('pseudo').notNull(),
   /** Couleur du curseur et du nom dans le chat. */
   color: text('color').notNull().default('#1d4ed8'),

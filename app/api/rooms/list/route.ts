@@ -1,9 +1,9 @@
 export const runtime = 'nodejs'
 
 import { NextRequest } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
 import { listRooms } from '@/lib/liveRooms'
 import { listRoomsForUser } from '@/lib/db/rooms'
+import { currentUserId } from '@/lib/db/users'
 import { isAdminRequest } from '@/lib/adminAuth'
 import { debug } from '@/lib/debug'
 import { fail, ok } from '@/lib/api-response'
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
       return ok({ rooms: all, scope: 'admin' })
     }
 
-    const { userId } = await auth()
+    const userId = await currentUserId()
     if (!userId) {
       // Visiteur non connecté : rien à montrer, et c'est voulu.
       return ok({ rooms: [], scope: 'anonymous' })
