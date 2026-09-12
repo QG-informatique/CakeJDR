@@ -13,7 +13,7 @@ import RoomList, { RoomInfo } from '../rooms/RoomList'
 import RoomCreateModal from '../rooms/RoomCreateModal'
 import { useRouter } from 'next/navigation'
 import { fetchRooms as fetchRoomsApi, roomAuthHeaders } from '@/lib/roomsApi'
-import { useClerk } from '@clerk/nextjs'
+import { signOut } from 'next-auth/react'
 import useProfile from '../app/hooks/useProfile'
 import {
   deleteAccountCharacter,
@@ -46,12 +46,11 @@ export default function MenuAccueil() {
   const router = useRouter()
   const t = useT()
   const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm()
-  // L'identite vient de Clerk et de la base ; elle n'est plus modifiable
+  // L'identite vient du compte connecte et de la base ; elle n'est plus modifiable
   // depuis le navigateur. `useProfile` renvoie un profil « Visiteur » quand
   // personne n'est connecte.
   const profile = useProfile()
   const user = profile?.signedIn ? profile : null
-  const { signOut } = useClerk()
   const [characters, setCharacters] = useState<Character[]>([])
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
@@ -255,7 +254,7 @@ export default function MenuAccueil() {
     if (loggingOut) return
     setLoggingOut(true)
     setSelectedIdx(null)
-    void signOut(() => router.replace('/menu'))
+    void signOut({ redirectTo: '/menu' })
   }
 
   const handlePlay = () => {
@@ -590,7 +589,7 @@ export default function MenuAccueil() {
       <div className="fixed right-3 top-3 z-50 flex items-center gap-2">
         <LanguageSwitcher />
         {/* Deconnecte, le panneau de connexion porte deja ces actions. */}
-        {user && <AuthControls />}
+        {user && <AuthControls pseudo={user.pseudo} color={user.color} />}
       </div>
 
       <div className="w-full min-h-screen relative text-white px-6 pb-8 flex flex-col max-w-7xl mx-auto bg-transparent overflow-hidden">

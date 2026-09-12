@@ -1,9 +1,8 @@
 'use client'
 
-import { useClerk } from '@clerk/nextjs'
-import { LogIn, UserPlus } from 'lucide-react'
 import CakeLogo from '@/components/ui/CakeLogo'
 import HeroDie from '@/components/ui/HeroDie'
+import SignInButtons from './SignInButtons'
 import VisitDemoButton from './VisitDemoButton'
 import { useT } from '@/lib/useT'
 
@@ -18,7 +17,6 @@ import { useT } from '@/lib/useT'
 const DOCK_ID = 'hero-die-dock'
 
 export default function SignedOutPanel() {
-  const { openSignIn, openSignUp } = useClerk()
   const t = useT()
 
   return (
@@ -40,20 +38,8 @@ export default function SignedOutPanel() {
       </div>
 
       <div className="flex w-full flex-col gap-2">
-        <button
-          onClick={() => openSignUp()}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600/85 px-4 py-2.5 font-semibold text-white transition hover:bg-emerald-500/90"
-        >
-          <UserPlus size={17} />
-          {t('authCreateAccount')}
-        </button>
-        <button
-          onClick={() => openSignIn()}
-          className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-white/85 transition hover:bg-white/10"
-        >
-          <LogIn size={17} />
-          {t('authSignIn')}
-        </button>
+        <SignInButtons />
+        <p className="m-0 text-xs text-white/50">{t('authSignInIntro')}</p>
       </div>
 
       <div className="flex w-full flex-col items-center gap-2 border-t border-white/10 pt-5">

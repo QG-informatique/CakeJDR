@@ -1,8 +1,8 @@
 # Plan de test manuel
 
 Parcours à suivre avant chaque mise en ligne, tant que les tests automatisés ne
-les couvrent pas. Il faut **deux comptes** (par exemple deux comptes Google, ou
-un Google et un email) et, si possible, une tablette ou un téléphone.
+les couvrent pas. Il faut **deux comptes** (par exemple un compte Google et un
+compte Discord) et, si possible, une tablette ou un téléphone.
 
 ## Préparation
 1. Lancer l'application (`npm run dev`), ou utiliser l'adresse de prévisualisation Vercel.
@@ -10,14 +10,15 @@ un Google et un email) et, si possible, une tablette ou un téléphone.
    1. **Compte A** — celui qui crée la table, et qui en sera donc le MJ
    2. **Compte B** — dans une fenêtre de navigation privée
    3. **Sans compte** — pour le parcours visiteur
-3. Vérifier que `.env.local` contient les clés Liveblocks, Cloudinary, Neon (`DATABASE_URL`) et Clerk.
+3. Vérifier que `.env.local` contient les clés Liveblocks, Cloudinary, Neon (`DATABASE_URL`), `AUTH_SECRET` et les identifiants Google et Discord.
 
 ## Accueil et compte
-1. Déconnecté : le panneau d'accueil propose de créer un compte, de se connecter et de visiter en invité. Le dé roule tout seul ; on peut l'attraper, le lancer, et il revient à sa place.
+1. Déconnecté : le panneau d'accueil propose de continuer avec Discord ou Google, et de visiter en invité. Le dé roule tout seul ; on peut l'attraper, le lancer, et il revient à sa place.
 2. Le bouton de langue bascule toute la page entre FR et EN, et le choix survit à un rechargement.
-3. Se connecter avec le compte A (Google, Discord ou email) : le menu s'affiche, l'avatar apparaît en haut à droite à côté du bouton de langue, sans chevauchement.
+3. Se connecter avec le compte A (Google ou Discord) : le menu s'affiche, l'avatar apparaît en haut à droite à côté du bouton de langue, sans chevauchement.
 4. Changer la couleur du profil, recharger : elle est conservée. Se connecter depuis un autre navigateur : même couleur, puisqu'elle est enregistrée sur le compte.
-5. Se déconnecter depuis l'avatar : retour au panneau d'accueil.
+5. Se déconnecter avec le bouton Déconnexion du menu : retour au panneau d'accueil.
+6. Annuler la connexion chez Google ou Discord : retour sur `/connexion` avec un message d'erreur, sans page blanche.
 
 ## Visiteur et salle de démonstration
 1. Sans compte, cliquer sur « Visiter en invité » : la salle de démonstration s'ouvre avec son bandeau, la fiche « Cake » complète, les images et le dessin.

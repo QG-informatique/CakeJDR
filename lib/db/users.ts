@@ -1,43 +1,51 @@
 import 'server-only'
 import { eq } from 'drizzle-orm'
-import { currentUser } from '@clerk/nextjs/server'
+import { auth } from '@/auth'
 import { db } from './index'
 import { users } from './schema'
 
 export type AppUser = typeof users.$inferSelect
 
+/** Identifiant du compte connecté, ou `null` pour un visiteur. */
+export async function currentUserId(): Promise<string | null> {
+  const session = await auth()
+  return session?.user?.id ?? null
+}
+
 /**
- * Récupère l'utilisateur en base, en le créant à la volée s'il vient de
- * s'inscrire.
+ * Récupère l'utilisateur en base, en le créant à la volée à sa première
+ * connexion.
  *
- * Cette synchronisation paresseuse évite les webhooks Clerk, qui exigeraient
- * une URL publique — donc impossibles à faire fonctionner en local. La
- * contrepartie est un appel supplémentaire à la première visite seulement.
+ * Création paresseuse plutôt qu'au moment de la connexion : le compte existe
+ * dès le premier appel qui en a besoin, sans dépendre d'une étape qui aurait
+ * pu échouer entre-temps.
  */
 export async function syncCurrentUser(): Promise<AppUser | null> {
-  const clerkUser = await currentUser()
-  if (!clerkUser) return null
+  const session = await auth()
+  const id = session?.user?.id
+  if (!id) return null
 
-  const existing = await db.select().from(users).where(eq(users.id, clerkUser.id)).limit(1)
+  const existing = await db.select().from(users).where(eq(users.id, id)).limit(1)
   if (existing.length > 0) return existing[0] ?? null
 
-  // Nom affiché : on prend ce que Clerk sait, du plus parlant au plus neutre.
+  // Nom affiché : celui du compte Google ou Discord, sinon le début de l'email.
   const pseudo =
-    clerkUser.username ||
-    [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ').trim() ||
-    clerkUser.primaryEmailAddress?.emailAddress?.split('@')[0] ||
-    'Joueur'
+    (
+      session.user?.name?.trim() ||
+      session.user?.email?.split('@')[0] ||
+      'Joueur'
+    ).slice(0, 32)
 
   const inserted = await db
     .insert(users)
-    .values({ id: clerkUser.id, pseudo })
+    .values({ id, pseudo })
     // Deux onglets ouverts simultanement peuvent inserer en meme temps.
     .onConflictDoNothing()
     .returning()
 
   if (inserted.length > 0) return inserted[0] ?? null
 
-  const after = await db.select().from(users).where(eq(users.id, clerkUser.id)).limit(1)
+  const after = await db.select().from(users).where(eq(users.id, id)).limit(1)
   return after[0] ?? null
 }
 

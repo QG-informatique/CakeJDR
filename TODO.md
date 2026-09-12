@@ -3,6 +3,7 @@
 ## Plan 1.0 — décisions
 - [x] Base de données : Neon Postgres (offre gratuite, intégration Vercel native)
 - [x] Authentification : Clerk via la Marketplace Vercel, plutôt qu'Auth.js — identifiants OAuth partagés en développement, donc aucune application Discord/Google à créer pour démarrer
+- [x] Authentification revue : Auth.js (Google et Discord) à la place de Clerk, pour rester sur l'adresse `.vercel.app` sans nom de domaine ; connexion par email abandonnée
 - [x] Mode visiteur : retenu, sous forme de room de démonstration pré-remplie (revient sur la recommandation initiale de ne pas en faire)
 - [ ] Trancher : mot de passe de table **et** invitations, ou invitations seules
 - [ ] Trancher : modèles de fiche liés à la table, ou bibliothèque réutilisable entre tables
@@ -11,7 +12,6 @@
 - [x] Créer la base Neon et reporter `DATABASE_URL` dans `.env.local`
 - [x] Installer Clerk depuis Vercel → Marketplace
 - [x] Activer Google et email dans le tableau de bord Clerk — inscription verifiee dans le navigateur
-- [ ] Activer Discord dans Clerk (SSO Connections → Add connection → For all users) — gratuit, seul le SSO entreprise est payant
 - [x] Cabler Clerk : `proxy.ts`, `ClerkProvider`, boutons de connexion, CSP élargie
 - [x] Propager le `userId` Clerk jusqu'à `/api/liveblocks-auth` (fin du `randomUUID()`)
 - [x] Écrire le schéma de base et le pousser sur Neon
@@ -43,17 +43,18 @@
 - [x] Creer la room de demonstration pre-remplie avec une fiche complete
 - [x] Restaurer la salle de demonstration a l'arrivee d'un visiteur quand elle est vide
 - [x] Ajouter le bandeau « session de demonstration » dans la salle
-- [ ] Copier `CRON_SECRET` (déjà généré dans `.env.local`) dans Vercel → Settings → Environment Variables, environnement Production
+- [x] Copier `CRON_SECRET` (déjà généré dans `.env.local`) dans Vercel → Settings → Environment Variables, environnement Production
 - [x] Interdire la creation de table sans compte
 - [x] Interdire au visiteur la sauvegarde cloud des fiches
 
 ## Mise en ligne — à faire avant le premier deploiement en production
-- [ ] Obtenir une adresse de production à soi : Clerk refuse les adresses `.vercel.app`. Un sous-domaine d'un domaine existant suffit (par exemple `jdr.<domaine>`), avec les cinq enregistrements DNS que Clerk indique
+- [ ] Créer l'application OAuth Google (Google Cloud Console) et renseigner `AUTH_GOOGLE_ID` et `AUTH_GOOGLE_SECRET` dans `.env.local` et dans Vercel
+- [ ] Créer l'application OAuth Discord (Discord Developer Portal) et renseigner `AUTH_DISCORD_ID` et `AUTH_DISCORD_SECRET` dans `.env.local` et dans Vercel
+- [ ] Copier `AUTH_SECRET` (déjà généré dans `.env.local`) dans Vercel, environnement Production
+- [ ] Après la première connexion, transférer la salle démo et le rôle admin vers le nouveau compte (`scripts/transfer-account.mjs`)
+- [ ] Retirer l'intégration Clerk de Vercel, avec ses variables `CLERK_*` et `NEXT_PUBLIC_CLERK_*`
 - [x] Réécrire `MANUAL_TEST_PLAN.md` pour les comptes, les invitations, les rôles, la salle de démonstration et les fiches du compte
 - [ ] Publier les commits locaux : la version en ligne date du 30 août et n'a aucune des protections de la phase 0 (suppression de tables ouverte à tous, notamment)
-- [ ] Creer l'application OAuth Discord et renseigner ses identifiants dans Clerk (obligatoire : l'instance de production n'utilise pas les identifiants partages)
-- [ ] Creer l'application OAuth Google et renseigner ses identifiants dans Clerk
-- [ ] Prevenir les testeurs que les comptes crees en preproduction ne sont pas transferes en production
 
 ## Sécurité — à faire avant toute mise en ligne publique
 - [ ] Définir un vrai `ADMIN_PASSWORD` dans `.env.local` (encore au placeholder `REMPLACE_MOI`) et sur Vercel avant tout déploiement — sans ça `/admin` reste inutilisable en prod
