@@ -12,7 +12,6 @@ export type ApiResult<T extends object = object> = ApiSuccess<T> | ApiFailure
 export type RoomInfoResponse = {
   id: string
   name: string
-  hasPassword?: boolean
   /** True si la room a un propriétaire enregistré (false pour les rooms d'avant l'ownership). */
   hasOwner?: boolean
   /** Rôle de l'appelant dans cette table : `gm` ou `player`. */

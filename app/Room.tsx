@@ -12,24 +12,18 @@ export function Room({
   children: ReactNode
 }) {
   /**
-   * authEndpoint sous forme de fonction pour pouvoir passer le token d'accès
-   * signé côté serveur lors de la vérification du mot de passe de room.
-   * L'accès reste réservé aux membres de la table : c'est le serveur qui décide.
+   * authEndpoint sous forme de fonction pour pouvoir afficher la raison d'un
+   * refus. L'accès est réservé aux membres de la table : c'est le serveur qui
+   * décide.
    */
   const [denied, setDenied] = useState<DeniedReason | null>(null)
 
   const authEndpoint = useCallback(async (roomId?: string) => {
     const room = roomId ?? ''
-    const accessToken = typeof sessionStorage !== 'undefined'
-      ? (sessionStorage.getItem(`room_token_${room}`) ?? undefined)
-      : undefined
-    const ts = typeof sessionStorage !== 'undefined'
-      ? (sessionStorage.getItem(`room_token_ts_${room}`) ?? undefined)
-      : undefined
     const res = await fetch('/api/liveblocks-auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ room, accessToken, ts }),
+      body: JSON.stringify({ room }),
     })
     if (!res.ok) {
       // Refus d'accès. Avant, le message d'erreur partait dans res.json(), la
@@ -39,7 +33,7 @@ export function Room({
       setDenied(
         res.status === 403
           ? text.startsWith('Sign in') ? 'sign-in' : 'not-member'
-          : res.status === 401 ? 'password' : 'other',
+          : 'other',
       )
       throw new Error(text || `Room access denied (${res.status})`)
     }

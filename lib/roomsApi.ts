@@ -62,17 +62,17 @@ export async function fetchRooms(): Promise<RoomInfoResponse[]> {
   return Array.isArray(data.rooms) ? data.rooms : []
 }
 
-export async function verifyRoomPassword(roomId: string, password: string) {
+/** Demande au serveur un jeton d'accès aux données de la table (membres seulement). */
+async function requestRoomToken(roomId: string) {
   const res = await fetch('/api/rooms/verify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: roomId, password }),
+    body: JSON.stringify({ id: roomId }),
   })
   return requireOk<ApiSuccess<{
-    guarded: boolean
-    /** Token HMAC signé côté serveur, valide 10 minutes. Présent seulement si guarded=true. */
-    accessToken?: string
-    ts?: number
+    /** Token HMAC signé côté serveur, valide 10 minutes. */
+    accessToken: string
+    ts: number
   }>>(res)
 }
 
@@ -103,22 +103,8 @@ function storeToken(roomId: string, accessToken: string, ts: number) {
 }
 
 /**
- * Vérifie le mot de passe puis mémorise le token d'accès en sessionStorage.
- * `Room.tsx` le relit pour authentifier la connexion Liveblocks : sans cette
- * étape, une room protégée renvoie 401 à l'entrée.
- */
-export async function verifyAndStoreRoomToken(roomId: string, password: string) {
-  const result = await verifyRoomPassword(roomId, password)
-  if (result.accessToken && result.ts != null) {
-    storeToken(roomId, result.accessToken, result.ts)
-  }
-  return result
-}
-
-/**
  * Renvoie un jeton d'accès valide pour la room, en en demandant un au serveur
- * si nécessaire. Renvoie `null` si la room est protégée et qu'aucun mot de
- * passe n'a encore été validé — à l'appelant d'inviter l'utilisateur à le saisir.
+ * si nécessaire. Renvoie `null` si l'appelant n'est pas membre de la table.
  */
 export async function ensureRoomToken(
   roomId: string,
@@ -126,14 +112,14 @@ export async function ensureRoomToken(
   const cached = readStoredToken(roomId)
   if (cached) return cached
   try {
-    const result = await verifyRoomPassword(roomId, '')
+    const result = await requestRoomToken(roomId)
     if (result.accessToken && result.ts != null) {
       storeToken(roomId, result.accessToken, result.ts)
       return { accessToken: result.accessToken, ts: result.ts }
     }
     return null
   } catch {
-    // 401 (room protégée), 429, ou réseau indisponible
+    // 403 (pas membre), 429, ou réseau indisponible
     return null
   }
 }
@@ -150,7 +136,7 @@ export async function roomAuthHeaders(
   }
 }
 
-export async function createRoom(payload: { name: string; password?: string }) {
+export async function createRoom(payload: { name: string }) {
   const res = await fetch('/api/rooms', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

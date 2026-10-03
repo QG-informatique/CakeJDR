@@ -1,5 +1,13 @@
 # Journal
 
+## 2026-10-03 — Phase 2 : tables sur invitation seule, nettoyage des tables abandonnées
+
+- Mot de passe de table retiré partout : création, entrée, panneau admin. On entre sur invitation seule ; le jeton d'accès aux fiches reste, réservé aux membres (`app/api/rooms/verify`, `lib/roomAuth.ts`). Page `/rooms`, `RoomJoinGuard` et `RoomSelector`, inutilisés, supprimés.
+- Une table où personne n'est entré depuis 6 mois est supprimée chaque nuit (`app/api/cron/cleanup-rooms`, `vercel.json`). Le MJ voit une alerte dans le menu à 5 mois (`lib/roomLifecycle.ts`). La démo n'est jamais concernée. Choisi pour ne pas garder indéfiniment des parties mortes, sans surprendre un MJ actif.
+- Modèles de fiche : on en fera une bibliothèque du MJ, plus tard. Page confidentialité mise à jour.
+
+Reste ouvert : colonne `password_hash` encore en base (Neon non touché), alerte d'inactivité non testée avec un vrai compte MJ.
+
 ## 2026-10-03 — Phase 2 : accès aux tables dans le panneau admin
 
 - `/admin` montre qui a accès à chaque table (MJ couronné, joueurs, code d'invitation), la dernière activité et un badge démo ; filtre par pseudo (`listAllRoomAccess` dans `lib/db/rooms.ts`).

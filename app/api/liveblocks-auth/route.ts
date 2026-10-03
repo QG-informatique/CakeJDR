@@ -2,7 +2,6 @@ export const runtime = 'nodejs'
 
 import { Liveblocks } from '@liveblocks/node'
 import { randomUUID } from 'node:crypto'
-import { roomHasPassword, verifyRoomToken } from '@/lib/roomAuth'
 import { syncCurrentUser } from '@/lib/db/users'
 import { resolveRoomAccess } from '@/lib/db/roomAccess'
 import { touchRoom } from '@/lib/db/rooms'
@@ -16,11 +15,9 @@ if (!secret) {
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as {
     room?: string
-    accessToken?: string
-    ts?: string
   }
 
-  const { room, accessToken, ts } = body
+  const { room } = body
 
   if (!room || typeof room !== 'string') {
     return new Response('Missing room id', { status: 400 })
@@ -54,19 +51,6 @@ export async function POST(request: Request) {
   // Date de dernière visite, pour repérer les tables abandonnées. Un échec ici
   // ne doit pas empêcher d'entrer.
   await touchRoom(room).catch((e) => console.error('touchRoom', e))
-
-  const meta = (roomData.metadata ?? {}) as Record<string, unknown>
-
-  // Le prédicat est partagé avec /api/rooms/verify. Cette route ne testait
-  // auparavant qu'un drapeau, si bien qu'une room protégée créée avant
-  // l'introduction de ce drapeau laissait entrer sans mot de passe.
-  if (roomHasPassword(meta)) {
-    if (!verifyRoomToken(room, accessToken, ts, secret)) {
-      return new Response('Password required — invalid or expired access token', {
-        status: 401,
-      })
-    }
-  }
 
   // Pseudo, couleur et rôle sont posés ici, côté serveur : un joueur ne peut
   // ni se faire passer pour un autre, ni se déclarer MJ.

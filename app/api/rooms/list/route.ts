@@ -49,8 +49,8 @@ export async function GET() {
       rooms: mine.map((r) => ({
         id: r.id,
         name: r.name,
-        hasPassword: Boolean(r.hasPassword),
         hasOwner: true,
+        isDemo: r.isDemo,
         role: r.role,
         // Le code n'est montré qu'au MJ : c'est lui qui invite.
         joinCode: r.role === 'gm' ? r.joinCode : undefined,

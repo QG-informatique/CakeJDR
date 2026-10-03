@@ -6,12 +6,11 @@ import { Home, Lock, LogIn } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import type { TranslationKey } from '@/lib/translations'
 
-export type DeniedReason = 'sign-in' | 'not-member' | 'password' | 'other'
+export type DeniedReason = 'sign-in' | 'not-member' | 'other'
 
 const MESSAGE: Record<DeniedReason, TranslationKey> = {
   'sign-in': 'roomDeniedSignIn',
   'not-member': 'roomDeniedNotMember',
-  password: 'roomDeniedPassword',
   other: 'roomDeniedOther',
 }
 

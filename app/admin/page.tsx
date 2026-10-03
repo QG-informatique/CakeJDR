@@ -10,11 +10,9 @@ import {
   RefreshCw,
   ShieldCheck,
   Trash2,
-  Unlock,
 } from 'lucide-react'
 import { fetchRooms } from '@/lib/roomsApi'
 import {
-  adminClearPassword,
   adminDeleteRooms,
   adminRenameRoom,
   fetchAdminStatus,
@@ -155,13 +153,6 @@ export default function AdminPage() {
     if (!next || next === room.name) return
     void runAction(`Room renommee en "${next}"`, async () => {
       await adminRenameRoom(room.id, next)
-    })
-  }
-
-  const handleClearPassword = (room: RoomInfoResponse) => {
-    if (!window.confirm(`Retirer le mot de passe de "${room.name}" ?`)) return
-    void runAction('Mot de passe retire', async () => {
-      await adminClearPassword(room.id)
     })
   }
 
@@ -345,11 +336,6 @@ export default function AdminPage() {
                   </td>
                   <td className="p-3">
                     <div className="flex gap-1 text-xs">
-                      {r.hasPassword && (
-                        <span className="rounded bg-pink-500/15 px-1.5 py-0.5 text-pink-300">
-                          MDP
-                        </span>
-                      )}
                       {r.isDemo && (
                         <span className="rounded bg-sky-500/15 px-1.5 py-0.5 text-sky-300">
                           démo
@@ -375,15 +361,6 @@ export default function AdminPage() {
                         className="rounded-lg border border-white/10 bg-white/5 p-1.5 hover:bg-white/10 disabled:opacity-40"
                       >
                         <Pencil size={14} />
-                      </button>
-                      <button
-                        onClick={() => handleClearPassword(r)}
-                        disabled={busy || !r.hasPassword}
-                        title="Retirer le mot de passe"
-                        aria-label={`Retirer le mot de passe de ${r.name || r.id}`}
-                        className="rounded-lg border border-white/10 bg-white/5 p-1.5 hover:bg-white/10 disabled:opacity-30"
-                      >
-                        <Unlock size={14} />
                       </button>
                       <button
                         onClick={() => deleteIds([r.id])}

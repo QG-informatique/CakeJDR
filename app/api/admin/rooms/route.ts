@@ -2,7 +2,7 @@ export const runtime = 'nodejs'
 
 import { NextRequest } from 'next/server'
 import { isAdminRequest } from '@/lib/adminAuth'
-import { clearRoomPassword, deleteRoom, renameRoom } from '@/lib/liveRooms'
+import { deleteRoom, renameRoom } from '@/lib/liveRooms'
 import { forgetRoom, renameRoomRecord } from '@/lib/db/rooms'
 import { debug } from '@/lib/debug'
 import { fail, ok } from '@/lib/api-response'
@@ -52,11 +52,6 @@ export async function POST(req: NextRequest) {
   if (!id) return fail('missing id', 400)
 
   try {
-    if (action === 'clearPassword') {
-      await clearRoomPassword(id)
-      debug('admin clear password', id)
-      return ok({ id })
-    }
     if (action === 'rename') {
       const name = typeof body.name === 'string' ? body.name.trim() : ''
       if (!name) return fail('missing name', 400)

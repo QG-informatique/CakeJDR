@@ -3,6 +3,10 @@
     {
       "path": "/api/demo/reset",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/cleanup-rooms",
+      "schedule": "30 4 * * *"
     }
   ]
 }

@@ -30,7 +30,6 @@ export async function recordRoom(params: {
   id: string
   name: string
   ownerId: string
-  passwordHash?: string | null
 }) {
   await db
     .insert(rooms)
@@ -38,7 +37,6 @@ export async function recordRoom(params: {
       id: params.id,
       name: params.name,
       ownerId: params.ownerId,
-      passwordHash: params.passwordHash ?? null,
       joinCode: generateJoinCode(),
     })
     .onConflictDoNothing()
@@ -83,10 +81,10 @@ export async function listRoomsForUser(userId: string) {
       name: rooms.name,
       ownerId: rooms.ownerId,
       joinCode: rooms.joinCode,
+      isDemo: rooms.isDemo,
       role: roomMembers.role,
       createdAt: rooms.createdAt,
       lastActiveAt: rooms.lastActiveAt,
-      hasPassword: rooms.passwordHash,
     })
     .from(roomMembers)
     .innerJoin(rooms, eq(rooms.id, roomMembers.roomId))
