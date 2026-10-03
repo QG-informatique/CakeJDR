@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-04 — Phase 3 en ligne
+
+- Phase 3 publiée ; les 14 tests Playwright passent sur le site en ligne (`E2E_BASE_URL=https://cakejdr.qg-informatique.fr npx playwright test`, `playwright.config.ts`).
+- Démo vérifiée : correcte sur ordinateur, inutilisable sur téléphone (seule la fiche s'affiche). Décidé de traiter le téléphone en premier en phase 4, après les tests manuels de Quentin.
+
+Reste ouvert : tests manuels de la phase 3 avec compte (coupure réseau, gestion de table depuis un autre appareil, dessin à deux).
+
 ## 2026-10-03 — Phase 3 : revue, code mort, coupures réseau, performance, tests
 
 - Revue de sécurité : `GET /api/rooms` (liste publique de toutes les tables) supprimé ; renommer ou supprimer une table dépend du compte du MJ, plus d'un secret rangé dans le navigateur qui l'avait créée (`app/api/rooms/route.ts`, `lib/liveRooms.ts`). Deux MJ peuvent désormais donner le même nom à leur table.

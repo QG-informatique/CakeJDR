@@ -1,7 +1,10 @@
 import { defineConfig, devices } from '@playwright/test'
 
 const port = 3000
-const baseURL = `http://localhost:${port}`
+// E2E_BASE_URL=https://cakejdr.qg-informatique.fr npx playwright test
+// vise le site en ligne au lieu de lancer le serveur local.
+const remoteURL = process.env.E2E_BASE_URL
+const baseURL = remoteURL || `http://localhost:${port}`
 
 export default defineConfig({
   testDir: './tests',
@@ -13,7 +16,7 @@ export default defineConfig({
     baseURL,
     trace: 'on-first-retry',
   },
-  webServer: {
+  webServer: remoteURL ? undefined : {
     command: 'npm run start',
     port,
     reuseExistingServer: true,
