@@ -1,6 +1,6 @@
 # Journal
 
-## 2026-10-04 — Phase 3 en ligne
+## 2026-10-03 — Phase 3 en ligne
 
 - Phase 3 publiée ; les 14 tests Playwright passent sur le site en ligne (`E2E_BASE_URL=https://cakejdr.qg-informatique.fr npx playwright test`, `playwright.config.ts`).
 - Démo vérifiée : correcte sur ordinateur, inutilisable sur téléphone (seule la fiche s'affiche). Décidé de traiter le téléphone en premier en phase 4, après les tests manuels de Quentin.
