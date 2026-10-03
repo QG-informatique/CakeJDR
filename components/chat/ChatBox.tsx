@@ -7,6 +7,7 @@ import SessionSummary from './SessionSummary'
 import DiceStats from './DiceStats'
 import useEventLog, { SessionEvent } from '../app/hooks/useEventLog'
 import { useT } from '@/lib/useT'
+import { useIsDesktop } from '@/lib/useIsDesktop'
 import { debug } from '@/lib/debug'
 
 type Roll = { player: string, dice: number, result: number }
@@ -46,6 +47,8 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
   const broadcast = useBroadcastEvent()
   const self = useSelf()
   const t = useT()
+  // Sur téléphone le chat a son propre onglet : on ne le replie jamais.
+  const isDesktop = useIsDesktop()
   const [collapsed, setCollapsed] = useState(() =>
     typeof window !== 'undefined' && localStorage.getItem('chatPanelCollapsed') === '1'
   )
@@ -89,7 +92,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
   }, [events])
 
   // When collapsed, only show a floating button so the panel frees all space
-  if (collapsed) {
+  if (collapsed && isDesktop) {
     return (
       <button
         onClick={() => setCollapsed(false)}
@@ -105,13 +108,13 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
   if (showSummary) {
     return (
       <aside
-        className="w-full lg:w-1/5 p-4 flex flex-col relative rounded-xl border border-white/10 bg-black/15 backdrop-blur-[2px] shadow-lg shadow-black/10 transition flex-shrink-0 text-white"
+        className="w-full flex-1 min-h-0 lg:flex-none lg:w-1/5 p-4 flex flex-col relative rounded-xl border border-white/10 bg-black/15 backdrop-blur-[2px] shadow-lg shadow-black/10 transition flex-shrink-0 text-white"
         style={{ boxShadow: '0 4px 18px -8px rgba(0,0,0,0.24), 0 0 0 1px rgba(255,255,255,0.05)' }}
       >
         <button
           onClick={() => setCollapsed(true)}
           aria-label="Collapse chat panel"
-          className="absolute top-2 left-2 z-50 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
+          className="max-lg:hidden absolute top-2 left-2 z-50 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
         >
           <ChevronRight size={20} />
         </button>
@@ -122,13 +125,13 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
 
   return (
     <aside
-      className="w-full lg:w-1/5 p-4 flex flex-col relative rounded-xl border border-white/10 bg-black/15 backdrop-blur-[2px] shadow-lg shadow-black/10 transition flex-shrink-0 text-white"
+      className="w-full flex-1 min-h-0 lg:flex-none lg:w-1/5 p-4 flex flex-col relative rounded-xl border border-white/10 bg-black/15 backdrop-blur-[2px] shadow-lg shadow-black/10 transition flex-shrink-0 text-white"
       style={{ boxShadow: '0 4px 18px -8px rgba(0,0,0,0.24), 0 0 0 1px rgba(255,255,255,0.05)' }}
     >
       <button
         onClick={() => setCollapsed(true)}
         aria-label="Collapse chat panel"
-        className="absolute top-2 left-2 z-50 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
+        className="max-lg:hidden absolute top-2 left-2 z-50 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
       >
         <ChevronRight size={20} />
       </button>

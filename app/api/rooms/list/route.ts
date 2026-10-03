@@ -1,6 +1,6 @@
 export const runtime = 'nodejs'
 
-import { listRooms } from '@/lib/liveRooms'
+import { countActiveUsers, listRooms } from '@/lib/liveRooms'
 import { listAllRoomAccess, listRoomsForUser } from '@/lib/db/rooms'
 import { currentUserId } from '@/lib/db/users'
 import { isAdminRequest } from '@/lib/adminAuth'
@@ -45,8 +45,9 @@ export async function GET() {
 
     const mine = await listRoomsForUser(userId)
     debug('rooms list (user)', mine.length)
+    const online = await Promise.all(mine.map((r) => countActiveUsers(r.id)))
     return ok({
-      rooms: mine.map((r) => ({
+      rooms: mine.map((r, i) => ({
         id: r.id,
         name: r.name,
         hasOwner: true,
@@ -56,7 +57,7 @@ export async function GET() {
         joinCode: r.role === 'gm' ? r.joinCode : undefined,
         createdAt: r.createdAt?.toISOString(),
         updatedAt: r.lastActiveAt?.toISOString(),
-        usersConnected: 0,
+        usersConnected: online[i] ?? 0,
       })),
       scope: 'member',
     })

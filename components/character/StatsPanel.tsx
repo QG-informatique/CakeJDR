@@ -117,8 +117,8 @@ const StatsPanel: FC<Props> = ({ edit, perso, onChange }) => {
         </div>
       </div>
 
-      {/* Stats and attack modifiers */}
-      <div className="mt-2 flex gap-0">
+      {/* Stats and attack modifiers — l'un sous l'autre sur téléphone */}
+      <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:gap-0">
         <div className="flex-1">
           <div className="font-semibold text-base mb-1">{t('attributes')}</div>
 {STATS.map(stat =>
@@ -159,11 +159,11 @@ const StatsPanel: FC<Props> = ({ edit, perso, onChange }) => {
 )}
 
         </div>
-        <div className="flex flex-col items-end justify-between ml-4 min-w-[120px]">
+        <div className="flex flex-col items-start sm:items-end justify-between sm:ml-4 sm:min-w-[120px]">
           <div className="font-semibold text-base mb-1">{t('attackMods')}</div>
           {ATTACKS.map(att =>
-            <div key={att.key} className="flex items-center mb-2 w-full justify-end">
-              <strong className="w-16 text-right">{t(att.label as TranslationKey)}</strong>
+            <div key={att.key} className="flex items-center mb-2 w-full sm:justify-end">
+              <strong className="w-28 sm:w-16 text-right">{t(att.label as TranslationKey)}</strong>
               {edit
                 ? <input type="text" value={perso[att.key] ?? ''} onChange={e => onChange(att.key, e.target.value)} className="ml-2 px-1 py-0.5 rounded bg-white border w-10 text-sm text-black text-right" />
                 : <span className="ml-3 px-2 py-0.5 rounded text-base font-bold bg-gray-700 text-white text-right">{perso[att.key] ?? 0}</span>

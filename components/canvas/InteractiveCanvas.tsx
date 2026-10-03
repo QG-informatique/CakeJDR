@@ -95,7 +95,11 @@ export default function InteractiveCanvas() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
   const [isDrawing, setIsDrawing] = useState(false)
   const lastPointRef = useRef<{ x: number; y: number } | null>(null)
-  const [toolsVisible, setToolsVisible] = useState(true)
+  // Ouverte d'emblée sur grand écran ; sur téléphone la palette couvrirait
+  // la moitié du canevas, on la laisse fermée.
+  const [toolsVisible, setToolsVisible] = useState(
+    () => typeof window === 'undefined' || window.matchMedia('(min-width: 1024px)').matches,
+  )
   const imageInputRef = useRef<HTMLInputElement>(null)
 
   // Images helpers

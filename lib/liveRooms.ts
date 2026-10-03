@@ -30,6 +30,22 @@ export type RoomSummary = {
   usersConnected: number
 }
 
+/**
+ * Nombre de personnes présentes dans la table en ce moment. Liveblocks ne
+ * renvoie pas ce chiffre avec la liste des tables : il faut le demander table
+ * par table. Un même compte ouvert dans deux onglets compte une fois.
+ * Renvoie `null` si Liveblocks ne répond pas : à l'appelant de choisir la
+ * valeur prudente.
+ */
+export async function countActiveUsers(id: string): Promise<number | null> {
+  try {
+    const { data } = await getClient().getActiveUsers(id)
+    return new Set(data.map((u) => u.id ?? `connection-${u.connectionId}`)).size
+  } catch {
+    return null
+  }
+}
+
 export async function listRooms(): Promise<RoomSummary[]> {
   const client = getClient()
   const rooms: RoomSummary[] = []
@@ -38,7 +54,6 @@ export async function listRooms(): Promise<RoomSummary[]> {
     const { data, nextCursor } = await client.getRooms({ startingAfter: cursor, limit: 50 })
     for (const r of data) {
       if (r.id === 'rooms-index' || r.metadata?.name === 'rooms-index') continue
-      const count = (r as { usersCount?: number }).usersCount
       const roomName =
         typeof r.metadata?.name === 'string' && r.metadata.name
           ? r.metadata.name
@@ -51,11 +66,12 @@ export async function listRooms(): Promise<RoomSummary[]> {
         name: roomName,
         createdAt: r.createdAt.toISOString(),
         updatedAt: r.lastConnectionAt ? r.lastConnectionAt.toISOString() : undefined,
-        usersConnected: typeof count === 'number' ? count : 0
+        usersConnected: 0,
       })
     }
     cursor = nextCursor ?? undefined
   } while (cursor)
+  await Promise.all(rooms.map(async (r) => { r.usersConnected = (await countActiveUsers(r.id)) ?? 0 }))
   return rooms
 }
 
