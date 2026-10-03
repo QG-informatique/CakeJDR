@@ -59,7 +59,9 @@
 - [x] Rendre les pseudos uniques (sans tenir compte des majuscules) : suffixe automatique à la première connexion si le nom est pris, refus au changement de pseudo
 - [ ] Tester l'écran « Choisis ton pseudo » avec le compte Google de test (CakeSama-2), pseudo libre puis pseudo déjà pris
 - [x] Identifier le propriétaire d'une fiche par l'identifiant du compte et non par le pseudo (`c.owner === profile.pseudo` dans `HomePageInner.tsx` et `MenuAccueil.tsx`)
-- [ ] Ajouter un bouton « Supprimer mon compte » (aujourd'hui la suppression se demande par email)
+- [x] Ajouter un bouton « Supprimer mon compte » (aujourd'hui la suppression se demande par email)
+- [ ] Tester « Supprimer mon compte » avec un compte jetable ayant une table : la table doit disparaître pour ses joueurs
+- [ ] Supprimer aussi les images Cloudinary d'un compte supprimé (aujourd'hui elles ne sont rattachées à aucun compte)
 - [x] Copier `AUTH_SECRET` (déjà généré dans `.env.local`) dans Vercel, environnement Production
 - [x] Après la première connexion, transférer la salle démo et le rôle admin vers le nouveau compte (`scripts/transfer-account.mjs`)
 - [x] Retirer l'intégration Clerk de Vercel, avec ses variables `CLERK_*` et `NEXT_PUBLIC_CLERK_*`

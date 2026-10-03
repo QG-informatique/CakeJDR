@@ -61,8 +61,9 @@ export default function ConfidentialitePage() {
 
       <h2>Tes droits</h2>
       <p>
-        Tu peux demander à consulter, corriger ou supprimer tes données, ou supprimer ton compte,
-        en écrivant à <a href={`mailto:${CONTACT}`}>{CONTACT}</a>. Réponse sous un mois. Tu peux
+        Tu peux supprimer ton compte toi-même, depuis le lien « Supprimer mon compte » en bas du
+        menu : tes fiches et les tables dont tu es le MJ partent avec lui. Tu peux aussi demander à
+        consulter, corriger ou supprimer tes données en écrivant à <a href={`mailto:${CONTACT}`}>{CONTACT}</a>. Réponse sous un mois. Tu peux
         aussi adresser une réclamation à la CNIL (cnil.fr).
       </p>
     </LegalPage>
