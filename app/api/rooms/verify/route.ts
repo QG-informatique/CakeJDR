@@ -3,8 +3,9 @@ export const runtime = 'nodejs'
 import { NextRequest } from 'next/server'
 import { Liveblocks } from '@liveblocks/node'
 import { issueRoomToken } from '@/lib/roomAuth'
+import { countActiveUsers } from '@/lib/liveRooms'
 import { clientIp, rateLimit } from '@/lib/rateLimit'
-import { resetDemoRoomIfEmpty } from '@/lib/db/demo'
+import { isDemoRoom, resetDemoRoomIfEmpty } from '@/lib/db/demo'
 import { syncCurrentUser } from '@/lib/db/users'
 import { resolveRoomAccess } from '@/lib/db/roomAccess'
 import { fail, ok } from '@/lib/api-response'
@@ -56,10 +57,15 @@ export async function POST(req: NextRequest) {
 
     // Salle de démonstration vide : on la remet dans son état de référence
     // avant de laisser entrer, pour que chaque visiteur la découvre intacte.
-    const connected = (room as { usersCount?: number }).usersCount ?? 0
-    await resetDemoRoomIfEmpty(id, connected).catch((e) =>
-      console.error('resetDemoRoomIfEmpty', e),
-    )
+    // Si quelqu'un y joue déjà, on n'efface rien. Seule la salle de démo est
+    // concernée : inutile d'interroger Liveblocks pour les autres.
+    // Sans réponse de Liveblocks, on suppose la salle occupée.
+    if (await isDemoRoom(id).catch(() => false)) {
+      const connected = (await countActiveUsers(id)) ?? 1
+      await resetDemoRoomIfEmpty(id, connected).catch((e) =>
+        console.error('resetDemoRoomIfEmpty', e),
+      )
+    }
 
     const { accessToken, ts } = issueRoomToken(id, secret)
     return ok({ accessToken, ts })

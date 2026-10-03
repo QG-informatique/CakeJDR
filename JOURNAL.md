@@ -1,5 +1,14 @@
 # Journal
 
+## 2026-10-03 — Phase 4 : table sur téléphone, compteur de présence
+
+- Téléphone et tablette (< 1024 px) : un panneau à la fois (Fiche / Table / Chat) avec une barre d'onglets en bas, point rouge sur Chat quand un message arrive (`components/app/MobileTabBar.tsx`, `HomePageInner.tsx`, `lib/useIsDesktop.ts`). L'affichage ordinateur est inchangé.
+- Le menu n'ouvre plus une connexion temps réel par table : il affiche « N en ligne » calculé par le serveur (`RoomList.tsx`, `RoomAvatarStack.tsx` supprimé).
+- Bug trouvé : le nombre de connectés lu chez Liveblocks n'existait pas, donc toujours 0. La démo était remise à zéro à chaque entrée, même avec des joueurs dedans. Corrigé par `countActiveUsers` (`lib/liveRooms.ts`, `app/api/rooms/verify/route.ts`). Si Liveblocks ne répond pas, on suppose la démo occupée et on n'efface rien.
+- 15 tests Playwright au vert, dont un nouveau parcours téléphone.
+
+Reste ouvert : essai sur un vrai téléphone, avertissements `react-hooks` des fonds animés.
+
 ## 2026-10-03 — Phase 3 en ligne
 
 - Phase 3 publiée ; les 14 tests Playwright passent sur le site en ligne (`E2E_BASE_URL=https://cakejdr.qg-informatique.fr npx playwright test`, `playwright.config.ts`).

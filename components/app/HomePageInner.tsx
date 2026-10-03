@@ -17,6 +17,7 @@ import useDiceHistory from './hooks/useDiceHistory'
 import useEventLog from './hooks/useEventLog'
 import useProfile from './hooks/useProfile'
 import ErrorBoundary from '@/components/misc/ErrorBoundary'
+import MobileTabBar, { type MobileTab } from '@/components/app/MobileTabBar'
 import { debug } from '@/lib/debug'
 import { roomAuthHeaders } from '@/lib/roomsApi'
 import { saveAccountCharacter } from '@/lib/charactersApi'
@@ -54,6 +55,15 @@ export default function HomePageInner() {
   const { addEvent } = useEventLog(roomId)
   const chatBoxRef = useRef<HTMLDivElement>(null)
   const [canvasKey, setCanvasKey] = useState(0)
+  // Sous 1024 px, un seul panneau à la fois : fiche, table (canevas et dés)
+  // ou chat. Au-dessus, les trois restent côte à côte et ceci ne sert pas.
+  const [mobileTab, setMobileTab] = useState<MobileTab>('table')
+  const [chatUnread, setChatUnread] = useState(false)
+  const showMobileTab = (tab: MobileTab) => {
+    setMobileTab(tab)
+    if (tab === 'chat') setChatUnread(false)
+  }
+  const mobilePanel = (tab: MobileTab) => (mobileTab === tab ? 'flex' : 'hidden')
   const lastRollTs = useRef<number | null>(null)
   const [cooldown, setCooldown] = useState(false)
   const remoteLoadedRef = useRef(false)
@@ -104,6 +114,10 @@ export default function HomePageInner() {
   // listen for remote events
   useEventListener((payload) => {
     const { event } = payload
+    if (event.type === 'chat') {
+      if (mobileTab !== 'chat') setChatUnread(true)
+      return
+    }
     if (event.type === 'dice-roll') {
       const ts =
         typeof (event as { ts?: number }).ts === 'number'
@@ -452,16 +466,20 @@ export default function HomePageInner() {
   return (
     <div className="relative w-screen h-dvh font-sans overflow-hidden bg-transparent">
       <div className="relative z-10 flex flex-col lg:flex-row w-full h-full">
-        <CharacterSheet perso={perso} onUpdate={handleUpdatePerso} chatBoxRef={chatBoxRef} allCharacters={characters} logoOnly>
-          <span className="ml-2">
-            {isGM && <GMCharacterSelector onSelect={handleGMSelect} />}
-          </span>
-          <span className="ml-1">
-            <ImportExportMenu perso={perso} onUpdate={handleUpdatePerso} />
-          </span>
-        </CharacterSheet>
+        {/* `lg:contents` efface l'enveloppe sur grand écran : la mise en page
+            côte à côte reste celle d'avant les onglets. */}
+        <div className={`${mobilePanel('sheet')} flex-1 min-h-0 flex-col items-center overflow-y-auto p-2 lg:contents`}>
+          <CharacterSheet perso={perso} onUpdate={handleUpdatePerso} chatBoxRef={chatBoxRef} allCharacters={characters} logoOnly>
+            <span className="ml-2">
+              {isGM && <GMCharacterSelector onSelect={handleGMSelect} />}
+            </span>
+            <span className="ml-1">
+              <ImportExportMenu perso={perso} onUpdate={handleUpdatePerso} />
+            </span>
+          </CharacterSheet>
+        </div>
 
-        <main className="flex-1 flex flex-col min-h-0">
+        <main className={`${mobilePanel('table')} lg:flex flex-1 flex-col min-h-0`}>
           <div className="flex-1 m-4 flex flex-col justify-center items-center relative min-h-0">
             <ErrorBoundary
               key={canvasKey}
@@ -500,15 +518,19 @@ export default function HomePageInner() {
           </ErrorBoundary>
         </main>
 
-        <ErrorBoundary fallback={<div className="p-4 text-red-500">Chat error</div>}>
-          <ChatBox
-            chatBoxRef={chatBoxRef}
-            history={history}
-            author={isGM
-              ? (profile?.pseudo ?? 'MJ')
-              : perso.nom || profile?.pseudo || 'Anonymous'}
-          />
-        </ErrorBoundary>
+        <div className={`${mobilePanel('chat')} flex-1 min-h-0 flex-col p-2 lg:contents`}>
+          <ErrorBoundary fallback={<div className="p-4 text-red-500">Chat error</div>}>
+            <ChatBox
+              chatBoxRef={chatBoxRef}
+              history={history}
+              author={isGM
+                ? (profile?.pseudo ?? 'MJ')
+                : perso.nom || profile?.pseudo || 'Anonymous'}
+            />
+          </ErrorBoundary>
+        </div>
+
+        <MobileTabBar active={mobileTab} onSelect={showMobileTab} chatUnread={chatUnread} />
       </div>
     </div>
   )

@@ -7,6 +7,7 @@ import EquipTab from './EquipTab'
 import DescriptionPanel from '../character/DescriptionPanel'
 import CharacterSheetHeader from '../character/CharacterSheetHeader'
 import { useT } from '@/lib/useT'
+import { useIsDesktop } from '@/lib/useIsDesktop'
 import {
   type Character,
   type CharacterSelection,
@@ -55,6 +56,7 @@ const CharacterSheet: FC<Props> = ({
     normalizeCharacter(perso),
   )
   const t = useT()
+  const isDesktop = useIsDesktop()
   const TABS = [
     { key: 'main', label: t('statsTab') },
     { key: 'equip', label: t('equipment') },
@@ -189,8 +191,9 @@ const CharacterSheet: FC<Props> = ({
     onUpdate(normalized)
   }
 
-  // When collapsed, render only an expand button so the panel frees all space
-  if (collapsed) {
+  // When collapsed, render only an expand button so the panel frees all space.
+  // Sur téléphone la fiche a son propre onglet : on ne la replie jamais.
+  if (collapsed && isDesktop) {
     return (
       <div className="relative w-0 h-0 overflow-visible flex-shrink-0">
         <button
@@ -224,7 +227,7 @@ const CharacterSheet: FC<Props> = ({
       <button
         onClick={() => setCollapsed(true)}
         aria-label="Collapse character panel"
-        className="absolute top-2 right-2 z-50 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
+        className="max-lg:hidden absolute top-2 right-2 z-50 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
       >
         <ChevronLeft size={20} />
       </button>

@@ -37,3 +37,25 @@ test('a guest can open the demo table', async ({ page }) => {
   // Pas de bandeau de connexion perdue une fois la table ouverte.
   await expect(page.getByText(/Connexion perdue|Connection lost/)).toHaveCount(0)
 })
+
+test('on a phone, the table shows one panel at a time', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 })
+  await page.goto('/menu-accueil')
+  await page.getByRole('button', { name: /invité|guest/i }).click()
+  await page.waitForURL(/\/room\//, { timeout: 15_000 })
+  // Onglet Table par défaut : canevas et dés, avec une vraie hauteur.
+  await expect(page.getByRole('tab', { name: /^(Table)$/ })).toHaveAttribute('aria-selected', 'true', { timeout: 20_000 })
+  const canvasBox = await page.locator('canvas').first().boundingBox()
+  expect(canvasBox?.height ?? 0).toBeGreaterThan(200)
+  await expect(page.getByRole('button', { name: /^(Lancer|Roll)$/ })).toBeVisible()
+
+  await page.getByRole('tab', { name: /^(Chat)$/ }).click()
+  await expect(page.getByPlaceholder(/Votre message|Your message/)).toBeVisible()
+  await expect(page.getByRole('button', { name: /^(Lancer|Roll)$/ })).toBeHidden()
+
+  await page.getByRole('tab', { name: /^(Fiche|Sheet)$/ }).click()
+  await expect(page.getByRole('button', { name: /^(Statistiques|Stats)$/ })).toBeVisible()
+  // Rien ne déborde sur la droite.
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
+  expect(overflow).toBeLessThanOrEqual(0)
+})

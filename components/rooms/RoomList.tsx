@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useT } from '@/lib/useT'
 import { AlertTriangle, CheckCircle2, LogIn } from 'lucide-react'
-import RoomAvatarStack from './RoomAvatarStack'
 import {
   deleteRoomById,
   fetchRooms as fetchRoomsApi,
@@ -193,14 +192,22 @@ export default function RoomList({
                 </>
               )}
             </div>
-            <span className="text-xs text-white/60 truncate">
-              {r.updatedAt
-                ? new Date(r.updatedAt).toLocaleDateString()
-                : r.createdAt
-                  ? new Date(r.createdAt).toLocaleDateString()
-                  : ''}
+            <span className="flex items-center justify-between gap-2 text-xs text-white/60">
+              <span className="truncate">
+                {r.updatedAt
+                  ? new Date(r.updatedAt).toLocaleDateString()
+                  : r.createdAt
+                    ? new Date(r.createdAt).toLocaleDateString()
+                    : ''}
+              </span>
+              {/* Compté par le serveur : ouvrir le menu ne connecte plus à chaque table. */}
+              {(r.usersConnected ?? 0) > 0 && (
+                <span className="flex shrink-0 items-center gap-1 text-emerald-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  {t('onlineCount').replace('{n}', String(r.usersConnected))}
+                </span>
+              )}
             </span>
-            <RoomAvatarStack id={r.id} />
             {r.role === 'gm' && !r.isDemo && (() => {
               // Table bientôt supprimée faute de visite : seul le MJ est prévenu,
               // et il suffit d'y entrer pour la garder.
