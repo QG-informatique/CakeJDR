@@ -1,19 +1,20 @@
 'use client'
 import React, { useEffect, useState } from 'react'
 
-/* ---------- BACKGROUNDS EXISTANTS ---------- */
-import RpgBackground from './RpgBackground'
-import CakeBackground from './CakeBackground'
-import BananaBackground from './BananaBackground'
-import UnicornBackground from './UnicornBackground'
-import SpecialBackground from './SpecialBackground'
+import dynamic from 'next/dynamic'
 
-/* ---------- 🆕 BACKGROUNDS 6 → 10 ---------- */
-import Background6 from './Background6'
-import Background7 from './Background7'
-import Background8 from './Background8'
-import Background9 from './Background9'
-import Background10 from './Background10'
+/* Chaque fond est chargé à la demande : un seul est affiché à la fois, et
+   certains sont lourds (SpecialBackground fait 1600 lignes d'animations). */
+const RpgBackground = dynamic(() => import('./RpgBackground'), { ssr: false })
+const CakeBackground = dynamic(() => import('./CakeBackground'), { ssr: false })
+const BananaBackground = dynamic(() => import('./BananaBackground'), { ssr: false })
+const UnicornBackground = dynamic(() => import('./UnicornBackground'), { ssr: false })
+const SpecialBackground = dynamic(() => import('./SpecialBackground'), { ssr: false })
+const Background6 = dynamic(() => import('./Background6'), { ssr: false })
+const Background7 = dynamic(() => import('./Background7'), { ssr: false })
+const Background8 = dynamic(() => import('./Background8'), { ssr: false })
+const Background9 = dynamic(() => import('./Background9'), { ssr: false })
+const Background10 = dynamic(() => import('./Background10'), { ssr: false })
 
 import { useBackground, BackgroundType } from '../context/BackgroundContext'
 

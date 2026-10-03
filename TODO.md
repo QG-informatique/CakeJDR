@@ -40,6 +40,16 @@
 - [ ] Transformer les modèles de fiche en bibliothèque du MJ, réutilisable d'une table à l'autre
 - [x] Nettoyer les tables antérieures : cinq supprimées, `cakroom` gardée comme salle de démonstration
 
+## Phase 3 — robustesse
+- [x] Supprimer `GET /api/rooms`, qui listait toutes les tables à n'importe qui
+- [x] Rattacher la gestion d'une table (renommer, supprimer) au compte du MJ, au lieu d'un secret gardé dans le navigateur qui l'a créée
+- [x] Afficher un bandeau quand la connexion temps réel se coupe (reconnexion, puis bouton « Recharger » si elle échoue) et prévenir avant de fermer l'onglet avec des modifications non envoyées
+- [x] Envoyer les traits du canevas par paquets, une fois par image, au lieu d'un message réseau par mouvement de souris
+- [x] Charger les fonds d'écran à la demande (un seul téléchargé au lieu des dix)
+- [x] Réécrire les tests Playwright : contrat API d'un visiteur, menu, crédit, pages légales, salle de démonstration (`npx playwright test`, Chrome du poste)
+- [ ] Rendre le canevas utilisable sous ~1000 px de large : il passe à 0 px de haut (constaté à 966 px) — phase 4
+- [ ] Limiter côté serveur le nombre de tables qu'un compte peut créer (le garde-fou actuel est dans le navigateur) — phase 5
+
 ## Page d'accueil
 - [x] Remettre le dé en page d'accueil : lancer automatique, attrapable et lançable sur tout l'écran
 - [x] Vérifier à l'œil que le dé revient bien à sa place après un lancer
@@ -90,19 +100,19 @@
 - [ ] Corriger les 58 avertissements `react-hooks` (`purity`, `set-state-in-effect`, `refs`) concentrés dans les fonds animés, puis repasser ces trois règles en erreur dans `eslint.config.mjs` — phase 4
 - [x] Restreindre les paramètres signés de `/api/cloudinary/signature` (formats, taille) après vérification de la doc Cloudinary — formats signés et compte requis ; Cloudinary n'a pas de paramètre de taille
 - [x] Donner une propriété par utilisateur aux fiches (Blob remplacé par la base)
-- [ ] Remplacer le jeton d'accès à la room par la session utilisateur une fois l'auth en place (phase 1)
+- [x] Remplacer le jeton d'accès à la room par la session utilisateur une fois l'auth en place (phase 1) — le jeton reste, mais n'est remis qu'aux membres reconnus par leur session
 
 ## Qualité / outillage
 - [x] Réparer `npm run lint` et le crash ESLint — flat config native, `FlatCompat` supprimé
 - [x] Mettre en place une CI GitHub Actions (typecheck, lint, audit, build)
-- [ ] Ajouter des tests e2e Playwright : rendu des pages, rejoindre une table par code d'invitation, upload image, lancer de dé, import/export personnage
+- [ ] Ajouter les tests e2e avec compte : rejoindre une table par code d'invitation, upload image, lancer de dé, import/export personnage (demande un compte de test et une session simulée)
 - [x] Traiter les vulnérabilités `npm audit` (0 restante, `@vercel/blob` monté en v2)
 - [ ] Nettoyer types résiduels `any` si possible sans rigidifier les structures Lson
 
 ## Nettoyage repo
 - [x] Retirer `tmp/` du suivi git (1963 fichiers, dont `node.exe` ~71 Mo, versionnés par erreur)
 - [ ] Purger `node.exe` et `node.zip` de l'historique git (`git filter-repo`) — retirés du contenu actuel mais toujours dans l'historique, `.git` pèse ~70 Mo ; réécrit tous les SHA, à faire à un moment calme
-- [ ] Supprimer le code mort : `components/rooms/RoomJoinGuard.tsx` et `components/rooms/RoomSelector.tsx` (plus importés nulle part)
+- [x] Supprimer le code mort : `components/rooms/RoomJoinGuard.tsx` et `components/rooms/RoomSelector.tsx` (plus importés nulle part) — avec `MusicPanel`, `OnlineProfiles`, `useOnlineStatus`, `/api/timestamp` et 13 paquets npm inutilisés
 - [ ] Migrer le rate-limit du login admin (`lib/rateLimit.ts`, en mémoire) vers Vercel KV/Redis pour un vrai quota en serverless
 
 ## Rooms / Auth
@@ -116,7 +126,7 @@
 
 ## Canvas & temps réel
 - [ ] Proposer un fond fixe (et respecter `prefers-reduced-motion`) : le fond aux dés saccade sur un navigateur sans accélération matérielle (constaté sur Firefox)
-- [ ] Throttler les segments de trait pour réduire le trafic Liveblocks lors de dessins rapides (coalescer via requestAnimationFrame)
+- [x] Throttler les segments de trait pour réduire le trafic Liveblocks lors de dessins rapides (coalescer via requestAnimationFrame)
 - [ ] Déplacer l'aperçu d'image en attente sur un calque dédié avec indicateur de progression
 
 ## Personnages / Cloud

@@ -43,3 +43,7 @@ next-env.d.ts
 
 # dossier de travail local (distribution Node, artefacts)
 /tmp/
+
+# Playwright
+/test-results/
+/playwright-report/

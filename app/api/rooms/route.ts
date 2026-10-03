@@ -1,12 +1,6 @@
 export const runtime = 'nodejs'
 import { NextRequest } from 'next/server'
-import {
-  listRooms,
-  createRoom,
-  deleteRoom,
-  renameRoom,
-  verifyRoomOwner,
-} from '@/lib/liveRooms'
+import { createRoom, deleteRoom, renameRoom } from '@/lib/liveRooms'
 import { isAdminRequest } from '@/lib/adminAuth'
 import { forgetRoom, isRoomOwner, recordRoom, renameRoomRecord } from '@/lib/db/rooms'
 import { currentUserId, syncCurrentUser } from '@/lib/db/users'
@@ -14,31 +8,15 @@ import { debug } from '@/lib/debug'
 import { fail, ok } from '@/lib/api-response'
 
 /**
- * Une mutation de room est autorisée si l'appelant est admin,
- * ou s'il présente le secret de propriété reçu à la création.
+ * Une table se renomme ou se supprime par son MJ (son créateur, enregistré
+ * en base) ou par l'administrateur.
+ *
+ * Il n'y a pas de GET : la liste des tables passe par `/api/rooms/list`, qui
+ * ne montre à chacun que les tables dont il est membre.
  */
-async function canMutate(req: NextRequest, id: string, ownerSecret?: unknown) {
+async function canMutate(id: string) {
   if (await isAdminRequest()) return true
-
-  // Propriétaire enregistré en base : le cas normal pour un joueur connecté.
-  const userId = await currentUserId()
-  if (await isRoomOwner(id, userId)) return true
-
-  // Secours pour les tables créées sans compte : le secret conservé par le
-  // navigateur du créateur. Disparaîtra quand tout sera rattaché aux comptes.
-  if (typeof ownerSecret !== 'string' || !ownerSecret) return false
-  return verifyRoomOwner(id, ownerSecret)
-}
-
-export async function GET() {
-  try {
-    const rooms = await listRooms()
-    debug('rooms list', rooms.length)
-    return ok({ rooms })
-  } catch (e) {
-    console.error(e)
-    return fail('Failed to list rooms', 500)
-  }
+  return isRoomOwner(id, await currentUserId())
 }
 
 export async function POST(req: NextRequest) {
@@ -54,20 +32,15 @@ export async function POST(req: NextRequest) {
     if (!name || typeof name !== 'string') {
       return fail('missing name', 400)
     }
-    const { id, ownerSecret } = await createRoom(name)
+    const { id } = await createRoom(name)
     await recordRoom({ id, name, ownerId: account.id }).catch((e) =>
       console.error('recordRoom', e),
     )
 
     debug('room created', name, id)
-    // ownerSecret n'est renvoyé qu'ici : le client doit le conserver
-    // pour pouvoir renommer ou supprimer sa room plus tard.
-    return ok({ id, ownerSecret })
+    return ok({ id })
   } catch (e) {
     const msg = (e as Error).message
-    if (msg === 'name_exists') {
-      return fail('name already used', 400)
-    }
     if (msg === 'Liveblocks key missing') {
       return fail(msg, 500)
     }
@@ -78,11 +51,11 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const { id, ownerSecret } = await req.json()
+    const { id } = await req.json()
     if (!id || typeof id !== 'string') {
       return fail('missing id', 400)
     }
-    if (!(await canMutate(req, id, ownerSecret))) {
+    if (!(await canMutate(id))) {
       return fail('forbidden: you are not the owner of this room', 403)
     }
     await deleteRoom(id)
@@ -101,11 +74,11 @@ export async function DELETE(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const { id, name, ownerSecret } = await req.json()
+    const { id, name } = await req.json()
     if (!id || typeof id !== 'string' || !name || typeof name !== 'string') {
       return fail('missing data', 400)
     }
-    if (!(await canMutate(req, id, ownerSecret))) {
+    if (!(await canMutate(id))) {
       return fail('forbidden: you are not the owner of this room', 403)
     }
     await renameRoom(id, name)

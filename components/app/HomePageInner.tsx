@@ -16,7 +16,6 @@ import ImportExportMenu from '@/components/character/ImportExportMenu'
 import useDiceHistory from './hooks/useDiceHistory'
 import useEventLog from './hooks/useEventLog'
 import useProfile from './hooks/useProfile'
-import useOnlineStatus from './hooks/useOnlineStatus'
 import ErrorBoundary from '@/components/misc/ErrorBoundary'
 import { debug } from '@/lib/debug'
 import { roomAuthHeaders } from '@/lib/roomsApi'
@@ -174,8 +173,6 @@ export default function HomePageInner() {
       router.push('/menu')
     }
   }, [router])
-
-  useOnlineStatus(user, profile)
 
   useEffect(() => {
     if (profile) setUser(profile.pseudo)
