@@ -1,5 +1,23 @@
 # Journal
 
+## 2026-10-03 — Sous-domaine OVH plutôt que l'adresse Vercel
+
+- Revirement : le site passera sur un sous-domaine de `qg-informatique.fr` (zone DNS chez OVH), relié à Vercel par un enregistrement CNAME.
+- On garde Auth.js : il ne dépend pas du domaine, et revenir à Clerk ajouterait cinq enregistrements DNS et un service de plus. Aucune adresse n'est écrite en dur dans le code, donc rien à modifier.
+- Application Discord créée. Ses redirections et celles de Google pointeront vers le sous-domaine ; l'adresse `.vercel.app` reste déclarée en secours.
+
+- Sous-domaine `cakejdr.qg-informatique.fr` en place ; l'adresse `.vercel.app` retirée plutôt que redirigée (aucun trafic dessus).
+- Connexion Discord vérifiée en local ; compte admin, pseudo et salle démo transférés vers `discord:…` (`scripts/transfer-account.mjs`). Icône animée de l'application : `public/cakejdr-icon.gif`.
+- Pages `/confidentialite` et `/conditions` (`components/legal/LegalPage.tsx`), liées dans le pied de page à côté du crédit : Google les exige pour publier l'application de connexion, et le RGPD pour un site à comptes.
+
+- Application Google créée (Branding, publication, client Web) ; clés dans `.env.local`. Le bouton Google mène bien à l'écran « Accéder à l'application CakeJDR », sans erreur de redirection.
+- Connexion Google vérifiée. Pseudos uniques sans tenir compte des majuscules (index `users_pseudo_lower_idx`) ; à la première connexion, écran « Choisis ton pseudo » avec disponibilité affichée pendant la frappe (`components/auth/PseudoPicker.tsx`, `app/api/me/pseudo`).
+- Plus de mot de passe admin : les droits viennent du compte (`users.is_admin`, `lib/adminAuth.ts`), la route `api/admin/login` est supprimée.
+- Upload d'images réservé aux comptes connectés, formats autorisés signés auprès de Cloudinary (un SVG est refusé, vérifié).
+- Fiches reconnues par l'identifiant du compte (`ownerId`, `isOwnedBy` dans `types/character.ts`) et non plus par le pseudo : changer de pseudo ne fait plus perdre ses fiches.
+
+Reste ouvert : tester l'écran de pseudo, puis la mise en ligne.
+
 ## 2026-09-12 — Clerk remplacé par Auth.js (Google et Discord)
 
 - Revirement sur la décision du 2026-09-06 : Clerk exige en production un nom de domaine à soi, et ni achat ni sous-domaine ne sont voulus. Auth.js fonctionne sur l'adresse `.vercel.app` : `auth.ts`, `app/api/auth/[...nextauth]/route.ts`, page `app/connexion`, `components/auth/SignInButtons.tsx`.

@@ -1,6 +1,5 @@
 export const runtime = 'nodejs'
 
-import { NextRequest } from 'next/server'
 import { listRooms } from '@/lib/liveRooms'
 import { listRoomsForUser } from '@/lib/db/rooms'
 import { currentUserId } from '@/lib/db/users'
@@ -15,9 +14,9 @@ import { fail, ok } from '@/lib/api-response'
  * est membre, c'est-à-dire celles qu'il a créées ou rejointes avec un code
  * d'invitation. Un administrateur voit tout, pour pouvoir modérer.
  */
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
-    if (await isAdminRequest(req)) {
+    if (await isAdminRequest()) {
       const all = await listRooms()
       debug('rooms list (admin)', all.length)
       return ok({ rooms: all, scope: 'admin' })

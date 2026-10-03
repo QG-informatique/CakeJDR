@@ -39,7 +39,15 @@ export async function GET() {
     .where(eq(characters.ownerId, account.id))
     .orderBy(desc(characters.updatedAt))
 
-  return ok({ characters: rows.map((r) => r.data) })
+  // Pseudo et compte relus à chaque lecture : une fiche enregistrée sous un
+  // ancien pseudo s'affiche sous le pseudo actuel.
+  return ok({
+    characters: rows.map((r) => ({
+      ...(r.data as Record<string, unknown>),
+      owner: account.pseudo,
+      ownerId: account.id,
+    })),
+  })
 }
 
 export async function PUT(req: NextRequest) {
@@ -64,7 +72,7 @@ export async function PUT(req: NextRequest) {
   if (!SAFE_ID.test(id)) return fail('invalid character id', 400)
 
   // Le propriétaire est celui du compte, jamais celui qu'annonce le client.
-  const data = { ...c, owner: account.pseudo }
+  const data = { ...c, owner: account.pseudo, ownerId: account.id }
   if (Buffer.byteLength(JSON.stringify(data), 'utf8') > MAX_BYTES) {
     return fail('character sheet too large', 413)
   }

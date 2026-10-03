@@ -12,7 +12,13 @@ export type Objet = { id: string; nom: string; quantite: number }
 
 export type Character = {
   id: string
+  /** Pseudo du propriétaire, pour l'affichage. */
   owner: string
+  /**
+   * Compte du propriétaire, posé par le serveur. C'est lui qui identifie le
+   * propriétaire : le pseudo peut changer, l'identifiant non.
+   */
+  ownerId?: string
   nom: string
   name?: string
   ownerConnectionId?: number
@@ -164,6 +170,20 @@ export const buildCharacterKey = (
   const id = getCharacterId(character)
   const owner = character.owner ? String(character.owner) : ''
   return owner ? `${owner}:${id}` : id
+}
+
+/**
+ * Vrai si la fiche appartient à ce joueur. Par compte quand la fiche le
+ * connaît ; les fiches enregistrées avant l'identifiant retombent sur le
+ * pseudo.
+ */
+export const isOwnedBy = (
+  character: Pick<Character, 'owner' | 'ownerId'>,
+  who: { id?: string; pseudo: string } | null | undefined,
+): boolean => {
+  if (!who) return false
+  if (character.ownerId && who.id) return character.ownerId === who.id
+  return character.owner === who.pseudo
 }
 
 export const buildSelectionKey = (

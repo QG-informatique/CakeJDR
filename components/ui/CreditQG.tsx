@@ -23,6 +23,15 @@ export default function CreditQG() {
       >
         QG Informatique
       </a>
+      {/* Pages légales : déclarées à Google et Discord, donc visibles partout. */}
+      <span aria-hidden="true"> · </span>
+      <a href="/confidentialite" className="pointer-events-auto text-inherit no-underline hover:underline">
+        Confidentialité
+      </a>
+      <span aria-hidden="true"> · </span>
+      <a href="/conditions" className="pointer-events-auto text-inherit no-underline hover:underline">
+        Conditions
+      </a>
     </p>
   )
 }

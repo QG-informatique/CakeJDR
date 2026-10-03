@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
+  ArrowLeft,
   KeyRound,
   Loader2,
-  LogOut,
   Pencil,
   RefreshCw,
   ShieldCheck,
@@ -15,8 +15,6 @@ import { fetchRooms } from '@/lib/roomsApi'
 import {
   adminClearPassword,
   adminDeleteRooms,
-  adminLogin,
-  adminLogout,
   adminRenameRoom,
   fetchAdminStatus,
 } from '@/lib/adminApi'
@@ -27,11 +25,6 @@ type SortKey = 'createdAt' | 'name' | 'usersConnected'
 export default function AdminPage() {
   const [checking, setChecking] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
-  const [configured, setConfigured] = useState(true)
-
-  const [password, setPassword] = useState('')
-  const [loggingIn, setLoggingIn] = useState(false)
-  const [loginError, setLoginError] = useState<string | null>(null)
 
   const [rooms, setRooms] = useState<RoomInfoResponse[]>([])
   const [loadingRooms, setLoadingRooms] = useState(false)
@@ -46,7 +39,6 @@ export default function AdminPage() {
     try {
       const data = await fetchAdminStatus()
       setIsAdmin(data.isAdmin)
-      setConfigured(data.configured)
     } catch {
       setIsAdmin(false)
     } finally {
@@ -119,35 +111,6 @@ export default function AdminPage() {
     })
   }
 
-  const handleLogin = async () => {
-    if (!password || loggingIn) return
-    setLoggingIn(true)
-    setLoginError(null)
-    try {
-      await adminLogin(password)
-      setPassword('')
-      await refreshStatus()
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Echec de connexion'
-      setLoginError(
-        msg === 'too many attempts'
-          ? 'Trop de tentatives. Reessaie dans quelques minutes.'
-          : msg === 'admin not configured on this server'
-            ? 'ADMIN_PASSWORD / ADMIN_SESSION_SECRET absents du serveur.'
-            : 'Mot de passe incorrect.',
-      )
-    } finally {
-      setLoggingIn(false)
-    }
-  }
-
-  const handleLogout = async () => {
-    await adminLogout().catch(() => {})
-    setRooms([])
-    setSelected(new Set())
-    await refreshStatus()
-  }
-
   const runAction = async (label: string, fn: () => Promise<void>) => {
     setBusy(true)
     setError(null)
@@ -208,53 +171,26 @@ export default function AdminPage() {
     )
   }
 
+  // Les droits viennent du compte (`users.is_admin`) : plus de mot de passe
+  // admin séparé, il suffit d'être connecté avec le bon compte.
   if (!isAdmin) {
     return (
       <main className="min-h-screen flex items-center justify-center p-6">
         <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-black/60 p-6 text-white shadow-2xl backdrop-blur-md">
           <div className="mb-4 flex items-center gap-2">
             <KeyRound size={18} className="text-amber-300" />
-            <h1 className="text-lg font-semibold">Acces administrateur</h1>
+            <h1 className="text-lg font-semibold">Accès administrateur</h1>
           </div>
-          {!configured && (
-            <p className="mb-3 rounded-lg border border-amber-400/30 bg-amber-500/10 p-2 text-xs text-amber-200">
-              Le serveur n&apos;a pas de mot de passe admin configure. Ajoute{' '}
-              <code className="rounded bg-black/40 px-1">ADMIN_PASSWORD</code> et{' '}
-              <code className="rounded bg-black/40 px-1">
-                ADMIN_SESSION_SECRET
-              </code>{' '}
-              dans ton <code>.env.local</code>, puis redemarre le serveur.
-            </p>
-          )}
-          <label
-            htmlFor="admin-password"
-            className="mb-1 block text-xs text-white/50"
+          <p className="mb-4 text-sm text-white/70">
+            Cette page est réservée au compte administrateur. Connecte-toi avec ce
+            compte pour y accéder.
+          </p>
+          <a
+            href="/connexion?callbackUrl=/admin"
+            className="block w-full rounded-xl bg-indigo-600/80 px-4 py-2 text-center font-semibold text-white transition hover:bg-indigo-500/90"
           >
-            Mot de passe
-          </label>
-          <input
-            id="admin-password"
-            type="password"
-            autoFocus
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') void handleLogin()
-            }}
-            disabled={loggingIn}
-            className="mb-3 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-white placeholder:text-white/30 focus:border-indigo-400/40 focus:outline-none"
-            placeholder="mot de passe admin"
-          />
-          {loginError && (
-            <p className="mb-3 text-sm text-red-400">{loginError}</p>
-          )}
-          <button
-            onClick={() => void handleLogin()}
-            disabled={loggingIn || !password}
-            className="w-full rounded-xl bg-indigo-600/80 px-4 py-2 font-semibold text-white transition hover:bg-indigo-500/90 disabled:opacity-50"
-          >
-            {loggingIn ? 'Connexion...' : 'Se connecter'}
-          </button>
+            Se connecter
+          </a>
         </div>
       </main>
     )
@@ -267,7 +203,7 @@ export default function AdminPage() {
           <ShieldCheck size={22} className="text-emerald-400" />
           <h1 className="text-xl font-semibold">Panel admin</h1>
           <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-300">
-            session active
+            compte admin
           </span>
           <div className="ml-auto flex gap-2">
             <button
@@ -281,13 +217,13 @@ export default function AdminPage() {
               />
               Rafraichir
             </button>
-            <button
-              onClick={() => void handleLogout()}
+            <a
+              href="/menu-accueil"
               className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm hover:bg-white/10"
             >
-              <LogOut size={14} />
-              Quitter le mode admin
-            </button>
+              <ArrowLeft size={14} />
+              Retour au menu
+            </a>
           </div>
         </header>
 

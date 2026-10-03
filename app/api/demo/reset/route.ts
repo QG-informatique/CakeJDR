@@ -19,7 +19,7 @@ async function authorized(req: NextRequest) {
   const cronSecret = process.env.CRON_SECRET
   const header = req.headers.get('authorization')
   if (cronSecret && header === `Bearer ${cronSecret}`) return true
-  return isAdminRequest(req)
+  return isAdminRequest()
 }
 
 export async function POST(req: NextRequest) {

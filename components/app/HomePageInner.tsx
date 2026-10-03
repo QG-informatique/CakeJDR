@@ -27,6 +27,7 @@ import {
   buildSelectionKey,
   normalizeCharacter,
   parseSelectionKey,
+  isOwnedBy,
 } from '@/types/character'
 
 const SELECTED_CHARACTER_KEY = 'selectedCharacterId'
@@ -279,7 +280,9 @@ export default function HomePageInner() {
           return merged
         })
         const preferred = (!perso?.id || characters.length === 0)
-          ? normalizedValues.find((c) => c.owner === profile?.pseudo) ?? normalizedValues[0]
+          ? normalizedValues.find((c) =>
+              isOwnedBy(c, { id: profile?.id, pseudo: profile?.pseudo ?? '' }),
+            ) ?? normalizedValues[0]
           : null
         // On applique meme si l'effet a ete relance entre-temps : le profil
         // arrive apres le montage, ce qui suffisait a annuler le chargement et
@@ -310,8 +313,7 @@ export default function HomePageInner() {
       }
     }
     void loadRemote()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  // Volontairement limite a la salle et au pseudo.
+  // Volontairement limite a la salle et au compte.
   //
   // `myConnectionId` et `updateMyPresence` changeaient juste apres le montage,
   // ce qui relancait l'effet, annulait le chargement en cours par sa fonction
@@ -320,7 +322,8 @@ export default function HomePageInner() {
   //
   // `perso?.id` et `characters.length` sont exclus pour la meme raison : ils
   // changent a chaque modification de fiche.
-  }, [roomId, profile?.pseudo])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomId, profile?.pseudo, profile?.id])
 
   // Sauvegarde initiale silencieuse dans le cloud pour éviter la perte de fiche
   useEffect(() => {
@@ -373,7 +376,7 @@ export default function HomePageInner() {
     // est enregistree, regroupee sur deux secondes pour ne pas envoyer une
     // requete par champ modifie. Les fiches des autres joueurs ne sont pas
     // concernees.
-    if (profile?.signedIn && updatedPerso.owner === profile.pseudo) {
+    if (profile?.signedIn && isOwnedBy(updatedPerso, profile)) {
       pendingAccountSave.current = updatedPerso
       if (accountSaveTimer.current) window.clearTimeout(accountSaveTimer.current)
       accountSaveTimer.current = window.setTimeout(() => {

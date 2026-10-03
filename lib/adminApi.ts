@@ -12,23 +12,9 @@ async function requireOk<T extends { ok?: boolean; error?: string }>(
   return data
 }
 
-/** État admin de la session courante (affichage uniquement). */
+/** État admin du compte connecté (affichage uniquement). */
 export async function fetchAdminStatus() {
   const res = await fetch('/api/admin/me', { cache: 'no-store' })
-  return requireOk<ApiSuccess<{ isAdmin: boolean; configured: boolean }>>(res)
-}
-
-export async function adminLogin(password: string) {
-  const res = await fetch('/api/admin/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ password }),
-  })
-  return requireOk<ApiSuccess<{ isAdmin: boolean }>>(res)
-}
-
-export async function adminLogout() {
-  const res = await fetch('/api/admin/login', { method: 'DELETE' })
   return requireOk<ApiSuccess<{ isAdmin: boolean }>>(res)
 }
 
