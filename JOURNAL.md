@@ -16,7 +16,10 @@
 - Upload d'images réservé aux comptes connectés, formats autorisés signés auprès de Cloudinary (un SVG est refusé, vérifié).
 - Fiches reconnues par l'identifiant du compte (`ownerId`, `isOwnedBy` dans `types/character.ts`) et non plus par le pseudo : changer de pseudo ne fait plus perdre ses fiches.
 
-Reste ouvert : tester l'écran de pseudo, puis la mise en ligne.
+- Mise en ligne sur `cakejdr.qg-informatique.fr` : connexions Google et Discord actives, base Neon branchée en production.
+- Bouton « Supprimer mon compte » en bas du menu (`components/auth/DeleteAccount.tsx`, `DELETE /api/me`) : les tables dont le joueur est MJ partent avec son compte, pour tous leurs joueurs (choix de Quentin). Le compte admin ne peut pas se supprimer ainsi.
+
+Reste ouvert : tester l'écran de pseudo et la suppression de compte en ligne, puis la phase 2.
 
 ## 2026-09-12 — Clerk remplacé par Auth.js (Google et Discord)
 

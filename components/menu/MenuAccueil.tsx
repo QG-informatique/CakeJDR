@@ -22,6 +22,7 @@ import {
 } from '@/lib/charactersApi'
 import SignedOutPanel from '../auth/SignedOutPanel'
 import PseudoPicker from '@/components/auth/PseudoPicker'
+import DeleteAccount from '@/components/auth/DeleteAccount'
 import { defaultPerso } from '../sheet/CharacterSheet'
 import MenuHeader from './MenuHeader'
 import CharacterList from './CharacterList'
@@ -773,6 +774,10 @@ export default function MenuAccueil() {
                 onImportFile={handleImportFile}
                 onOpenCloud={() => setCloudOpen(true)}
               />
+            </div>
+
+            <div className="mt-2 flex justify-end">
+              <DeleteAccount pseudo={user.pseudo} />
             </div>
 
             <CharacterModal

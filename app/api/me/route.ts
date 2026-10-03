@@ -3,7 +3,8 @@ export const runtime = 'nodejs'
 import { NextRequest } from 'next/server'
 import { eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { users } from '@/lib/db/schema'
+import { rooms, users } from '@/lib/db/schema'
+import { deleteRoom } from '@/lib/liveRooms'
 import { normalizePseudo, pseudoProblem, syncCurrentUser } from '@/lib/db/users'
 import { fail, ok } from '@/lib/api-response'
 
@@ -96,4 +97,33 @@ export async function PATCH(req: NextRequest) {
 function isUniqueViolation(err: unknown): boolean {
   const e = err as { code?: string; cause?: { code?: string } } | null
   return e?.code === '23505' || e?.cause?.code === '23505'
+}
+
+/**
+ * Suppression du compte (RGPD).
+ *
+ * Les fiches, les appartenances et les tables du joueur partent par cascade
+ * en base ; le contenu de ses tables chez Liveblocks est supprimé d'abord.
+ * Un échec chez Liveblocks n'empêche pas la suppression du compte : la table
+ * orpheline n'est plus accessible à personne, faute d'enregistrement en base.
+ *
+ * Le compte administrateur ne se supprime pas d'ici : ce serait perdre l'accès
+ * au panneau d'administration et la salle de démonstration d'un seul clic.
+ */
+export async function DELETE() {
+  const account = await syncCurrentUser().catch(() => null)
+  if (!account) return fail('sign in required', 401)
+  if (account.isAdmin) return fail('admin account cannot be deleted', 403)
+
+  const owned = await db
+    .select({ id: rooms.id })
+    .from(rooms)
+    .where(eq(rooms.ownerId, account.id))
+  const results = await Promise.allSettled(owned.map((r) => deleteRoom(r.id)))
+  results.forEach((r, i) => {
+    if (r.status === 'rejected') console.error('account delete: liveblocks room', owned[i]?.id, r.reason)
+  })
+
+  await db.delete(users).where(eq(users.id, account.id))
+  return ok({ deleted: true, rooms: owned.length })
 }
