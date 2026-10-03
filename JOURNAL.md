@@ -1,5 +1,11 @@
 # Journal
 
+## 2026-10-03 — Phase 4 en ligne
+
+- Phase 4 publiée ; les 15 tests Playwright passent sur le site en ligne, dont le parcours téléphone.
+
+Reste ouvert : essai de Quentin sur un vrai téléphone, avertissements `react-hooks` des fonds animés.
+
 ## 2026-10-03 — Phase 4 : table sur téléphone, compteur de présence
 
 - Téléphone et tablette (< 1024 px) : un panneau à la fois (Fiche / Table / Chat) avec une barre d'onglets en bas, point rouge sur Chat quand un message arrive (`components/app/MobileTabBar.tsx`, `HomePageInner.tsx`, `lib/useIsDesktop.ts`). L'affichage ordinateur est inchangé.
