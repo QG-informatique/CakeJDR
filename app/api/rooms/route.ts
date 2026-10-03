@@ -18,7 +18,7 @@ import { fail, ok } from '@/lib/api-response'
  * ou s'il présente le secret de propriété reçu à la création.
  */
 async function canMutate(req: NextRequest, id: string, ownerSecret?: unknown) {
-  if (await isAdminRequest(req)) return true
+  if (await isAdminRequest()) return true
 
   // Propriétaire enregistré en base : le cas normal pour un joueur connecté.
   const userId = await currentUserId()

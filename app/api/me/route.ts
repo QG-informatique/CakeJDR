@@ -4,7 +4,7 @@ import { NextRequest } from 'next/server'
 import { eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { users } from '@/lib/db/schema'
-import { syncCurrentUser } from '@/lib/db/users'
+import { normalizePseudo, pseudoProblem, syncCurrentUser } from '@/lib/db/users'
 import { fail, ok } from '@/lib/api-response'
 
 /**
@@ -23,6 +23,7 @@ export async function GET() {
       pseudo: account.pseudo,
       color: account.color,
       isAdmin: account.isAdmin,
+      pseudoChosen: account.pseudoChosen,
     },
   })
 }
@@ -46,14 +47,15 @@ export async function PATCH(req: NextRequest) {
     color?: unknown
   }
 
-  const patch: { pseudo?: string; color?: string } = {}
+  const patch: { pseudo?: string; color?: string; pseudoChosen?: boolean } = {}
 
   if (typeof body.pseudo === 'string') {
-    const pseudo = body.pseudo.trim()
-    if (pseudo.length < 2 || pseudo.length > 32) {
-      return fail('pseudo must be between 2 and 32 characters', 400)
-    }
+    const pseudo = normalizePseudo(body.pseudo)
+    const problem = await pseudoProblem(pseudo, account.id)
+    if (problem === 'taken') return fail('pseudo taken', 409)
+    if (problem) return fail(`pseudo ${problem}`, 400)
     patch.pseudo = pseudo
+    patch.pseudoChosen = true
   }
 
   if (typeof body.color === 'string') {
@@ -63,11 +65,19 @@ export async function PATCH(req: NextRequest) {
 
   if (Object.keys(patch).length === 0) return fail('nothing to update', 400)
 
-  const [updated] = await db
-    .update(users)
-    .set(patch)
-    .where(eq(users.id, account.id))
-    .returning()
+  let updated: typeof users.$inferSelect | undefined
+  try {
+    ;[updated] = await db
+      .update(users)
+      .set(patch)
+      .where(eq(users.id, account.id))
+      .returning()
+  } catch (err) {
+    // L'index unique tranche si deux joueurs valident le même pseudo à
+    // l'instant près, entre la vérification et l'écriture.
+    if (isUniqueViolation(err)) return fail('pseudo taken', 409)
+    throw err
+  }
 
   return ok({
     user: updated
@@ -76,7 +86,14 @@ export async function PATCH(req: NextRequest) {
           pseudo: updated.pseudo,
           color: updated.color,
           isAdmin: updated.isAdmin,
+          pseudoChosen: updated.pseudoChosen,
         }
       : null,
   })
+}
+
+/** Code Postgres 23505, éventuellement enveloppé par le pilote. */
+function isUniqueViolation(err: unknown): boolean {
+  const e = err as { code?: string; cause?: { code?: string } } | null
+  return e?.code === '23505' || e?.cause?.code === '23505'
 }

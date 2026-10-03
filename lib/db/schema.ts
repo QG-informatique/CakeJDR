@@ -6,7 +6,9 @@ import {
   primaryKey,
   text,
   timestamp,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
 
 /**
  * Schéma de la base.
@@ -20,14 +22,23 @@ import {
 export const users = pgTable('users', {
   /** Service et identifiant chez lui (`google:...`, `discord:...`). */
   id: text('id').primaryKey(),
-  /** Nom affiché en jeu, modifiable indépendamment du compte Google ou Discord. */
+  /**
+   * Nom affiché en jeu, modifiable indépendamment du compte Google ou Discord.
+   * Unique sans tenir compte des majuscules : il sert aussi à reconnaître les
+   * fiches d'un joueur dans une table.
+   */
   pseudo: text('pseudo').notNull(),
+  /**
+   * Faux tant que le joueur n'a pas validé son pseudo : à sa première
+   * connexion, on lui propose celui de son compte Google ou Discord.
+   */
+  pseudoChosen: boolean('pseudo_chosen').notNull().default(false),
   /** Couleur du curseur et du nom dans le chat. */
   color: text('color').notNull().default('#1d4ed8'),
   /** Droits d'administration : remplace le mot de passe admin de la phase 0. */
   isAdmin: boolean('is_admin').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+}, (t) => [uniqueIndex('users_pseudo_lower_idx').on(sql`lower(${t.pseudo})`)])
 
 /**
  * Tables de jeu.

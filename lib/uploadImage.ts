@@ -24,6 +24,7 @@ export type UploadStep =
 
 export type UploadErrorCode =
   | 'FILE_MISSING'
+  | 'SIGN_IN_REQUIRED'
   | 'IMAGE_EMPTY'
   | 'IMAGE_INVALID_TYPE'
   | 'IMAGE_TOO_LARGE'
@@ -59,6 +60,7 @@ type CloudinarySignature = {
   timestamp: number
   signature: string
   folder?: string
+  allowedFormats?: string
 }
 
 export class UploadError extends Error {
@@ -275,6 +277,7 @@ const parseSignaturePayload = (body: Record<string, unknown>): CloudinarySignatu
   const signature = readString(body.signature)
   const timestamp = readNumber(body.timestamp)
   const folder = readString(body.folder)
+  const allowedFormats = readString(body.allowedFormats)
 
   if (!cloudName || !apiKey || !signature || !timestamp) {
     throw buildUploadError(
@@ -285,7 +288,7 @@ const parseSignaturePayload = (body: Record<string, unknown>): CloudinarySignatu
     )
   }
 
-  return { cloudName, apiKey, signature, timestamp, folder }
+  return { cloudName, apiKey, signature, timestamp, folder, allowedFormats }
 }
 
 const tryFetchSignature = async (): Promise<CloudinarySignature | null> => {
@@ -297,6 +300,13 @@ const tryFetchSignature = async (): Promise<CloudinarySignature | null> => {
   }
 
   const body = await parseResponse(res)
+  if (res.status === 401) {
+    throw buildUploadError(
+      'SIGN_IN_REQUIRED',
+      'SIGNATURE_REQUEST',
+      'Connecte-toi pour ajouter des images.',
+    )
+  }
   if (!res.ok) {
     return null
   }
@@ -318,6 +328,7 @@ const uploadDirectToCloudinary = async (
   form.append('timestamp', String(signature.timestamp))
   form.append('signature', signature.signature)
   if (signature.folder) form.append('folder', signature.folder)
+  if (signature.allowedFormats) form.append('allowed_formats', signature.allowedFormats)
 
   let res: Response
   try {

@@ -11,7 +11,7 @@ import { fail, ok } from '@/lib/api-response'
 const MAX_BULK = 50
 
 export async function DELETE(req: NextRequest) {
-  if (!(await isAdminRequest(req))) return fail('forbidden', 403)
+  if (!(await isAdminRequest())) return fail('forbidden', 403)
 
   const body = (await req.json().catch(() => ({}))) as { ids?: unknown }
   const ids = Array.isArray(body.ids)
@@ -37,7 +37,7 @@ export async function DELETE(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!(await isAdminRequest(req))) return fail('forbidden', 403)
+  if (!(await isAdminRequest())) return fail('forbidden', 403)
 
   const body = (await req.json().catch(() => ({}))) as {
     action?: unknown

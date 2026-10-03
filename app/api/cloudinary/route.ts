@@ -4,6 +4,7 @@ export const runtime = "nodejs";
 import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { clientIp, rateLimit } from "@/lib/rateLimit";
+import { currentUserId } from "@/lib/db/users";
 
 const CLOUD_NAME =
   process.env.CLOUDINARY_CLOUD_NAME ||
@@ -78,7 +79,11 @@ function buildDeliveryUrl(
 
 export async function POST(req: NextRequest) {
   try {
-    const limit = rateLimit(`cloudinary-upload:${clientIp(req)}`, UPLOAD_LIMIT, UPLOAD_WINDOW_MS);
+    // Réservé aux comptes connectés, comme la signature d'upload direct.
+    const userId = await currentUserId();
+    if (!userId) return bad("sign in required", 401);
+
+    const limit = rateLimit(`cloudinary-upload:${userId}:${clientIp(req)}`, UPLOAD_LIMIT, UPLOAD_WINDOW_MS);
     if (!limit.allowed) {
       const res = NextResponse.json({ error: "too many uploads" }, { status: 429 });
       res.headers.set("Retry-After", String(limit.retryAfter));
@@ -93,7 +98,7 @@ export async function POST(req: NextRequest) {
     if (!file || !(file instanceof File)) return bad("No file field named 'file'");
     if (file.size <= 0) return bad("Empty file");
     if (file.size > MAX_BYTES) return bad(`File too large (max ${Math.round(MAX_BYTES / (1024 * 1024))}MB)`);
-    if (file.type && !ALLOWED_TYPES.has(file.type)) return bad(`Unsupported file type: ${file.type}`);
+    if (!ALLOWED_TYPES.has(file.type)) return bad(`Unsupported file type: ${file.type || "unknown"}`);
 
     const folder = "cakejdr";
     const useSignedUpload = Boolean(apiKey && apiSecret);
@@ -105,7 +110,9 @@ export async function POST(req: NextRequest) {
 
     if (useSignedUpload) {
       const timestamp = Math.floor(Date.now() / 1000);
-      const signature = signUpload({ folder, timestamp }, apiSecret!);
+      const allowedFormats = "png,jpg,jpeg,webp,gif";
+      cloudForm.append("allowed_formats", allowedFormats);
+      const signature = signUpload({ allowed_formats: allowedFormats, folder, timestamp }, apiSecret!);
       cloudForm.append("api_key", apiKey!);
       cloudForm.append("timestamp", String(timestamp));
       cloudForm.append("signature", signature);

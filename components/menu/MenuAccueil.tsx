@@ -21,6 +21,7 @@ import {
   saveAccountCharacter,
 } from '@/lib/charactersApi'
 import SignedOutPanel from '../auth/SignedOutPanel'
+import PseudoPicker from '@/components/auth/PseudoPicker'
 import { defaultPerso } from '../sheet/CharacterSheet'
 import MenuHeader from './MenuHeader'
 import CharacterList from './CharacterList'
@@ -33,6 +34,7 @@ import {
   buildSelectionKey,
   normalizeCharacter,
   parseSelectionKey,
+  isOwnedBy,
 } from '@/types/character'
 
 const PROFILE_KEY = 'jdr_profile'
@@ -178,7 +180,7 @@ export default function MenuAccueil() {
    * les fiches d'autres joueurs, recuperees en passant dans leurs tables :
    * celles-la restent locales, sans quoi elles atterriraient sur son compte.
    */
-  const isMine = (c: Character) => !c.owner || c.owner === user?.pseudo
+  const isMine = (c: Character) => (!c.owner && !c.ownerId) || isOwnedBy(c, user)
 
   const saveCharacters = (chars: Character[]) => {
     const normalized = chars.map((c) =>
@@ -233,7 +235,9 @@ export default function MenuAccueil() {
         }
         const remoteIds = new Set(remote.map((r) => String(r.id)))
         const toUpload = local.filter(
-          (c) => !remoteIds.has(String(c.id)) && (!c.owner || c.owner === accountPseudo),
+          (c) =>
+            !remoteIds.has(String(c.id)) &&
+            ((!c.owner && !c.ownerId) || isOwnedBy(c, { id: accountId, pseudo: accountPseudo ?? '' })),
         )
         await Promise.allSettled(toUpload.map((c) => saveAccountCharacter(c)))
         const merged = Array.from(byId.values())
@@ -303,7 +307,7 @@ export default function MenuAccueil() {
     if (!user) return
     setDraftChar(
       normalizeCharacter(
-        { ...defaultPerso, id: crypto.randomUUID(), owner: user.pseudo },
+        { ...defaultPerso, id: crypto.randomUUID(), owner: user.pseudo, ownerId: user.id },
         user.pseudo,
       ),
     )
@@ -326,6 +330,7 @@ export default function MenuAccueil() {
         id,
         nom: draftChar.nom || t('unnamed'),
         owner: user.pseudo,
+        ownerId: user.id,
         updatedAt: Date.now(),
       },
       user.pseudo,
@@ -596,6 +601,12 @@ export default function MenuAccueil() {
         {!user ? (
           <div className="flex-grow flex items-center justify-center">
             <SignedOutPanel />
+          </div>
+        ) : !user.pseudoChosen ? (
+          // Première visite : le pseudo proposé vient du compte Google ou
+          // Discord, le joueur le valide ou le change avant d'entrer.
+          <div className="flex-grow flex items-center justify-center">
+            <PseudoPicker initial={user.pseudo} />
           </div>
         ) : (
           <>

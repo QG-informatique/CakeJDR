@@ -48,16 +48,29 @@
 - [x] Interdire au visiteur la sauvegarde cloud des fiches
 
 ## Mise en ligne — à faire avant le premier deploiement en production
-- [ ] Créer l'application OAuth Google (Google Cloud Console) et renseigner `AUTH_GOOGLE_ID` et `AUTH_GOOGLE_SECRET` dans `.env.local` et dans Vercel
-- [ ] Créer l'application OAuth Discord (Discord Developer Portal) et renseigner `AUTH_DISCORD_ID` et `AUTH_DISCORD_SECRET` dans `.env.local` et dans Vercel
-- [ ] Copier `AUTH_SECRET` (déjà généré dans `.env.local`) dans Vercel, environnement Production
-- [ ] Après la première connexion, transférer la salle démo et le rôle admin vers le nouveau compte (`scripts/transfer-account.mjs`)
-- [ ] Retirer l'intégration Clerk de Vercel, avec ses variables `CLERK_*` et `NEXT_PUBLIC_CLERK_*`
+- [x] Ajouter le sous-domaine dans Vercel (Settings → Domains), créer le CNAME correspondant dans la zone DNS OVH de `qg-informatique.fr`, attendre « Valid Configuration »
+- [x] Ajouter les redirections Discord `http://localhost:3000/api/auth/callback/discord` et `https://<sous-domaine>/api/auth/callback/discord`
+- [x] Créer l'application OAuth Google (Google Cloud Console) et renseigner `AUTH_GOOGLE_ID` et `AUTH_GOOGLE_SECRET` dans `.env.local`
+- [x] Renseigner `AUTH_GOOGLE_ID` et `AUTH_GOOGLE_SECRET` dans Vercel, environnement Production
+- [x] Créer l'application OAuth Discord et renseigner `AUTH_DISCORD_ID` et `AUTH_DISCORD_SECRET` dans `.env.local`
+- [x] Renseigner `AUTH_DISCORD_ID` et `AUTH_DISCORD_SECRET` dans Vercel, environnement Production
+- [x] Créer l'application Google : compléter le Branding (accueil, `/confidentialite`, `/conditions`, domaine `qg-informatique.fr`), publier, créer le client Web
+- [ ] Relire `app/confidentialite` et `app/conditions` (nom, email de contact, hébergeur) avant la mise en ligne
+- [x] Rendre les pseudos uniques (sans tenir compte des majuscules) : suffixe automatique à la première connexion si le nom est pris, refus au changement de pseudo
+- [ ] Tester l'écran « Choisis ton pseudo » avec le compte Google de test (CakeSama-2), pseudo libre puis pseudo déjà pris
+- [x] Identifier le propriétaire d'une fiche par l'identifiant du compte et non par le pseudo (`c.owner === profile.pseudo` dans `HomePageInner.tsx` et `MenuAccueil.tsx`)
+- [ ] Ajouter un bouton « Supprimer mon compte » (aujourd'hui la suppression se demande par email)
+- [x] Copier `AUTH_SECRET` (déjà généré dans `.env.local`) dans Vercel, environnement Production
+- [x] Après la première connexion, transférer la salle démo et le rôle admin vers le nouveau compte (`scripts/transfer-account.mjs`)
+- [x] Retirer l'intégration Clerk de Vercel, avec ses variables `CLERK_*` et `NEXT_PUBLIC_CLERK_*`
+- [ ] Traiter les variables marquées « Needs attention » dans Vercel (les passer en « Sensitive », en régénérant la valeur si Vercel le demande)
+- [ ] Après la mise en ligne, supprimer `BLOB_READ_WRITE_TOKEN` et le store Vercel Blob (plus utilisés par le code), après avoir vérifié qu'aucune ancienne fiche n'y reste à récupérer
 - [x] Réécrire `MANUAL_TEST_PLAN.md` pour les comptes, les invitations, les rôles, la salle de démonstration et les fiches du compte
 - [ ] Publier les commits locaux : la version en ligne date du 30 août et n'a aucune des protections de la phase 0 (suppression de tables ouverte à tous, notamment)
 
 ## Sécurité — à faire avant toute mise en ligne publique
-- [ ] Définir un vrai `ADMIN_PASSWORD` dans `.env.local` (encore au placeholder `REMPLACE_MOI`) et sur Vercel avant tout déploiement — sans ça `/admin` reste inutilisable en prod
+- [x] Définir un vrai `ADMIN_PASSWORD` dans `.env.local` (encore au placeholder `REMPLACE_MOI`) et sur Vercel avant tout déploiement — sans ça `/admin` reste inutilisable en prod (remplacé : les droits admin viennent du compte, `users.is_admin`)
+- [ ] Supprimer `ADMIN_PASSWORD` et `ADMIN_SESSION_SECRET` des variables Vercel s'ils y sont
 - [x] Authentifier `/api/roomstorage` (GET/POST/DELETE) via un jeton d'accès à la room
 - [x] Contraindre `/api/blob` (préfixe `FichePerso/` imposé, JSON seul, 256 Ko max, débit limité) et supprimer `/api/blop/delete`
 - [x] Limiter le débit de `/api/cloudinary/signature` et `/api/cloudinary`, retirer le SVG des formats acceptés
@@ -67,7 +80,7 @@
 ## Issu de la phase 0 — à finir plus tard
 - [x] Ajouter le crédit QG Informatique, absent du projet (règle `C:\DEV\CLAUDE.md`) — footer fixe rendu par `ClientLayout`
 - [ ] Corriger les 58 avertissements `react-hooks` (`purity`, `set-state-in-effect`, `refs`) concentrés dans les fonds animés, puis repasser ces trois règles en erreur dans `eslint.config.mjs` — phase 4
-- [ ] Restreindre les paramètres signés de `/api/cloudinary/signature` (formats, taille) après vérification de la doc Cloudinary — seule la limite de débit est en place
+- [x] Restreindre les paramètres signés de `/api/cloudinary/signature` (formats, taille) après vérification de la doc Cloudinary — formats signés et compte requis ; Cloudinary n'a pas de paramètre de taille
 - [x] Donner une propriété par utilisateur aux fiches (Blob remplacé par la base)
 - [ ] Remplacer le jeton d'accès à la room par la session utilisateur une fois l'auth en place (phase 1)
 
@@ -95,6 +108,7 @@
 - [x] Passer l'application en français par défaut
 
 ## Canvas & temps réel
+- [ ] Proposer un fond fixe (et respecter `prefers-reduced-motion`) : le fond aux dés saccade sur un navigateur sans accélération matérielle (constaté sur Firefox)
 - [ ] Throttler les segments de trait pour réduire le trafic Liveblocks lors de dessins rapides (coalescer via requestAnimationFrame)
 - [ ] Déplacer l'aperçu d'image en attente sur un calque dédié avec indicateur de progression
 

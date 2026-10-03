@@ -3,6 +3,7 @@ export const runtime = "nodejs";
 import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { clientIp, rateLimit } from "@/lib/rateLimit";
+import { currentUserId } from "@/lib/db/users";
 
 const CLOUD_NAME =
   process.env.CLOUDINARY_CLOUD_NAME ||
@@ -14,11 +15,18 @@ const API_SECRET = process.env.CLOUDINARY_API_SECRET;
 const FOLDER = "cakejdr";
 
 /**
- * Cette route délivre de quoi téléverser directement chez Cloudinary. Sans
- * limite, elle offrait un droit d'upload illimité sur le compte à qui la
- * demandait. La limite de débit ci-dessous est le contrôle sûr et vérifiable ;
- * restreindre en plus les paramètres signés (formats, taille) suppose de
- * confirmer leur comportement dans la doc Cloudinary — noté au TODO.
+ * Formats signés avec l'upload : Cloudinary rejette tout autre fichier, et le
+ * client ne peut pas retirer ce paramètre sans invalider la signature.
+ */
+const ALLOWED_FORMATS = "png,jpg,jpeg,webp,gif";
+
+/**
+ * Cette route délivre de quoi téléverser directement chez Cloudinary. Elle est
+ * réservée aux comptes connectés (les visiteurs ne jouent que dans la salle de
+ * démo), limitée en débit par compte, et la signature fige le dossier et les
+ * formats. La taille n'est pas un paramètre d'upload chez Cloudinary : elle
+ * reste bornée par le plafond du compte Cloudinary et la vérification côté
+ * client.
  */
 const SIGN_LIMIT = 20;
 const SIGN_WINDOW_MS = 10 * 60 * 1000;
@@ -59,7 +67,10 @@ function signUpload(
 }
 
 export async function POST(req: NextRequest) {
-  const limit = rateLimit(`cloudinary-sign:${clientIp(req)}`, SIGN_LIMIT, SIGN_WINDOW_MS);
+  const userId = await currentUserId();
+  if (!userId) return bad("sign in required", 401);
+
+  const limit = rateLimit(`cloudinary-sign:${userId}:${clientIp(req)}`, SIGN_LIMIT, SIGN_WINDOW_MS);
   if (!limit.allowed) {
     const res = NextResponse.json({ error: "too many requests" }, { status: 429 });
     res.headers.set("Retry-After", String(limit.retryAfter));
@@ -73,7 +84,10 @@ export async function POST(req: NextRequest) {
   }
 
   const timestamp = Math.floor(Date.now() / 1000);
-  const signature = signUpload({ folder: FOLDER, timestamp }, apiSecret);
+  const signature = signUpload(
+    { allowed_formats: ALLOWED_FORMATS, folder: FOLDER, timestamp },
+    apiSecret,
+  );
 
   return NextResponse.json({
     ok: true,
@@ -82,5 +96,6 @@ export async function POST(req: NextRequest) {
     timestamp,
     signature,
     folder: FOLDER,
+    allowedFormats: ALLOWED_FORMATS,
   });
 }

@@ -37,4 +37,3 @@ jobs:
           # La build ne contacte aucun service, mais les routes attendent ces
           # variables : des valeurs factices suffisent à la compilation.
           LIVEBLOCKS_SECRET_KEY: sk_ci_placeholder
-          ADMIN_SESSION_SECRET: ci_placeholder_secret
