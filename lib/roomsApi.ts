@@ -5,43 +5,6 @@ import type {
   RoomInfoResponse,
 } from '@/types/api'
 
-const OWNER_KEY_PREFIX = 'jdr_room_owner_'
-
-/**
- * Secret de propriété d'une room, remis une seule fois par le serveur à la
- * création. Sans lui (et sans session admin) le serveur refuse toute
- * suppression ou renommage.
- */
-export function getRoomOwnerSecret(roomId: string): string | null {
-  if (typeof localStorage === 'undefined') return null
-  try {
-    return localStorage.getItem(OWNER_KEY_PREFIX + roomId)
-  } catch {
-    return null
-  }
-}
-
-export function storeRoomOwnerSecret(roomId: string, secret: string) {
-  if (typeof localStorage === 'undefined') return
-  try {
-    localStorage.setItem(OWNER_KEY_PREFIX + roomId, secret)
-  } catch {
-    // quota / mode privé : la room reste utilisable, seule la gestion est perdue
-  }
-}
-
-export function forgetRoomOwnerSecret(roomId: string) {
-  if (typeof localStorage === 'undefined') return
-  try {
-    localStorage.removeItem(OWNER_KEY_PREFIX + roomId)
-  } catch {}
-}
-
-/** True si ce navigateur détient le secret de propriété de la room. */
-export function ownsRoom(roomId: string): boolean {
-  return Boolean(getRoomOwnerSecret(roomId))
-}
-
 async function readJson<T>(res: Response): Promise<T> {
   return (await res.json().catch(() => ({}))) as T
 }
@@ -106,7 +69,7 @@ function storeToken(roomId: string, accessToken: string, ts: number) {
  * Renvoie un jeton d'accès valide pour la room, en en demandant un au serveur
  * si nécessaire. Renvoie `null` si l'appelant n'est pas membre de la table.
  */
-export async function ensureRoomToken(
+async function ensureRoomToken(
   roomId: string,
 ): Promise<{ accessToken: string; ts: number } | null> {
   const cached = readStoredToken(roomId)
@@ -142,29 +105,23 @@ export async function createRoom(payload: { name: string }) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
-  const data = await requireOk<ApiSuccess<{ id: string; ownerSecret?: string }>>(res)
-  if (data.ownerSecret) {
-    storeRoomOwnerSecret(data.id, data.ownerSecret)
-  }
-  return data
+  return requireOk<ApiSuccess<{ id: string }>>(res)
 }
 
 export async function deleteRoomById(id: string) {
   const res = await fetch('/api/rooms', {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id, ownerSecret: getRoomOwnerSecret(id) }),
+    body: JSON.stringify({ id }),
   })
-  const data = await requireOk<ApiSuccess<{ id?: string }>>(res)
-  forgetRoomOwnerSecret(id)
-  return data
+  return requireOk<ApiSuccess<{ id?: string }>>(res)
 }
 
 export async function renameRoomById(id: string, name: string) {
   const res = await fetch('/api/rooms', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id, name, ownerSecret: getRoomOwnerSecret(id) }),
+    body: JSON.stringify({ id, name }),
   })
   return requireOk<ApiSuccess<{ id?: string }>>(res)
 }

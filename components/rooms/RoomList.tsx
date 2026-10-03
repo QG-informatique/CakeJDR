@@ -8,7 +8,6 @@ import {
   deleteRoomById,
   fetchRooms as fetchRoomsApi,
   joinRoomByCode,
-  ownsRoom,
   renameRoomById,
 } from '@/lib/roomsApi'
 import { fetchAdminStatus } from '@/lib/adminApi'
@@ -73,8 +72,8 @@ export default function RoomList({
       .catch(() => setIsAdmin(false))
   }, [])
 
-  /** Gérable si on détient le secret de propriété de la room, ou si on est admin. */
-  const canManage = (roomId: string) => isAdmin || ownsRoom(roomId)
+  /** Le MJ gère sa table depuis n'importe quel appareil ; l'admin, toutes. */
+  const canManage = (room: RoomInfo) => isAdmin || room.role === 'gm'
 
   /** Rejoint une table via son code d'invitation : le seul moyen d'y accéder. */
   const joinByCode = async () => {
@@ -187,7 +186,7 @@ export default function RoomList({
                 {r.name || t('unnamed')}
               </span>
               {myRoom === r.id && <span title={t('creator')}>👑</span>}
-              {canManage(r.id) && (
+              {canManage(r) && (
                 <>
                   <button onClick={(e) => { e.stopPropagation(); void renameRoom(r) }} className="ml-1 text-yellow-300" title={t('rename')}>✏️</button>
                   <button onClick={(e) => { e.stopPropagation(); void deleteRoom(r) }} className="ml-1 text-red-400" title={t('delete')}>🗑️</button>

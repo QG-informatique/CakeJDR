@@ -24,10 +24,8 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: {
-        ...devices['Desktop Chrome'],
-        channel: 'msedge',
-      },
+      // Chrome installé sur le poste : rien à télécharger pour lancer les tests.
+      use: { ...devices['Desktop Chrome'], channel: 'chrome' },
     },
   ],
 })

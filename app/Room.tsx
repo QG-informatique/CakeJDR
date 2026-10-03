@@ -1,6 +1,7 @@
 "use client";
 import { ReactNode, useCallback, useState } from "react";
 import RoomAccessDenied, { type DeniedReason } from "@/components/rooms/RoomAccessDenied";
+import ConnectionBanner from "@/components/rooms/ConnectionBanner";
 import { LiveblocksProvider, RoomProvider, ClientSideSuspense } from "@liveblocks/react/suspense";
 import { LiveMap, LiveObject, LiveList } from '@liveblocks/client'
 
@@ -43,7 +44,9 @@ export function Room({
   if (denied) return <RoomAccessDenied reason={denied} />
 
   return (
-    <LiveblocksProvider authEndpoint={authEndpoint}>
+    // preventUnsavedChanges : le navigateur demande confirmation si on ferme
+    // l'onglet alors que des modifications ne sont pas encore parties.
+    <LiveblocksProvider authEndpoint={authEndpoint} preventUnsavedChanges>
       <RoomProvider
         id={id}
         initialPresence={{}}
@@ -64,6 +67,7 @@ export function Room({
         }}
       >
         <ClientSideSuspense fallback={<div>Loading...</div>}>
+          <ConnectionBanner />
           {children}
         </ClientSideSuspense>
       </RoomProvider>

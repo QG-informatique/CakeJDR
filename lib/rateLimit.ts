@@ -52,11 +52,6 @@ export function rateLimit(
   return { allowed: true, remaining: limit - current.count, retryAfter: 0 }
 }
 
-/** Remet le compteur à zéro (à appeler après un login réussi). */
-export function resetRateLimit(key: string) {
-  buckets.delete(key)
-}
-
 /** Meilleure approximation de l'IP client derrière le proxy Vercel. */
 export function clientIp(req: Request) {
   const forwarded = req.headers.get('x-forwarded-for')

@@ -272,7 +272,7 @@ export default function InteractiveCanvas() {
     const map = storage.get('images') as unknown as { delete: (key: string) => void }
     map.delete(id)
   }, [])
-  const addStrokeSegment = useMutation(({ storage }, segment: StrokeSegment) => {
+  const addStrokeSegments = useMutation(({ storage }, segments: StrokeSegment[]) => {
     let list = storage.get('strokes') as unknown
     const hasPush = !!(list && typeof (list as { push?: unknown }).push === 'function')
     const hasInsert = !!(list && typeof (list as { insert?: unknown }).insert === 'function')
@@ -280,13 +280,41 @@ export default function InteractiveCanvas() {
       storage.set('strokes', new LiveList<StrokeSegment>([]))
       list = storage.get('strokes') as unknown
     }
-    if (typeof (list as { push?: (v: StrokeSegment) => void }).push === 'function') {
-      ;(list as { push: (v: StrokeSegment) => void }).push(segment)
-    } else if (typeof (list as { insert?: (i: number, v: StrokeSegment) => void; length?: number }).insert === 'function') {
-      const helper = list as { insert: (i: number, v: StrokeSegment) => void; length?: number }
-      helper.insert((helper.length ?? 0) as number, segment)
+    for (const segment of segments) {
+      if (typeof (list as { push?: (v: StrokeSegment) => void }).push === 'function') {
+        ;(list as { push: (v: StrokeSegment) => void }).push(segment)
+      } else if (typeof (list as { insert?: (i: number, v: StrokeSegment) => void; length?: number }).insert === 'function') {
+        const helper = list as { insert: (i: number, v: StrokeSegment) => void; length?: number }
+        helper.insert((helper.length ?? 0) as number, segment)
+      }
     }
   }, [])
+  // Le trait s'affiche tout de suite en local, mais les segments ne partent
+  // vers Liveblocks qu'une fois par image (requestAnimationFrame) : un dessin
+  // rapide produit des dizaines de pointermove par seconde, et chacun coûtait
+  // un envoi réseau et un redessin complet du canevas chez tous les joueurs.
+  const pendingStrokes = useRef<StrokeSegment[]>([])
+  const strokeFlushRaf = useRef<number | null>(null)
+  const flushStrokes = useCallback(() => {
+    if (strokeFlushRaf.current !== null) {
+      cancelAnimationFrame(strokeFlushRaf.current)
+      strokeFlushRaf.current = null
+    }
+    if (pendingStrokes.current.length === 0) return
+    const batch = pendingStrokes.current
+    pendingStrokes.current = []
+    addStrokeSegments(batch)
+  }, [addStrokeSegments])
+  const queueStrokeSegment = useCallback((segment: StrokeSegment) => {
+    pendingStrokes.current.push(segment)
+    if (strokeFlushRaf.current === null) {
+      strokeFlushRaf.current = requestAnimationFrame(() => {
+        strokeFlushRaf.current = null
+        flushStrokes()
+      })
+    }
+  }, [flushStrokes])
+  useEffect(() => () => flushStrokes(), [flushStrokes])
   const clearStrokes = useMutation(({ storage }) => {
     const list = storage.get('strokes') as unknown
     if (!list) return
@@ -417,7 +445,7 @@ export default function InteractiveCanvas() {
       }
       const ctx = ctxRef.current
       if (ctx) drawStrokeSegment(ctx, seg, { width: rect.width, height: rect.height })
-      addStrokeSegment(seg)
+      queueStrokeSegment(seg)
       lastPointRef.current = world
     }
     if (drawMode === 'images' && dragState.current.id) {
@@ -437,7 +465,7 @@ export default function InteractiveCanvas() {
     }
   }
   const handlePointerUp = () => {
-    if ((drawMode === 'draw' || drawMode === 'erase') && isDrawing) { setIsDrawing(false); lastPointRef.current = null }
+    if ((drawMode === 'draw' || drawMode === 'erase') && isDrawing) { setIsDrawing(false); lastPointRef.current = null; flushStrokes() }
     if (drawMode === 'images' && dragState.current.id) {
       const key = dragState.current.id
       const img = localTransforms.current.get(key)

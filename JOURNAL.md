@@ -1,5 +1,15 @@
 # Journal
 
+## 2026-10-03 — Phase 3 : revue, code mort, coupures réseau, performance, tests
+
+- Revue de sécurité : `GET /api/rooms` (liste publique de toutes les tables) supprimé ; renommer ou supprimer une table dépend du compte du MJ, plus d'un secret rangé dans le navigateur qui l'avait créée (`app/api/rooms/route.ts`, `lib/liveRooms.ts`). Deux MJ peuvent désormais donner le même nom à leur table.
+- Code mort retiré : `MusicPanel`, `OnlineProfiles`, `useOnlineStatus`, `/api/timestamp`, helpers inutilisés, 13 paquets npm.
+- Coupure réseau : bandeau « connexion perdue / rétablie / recharger » dans la table (`components/rooms/ConnectionBanner.tsx`), alerte avant de fermer l'onglet si des modifications ne sont pas parties. Testé en coupant la connexion à la main.
+- Performance : traits du canevas envoyés par paquets (54 segments en 1 message au lieu de 54), fonds d'écran chargés à la demande.
+- Tests Playwright réécrits, 14 au vert sur le Chrome du poste (Edge absent de la machine).
+
+Reste ouvert : tests e2e avec compte, canevas à 0 px de haut sous ~1000 px de large (phase 4).
+
 ## 2026-10-03 — Phase 2 : tables sur invitation seule, nettoyage des tables abandonnées
 
 - Mot de passe de table retiré partout : création, entrée, panneau admin. On entre sur invitation seule ; le jeton d'accès aux fiches reste, réservé aux membres (`app/api/rooms/verify`, `lib/roomAuth.ts`). Page `/rooms`, `RoomJoinGuard` et `RoomSelector`, inutilisés, supprimés.

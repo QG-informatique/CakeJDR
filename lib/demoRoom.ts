@@ -29,20 +29,6 @@ function client() {
   return new Liveblocks({ secret })
 }
 
-/** Lit l'état courant de la salle pour en faire la référence. */
-export async function captureSnapshot(roomId: string): Promise<DemoSnapshot> {
-  const doc = (await client().getStorageDocument(roomId, 'json')) as Record<string, unknown>
-  return {
-    images: (doc?.images as Record<string, Json>) ?? {},
-    strokes: (doc?.strokes as Json[]) ?? [],
-    characters: (doc?.characters as Record<string, Json>) ?? {},
-    quickNote: (doc?.quickNote as DemoSnapshot['quickNote']) ?? { text: '', updatedAt: 0 },
-    music: (doc?.music as DemoSnapshot['music']) ?? { id: '', playing: false },
-    events: (doc?.events as Json[]) ?? [],
-    capturedAt: Date.now(),
-  }
-}
-
 /**
  * Réécrit l'état de référence par-dessus la salle.
  *

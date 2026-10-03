@@ -32,7 +32,7 @@ compte Discord) et, si possible, une tablette ou un téléphone.
 3. Le compte B ouvre directement l'adresse de la table, copiée depuis A : l'écran « Accès refusé » s'affiche et lui dit de demander le code.
 4. Le compte B saisit le code d'invitation sur l'accueil : la table apparaît, et il peut y entrer.
 5. Un mauvais code est refusé proprement.
-6. Table protégée par mot de passe : le bon mot de passe fait entrer, un mauvais est refusé proprement, et après plusieurs erreurs un blocage temporaire s'affiche.
+6. Le compte A ouvre son menu depuis un autre navigateur : les boutons pour renommer et supprimer sa table sont bien là.
 7. Le compte A renomme puis supprime la table ; le compte B ne peut faire ni l'un ni l'autre.
 
 ## Rôle de MJ
@@ -63,7 +63,7 @@ compte Discord) et, si possible, une tablette ou un téléphone.
 3. Tablette ou téléphone, en portrait puis en paysage : aucune action indispensable n'est cachée. L'affichage mobile n'a pas encore été retravaillé : noter ce qui gêne.
 
 ## Panel d'administration
-1. Connecté avec le compte administrateur, `/admin` liste toutes les tables et permet de les renommer, de retirer un mot de passe et de les supprimer.
+1. Connecté avec le compte administrateur, `/admin` liste toutes les tables et permet de les renommer et de les supprimer.
 
 ## Critères de mise en ligne
 - Aucune erreur bloquante dans la console ni dans les réponses de l'application.

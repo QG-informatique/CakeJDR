@@ -110,25 +110,6 @@ export async function addMember(roomId: string, userId: string, role = 'player')
     .onConflictDoNothing()
 }
 
-/** Membres d'une table, pour l'affichage administrateur. */
-export async function listMembers(roomId: string) {
-  return db
-    .select({ userId: roomMembers.userId, role: roomMembers.role, joinedAt: roomMembers.joinedAt })
-    .from(roomMembers)
-    .where(eq(roomMembers.roomId, roomId))
-}
-
-/** True si le joueur est membre de la table. */
-export async function isRoomMember(roomId: string, userId: string | null | undefined) {
-  if (!userId) return false
-  const rows = await db
-    .select({ userId: roomMembers.userId })
-    .from(roomMembers)
-    .where(and(eq(roomMembers.roomId, roomId), eq(roomMembers.userId, userId)))
-    .limit(1)
-  return rows.length > 0
-}
-
 /** Rôle du joueur dans la table, ou `null` s'il n'en est pas membre. */
 export async function getMemberRole(
   roomId: string,
