@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ArrowLeft,
+  Crown,
   KeyRound,
   Loader2,
   Pencil,
@@ -20,7 +21,7 @@ import {
 } from '@/lib/adminApi'
 import type { RoomInfoResponse } from '@/types/api'
 
-type SortKey = 'createdAt' | 'name' | 'usersConnected'
+type SortKey = 'createdAt' | 'lastActiveAt' | 'name' | 'usersConnected'
 
 export default function AdminPage() {
   const [checking, setChecking] = useState(true)
@@ -79,13 +80,16 @@ export default function AdminPage() {
       ? rooms.filter(
           (r) =>
             r.name?.toLowerCase().includes(needle) ||
-            r.id.toLowerCase().includes(needle),
+            r.id.toLowerCase().includes(needle) ||
+            r.members?.some((m) => m.pseudo.toLowerCase().includes(needle)),
         )
       : [...rooms]
     return list.sort((a, b) => {
       if (sortKey === 'name') return (a.name || '').localeCompare(b.name || '')
       if (sortKey === 'usersConnected')
         return (b.usersConnected ?? 0) - (a.usersConnected ?? 0)
+      if (sortKey === 'lastActiveAt')
+        return (a.lastActiveAt ?? '').localeCompare(b.lastActiveAt ?? '')
       return (b.createdAt ?? '').localeCompare(a.createdAt ?? '')
     })
   }, [rooms, filter, sortKey])
@@ -231,7 +235,7 @@ export default function AdminPage() {
           <input
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            placeholder="Filtrer par nom ou id..."
+            placeholder="Filtrer par nom, id ou joueur..."
             aria-label="Filtrer les rooms"
             className="min-w-[220px] flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm placeholder:text-white/30 focus:outline-none"
           />
@@ -245,6 +249,7 @@ export default function AdminPage() {
             className="rounded-lg border border-white/10 bg-white/5 px-2 py-2 text-sm [&>option]:bg-neutral-900"
           >
             <option value="createdAt">Plus recentes</option>
+            <option value="lastActiveAt">Inactives depuis longtemps</option>
             <option value="name">Nom (A vers Z)</option>
             <option value="usersConnected">Connectes</option>
           </select>
@@ -270,7 +275,7 @@ export default function AdminPage() {
         )}
 
         <div className="overflow-x-auto rounded-xl border border-white/10 bg-black/25">
-          <table className="w-full min-w-[720px] text-sm">
+          <table className="w-full min-w-[860px] text-sm">
             <thead className="border-b border-white/10 text-left text-xs uppercase tracking-wider text-white/40">
               <tr>
                 <th className="p-3">
@@ -283,7 +288,8 @@ export default function AdminPage() {
                 </th>
                 <th className="p-3">Nom</th>
                 <th className="p-3">Id</th>
-                <th className="p-3">Creee le</th>
+                <th className="p-3">Accès</th>
+                <th className="p-3">Dernière activité</th>
                 <th className="p-3">Connectes</th>
                 <th className="p-3">Etat</th>
                 <th className="p-3 text-right">Actions</th>
@@ -307,8 +313,32 @@ export default function AdminPage() {
                     {r.name || <span className="text-white/40">sans nom</span>}
                   </td>
                   <td className="p-3 font-mono text-xs text-white/40">{r.id}</td>
-                  <td className="p-3 text-white/60">
-                    {r.createdAt ? new Date(r.createdAt).toLocaleString() : '-'}
+                  <td className="p-3 text-xs">
+                    {r.members && r.members.length > 0 ? (
+                      <ul className="m-0 list-none space-y-0.5 p-0">
+                        {r.members.map((m) => (
+                          <li key={m.pseudo} className="flex items-center gap-1">
+                            {m.role === 'gm' && (
+                              <Crown size={12} className="text-pink-400" aria-label="MJ" />
+                            )}
+                            <span className={m.role === 'gm' ? 'text-white' : 'text-white/60'}>
+                              {m.pseudo}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <span className="text-white/40">personne</span>
+                    )}
+                    {r.joinCode && (
+                      <span className="mt-1 block font-mono text-white/40">code {r.joinCode}</span>
+                    )}
+                  </td>
+                  <td
+                    className="p-3 text-white/60"
+                    title={r.createdAt ? `Créée le ${new Date(r.createdAt).toLocaleString()}` : undefined}
+                  >
+                    {r.lastActiveAt ? new Date(r.lastActiveAt).toLocaleDateString() : '-'}
                   </td>
                   <td className="p-3 tabular-nums text-white/60">
                     {r.usersConnected ?? 0}
@@ -320,10 +350,15 @@ export default function AdminPage() {
                           MDP
                         </span>
                       )}
+                      {r.isDemo && (
+                        <span className="rounded bg-sky-500/15 px-1.5 py-0.5 text-sky-300">
+                          démo
+                        </span>
+                      )}
                       {!r.hasOwner && (
                         <span
                           className="rounded bg-white/10 px-1.5 py-0.5 text-white/50"
-                          title="Room creee avant le systeme de propriete : seul l'admin peut la gerer"
+                          title="Table absente de la base : aucun joueur n'y a accès, seul l'admin la voit"
                         >
                           orpheline
                         </span>
@@ -365,7 +400,7 @@ export default function AdminPage() {
               ))}
               {!visibleRooms.length && (
                 <tr>
-                  <td colSpan={7} className="p-6 text-center text-white/40">
+                  <td colSpan={8} className="p-6 text-center text-white/40">
                     {loadingRooms ? 'Chargement...' : 'Aucune room'}
                   </td>
                 </tr>
@@ -375,7 +410,7 @@ export default function AdminPage() {
         </div>
 
         <p className="mt-4 text-xs text-white/30">
-          {rooms.length} room(s) au total. La session admin expire au bout de 8 h.
+          {rooms.length} table(s) au total.
         </p>
       </div>
     </main>

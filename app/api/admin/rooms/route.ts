@@ -3,6 +3,7 @@ export const runtime = 'nodejs'
 import { NextRequest } from 'next/server'
 import { isAdminRequest } from '@/lib/adminAuth'
 import { clearRoomPassword, deleteRoom, renameRoom } from '@/lib/liveRooms'
+import { forgetRoom, renameRoomRecord } from '@/lib/db/rooms'
 import { debug } from '@/lib/debug'
 import { fail, ok } from '@/lib/api-response'
 
@@ -26,6 +27,8 @@ export async function DELETE(req: NextRequest) {
   for (const id of ids) {
     try {
       await deleteRoom(id)
+      // Sans cela, la table restait listée chez ses joueurs après suppression.
+      await forgetRoom(id).catch((e) => console.error('forgetRoom', e))
       deleted.push(id)
     } catch (e) {
       failed.push({ id, error: e instanceof Error ? e.message : 'delete failed' })
@@ -58,6 +61,7 @@ export async function POST(req: NextRequest) {
       const name = typeof body.name === 'string' ? body.name.trim() : ''
       if (!name) return fail('missing name', 400)
       await renameRoom(id, name)
+      await renameRoomRecord(id, name).catch((e) => console.error('renameRoomRecord', e))
       debug('admin rename', id, name)
       return ok({ id, name })
     }
