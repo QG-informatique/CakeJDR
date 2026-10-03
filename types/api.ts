@@ -22,6 +22,12 @@ export type RoomInfoResponse = {
   createdAt?: string
   updatedAt?: string
   usersConnected?: number
+  /** Réservé à l'admin : salle de démonstration. */
+  isDemo?: boolean
+  /** Réservé à l'admin : dernière ouverture de la table par un joueur. */
+  lastActiveAt?: string
+  /** Réservé à l'admin : qui a accès à la table, MJ en premier. */
+  members?: Array<{ pseudo: string; role: string }>
 }
 
 export type RoomsListResponse = ApiResult<{

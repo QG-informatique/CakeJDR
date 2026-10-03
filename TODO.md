@@ -31,7 +31,9 @@
 - [x] Supprimer l'annuaire public : une table ne se voit que si on en est membre
 - [x] Ajouter un code d'invitation par table et la route pour rejoindre
 - [x] Afficher un panneau de connexion au lieu du menu quand on n'a pas de compte
-- [ ] Afficher dans le panel admin qui a accès à chaque table
+- [x] Afficher dans le panel admin qui a accès à chaque table
+- [x] Noter la dernière ouverture de chaque table (`rooms.last_active_at`, mis à jour à l'entrée)
+- [ ] Nettoyer automatiquement les tables inactives (délai à trancher), en excluant la salle de démonstration
 - [x] Nettoyer les tables antérieures : cinq supprimées, `cakroom` gardée comme salle de démonstration
 
 ## Page d'accueil

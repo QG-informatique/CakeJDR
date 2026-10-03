@@ -1,5 +1,13 @@
 # Journal
 
+## 2026-10-03 — Phase 2 : accès aux tables dans le panneau admin
+
+- `/admin` montre qui a accès à chaque table (MJ couronné, joueurs, code d'invitation), la dernière activité et un badge démo ; filtre par pseudo (`listAllRoomAccess` dans `lib/db/rooms.ts`).
+- La date de dernière activité d'une table est enfin mise à jour, à l'entrée d'un joueur (`touchRoom`, une écriture par heure au plus) : elle servira au nettoyage des tables abandonnées.
+- Corrigé : une table supprimée depuis `/admin` restait en base et donc listée chez ses joueurs ; le renommage admin n'était pas reporté en base non plus.
+
+Reste ouvert : délai de nettoyage des tables inactives, mot de passe de table, modèles de fiche — à trancher.
+
 ## 2026-10-03 — Sous-domaine OVH plutôt que l'adresse Vercel
 
 - Revirement : le site passera sur un sous-domaine de `qg-informatique.fr` (zone DNS chez OVH), relié à Vercel par un enregistrement CNAME.

@@ -1,7 +1,7 @@
 export const runtime = 'nodejs'
 
 import { listRooms } from '@/lib/liveRooms'
-import { listRoomsForUser } from '@/lib/db/rooms'
+import { listAllRoomAccess, listRoomsForUser } from '@/lib/db/rooms'
 import { currentUserId } from '@/lib/db/users'
 import { isAdminRequest } from '@/lib/adminAuth'
 import { debug } from '@/lib/debug'
@@ -17,9 +17,24 @@ import { fail, ok } from '@/lib/api-response'
 export async function GET() {
   try {
     if (await isAdminRequest()) {
-      const all = await listRooms()
+      const [all, access] = await Promise.all([listRooms(), listAllRoomAccess()])
       debug('rooms list (admin)', all.length)
-      return ok({ rooms: all, scope: 'admin' })
+      return ok({
+        rooms: all.map((r) => {
+          const a = access.get(r.id)
+          return {
+            ...r,
+            // Une table sans enregistrement en base n'a ni propriétaire ni
+            // membres : seul l'admin peut encore la voir.
+            hasOwner: Boolean(a),
+            joinCode: a?.joinCode,
+            isDemo: a?.isDemo ?? false,
+            lastActiveAt: a?.lastActiveAt,
+            members: a?.members ?? [],
+          }
+        }),
+        scope: 'admin',
+      })
     }
 
     const userId = await currentUserId()

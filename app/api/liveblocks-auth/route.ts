@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto'
 import { roomHasPassword, verifyRoomToken } from '@/lib/roomAuth'
 import { syncCurrentUser } from '@/lib/db/users'
 import { resolveRoomAccess } from '@/lib/db/roomAccess'
+import { touchRoom } from '@/lib/db/rooms'
 
 const secret = process.env.LIVEBLOCKS_SECRET_KEY
 
@@ -49,6 +50,10 @@ export async function POST(request: Request) {
         : 'Not a member of this table — ask for its invitation code'
     return new Response(message, { status: 403 })
   }
+
+  // Date de dernière visite, pour repérer les tables abandonnées. Un échec ici
+  // ne doit pas empêcher d'entrer.
+  await touchRoom(room).catch((e) => console.error('touchRoom', e))
 
   const meta = (roomData.metadata ?? {}) as Record<string, unknown>
 
