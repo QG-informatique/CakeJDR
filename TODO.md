@@ -47,7 +47,7 @@
 - [x] Envoyer les traits du canevas par paquets, une fois par image, au lieu d'un message réseau par mouvement de souris
 - [x] Charger les fonds d'écran à la demande (un seul téléchargé au lieu des dix)
 - [x] Réécrire les tests Playwright : contrat API d'un visiteur, menu, crédit, pages légales, salle de démonstration (`npx playwright test`, Chrome du poste)
-- [ ] Rendre le canevas utilisable sous ~1000 px de large : il passe à 0 px de haut (constaté à 966 px) — phase 4
+- [ ] Rendre la table utilisable sur téléphone : sous ~1000 px de large, seule la fiche s'affiche, sans canevas, dés ni chat (constaté sur la démo) — premier chantier de la phase 4
 - [ ] Limiter côté serveur le nombre de tables qu'un compte peut créer (le garde-fou actuel est dans le navigateur) — phase 5
 
 ## Page d'accueil
