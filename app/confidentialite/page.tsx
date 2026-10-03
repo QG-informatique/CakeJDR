@@ -55,7 +55,9 @@ export default function ConfidentialitePage() {
 
       <h2>Durée de conservation</h2>
       <p>
-        Tant que ton compte existe. Une table supprimée l&apos;est avec son contenu. La salle de
+        Tant que ton compte existe. Une table supprimée l&apos;est avec son contenu. Une table où
+        personne n&apos;est entré depuis six mois est supprimée automatiquement ; son MJ en est
+        prévenu dans le menu un mois avant, et il suffit d&apos;y entrer pour la garder. La salle de
         démonstration est remise à zéro chaque jour.
       </p>
 

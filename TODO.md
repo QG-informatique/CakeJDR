@@ -5,8 +5,9 @@
 - [x] Authentification : Clerk via la Marketplace Vercel, plutôt qu'Auth.js — identifiants OAuth partagés en développement, donc aucune application Discord/Google à créer pour démarrer
 - [x] Authentification revue : Auth.js (Google et Discord) à la place de Clerk, pour rester sur l'adresse `.vercel.app` sans nom de domaine ; connexion par email abandonnée
 - [x] Mode visiteur : retenu, sous forme de room de démonstration pré-remplie (revient sur la recommandation initiale de ne pas en faire)
-- [ ] Trancher : mot de passe de table **et** invitations, ou invitations seules
-- [ ] Trancher : modèles de fiche liés à la table, ou bibliothèque réutilisable entre tables
+- [x] Accès aux tables : invitations seules, le mot de passe de table est retiré
+- [x] Modèles de fiche : bibliothèque du MJ réutilisable entre tables (chantier pour plus tard)
+- [x] Tables inactives : supprimées après 6 mois sans visite, MJ prévenu dans le menu à 5 mois, salle de démo exclue
 
 ## Phase 1 — identité (Clerk + Neon)
 - [x] Créer la base Neon et reporter `DATABASE_URL` dans `.env.local`
@@ -33,7 +34,10 @@
 - [x] Afficher un panneau de connexion au lieu du menu quand on n'a pas de compte
 - [x] Afficher dans le panel admin qui a accès à chaque table
 - [x] Noter la dernière ouverture de chaque table (`rooms.last_active_at`, mis à jour à l'entrée)
-- [ ] Nettoyer automatiquement les tables inactives (délai à trancher), en excluant la salle de démonstration
+- [x] Nettoyer automatiquement les tables inactives (`/api/cron/cleanup-rooms`, chaque jour à 4 h 30), en excluant la salle de démonstration
+- [ ] Vérifier dans les logs Vercel que la tâche `cleanup-rooms` tourne chaque nuit sans erreur (`wouldDelete` visible avec `?dry=1` en admin)
+- [ ] Supprimer la colonne `rooms.password_hash`, devenue inutile (migration Neon, avec accord)
+- [ ] Transformer les modèles de fiche en bibliothèque du MJ, réutilisable d'une table à l'autre
 - [x] Nettoyer les tables antérieures : cinq supprimées, `cakroom` gardée comme salle de démonstration
 
 ## Page d'accueil
@@ -91,7 +95,7 @@
 ## Qualité / outillage
 - [x] Réparer `npm run lint` et le crash ESLint — flat config native, `FlatCompat` supprimé
 - [x] Mettre en place une CI GitHub Actions (typecheck, lint, audit, build)
-- [ ] Ajouter des tests e2e Playwright : rendu des pages, join room (avec et sans mot de passe), upload image, lancer de dé, import/export personnage
+- [ ] Ajouter des tests e2e Playwright : rendu des pages, rejoindre une table par code d'invitation, upload image, lancer de dé, import/export personnage
 - [x] Traiter les vulnérabilités `npm audit` (0 restante, `@vercel/blob` monté en v2)
 - [ ] Nettoyer types résiduels `any` si possible sans rigidifier les structures Lson
 
@@ -105,7 +109,6 @@
 - [x] Hasher le mot de passe de room côté serveur (`metadata.passwordHash`) et ne plus exposer le mot de passe en clair
 - [x] Corriger le flux de connexion aux rooms protégées (le token d'accès n'était pas mémorisé, rendant ces rooms inaccessibles)
 - [x] Empêcher la suppression/renommage d'une room par un tiers (système de secret de propriété + accès admin)
-- [ ] Ajouter un petit loader « jeu vidéo » lors de la vérification du mot de passe (indicateur minimal déjà présent, à améliorer via framer-motion)
 
 ## Interface — langue
 - [x] Traduire les textes ajoutés récemment (panneau de connexion, bandeau de démo, invitation par code), écrits en dur en français et qui ne suivent pas la bascule de langue

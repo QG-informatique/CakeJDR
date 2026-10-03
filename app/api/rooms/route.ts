@@ -50,14 +50,11 @@ export async function POST(req: NextRequest) {
       return fail('sign in to create a table', 401)
     }
 
-    const { name, password } = await req.json()
+    const { name } = await req.json()
     if (!name || typeof name !== 'string') {
       return fail('missing name', 400)
     }
-    const { id, ownerSecret } = await createRoom(
-      name,
-      typeof password === 'string' ? password : undefined,
-    )
+    const { id, ownerSecret } = await createRoom(name)
     await recordRoom({ id, name, ownerId: account.id }).catch((e) =>
       console.error('recordRoom', e),
     )

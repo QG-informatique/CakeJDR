@@ -13,8 +13,6 @@ interface Props {
 
 export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
   const [name, setName] = useState('')
-  const [withPassword, setWithPassword] = useState(false)
-  const [password, setPassword] = useState('')
   const [creating, setCreating] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const t = useT()
@@ -29,13 +27,11 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
     }
     setCreating(true)
     setErrorMsg('')
-    const payload = { name, password: withPassword ? password : '' }
     try {
-      const data = await createRoomApi(payload)
+      const data = await createRoomApi({ name })
       const room = {
         id: data.id,
         name,
-        hasPassword: Boolean(payload.password),
         createdAt: new Date().toISOString(),
       }
       localStorage.setItem('jdr_my_room', data.id)
@@ -69,24 +65,6 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') void createRoom() }}
         />
-        <label className="text-sm flex items-center gap-2 mb-2">
-          <input
-            type="checkbox"
-            checked={withPassword}
-            onChange={(e) => { setWithPassword(e.target.checked); if (!e.target.checked) setPassword('') }}
-          />
-          {t('password')} ?
-        </label>
-        {withPassword && (
-          <input
-            type="password"
-            className="w-full mb-2 px-2 py-1 rounded bg-gray-800 text-white placeholder-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-pink-400/30"
-            placeholder={t('password')}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') void createRoom() }}
-          />
-        )}
         {creating ? (
           <div className="w-full h-2 bg-gray-700 rounded overflow-hidden mb-2">
             <div className="h-full bg-emerald-500 animate-pulse" style={{ width: '100%' }} />

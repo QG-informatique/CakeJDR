@@ -29,15 +29,6 @@ export async function adminDeleteRooms(ids: string[]) {
   >(res)
 }
 
-export async function adminClearPassword(id: string) {
-  const res = await fetch('/api/admin/rooms', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'clearPassword', id }),
-  })
-  return requireOk<ApiSuccess<{ id: string }>>(res)
-}
-
 export async function adminRenameRoom(id: string, name: string) {
   const res = await fetch('/api/admin/rooms', {
     method: 'POST',

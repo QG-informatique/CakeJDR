@@ -1,6 +1,5 @@
 import { Liveblocks } from '@liveblocks/node'
 import { createHash, randomBytes, timingSafeEqual } from 'crypto'
-import { hashRoomPassword, roomHasPassword } from './roomAuth'
 
 function slugify(str: string) {
   return str
@@ -49,8 +48,6 @@ function getClient() {
 export type RoomSummary = {
   id: string
   name: string
-  // FIX: Do not expose raw passwords; only expose a boolean flag
-  hasPassword?: boolean
   /** True si la room a un propriétaire enregistré (rooms créées avant cette version : false). */
   hasOwner?: boolean
   createdAt: string
@@ -74,12 +71,9 @@ export async function listRooms(): Promise<RoomSummary[]> {
             ? r.id.substring(0, r.id.lastIndexOf('-'))
             : r.id
       const meta = (r.metadata ?? {}) as Record<string, unknown>
-      // On n'expose qu'un booléen, jamais la valeur (hash ou clair).
-      const hasPassword = roomHasPassword(meta)
       rooms.push({
         id: r.id,
         name: roomName,
-        hasPassword,
         hasOwner: typeof meta.ownerHash === 'string' && meta.ownerHash.length > 0,
         createdAt: r.createdAt.toISOString(),
         updatedAt: r.lastConnectionAt ? r.lastConnectionAt.toISOString() : undefined,
@@ -91,7 +85,7 @@ export async function listRooms(): Promise<RoomSummary[]> {
   return rooms
 }
 
-export async function createRoom(name: string, password?: string) {
+export async function createRoom(name: string) {
   const client = getClient()
 
   // 1) Si une room avec ce nom existe déjà, refuser la création
@@ -112,12 +106,7 @@ export async function createRoom(name: string, password?: string) {
   const stableId = `${base}-${Buffer.from(name).toString('hex').slice(0, 8)}`
 
   // 3) Idempotence côté serveur
-  // FIX: only keep a password hash in metadata
   const metadata: Record<string, string | string[]> = { name }
-  if (password) {
-    metadata.passwordHash = hashRoomPassword(password)
-    metadata.hasPassword = '1'
-  }
 
   // 4) Secret de propriété : renvoyé une seule fois, seul son hash est stocké
   const ownerSecret = randomBytes(24).toString('hex')
@@ -163,26 +152,4 @@ export async function renameRoom(id: string, name: string) {
   }
   const metadata = Object.fromEntries(entries) as Record<string, string | string[]>
   await client.updateRoom(id, { metadata: { ...metadata, name } })
-}
-
-/** Retire le mot de passe d'une room (action admin). */
-export async function clearRoomPassword(id: string) {
-  const client = getClient()
-  const room = await client.getRoom(id)
-  const entries: Array<[string, string | string[] | null]> = []
-  if (typeof room.metadata === 'object' && room.metadata !== null) {
-    for (const [k, v] of Object.entries(room.metadata as Record<string, unknown>)) {
-      if (!isSafeMetadataKey(k)) continue
-      if (k === 'password' || k === 'passwordHash' || k === 'hasPassword') continue
-      if (typeof v === 'string') entries.push([k, v])
-      else if (Array.isArray(v) && v.every((x) => typeof x === 'string')) {
-        entries.push([k, v as string[]])
-      }
-    }
-  }
-  // `null` demande explicitement à Liveblocks de supprimer la clé.
-  entries.push(['password', null], ['passwordHash', null], ['hasPassword', null])
-  await client.updateRoom(id, {
-    metadata: Object.fromEntries(entries) as Record<string, string | string[] | null>,
-  })
 }
