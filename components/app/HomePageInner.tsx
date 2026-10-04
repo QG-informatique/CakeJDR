@@ -596,7 +596,7 @@ export default function HomePageInner() {
               disabled={diceDisabled}
               cooldown={cooldown}
               cooldownDuration={ROLL_TOTAL_MS}
-              afterRoll={<MusicPlayer />}
+              leading={<MusicPlayer />}
             >
               <LiveAvatarStack />
             </DiceRoller>

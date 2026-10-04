@@ -162,6 +162,10 @@
 - [x] Phase D : faire de la bibliothèque le seul moyen d'ajouter une image (envoi par « + », carte en fond plein plateau, pions alliés et ennemis posés et retirés d'un clic, onglet Outils renommé Dessin)
 - [x] Phase E : simplifier la barre du bas (dés, musique lecture/pause + volume avec options repliées, joueurs en ligne y compris soi)
 - [x] Phase F : créer le panneau du MJ de la salle (joueurs et fiches en temps réel, droits de modification des fiches, droits de dessin)
+- [x] Mettre la barre du bas sur une seule ligne : musique à gauche, dé en menu déroulant et « Lancer » au centre, joueurs à droite
+- [ ] Faire générer le pack d'images n° 2 par ChatGPT avec `PROMPT-PACK-IMAGES.md` (Quentin), puis le rapporter en zip
+- [ ] Intégrer le pack n° 2 : convertir en webp avec miniatures dans `public/bibliotheque/`, déclarer les images dans `lib/library.ts`
+- [ ] Refaire la salle de démo avec le set « Cake » : sa pâtisserie en fond, son pion, le Golem de Mie Brûlée et ses levains, la rencontre de Mila
 - [ ] Vérifier les boutons import, export et cloud des fiches sur la page des salles (possible en local avec « Connexion locale (admin) » ; attention, c'est la vraie base)
 - [x] Retirer le mode édition devenu inutile des panneaux de fiche (`StatsPanel`, `EquipPanel`, `DescriptionPanel`, `CompetencesPanel`) en refaisant la fiche en partie (phase C)
 - [ ] Envoyer une vraie image par le « + » de la bibliothèque, la poser, puis la supprimer, pour vérifier l'envoi et l'effacement chez Cloudinary (avec l'accord de Quentin)
