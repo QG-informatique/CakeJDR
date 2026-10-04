@@ -158,12 +158,15 @@
 ## Refonte d'octobre 2026 — détail dans `PLAN-REFONTE.md`
 - [x] Phase A : garder deux thèmes (Ardoise fixe, Classique aux dés roses), ranger les autres fonds, `/` pour la connexion et `/salles` pour les salles, retirer l'indicateur de MJ du menu
 - [x] Phase B : refaire l'écran de création et de modification de fiche (un seul écran, sections qui défilent, plus de chevauchement des compétences)
-- [ ] Phase C : refaire la fiche en partie (portrait choisi dans la bibliothèque, barre de PV, affichage compact ou complet, bouton Modifier sur la fiche, sans sélecteur de personnage ni menu import/export)
-- [ ] Phase D : faire de la bibliothèque le seul moyen d'ajouter une image (envoi par « + », carte en fond plein plateau, pions alliés et ennemis posés et retirés d'un clic, onglet Outils renommé Dessin)
-- [ ] Phase E : simplifier la barre du bas (dés, musique lecture/pause + volume avec options repliées, joueurs en ligne y compris soi)
-- [ ] Phase F : créer le panneau du MJ de la salle (joueurs et fiches en temps réel, droits de modification des fiches, droits de dessin)
+- [x] Phase C : refaire la fiche en partie (portrait choisi dans la bibliothèque, barre de PV, affichage compact ou complet, bouton Modifier sur la fiche, sans sélecteur de personnage ni menu import/export)
+- [x] Phase D : faire de la bibliothèque le seul moyen d'ajouter une image (envoi par « + », carte en fond plein plateau, pions alliés et ennemis posés et retirés d'un clic, onglet Outils renommé Dessin)
+- [x] Phase E : simplifier la barre du bas (dés, musique lecture/pause + volume avec options repliées, joueurs en ligne y compris soi)
+- [x] Phase F : créer le panneau du MJ de la salle (joueurs et fiches en temps réel, droits de modification des fiches, droits de dessin)
 - [ ] Vérifier les boutons import, export et cloud des fiches sur la page des salles (possible en local avec « Connexion locale (admin) » ; attention, c'est la vraie base)
-- [ ] Retirer le mode édition devenu inutile des panneaux de fiche (`StatsPanel`, `EquipPanel`, `DescriptionPanel`, `CompetencesPanel`) en refaisant la fiche en partie (phase C)
+- [x] Retirer le mode édition devenu inutile des panneaux de fiche (`StatsPanel`, `EquipPanel`, `DescriptionPanel`, `CompetencesPanel`) en refaisant la fiche en partie (phase C)
+- [ ] Envoyer une vraie image par le « + » de la bibliothèque, la poser, puis la supprimer, pour vérifier l'envoi et l'effacement chez Cloudinary (avec l'accord de Quentin)
+- [ ] Essayer les réglages du panneau du MJ avec un vrai compte joueur : fiche verrouillée par le MJ, dessin retiré, dessin autorisé joueur par joueur
+- [ ] Protéger côté serveur les réglages du MJ (fiches, dessin) et la suppression d'images de la bibliothèque, aujourd'hui bloqués dans l'interface seulement, si une table publique en a besoin
 
 ## Ordre validé (2026-10-04) : débug → refonte en thème → bibliothèque → public → autres thèmes
 
