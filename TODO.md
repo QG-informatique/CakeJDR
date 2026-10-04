@@ -179,9 +179,11 @@
 - [ ] Faire du pack « Papier & Sauge » (thème clair, accent vert sauge) un thème : maquettes et couleurs dans `C:\DEV\CakeJDR-themes\CakeJDR-theme-papier-sauge`
 
 ## Bibliothèque partagée — avant le public
-- [ ] Créer une bibliothèque de départ (cartes, monstres, PNJ, images) utilisable par tous les MJ, en plus de leurs propres images — uniquement des images dont on a les droits
+- [x] Créer une bibliothèque de départ (cartes, monstres, PNJ, images) utilisable par tous les MJ, en plus de leurs propres images — uniquement des images dont on a les droits
+- [ ] Ajouter des monstres et des PNJ à la bibliothèque (seulement 3 rencontres pour l'instant) : WebP + miniature dans `public/bibliotheque/`, puis une ligne dans `lib/library.ts`
+- [ ] Proposer les portraits de la bibliothèque comme image de fiche de personnage
 
 ## Maquette V2 (ChatGPT) — après le rework
 - [x] Copier la maquette V2 hors du dossier caché de Codex — copiée dans `C:\DEV\CakeJDR-V2` le 2026-10-04
 - [ ] Trier avec Quentin ce qu'on garde de la V2 (bibliothèque de visuels, pions détourés sur la carte, barre de PV, menu en liste, style sobre)
-- [ ] Convertir en WebP les visuels V2 retenus (PNG de ~2,5 Mo chacun, 53 Mo au total) avant de les intégrer
+- [x] Convertir en WebP les visuels V2 retenus (PNG de ~2,5 Mo chacun, 53 Mo au total) avant de les intégrer

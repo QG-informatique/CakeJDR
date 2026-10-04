@@ -1,5 +1,14 @@
 # Journal
 
+## 2026-10-04 — Bibliothèque de départ sur la table
+- 21 images du pack de Quentin (V2) converties en WebP avec miniatures dans `public/bibliotheque/` (2,4 Mo) : 2 cartes, 8 pions détourés, 8 portraits, 3 rencontres.
+- Liste et tailles dans `lib/library.ts` ; panneau `components/canvas/LibraryPanel.tsx` ouvert par un bouton « Bibliothèque » à côté de « Outils ».
+- Un clic pose l'image au centre du plateau, un glisser la pose où on la lâche ; taille d'arrivée selon le type (carte grande, pion petit).
+- Images servies par le site lui-même, pas par Cloudinary : rien à envoyer, rien à payer, et toujours disponibles.
+- Build et 15 tests e2e OK ; essai dans la salle de démo, pion retiré après.
+
+Reste ouvert : relecture par Quentin ; pas encore en ligne.
+
 ## 2026-10-04 — Interface retravaillée façon Ardoise (menu et table)
 - Panneaux, boutons, champs et onglets communs (`ui-panel`, `ui-btn`, `ui-seg`…) dans `app/globals.css`, avec un fond et un flou par thème (`app/themes.css`) : aplats nets en Ardoise, voiles translucides en Classique.
 - Table : trois panneaux espacés ; fiche avec en-tête collant (retour à l'accueil, thème, repli) et stats en cases ; chat, barre de dés, outils du plateau, notes et onglets du téléphone redessinés ; bandeau de démo déplacé en bas du plateau pour ne plus cacher les outils.

@@ -254,6 +254,8 @@ export const translations = {
     brushSize: "Brush size",
     enterRoomNamed: "Enter {n}",
     pickARoom: "Pick a table to play",
+    library: "Library",
+    libraryHint: "Click or drag onto the table",
   },
   fr: {
     addSkill: 'Ajouter une compétence',
@@ -510,6 +512,8 @@ export const translations = {
     brushSize: "Taille du pinceau",
     enterRoomNamed: "Entrer dans {n}",
     pickARoom: "Choisis une table pour jouer",
+    library: "Bibliothèque",
+    libraryHint: "Clique ou glisse sur la table",
   },
 } as const
 
