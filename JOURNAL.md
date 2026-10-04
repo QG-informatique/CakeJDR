@@ -1,5 +1,10 @@
 # Journal
 
+## 2026-10-04 — Mise en ligne des dés serveur et des correctifs React
+- Commits `dc35ce3` à `a0e9248` publiés sur `cakejdr.qg-informatique.fr` : déploiement Vercel réussi, 15 tests e2e OK sur le site en ligne, clé publique des dés servie par `/api/dice/key`.
+
+Reste ouvert : images de monstres et PNJ à dessiner ; 16 avertissements `jsx-a11y`.
+
 ## 2026-10-04 — Alertes techniques React corrigées
 - Les 58 avertissements `react-hooks` (`purity`, `set-state-in-effect`, `refs`) sont corrigés, et ces trois règles repassent en erreur (`eslint.config.mjs`).
 - Fonds animés : tirage au sort fait une seule fois au montage, identifiants SVG stables (`useId`). Ailleurs : valeurs déduites au lieu d'être recopiées (`HomePageInner`, `GMCharacterSelector`, `BackgroundWrapper`), langue lue via `useSyncExternalStore` (`LanguageContext`).
