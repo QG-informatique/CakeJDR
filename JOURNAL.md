@@ -1,5 +1,13 @@
 # Journal
 
+## 2026-10-04 — Refonte, phase B : un seul écran pour créer et modifier une fiche
+- Nouvel écran `components/character/CharacterEditor.tsx` : portrait et identité à gauche, onglets Caractéristiques, Combat, Compétences, Équipement, Histoire à droite ; chaque zone défile seule, Annuler et Enregistrer restent visibles. Remplace `CharacterModal` (supprimé).
+- Compétences ajoutées et modifiées directement dans la liste, sans fenêtre par-dessus : c'est ce qui créait les chevauchements.
+- Le bouton « Modifier » de la fiche en partie ouvre le même écran ; la fiche n'est plus modifiable sur place (`CharacterSheet.tsx`). Échap ferme, en demandant si des modifications seraient perdues.
+- Champ `portrait` ajouté à la fiche (`types/character.ts`), affiché dans la case du portrait ; le choix de l'image vient en phase C.
+
+Reste ouvert : import, export et cloud à vérifier par Quentin, connecté ; phases C à F.
+
 ## 2026-10-04 — Refonte, phase A : deux thèmes, nouvelles adresses
 - Plan de refonte en six phases écrit après le test en ligne de Quentin (`PLAN-REFONTE.md`).
 - Deux thèmes seulement : Ardoise (fond fixe) et Classique (dés roses). Les neuf autres fonds animés et le clic sur le gâteau qui les faisait tourner sont retirés : c'est ce clic qui mettait un fond de Classique dans Ardoise. Fonds rangés dans `C:\DEV\CakeJDR-themesonds-archives`.

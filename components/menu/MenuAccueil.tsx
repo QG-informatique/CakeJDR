@@ -28,7 +28,7 @@ import { defaultPerso } from '../sheet/CharacterSheet'
 import MenuHeader from './MenuHeader'
 import CharacterList from './CharacterList'
 import CharacterCloudModal from './CharacterCloudModal'
-import CharacterModal from './CharacterModal'
+import CharacterEditor from '../character/CharacterEditor'
 import ProfileColorPicker from './ProfileColorPicker'
 import {
   type Character,
@@ -334,14 +334,14 @@ export default function MenuAccueil({ page }: { page: 'landing' | 'salles' }) {
     }
   }
 
-  const handleSaveDraft = () => {
+  const handleSaveDraft = (edited: Character) => {
     if (!user) return
-    const id = draftChar.id || crypto.randomUUID()
+    const id = edited.id || crypto.randomUUID()
     const toSave = normalizeCharacter(
       {
-        ...draftChar,
+        ...edited,
         id,
-        nom: draftChar.nom || t('unnamed'),
+        nom: edited.nom || t('unnamed'),
         owner: user.pseudo,
         ownerId: user.id,
         updatedAt: Date.now(),
@@ -700,10 +700,11 @@ export default function MenuAccueil({ page }: { page: 'landing' | 'salles' }) {
               <DeleteAccount pseudo={user.pseudo} />
             </div>
 
-            <CharacterModal
+            <CharacterEditor
+              key={draftChar.id}
               open={modalOpen}
               character={draftChar}
-              onUpdate={setDraftChar}
+              isNew={!characters.some((c) => String(c.id) === String(draftChar.id))}
               onSave={handleSaveDraft}
               onClose={() => setModalOpen(false)}
             />

@@ -6,6 +6,7 @@ import StatsTab from './StatsTab'
 import EquipTab from './EquipTab'
 import DescriptionPanel from '../character/DescriptionPanel'
 import CharacterSheetHeader from '../character/CharacterSheetHeader'
+import CharacterEditor from '../character/CharacterEditor'
 import { useT } from '@/lib/useT'
 import { useIsDesktop } from '@/lib/useIsDesktop'
 import {
@@ -20,7 +21,6 @@ type Props = {
   perso: Character // Fiche perso initiale
   onUpdate: (perso: Character) => void
   chatBoxRef?: React.RefObject<HTMLDivElement | null>
-  creation?: boolean
   children?: React.ReactNode
   logoOnly?: boolean
 }
@@ -38,12 +38,12 @@ const rollDice = (dice: string): number => {
 const CharacterSheet: FC<Props> = ({
   perso,
   onUpdate,
-  creation = false,
   children,
   logoOnly = false,
 }) => {
-  // NE PAS relier edit à creation sauf à l'init
-  const [edit, setEdit] = useState(!!creation)
+  // La fiche se modifie dans l'écran d'édition (CharacterEditor) ; ici elle
+  // ne fait que s'afficher.
+  const [editorOpen, setEditorOpen] = useState(false)
   const [tab, setTab] = useState('main')
   const [localPerso, setLocalPerso] = useState<Character>(() =>
     normalizeCharacter(perso),
@@ -67,20 +67,16 @@ const CharacterSheet: FC<Props> = ({
     }
   }, [collapsed])
 
-  // Hors édition, la fiche affichée suit celle du parent. En édition, on n'y
-  // touche pas : une fiche reçue entre-temps (chargement, MJ, liste mise à
-  // jour) effaçait les modifications en cours avant « Enregistrer ».
+  // La fiche affichée suit celle du parent. L'écran d'édition travaille sur
+  // sa propre copie : une fiche reçue pendant qu'on la modifie n'efface rien.
   useEffect(() => {
-    if (!edit) {
-      const next = Object.keys(perso || {}).length ? perso : defaultPerso
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- hors édition, la fiche suit celle du parent
-      setLocalPerso(normalizeCharacter(next))
-    }
-  }, [edit, perso])
+    const next = Object.keys(perso || {}).length ? perso : defaultPerso
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- la fiche affichée suit celle du parent
+    setLocalPerso(normalizeCharacter(next))
+  }, [perso])
 
-  const handleChange: CharacterChangeHandler = (field, value) => {
-    setLocalPerso({ ...localPerso, [field]: value })
-  }
+  // Les panneaux ne sont plus modifiables ici : ce gestionnaire ne sert plus.
+  const handleChange: CharacterChangeHandler = () => {}
 
   const [processing, setProcessing] = useState(false)
   const [dice, setDice] = useState('d6')
@@ -88,11 +84,7 @@ const CharacterSheet: FC<Props> = ({
   const [lastGain, setLastGain] = useState<number | null>(null)
   const [animKey, setAnimKey] = useState(0)
 
-  const cFiche: Character = edit
-    ? localPerso
-    : Object.keys(perso || {}).length
-      ? perso
-      : defaultPerso
+  const cFiche: Character = Object.keys(perso || {}).length ? perso : defaultPerso
 
   const handleLevelUp = useCallback(async () => {
     if (processing) return
@@ -154,11 +146,10 @@ const CharacterSheet: FC<Props> = ({
     setProcessing(false)
   }, [processing, cFiche, dice, onUpdate])
 
-  const save = () => {
-    setEdit(false)
-    const normalized = normalizeCharacter(localPerso)
-    setLocalPerso(normalized)
-    onUpdate(normalized)
+  const saveFromEditor = (edited: Character) => {
+    setEditorOpen(false)
+    setLocalPerso(edited)
+    onUpdate(edited)
   }
 
   // When collapsed, render only an expand button so the panel frees all space.
@@ -180,23 +171,11 @@ const CharacterSheet: FC<Props> = ({
 
   return (
     <aside
-      className={`
-        ui-panel relative select-none flex-shrink-0 text-[15px]
-        w-full md:w-[400px] px-3 pb-4 overflow-y-auto ${creation ? 'pt-4' : ''}
-      `}
-      style={{
-        width: creation ? 'auto' : undefined,
-        minWidth: creation ? '600px' : undefined,
-        maxWidth: creation ? '100%' : undefined,
-        boxSizing: 'border-box',
-        overflowX: 'hidden',
-      }}
+      className="ui-panel relative select-none flex-shrink-0 text-[15px] w-full md:w-[400px] px-3 pb-4 overflow-y-auto"
+      style={{ boxSizing: 'border-box', overflowX: 'hidden' }}
     >
-      {!creation && (
         <CharacterSheetHeader
-          edit={edit}
-          onToggleEdit={() => setEdit((v) => !v)}
-          onSave={save}
+          onEdit={() => setEditorOpen(true)}
           tab={tab}
           setTab={setTab}
           TABS={TABS}
@@ -205,11 +184,17 @@ const CharacterSheet: FC<Props> = ({
         >
           {children}
         </CharacterSheetHeader>
-      )}
 
-      {(creation || tab === 'main') && (
+      <CharacterEditor
+        open={editorOpen}
+        character={cFiche}
+        onSave={saveFromEditor}
+        onClose={() => setEditorOpen(false)}
+      />
+
+      {tab === 'main' && (
         <StatsTab
-          edit={edit}
+          edit={false}
           perso={localPerso}
           onChange={handleChange}
           setLocalPerso={setLocalPerso}
@@ -223,18 +208,18 @@ const CharacterSheet: FC<Props> = ({
           animKey={animKey}
         />
       )}
-      {(creation || tab === 'equip') && (
+      {tab === 'equip' && (
         <EquipTab
-          edit={edit}
+          edit={false}
           localPerso={localPerso}
           setLocalPerso={setLocalPerso}
           onChange={handleChange}
         />
       )}
 
-      {(creation || tab === 'desc') && (
+      {tab === 'desc' && (
         <DescriptionPanel
-          edit={edit}
+          edit={false}
           values={{
             race: localPerso.race,
             classe: localPerso.classe,
