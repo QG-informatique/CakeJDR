@@ -16,6 +16,8 @@ type Json = string | number | boolean | null | Json[] | { [key: string]: Json }
 
 export type DemoSnapshot = {
   images: Record<string, Json>
+  /** Bibliothèque de la table ; absente des captures faites avant elle. */
+  library?: Record<string, Json>
   strokes: Json[]
   characters: Record<string, Json>
   quickNote: { text: string; updatedAt: number }
@@ -42,7 +44,7 @@ function client() {
 export async function restoreSnapshot(roomId: string, snap: DemoSnapshot) {
   const liveblocks = client()
   const added = await collectRoomImages(
-    () => liveblocks.getStorageDocument(roomId, 'json') as Promise<{ images?: unknown }>,
+    () => liveblocks.getStorageDocument(roomId, 'json') as Promise<{ images?: unknown; library?: unknown }>,
   ).catch((e: unknown) => {
     console.error('restoreSnapshot: lecture des images impossible', roomId, e)
     return []
@@ -51,6 +53,10 @@ export async function restoreSnapshot(roomId: string, snap: DemoSnapshot) {
     root.set(
       'images',
       new LiveMap(Object.entries(snap.images ?? {})) as never,
+    )
+    root.set(
+      'library',
+      new LiveMap(Object.entries(snap.library ?? {})) as never,
     )
     root.set('strokes', new LiveList(snap.strokes ?? []) as never)
     root.set(

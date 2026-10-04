@@ -2,8 +2,9 @@
 
 import React from 'react'
 import { useT } from '@/lib/useT'
-import { Image as ImageIcon, Pencil, Eraser, Trash2 } from 'lucide-react' // FIX: remove unused Upload
+import { Pencil, Eraser, Trash2 } from 'lucide-react'
 
+/** « images » : rien n'est dessiné, on déplace les pions (palette fermée). */
 export type ToolMode = 'images' | 'draw' | 'erase'
 
 interface CanvasToolsProps {
@@ -15,7 +16,6 @@ interface CanvasToolsProps {
   setPenSize: (v: number) => void
   setEraserSize: (v: number) => void
   clearCanvas: () => void
-  onAddImage?: () => void
 }
 
 const COLORS = [
@@ -32,7 +32,6 @@ const CanvasTools: React.FC<CanvasToolsProps> = ({
   setPenSize,
   setEraserSize,
   clearCanvas,
-  onAddImage,
 }) => {
   const DRAW_MIN = 2
   const DRAW_MAX = 50
@@ -40,7 +39,6 @@ const CanvasTools: React.FC<CanvasToolsProps> = ({
   const ERASE_MAX = DRAW_MAX * 4
   const t = useT()
   const modes: { mode: ToolMode; label: string; Icon: typeof Pencil }[] = [
-    { mode: 'images', label: t('images'), Icon: ImageIcon },
     { mode: 'draw', label: t('draw'), Icon: Pencil },
     { mode: 'erase', label: t('erase'), Icon: Eraser },
   ]
@@ -54,11 +52,7 @@ const CanvasTools: React.FC<CanvasToolsProps> = ({
           <button
             key={mode}
             aria-pressed={drawMode === mode}
-            onClick={() => {
-              // Un second clic sur « Images » ouvre le choix de fichier.
-              if (mode === 'images' && drawMode === 'images' && onAddImage) onAddImage()
-              setDrawMode(mode)
-            }}
+            onClick={() => setDrawMode(mode)}
             className="!flex-none inline-flex items-center gap-1.5"
             title={label}
           >

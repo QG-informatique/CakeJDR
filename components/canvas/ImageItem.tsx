@@ -1,12 +1,12 @@
 'use client'
 
 import Image from 'next/image'
-import { Trash2 } from 'lucide-react'
 import React, { useState } from 'react'
 import { useT } from '@/lib/useT'
 import { ToolMode } from './CanvasTools'
 
-// Single image element on canvas with move/resize handles.
+// Pion ou rencontre posé sur le plateau : on le déplace et le redimensionne
+// quand on ne dessine pas. On le retire depuis la bibliothèque.
 export interface ImageRenderData {
   id: string
   url: string
@@ -27,8 +27,6 @@ interface Props {
     id: string,
     type: 'move' | 'resize',
   ) => void
-  onDelete: (id: string) => void
-  pending?: boolean
 }
 
 // Une image qui ne charge pas chez un joueur (réseau, bloqueur) reste sur la
@@ -38,8 +36,6 @@ const ImageItem: React.FC<Props> = ({
   img,
   drawMode,
   onPointerDown,
-  onDelete,
-  pending,
 }) => {
   const t = useT()
   const [failedUrl, setFailedUrl] = useState<string | null>(null)
@@ -55,16 +51,6 @@ const ImageItem: React.FC<Props> = ({
       zIndex: 1,
     }}
   >
-    {drawMode === 'images' && !pending && (
-      <button
-        onClick={() => onDelete(img.id)}
-        className="absolute top-1 left-1 z-20 p-1 rounded-full bg-shade/60 hover:bg-red-600 transition text-white opacity-80 group-hover:opacity-100"
-        title={t('delete')}
-        style={{ cursor: 'pointer' }}
-      >
-        <Trash2 size={18} />
-      </button>
-    )}
     {failedUrl === src ? (
       <div className="w-full h-full flex items-center justify-center rounded-2xl border border-dashed border-ink/30 bg-shade/40 text-xs text-ink/70 text-center p-2 select-none">
         {t('imageUnavailable')}
@@ -81,7 +67,7 @@ const ImageItem: React.FC<Props> = ({
         unoptimized
       />
     )}
-    {drawMode === 'images' && !pending && (
+    {drawMode === 'images' && (
       <>
         <div
           onPointerDown={(e) => onPointerDown(e, img.id, 'move')}
