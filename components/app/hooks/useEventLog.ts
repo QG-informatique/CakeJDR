@@ -14,6 +14,8 @@ export type SessionEvent = {
 }
 
 const prefix = 'jdr_events_'
+/** Messages et lancers gardés par table ; les plus anciens partent au-delà. */
+const MAX_EVENTS = 2000
 
 export default function useEventLog(roomId: string) {
   const liveList = useStorage(root => root.events)
@@ -26,7 +28,9 @@ export default function useEventLog(roomId: string) {
         ? ev.author === e.author && ev.text === e.text
         : ev.player === e.player && ev.dice === e.dice && ev.result === e.result)
     )
-    if (!exists) list.push(e)
+    if (exists) return
+    list.push(e)
+    for (let i = list.length - MAX_EVENTS; i > 0; i -= 1) list.delete(0)
   }, [])
   const events = useMemo(() => {
     return liveList ? (Array.from(liveList) as SessionEvent[]) : []

@@ -147,3 +147,34 @@
 ## Session Summary / Lexical
 - [ ] Vérifier le provider Liveblocks/Lexical sur plusieurs rooms (éviter un second RoomProvider caché)
 - [ ] Envisager une persistance Blob debouncée (60–120s) pour les snapshots de session
+
+## Ordre validé (2026-10-04) : débug → refonte en thème → bibliothèque → public → autres thèmes
+
+## Débug — fin de phase 3
+- [x] Revoir le dessin sur le canevas (outils, gomme, images, calques) et corriger ce qui casse
+- [x] Revoir les dés 3D (lancers, résultats partagés, historique)
+- [x] Revoir le chat (envoi, couronne du MJ, messages longs)
+- [x] Revoir les fiches de personnage (édition, fiche imposée par le MJ, sauvegarde du compte)
+- [x] Revoir la musique YouTube synchronisée
+- [x] Revoir le résumé de session (éditeur Lexical)
+- [x] Revoir l'import/export de personnages
+- [x] Limiter la taille des données d'une table (traits et images accumulés sans fin)
+- [ ] Tester avec deux comptes la fiche d'un joueur ouverte et modifiée par le MJ, puis le retour à « Ma fiche »
+- [ ] Passer le résumé de session en vraie co-édition (plugin Lexical de Liveblocks) : aujourd'hui, si deux personnes écrivent en même temps, la dernière gagne
+- [ ] Tirer les dés côté serveur : le résultat est calculé dans le navigateur, donc falsifiable
+- [ ] Caler la position de la musique pour un joueur qui arrive en cours de morceau
+- [ ] Ne pas perdre la modification du MJ quand le joueur est lui-même en train d'éditer sa fiche
+
+## Refonte et thèmes — phase 4 puis 6
+- [ ] Concevoir la refonte graphique comme thème n°1 : couleurs, images et disposition des panneaux réunies dans un thème, pour en brancher d'autres ensuite
+- [ ] Ajouter un sélecteur de thème (par joueur ou par table, à décider)
+- [ ] Faire de la maquette V2 un second thème (phase 6)
+- [ ] Faire du pack « Papier & Sauge » (thème clair, accent vert sauge) un thème : maquettes et couleurs dans `C:\DEV\CakeJDR-themes\CakeJDR-theme-papier-sauge`
+
+## Bibliothèque partagée — avant le public
+- [ ] Créer une bibliothèque de départ (cartes, monstres, PNJ, images) utilisable par tous les MJ, en plus de leurs propres images — uniquement des images dont on a les droits
+
+## Maquette V2 (ChatGPT) — après le rework
+- [x] Copier la maquette V2 hors du dossier caché de Codex — copiée dans `C:\DEV\CakeJDR-V2` le 2026-10-04
+- [ ] Trier avec Quentin ce qu'on garde de la V2 (bibliothèque de visuels, pions détourés sur la carte, barre de PV, menu en liste, style sobre)
+- [ ] Convertir en WebP les visuels V2 retenus (PNG de ~2,5 Mo chacun, 53 Mo au total) avant de les intégrer

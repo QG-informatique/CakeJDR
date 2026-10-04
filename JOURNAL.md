@@ -1,5 +1,25 @@
 # Journal
 
+## 2026-10-04 — Débug de fin de phase 3
+- Résumé de session : il n'était jamais partagé en ligne (lecture fautive du stockage Liveblocks, boucle, bascule en local) ; corrigé, plus les lignes vides doublées et l'écrasement au clic (`components/chat/SessionSummary.tsx`).
+- Fiches : les modifications en cours ne sont plus écrasées ; le MJ peut ouvrir, modifier et rendre la fiche d'un joueur, puis revenir à la sienne (`HomePageInner.tsx`, `GMCharacterSelector.tsx`, `CharacterSheet.tsx`).
+- Canevas, dés, chat, musique, import/export corrigés ; traits et historique plafonnés pour qu'une table ne grossisse pas sans fin.
+- Pack de thème « Papier & Sauge » reçu, rangé dans `C:\DEV\CakeJDR-themes` pour la phase des thèmes.
+
+Reste ouvert : co-édition réelle du résumé, dés tirés côté serveur, test du MJ à deux comptes.
+
+## 2026-10-04 — Maquette V2 de ChatGPT repérée
+
+- Trouvée hors du projet, dans un dossier caché de Codex (chemin dans `TODO.md`). Même socle technique (Next 16, React 19, Tailwind 4) mais interface autonome : données dans le navigateur, sans temps réel, comptes ni base.
+- Décidé : finir d'abord le rework prévu, puis reprendre les idées et les visuels de la V2, pas son code tel quel.
+
+Reste ouvert : copier la V2 à l'abri, trier ce qu'on garde.
+
+## 2026-10-04 — Plan revu : débug, refonte en thème, bibliothèque
+- V2 copiée dans `C:\DEV\CakeJDR-V2` (hors du dossier caché de Codex, sans `node_modules`).
+- Ordre validé par Quentin : débug de chaque fonction (fin de phase 3) → refonte graphique conçue comme thème n°1 (phase 4) → bibliothèque partagée de départ → public (phase 5) → autres thèmes dont la V2 (phase 6).
+- Pourquoi la refonte en thème : les thèmes changeront aussi la disposition, pas seulement les couleurs ; la construire ainsi évite de la refaire.
+
 ## 2026-10-03 — Phase 4 en ligne
 
 - Phase 4 publiée ; les 15 tests Playwright passent sur le site en ligne, dont le parcours téléphone.

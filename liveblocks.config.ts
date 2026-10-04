@@ -58,7 +58,7 @@ declare global {
       // Currently selected character data
       character?: CharacterData
       // Optional information about which character the GM is consulting
-      gmView?: { id: string; name?: string }
+      gmView?: { id: string; name?: string } | null
       // Cursor position in canvas coordinates
       cursor?: { x: number; y: number } | null
       // Display name and color for cursors

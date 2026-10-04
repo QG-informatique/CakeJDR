@@ -2,7 +2,7 @@
 
 import { FC, RefObject, useRef, useState, useEffect, useMemo } from 'react'
 import { ChevronLeft, ChevronRight, BarChart3, MessageSquare } from 'lucide-react'
-import { useBroadcastEvent, useRoom, useEventListener, useSelf } from '@liveblocks/react'
+import { useBroadcastEvent, useRoom, useSelf } from '@liveblocks/react'
 import SessionSummary from './SessionSummary'
 import DiceStats from './DiceStats'
 import useEventLog, { SessionEvent } from '../app/hooks/useEventLog'
@@ -10,15 +10,16 @@ import { useT } from '@/lib/useT'
 import { useIsDesktop } from '@/lib/useIsDesktop'
 import { debug } from '@/lib/debug'
 
-type Roll = { player: string, dice: number, result: number }
+// Longueur maximale d'un message : au-delà, la liste partagée de la table
+// grossit vite et un pavé sans espace déborde du panneau.
+const MAX_MESSAGE_LENGTH = 1000
 
 interface Props {
   chatBoxRef: RefObject<HTMLDivElement | null>
-  history: Roll[]
   author: string
 }
 
-const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
+const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
   const room = useRoom()
   const { events, addEvent } = useEventLog(room.id)
   const sortedEvents = useMemo(() => {
@@ -35,6 +36,15 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
     }
     return unique.sort((a, b) => a.ts - b.ts)
   }, [events])
+  // Les statistiques de dés se calculent sur l'historique partagé de la table :
+  // tous les joueurs voient les mêmes chiffres, y compris pour les lancers
+  // faits avant leur arrivée.
+  const diceRolls = useMemo(
+    () => sortedEvents
+      .filter((ev) => ev.kind === 'dice' && ev.player != null && ev.dice != null && ev.result != null)
+      .map((ev) => ({ player: ev.player!, dice: ev.dice!, result: ev.result!, ts: ev.ts })),
+    [sortedEvents],
+  )
   const [inputValue, setInputValue] = useState('')
   const endRef = useRef<HTMLDivElement>(null)
   const [showSummary, setShowSummary] = useState(false)
@@ -62,7 +72,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
   const sendMessage = async () => {
     if (inputValue.trim() === '') return
 
-    const msg = { author, text: inputValue.trim(), isMJ: self?.info?.role === 'gm' }
+    const msg = { author, text: inputValue.trim().slice(0, MAX_MESSAGE_LENGTH), isMJ: self?.info?.role === 'gm' }
     const ts = Date.now()
 
     broadcast({ type: 'chat', author: msg.author, text: msg.text, isMJ: msg.isMJ, ts })
@@ -72,20 +82,10 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
     setInputValue('')
   }
 
-  // Receive remote chat events and persist them to storage.
-  // On ignore nos propres broadcasts (on a déjà appelé addEvent localement dans sendMessage)
-  // pour éviter la double-insertion dans la LiveList.
-  useEventListener((payload: { connectionId: number; user?: { info?: { role?: string } } | null; event: { type: string; author?: string; text?: string; ts?: number; isMJ?: boolean } }) => {
-    const { event, connectionId } = payload
-    if (event && event.type === 'chat') {
-      // Sauter les événements provenant de notre propre connexion
-      if (connectionId === self?.connectionId) return
-      const ts = typeof event.ts === 'number' ? event.ts : Date.now()
-      // La couronne vient du role de l'expediteur, fixe par le serveur, et non
-      // de ce qu'annonce le message : sinon n'importe qui pourrait se couronner.
-      addEvent({ id: crypto.randomUUID(), kind: 'chat', author: event.author || 'Unknown', text: event.text || '', ts, isMJ: payload.user?.info?.role === 'gm' })
-    }
-  })
+  // Le message est écrit une seule fois dans la liste partagée, par son
+  // auteur ; les autres joueurs le reçoivent par la synchronisation. Avant,
+  // chaque joueur le réécrivait à réception, ce qui créait des doublons dans
+  // la table quand deux écritures se croisaient.
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -177,7 +177,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
           <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
             <div className="text-center font-bold mb-2">{t('diceStatsTitle')}</div>
             <div className="flex-1 overflow-y-auto rounded-xl border border-white/10 bg-black/15 backdrop-blur-[2px] shadow p-2 min-h-0">
-              <DiceStats history={history} />
+              <DiceStats history={diceRolls} />
             </div>
           </div>
         )}
@@ -210,6 +210,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
                       ${isMJ
                         ? 'bg-gradient-to-br from-amber-500/20 to-yellow-600/10 border border-amber-400/20 text-amber-100'
                         : 'bg-white/8 border border-white/8 text-white/90'}
+                      whitespace-pre-wrap [overflow-wrap:anywhere]
                     `}>
                       {ev.text}
                     </div>
@@ -252,6 +253,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, history, author }) => {
               type="text"
               placeholder={t('yourMessage')}
               value={inputValue}
+              maxLength={MAX_MESSAGE_LENGTH}
               onChange={e => setInputValue(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') sendMessage() }}
               className="flex-1 border-none px-3 py-2.5 text-white bg-transparent focus:outline-none text-sm placeholder:text-white/30 min-w-0"

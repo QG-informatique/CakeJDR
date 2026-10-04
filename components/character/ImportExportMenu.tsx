@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useT } from '@/lib/useT'
 import { Folder } from 'lucide-react'
 import { defaultPerso } from '../sheet/CharacterSheet'
+import ConfirmDialog from '../ui/ConfirmDialog'
 import {
   type Character,
   buildCharacterKey,
@@ -23,6 +24,9 @@ type Props = {
 
 const LOCAL_KEY = 'cakejdr_perso'
 const CHAR_LIST_KEY = 'jdr_characters'
+// Une fiche fait quelques Ko : 1 Mo laisse de la marge sans laisser passer
+// n'importe quel fichier choisi par erreur.
+const MAX_IMPORT_BYTES = 1024 * 1024
 
 const addToList = (char: Character) => {
   try {
@@ -53,6 +57,8 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
   const [modal, setModal] = useState<'import' | 'export' | 'delete' | null>(null)
   const [cloudChars, setCloudChars] = useState<Character[]>([])
   const [localChars, setLocalChars] = useState<Character[]>([])
+  const [confirmReset, setConfirmReset] = useState(false)
+  const [toDelete, setToDelete] = useState<Character | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const t = useT()
@@ -95,20 +101,29 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
   // Export fiche
   const handleExport = () => {
     const txt = JSON.stringify(perso, null, 2)
-    const blob = new Blob([txt], { type: "text/plain" })
+    const blob = new Blob([txt], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `perso_${perso.nom || 'sans_nom'}.txt`
+    const safeName = (perso.nom || 'sans_nom').replace(/[\\/:*?"<>|]+/g, '_')
+    a.download = `perso_${safeName}.json`
     a.click()
-    URL.revokeObjectURL(url)
+    // Révoquer tout de suite peut annuler le téléchargement sur certains navigateurs.
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
     setOpen(false)
   }
 
   // Import fiche
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
+    // Vider le champ permet de réimporter le même fichier juste après.
+    e.target.value = ''
     if (!file) return
+    if (file.size > MAX_IMPORT_BYTES) {
+      alert(t('importTooBig'))
+      setOpen(false)
+      return
+    }
     const reader = new FileReader()
     reader.onload = ev => {
       try {
@@ -197,12 +212,10 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
 
   // Reset sheet
   const handleReset = () => {
-    if (window.confirm("Really reset the sheet? (This will delete it)")) {
-      onUpdate(
-        normalizeCharacter({ ...defaultPerso, id: crypto.randomUUID() }),
-      )
-      setOpen(false)
-    }
+    onUpdate(
+      normalizeCharacter({ ...defaultPerso, id: crypto.randomUUID() }),
+    )
+    setConfirmReset(false)
   }
 
   return (
@@ -233,7 +246,7 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
           )}
 
           <hr className="my-1 border-gray-600" />
-          <button onClick={handleReset} className="w-full px-3 py-1 rounded hover:bg-red-700 bg-red-600 text-white text-left text-sm">🗑 {t('resetSheet')}</button>
+          <button onClick={() => { setConfirmReset(true); setOpen(false) }} className="w-full px-3 py-1 rounded hover:bg-red-700 bg-red-600 text-white text-left text-sm">🗑 {t('resetSheet')}</button>
         </div>
       )}
       <style jsx>{`
@@ -245,6 +258,25 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
           to   { opacity: 1; transform: translateY(0);}
         }
       `}</style>
+      <ConfirmDialog
+        open={confirmReset}
+        message={t('resetSheetConfirm')}
+        confirmLabel={t('resetSheet')}
+        danger
+        onConfirm={handleReset}
+        onCancel={() => setConfirmReset(false)}
+      />
+      <ConfirmDialog
+        open={toDelete !== null}
+        message={t('deleteCloudConfirm').replace('{n}', toDelete?.nom || toDelete?.name || `#${toDelete?.id}`)}
+        confirmLabel={t('delete')}
+        danger
+        onConfirm={() => {
+          if (toDelete) deleteFromCloud(toDelete)
+          setToDelete(null)
+        }}
+        onCancel={() => setToDelete(null)}
+      />
       {modal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -303,7 +335,7 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
                     <li key={String(c.id)} className="flex justify-between items-center gap-2">
                       <span className="truncate flex-1">{c.nom || c.name || `#${c.id}`}</span>
                       <button
-                        onClick={() => deleteFromCloud(c)}
+                        onClick={() => setToDelete(c)}
                         className="px-2 py-1 bg-red-700/50 hover:bg-red-700/80 rounded text-sm"
                       >
                         {t('delete')}

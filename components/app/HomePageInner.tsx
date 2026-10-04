@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { useBroadcastEvent, useEventListener, useMyPresence, useSelf } from '@liveblocks/react'
+import { useBroadcastEvent, useEventListener, useMyPresence, useOthers, useSelf } from '@liveblocks/react'
 import { useRouter, useParams } from 'next/navigation'
 import CharacterSheet, { defaultPerso } from '@/components/sheet/CharacterSheet'
 import DiceRoller from '@/components/dice/DiceRoller'
@@ -13,7 +13,6 @@ import LiveAvatarStack from '@/components/chat/LiveAvatarStack'
 import SignedOutPanel from '@/components/auth/SignedOutPanel'
 import GMCharacterSelector from '@/components/misc/GMCharacterSelector'
 import ImportExportMenu from '@/components/character/ImportExportMenu'
-import useDiceHistory from './hooks/useDiceHistory'
 import useEventLog from './hooks/useEventLog'
 import useProfile from './hooks/useProfile'
 import ErrorBoundary from '@/components/misc/ErrorBoundary'
@@ -44,6 +43,20 @@ export default function HomePageInner() {
     normalizeCharacter(defaultPerso),
   )
   const [characters, setCharacters] = useState<Character[]>([])
+  // Le MJ peut ouvrir la fiche d'un joueur : ses modifications partent alors
+  // vers ce joueur, et sa propre fiche est mise de côté le temps de la visite.
+  const [viewedConnectionId, setViewedConnectionId] = useState<number | null>(null)
+  const gmOwnPersoRef = useRef<Character | null>(null)
+  const viewedStillHere = useOthers((others) =>
+    viewedConnectionId === null || others.some((o) => o.connectionId === viewedConnectionId),
+  )
+  const viewedCharacter = useOthers(
+    (others) =>
+      viewedConnectionId === null
+        ? null
+        : others.find((o) => o.connectionId === viewedConnectionId)?.presence?.character ?? null,
+    (a, b) => a?.id === b?.id && a?.updatedAt === b?.updatedAt,
+  )
 
   const [showPopup, setShowPopup] = useState(false)
   const [diceType, setDiceType] = useState(6)
@@ -51,7 +64,6 @@ export default function HomePageInner() {
   const [diceDisabled, setDiceDisabled] = useState(false)
   const { id: roomId } = useParams<{ id: string }>()
   const [pendingRoll, setPendingRoll] = useState<{ result: number; dice: number; nom: string } | null>(null)
-  const [history, setHistory] = useDiceHistory(roomId)
   const { addEvent } = useEventLog(roomId)
   const chatBoxRef = useRef<HTMLDivElement>(null)
   const [canvasKey, setCanvasKey] = useState(0)
@@ -64,7 +76,6 @@ export default function HomePageInner() {
     if (tab === 'chat') setChatUnread(false)
   }
   const mobilePanel = (tab: MobileTab) => (mobileTab === tab ? 'flex' : 'hidden')
-  const lastRollTs = useRef<number | null>(null)
   const [cooldown, setCooldown] = useState(false)
   const remoteLoadedRef = useRef(false)
   // Vrai des qu'une fiche venue du serveur a ete appliquee. Empeche l'effet de
@@ -118,15 +129,10 @@ export default function HomePageInner() {
       if (mobileTab !== 'chat') setChatUnread(true)
       return
     }
+    // Les lancers des autres arrivent par la liste partagée (`useEventLog`),
+    // écrite une seule fois par celui qui lance.
     if (event.type === 'dice-roll') {
-      const ts =
-        typeof (event as { ts?: number }).ts === 'number'
-          ? (event as { ts: number }).ts
-          : Date.now()
-      if (ts === lastRollTs.current) return
-      setHistory((h) => [...h, { player: event.player, dice: event.dice, result: event.result, ts }])
       debug('dice-roll received', event)
-      addEvent({ id: crypto.randomUUID(), kind: 'dice', player: event.player, dice: event.dice, result: event.result, ts })
       return
     }
 
@@ -344,6 +350,14 @@ export default function HomePageInner() {
   }, [roomId, perso, saveCharacterToCloud])
 
   const handleUpdatePerso = (incoming: Character) => {
+    if (viewedConnectionId !== null) {
+      // Fiche d'un joueur ouverte par le MJ : on la lui envoie, il l'applique
+      // et l'enregistre de son côté. Rien n'est écrit sur la fiche du MJ.
+      const forPlayer = normalizeCharacter({ ...incoming, updatedAt: Date.now() })
+      setPerso(forPlayer)
+      broadcast({ type: 'gm-select', character: forPlayer, targetConnectionId: viewedConnectionId })
+      return
+    }
     const updatedPerso = normalizeCharacter(
       {
         ...incoming,
@@ -407,15 +421,36 @@ export default function HomePageInner() {
   }, [])
 
   const handleGMSelect = (char: Character) => {
+    if (typeof char.ownerConnectionId !== 'number') return
+    if (viewedConnectionId === null) gmOwnPersoRef.current = perso
     const next = normalizeCharacter(
       { ...char, owner: char.owner || profile?.pseudo || '' },
       profile?.pseudo ?? null,
     )
+    setViewedConnectionId(char.ownerConnectionId)
     setPerso(next)
     updateMyPresence({ gmView: { id: next.id, name: next.nom || next.name } })
-    // Diffuse un événement d'observation (sans ciblage) pour information uniquement
-    broadcast({ type: 'gm-select', character: next, targetConnectionId: null })
   }
+
+  const handleGMBackToOwn = useCallback(() => {
+    setViewedConnectionId(null)
+    if (gmOwnPersoRef.current) setPerso(gmOwnPersoRef.current)
+    gmOwnPersoRef.current = null
+    updateMyPresence({ gmView: null })
+  }, [updateMyPresence])
+
+  // La fiche consultée suit les changements du joueur ; s'il quitte la table,
+  // le MJ retrouve sa propre fiche.
+  useEffect(() => {
+    if (viewedConnectionId === null) return
+    if (!viewedStillHere) {
+      handleGMBackToOwn()
+      return
+    }
+    if (viewedCharacter) {
+      setPerso(normalizeCharacter({ ...viewedCharacter, ownerConnectionId: viewedConnectionId }))
+    }
+  }, [viewedConnectionId, viewedStillHere, viewedCharacter, handleGMBackToOwn])
 
   if (!user) {
     // Profil pas encore resolu : useProfile renvoie un profil « Visiteur »
@@ -434,7 +469,7 @@ export default function HomePageInner() {
     const result = Math.floor(Math.random() * diceType) + 1
     setDiceResult(result)
     setShowPopup(true)
-    setPendingRoll({ result, dice: diceType, nom: perso.nom || '?' })
+    setPendingRoll({ result, dice: diceType, nom: perso.nom || profile?.pseudo || '?' })
   }
 
   const handlePopupReveal = () => {
@@ -444,8 +479,6 @@ export default function HomePageInner() {
     const ts = Date.now()
     const entry = { player: nom, dice, result, ts }
 
-    lastRollTs.current = ts
-    setHistory((h) => [...h, entry])
     addEvent({ id: crypto.randomUUID(), kind: 'dice', ...entry })
 
     broadcast({ type: 'dice-roll', player: nom, dice, result, ts })
@@ -469,9 +502,15 @@ export default function HomePageInner() {
         {/* `lg:contents` efface l'enveloppe sur grand écran : la mise en page
             côte à côte reste celle d'avant les onglets. */}
         <div className={`${mobilePanel('sheet')} flex-1 min-h-0 flex-col items-center overflow-y-auto p-2 lg:contents`}>
-          <CharacterSheet perso={perso} onUpdate={handleUpdatePerso} chatBoxRef={chatBoxRef} allCharacters={characters} logoOnly>
+          <CharacterSheet perso={perso} onUpdate={handleUpdatePerso} chatBoxRef={chatBoxRef} logoOnly>
             <span className="ml-2">
-              {isGM && <GMCharacterSelector onSelect={handleGMSelect} />}
+              {isGM && (
+                <GMCharacterSelector
+                  onSelect={handleGMSelect}
+                  onSelectOwn={handleGMBackToOwn}
+                  viewingConnectionId={viewedConnectionId}
+                />
+              )}
             </span>
             <span className="ml-1">
               <ImportExportMenu perso={perso} onUpdate={handleUpdatePerso} />
@@ -522,7 +561,6 @@ export default function HomePageInner() {
           <ErrorBoundary fallback={<div className="p-4 text-red-500">Chat error</div>}>
             <ChatBox
               chatBoxRef={chatBoxRef}
-              history={history}
               author={isGM
                 ? (profile?.pseudo ?? 'MJ')
                 : perso.nom || profile?.pseudo || 'Anonymous'}

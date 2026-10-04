@@ -7,12 +7,16 @@ import CanvasTools, { ToolMode } from './CanvasTools'
 import LiveCursors from './LiveCursors'
 import ImageItem, { ImageRenderData } from './ImageItem'
 import SideNotes from '@/components/misc/SideNotes'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { useT } from '@/lib/useT'
 import {
   extractUploadErrorInfo,
   uploadImageToCloudinary,
   UploadError,
 } from '@/lib/uploadImage'
+
+/** Environ 3 Mo de dessin : largement de quoi couvrir une carte. */
+const MAX_STROKE_SEGMENTS = 20000
 
 type StrokeSegment = {
   id: string
@@ -45,6 +49,9 @@ type StoredImageData = {
 type CanvasSize = { width: number; height: number }
 
 const MIN_IMAGE_SIZE = 40
+// Une image ajoutée occupe au plus cette part du canevas, proportions gardées :
+// une photo de 4000 px recouvrait sinon toute la table.
+const MAX_INITIAL_IMAGE_SHARE = 0.6
 const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max)
 const clamp01 = (v: number) => Math.min(Math.max(v, 0), 1)
 const roundRatio = (v: number) => Math.round(v * 1000) / 1000
@@ -292,6 +299,13 @@ export default function InteractiveCanvas() {
         helper.insert((helper.length ?? 0) as number, segment)
       }
     }
+    // Au-delà, les plus anciens segments partent : une table dessinée pendant
+    // des mois finissait par alourdir chaque chargement pour tout le monde.
+    const sized = list as { length?: number; delete?: (idx: number) => void }
+    if (typeof sized.delete === 'function') {
+      const overflow = (sized.length ?? 0) - MAX_STROKE_SEGMENTS
+      for (let i = 0; i < overflow; i += 1) sized.delete(0)
+    }
   }, [])
   // Le trait s'affiche tout de suite en local, mais les segments ne partent
   // vers Liveblocks qu'une fois par image (requestAnimationFrame) : un dessin
@@ -499,11 +513,14 @@ export default function InteractiveCanvas() {
       setSelectedImageId(null)
     }
   }
-  const handlePointerLeave = () => { if (isDrawing) handlePointerUp() }
+  const handlePointerLeave = () => {
+    updateMyPresence({ cursor: null })
+    if (isDrawing || dragState.current.id) handlePointerUp()
+  }
   const handleKeyDown = (e: React.KeyboardEvent) => { if ((e.key === 'Delete' || e.key === 'Backspace') && selectedImageId) deleteImage(selectedImageId) }
 
   const handleDeleteImage = (id: string) => deleteImage(id)
-  const handleImageError = (id: string) => deleteImage(id)
+  const [confirmClear, setConfirmClear] = useState(false)
 
   // Upload helpers
   const fileToObjectURL = (file: File) => URL.createObjectURL(file)
@@ -559,11 +576,14 @@ export default function InteractiveCanvas() {
     try {
       const uploadResult = await uploadImageToCloudinary(file)
       const finalUrl = uploadResult.deliveryUrl ?? uploadResult.url
-      const uploadWorldSize = screenToWorldSize(
-        uploadResult.width ?? baseSize,
-        uploadResult.height ?? baseSize,
-        rect,
+      const naturalW = uploadResult.width ?? baseSize
+      const naturalH = uploadResult.height ?? baseSize
+      const fit = Math.min(
+        1,
+        (rect.width * MAX_INITIAL_IMAGE_SHARE) / naturalW,
+        (rect.height * MAX_INITIAL_IMAGE_SHARE) / naturalH,
       )
+      const uploadWorldSize = screenToWorldSize(naturalW * fit, naturalH * fit, rect)
       const widthWorld = clamp(uploadWorldSize.w, minWorldW, 1)
       const heightWorld = clamp(uploadWorldSize.h, minWorldH, 1)
       const normalized: StoredImageData = {
@@ -571,8 +591,8 @@ export default function InteractiveCanvas() {
         url: finalUrl,
         width: widthWorld,
         height: heightWorld,
-        x: clamp(baseImgWorld.x, 0, Math.max(0, 1 - widthWorld)),
-        y: clamp(baseImgWorld.y, 0, Math.max(0, 1 - heightWorld)),
+        x: clamp(worldDrop.x - widthWorld / 2, 0, Math.max(0, 1 - widthWorld)),
+        y: clamp(worldDrop.y - heightWorld / 2, 0, Math.max(0, 1 - heightWorld)),
         createdAt: Date.now(),
       }
       try {
@@ -636,11 +656,11 @@ export default function InteractiveCanvas() {
         )}
         {toolsVisible && (
           <div className="absolute top-3 left-36 z-30 origin-top-left pointer-events-auto">
-            <CanvasTools drawMode={drawMode} setDrawMode={setDrawMode} color={color} setColor={setColor} brushSize={brushSize} setPenSize={setPenSize} setEraserSize={setEraserSize} clearCanvas={clearStrokes} onAddImage={() => imageInputRef.current?.click()} />
+            <CanvasTools drawMode={drawMode} setDrawMode={setDrawMode} color={color} setColor={setColor} brushSize={brushSize} setPenSize={setPenSize} setEraserSize={setEraserSize} clearCanvas={() => setConfirmClear(true)} onAddImage={() => imageInputRef.current?.click()} />
           </div>
         )}
         {/* Surface */}
-        <div ref={canvasRef} tabIndex={0} onDrop={handleDrop} onDragOver={(e) => e.preventDefault()} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerLeave} onKeyDown={handleKeyDown} onWheel={(e) => e.preventDefault()} className="w-full h-full relative overflow-hidden z-0 touch-none" style={{ background: 'none', border: 'none', borderRadius: 0 }}>
+        <div ref={canvasRef} tabIndex={0} onDrop={handleDrop} onDragOver={(e) => e.preventDefault()} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerLeave} onKeyDown={handleKeyDown} className="w-full h-full relative overflow-hidden z-0 touch-none" style={{ background: 'none', border: 'none', borderRadius: 0 }}>
           <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; e.currentTarget.value = ''; if (!file) return; const rect = drawingCanvasRef.current?.getBoundingClientRect(); if (!rect) return; await uploadOneImage(file, rect.width / 2, rect.height / 2, rect) }} />
           <canvas ref={drawingCanvasRef} className="absolute top-0 left-0 w-full h-full" />
           {pendingImages.map((img) => (
@@ -649,7 +669,7 @@ export default function InteractiveCanvas() {
             </div>
           ))}
           {imagesToRender.map((img) => (
-            <ImageItem key={img.id} img={img} drawMode={drawMode} onPointerDown={handlePointerDown} onDelete={handleDeleteImage} onError={handleImageError} pending={pendingImages.some((p) => p.id === img.id)} />
+            <ImageItem key={img.id} img={img} drawMode={drawMode} onPointerDown={handlePointerDown} onDelete={handleDeleteImage} pending={pendingImages.some((p) => p.id === img.id)} />
           ))}
           {(drawMode === 'draw' || drawMode === 'erase') && !dragState.current.id && (
             <div className="absolute rounded-full border border-emerald-500 pointer-events-none" style={{ top: mousePos.y - brushSize / 2, left: mousePos.x - brushSize / 2, width: brushSize, height: brushSize, zIndex: 2 }} />
@@ -658,6 +678,14 @@ export default function InteractiveCanvas() {
           <SideNotes />
         </div>
       </div>
+      <ConfirmDialog
+        open={confirmClear}
+        message={t('clearAllConfirm')}
+        confirmLabel={t('clearAll')}
+        danger
+        onConfirm={() => { setConfirmClear(false); clearStrokes() }}
+        onCancel={() => setConfirmClear(false)}
+      />
     </>
   )
 }

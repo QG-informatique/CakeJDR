@@ -8,17 +8,22 @@ import { type Character, normalizeCharacter } from '@/types/character'
 
 type Props = {
   onSelect: (char: Character) => void
+  /** Revenir à sa propre fiche après avoir consulté celle d'un joueur. */
+  onSelectOwn: () => void
+  /** Joueur dont la fiche est ouverte, ou null sur sa propre fiche. */
+  viewingConnectionId: number | null
   className?: string
 }
 
 export default function GMCharacterSelector({
   onSelect,
+  onSelectOwn,
+  viewingConnectionId,
   className = '',
 }: Props) {
   const others = useOthers()
   const [chars, setChars] = useState<Character[]>([])
   const [open, setOpen] = useState(false)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const t = useT()
 
@@ -30,7 +35,9 @@ export default function GMCharacterSelector({
         if (!raw || raw.id === undefined) return null
         return normalizeCharacter({
           ...raw,
-          ownerConnectionId: raw.ownerConnectionId ?? o.connectionId ?? undefined,
+          // La connexion réelle, pas celle notée dans la fiche : elle change
+          // à chaque reconnexion du joueur.
+          ownerConnectionId: o.connectionId,
         })
       })
       .filter((c): c is Character => c !== null)
@@ -49,13 +56,8 @@ export default function GMCharacterSelector({
     return () => window.removeEventListener('mousedown', handler)
   }, [open])
 
-  // Sélection du personnage
-  const handleSelect = (id: string) => {
-    const found = chars.find((c) => c.id === id)
-    if (!found) return
-
-    setSelectedId(id)
-    onSelect(found)
+  const handleSelect = (char: Character) => {
+    onSelect(char)
     setOpen(false)
   }
 
@@ -93,6 +95,17 @@ export default function GMCharacterSelector({
             backdrop-blur-[2px]
           "
         >
+          {viewingConnectionId !== null && (
+            <button
+              onClick={() => {
+                onSelectOwn()
+                setOpen(false)
+              }}
+              className="w-full text-left px-4 py-2 rounded-xl text-base font-semibold transition hover:bg-pink-400/10 text-white/90 border-b border-white/10"
+            >
+              ← {t('myCharacter')}
+            </button>
+          )}
           {chars.length === 0 && (
             <div className="px-4 py-3 text-sm text-gray-400 text-center">
               {t('noActiveChar')}
@@ -100,13 +113,13 @@ export default function GMCharacterSelector({
           )}
           {chars.map((c, idx) => (
             <button
-              key={c.id}
-              onClick={() => handleSelect(c.id)}
+              key={c.ownerConnectionId ?? c.id}
+              onClick={() => handleSelect(c)}
               className={`
                 w-full text-left px-4 py-2 rounded-xl text-base
                 font-semibold transition
                 ${
-                  selectedId === c.id
+                  viewingConnectionId === c.ownerConnectionId
                     ? 'bg-pink-400/20 text-pink-200'
                     : 'hover:bg-pink-400/10 text-white/90'
                 }

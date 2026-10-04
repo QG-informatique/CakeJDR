@@ -1,11 +1,13 @@
 'use client'
 
 import { useEffect, useId, useRef, useState } from 'react'
-import { useMutation, useStorage } from '@liveblocks/react'
+import { useMutation, useOthers, useSelf, useStorage } from '@liveblocks/react'
 import { LiveList, LiveObject } from '@liveblocks/client'
 import YouTube from 'react-youtube'
 import type { YouTubePlayer } from 'youtube-player/dist/types'
 import { ChevronDown, ChevronUp, Music2, Pause, Play, Plus, SkipForward } from 'lucide-react'
+import { useT } from '@/lib/useT'
+import type { TranslationKey } from '@/lib/translations'
 
 type QueueItem = { id: string }
 type PlayerVideoData = { title?: string }
@@ -40,7 +42,18 @@ const formatTime = (seconds: number) => {
   return `${minutes}:${String(secs).padStart(2, '0')}`
 }
 
+// Codes d'erreur YouTube : 2 = identifiant invalide, 5 = erreur HTML5,
+// 100 = vidéo introuvable, 101/150 = intégration refusée par l'auteur.
+const YT_ERRORS: Record<number, TranslationKey> = {
+  2: 'ytInvalidId',
+  5: 'ytPlayerError',
+  100: 'ytNotFound',
+  101: 'ytEmbedDisabled',
+  150: 'ytEmbedDisabled',
+}
+
 export default function MusicPlayer() {
+  const t = useT()
   const musicObj = useStorage((root) => root.music)
   const queueObj = useStorage((root) => root.musicQueue) as LiveList<QueueItem> | null
 
@@ -55,6 +68,16 @@ export default function MusicPlayer() {
   const [playerError, setPlayerError] = useState<string | null>(null)
   const playerRef = useRef<YouTubePlayer | null>(null)
   const hasSyncedRef = useRef(false)
+  // Lu par les rappels du lecteur YouTube, qui ne voient pas l'état React à jour.
+  const isPlayingRef = useRef(false)
+  useEffect(() => { isPlayingRef.current = isPlaying }, [isPlaying])
+  // À la fin d'un morceau, un seul joueur passe au suivant : celui dont la
+  // connexion porte le plus petit numéro. Avant, chacun avançait la file, et
+  // une table de quatre joueurs sautait trois morceaux.
+  const selfConnectionId = useSelf((me) => me.connectionId)
+  const otherConnectionIds = useOthers((others) => others.map((o) => o.connectionId))
+  const isQueueLeader =
+    selfConnectionId != null && otherConnectionIds.every((id) => id > selfConnectionId)
   const optionsPanelId = useId()
 
   const [volume, setVolume] = useState<number>(() => {
@@ -117,7 +140,13 @@ export default function MusicPlayer() {
     ;(list as LiveList<QueueItem>).push({ id })
   }, [])
 
-  const playNextFromQueue = useMutation(({ storage }) => {
+  // `expectedId` : le morceau qui vient de finir. Si un autre joueur a déjà
+  // changé de morceau entre-temps, on ne touche à rien.
+  const playNextFromQueue = useMutation(({ storage }, expectedId?: string) => {
+    if (expectedId) {
+      const current = storage.get('music')
+      if (current instanceof LiveObject && current.get('id') !== expectedId) return null
+    }
     let list = storage.get('musicQueue')
     if (!(list instanceof LiveList)) {
       list = new LiveList<QueueItem>([])
@@ -280,7 +309,7 @@ export default function MusicPlayer() {
       >
         <span className="inline-flex items-center gap-2">
           <Music2 size={14} className="text-purple-300 shrink-0" />
-          {optionsOpen ? 'Fermer les options YouTube' : 'Options YouTube'}
+          {optionsOpen ? t('musicCloseOptions') : t('musicOptions')}
         </span>
         {optionsOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
       </button>
@@ -294,7 +323,7 @@ export default function MusicPlayer() {
             <Music2 size={16} className="text-purple-300 shrink-0" />
             <input
               type="text"
-              placeholder="Lien YouTube"
+              placeholder={t('youtubeLink')}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
@@ -307,14 +336,14 @@ export default function MusicPlayer() {
             onClick={handlePlayNow}
             className="rounded-xl px-3 py-2 text-xs font-semibold shadow border-none bg-blue-600 text-white hover:bg-blue-700"
           >
-            Lire
+            {t('musicPlayNow')}
           </button>
           <button
             onClick={handleAddToQueue}
             className="rounded-xl px-3 py-2 text-xs font-semibold shadow border border-white/10 bg-black/30 text-white/90 hover:bg-purple-600 hover:text-white inline-flex items-center gap-1"
           >
             <Plus size={14} />
-            Ajouter a la suite
+            {t('musicAddToQueue')}
           </button>
         </div>
 
@@ -326,11 +355,11 @@ export default function MusicPlayer() {
           >
             {isPlaying ? (
               <>
-                <Pause size={14} /> Pause
+                <Pause size={14} /> {t('musicPause')}
               </>
             ) : (
               <>
-                <Play size={14} /> Lecture
+                <Play size={14} /> {t('musicPlay')}
               </>
             )}
           </button>
@@ -340,10 +369,10 @@ export default function MusicPlayer() {
             className={`rounded-xl px-3 py-2 text-xs font-semibold shadow border border-white/10 bg-black/30 text-white/90 hover:bg-emerald-600 hover:text-white inline-flex items-center gap-1 ${
               queueCount === 0 ? 'opacity-50 cursor-not-allowed' : ''
             }`}
-            title={queueCount > 0 ? `Prochaine piste (${queueCount})` : 'Queue vide'}
+            title={queueCount > 0 ? t('musicNextTitle').replace('{n}', String(queueCount)) : t('musicQueueEmpty')}
           >
             <SkipForward size={14} />
-            Next
+            {t('musicNext')}
           </button>
 
           <div className="flex flex-col flex-1 min-w-[220px]">
@@ -353,7 +382,7 @@ export default function MusicPlayer() {
               </div>
             ) : (
               <div className="text-xs text-white/80 truncate">
-                {currentTitle || 'Aucune musique'}
+                {currentTitle || t('musicNone')}
               </div>
             )}
             <div className="flex items-center gap-2">
@@ -382,7 +411,7 @@ export default function MusicPlayer() {
           </div>
 
           <div className="flex items-center gap-2 min-w-[120px]">
-            <span className="text-[11px] text-white/60">Vol</span>
+            <span className="text-[11px] text-white/60">{t('musicVolume')}</span>
             <input
               type="range"
               min={0}
@@ -402,30 +431,27 @@ export default function MusicPlayer() {
           onReady={(e) => {
             playerRef.current = e.target
             e.target.setVolume(volume)
-            e.target.pauseVideo()
+            // « Lire » sur le tout premier morceau : le lecteur n'existait pas
+            // encore quand on a demandé la lecture, on la lance maintenant.
+            if (isPlayingRef.current) e.target.playVideo()
+            else e.target.pauseVideo()
             syncTitleFromPlayer()
           }}
           onError={(e) => {
-            // Codes d'erreur YouTube : 2=invalid id, 5=HTML5 error, 100=not found,
-            // 101/150=embed not allowed
-            const errorMessages: Record<number, string> = {
-              2:   'ID YouTube invalide.',
-              5:   'Erreur lecteur HTML5.',
-              100: 'Vidéo introuvable ou supprimée.',
-              101: "Intégration désactivée par l'auteur.",
-              150: "Intégration désactivée par l'auteur.",
-            }
             const code = typeof e.data === 'number' ? e.data : -1
-            setPlayerError(errorMessages[code] ?? `Erreur YouTube (code ${code}).`)
+            const key = YT_ERRORS[code]
+            setPlayerError(key ? t(key) : t('ytError').replace('{n}', String(code)))
             setIsPlaying(false)
           }}
           onStateChange={(e) => {
             try {
               if (!playerRef.current) playerRef.current = e.target
               if (e.data === 0) {
-                playNextFromQueue()
+                if (isQueueLeader && currentId) playNextFromQueue(currentId)
                 return
               }
+              // Morceau changé pendant la lecture : YouTube le charge à l'arrêt.
+              if (e.data === 5 && isPlayingRef.current) e.target.playVideo()
               if (e.data === 1 || e.data === 5) {
                 setPlayerError(null) // lecture OK → effacer une erreur précédente
                 syncTitleFromPlayer()
