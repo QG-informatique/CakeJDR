@@ -57,9 +57,9 @@ export const AddCompetenceModal: React.FC<AddCompetenceModalProps> = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.2)" }}>
-            <div className="bg-gray-900 rounded-lg shadow-lg p-6 w-full max-w-md relative">
+            <div className="bg-surface-deep rounded-lg shadow-lg p-6 w-full max-w-md relative">
                 <button
-                    className="absolute top-2 right-2 text-gray-400 hover:text-white"
+                    className="absolute top-2 right-2 text-ink/55 hover:text-ink"
                     onClick={onClose}
                 >
                     ✕
@@ -69,7 +69,7 @@ export const AddCompetenceModal: React.FC<AddCompetenceModalProps> = ({
                     <div>
                         <label className="block text-sm mb-1">{t('name')}</label>
                         <input
-                            className="w-full px-2 py-1 rounded bg-gray-800 text-white placeholder-white"
+                            className="w-full px-2 py-1 rounded bg-surface text-ink placeholder-ink"
                             value={nom}
                             onChange={e => setNom(e.target.value)}
                             placeholder={t('skillName')}
@@ -78,7 +78,7 @@ export const AddCompetenceModal: React.FC<AddCompetenceModalProps> = ({
                     <div>
                         <label className="block text-sm mb-1">{t('type')}</label>
                         <select
-                            className="w-full px-2 py-1 rounded bg-gray-800 text-white"
+                            className="w-full px-2 py-1 rounded bg-surface text-ink"
                             value={type}
                             onChange={e => setType(e.target.value)}
                         >
@@ -90,7 +90,7 @@ export const AddCompetenceModal: React.FC<AddCompetenceModalProps> = ({
                     <div>
                         <label className="block text-sm mb-1">{t('effects')}</label>
                         <input
-                            className="w-full px-2 py-1 rounded bg-gray-800 text-white placeholder-white"
+                            className="w-full px-2 py-1 rounded bg-surface text-ink placeholder-ink"
                             value={effets}
                             onChange={e => setEffets(e.target.value)}
                             placeholder={t('effectDesc')}
@@ -99,7 +99,7 @@ export const AddCompetenceModal: React.FC<AddCompetenceModalProps> = ({
                     <div>
                         <label className="block text-sm mb-1">{t('damageOptional')}</label>
                         <input
-                            className="w-full px-2 py-1 rounded bg-gray-800 text-white placeholder-white"
+                            className="w-full px-2 py-1 rounded bg-surface text-ink placeholder-ink"
                             value={degats}
                             onChange={e => setDegats(e.target.value)}
                             placeholder="Ex: 2d6+3"
@@ -108,7 +108,7 @@ export const AddCompetenceModal: React.FC<AddCompetenceModalProps> = ({
                 </div>
                 <div className="mt-5 flex justify-end gap-2">
                     <button
-                        className="bg-gray-700 hover:bg-gray-600 text-white rounded px-3 py-1"
+                        className="bg-surface-hover hover:bg-surface-hover text-ink rounded px-3 py-1"
                         onClick={onClose}
                     >
                         {t('cancel')}

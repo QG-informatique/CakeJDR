@@ -299,13 +299,13 @@ export default function MusicPlayer() {
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-black/20 backdrop-blur-sm px-3 py-2 shadow-md min-w-[240px] max-w-[640px] w-full sm:w-auto">
+    <div className="flex flex-col gap-2 rounded-2xl border border-ink/10 bg-shade/20 backdrop-blur-sm px-3 py-2 shadow-md min-w-[240px] max-w-[640px] w-full sm:w-auto">
       <button
         type="button"
         onClick={() => setOptionsOpen((open) => !open)}
         aria-expanded={optionsOpen}
         aria-controls={optionsPanelId}
-        className="w-full rounded-xl px-3 py-2 text-xs font-semibold shadow border border-white/10 bg-black/30 text-white/90 hover:bg-purple-600 hover:text-white flex items-center justify-between gap-2"
+        className="w-full rounded-xl px-3 py-2 text-xs font-semibold shadow border border-ink/10 bg-shade/30 text-ink/90 hover:bg-purple-600 hover:text-white flex items-center justify-between gap-2"
       >
         <span className="inline-flex items-center gap-2">
           <Music2 size={14} className="text-purple-300 shrink-0" />
@@ -329,7 +329,7 @@ export default function MusicPlayer() {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handlePlayNow()
               }}
-              className="w-full px-3 py-2 rounded-lg bg-black/40 text-white border border-white/20 placeholder:text-white/40"
+              className="w-full px-3 py-2 rounded-lg bg-shade/40 text-ink border border-ink/20 placeholder:text-ink/40"
             />
           </div>
           <button
@@ -340,7 +340,7 @@ export default function MusicPlayer() {
           </button>
           <button
             onClick={handleAddToQueue}
-            className="rounded-xl px-3 py-2 text-xs font-semibold shadow border border-white/10 bg-black/30 text-white/90 hover:bg-purple-600 hover:text-white inline-flex items-center gap-1"
+            className="rounded-xl px-3 py-2 text-xs font-semibold shadow border border-ink/10 bg-shade/30 text-ink/90 hover:bg-purple-600 hover:text-white inline-flex items-center gap-1"
           >
             <Plus size={14} />
             {t('musicAddToQueue')}
@@ -350,7 +350,7 @@ export default function MusicPlayer() {
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={handlePlayPause}
-            className="rounded-xl px-3 py-2 text-xs font-semibold shadow border border-white/10 bg-black/30 text-white/90 hover:bg-purple-600 hover:text-white inline-flex items-center gap-1"
+            className="rounded-xl px-3 py-2 text-xs font-semibold shadow border border-ink/10 bg-shade/30 text-ink/90 hover:bg-purple-600 hover:text-white inline-flex items-center gap-1"
             disabled={!currentId && queueCount === 0}
           >
             {isPlaying ? (
@@ -366,7 +366,7 @@ export default function MusicPlayer() {
           <button
             onClick={handleNext}
             disabled={queueCount === 0}
-            className={`rounded-xl px-3 py-2 text-xs font-semibold shadow border border-white/10 bg-black/30 text-white/90 hover:bg-emerald-600 hover:text-white inline-flex items-center gap-1 ${
+            className={`rounded-xl px-3 py-2 text-xs font-semibold shadow border border-ink/10 bg-shade/30 text-ink/90 hover:bg-emerald-600 hover:text-white inline-flex items-center gap-1 ${
               queueCount === 0 ? 'opacity-50 cursor-not-allowed' : ''
             }`}
             title={queueCount > 0 ? t('musicNextTitle').replace('{n}', String(queueCount)) : t('musicQueueEmpty')}
@@ -381,12 +381,12 @@ export default function MusicPlayer() {
                 ⚠ {playerError}
               </div>
             ) : (
-              <div className="text-xs text-white/80 truncate">
+              <div className="text-xs text-ink/80 truncate">
                 {currentTitle || t('musicNone')}
               </div>
             )}
             <div className="flex items-center gap-2">
-              <span className="text-[11px] text-white/60 tabular-nums">
+              <span className="text-[11px] text-ink/60 tabular-nums">
                 {formatTime(currentTime)}
               </span>
               <input
@@ -404,14 +404,14 @@ export default function MusicPlayer() {
                 className="flex-1"
                 disabled={!currentId || duration === 0}
               />
-              <span className="text-[11px] text-white/60 tabular-nums">
+              <span className="text-[11px] text-ink/60 tabular-nums">
                 {formatTime(duration)}
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-2 min-w-[120px]">
-            <span className="text-[11px] text-white/60">{t('musicVolume')}</span>
+            <span className="text-[11px] text-ink/60">{t('musicVolume')}</span>
             <input
               type="range"
               min={0}

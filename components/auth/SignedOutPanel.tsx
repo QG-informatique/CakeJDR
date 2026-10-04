@@ -22,7 +22,7 @@ export default function SignedOutPanel() {
   return (
     <>
     <HeroDie dockId={DOCK_ID} />
-    <div className="flex w-full max-w-md flex-col items-center gap-6 rounded-2xl border border-white/10 bg-black/40 px-8 py-10 text-center backdrop-blur-md">
+    <div className="flex w-full max-w-md flex-col items-center gap-6 rounded-2xl border border-ink/10 bg-shade/40 px-8 py-10 text-center backdrop-blur-md">
       <CakeLogo large showText={false} />
 
       {/* Le de lui-meme est rendu dans un calque fixe (HeroDie), pour pouvoir
@@ -31,19 +31,19 @@ export default function SignedOutPanel() {
       <div id={DOCK_ID} aria-hidden="true" style={{ width: 104, height: 140 }} />
 
       <div className="space-y-2">
-        <h1 className="m-0 text-2xl font-bold text-white">CakeJDR</h1>
-        <p className="m-0 text-sm text-white/60">
+        <h1 className="m-0 text-2xl font-bold text-ink">CakeJDR</h1>
+        <p className="m-0 text-sm text-ink/60">
           {t('authTagline')}
         </p>
       </div>
 
       <div className="flex w-full flex-col gap-2">
         <SignInButtons />
-        <p className="m-0 text-xs text-white/50">{t('authSignInIntro')}</p>
+        <p className="m-0 text-xs text-ink/50">{t('authSignInIntro')}</p>
       </div>
 
-      <div className="flex w-full flex-col items-center gap-2 border-t border-white/10 pt-5">
-        <p className="m-0 text-xs text-white/50">
+      <div className="flex w-full flex-col items-center gap-2 border-t border-ink/10 pt-5">
+        <p className="m-0 text-xs text-ink/50">
           {t('authGuestPitch')}
         </p>
         <VisitDemoButton />

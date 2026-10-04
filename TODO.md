@@ -167,7 +167,10 @@
 
 ## Refonte et thèmes — phase 4 puis 6
 - [ ] Concevoir la refonte graphique comme thème n°1 : couleurs, images et disposition des panneaux réunies dans un thème, pour en brancher d'autres ensuite
-- [ ] Ajouter un sélecteur de thème (par joueur ou par table, à décider)
+- [x] Poser le socle des thèmes : couleurs nommées (`app/themes.css`), liste et disposition (`lib/themes.ts`), choix gardé par joueur
+- [ ] Choisir la direction du thème n°1 (Taverne, Nuit arcane ou Ardoise) puis remplir ses couleurs
+- [ ] Brancher les fonds animés et les couleurs d'accent (bleu, violet, rose, émeraude en dur) sur le thème
+- [ ] Ajouter un sélecteur de thème dans l'interface (choix par joueur, gardé dans le navigateur)
 - [ ] Faire de la maquette V2 un second thème (phase 6)
 - [ ] Faire du pack « Papier & Sauge » (thème clair, accent vert sauge) un thème : maquettes et couleurs dans `C:\DEV\CakeJDR-themes\CakeJDR-theme-papier-sauge`
 

@@ -59,7 +59,7 @@ export default function ConnectionBanner() {
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="ml-1 inline-flex items-center gap-1 rounded-lg bg-white/15 px-2 py-1 text-xs font-semibold hover:bg-white/25"
+          className="ml-1 inline-flex items-center gap-1 rounded-lg bg-ink/15 px-2 py-1 text-xs font-semibold hover:bg-ink/25"
         >
           <RefreshCw size={12} />
           {t('reloadPage')}

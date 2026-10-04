@@ -97,7 +97,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
       <button
         onClick={() => setCollapsed(false)}
         aria-label="Expand chat panel"
-        className="absolute top-2 right-2 z-50 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
+        className="absolute top-2 right-2 z-50 text-ink/80 hover:text-ink bg-shade/30 rounded-full p-1"
       >
         <ChevronLeft size={20} />
       </button>
@@ -108,13 +108,13 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
   if (showSummary) {
     return (
       <aside
-        className="w-full flex-1 min-h-0 lg:flex-none lg:w-1/5 p-4 flex flex-col relative rounded-xl border border-white/10 bg-black/15 backdrop-blur-[2px] shadow-lg shadow-black/10 transition flex-shrink-0 text-white"
+        className="w-full flex-1 min-h-0 lg:flex-none lg:w-1/5 p-4 flex flex-col relative rounded-xl border border-ink/10 bg-shade/15 backdrop-blur-[2px] shadow-lg shadow-shade/10 transition flex-shrink-0 text-ink"
         style={{ boxShadow: '0 4px 18px -8px rgba(0,0,0,0.24), 0 0 0 1px rgba(255,255,255,0.05)' }}
       >
         <button
           onClick={() => setCollapsed(true)}
           aria-label="Collapse chat panel"
-          className="max-lg:hidden absolute top-2 left-2 z-50 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
+          className="max-lg:hidden absolute top-2 left-2 z-50 text-ink/80 hover:text-ink bg-shade/30 rounded-full p-1"
         >
           <ChevronRight size={20} />
         </button>
@@ -125,13 +125,13 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
 
   return (
     <aside
-      className="w-full flex-1 min-h-0 lg:flex-none lg:w-1/5 p-4 flex flex-col relative rounded-xl border border-white/10 bg-black/15 backdrop-blur-[2px] shadow-lg shadow-black/10 transition flex-shrink-0 text-white"
+      className="w-full flex-1 min-h-0 lg:flex-none lg:w-1/5 p-4 flex flex-col relative rounded-xl border border-ink/10 bg-shade/15 backdrop-blur-[2px] shadow-lg shadow-shade/10 transition flex-shrink-0 text-ink"
       style={{ boxShadow: '0 4px 18px -8px rgba(0,0,0,0.24), 0 0 0 1px rgba(255,255,255,0.05)' }}
     >
       <button
         onClick={() => setCollapsed(true)}
         aria-label="Collapse chat panel"
-        className="max-lg:hidden absolute top-2 left-2 z-50 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
+        className="max-lg:hidden absolute top-2 left-2 z-50 text-ink/80 hover:text-ink bg-shade/30 rounded-full p-1"
       >
         <ChevronRight size={20} />
       </button>
@@ -158,7 +158,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
             flex items-center justify-center gap-1.5 min-h-[38px]
             ${showStats
               ? 'bg-blue-600/30 border-blue-400/30 text-blue-200 hover:bg-blue-600/40'
-              : 'bg-black/30 border-white/10 text-white/70 hover:bg-blue-900/30 hover:text-blue-200 hover:border-blue-400/20'
+              : 'bg-shade/30 border-ink/10 text-ink/70 hover:bg-blue-900/30 hover:text-blue-200 hover:border-blue-400/20'
             }`}
           onClick={() => setShowStats(s => !s)}
           title={t('diceStats')}
@@ -176,21 +176,21 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
         {showStats && (
           <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
             <div className="text-center font-bold mb-2">{t('diceStatsTitle')}</div>
-            <div className="flex-1 overflow-y-auto rounded-xl border border-white/10 bg-black/15 backdrop-blur-[2px] shadow p-2 min-h-0">
+            <div className="flex-1 overflow-y-auto rounded-xl border border-ink/10 bg-shade/15 backdrop-blur-[2px] shadow p-2 min-h-0">
               <DiceStats history={diceRolls} />
             </div>
           </div>
         )}
 
         <div className={`flex-1 min-h-0 flex flex-col ${showStats ? '' : 'h-full'}`}>
-          <h2 className="text-sm font-semibold mb-1.5 text-center text-white/50 tracking-widest uppercase">{t('chat')}</h2>
+          <h2 className="text-sm font-semibold mb-1.5 text-center text-ink/50 tracking-widest uppercase">{t('chat')}</h2>
           <div
             ref={chatBoxRef}
-            className="relative flex-1 overflow-y-auto rounded-xl border border-white/8 bg-black/20 backdrop-blur-[2px] shadow-inner p-2 min-h-0"
+            className="relative flex-1 overflow-y-auto rounded-xl border border-ink/8 bg-shade/20 backdrop-blur-[2px] shadow-inner p-2 min-h-0"
           >
             <button
               onClick={() => setShowHistory(h => !h)}
-              className="absolute left-1/2 -translate-x-1/2 top-1 text-xs opacity-20 hover:opacity-60 bg-black/30 px-2 py-0.5 rounded-full transition-opacity"
+              className="absolute left-1/2 -translate-x-1/2 top-1 text-xs opacity-20 hover:opacity-60 bg-shade/30 px-2 py-0.5 rounded-full transition-opacity"
               title={showHistory ? t('hideHistory') : t('showHistory')}
             >
               {showHistory ? t('hideHistory') : t('showHistory')}
@@ -202,14 +202,14 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
                 const isMJ = ev.isMJ
                 return (
                   <div key={ev.id} className="animate-fadeIn flex flex-col gap-0.5">
-                    <span className={`text-[10px] font-semibold px-1 ${isMJ ? 'text-amber-400/80' : 'text-white/40'}`}>
+                    <span className={`text-[10px] font-semibold px-1 ${isMJ ? 'text-amber-400/80' : 'text-ink/40'}`}>
                       {isMJ && '👑 '}{ev.author}
                     </span>
                     <div className={`
                       px-2.5 py-1.5 rounded-xl rounded-tl-sm text-sm leading-snug max-w-[92%]
                       ${isMJ
                         ? 'bg-gradient-to-br from-amber-500/20 to-yellow-600/10 border border-amber-400/20 text-amber-100'
-                        : 'bg-white/8 border border-white/8 text-white/90'}
+                        : 'bg-ink/8 border border-ink/8 text-ink/90'}
                       whitespace-pre-wrap [overflow-wrap:anywhere]
                     `}>
                       {ev.text}
@@ -233,8 +233,8 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
                 return (
                   <div key={ev.id} className={`animate-fadeIn flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-gradient-to-r ${bgColor} border text-sm`}>
                     <span className="text-base leading-none">🎲</span>
-                    <span className="text-white/60 text-xs">{ev.player}</span>
-                    {ev.dice != null && <span className="text-white/40 text-xs">D{ev.dice}</span>}
+                    <span className="text-ink/60 text-xs">{ev.player}</span>
+                    {ev.dice != null && <span className="text-ink/40 text-xs">D{ev.dice}</span>}
                     <span className="ml-auto font-bold text-base leading-none tabular-nums">
                       <span className={resultColor}>{ev.result ?? '?'}</span>
                     </span>
@@ -248,7 +248,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
             <div ref={endRef} />
           </div>
 
-          <div className="mt-2 flex items-center w-full max-w-full overflow-hidden rounded-xl border border-white/10 bg-black/25 backdrop-blur-[2px] focus-within:border-white/20 focus-within:bg-black/35 transition-all">
+          <div className="mt-2 flex items-center w-full max-w-full overflow-hidden rounded-xl border border-ink/10 bg-shade/25 backdrop-blur-[2px] focus-within:border-ink/20 focus-within:bg-shade/35 transition-all">
             <input
               type="text"
               placeholder={t('yourMessage')}
@@ -256,7 +256,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
               maxLength={MAX_MESSAGE_LENGTH}
               onChange={e => setInputValue(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') sendMessage() }}
-              className="flex-1 border-none px-3 py-2.5 text-white bg-transparent focus:outline-none text-sm placeholder:text-white/30 min-w-0"
+              className="flex-1 border-none px-3 py-2.5 text-ink bg-transparent focus:outline-none text-sm placeholder:text-ink/30 min-w-0"
             />
             <button
               onClick={sendMessage}

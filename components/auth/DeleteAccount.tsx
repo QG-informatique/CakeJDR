@@ -92,7 +92,7 @@ export default function DeleteAccount({ pseudo }: { pseudo: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1 text-xs text-white/50 underline-offset-2 transition hover:text-rose-300 hover:underline"
+        className="inline-flex items-center gap-1 text-xs text-ink/50 underline-offset-2 transition hover:text-rose-300 hover:underline"
       >
         <Trash2 size={12} />
         {t('deleteAccount')}
@@ -102,23 +102,23 @@ export default function DeleteAccount({ pseudo }: { pseudo: string }) {
         // Clic hors de la carte pour fermer ; l'équivalent clavier est Échap.
         // eslint-disable-next-line jsx-a11y/click-events-have-key-events
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-shade/70 p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="delete-account-title"
           onClick={(e) => e.target === e.currentTarget && close()}
         >
-          <div className="w-full max-w-md space-y-4 rounded-2xl border border-rose-400/30 bg-zinc-900/95 p-6 text-white shadow-2xl">
+          <div className="w-full max-w-md space-y-4 rounded-2xl border border-rose-400/30 bg-surface-deep/95 p-6 text-ink shadow-2xl">
             <h2 id="delete-account-title" className="m-0 text-xl font-bold text-rose-300">
               {t('deleteAccountTitle')}
             </h2>
-            <p className="m-0 text-sm text-white/80">{t('deleteAccountWarn')}</p>
+            <p className="m-0 text-sm text-ink/80">{t('deleteAccountWarn')}</p>
 
             {rooms === null ? (
-              <p className="m-0 text-sm text-white/50">{t('pseudoChecking')}</p>
+              <p className="m-0 text-sm text-ink/50">{t('pseudoChecking')}</p>
             ) : rooms.length > 0 ? (
               <div className="text-sm">
-                <p className="m-0 mb-1 text-white/80">{t('deleteAccountTables')}</p>
+                <p className="m-0 mb-1 text-ink/80">{t('deleteAccountTables')}</p>
                 <ul className="m-0 max-h-32 list-disc space-y-0.5 overflow-auto pl-5 text-rose-200">
                   {rooms.map((r) => (
                     <li key={r.id}>{r.name}</li>
@@ -128,13 +128,13 @@ export default function DeleteAccount({ pseudo }: { pseudo: string }) {
             ) : null}
 
             <label className="block space-y-1 text-sm">
-              <span className="text-white/80">
+              <span className="text-ink/80">
                 {t('deleteAccountConfirmHint')} <strong>{pseudo}</strong>
               </span>
               <input
                 value={typed}
                 onChange={(e) => setTyped(e.target.value)}
-                className="w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-white outline-none focus:ring-2 focus:ring-rose-300/30"
+                className="w-full rounded-lg border border-ink/20 bg-shade/40 px-3 py-2 text-ink outline-none focus:ring-2 focus:ring-rose-300/30"
               />
             </label>
 
@@ -145,7 +145,7 @@ export default function DeleteAccount({ pseudo }: { pseudo: string }) {
                 type="button"
                 onClick={close}
                 disabled={deleting}
-                className="rounded-lg bg-white/10 px-4 py-2 text-sm hover:bg-white/20 disabled:opacity-40"
+                className="rounded-lg bg-ink/10 px-4 py-2 text-sm hover:bg-ink/20 disabled:opacity-40"
               >
                 {t('cancel')}
               </button>

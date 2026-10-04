@@ -54,7 +54,7 @@ const ProfileColorPicker: FC<Props> = ({ color, onChange, size = 28 }) => {
           group relative flex-shrink-0
           rounded-full border
           transition
-          focus:outline-none focus:ring-2 focus:ring-white/30
+          focus:outline-none focus:ring-2 focus:ring-ink/30
           hover:shadow
         `}
         style={{
@@ -70,7 +70,7 @@ const ProfileColorPicker: FC<Props> = ({ color, onChange, size = 28 }) => {
           className={`
             absolute left-1/2 top-1/2 
             -translate-x-1/2 -translate-y-1/2
-            text-[14px] leading-none font-semibold text-white
+            text-[14px] leading-none font-semibold text-ink
             opacity-80 group-hover:opacity-100
             transition select-none pointer-events-none
           `}
@@ -112,8 +112,8 @@ const ProfileColorPicker: FC<Props> = ({ color, onChange, size = 28 }) => {
                 w-6 h-6 rounded-full border
                 transition transform
                 ${active
-                  ? 'border-white ring-2 ring-white/70 scale-110'
-                  : 'border-white/30 hover:border-white/70 hover:scale-110'}
+                  ? 'border-ink ring-2 ring-ink/70 scale-110'
+                  : 'border-ink/30 hover:border-ink/70 hover:scale-110'}
               `}
               style={{ background: c }}
               aria-label={`Couleur ${c}`}
@@ -126,9 +126,9 @@ const ProfileColorPicker: FC<Props> = ({ color, onChange, size = 28 }) => {
             type="button"
             onClick={() => setShowModal(true)}
             className="
-    w-6 h-6 rounded-full border border-dashed border-white/40
-    text-[11px] font-bold text-white/70
-    hover:border-white/70 hover:text-white
+    w-6 h-6 rounded-full border border-dashed border-ink/40
+    text-[11px] font-bold text-ink/70
+    hover:border-ink/70 hover:text-ink
     flex items-center justify-center transition
   "
             title="Couleur personnalisée"
@@ -141,7 +141,7 @@ const ProfileColorPicker: FC<Props> = ({ color, onChange, size = 28 }) => {
         {showModal && (
           <Portal>
             <div
-              className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+              className="fixed inset-0 z-[99999] flex items-center justify-center bg-shade/50 backdrop-blur-sm"
             >
               <div className="relative z-[100000]">
                 <CustomColorPicker
@@ -153,7 +153,7 @@ const ProfileColorPicker: FC<Props> = ({ color, onChange, size = 28 }) => {
                 />
                 <button
                   onClick={() => setShowModal(false)}
-                  className="absolute -top-3 -right-3 bg-white text-black rounded-full w-6 h-6 font-bold shadow"
+                  className="absolute -top-3 -right-3 bg-field text-field-ink rounded-full w-6 h-6 font-bold shadow"
                 >
                   ×
                 </button>

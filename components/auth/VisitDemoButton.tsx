@@ -51,7 +51,7 @@ export default function VisitDemoButton({ className = '' }: { className?: string
     <button
       onClick={enter}
       disabled={entering}
-      className={`inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-sm text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-50 ${className}`}
+      className={`inline-flex items-center gap-2 rounded-lg border border-ink/15 bg-ink/5 px-3 py-1.5 text-sm text-ink/80 transition hover:bg-ink/10 hover:text-ink disabled:opacity-50 ${className}`}
     >
       <Eye size={15} />
       {entering ? t('authOpening') : t('authVisitGuest')}

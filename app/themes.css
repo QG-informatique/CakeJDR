@@ -1,0 +1,24 @@
+/* Thèmes de CakeJDR.
+   Un thème = un bloc [data-theme="…"] qui donne une valeur à chaque couleur.
+   La liste des thèmes et leur disposition des panneaux est dans lib/themes.ts.
+
+   ink   : couleur du texte et des traits fins
+   shade : couleur des voiles posés sur le fond (panneaux translucides)
+   field : champs de saisie de la fiche */
+
+:root,
+[data-theme="classique"] {
+  color-scheme: dark;
+  --c-page: #13111c;
+  --c-ink: #ffffff;
+  --c-shade: #000000;
+  --c-surface: #1f2937;
+  --c-surface-hover: #374151;
+  --c-surface-deep: #111827;
+  --c-line: #374151;
+  --c-line-strong: #4b5563;
+  --c-field: #ffffff;
+  --c-field-ink: #000000;
+  --c-accent: #2563eb;
+  --c-on-accent: #ffffff;
+}

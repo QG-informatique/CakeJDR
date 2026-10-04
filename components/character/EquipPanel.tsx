@@ -44,28 +44,28 @@ const EquipPanel: FC<Props> = ({
       <div className="mb-1 flex items-center">
         <strong className="w-32">{t('weapons')}:</strong>
         {edit
-          ? <input value={armes || ''} onChange={e => onChange('armes', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-28 text-sm text-black" />
+          ? <input value={armes || ''} onChange={e => onChange('armes', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-field border w-28 text-sm text-field-ink" />
           : <span className="ml-1">{armes}</span>
         }
       </div>
       <div className="mb-1 flex items-center">
         <strong className="w-32">{t('weaponDamage')}:</strong>
         {edit
-          ? <input value={degats_armes || ''} onChange={e => onChange('degats_armes', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-20 text-sm text-black" />
+          ? <input value={degats_armes || ''} onChange={e => onChange('degats_armes', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-field border w-20 text-sm text-field-ink" />
           : <span className="ml-1">{degats_armes}</span>
         }
       </div>
       <div className="mb-1 flex items-center">
         <strong className="w-32">{t('armor')}:</strong>
         {edit
-          ? <input value={armure || ''} onChange={e => onChange('armure', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-28 text-sm text-black" />
+          ? <input value={armure || ''} onChange={e => onChange('armure', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-field border w-28 text-sm text-field-ink" />
           : <span className="ml-1">{armure}</span>
         }
       </div>
       <div className="mb-3 flex items-center">
         <strong className="w-32">{t('armorMod')}:</strong>
         {edit
-          ? <input type="number" value={modif_armure ?? ''} onChange={e => onChange('modif_armure', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-12 text-sm text-black" />
+          ? <input type="number" value={modif_armure ?? ''} onChange={e => onChange('modif_armure', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-field border w-12 text-sm text-field-ink" />
           : <span className="ml-1">{modif_armure}</span>
         }
       </div>
@@ -75,22 +75,22 @@ const EquipPanel: FC<Props> = ({
         <>
           <div className="flex flex-col gap-1 mb-2">
             {objets.map((o) => (
-              <div key={o.id} className="flex items-center gap-2 bg-gray-800 rounded px-2 py-1">
+              <div key={o.id} className="flex items-center gap-2 bg-surface rounded px-2 py-1">
                 <span className="text-base">{o.nom}</span>
-                <span className="text-xs text-gray-300">x{o.quantite}</span>
+                <span className="text-xs text-ink/70">x{o.quantite}</span>
                 <button className="text-xs text-red-400 hover:underline ml-2" onClick={() => onDelObj(o.id)}>{t('delete')}</button>
               </div>
             ))}
           </div>
           <div className="flex gap-1 mb-2">
             <input
-              className="p-1 rounded bg-white text-black text-sm flex-1"
+              className="p-1 rounded bg-field text-field-ink text-sm flex-1"
               placeholder={t('itemName')}
               value={newObj.nom}
               onChange={e => setNewObj({ ...newObj, nom: e.target.value })}
             />
             <input
-              className="p-1 rounded bg-white text-black text-sm w-16"
+              className="p-1 rounded bg-field text-field-ink text-sm w-16"
               placeholder={t('qty')}
               type="number"
               min="1"
@@ -108,12 +108,12 @@ const EquipPanel: FC<Props> = ({
       ) : (
         <div className="flex flex-col gap-1">
           {objets.map((o) => (
-            <div key={o.id} className="flex items-center gap-2 bg-gray-800 rounded px-2 py-1">
+            <div key={o.id} className="flex items-center gap-2 bg-surface rounded px-2 py-1">
               <span className="text-base">{o.nom}</span>
-              <span className="text-xs text-gray-300">x{o.quantite}</span>
+              <span className="text-xs text-ink/70">x{o.quantite}</span>
             </div>
           ))}
-          {objets.length === 0 && <span className="text-gray-400 text-xs">{t('noItems')}</span>}
+          {objets.length === 0 && <span className="text-ink/55 text-xs">{t('noItems')}</span>}
         </div>
       )}
     </div>

@@ -598,7 +598,7 @@ export default function MenuAccueil() {
         {user && <AuthControls pseudo={user.pseudo} color={user.color} />}
       </div>
 
-      <div className="w-full min-h-screen relative text-white px-6 pb-8 flex flex-col max-w-7xl mx-auto bg-transparent overflow-hidden">
+      <div className="w-full min-h-screen relative text-ink px-6 pb-8 flex flex-col max-w-7xl mx-auto bg-transparent overflow-hidden">
         {!user ? (
           <div className="flex-grow flex items-center justify-center">
             <SignedOutPanel />
@@ -616,7 +616,7 @@ export default function MenuAccueil() {
               className="
                 mt-4 mb-6
                 rounded-xl backdrop-blur-md
-                bg-black/35
+                bg-shade/35
                 px-6 py-4
                 flex items-center w-full
               "
@@ -648,7 +648,7 @@ export default function MenuAccueil() {
                   }}
                   transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                 >
-                  <LogIn className={`w-5 h-5 ${selectedRoom ? 'text-emerald-950' : 'text-white'}`} />
+                  <LogIn className={`w-5 h-5 ${selectedRoom ? 'text-emerald-950' : 'text-ink'}`} />
                   {selectedRoom && (
                     <span className="truncate text-sm font-bold">
                       Enter {selectedRoom.name || t('unnamedRoom')}
@@ -656,7 +656,7 @@ export default function MenuAccueil() {
                   )}
                 </motion.button>
                 {!selectedRoom && (
-                  <span className="text-sm text-white/65">
+                  <span className="text-sm text-ink/65">
                     Select a room
                   </span>
                 )}
@@ -697,7 +697,7 @@ export default function MenuAccueil() {
                     ${
                       isGMHere
                         ? 'bg-[#f472b6]/20 hover:bg-[#f472b6]/35 border-[#f472b6]/40'
-                        : 'bg-gray-700/70 hover:bg-gray-600/70 border-gray-400/30'
+                        : 'bg-surface-hover/70 hover:bg-surface-hover/70 border-line-strong/30'
                     }
                   `}
                   style={{
@@ -714,7 +714,7 @@ export default function MenuAccueil() {
                         ${
                           isGMHere
                             ? 'bg-fuchsia-300 shadow-[0_0_6px_2px_rgba(217,70,239,0.5)]'
-                            : 'bg-gray-300/80'
+                            : 'bg-ink/40'
                         }
                       `}
                     />
@@ -727,7 +727,7 @@ export default function MenuAccueil() {
                     inline-flex items-center justify-center px-3 h-10 rounded-md
                     bg-gradient-to-br from-slate-700/80 to-slate-800/80
                     hover:from-pink-600/80 hover:to-pink-700/80
-                    font-semibold text-sm text-white shadow-lg shadow-black/40 transition
+                    font-semibold text-sm text-ink shadow-lg shadow-shade/40 transition
                     focus:outline-none focus:ring-2 focus:ring-pink-400/30 focus:ring-offset-2 focus:ring-offset-black
                   "
                   style={{
@@ -756,7 +756,7 @@ export default function MenuAccueil() {
             />
 
             {/* Liste des personnages */}
-            <div className="flex-1 min-h-0 rounded-xl backdrop-blur-md bg-black/20 p-5 overflow-auto">
+            <div className="flex-1 min-h-0 rounded-xl backdrop-blur-md bg-shade/20 p-5 overflow-auto">
               <CharacterList
                 filtered={filteredCharacters}
                 remote={remoteChars}
@@ -806,7 +806,7 @@ export default function MenuAccueil() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.3 }}
-            className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded"
+            className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-shade/80 text-ink px-4 py-2 rounded"
           >
             {statusMessage}
           </motion.div>

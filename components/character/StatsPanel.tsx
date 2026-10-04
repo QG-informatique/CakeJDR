@@ -29,7 +29,7 @@ const getStatColor = (value: number) => {
 }
 
 const getPvColor = (pv: number, pvMax: number) => {
-  if (!pvMax) return 'bg-gray-500 text-white'
+  if (!pvMax) return 'bg-ink/25 text-ink'
   const ratio = pv / pvMax
   if (ratio > 0.7) return 'bg-green-500 text-white'
   if (ratio > 0.3) return 'bg-orange-400 text-white'
@@ -55,44 +55,44 @@ const StatsPanel: FC<Props> = ({ edit, perso, onChange }) => {
           <div className="flex items-center">
             <strong className="w-20">{t('level')}:</strong>
             {edit
-              ? <input type="text" value={perso.niveau || ''} onChange={e => onChange('niveau', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-14 text-sm text-black" />
+              ? <input type="text" value={perso.niveau || ''} onChange={e => onChange('niveau', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-field border w-14 text-sm text-field-ink" />
               : <span className="ml-1 text-sm">{perso.niveau}</span>
             }
           </div>
           <div className="flex items-center">
             <strong className="w-20">{t('defense')}:</strong>
             {edit
-              ? <input type="text" value={perso.defense || ''} onChange={e => onChange('defense', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-14 text-sm text-black" />
+              ? <input type="text" value={perso.defense || ''} onChange={e => onChange('defense', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-field border w-14 text-sm text-field-ink" />
               : <span className="ml-1 text-sm">{perso.defense}</span>
             }
           </div>
           <div className="flex items-center">
             <strong className="w-20">{t('luck')}:</strong>
             {edit
-              ? <input type="text" value={perso.chance || ''} onChange={e => onChange('chance', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-14 text-sm text-black" />
+              ? <input type="text" value={perso.chance || ''} onChange={e => onChange('chance', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-field border w-14 text-sm text-field-ink" />
               : <span className="ml-1 text-sm">{perso.chance}</span>
             }
           </div>
           <div className="flex items-center">
             <strong className="w-20">{t('initiative')}:</strong>
             {edit
-              ? <input type="text" value={perso.initiative || ''} onChange={e => onChange('initiative', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-white border w-14 text-sm text-black" />
+              ? <input type="text" value={perso.initiative || ''} onChange={e => onChange('initiative', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-field border w-14 text-sm text-field-ink" />
               : <span className="ml-1 text-sm">{perso.initiative}</span>
             }
           </div>
         </div>
         <div className="flex flex-col items-center ml-4">
           <div className="flex items-center mb-1">
-            <span className="text-sm text-gray-400 mr-2">{t('name')}:</span>
+            <span className="text-sm text-ink/55 mr-2">{t('name')}:</span>
             {edit
-              ? <input value={perso.nom || ''} onChange={e => onChange('nom', e.target.value)} className="px-1 py-0.5 rounded text-sm font-semibold bg-white border text-black w-[90px]" />
+              ? <input value={perso.nom || ''} onChange={e => onChange('nom', e.target.value)} className="px-1 py-0.5 rounded text-sm font-semibold bg-field border text-field-ink w-[90px]" />
               : <span className="text-sm font-semibold">{perso.nom}</span>
             }
           </div>
           <span className={`flex items-center justify-center text-2xl font-bold rounded-full h-14 w-14 border-4 ${getPvColor(pvActuel, pvMax)}`} style={{ boxShadow: '0 0 8px #222' }}>
             {pvActuel}
           </span>
-          <span className="mt-1 text-xs text-gray-300">{t('hp')} / {pvMax}</span>
+          <span className="mt-1 text-xs text-ink/70">{t('hp')} / {pvMax}</span>
           {edit && (
             <div className="mt-1 flex gap-1">
               <input
@@ -100,16 +100,16 @@ const StatsPanel: FC<Props> = ({ edit, perso, onChange }) => {
                 min={0}
                 value={perso.pv ?? ''}
                 onChange={e => onChange('pv', e.target.value)}
-                className="w-10 px-1 py-0.5 rounded bg-white border text-sm text-black"
+                className="w-10 px-1 py-0.5 rounded bg-field border text-sm text-field-ink"
                 placeholder={t('hp')}
               />
-              <span className="text-gray-400 font-bold">/</span>
+              <span className="text-ink/55 font-bold">/</span>
               <input
                 type="number"
                 min={0}
                 value={perso.pv_max ?? perso.pvMax ?? ''}
                 onChange={e => onChange('pv_max', e.target.value)}
-                className="w-10 px-1 py-0.5 rounded bg-white border text-sm text-black"
+                className="w-10 px-1 py-0.5 rounded bg-field border text-sm text-field-ink"
                 placeholder={t('max')}
               />
             </div>
@@ -126,9 +126,9 @@ const StatsPanel: FC<Props> = ({ edit, perso, onChange }) => {
     <strong className="w-28 text-right">{t(stat.label as TranslationKey)} :</strong>
     {edit
       ? <>
-          <input type="text" value={perso[stat.key] ?? ''} onChange={e => onChange(stat.key, e.target.value)} className="ml-2 px-1 py-0.5 rounded bg-white border w-10 text-sm text-black" />
+          <input type="text" value={perso[stat.key] ?? ''} onChange={e => onChange(stat.key, e.target.value)} className="ml-2 px-1 py-0.5 rounded bg-field border w-10 text-sm text-field-ink" />
           <span className="mx-1">/</span>
-          <input type="text" value={perso[`${stat.key}_mod`] ?? ''} onChange={e => onChange(`${stat.key}_mod`, e.target.value)} className="px-1 py-0.5 rounded bg-white border w-10 text-sm text-black" placeholder={t('mod')} />
+          <input type="text" value={perso[`${stat.key}_mod`] ?? ''} onChange={e => onChange(`${stat.key}_mod`, e.target.value)} className="px-1 py-0.5 rounded bg-field border w-10 text-sm text-field-ink" placeholder={t('mod')} />
         </>
       : <>
           {(() => {
@@ -145,7 +145,7 @@ const StatsPanel: FC<Props> = ({ edit, perso, onChange }) => {
             {statValue}
           </span>
           <span
-            className="ml-2 text-gray-300 text-base font-semibold"
+            className="ml-2 text-ink/70 text-base font-semibold"
             style={{ display: 'inline-block', width: '50px', textAlign: 'left' }} // fixed width for all mods
           >
             ({modValue >= 0 ? '+' : ''}{modValue})
@@ -165,8 +165,8 @@ const StatsPanel: FC<Props> = ({ edit, perso, onChange }) => {
             <div key={att.key} className="flex items-center mb-2 w-full sm:justify-end">
               <strong className="w-28 sm:w-16 text-right">{t(att.label as TranslationKey)}</strong>
               {edit
-                ? <input type="text" value={perso[att.key] ?? ''} onChange={e => onChange(att.key, e.target.value)} className="ml-2 px-1 py-0.5 rounded bg-white border w-10 text-sm text-black text-right" />
-                : <span className="ml-3 px-2 py-0.5 rounded text-base font-bold bg-gray-700 text-white text-right">{perso[att.key] ?? 0}</span>
+                ? <input type="text" value={perso[att.key] ?? ''} onChange={e => onChange(att.key, e.target.value)} className="ml-2 px-1 py-0.5 rounded bg-field border w-10 text-sm text-field-ink text-right" />
+                : <span className="ml-3 px-2 py-0.5 rounded text-base font-bold bg-surface-hover text-ink text-right">{perso[att.key] ?? 0}</span>
               }
             </div>
           )}

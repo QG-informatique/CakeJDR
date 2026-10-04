@@ -642,12 +642,12 @@ export default function InteractiveCanvas() {
       <div className="relative w-full h-full select-none">
         {/* Tools */}
         <div className="absolute top-3 left-3 z-30 pointer-events-auto">
-          <button onClick={() => setToolsVisible(!toolsVisible)} className="rounded-xl px-5 py-2 text-base font-semibold shadow border-none bg-black/30 text-white/90 hover:bg-emerald-600 hover:text-white transition duration-100 flex items-center justify-center min-h-[38px]">
+          <button onClick={() => setToolsVisible(!toolsVisible)} className="rounded-xl px-5 py-2 text-base font-semibold shadow border-none bg-shade/30 text-ink/90 hover:bg-emerald-600 hover:text-white transition duration-100 flex items-center justify-center min-h-[38px]">
             <span className="text-sm">{t('tools')}</span>
           </button>
         </div>
         {uploadMessage && (
-          <div className="absolute top-3 right-3 z-40 max-w-sm pointer-events-auto rounded-xl bg-black/80 text-white px-4 py-3 shadow-lg border border-white/10 backdrop-blur-sm">
+          <div className="absolute top-3 right-3 z-40 max-w-sm pointer-events-auto rounded-xl bg-shade/80 text-ink px-4 py-3 shadow-lg border border-ink/10 backdrop-blur-sm">
             <p className="text-sm font-semibold leading-snug">{uploadMessage}</p>
             {isDev && uploadDebug && (
               <p className="mt-1 text-xs text-amber-100/80">[{uploadDebug}]</p>
@@ -664,7 +664,7 @@ export default function InteractiveCanvas() {
           <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={async (e) => { const file = e.target.files?.[0]; e.currentTarget.value = ''; if (!file) return; const rect = drawingCanvasRef.current?.getBoundingClientRect(); if (!rect) return; await uploadOneImage(file, rect.width / 2, rect.height / 2, rect) }} />
           <canvas ref={drawingCanvasRef} className="absolute top-0 left-0 w-full h-full" />
           {pendingImages.map((img) => (
-            <div key={`pending-${img.id}`} className="absolute rounded-2xl border border-dashed border-white/30 bg-black/30 pointer-events-none animate-pulse" style={{ top: img.y, left: img.x, width: img.width, height: img.height, zIndex: 2 }}>
+            <div key={`pending-${img.id}`} className="absolute rounded-2xl border border-dashed border-ink/30 bg-shade/30 pointer-events-none animate-pulse" style={{ top: img.y, left: img.x, width: img.width, height: img.height, zIndex: 2 }}>
               <img src={img.url} alt="Upload" className="w-full h-full object-contain rounded-2xl opacity-80" />
             </div>
           ))}

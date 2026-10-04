@@ -134,7 +134,7 @@ export default function RoomList({
 
 
   return (
-    <div className="rounded-xl backdrop-blur-md bg-black/20 p-4 border border-white/10 shadow-lg">
+    <div className="rounded-xl backdrop-blur-md bg-shade/20 p-4 border border-ink/10 shadow-lg">
       <h2 className="text-lg font-semibold mb-2">{t('rooms')}</h2>
 
       <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -145,16 +145,16 @@ export default function RoomList({
           placeholder={t('inviteCodePlaceholder')}
           aria-label={t('inviteCodePlaceholder')}
           maxLength={12}
-          className="w-44 rounded-lg border border-white/15 bg-black/30 px-3 py-1.5 font-mono text-sm tracking-widest uppercase placeholder:font-sans placeholder:tracking-normal placeholder:text-white/30 focus:border-emerald-400/40 focus:outline-none"
+          className="w-44 rounded-lg border border-ink/15 bg-shade/30 px-3 py-1.5 font-mono text-sm tracking-widest uppercase placeholder:font-sans placeholder:tracking-normal placeholder:text-ink/30 focus:border-emerald-400/40 focus:outline-none"
         />
         <button
           onClick={() => void joinByCode()}
           disabled={joining || !inviteCode.trim()}
-          className="rounded-lg bg-emerald-600/80 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-500/90 disabled:opacity-40"
+          className="rounded-lg bg-emerald-600/80 px-3 py-1.5 text-sm font-semibold text-ink transition hover:bg-emerald-500/90 disabled:opacity-40"
         >
           {joining ? '...' : t('inviteJoin')}
         </button>
-        <span className="text-xs text-white/40">
+        <span className="text-xs text-ink/40">
           {t('inviteOnlyHint')}
         </span>
       </div>
@@ -170,7 +170,7 @@ export default function RoomList({
         {rooms.map((r) => (
           <div
             key={r.id}
-            className={`relative p-3 rounded-xl border cursor-pointer flex flex-col gap-2 transition ${selectedId === r.id ? 'bg-emerald-500/15 border-emerald-300 ring-2 ring-emerald-300 shadow-[0_0_16px_2px_rgba(110,231,183,0.35)]' : 'bg-black/30 border-white/10 hover:border-emerald-300/60 hover:ring-2 hover:ring-emerald-300/30'}`}
+            className={`relative p-3 rounded-xl border cursor-pointer flex flex-col gap-2 transition ${selectedId === r.id ? 'bg-emerald-500/15 border-emerald-300 ring-2 ring-emerald-300 shadow-[0_0_16px_2px_rgba(110,231,183,0.35)]' : 'bg-shade/30 border-ink/10 hover:border-emerald-300/60 hover:ring-2 hover:ring-emerald-300/30'}`}
             onClick={() => handleSelect(r)}
             onDoubleClick={() => handleEnter(r)}
           >
@@ -192,7 +192,7 @@ export default function RoomList({
                 </>
               )}
             </div>
-            <span className="flex items-center justify-between gap-2 text-xs text-white/60">
+            <span className="flex items-center justify-between gap-2 text-xs text-ink/60">
               <span className="truncate">
                 {r.updatedAt
                   ? new Date(r.updatedAt).toLocaleDateString()
@@ -230,7 +230,7 @@ export default function RoomList({
               </span>
             ) : (
               <span
-                className="text-[10px] text-white/40 cursor-pointer select-none"
+                className="text-[10px] text-ink/40 cursor-pointer select-none"
                 onClick={(e) => { e.stopPropagation(); setRevealIds((prev) => ({ ...prev, [r.id]: !prev[r.id] })) }}
               >
                 {revealIds[r.id] ? r.id : t('idLabel')}
@@ -243,7 +243,7 @@ export default function RoomList({
                 e.stopPropagation()
                 handleEnter(r)
               }}
-              className={`mt-1 inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition ${selectedId === r.id ? 'bg-emerald-400 text-emerald-950 hover:bg-emerald-300 shadow-[0_0_14px_rgba(110,231,183,0.35)]' : 'bg-white/10 text-white hover:bg-white/20'}`}
+              className={`mt-1 inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition ${selectedId === r.id ? 'bg-emerald-400 text-emerald-950 hover:bg-emerald-300 shadow-[0_0_14px_rgba(110,231,183,0.35)]' : 'bg-ink/10 text-white hover:bg-ink/20'}`}
             >
               <LogIn size={16} />
               {selectedId === r.id ? 'Enter selected room' : t('enter')}

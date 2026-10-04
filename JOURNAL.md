@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-04 — Refonte lancée : socle des thèmes
+- Couleurs de l'interface passées en noms de thème (`bg-surface`, `text-ink/60`…) dans 45 composants ; valeurs dans `app/themes.css`, liste et disposition des panneaux dans `lib/themes.ts`.
+- Choix du thème gardé par joueur dans son navigateur (`components/context/ThemeContext.tsx`), appliqué avant l'affichage pour éviter un flash (`app/layout.tsx`).
+- Thème « Classique » = l'apparence actuelle, à l'identique. Build et 15 tests e2e OK.
+
+Reste ouvert : direction du thème n°1 à choisir (Taverne, Nuit arcane ou Ardoise), fonds animés et couleurs d'accent encore en dur.
+
 ## 2026-10-04 — Débug de fin de phase 3
 - Résumé de session : il n'était jamais partagé en ligne (lecture fautive du stockage Liveblocks, boucle, bascule en local) ; corrigé, plus les lignes vides doublées et l'écrasement au clic (`components/chat/SessionSummary.tsx`).
 - Fiches : les modifications en cours ne sont plus écrasées ; le MJ peut ouvrir, modifier et rendre la fiche d'un joueur, puis revenir à la sienne (`HomePageInner.tsx`, `GMCharacterSelector.tsx`, `CharacterSheet.tsx`).

@@ -56,17 +56,17 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose} style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(2px)' }}>
-      <div onClick={(e) => e.stopPropagation()} className="bg-black/80 text-white rounded-2xl border border-white/10 shadow-2xl backdrop-blur-md p-5 w-80">
+      <div onClick={(e) => e.stopPropagation()} className="bg-shade/80 text-ink rounded-2xl border border-ink/10 shadow-2xl backdrop-blur-md p-5 w-80">
         <h2 className="text-lg font-semibold mb-2">{t('createRoom')}</h2>
         <input
-          className="w-full mb-2 px-2 py-1 rounded bg-gray-800 text-white placeholder-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-pink-400/30"
+          className="w-full mb-2 px-2 py-1 rounded bg-surface text-ink placeholder-ink border border-ink/20 focus:outline-none focus:ring-2 focus:ring-pink-400/30"
           placeholder={t('name')}
           value={name}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') void createRoom() }}
         />
         {creating ? (
-          <div className="w-full h-2 bg-gray-700 rounded overflow-hidden mb-2">
+          <div className="w-full h-2 bg-surface-hover rounded overflow-hidden mb-2">
             <div className="h-full bg-emerald-500 animate-pulse" style={{ width: '100%' }} />
           </div>
         ) : (

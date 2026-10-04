@@ -135,9 +135,9 @@ export default function SideNotes() {
       onPointerUp={(e) => e.stopPropagation()}
     >
       {open ? (
-        <div className="relative rounded-2xl border border-white/12 bg-black/40 backdrop-blur-[8px] shadow-2xl text-white p-3 w-72 animate-fadeInScale"
+        <div className="relative rounded-2xl border border-ink/12 bg-shade/40 backdrop-blur-[8px] shadow-2xl text-ink p-3 w-72 animate-fadeInScale"
           style={{ boxShadow: '0 8px 32px -8px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)' }}>
-          <div className="flex items-center gap-1.5 mb-2 text-white/40">
+          <div className="flex items-center gap-1.5 mb-2 text-ink/40">
             <svg width="13" height="13" viewBox="0 0 22 22" fill="none" aria-hidden="true">
               <rect x="4" y="3.5" width="14" height="15" rx="3.5" stroke="currentColor" strokeWidth="1.5" fill="none"/>
               <line x1="7" y1="7.7" x2="15" y2="7.7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
@@ -148,7 +148,7 @@ export default function SideNotes() {
           </div>
           <textarea
             ref={textareaRef}
-            className="w-full bg-white/5 rounded-xl p-2.5 text-sm resize-y border border-white/8 focus:outline-none focus:border-indigo-400/30 focus:bg-white/8 transition-all placeholder:text-white/20 text-white/90 leading-relaxed"
+            className="w-full bg-ink/5 rounded-xl p-2.5 text-sm resize-y border border-ink/8 focus:outline-none focus:border-indigo-400/30 focus:bg-ink/8 transition-all placeholder:text-ink/20 text-ink/90 leading-relaxed"
             style={{ height }}
             value={notes}
             onChange={handleChange}
@@ -157,7 +157,7 @@ export default function SideNotes() {
             placeholder="…"
           />
           <button
-            className="absolute -right-3 top-4 bg-black/70 hover:bg-black/90 text-white/60 hover:text-white border border-white/12 rounded-lg shadow-lg flex items-center justify-center transition-all duration-150 hover:scale-110"
+            className="absolute -right-3 top-4 bg-shade/70 hover:bg-shade/90 text-ink/60 hover:text-ink border border-ink/12 rounded-lg shadow-lg flex items-center justify-center transition-all duration-150 hover:scale-110"
             onClick={() => { handleResize(); setOpen(false) }}
             title={t('close')}
             style={{ width: 26, height: 26, padding: 0 }}
@@ -167,7 +167,7 @@ export default function SideNotes() {
         </div>
       ) : (
         <button
-          className="bg-black/30 hover:bg-black/55 border border-white/12 rounded-xl shadow-lg backdrop-blur-[4px] flex items-center justify-center transition-all duration-150 hover:scale-105 hover:border-white/20"
+          className="bg-shade/30 hover:bg-shade/55 border border-ink/12 rounded-xl shadow-lg backdrop-blur-[4px] flex items-center justify-center transition-all duration-150 hover:scale-105 hover:border-ink/20"
           onClick={() => setOpen(true)}
           title={t('notes')}
           style={{ width: 40, height: 40, fontSize: '1.2rem', padding: 0 }}

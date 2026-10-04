@@ -20,6 +20,7 @@ import MobileTabBar, { type MobileTab } from '@/components/app/MobileTabBar'
 import { debug } from '@/lib/debug'
 import { roomAuthHeaders } from '@/lib/roomsApi'
 import { saveAccountCharacter } from '@/lib/charactersApi'
+import { useTheme } from '@/components/context/ThemeContext'
 import {
   type Character,
   buildCharacterKey,
@@ -33,6 +34,7 @@ const SELECTED_CHARACTER_KEY = 'selectedCharacterId'
 
 export default function HomePageInner() {
   const router = useRouter()
+  const { theme } = useTheme()
   const [user, setUser] = useState<string | null>(null)
   const profile = useProfile()
   const self = useSelf()
@@ -498,7 +500,7 @@ export default function HomePageInner() {
 
   return (
     <div className="relative w-screen h-dvh font-sans overflow-hidden bg-transparent">
-      <div className="relative z-10 flex flex-col lg:flex-row w-full h-full">
+      <div className={`relative z-10 flex flex-col w-full h-full ${theme.layout.sheetSide === 'right' ? 'lg:flex-row-reverse' : 'lg:flex-row'}`}>
         {/* `lg:contents` efface l'enveloppe sur grand écran : la mise en page
             côte à côte reste celle d'avant les onglets. */}
         <div className={`${mobilePanel('sheet')} flex-1 min-h-0 flex-col items-center overflow-y-auto p-2 lg:contents`}>
@@ -530,7 +532,7 @@ export default function HomePageInner() {
                     onClick={() => { reset(); setCanvasKey((k) => k + 1) }}
                   >Reload canvas</button>
                   <button
-                    className="px-3 py-1 rounded bg-gray-700 text-white hover:bg-gray-600"
+                    className="px-3 py-1 rounded bg-surface-hover text-ink hover:bg-surface-hover"
                     onClick={() => window.location.reload()}
                   >Reload page</button>
                 </div>

@@ -160,7 +160,7 @@ export default function AdminPage() {
 
   if (checking) {
     return (
-      <main className="min-h-screen flex items-center justify-center text-white/60">
+      <main className="min-h-screen flex items-center justify-center text-ink/60">
         <Loader2 className="animate-spin" size={20} />
       </main>
     )
@@ -171,18 +171,18 @@ export default function AdminPage() {
   if (!isAdmin) {
     return (
       <main className="min-h-screen flex items-center justify-center p-6">
-        <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-black/60 p-6 text-white shadow-2xl backdrop-blur-md">
+        <div className="w-full max-w-sm rounded-2xl border border-ink/10 bg-shade/60 p-6 text-ink shadow-2xl backdrop-blur-md">
           <div className="mb-4 flex items-center gap-2">
             <KeyRound size={18} className="text-amber-300" />
             <h1 className="text-lg font-semibold">Accès administrateur</h1>
           </div>
-          <p className="mb-4 text-sm text-white/70">
+          <p className="mb-4 text-sm text-ink/70">
             Cette page est réservée au compte administrateur. Connecte-toi avec ce
             compte pour y accéder.
           </p>
           <a
             href="/connexion?callbackUrl=/admin"
-            className="block w-full rounded-xl bg-indigo-600/80 px-4 py-2 text-center font-semibold text-white transition hover:bg-indigo-500/90"
+            className="block w-full rounded-xl bg-indigo-600/80 px-4 py-2 text-center font-semibold text-ink transition hover:bg-indigo-500/90"
           >
             Se connecter
           </a>
@@ -192,7 +192,7 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="min-h-screen p-6 text-white">
+    <main className="min-h-screen p-6 text-ink">
       <div className="mx-auto max-w-5xl">
         <header className="mb-6 flex flex-wrap items-center gap-3">
           <ShieldCheck size={22} className="text-emerald-400" />
@@ -204,7 +204,7 @@ export default function AdminPage() {
             <button
               onClick={() => void loadRooms()}
               disabled={loadingRooms}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm hover:bg-white/10 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-ink/10 bg-ink/5 px-3 py-1.5 text-sm hover:bg-ink/10 disabled:opacity-50"
             >
               <RefreshCw
                 size={14}
@@ -214,7 +214,7 @@ export default function AdminPage() {
             </button>
             <a
               href="/menu-accueil"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm hover:bg-white/10"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-ink/10 bg-ink/5 px-3 py-1.5 text-sm hover:bg-ink/10"
             >
               <ArrowLeft size={14} />
               Retour au menu
@@ -228,16 +228,16 @@ export default function AdminPage() {
             onChange={(e) => setFilter(e.target.value)}
             placeholder="Filtrer par nom, id ou joueur..."
             aria-label="Filtrer les rooms"
-            className="min-w-[220px] flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm placeholder:text-white/30 focus:outline-none"
+            className="min-w-[220px] flex-1 rounded-lg border border-ink/10 bg-ink/5 px-3 py-2 text-sm placeholder:text-ink/30 focus:outline-none"
           />
-          <label htmlFor="admin-sort" className="text-xs text-white/50">
+          <label htmlFor="admin-sort" className="text-xs text-ink/50">
             Trier
           </label>
           <select
             id="admin-sort"
             value={sortKey}
             onChange={(e) => setSortKey(e.target.value as SortKey)}
-            className="rounded-lg border border-white/10 bg-white/5 px-2 py-2 text-sm [&>option]:bg-neutral-900"
+            className="rounded-lg border border-ink/10 bg-ink/5 px-2 py-2 text-sm [&>option]:bg-surface-deep"
           >
             <option value="createdAt">Plus recentes</option>
             <option value="lastActiveAt">Inactives depuis longtemps</option>
@@ -265,9 +265,9 @@ export default function AdminPage() {
           </p>
         )}
 
-        <div className="overflow-x-auto rounded-xl border border-white/10 bg-black/25">
+        <div className="overflow-x-auto rounded-xl border border-ink/10 bg-shade/25">
           <table className="w-full min-w-[860px] text-sm">
-            <thead className="border-b border-white/10 text-left text-xs uppercase tracking-wider text-white/40">
+            <thead className="border-b border-ink/10 text-left text-xs uppercase tracking-wider text-ink/40">
               <tr>
                 <th className="p-3">
                   <input
@@ -290,7 +290,7 @@ export default function AdminPage() {
               {visibleRooms.map((r) => (
                 <tr
                   key={r.id}
-                  className="border-b border-white/5 hover:bg-white/5"
+                  className="border-b border-ink/5 hover:bg-ink/5"
                 >
                   <td className="p-3">
                     <input
@@ -301,9 +301,9 @@ export default function AdminPage() {
                     />
                   </td>
                   <td className="max-w-[220px] truncate p-3 font-medium">
-                    {r.name || <span className="text-white/40">sans nom</span>}
+                    {r.name || <span className="text-ink/40">sans nom</span>}
                   </td>
-                  <td className="p-3 font-mono text-xs text-white/40">{r.id}</td>
+                  <td className="p-3 font-mono text-xs text-ink/40">{r.id}</td>
                   <td className="p-3 text-xs">
                     {r.members && r.members.length > 0 ? (
                       <ul className="m-0 list-none space-y-0.5 p-0">
@@ -312,26 +312,26 @@ export default function AdminPage() {
                             {m.role === 'gm' && (
                               <Crown size={12} className="text-pink-400" aria-label="MJ" />
                             )}
-                            <span className={m.role === 'gm' ? 'text-white' : 'text-white/60'}>
+                            <span className={m.role === 'gm' ? 'text-ink' : 'text-ink/60'}>
                               {m.pseudo}
                             </span>
                           </li>
                         ))}
                       </ul>
                     ) : (
-                      <span className="text-white/40">personne</span>
+                      <span className="text-ink/40">personne</span>
                     )}
                     {r.joinCode && (
-                      <span className="mt-1 block font-mono text-white/40">code {r.joinCode}</span>
+                      <span className="mt-1 block font-mono text-ink/40">code {r.joinCode}</span>
                     )}
                   </td>
                   <td
-                    className="p-3 text-white/60"
+                    className="p-3 text-ink/60"
                     title={r.createdAt ? `Créée le ${new Date(r.createdAt).toLocaleString()}` : undefined}
                   >
                     {r.lastActiveAt ? new Date(r.lastActiveAt).toLocaleDateString() : '-'}
                   </td>
-                  <td className="p-3 tabular-nums text-white/60">
+                  <td className="p-3 tabular-nums text-ink/60">
                     {r.usersConnected ?? 0}
                   </td>
                   <td className="p-3">
@@ -343,7 +343,7 @@ export default function AdminPage() {
                       )}
                       {!r.hasOwner && (
                         <span
-                          className="rounded bg-white/10 px-1.5 py-0.5 text-white/50"
+                          className="rounded bg-ink/10 px-1.5 py-0.5 text-ink/50"
                           title="Table absente de la base : aucun joueur n'y a accès, seul l'admin la voit"
                         >
                           orpheline
@@ -358,7 +358,7 @@ export default function AdminPage() {
                         disabled={busy}
                         title="Renommer"
                         aria-label={`Renommer ${r.name || r.id}`}
-                        className="rounded-lg border border-white/10 bg-white/5 p-1.5 hover:bg-white/10 disabled:opacity-40"
+                        className="rounded-lg border border-ink/10 bg-ink/5 p-1.5 hover:bg-ink/10 disabled:opacity-40"
                       >
                         <Pencil size={14} />
                       </button>
@@ -377,7 +377,7 @@ export default function AdminPage() {
               ))}
               {!visibleRooms.length && (
                 <tr>
-                  <td colSpan={8} className="p-6 text-center text-white/40">
+                  <td colSpan={8} className="p-6 text-center text-ink/40">
                     {loadingRooms ? 'Chargement...' : 'Aucune room'}
                   </td>
                 </tr>
@@ -386,7 +386,7 @@ export default function AdminPage() {
           </table>
         </div>
 
-        <p className="mt-4 text-xs text-white/30">
+        <p className="mt-4 text-xs text-ink/30">
           {rooms.length} table(s) au total.
         </p>
       </div>

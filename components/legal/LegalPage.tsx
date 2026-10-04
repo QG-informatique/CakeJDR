@@ -18,12 +18,12 @@ export default function LegalPage({
 }) {
   return (
     <div className="flex min-h-dvh w-full justify-center px-4 py-10">
-      <article className="legal w-full max-w-2xl rounded-2xl border border-white/10 bg-black/60 px-6 py-8 text-sm leading-relaxed text-white/85 backdrop-blur-md sm:px-10">
-        <Link href="/menu-accueil" className="text-white/60 no-underline hover:text-white">
+      <article className="legal w-full max-w-2xl rounded-2xl border border-ink/10 bg-shade/60 px-6 py-8 text-sm leading-relaxed text-ink/85 backdrop-blur-md sm:px-10">
+        <Link href="/menu-accueil" className="text-ink/60 no-underline hover:text-ink">
           ← CakeJDR
         </Link>
-        <h1 className="mt-4 mb-1 text-2xl font-bold text-white">{title}</h1>
-        <p className="mt-0 mb-6 text-white/50">Dernière mise à jour : {updated}</p>
+        <h1 className="mt-4 mb-1 text-2xl font-bold text-ink">{title}</h1>
+        <p className="mt-0 mb-6 text-ink/50">Dernière mise à jour : {updated}</p>
         {children}
       </article>
       <style>{`
