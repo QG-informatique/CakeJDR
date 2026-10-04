@@ -47,6 +47,15 @@ export async function recordRoom(params: {
     .onConflictDoNothing()
 }
 
+/** Nombre de tables dont ce compte est le MJ. */
+export async function countOwnedRooms(userId: string) {
+  const rows = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(rooms)
+    .where(eq(rooms.ownerId, userId))
+  return rows[0]?.n ?? 0
+}
+
 /** True si ce compte est le propriétaire enregistré de la table. */
 export async function isRoomOwner(roomId: string, userId: string | null | undefined) {
   if (!userId) return false

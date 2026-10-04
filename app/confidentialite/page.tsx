@@ -7,7 +7,7 @@ const CONTACT = 'qg.informatique.pro@gmail.com'
 
 export default function ConfidentialitePage() {
   return (
-    <LegalPage title="Politique de confidentialité" updated="3 octobre 2026">
+    <LegalPage title="Politique de confidentialité" updated="4 octobre 2026">
       <p>
         CakeJDR est une table de jeu de rôle en ligne, gratuite, éditée par QG Informatique
         (Quentin Gaillard). Cette page explique quelles données le site garde, pourquoi, et
@@ -35,8 +35,9 @@ export default function ConfidentialitePage() {
 
       <h2>Cookies et stockage local</h2>
       <p>
-        Un seul cookie, celui qui te garde connecté (7 jours). Le navigateur garde aussi tes
-        préférences : langue, fond d&apos;écran, fiches non synchronisées. La musique d&apos;une table
+        Un seul cookie, celui qui te garde connecté (30 jours, prolongés à chaque visite). Le
+        navigateur garde aussi tes préférences : langue, thème, fond d&apos;écran, fiches non
+        synchronisées. La musique d&apos;une table
         passe par le lecteur YouTube, soumis aux règles de Google.
       </p>
 
@@ -55,7 +56,7 @@ export default function ConfidentialitePage() {
 
       <h2>Durée de conservation</h2>
       <p>
-        Tant que ton compte existe. Une table supprimée l&apos;est avec son contenu. Une table où
+        Tant que ton compte existe. Une table supprimée l&apos;est avec son contenu, images comprises. Une table où
         personne n&apos;est entré depuis six mois est supprimée automatiquement ; son MJ en est
         prévenu dans le menu un mois avant, et il suffit d&apos;y entrer pour la garder. La salle de
         démonstration est remise à zéro chaque jour.

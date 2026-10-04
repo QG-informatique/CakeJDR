@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-04 — Ouverture au public : premiers garde-fous
+- Images Cloudinary supprimées avec leur table, quelle que soit la cause (MJ, compte supprimé, ménage des tables abandonnées) : `lib/cloudinaryCleanup.ts`, appelé par `deleteRoom`. Seulement le dossier `cakejdr/`, jamais une image de la salle de démo.
+- Limite de 5 tables par compte vérifiée par le serveur (`app/api/rooms/route.ts`), nom de table coupé à 60 caractères ; l'ancienne limite à 1 table par navigateur est retirée. 5 choisi par défaut, à ajuster si Quentin veut autre chose.
+- Pages légales relues : connexion de 30 jours, thème, images supprimées avec la table, adresse de l'hébergeur, droits sur les images de la bibliothèque.
+
+Reste ouvert : adresse et SIRET dans les mentions légales (Quentin) ; test de suppression avec un compte jetable ; rien n'est encore en ligne.
+
 ## 2026-10-04 — Connexion gardée 30 jours
 - Session de connexion portée de 7 à 30 jours, prolongée à chaque visite (`auth.ts`) : Quentin ne veut pas repasser par Google ou Discord à chaque venue.
 - Les 7 jours d'avant étaient déjà prolongés à chaque visite ; si la connexion saute encore, chercher du côté du navigateur (navigation privée, cookies effacés, panneau de l'app Claude).
