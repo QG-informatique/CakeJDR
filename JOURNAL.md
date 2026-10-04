@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-04 — Connexion locale en un clic, sans Discord ni Google
+- Bouton « Connexion locale (admin) » sur la page d'accueil, qui connecte au premier compte administrateur (`auth.ts`, `components/auth/SignInButtons.tsx`).
+- N'existe qu'avec `npm run dev` et depuis localhost : vérifié absent du site construit pour la mise en ligne. Demandé par Quentin, dont le compte Discord n'est pas enregistré dans le navigateur intégré.
+- En local, la base est la vraie : ce qu'on modifie connecté change les vraies fiches et salles.
+
+Reste ouvert : phases C à F de la refonte.
+
 ## 2026-10-04 — Refonte, phase B : un seul écran pour créer et modifier une fiche
 - Nouvel écran `components/character/CharacterEditor.tsx` : portrait et identité à gauche, onglets Caractéristiques, Combat, Compétences, Équipement, Histoire à droite ; chaque zone défile seule, Annuler et Enregistrer restent visibles. Remplace `CharacterModal` (supprimé).
 - Compétences ajoutées et modifiées directement dans la liste, sans fenêtre par-dessus : c'est ce qui créait les chevauchements.
