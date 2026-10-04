@@ -42,7 +42,6 @@ import {
 const PROFILE_KEY = 'jdr_profile'
 const SELECTED_KEY = 'selectedCharacterId'
 // Dice button size consistent with main repo
-const DICE_SIZE = 44
 
 const ROOM_KEY = 'jdr_selected_room'
 
@@ -613,77 +612,22 @@ export default function MenuAccueil() {
           </div>
         ) : (
           <>
-            {/* Barre profil */}
-            <section
-              className="
-                mt-4 mb-6
-                rounded-xl backdrop-blur-md
-                bg-shade/35
-                px-6 py-4
-                flex items-center w-full
-              "
-            >
-              <div className="shrink-0 flex items-center justify-start min-w-[150px] gap-2">
-                <motion.button
-                  type="button"
-                  aria-label="Enter room"
-                  onClick={handlePlay}
-                  className={`relative inline-flex items-center justify-center gap-2 rounded-lg border-2 px-4 shadow-md transition focus:outline-none focus:ring-2 focus:ring-gm-soft/40 focus:ring-offset-2 focus:ring-offset-black ${selectedRoom ? 'animate-pulse' : ''}`}
-                  style={{
-                    height: DICE_SIZE,
-                    minWidth: selectedRoom ? 180 : DICE_SIZE,
-                    background: selectedRoom
-                      ? 'linear-gradient(135deg, rgba(110,231,183,0.95), rgba(52,211,153,0.95))'
-                      : 'rgba(38,16,56,0.14)',
-                    color: selectedRoom ? '#052e16' : '#ffffff',
-                    borderColor: selectedRoom ? '#86efac' : '#f7bbf7',
-                    boxShadow: selectedRoom
-                      ? '0 0 16px 2px rgba(110,231,183,0.45), 0 6px 24px rgba(16,185,129,0.25)'
-                      : '0 0 4px 1px #ffe5fa44, 0 2px 8px 2px #fff2',
-                  }}
-                  disabled={!selectedRoom}
-                  whileHover={{
-                    scale: 1.1,
-                    boxShadow: selectedRoom
-                      ? '0 0 18px 4px rgba(110,231,183,0.55), 0 8px 28px rgba(16,185,129,0.3)'
-                      : '0 0 6px 2px #ffe5fa66, 0 4px 12px 3px #fff3',
-                  }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                >
-                  <LogIn className={`w-5 h-5 ${selectedRoom ? 'text-emerald-950' : 'text-ink'}`} />
-                  {selectedRoom && (
-                    <span className="truncate text-sm font-bold">
-                      Enter {selectedRoom.name || t('unnamedRoom')}
-                    </span>
-                  )}
-                </motion.button>
-                {!selectedRoom && (
-                  <span className="text-sm text-ink/65">
-                    Select a room
-                  </span>
-                )}
-                {selectedRoom && roomLoading && <SmallSpinner />}
-              </div>
-
-              <div className="flex-1 flex items-center justify-center">
+            {/* Barre profil : qui je suis, puis l'action principale, entrer en jeu */}
+            <section className="ui-panel mt-2 mb-4 flex flex-wrap items-center gap-3 px-4 py-3">
+              <div className="flex min-w-0 items-center gap-2">
                 <span
-                  className="font-bold text-xl tracking-wide select-none"
-                  style={{
-                    color: user.color,
-                    textShadow: '0 1px 2px rgba(0,0,0,0.5)',
-                  }}
+                  className="truncate text-lg font-bold tracking-wide select-none"
+                  style={{ color: user.color }}
                 >
                   {user.pseudo}
                 </span>
-                <span className="ml-4">
-                  <ProfileColorPicker
-                    color={user.color}
-                    onChange={handleChangeColor}
-                  />
-                </span>
+                <ProfileColorPicker
+                  color={user.color}
+                  onChange={handleChangeColor}
+                />
               </div>
 
-              <div className="shrink-0 flex items-center justify-end w-[120px] gap-3">
+              <div className="ml-auto flex flex-wrap items-center gap-2">
                 <span
                   title={
                     !selectedRoom
@@ -692,73 +636,41 @@ export default function MenuAccueil() {
                         ? t('gmToolsActive')
                         : t('gmPlayerHere')
                   }
-                  className={`
-                    relative inline-flex items-center justify-center
-                    w-14 h-10 rounded-md font-semibold text-sm
-                    transition border
-                    ${
-                      isGMHere
-                        ? 'bg-[#f472b6]/20 hover:bg-[#f472b6]/35 border-[#f472b6]/40'
-                        : 'bg-surface-hover/70 hover:bg-surface-hover/70 border-line-strong/30'
-                    }
-                  `}
-                  style={{
-                    boxShadow: isGMHere
-                      ? '0 0 0 1px rgba(244,114,182,0.14), 0 0 12px -2px #f472b630'
-                      : '0 0 0 1px rgba(255,255,255,0.05), 0 2px 8px -2px rgba(0,0,0,0.55)',
-                  }}
+                  className={`inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 transition ${
+                    isGMHere ? 'border-gm/40 bg-gm/10' : 'border-line-strong'
+                  }`}
                 >
-                  <span className="flex items-center gap-1">
-                    <Crown size={18} className="text-gm" />
-                    <span
-                      className={`
-                        block w-2.5 h-2.5 rounded-full transition
-                        ${
-                          isGMHere
-                            ? 'bg-gm-soft shadow-[0_0_6px_2px_color-mix(in_srgb,var(--c-gm)_50%,transparent)]'
-                            : 'bg-ink/40'
-                        }
-                      `}
-                    />
-                  </span>
+                  <Crown size={16} className={isGMHere ? 'text-gm' : 'text-ink/40'} />
+                  <span className={`block h-2 w-2 rounded-full ${isGMHere ? 'bg-gm-soft' : 'bg-ink/30'}`} />
                 </span>
-                {/* Logout button with red hover */}
                 <button
-                  onClick={handleLogout}
-                  className="
-                    inline-flex items-center justify-center px-3 h-10 rounded-md
-                    bg-gradient-to-br from-slate-700/80 to-slate-800/80
-                    hover:from-gm/70 hover:to-gm/60
-                    font-semibold text-sm text-ink shadow-lg shadow-shade/40 transition
-                    focus:outline-none focus:ring-2 focus:ring-gm/30 focus:ring-offset-2 focus:ring-offset-black
-                  "
-                  style={{
-                    transition: 'background 0.2s, box-shadow 0.2s',
-                    boxShadow:
-                      '0 2px 8px -2px #d6336c77, 0 4px 24px -6px #d6336c22',
-                  }}
+                  type="button"
+                  onClick={handlePlay}
+                  disabled={!selectedRoom}
+                  className="ui-btn ui-btn-primary !min-h-10 !px-5 max-w-[22rem]"
                 >
-                  <LogOut size={18} className="mr-1" />
+                  {selectedRoom && roomLoading ? <SmallSpinner /> : <LogIn size={16} />}
+                  <span className="truncate">
+                    {selectedRoom
+                      ? t('enterRoomNamed').replace('{n}', selectedRoom.name || t('unnamedRoom'))
+                      : t('pickARoom')}
+                  </span>
+                </button>
+                <button onClick={handleLogout} className="ui-btn ui-btn-ghost">
+                  <LogOut size={16} />
                   {t('logout')}
                 </button>
               </div>
             </section>
-            <div className="mb-4">
-            <RoomList
-              selectedId={selectedRoom?.id || null}
-              onSelect={handleRoomSelect}
-              onEnter={handleEnterRoom}
-              onCreateClick={() => setCreateRoomOpen(true)}
-            />
-            </div>
-            <RoomCreateModal
-              open={createRoomOpen}
-              onClose={() => setCreateRoomOpen(false)}
-              onCreated={handleRoomSelect}
-            />
 
-            {/* Liste des personnages */}
-            <div className="flex-1 min-h-0 rounded-xl backdrop-blur-md bg-shade/20 p-5 overflow-auto">
+            {/* Tables à gauche, personnages à droite sur grand écran */}
+            <div className="grid flex-1 min-h-0 items-start gap-4 lg:grid-cols-2">
+              <RoomList
+                selectedId={selectedRoom?.id || null}
+                onSelect={handleRoomSelect}
+                onEnter={handleEnterRoom}
+                onCreateClick={() => setCreateRoomOpen(true)}
+              />
               <CharacterList
                 filtered={filteredCharacters}
                 remote={remoteChars}
@@ -777,8 +689,13 @@ export default function MenuAccueil() {
                 onOpenCloud={() => setCloudOpen(true)}
               />
             </div>
+            <RoomCreateModal
+              open={createRoomOpen}
+              onClose={() => setCreateRoomOpen(false)}
+              onCreated={handleRoomSelect}
+            />
 
-            <div className="mt-2 flex justify-end">
+            <div className="mt-4 flex justify-end">
               <DeleteAccount pseudo={user.pseudo} />
             </div>
 
@@ -808,7 +725,8 @@ export default function MenuAccueil() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.3 }}
-            className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-shade/80 text-ink px-4 py-2 rounded"
+            className="ui-panel fixed bottom-10 left-1/2 z-50 -translate-x-1/2 px-4 py-2 text-sm shadow-lg !backdrop-blur-md"
+            style={{ background: 'var(--c-panel-head)' }}
           >
             {statusMessage}
           </motion.div>

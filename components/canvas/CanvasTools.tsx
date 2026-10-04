@@ -39,32 +39,33 @@ const CanvasTools: React.FC<CanvasToolsProps> = ({
   const ERASE_MIN = DRAW_MIN * 4
   const ERASE_MAX = DRAW_MAX * 4
   const t = useT()
+  const modes: { mode: ToolMode; label: string; Icon: typeof Pencil }[] = [
+    { mode: 'images', label: t('images'), Icon: ImageIcon },
+    { mode: 'draw', label: t('draw'), Icon: Pencil },
+    { mode: 'erase', label: t('erase'), Icon: Eraser },
+  ]
   return (
-    <div className="flex gap-2 flex-wrap items-center p-3 bg-shade/60 backdrop-blur-xl rounded-2xl shadow-lg border border-ink/10">
-      <button
-        onClick={() => {
-          if (drawMode === 'images' && onAddImage) onAddImage();
-          setDrawMode('images');
-        }}
-        className={`rounded-xl px-3 py-2 text-xs font-semibold shadow border border-ink/10 transition duration-100 ${drawMode === 'images' ? 'bg-accent text-on-accent shadow-md' : 'bg-shade/20 text-accent-soft/85 hover:bg-accent/10 hover:text-ink/80'}`}
-        title={t('images')}
-      >
-        <span className="inline-flex items-center gap-1"><ImageIcon size={14} /> {t('images')}</span>
-      </button>
-      <button
-        onClick={() => setDrawMode('draw')}
-        className={`rounded-xl px-3 py-2 text-xs font-semibold shadow border border-ink/10 transition duration-100 ${drawMode === 'draw' ? 'bg-accent text-on-accent shadow-md' : 'bg-shade/20 text-accent-soft/85 hover:bg-accent/10 hover:text-ink/80'}`}
-        title={t('draw')}
-      >
-        <span className="inline-flex items-center gap-1"><Pencil size={14} /> {t('draw')}</span>
-      </button>
-      <button
-        onClick={() => setDrawMode('erase')}
-        className={`rounded-xl px-3 py-2 text-xs font-semibold shadow border border-ink/10 transition duration-100 ${drawMode === 'erase' ? 'bg-accent text-on-accent shadow-md' : 'bg-shade/20 text-accent-soft/85 hover:bg-accent/10 hover:text-ink/80'}`}
-        title={t('erase')}
-      >
-        <span className="inline-flex items-center gap-1"><Eraser size={14} /> {t('erase')}</span>
-      </button>
+    <div
+      className="ui-panel flex flex-wrap items-center gap-x-3 gap-y-2 p-1.5 shadow-lg !backdrop-blur-md"
+      style={{ background: 'var(--c-panel-head)' }}
+    >
+      <div className="ui-seg" role="group">
+        {modes.map(({ mode, label, Icon }) => (
+          <button
+            key={mode}
+            aria-pressed={drawMode === mode}
+            onClick={() => {
+              // Un second clic sur « Images » ouvre le choix de fichier.
+              if (mode === 'images' && drawMode === 'images' && onAddImage) onAddImage()
+              setDrawMode(mode)
+            }}
+            className="!flex-none inline-flex items-center gap-1.5"
+            title={label}
+          >
+            <Icon size={14} /> {label}
+          </button>
+        ))}
+      </div>
       <input
         type="range"
         min={drawMode === 'erase' ? ERASE_MIN : DRAW_MIN}
@@ -75,24 +76,28 @@ const CanvasTools: React.FC<CanvasToolsProps> = ({
           if (drawMode === 'erase') setEraserSize(v)
           else setPenSize(v)
         }}
-        className="w-24 mx-2"
+        className="w-24"
+        aria-label={t('brushSize')}
       />
-      {COLORS.map(c => (
-        <button
-          key={c}
-          onClick={() => setColor(c)}
-          className="w-6 h-6 rounded-full border-2 mx-1"
-          style={{ backgroundColor: c, borderColor: color === c ? '#4f9ddf' : 'white', boxShadow: color === c ? '0 0 0 2px #4f9ddf' : 'none' }}
-          title={c}
-        />
-      ))}
-      {/* Import button removed; Images button already opens picker */}
+      <div className="flex items-center gap-1.5">
+        {COLORS.map(c => (
+          <button
+            key={c}
+            onClick={() => setColor(c)}
+            className={`h-5 w-5 rounded-full border border-ink/30 transition ${color === c ? 'ring-2 ring-accent ring-offset-2 ring-offset-[var(--c-surface-deep)]' : 'hover:scale-110'}`}
+            style={{ backgroundColor: c }}
+            title={c}
+            aria-label={c}
+            aria-pressed={color === c}
+          />
+        ))}
+      </div>
       <button
         onClick={clearCanvas}
-        className="rounded-xl px-3 py-2 text-xs font-semibold shadow border-none bg-red-600 text-white hover:bg-red-700 ml-4"
+        className="ui-btn ui-btn-danger !text-red-300"
         title={t('clearAll')}
       >
-        <span className="inline-flex items-center gap-1"><Trash2 size={14} /> {t('clearAll')}</span>
+        <Trash2 size={14} /> {t('clearAll')}
       </button>
     </div>
   )

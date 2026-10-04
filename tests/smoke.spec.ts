@@ -54,7 +54,7 @@ test('on a phone, the table shows one panel at a time', async ({ page }) => {
   await expect(page.getByRole('button', { name: /^(Lancer|Roll)$/ })).toBeHidden()
 
   await page.getByRole('tab', { name: /^(Fiche|Sheet)$/ }).click()
-  await expect(page.getByRole('button', { name: /^(Statistiques|Stats)$/ })).toBeVisible()
+  await expect(page.getByRole('tab', { name: /^(Statistiques|Stats)$/ })).toBeVisible()
   // Rien ne déborde sur la droite.
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
   expect(overflow).toBeLessThanOrEqual(0)

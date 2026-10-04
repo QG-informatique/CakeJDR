@@ -1,7 +1,7 @@
 'use client'
 
 import { FC, useState, useEffect, useCallback } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import StatsTab from './StatsTab'
 import EquipTab from './EquipTab'
 import DescriptionPanel from '../character/DescriptionPanel'
@@ -167,10 +167,11 @@ const CharacterSheet: FC<Props> = ({
       <div className="relative w-0 h-0 overflow-visible flex-shrink-0">
         <button
           onClick={() => setCollapsed(false)}
-          aria-label="Expand character panel"
-          className="absolute top-2 left-2 z-50 text-ink/80 hover:text-ink bg-shade/30 rounded-full p-1"
+          aria-label={t('expandPanel')}
+          title={t('expandPanel')}
+          className="ui-btn ui-btn-icon absolute top-0 left-0 z-50"
         >
-          <ChevronRight size={20} />
+          <ChevronRight size={18} />
         </button>
       </div>
     )
@@ -178,12 +179,10 @@ const CharacterSheet: FC<Props> = ({
 
   return (
     <aside
-      className="
-        relative select-none flex-shrink-0 transition-all duration-300
-        bg-shade/10 border border-ink/10 backdrop-blur-[2px]
-        shadow shadow-shade/5 rounded-2xl text-[15px] text-ink
-        w-full md:w-[420px] p-5 pt-0 pb-3 px-3 overflow-y-auto
-      "
+      className={`
+        ui-panel relative select-none flex-shrink-0 text-[15px]
+        w-full md:w-[400px] px-3 pb-4 overflow-y-auto ${creation ? 'pt-4' : ''}
+      `}
       style={{
         width: creation ? 'auto' : undefined,
         minWidth: creation ? '600px' : undefined,
@@ -192,15 +191,6 @@ const CharacterSheet: FC<Props> = ({
         overflowX: 'hidden',
       }}
     >
-      {/* Collapse button stays visible above content */}
-      <button
-        onClick={() => setCollapsed(true)}
-        aria-label="Collapse character panel"
-        className="max-lg:hidden absolute top-2 right-2 z-50 text-ink/80 hover:text-ink bg-shade/30 rounded-full p-1"
-      >
-        <ChevronLeft size={20} />
-      </button>
-
       {!creation && (
         <CharacterSheetHeader
           edit={edit}
@@ -210,6 +200,7 @@ const CharacterSheet: FC<Props> = ({
           setTab={setTab}
           TABS={TABS}
           logoOnly={logoOnly}
+          onCollapse={isDesktop ? () => setCollapsed(true) : undefined}
         >
           {children}
         </CharacterSheetHeader>

@@ -29,7 +29,7 @@ export default function MobileTabBar({
   ]
 
   return (
-    <nav className="lg:hidden flex-shrink-0 border-t border-ink/10 bg-shade/40 px-2 pt-1.5 pb-6 backdrop-blur">
+    <nav className="lg:hidden flex-shrink-0 border-t border-[var(--c-panel-line)] px-2 pt-1.5 pb-6 backdrop-blur" style={{ background: 'var(--c-panel-head)' }}>
       <div role="tablist" className="flex gap-1">
         {tabs.map(({ key, label, Icon }) => {
           const selected = active === key
@@ -40,14 +40,14 @@ export default function MobileTabBar({
               role="tab"
               aria-selected={selected}
               onClick={() => onSelect(key)}
-              className={`relative flex flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 text-xs font-semibold transition ${
-                selected ? 'bg-ink/15 text-ink' : 'text-ink/60 hover:text-ink'
+              className={`relative flex flex-1 flex-col items-center gap-0.5 rounded-lg py-1.5 text-xs font-semibold transition ${
+                selected ? 'bg-accent/15 text-accent' : 'text-ink/60 hover:text-ink'
               }`}
             >
               <Icon size={20} />
               {label}
               {key === 'chat' && chatUnread && !selected && (
-                <span className="absolute right-[30%] top-1 h-2 w-2 rounded-full bg-rose-400" aria-hidden="true" />
+                <span className="absolute right-[30%] top-1 h-2 w-2 rounded-full bg-accent" aria-hidden="true" />
               )}
             </button>
           )

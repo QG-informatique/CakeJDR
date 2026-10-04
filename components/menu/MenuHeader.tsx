@@ -23,14 +23,10 @@ interface MenuHeaderProps {
   bottomPadding?: number
 }
 
-const SIDE_WIDTH  = 120
-const HEADER_PAD  = 16
-const LOGO_SIZE   = 160
+const LOGO_SIZE   = 48
 
 const MenuHeader: FC<MenuHeaderProps> = ({
   scale = 1,
-  topPadding = 48,
-  bottomPadding = 32,
 }) => {
   // Animation gâteau
   const [cakeAnim, setCakeAnim] = useState<'idle' | 'walking'>('idle')
@@ -61,57 +57,29 @@ const MenuHeader: FC<MenuHeaderProps> = ({
     }
   }
 
+  // Une barre basse : le logo à gauche, les réglages (fixés en haut à droite)
+  // gardent leur place. Un clic sur le gâteau change le fond, comme avant.
   return (
     <header
-      className="relative w-full select-none"
-      style={{
-        paddingTop: topPadding,
-        paddingBottom: bottomPadding,
-        paddingInline: HEADER_PAD,
-        transform: scale !== 1 ? `scale(${scale})` : undefined,
-        transformOrigin: 'top center'
-      }}
+      className="relative mx-auto flex w-full max-w-7xl items-center px-6 pt-3 select-none"
+      style={{ transform: scale !== 1 ? `scale(${scale})` : undefined, transformOrigin: 'top left' }}
     >
-      {/* Logo Cake animé, centré, taille personnalisable */}
-      <div className="pointer-events-auto absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-20">
-        <motion.div
-          animate={cakeAnim}
-          initial="idle"
-          variants={cakeVariants}
-          onClick={handleCakeClick}
-          onAnimationComplete={(def) => {
-            if (def === 'walking') {
-              cycleBackground() // FIX: change background after animation
-              setCakeAnim('idle') // FIX: re-enable button for next clicks
-            }
-          }}
-          whileHover={{ scale: 1.05, filter: 'drop-shadow(0 0 8px rgba(244,114,182,0.6))' }}
-          whileTap={{ scale: 0.97 }}
-          className="inline-flex items-center justify-center overflow-visible"
-          style={{
-            cursor: 'pointer',
-            userSelect: 'none'
-          }}
-        >
-          <CakeLogo
-            xl
-            showText={false}
-            className="pointer-events-none"
-          />
-        </motion.div>
-      </div>
-
-      {/* Ligne principale */}
-      <div className="relative z-10 flex items-center w-full">
-        {/* Colonne gauche */}
-        <div
-          className="flex items-center justify-start ml-4"
-          style={{ width: SIDE_WIDTH, minWidth: SIDE_WIDTH }}
-        />
-
-        {/* Centre flexible */}
-        <div className="flex-1" />
-      </div>
+      <motion.div
+        animate={cakeAnim}
+        initial="idle"
+        variants={cakeVariants}
+        onClick={handleCakeClick}
+        onAnimationComplete={(def) => {
+          if (def === 'walking') {
+            cycleBackground()
+            setCakeAnim('idle')
+          }
+        }}
+        whileTap={{ scale: 0.97 }}
+        className="inline-flex cursor-pointer items-center"
+      >
+        <CakeLogo large className="pointer-events-none !gap-2 [&>span]:!text-2xl" />
+      </motion.div>
     </header>
   )
 }

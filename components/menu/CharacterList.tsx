@@ -1,5 +1,5 @@
 import { FC, RefObject, useMemo } from 'react'
-import { Edit2, Trash2, Plus, Upload, Download, Cloud } from 'lucide-react'
+import { Edit2, Trash2, Plus, Upload, Download, Cloud, ScrollText } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useT } from '@/lib/useT'
 import { type Character, buildCharacterKey } from '@/types/character'
@@ -22,11 +22,8 @@ interface Props {
   onOpenCloud: () => void // FIX: open cloud modal
 }
 
-const btnBase =
-  'inline-flex items-center justify-center gap-2 px-2.5 py-1.5 rounded-lg ' +
-  'bg-accent/10 hover:bg-accent/25 active:bg-accent/30 border border-accent/10 ' +
-  'transition-all shadow-sm text-accent-soft font-semibold text-sm backdrop-blur-[2px] ' +
-  'disabled:opacity-40 disabled:cursor-not-allowed'
+// Petits boutons d'icône des cartes de personnage.
+const iconBtn = 'ui-btn ui-btn-ghost ui-btn-icon !h-7 !min-h-7 !w-7'
 
 const CharacterList: FC<Props> = ({
   filtered,
@@ -49,17 +46,9 @@ const CharacterList: FC<Props> = ({
   const remoteMap = useMemo(() => new Map(Object.entries(remote)), [remote])
 
   return (
-    <section
-      className="
-        rounded-xl backdrop-blur-md bg-shade/18 border border-ink/10
-        p-3 flex-grow relative overflow-hidden
-      "
-      style={{
-        boxShadow:
-          '0 4px 18px -8px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05)',
-      }}
-    >
-      <h2 className="text-lg font-semibold mb-2 select-none tracking-wide">
+    <section className="ui-panel flex flex-col gap-3 p-4">
+      <h2 className="flex items-center gap-2 text-base font-semibold select-none">
+        <ScrollText size={16} className="text-accent" />
         {t('characterSheets')}
       </h2>
 
@@ -75,7 +64,7 @@ const CharacterList: FC<Props> = ({
           return <p className="text-xs text-ink/65 italic">{t('noSheets')}</p>
         }
         return (
-          <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <ul className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
             <AnimatePresence initial={false}>
               {all.map((ch) => {
                 const isSelected =
@@ -109,37 +98,20 @@ const CharacterList: FC<Props> = ({
                         if (typeof idx === 'number' && idx >= 0) onSelect(idx)
                       }
                     }}
-                    className={`
-                  group relative rounded-lg p-3 cursor-pointer
-                  flex flex-col gap-2 min-h-[120px]
-                  transition
-                  ${
-                    isSelected
-                      ? 'ring-2 ring-emerald-400/90 shadow-[0_0_12px_2px_rgba(16,185,129,0.6)]'
-                      : 'hover:ring-2 hover:ring-emerald-300/40'
-                  }
-                `}
-                    style={{
-                      background:
-                        'linear-gradient(145deg, rgba(34,42,60,0.42), rgba(18,23,35,0.35))',
-                      backdropFilter: 'blur(4px)',
-                      WebkitBackdropFilter: 'blur(4px)',
-                      boxShadow: isSelected
-                        ? '0 0 0 1px rgba(255,255,255,0.06), 0 0 18px -6px rgba(16,185,129,0.45)'
-                        : '0 0 0 1px rgba(255,255,255,0.03), 0 2px 6px -4px rgba(0,0,0,0.50)',
-                    }}
-                    title={ch.nom || 'No name'}
+                    className={`ui-well group relative flex min-h-[7.5rem] cursor-pointer flex-col gap-1.5 p-3 transition ${
+                      isSelected
+                        ? '!border-accent ring-1 ring-accent'
+                        : 'hover:!border-[var(--c-line-strong)]'
+                    }`}
+                    title={ch.nom || t('unnamed')}
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     layout
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <span
-                        className="font-semibold text-sm leading-tight truncate max-w-[110px]"
-                        style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
-                      >
-                        {ch.nom || 'No name'}
+                      <span className="min-w-0 flex-1 truncate font-semibold leading-tight">
+                        {ch.nom || t('unnamed')}
                       </span>
                       {local && (
                         <div className="flex items-center gap-1 shrink-0">
@@ -148,34 +120,30 @@ const CharacterList: FC<Props> = ({
                               e.stopPropagation()
                               onEdit(ch.id)
                             }}
-                            className={
-                              btnBase +
-                              ' hover:bg-yellow-500/90 text-yellow-100 w-8 h-8'
-                            }
+                            className={iconBtn}
                             title={t('edit')}
+                            aria-label={t('edit')}
                           >
-                            <Edit2 size={16} />
+                            <Edit2 size={13} />
                           </button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
                               onDelete(ch.id)
                             }}
-                            className={
-                              btnBase +
-                              ' hover:bg-red-600/90 text-red-100 w-8 h-8'
-                            }
+                            className={`${iconBtn} ui-btn-danger`}
                             title={t('delete')}
+                            aria-label={t('delete')}
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={13} />
                           </button>
                         </div>
                       )}
                     </div>
-                    <div className="flex flex-col gap-1 text-xs text-ink/85 mt-1 flex-1">
+                    <div className="flex flex-1 flex-col gap-0.5 text-xs text-ink/80">
                       {ch.niveau !== undefined && (
                         <div>
-                          <span className="font-medium text-emerald-200">
+                          <span className="text-ink/45">
                             {t('level')}
                           </span>{' '}
                           {ch.niveau}
@@ -183,7 +151,7 @@ const CharacterList: FC<Props> = ({
                       )}
                       {ch.classe && (
                         <div>
-                          <span className="font-medium text-emerald-200">
+                          <span className="text-ink/45">
                             {t('class')}
                           </span>{' '}
                           {ch.classe}
@@ -191,7 +159,7 @@ const CharacterList: FC<Props> = ({
                       )}
                       {ch.sexe && (
                         <div>
-                          <span className="font-medium text-emerald-200">
+                          <span className="text-ink/45">
                             {t('gender')}
                           </span>{' '}
                           {ch.sexe}
@@ -199,7 +167,7 @@ const CharacterList: FC<Props> = ({
                       )}
                       {ch.race && (
                         <div>
-                          <span className="font-medium text-emerald-200">
+                          <span className="text-ink/45">
                             {t('race')}
                           </span>{' '}
                           {ch.race}
@@ -208,7 +176,7 @@ const CharacterList: FC<Props> = ({
                     </div>
                     <div className="flex items-center gap-1 justify-end mt-auto">
                       {cloud && (
-                        <Cloud size={14} className="text-accent-soft/80" />
+                        <Cloud size={14} className="mr-auto text-accent-soft/70" aria-label="Cloud" />
                       )}
                       {needsUpload && (
                         <button
@@ -216,13 +184,11 @@ const CharacterList: FC<Props> = ({
                             e.stopPropagation()
                               onUpload(local ? filtered.at(localIdx)! : ch)
                           }}
-                          className={
-                            btnBase +
-                            ' hover:bg-cyan-600/80 text-cyan-100 w-8 h-8'
-                          }
-                          title={cloud ? 'Update cloud' : 'Upload'}
+                          className={iconBtn}
+                          title={t('exportToCloud')}
+                          aria-label={t('exportToCloud')}
                         >
-                          <Upload size={16} />
+                          <Upload size={13} />
                         </button>
                       )}
                       {needsDownload && (
@@ -234,13 +200,11 @@ const CharacterList: FC<Props> = ({
                               onSelect(idx)
                             }
                           }}
-                          className={
-                            btnBase +
-                            ' hover:bg-emerald-600/80 text-emerald-100 w-8 h-8'
-                          }
-                          title="Download"
+                          className={iconBtn}
+                          title={t('importFromCloud')}
+                          aria-label={t('importFromCloud')}
                         >
-                          <Download size={16} />
+                          <Download size={13} />
                         </button>
                       )}
                       {cloud && (
@@ -249,13 +213,11 @@ const CharacterList: FC<Props> = ({
                             e.stopPropagation()
                             onDeleteCloud(ch)
                           }}
-                          className={
-                            btnBase +
-                            ' hover:bg-red-700/80 text-red-100 w-8 h-8'
-                          }
-                          title="Delete cloud"
+                          className={`${iconBtn} ui-btn-danger`}
+                          title={t('deleteFromCloud')}
+                          aria-label={t('deleteFromCloud')}
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={13} />
                         </button>
                       )}
                     </div>
@@ -267,36 +229,18 @@ const CharacterList: FC<Props> = ({
         )
       })()}
 
-      <div className="mt-6 flex flex-wrap gap-3 text-sm items-center">
-        <button
-          onClick={onNew}
-          className={btnBase + ' hover:bg-emerald-600/80 text-emerald-100'}
-        >
-          <Plus size={17} /> {t('newSheet')}
+      <div className="flex flex-wrap items-center gap-2 border-t border-[var(--c-panel-line)] pt-3">
+        <button onClick={onNew} className="ui-btn ui-btn-primary">
+          <Plus size={15} /> {t('newSheet')}
         </button>
-        <button
-          onClick={onImportClick}
-          className={btnBase + ' hover:bg-accent-hover/80 text-accent-soft hover:text-on-accent'}
-        >
-          <Upload size={17} /> {t('importBtn')}
+        <button onClick={onImportClick} className="ui-btn">
+          <Upload size={15} /> {t('importBtn')}
         </button>
-        <button
-          onClick={onExport}
-          disabled={selectedIdx === null}
-          className={
-            btnBase +
-            ' hover:bg-emerald-600/80 text-emerald-100' +
-            (selectedIdx === null ? ' opacity-50 pointer-events-none' : '')
-          }
-        >
-          <Download size={17} /> {t('exportBtn')}
+        <button onClick={onExport} disabled={selectedIdx === null} className="ui-btn">
+          <Download size={15} /> {t('exportBtn')}
         </button>
-        <button
-          onClick={onOpenCloud}
-          className={btnBase + ' hover:bg-accent/80 text-accent-soft hover:text-on-accent'}
-          title="Cloud"
-        >
-          <Cloud size={17} /> Cloud
+        <button onClick={onOpenCloud} className="ui-btn" title="Cloud">
+          <Cloud size={15} /> Cloud
         </button>
         <input
           type="file"

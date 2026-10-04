@@ -19,22 +19,40 @@ const ATTACKS = [
   { key: 'mod_distance', label: 'ranged' },
   { key: 'mod_magique', label: 'magic' }
 ] as const
+const BASICS = [
+  { key: 'defense', label: 'defense' },
+  { key: 'chance', label: 'luck' },
+  { key: 'initiative', label: 'initiative' },
+] as const
 
+// Couleur de la valeur d'une caractéristique : on lit d'un coup d'œil les
+// points forts (vert, or) et les faiblesses (orange, rouge).
 const getStatColor = (value: number) => {
-  if (value >= 18) return 'bg-yellow-400 text-black'
-  if (value >= 14) return 'bg-green-500 text-white'
-  if (value >= 10) return 'bg-green-300 text-black'
-  if (value >= 6) return 'bg-orange-400 text-white'
-  return 'bg-red-500 text-white'
+  if (value >= 18) return 'text-yellow-300'
+  if (value >= 14) return 'text-emerald-300'
+  if (value >= 10) return 'text-ink'
+  if (value >= 6) return 'text-amber-300'
+  return 'text-red-400'
 }
 
 const getPvColor = (pv: number, pvMax: number) => {
-  if (!pvMax) return 'bg-ink/25 text-ink'
+  if (!pvMax) return 'bg-ink/30'
   const ratio = pv / pvMax
-  if (ratio > 0.7) return 'bg-green-500 text-white'
-  if (ratio > 0.3) return 'bg-orange-400 text-white'
-  return 'bg-red-500 text-white'
+  if (ratio > 0.7) return 'bg-emerald-500'
+  if (ratio > 0.3) return 'bg-amber-500'
+  return 'bg-red-500'
 }
+
+const fieldClass =
+  'w-full min-w-0 rounded-md bg-field border px-1.5 py-0.5 text-sm text-field-ink text-center'
+
+/** Case d'une valeur : petit intitulé, grand chiffre. */
+const Tile: FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
+  <div className="ui-well flex min-w-0 flex-col items-center gap-0.5 px-1.5 py-2">
+    <span className="ui-label !text-[10px] w-full truncate text-center" title={label}>{label}</span>
+    {children}
+  </div>
+)
 
 type Props = {
   edit: boolean
@@ -45,131 +63,124 @@ type Props = {
 const StatsPanel: FC<Props> = ({ edit, perso, onChange }) => {
   const pvActuel = Number(perso.pv) || 0
   const pvMax = Number(perso.pv_max ?? perso.pvMax ?? perso.pv) || pvActuel
+  const pvRatio = pvMax ? Math.max(0, Math.min(1, pvActuel / pvMax)) : 0
   const t = useT()
 
   return (
-    <div>
-      {/* Name top right above HP */}
-      <div className="flex justify-between items-start mb-2">
-        <div className="flex flex-col gap-2 flex-1">
-          <div className="flex items-center">
-            <strong className="w-20">{t('level')}:</strong>
-            {edit
-              ? <input type="text" value={perso.niveau || ''} onChange={e => onChange('niveau', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-field border w-14 text-sm text-field-ink" />
-              : <span className="ml-1 text-sm">{perso.niveau}</span>
-            }
-          </div>
-          <div className="flex items-center">
-            <strong className="w-20">{t('defense')}:</strong>
-            {edit
-              ? <input type="text" value={perso.defense || ''} onChange={e => onChange('defense', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-field border w-14 text-sm text-field-ink" />
-              : <span className="ml-1 text-sm">{perso.defense}</span>
-            }
-          </div>
-          <div className="flex items-center">
-            <strong className="w-20">{t('luck')}:</strong>
-            {edit
-              ? <input type="text" value={perso.chance || ''} onChange={e => onChange('chance', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-field border w-14 text-sm text-field-ink" />
-              : <span className="ml-1 text-sm">{perso.chance}</span>
-            }
-          </div>
-          <div className="flex items-center">
-            <strong className="w-20">{t('initiative')}:</strong>
-            {edit
-              ? <input type="text" value={perso.initiative || ''} onChange={e => onChange('initiative', e.target.value)} className="ml-1 px-1 py-0.5 rounded bg-field border w-14 text-sm text-field-ink" />
-              : <span className="ml-1 text-sm">{perso.initiative}</span>
-            }
-          </div>
+    <div className="flex flex-col gap-4">
+      {/* Identité : nom et niveau */}
+      <div className="flex items-end gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="ui-label mb-0.5">{t('name')}</div>
+          {edit
+            ? <input value={perso.nom || ''} onChange={e => onChange('nom', e.target.value)} className={`${fieldClass} !text-left !text-base font-semibold`} />
+            : <div className="truncate text-xl font-bold leading-tight">{perso.nom || t('unnamed')}</div>
+          }
         </div>
-        <div className="flex flex-col items-center ml-4">
-          <div className="flex items-center mb-1">
-            <span className="text-sm text-ink/55 mr-2">{t('name')}:</span>
-            {edit
-              ? <input value={perso.nom || ''} onChange={e => onChange('nom', e.target.value)} className="px-1 py-0.5 rounded text-sm font-semibold bg-field border text-field-ink w-[90px]" />
-              : <span className="text-sm font-semibold">{perso.nom}</span>
-            }
-          </div>
-          <span className={`flex items-center justify-center text-2xl font-bold rounded-full h-14 w-14 border-4 ${getPvColor(pvActuel, pvMax)}`} style={{ boxShadow: '0 0 8px #222' }}>
-            {pvActuel}
-          </span>
-          <span className="mt-1 text-xs text-ink/70">{t('hp')} / {pvMax}</span>
-          {edit && (
-            <div className="mt-1 flex gap-1">
-              <input
-                type="number"
-                min={0}
-                value={perso.pv ?? ''}
-                onChange={e => onChange('pv', e.target.value)}
-                className="w-10 px-1 py-0.5 rounded bg-field border text-sm text-field-ink"
-                placeholder={t('hp')}
-              />
-              <span className="text-ink/55 font-bold">/</span>
-              <input
-                type="number"
-                min={0}
-                value={perso.pv_max ?? perso.pvMax ?? ''}
-                onChange={e => onChange('pv_max', e.target.value)}
-                className="w-10 px-1 py-0.5 rounded bg-field border text-sm text-field-ink"
-                placeholder={t('max')}
-              />
-            </div>
-          )}
+        <div className="w-20 shrink-0 text-right">
+          <div className="ui-label mb-0.5">{t('level')}</div>
+          {edit
+            ? <input type="text" value={perso.niveau || ''} onChange={e => onChange('niveau', e.target.value)} className={fieldClass} />
+            : <div className="text-xl font-bold leading-tight tabular-nums">{perso.niveau}</div>
+          }
         </div>
       </div>
 
-      {/* Stats and attack modifiers — l'un sous l'autre sur téléphone */}
-      <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:gap-0">
-        <div className="flex-1">
-          <div className="font-semibold text-base mb-1">{t('attributes')}</div>
-{STATS.map(stat =>
-  <div key={stat.key} className="flex gap-3 items-center mb-1">
-    <strong className="w-28 text-right">{t(stat.label as TranslationKey)} :</strong>
-    {edit
-      ? <>
-          <input type="text" value={perso[stat.key] ?? ''} onChange={e => onChange(stat.key, e.target.value)} className="ml-2 px-1 py-0.5 rounded bg-field border w-10 text-sm text-field-ink" />
-          <span className="mx-1">/</span>
-          <input type="text" value={perso[`${stat.key}_mod`] ?? ''} onChange={e => onChange(`${stat.key}_mod`, e.target.value)} className="px-1 py-0.5 rounded bg-field border w-10 text-sm text-field-ink" placeholder={t('mod')} />
-        </>
-      : <>
-          {(() => {
+      {/* Points de vie */}
+      <div className="ui-well px-3 py-2.5">
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="ui-label">{t('hp')}</span>
+          {edit
+            ? (
+              <span className="flex items-center gap-1">
+                <input
+                  type="number"
+                  min={0}
+                  value={perso.pv ?? ''}
+                  onChange={e => onChange('pv', e.target.value)}
+                  className={`${fieldClass} !w-16`}
+                  placeholder={t('hp')}
+                />
+                <span className="text-ink/50 font-bold">/</span>
+                <input
+                  type="number"
+                  min={0}
+                  value={perso.pv_max ?? perso.pvMax ?? ''}
+                  onChange={e => onChange('pv_max', e.target.value)}
+                  className={`${fieldClass} !w-16`}
+                  placeholder={t('max')}
+                />
+              </span>
+            )
+            : (
+              <span className="tabular-nums">
+                <span className="text-2xl font-bold">{pvActuel}</span>
+                <span className="text-sm text-ink/55"> / {pvMax}</span>
+              </span>
+            )}
+        </div>
+        <div className="mt-2 h-2 overflow-hidden rounded-full bg-ink/10">
+          <div
+            className={`h-full rounded-full transition-[width] duration-300 ${getPvColor(pvActuel, pvMax)}`}
+            style={{ width: `${pvRatio * 100}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Défense, chance, initiative */}
+      <div className="grid grid-cols-3 gap-2">
+        {BASICS.map(b => (
+          <Tile key={b.key} label={t(b.label as TranslationKey)}>
+            {edit
+              ? <input type="text" value={perso[b.key] || ''} onChange={e => onChange(b.key, e.target.value)} className={fieldClass} />
+              : <span className="text-lg font-bold tabular-nums">{perso[b.key]}</span>
+            }
+          </Tile>
+        ))}
+      </div>
+
+      {/* Caractéristiques et modificateurs */}
+      <div>
+        <div className="ui-label mb-1.5">{t('attributes')}</div>
+        <div className="grid grid-cols-3 gap-2">
+          {STATS.map(stat => {
             const statValue = Number(perso[stat.key] ?? 0)
             const modValue = Number(
               (perso as Record<string, unknown>)[`${stat.key}_mod`] ?? 0,
             )
             return (
-              <>
-          <span
-            className={`ml-2 px-2 py-0.5 rounded text-base font-bold ${getStatColor(statValue)} bg-opacity-80`}
-            style={{ display: 'inline-block', width: '36px', textAlign: 'center' }} // fixed width
-          >
-            {statValue}
-          </span>
-          <span
-            className="ml-2 text-ink/70 text-base font-semibold"
-            style={{ display: 'inline-block', width: '50px', textAlign: 'left' }} // fixed width for all mods
-          >
-            ({modValue >= 0 ? '+' : ''}{modValue})
-          </span>
-              </>
+              <Tile key={stat.key} label={t(stat.label as TranslationKey)}>
+                {edit
+                  ? (
+                    <span className="flex w-full items-center gap-1">
+                      <input type="text" value={perso[stat.key] ?? ''} onChange={e => onChange(stat.key, e.target.value)} className={fieldClass} aria-label={t(stat.label as TranslationKey)} />
+                      <input type="text" value={perso[`${stat.key}_mod`] ?? ''} onChange={e => onChange(`${stat.key}_mod`, e.target.value)} className={fieldClass} placeholder={t('mod')} aria-label={`${t(stat.label as TranslationKey)} — ${t('mod')}`} />
+                    </span>
+                  )
+                  : (
+                    <span className="flex items-baseline gap-1.5 tabular-nums">
+                      <span className={`text-xl font-bold ${getStatColor(statValue)}`}>{statValue}</span>
+                      <span className="text-xs font-semibold text-ink/55">{modValue >= 0 ? '+' : ''}{modValue}</span>
+                    </span>
+                  )}
+              </Tile>
             )
-          })()}
-        </>
-    }
-  </div>
-)}
-
+          })}
         </div>
-        <div className="flex flex-col items-start sm:items-end justify-between sm:ml-4 sm:min-w-[120px]">
-          <div className="font-semibold text-base mb-1">{t('attackMods')}</div>
-          {ATTACKS.map(att =>
-            <div key={att.key} className="flex items-center mb-2 w-full sm:justify-end">
-              <strong className="w-28 sm:w-16 text-right">{t(att.label as TranslationKey)}</strong>
+      </div>
+
+      {/* Modificateurs d'attaque */}
+      <div>
+        <div className="ui-label mb-1.5">{t('attackMods')}</div>
+        <div className="grid grid-cols-3 gap-2">
+          {ATTACKS.map(att => (
+            <Tile key={att.key} label={t(att.label as TranslationKey)}>
               {edit
-                ? <input type="text" value={perso[att.key] ?? ''} onChange={e => onChange(att.key, e.target.value)} className="ml-2 px-1 py-0.5 rounded bg-field border w-10 text-sm text-field-ink text-right" />
-                : <span className="ml-3 px-2 py-0.5 rounded text-base font-bold bg-surface-hover text-ink text-right">{perso[att.key] ?? 0}</span>
+                ? <input type="text" value={perso[att.key] ?? ''} onChange={e => onChange(att.key, e.target.value)} className={fieldClass} />
+                : <span className="text-lg font-bold tabular-nums">{perso[att.key] ?? 0}</span>
               }
-            </div>
-          )}
+            </Tile>
+          ))}
         </div>
       </div>
     </div>

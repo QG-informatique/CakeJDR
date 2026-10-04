@@ -1,7 +1,7 @@
 'use client'
 
 import { FC, RefObject, useRef, useState, useEffect, useMemo } from 'react'
-import { ChevronLeft, ChevronRight, BarChart3, MessageSquare } from 'lucide-react'
+import { ChevronLeft, ChevronRight, BarChart3, BookOpen, Dices, MessageSquare } from 'lucide-react'
 import { useBroadcastEvent, useRoom, useSelf } from '@liveblocks/react'
 import SessionSummary from './SessionSummary'
 import DiceStats from './DiceStats'
@@ -96,120 +96,107 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
     return (
       <button
         onClick={() => setCollapsed(false)}
-        aria-label="Expand chat panel"
-        className="absolute top-2 right-2 z-50 text-ink/80 hover:text-ink bg-shade/30 rounded-full p-1"
+        aria-label={t('expandPanel')}
+        title={t('expandPanel')}
+        className="ui-btn ui-btn-icon absolute top-3 right-3 z-50"
       >
-        <ChevronLeft size={20} />
+        <ChevronLeft size={18} />
       </button>
     )
   }
 
+  const panelClass =
+    'ui-panel w-full flex-1 min-h-0 lg:flex-none lg:w-[340px] flex flex-col relative flex-shrink-0 overflow-hidden'
+
+  const collapseButton = (
+    <button
+      onClick={() => setCollapsed(true)}
+      aria-label={t('collapsePanel')}
+      title={t('collapsePanel')}
+      className="max-lg:hidden ui-btn ui-btn-ghost ui-btn-icon"
+    >
+      <ChevronRight size={18} />
+    </button>
+  )
+
   // Summary view
   if (showSummary) {
     return (
-      <aside
-        className="w-full flex-1 min-h-0 lg:flex-none lg:w-1/5 p-4 flex flex-col relative rounded-xl border border-ink/10 bg-shade/15 backdrop-blur-[2px] shadow-lg shadow-shade/10 transition flex-shrink-0 text-ink"
-        style={{ boxShadow: '0 4px 18px -8px rgba(0,0,0,0.24), 0 0 0 1px rgba(255,255,255,0.05)' }}
-      >
-        <button
-          onClick={() => setCollapsed(true)}
-          aria-label="Collapse chat panel"
-          className="max-lg:hidden absolute top-2 left-2 z-50 text-ink/80 hover:text-ink bg-shade/30 rounded-full p-1"
-        >
-          <ChevronRight size={20} />
-        </button>
+      <aside className={`${panelClass} p-3`}>
+        <div className="flex justify-end">{collapseButton}</div>
         <SessionSummary onClose={() => setShowSummary(false)} />
       </aside>
     )
   }
 
   return (
-    <aside
-      className="w-full flex-1 min-h-0 lg:flex-none lg:w-1/5 p-4 flex flex-col relative rounded-xl border border-ink/10 bg-shade/15 backdrop-blur-[2px] shadow-lg shadow-shade/10 transition flex-shrink-0 text-ink"
-      style={{ boxShadow: '0 4px 18px -8px rgba(0,0,0,0.24), 0 0 0 1px rgba(255,255,255,0.05)' }}
-    >
-      <button
-        onClick={() => setCollapsed(true)}
-        aria-label="Collapse chat panel"
-        className="max-lg:hidden absolute top-2 left-2 z-50 text-ink/80 hover:text-ink bg-shade/30 rounded-full p-1"
-      >
-        <ChevronRight size={20} />
-      </button>
-
-      {/* Header buttons */}
-      <div className="flex justify-center items-center mb-3 gap-2">
-        <button
-          className="flex-1 px-3 py-2 rounded-xl font-semibold text-sm shadow
-            bg-gradient-to-b from-amber-500/20 to-amber-600/10
-            border border-amber-400/20
-            text-amber-200/90 hover:text-amber-100
-            hover:from-amber-500/30 hover:to-amber-600/20
-            hover:border-amber-400/40
-            active:scale-95 transition-all duration-150
-            flex items-center justify-center gap-1.5 min-h-[38px]"
-          onClick={() => setShowSummary(true)}
-        >
-          <span className="text-base leading-none">📖</span>
-          <span className="truncate">{t('sessionSummary')}</span>
-        </button>
-        <button
-          className={`px-3 py-2 rounded-xl font-semibold text-sm shadow
-            border active:scale-95 transition-all duration-150
-            flex items-center justify-center gap-1.5 min-h-[38px]
-            ${showStats
-              ? 'bg-accent/30 border-accent/30 text-accent-soft hover:bg-accent/40'
-              : 'bg-shade/30 border-ink/10 text-ink/70 hover:bg-accent/10 hover:text-accent-soft hover:border-accent/20'
-            }`}
-          onClick={() => setShowStats(s => !s)}
-          title={t('diceStats')}
-        >
-          {showStats ? (
-            <><MessageSquare size={14} /> <span>{t('chat')}</span></>
-          ) : (
-            <><BarChart3 size={14} /> <span>{t('diceStats')}</span></>
-          )}
-        </button>
+    <aside className={panelClass}>
+      {/* En-tête : titre, résumé de la session, statistiques des dés */}
+      <div className="flex items-center gap-1.5 border-b border-[var(--c-panel-line)] px-3 py-2.5" style={{ background: 'var(--c-panel-head)' }}>
+        <MessageSquare size={16} className="text-accent shrink-0" />
+        <h2 className="text-sm font-semibold">{t('chat')}</h2>
+        <span className="ml-auto flex items-center gap-1">
+          <button
+            className="ui-btn !border-amber-400/30 !text-amber-200 hover:!bg-amber-500/15"
+            onClick={() => setShowSummary(true)}
+            title={t('sessionSummary')}
+          >
+            <BookOpen size={14} />
+            {t('summaryShort')}
+          </button>
+          <button
+            className={`ui-btn ui-btn-icon ${showStats ? 'ui-btn-primary' : ''}`}
+            onClick={() => setShowStats(s => !s)}
+            aria-pressed={showStats}
+            aria-label={t('diceStats')}
+            title={t('diceStats')}
+          >
+            <BarChart3 size={15} />
+          </button>
+          {collapseButton}
+        </span>
       </div>
 
       {/* Vertical layout: stats (optional) + chat */}
-      <div className="flex flex-col flex-1 min-h-0 gap-2">
+      <div className="flex flex-col flex-1 min-h-0 gap-3 p-3">
         {showStats && (
           <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-            <div className="text-center font-bold mb-2">{t('diceStatsTitle')}</div>
-            <div className="flex-1 overflow-y-auto rounded-xl border border-ink/10 bg-shade/15 backdrop-blur-[2px] shadow p-2 min-h-0">
+            <div className="ui-label mb-1.5">{t('diceStatsTitle')}</div>
+            <div className="ui-well flex-1 overflow-y-auto p-2 min-h-0">
               <DiceStats history={diceRolls} />
             </div>
           </div>
         )}
 
         <div className={`flex-1 min-h-0 flex flex-col ${showStats ? '' : 'h-full'}`}>
-          <h2 className="text-sm font-semibold mb-1.5 text-center text-ink/50 tracking-widest uppercase">{t('chat')}</h2>
           <div
             ref={chatBoxRef}
-            className="relative flex-1 overflow-y-auto rounded-xl border border-ink/8 bg-shade/20 backdrop-blur-[2px] shadow-inner p-2 min-h-0"
+            className="relative flex-1 overflow-y-auto min-h-0 -mx-1 px-1"
           >
-            <button
-              onClick={() => setShowHistory(h => !h)}
-              className="absolute left-1/2 -translate-x-1/2 top-1 text-xs opacity-20 hover:opacity-60 bg-shade/30 px-2 py-0.5 rounded-full transition-opacity"
-              title={showHistory ? t('hideHistory') : t('showHistory')}
-            >
-              {showHistory ? t('hideHistory') : t('showHistory')}
-            </button>
-            <div className="pt-5 flex flex-col gap-1.5">
+            <div className="flex justify-center pb-2">
+              <button
+                onClick={() => setShowHistory(h => !h)}
+                className="rounded-full px-2 py-0.5 text-[11px] text-ink/40 transition hover:bg-ink/8 hover:text-ink/80"
+                title={showHistory ? t('hideHistory') : t('showHistory')}
+              >
+                {showHistory ? t('hideHistory') : t('showHistory')}
+              </button>
+            </div>
+            <div className="flex flex-col gap-2">
             {displayedEvents.map(ev => {
               const isChat = ev.kind === 'chat'
               if (isChat) {
                 const isMJ = ev.isMJ
                 return (
                   <div key={ev.id} className="animate-fadeIn flex flex-col gap-0.5">
-                    <span className={`text-[10px] font-semibold px-1 ${isMJ ? 'text-amber-400/80' : 'text-ink/40'}`}>
+                    <span className={`text-[11px] font-semibold px-0.5 ${isMJ ? 'text-amber-300' : 'text-ink/50'}`}>
                       {isMJ && '👑 '}{ev.author}
                     </span>
                     <div className={`
-                      px-2.5 py-1.5 rounded-xl rounded-tl-sm text-sm leading-snug max-w-[92%]
+                      px-2.5 py-1.5 rounded-lg text-sm leading-snug
                       ${isMJ
-                        ? 'bg-gradient-to-br from-amber-500/20 to-yellow-600/10 border border-amber-400/20 text-amber-100'
-                        : 'bg-ink/8 border border-ink/8 text-ink/90'}
+                        ? 'bg-amber-500/10 border border-amber-400/25 border-l-2 border-l-amber-400 text-amber-50'
+                        : 'ui-well text-ink/90'}
                       whitespace-pre-wrap [overflow-wrap:anywhere]
                     `}>
                       {ev.text}
@@ -224,18 +211,18 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
                   ? 'text-yellow-300'
                   : isFumble
                   ? 'text-red-400'
-                  : 'text-accent-soft'
-                const bgColor = isCrit
-                  ? 'from-yellow-500/15 to-amber-600/8 border-yellow-400/20'
+                  : 'text-accent'
+                const edge = isCrit
+                  ? 'border-l-yellow-400'
                   : isFumble
-                  ? 'from-red-500/15 to-red-600/8 border-red-400/20'
-                  : 'from-accent/10 to-accent/5 border-accent/15'
+                  ? 'border-l-red-400'
+                  : 'border-l-accent'
                 return (
-                  <div key={ev.id} className={`animate-fadeIn flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-gradient-to-r ${bgColor} border text-sm`}>
-                    <span className="text-base leading-none">🎲</span>
-                    <span className="text-ink/60 text-xs">{ev.player}</span>
-                    {ev.dice != null && <span className="text-ink/40 text-xs">D{ev.dice}</span>}
-                    <span className="ml-auto font-bold text-base leading-none tabular-nums">
+                  <div key={ev.id} className={`animate-fadeIn ui-well flex items-center gap-2 px-2.5 py-1.5 border-l-2 ${edge} text-sm`}>
+                    <Dices size={15} className="shrink-0 text-ink/50" />
+                    <span className="truncate text-ink/75 text-xs font-semibold">{ev.player}</span>
+                    {ev.dice != null && <span className="text-ink/45 text-xs">D{ev.dice}</span>}
+                    <span className="ml-auto font-bold text-lg leading-none tabular-nums">
                       <span className={resultColor}>{ev.result ?? '?'}</span>
                     </span>
                     {isCrit && <span className="text-xs">✨</span>}
@@ -248,7 +235,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
             <div ref={endRef} />
           </div>
 
-          <div className="mt-2 flex items-center w-full max-w-full overflow-hidden rounded-xl border border-ink/10 bg-shade/25 backdrop-blur-[2px] focus-within:border-ink/20 focus-within:bg-shade/35 transition-all">
+          <div className="mt-3 flex items-center gap-1.5">
             <input
               type="text"
               placeholder={t('yourMessage')}
@@ -256,14 +243,11 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
               maxLength={MAX_MESSAGE_LENGTH}
               onChange={e => setInputValue(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') sendMessage() }}
-              className="flex-1 border-none px-3 py-2.5 text-ink bg-transparent focus:outline-none text-sm placeholder:text-ink/30 min-w-0"
+              className="ui-input flex-1 min-w-0 !min-h-9"
             />
             <button
               onClick={sendMessage}
-              className="mr-1 px-3 py-1.5 rounded-lg text-sm font-semibold
-                bg-accent/20 border border-accent/20 text-accent-soft
-                hover:bg-accent/30 hover:border-accent/40 hover:text-ink
-                active:scale-95 transition-all duration-150 flex-shrink-0"
+              className="ui-btn ui-btn-primary !min-h-9 flex-shrink-0"
             >
               {t('send')}
             </button>

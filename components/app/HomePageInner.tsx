@@ -8,6 +8,7 @@ import DiceRoller from '@/components/dice/DiceRoller'
 import ChatBox from '@/components/chat/ChatBox'
 import PopupResult from '@/components/dice/PopupResult'
 import InteractiveCanvas from '@/components/canvas/InteractiveCanvas'
+import DemoBanner from '@/components/rooms/DemoBanner'
 import MusicPlayer from '@/components/music/MusicPlayer'
 import LiveAvatarStack from '@/components/chat/LiveAvatarStack'
 import SignedOutPanel from '@/components/auth/SignedOutPanel'
@@ -500,7 +501,7 @@ export default function HomePageInner() {
 
   return (
     <div className="relative w-screen h-dvh font-sans overflow-hidden bg-transparent">
-      <div className={`relative z-10 flex flex-col w-full h-full ${theme.layout.sheetSide === 'right' ? 'lg:flex-row-reverse' : 'lg:flex-row'}`}>
+      <div className={`relative z-10 flex flex-col w-full h-full lg:gap-3 lg:p-3 ${theme.layout.sheetSide === 'right' ? 'lg:flex-row-reverse' : 'lg:flex-row'}`}>
         {/* `lg:contents` efface l'enveloppe sur grand écran : la mise en page
             côte à côte reste celle d'avant les onglets. */}
         <div className={`${mobilePanel('sheet')} flex-1 min-h-0 flex-col items-center overflow-y-auto p-2 lg:contents`}>
@@ -520,19 +521,20 @@ export default function HomePageInner() {
           </CharacterSheet>
         </div>
 
-        <main className={`${mobilePanel('table')} lg:flex flex-1 flex-col min-h-0`}>
-          <div className="flex-1 m-4 flex flex-col justify-center items-center relative min-h-0">
+        <main className={`${mobilePanel('table')} lg:flex flex-1 flex-col min-h-0 min-w-0 gap-2 max-lg:p-2 lg:gap-3`}>
+          {/* Le plateau : un panneau comme la fiche et le chat. */}
+          <div className="ui-panel flex-1 flex flex-col justify-center items-center relative min-h-0 overflow-hidden">
             <ErrorBoundary
               key={canvasKey}
               fallbackRender={({ error, reset }) => (
                 <div className="p-4 text-red-500 flex flex-col items-center gap-2">
                   <div>Canvas error: {String(error?.message || 'Unknown')}</div>
                   <button
-                    className="px-3 py-1 rounded bg-accent text-on-accent hover:bg-accent-hover"
+                    className="ui-btn ui-btn-primary"
                     onClick={() => { reset(); setCanvasKey((k) => k + 1) }}
                   >Reload canvas</button>
                   <button
-                    className="px-3 py-1 rounded bg-surface-hover text-ink hover:bg-surface-hover"
+                    className="ui-btn"
                     onClick={() => window.location.reload()}
                   >Reload page</button>
                 </div>
@@ -540,6 +542,8 @@ export default function HomePageInner() {
             >
               <InteractiveCanvas />
             </ErrorBoundary>
+            {/* Bandeau de la salle de démo, en bas du plateau : il ne cache pas les outils. */}
+            <DemoBanner />
             <ErrorBoundary fallback={<div className="p-4 text-red-500">Dice display error</div>}>
               <PopupResult show={showPopup} result={diceResult} diceType={diceType} onReveal={handlePopupReveal} onFinish={handlePopupFinish} />
             </ErrorBoundary>

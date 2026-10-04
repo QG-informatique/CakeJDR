@@ -299,13 +299,13 @@ export default function MusicPlayer() {
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-2xl border border-ink/10 bg-shade/20 backdrop-blur-sm px-3 py-2 shadow-md min-w-[240px] max-w-[640px] w-full sm:w-auto">
+    <div className="flex flex-col gap-2 min-w-[200px] max-w-[640px] w-full sm:w-auto">
       <button
         type="button"
         onClick={() => setOptionsOpen((open) => !open)}
         aria-expanded={optionsOpen}
         aria-controls={optionsPanelId}
-        className="w-full rounded-xl px-3 py-2 text-xs font-semibold shadow border border-ink/10 bg-shade/30 text-ink/90 hover:bg-accent hover:text-on-accent flex items-center justify-between gap-2"
+        className="ui-btn w-full !justify-between"
       >
         <span className="inline-flex items-center gap-2">
           <Music2 size={14} className="text-accent-soft shrink-0" />
@@ -329,18 +329,18 @@ export default function MusicPlayer() {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handlePlayNow()
               }}
-              className="w-full px-3 py-2 rounded-lg bg-shade/40 text-ink border border-ink/20 placeholder:text-ink/40"
+              className="ui-input w-full"
             />
           </div>
           <button
             onClick={handlePlayNow}
-            className="rounded-xl px-3 py-2 text-xs font-semibold shadow border-none bg-accent text-on-accent hover:bg-accent-hover"
+            className="ui-btn ui-btn-primary"
           >
             {t('musicPlayNow')}
           </button>
           <button
             onClick={handleAddToQueue}
-            className="rounded-xl px-3 py-2 text-xs font-semibold shadow border border-ink/10 bg-shade/30 text-ink/90 hover:bg-accent hover:text-on-accent inline-flex items-center gap-1"
+            className="ui-btn"
           >
             <Plus size={14} />
             {t('musicAddToQueue')}
@@ -350,7 +350,7 @@ export default function MusicPlayer() {
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={handlePlayPause}
-            className="rounded-xl px-3 py-2 text-xs font-semibold shadow border border-ink/10 bg-shade/30 text-ink/90 hover:bg-accent hover:text-on-accent inline-flex items-center gap-1"
+            className="ui-btn"
             disabled={!currentId && queueCount === 0}
           >
             {isPlaying ? (
@@ -366,9 +366,7 @@ export default function MusicPlayer() {
           <button
             onClick={handleNext}
             disabled={queueCount === 0}
-            className={`rounded-xl px-3 py-2 text-xs font-semibold shadow border border-ink/10 bg-shade/30 text-ink/90 hover:bg-emerald-600 hover:text-white inline-flex items-center gap-1 ${
-              queueCount === 0 ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
+            className="ui-btn"
             title={queueCount > 0 ? t('musicNextTitle').replace('{n}', String(queueCount)) : t('musicQueueEmpty')}
           >
             <SkipForward size={14} />
