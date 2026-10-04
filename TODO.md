@@ -133,7 +133,8 @@
 - [x] Passer l'application en français par défaut
 
 ## Canvas & temps réel
-- [ ] Proposer un fond fixe (et respecter `prefers-reduced-motion`) : le fond aux dés saccade sur un navigateur sans accélération matérielle (constaté sur Firefox)
+- [x] Proposer un fond fixe (et respecter `prefers-reduced-motion`) : le fond aux dés saccade sur un navigateur sans accélération matérielle (constaté sur Firefox)
+- [ ] Vérifier sur Firefox que le fond aux dés du thème Classique ne saccade plus (`will-change` ajouté dans `components/ui/RpgBackground.tsx`)
 - [x] Throttler les segments de trait pour réduire le trafic Liveblocks lors de dessins rapides (coalescer via requestAnimationFrame)
 - [ ] Déplacer l'aperçu d'image en attente sur un calque dédié avec indicateur de progression
 
