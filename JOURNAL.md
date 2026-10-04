@@ -1,5 +1,13 @@
 # Journal
 
+## 2026-10-04 — Refonte, phase A : deux thèmes, nouvelles adresses
+- Plan de refonte en six phases écrit après le test en ligne de Quentin (`PLAN-REFONTE.md`).
+- Deux thèmes seulement : Ardoise (fond fixe) et Classique (dés roses). Les neuf autres fonds animés et le clic sur le gâteau qui les faisait tourner sont retirés : c'est ce clic qui mettait un fond de Classique dans Ardoise. Fonds rangés dans `C:\DEV\CakeJDR-themesonds-archives`.
+- `/` est la page de connexion, `/salles` la page des salles et des fiches ; `/menu` et `/menu-accueil` y redirigent (`next.config.ts`). Plus d'écran de connexion qui clignote en revenant d'une table.
+- Bouton « ← Salles » à la place du gâteau dans la table ; indicateur couronne du menu retiré (on est MJ d'une salle parce qu'on l'a créée).
+
+Reste ouvert : phases B à F du plan.
+
 ## 2026-10-04 — Mise en ligne des dés serveur et des correctifs React
 - Commits `dc35ce3` à `a0e9248` publiés sur `cakejdr.qg-informatique.fr` : déploiement Vercel réussi, 15 tests e2e OK sur le site en ligne, clé publique des dés servie par `/api/dice/key`.
 

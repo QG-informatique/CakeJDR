@@ -43,7 +43,7 @@ export default function RoomAccessDenied({ reason }: { reason: DeniedReason }) {
             </Link>
           )}
           <Link
-            href="/menu-accueil"
+            href="/salles"
             className="inline-flex items-center justify-center gap-2 rounded-xl border border-ink/15 bg-ink/5 px-4 py-2.5 text-ink/85 no-underline transition hover:bg-ink/10"
           >
             <Home size={17} aria-hidden="true" />

@@ -3,7 +3,6 @@
 import React, { Suspense } from 'react'
 import dynamic from 'next/dynamic'
 import { SessionProvider } from 'next-auth/react'
-import { BackgroundProvider } from '@/components/context/BackgroundContext'
 import { LanguageProvider } from '@/components/context/LanguageContext'
 import { ThemeProvider } from '@/components/context/ThemeContext'
 import HtmlLangSync from '@/components/ui/HtmlLangSync'
@@ -49,15 +48,13 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     <ThemeProvider>
       {/* Synchronise document.documentElement.lang avec la langue active */}
       <HtmlLangSync />
-      <BackgroundProvider>
-        <BackgroundErrorBoundary>
-          <Suspense fallback={null}>
-            <BackgroundWrapper />
-          </Suspense>
-        </BackgroundErrorBoundary>
-        <main className="relative z-10">{children}</main>
-        <CreditQG />
-      </BackgroundProvider>
+      <BackgroundErrorBoundary>
+        <Suspense fallback={null}>
+          <BackgroundWrapper />
+        </Suspense>
+      </BackgroundErrorBoundary>
+      <main className="relative z-10">{children}</main>
+      <CreditQG />
     </ThemeProvider>
     </LanguageProvider>
     </SessionProvider>

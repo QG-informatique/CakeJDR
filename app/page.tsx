@@ -1,12 +1,11 @@
-"use client"
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+'use client'
+import MenuAccueil from '@/components/menu/MenuAccueil'
 
-// Landing page: simply redirect to the login/menu screen.
+// Page d'arrivée : la connexion. Un joueur déjà connecté passe aux salles.
 export default function HomePage() {
-  const router = useRouter()
-  useEffect(() => {
-    router.replace('/menu')
-  }, [router])
-  return null
+  return (
+    <div className="relative w-screen h-screen overflow-hidden">
+      <MenuAccueil page="landing" />
+    </div>
+  )
 }

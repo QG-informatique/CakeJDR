@@ -8,15 +8,15 @@ import SignInPanel from '@/components/auth/SignInPanel'
  * pourrait renvoyer vers un autre site après la connexion.
  */
 function safePath(value: unknown): string {
-  if (typeof value !== 'string') return '/menu-accueil'
+  if (typeof value !== 'string') return '/salles'
   try {
     // Auth.js transmet une adresse complète : on n'en garde que le chemin.
     const url = new URL(value, 'http://interne')
-    if (url.origin !== 'http://interne' && !value.startsWith('http')) return '/menu-accueil'
+    if (url.origin !== 'http://interne' && !value.startsWith('http')) return '/salles'
     const path = url.pathname + url.search
-    return path.startsWith('/') && !path.startsWith('//') ? path : '/menu-accueil'
+    return path.startsWith('/') && !path.startsWith('//') ? path : '/salles'
   } catch {
-    return '/menu-accueil'
+    return '/salles'
   }
 }
 
