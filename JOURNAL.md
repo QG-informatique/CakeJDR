@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-04 — Barre du bas sur une ligne, prompt du pack d'images n° 2
+- Barre du bas en trois zones sur une seule ligne : musique à gauche, choix du dé en menu déroulant et « Lancer » au centre, joueurs en ligne à droite (`components/dice/DiceRoller.tsx`).
+- Quand la barre est étroite, le titre du morceau se cache et le volume passe dans le menu « ⋯ » (`components/music/MusicPlayer.tsx`), pour ne jamais passer sur deux lignes.
+- `PROMPT-PACK-IMAGES.md` : prompt ChatGPT pour 66 images dans le style du premier pack (cartes vue de dessus, pions alliés et ennemis, rencontres) et un set « Cake » pour la démo : pion, portrait, rencontre, sa pâtisserie, le Golem de Mie Brûlée et ses levains.
+
+Reste ouvert : intégrer le pack quand Quentin le rapporte, puis refaire la salle de démo avec.
+
 ## 2026-10-04 — Refonte, phase F : panneau du MJ
 - Bouton « MJ » sur le plateau, visible du seul MJ (`components/gm/GMPanel.tsx`) : joueurs connectés avec leur personnage, niveau et PV ; « Ouvrir la fiche » la passe dans la fiche du MJ, qui la modifie, et le joueur voit le changement en direct. Bandeau « Tu modifies la fiche de… » avec retour à sa fiche.
 - Réglages partagés de la table (`lib/roomSettings.ts`, clé `settings` dans Liveblocks) : qui modifie les fiches (chacun la sienne par défaut, ou le MJ seulement : fiche en lecture, sans « Modifier », portrait ni montée de niveau) ; qui dessine (tout le monde par défaut, le MJ, ou au choix joueur par joueur).

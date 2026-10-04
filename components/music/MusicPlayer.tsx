@@ -320,6 +320,21 @@ export default function MusicPlayer() {
 
   const canPlay = !!currentId || queueCount > 0
 
+  const volumeControl = (className: string, rangeClass: string) => (
+    <label className={`${className} items-center gap-1 text-ink/60`} title={`${t('musicVolume')} ${volume}`}>
+      {volume === 0 ? <VolumeX size={14} aria-hidden /> : <Volume2 size={14} aria-hidden />}
+      <span className="sr-only">{t('musicVolume')}</span>
+      <input
+        type="range"
+        min={0}
+        max={100}
+        value={volume}
+        onChange={(e) => setVolume(clamp(Number(e.target.value), 0, 100))}
+        className={rangeClass}
+      />
+    </label>
+  )
+
   return (
     <div ref={wrapRef} className="relative flex min-w-0 items-center gap-1.5">
       <button
@@ -333,30 +348,20 @@ export default function MusicPlayer() {
       </button>
 
       {playerError ? (
-        <span className="min-w-0 max-w-[14rem] truncate text-xs text-red-400" title={playerError}>
+        <span className="hidden min-w-0 max-w-[14rem] truncate text-xs text-red-400 @lg:block" title={playerError}>
           ⚠ {playerError}
         </span>
       ) : (
         <span
-          className={`min-w-0 max-w-[14rem] truncate text-xs ${currentTitle ? 'text-ink/85' : 'text-ink/55'}`}
+          className={`hidden min-w-0 max-w-[14rem] truncate text-xs @lg:block ${currentTitle ? 'text-ink/85' : 'text-ink/55'}`}
           title={currentTitle || undefined}
         >
           {currentTitle || (currentId ? '…' : t('musicNone'))}
         </span>
       )}
 
-      <label className="flex shrink-0 items-center gap-1 text-ink/60" title={`${t('musicVolume')} ${volume}`}>
-        {volume === 0 ? <VolumeX size={14} aria-hidden /> : <Volume2 size={14} aria-hidden />}
-        <span className="sr-only">{t('musicVolume')}</span>
-        <input
-          type="range"
-          min={0}
-          max={100}
-          value={volume}
-          onChange={(e) => setVolume(clamp(Number(e.target.value), 0, 100))}
-          className="w-20"
-        />
-      </label>
+      {/* Barre du bas étroite : le volume passe dans le menu « ⋯ ». */}
+      {volumeControl('hidden shrink-0 @2xl:flex', 'w-20')}
 
       <button
         type="button"
@@ -411,6 +416,8 @@ export default function MusicPlayer() {
               </button>
             </div>
           </div>
+
+          {volumeControl('flex @2xl:hidden', 'flex-1')}
 
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
