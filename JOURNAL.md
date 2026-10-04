@@ -1,5 +1,13 @@
 # Journal
 
+## 2026-10-04 — Image retirée du plateau effacée chez Cloudinary
+- Retirer une image téléversée (bouton ou touche Suppr) l'efface aussi chez Cloudinary : route `app/api/cloudinary/remove/route.ts`, appelée par `components/canvas/InteractiveCanvas.tsx`.
+- Garde-fous : compte connecté, accès à la table, image plus présente sur la table (revérifiée 1,5 s plus tard), dossier `cakejdr/` seulement, jamais une image de la salle de démo, 60 retraits par 10 min.
+- Images de la bibliothèque non concernées : elles sont servies par le site.
+- Build et 15 tests e2e OK ; route testée sans compte (refus 401). Pas testé avec un vrai envoi Cloudinary.
+
+Reste ouvert : essai réel en ligne avec un compte ; pas encore en ligne.
+
 ## 2026-10-04 — Ouverture au public : premiers garde-fous
 - Images Cloudinary supprimées avec leur table, quelle que soit la cause (MJ, compte supprimé, ménage des tables abandonnées) : `lib/cloudinaryCleanup.ts`, appelé par `deleteRoom`. Seulement le dossier `cakejdr/`, jamais une image de la salle de démo.
 - Limite de 5 tables par compte vérifiée par le serveur (`app/api/rooms/route.ts`), nom de table coupé à 60 caractères ; l'ancienne limite à 1 table par navigateur est retirée. 5 choisi par défaut, à ajuster si Quentin veut autre chose.

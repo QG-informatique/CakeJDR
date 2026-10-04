@@ -1,6 +1,6 @@
 import { Liveblocks } from '@liveblocks/node'
 import { randomBytes } from 'crypto'
-import { collectRoomImages, deleteCloudinaryImages } from './cloudinaryCleanup'
+import { collectRoomImages, deleteCloudinaryImages, imageUrls } from './cloudinaryCleanup'
 
 function slugify(str: string) {
   return str
@@ -109,6 +109,12 @@ export async function deleteRoom(id: string) {
   await deleteCloudinaryImages(images).catch((e: unknown) => {
     console.error('deleteRoom: suppression des images Cloudinary impossible', id, e)
   })
+}
+
+/** Cette image est-elle encore posée sur la table ? */
+export async function roomShowsImage(id: string, url: string) {
+  const storage = (await getClient().getStorageDocument(id, 'json')) as { images?: unknown }
+  return imageUrls(storage.images).includes(url)
 }
 
 export async function renameRoom(id: string, name: string) {

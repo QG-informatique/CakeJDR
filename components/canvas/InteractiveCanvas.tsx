@@ -1,7 +1,7 @@
 ﻿"use client"
 
 import { useRef, useState, useEffect, useMemo, useCallback } from 'react'
-import { useStorage, useMutation, useMyPresence } from '@liveblocks/react'
+import { useStorage, useMutation, useMyPresence, useRoom } from '@liveblocks/react'
 import { LiveList } from '@liveblocks/client'
 import CanvasTools, { ToolMode } from './CanvasTools'
 import LiveCursors from './LiveCursors'
@@ -284,9 +284,27 @@ export default function InteractiveCanvas() {
     map.set(id, { ...prev, ...patch })
   }, [])
   const deleteImage = useMutation(({ storage }, id: string) => {
-    const map = storage.get('images') as unknown as { delete: (key: string) => void }
+    const map = storage.get('images') as unknown as {
+      get: (key: string) => StoredImageData | undefined
+      delete: (key: string) => void
+    }
+    const url = map.get(id)?.url
     map.delete(id)
+    return url
   }, [])
+  // Une image téléversée qu'on retire du plateau est aussi effacée chez
+  // Cloudinary ; le serveur vérifie qu'elle n'est plus sur la table.
+  const room = useRoom()
+  const removeImage = useCallback((id: string) => {
+    const url = deleteImage(id)
+    if (!url?.startsWith('https://res.cloudinary.com/')) return
+    fetch('/api/cloudinary/remove', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ roomId: room.id, url }),
+      keepalive: true,
+    }).catch(() => {})
+  }, [deleteImage, room])
   const addStrokeSegments = useMutation(({ storage }, segments: StrokeSegment[]) => {
     let list = storage.get('strokes') as unknown
     const hasPush = !!(list && typeof (list as { push?: unknown }).push === 'function')
@@ -521,9 +539,9 @@ export default function InteractiveCanvas() {
     updateMyPresence({ cursor: null })
     if (isDrawing || dragState.current.id) handlePointerUp()
   }
-  const handleKeyDown = (e: React.KeyboardEvent) => { if ((e.key === 'Delete' || e.key === 'Backspace') && selectedImageId) deleteImage(selectedImageId) }
+  const handleKeyDown = (e: React.KeyboardEvent) => { if ((e.key === 'Delete' || e.key === 'Backspace') && selectedImageId) removeImage(selectedImageId) }
 
-  const handleDeleteImage = (id: string) => deleteImage(id)
+  const handleDeleteImage = (id: string) => removeImage(id)
   const [confirmClear, setConfirmClear] = useState(false)
 
   // Upload helpers
