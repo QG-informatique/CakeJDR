@@ -51,7 +51,7 @@
 - [x] Ne plus ouvrir une connexion Liveblocks par table affichée dans le menu : le nombre de personnes en ligne vient du serveur
 - [x] Compter réellement les personnes présentes dans une table (`usersCount` n'existe pas chez Liveblocks : la démo se réinitialisait sous les pieds des joueurs, la colonne « Connectés » de l'admin restait à 0)
 - [ ] Essayer la table sur un vrai téléphone (iPhone et Android) après la mise en ligne de la phase 4
-- [ ] Limiter côté serveur le nombre de tables qu'un compte peut créer (le garde-fou actuel est dans le navigateur) — phase 5
+- [x] Limiter côté serveur le nombre de tables qu'un compte peut créer (le garde-fou actuel est dans le navigateur) — phase 5
 
 ## Page d'accueil
 - [x] Remettre le dé en page d'accueil : lancer automatique, attrapable et lançable sur tout l'écran
@@ -74,13 +74,16 @@
 - [x] Créer l'application OAuth Discord et renseigner `AUTH_DISCORD_ID` et `AUTH_DISCORD_SECRET` dans `.env.local`
 - [x] Renseigner `AUTH_DISCORD_ID` et `AUTH_DISCORD_SECRET` dans Vercel, environnement Production
 - [x] Créer l'application Google : compléter le Branding (accueil, `/confidentialite`, `/conditions`, domaine `qg-informatique.fr`), publier, créer le client Web
-- [ ] Relire `app/confidentialite` et `app/conditions` (nom, email de contact, hébergeur) avant la mise en ligne
+- [x] Relire `app/confidentialite` et `app/conditions` (nom, email de contact, hébergeur) avant la mise en ligne
+- [ ] Compléter les mentions légales (`app/conditions`) avec l'adresse et le SIRET de QG Informatique, obligatoires pour un éditeur professionnel
 - [x] Rendre les pseudos uniques (sans tenir compte des majuscules) : suffixe automatique à la première connexion si le nom est pris, refus au changement de pseudo
 - [ ] Tester l'écran « Choisis ton pseudo » avec le compte Google de test (CakeSama-2), pseudo libre puis pseudo déjà pris
 - [x] Identifier le propriétaire d'une fiche par l'identifiant du compte et non par le pseudo (`c.owner === profile.pseudo` dans `HomePageInner.tsx` et `MenuAccueil.tsx`)
 - [x] Ajouter un bouton « Supprimer mon compte » (aujourd'hui la suppression se demande par email)
 - [ ] Tester « Supprimer mon compte » avec un compte jetable ayant une table : la table doit disparaître pour ses joueurs
-- [ ] Supprimer aussi les images Cloudinary d'un compte supprimé (aujourd'hui elles ne sont rattachées à aucun compte)
+- [x] Supprimer aussi les images Cloudinary d'un compte supprimé (aujourd'hui elles ne sont rattachées à aucun compte)
+- [ ] Supprimer aussi chez Cloudinary une image retirée du plateau (aujourd'hui seule la suppression de la table entière l'efface)
+- [ ] Tester avec un compte jetable qu'une table supprimée emporte ses images sur Cloudinary (`lib/cloudinaryCleanup.ts`)
 - [x] Copier `AUTH_SECRET` (déjà généré dans `.env.local`) dans Vercel, environnement Production
 - [x] Après la première connexion, transférer la salle démo et le rôle admin vers le nouveau compte (`scripts/transfer-account.mjs`)
 - [x] Retirer l'intégration Clerk de Vercel, avec ses variables `CLERK_*` et `NEXT_PUBLIC_CLERK_*`

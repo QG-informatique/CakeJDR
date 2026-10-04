@@ -256,6 +256,7 @@ export const translations = {
     pickARoom: "Pick a table to play",
     library: "Library",
     libraryHint: "Click or drag onto the table",
+    roomLimitReached: "You've reached 5 tables. Delete one to create another.",
   },
   fr: {
     addSkill: 'Ajouter une compétence',
@@ -514,6 +515,7 @@ export const translations = {
     pickARoom: "Choisis une table pour jouer",
     library: "Bibliothèque",
     libraryHint: "Clique ou glisse sur la table",
+    roomLimitReached: "Tu as atteint 5 tables. Supprimes-en une pour en créer une autre.",
   },
 } as const
 

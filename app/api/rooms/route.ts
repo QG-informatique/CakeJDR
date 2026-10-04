@@ -2,7 +2,7 @@ export const runtime = 'nodejs'
 import { NextRequest } from 'next/server'
 import { createRoom, deleteRoom, renameRoom } from '@/lib/liveRooms'
 import { isAdminRequest } from '@/lib/adminAuth'
-import { forgetRoom, isRoomOwner, recordRoom, renameRoomRecord } from '@/lib/db/rooms'
+import { countOwnedRooms, forgetRoom, isRoomOwner, recordRoom, renameRoomRecord } from '@/lib/db/rooms'
 import { currentUserId, syncCurrentUser } from '@/lib/db/users'
 import { debug } from '@/lib/debug'
 import { fail, ok } from '@/lib/api-response'
@@ -14,6 +14,14 @@ import { fail, ok } from '@/lib/api-response'
  * Il n'y a pas de GET : la liste des tables passe par `/api/rooms/list`, qui
  * ne montre à chacun que les tables dont il est membre.
  */
+/**
+ * Tables qu'un compte peut créer, hors administrateur. Vérifié ici et non
+ * plus dans le navigateur, où il suffisait de vider le stockage local pour
+ * passer outre.
+ */
+const MAX_ROOMS_PER_ACCOUNT = 5
+const MAX_NAME_LENGTH = 60
+
 async function canMutate(id: string) {
   if (await isAdminRequest()) return true
   return isRoomOwner(id, await currentUserId())
@@ -28,9 +36,13 @@ export async function POST(req: NextRequest) {
       return fail('sign in to create a table', 401)
     }
 
-    const { name } = await req.json()
-    if (!name || typeof name !== 'string') {
+    const body = await req.json()
+    const name = typeof body?.name === 'string' ? body.name.trim().slice(0, MAX_NAME_LENGTH) : ''
+    if (!name) {
       return fail('missing name', 400)
+    }
+    if (!account.isAdmin && (await countOwnedRooms(account.id)) >= MAX_ROOMS_PER_ACCOUNT) {
+      return fail('room limit reached', 403)
     }
     const { id } = await createRoom(name)
     await recordRoom({ id, name, ownerId: account.id }).catch((e) =>

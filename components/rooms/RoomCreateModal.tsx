@@ -21,10 +21,6 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
 
   const createRoom = async () => {
     if (!name || creating) return
-    if (localStorage.getItem('jdr_my_room')) {
-      setErrorMsg(t('alreadyCreatedRoom'))
-      return
-    }
     setCreating(true)
     setErrorMsg('')
     try {
@@ -48,7 +44,9 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
       onCreated?.(room)
       onClose()
     } catch (error) {
-      setErrorMsg(error instanceof Error ? error.message : t('creationFailed'))
+      // Le serveur refuse au-delà de MAX_ROOMS_PER_ACCOUNT tables.
+      const message = error instanceof Error ? error.message : ''
+      setErrorMsg(message === 'room limit reached' ? t('roomLimitReached') : message || t('creationFailed'))
     } finally {
       setCreating(false)
     }

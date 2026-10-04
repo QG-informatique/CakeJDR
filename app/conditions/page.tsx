@@ -8,7 +8,7 @@ const CONTACT = 'qg.informatique.pro@gmail.com'
 
 export default function ConditionsPage() {
   return (
-    <LegalPage title="Conditions d'utilisation" updated="3 octobre 2026">
+    <LegalPage title="Conditions d'utilisation" updated="4 octobre 2026">
       <p>
         En utilisant CakeJDR, tu acceptes ces conditions. Elles sont courtes : merci de les lire.
       </p>
@@ -44,6 +44,10 @@ export default function ConditionsPage() {
         stocker et à l&apos;afficher aux membres de tes tables. Le créateur d&apos;une table en est le
         maître du jeu : il gère qui y entre et ce qui s&apos;y passe.
       </p>
+      <p>
+        Les images de la bibliothèque de départ appartiennent à QG Informatique : tu peux les
+        utiliser librement dans tes tables CakeJDR, mais pas les reprendre ailleurs.
+      </p>
 
       <h2>Données personnelles</h2>
       <p>
@@ -60,7 +64,7 @@ export default function ConditionsPage() {
       <p>
         Éditeur : QG Informatique (Quentin Gaillard), <a href={`mailto:${CONTACT}`}>{CONTACT}</a>.
         <br />
-        Hébergeur : Vercel Inc., États-Unis (vercel.com).
+        Hébergeur : Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis (vercel.com).
       </p>
     </LegalPage>
   )
