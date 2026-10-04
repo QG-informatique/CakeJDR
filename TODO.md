@@ -162,7 +162,7 @@
 - [ ] Phase D : faire de la bibliothèque le seul moyen d'ajouter une image (envoi par « + », carte en fond plein plateau, pions alliés et ennemis posés et retirés d'un clic, onglet Outils renommé Dessin)
 - [ ] Phase E : simplifier la barre du bas (dés, musique lecture/pause + volume avec options repliées, joueurs en ligne y compris soi)
 - [ ] Phase F : créer le panneau du MJ de la salle (joueurs et fiches en temps réel, droits de modification des fiches, droits de dessin)
-- [ ] Vérifier les boutons import, export et cloud des fiches sur la page des salles (connecté avec un vrai compte : Claude ne peut pas se connecter)
+- [ ] Vérifier les boutons import, export et cloud des fiches sur la page des salles (possible en local avec « Connexion locale (admin) » ; attention, c'est la vraie base)
 - [ ] Retirer le mode édition devenu inutile des panneaux de fiche (`StatsPanel`, `EquipPanel`, `DescriptionPanel`, `CompetencesPanel`) en refaisant la fiche en partie (phase C)
 
 ## Ordre validé (2026-10-04) : débug → refonte en thème → bibliothèque → public → autres thèmes

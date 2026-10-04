@@ -1,6 +1,30 @@
 import NextAuth from 'next-auth'
 import Discord from 'next-auth/providers/discord'
 import Google from 'next-auth/providers/google'
+import Credentials from 'next-auth/providers/credentials'
+
+/**
+ * Connexion locale, pour essayer le site sur son PC sans passer par Discord
+ * ou Google : un clic connecte au compte administrateur. Elle n'existe
+ * qu'avec `npm run dev` (jamais dans un site construit pour être mis en
+ * ligne) et seulement depuis l'adresse localhost.
+ */
+const DEV_LOGIN = process.env.NODE_ENV === 'development'
+
+const devLogin = Credentials({
+  id: 'dev',
+  name: 'Connexion locale',
+  credentials: {},
+  async authorize(_credentials, request) {
+    const host = new URL(request.url).hostname
+    if (!DEV_LOGIN || !['localhost', '127.0.0.1', '::1', '[::1]'].includes(host)) return null
+    const { db } = await import('@/lib/db')
+    const { users } = await import('@/lib/db/schema')
+    const { asc, eq } = await import('drizzle-orm')
+    const [admin] = await db.select().from(users).where(eq(users.isAdmin, true)).orderBy(asc(users.createdAt)).limit(1)
+    return admin ? { id: admin.id, name: admin.pseudo } : null
+  },
+})
 
 /**
  * Connexion par Auth.js, avec Google et Discord.
@@ -23,6 +47,7 @@ export const { handlers, auth } = NextAuth({
   providers: [
     ...(process.env.AUTH_GOOGLE_ID ? [Google] : []),
     ...(process.env.AUTH_DISCORD_ID ? [Discord] : []),
+    ...(DEV_LOGIN ? [devLogin] : []),
   ],
   // 30 jours, prolongés à chaque visite (au plus une fois par jour) : un
   // joueur qui revient chaque semaine ne revoit jamais l'écran de connexion.
@@ -31,11 +56,13 @@ export const { handlers, auth } = NextAuth({
   // Vercel garantit l'en-tête Host ; en local, il faut l'accepter aussi.
   trustHost: true,
   callbacks: {
-    jwt({ token, account }) {
+    jwt({ token, account, user }) {
       // Identifiant stable : fournisseur + identifiant chez lui, par exemple
       // `discord:1234`. L'email ne sert pas de clé : il peut changer, et
       // Discord ne le fournit pas toujours.
-      if (account) token.uid = `${account.provider}:${account.providerAccountId}`
+      // La connexion locale reprend tel quel l'identifiant du compte admin.
+      if (account?.provider === 'dev' && user?.id) token.uid = user.id
+      else if (account) token.uid = `${account.provider}:${account.providerAccountId}`
       return token
     },
     session({ session, token }) {

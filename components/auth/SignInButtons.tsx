@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useT } from '@/lib/useT'
 
-type Provider = 'discord' | 'google'
+type Provider = 'discord' | 'google' | 'dev'
 
 /**
  * Boutons de connexion Discord et Google.
@@ -40,6 +40,12 @@ export default function SignInButtons({ redirectTo = '/salles' }: { redirectTo?:
         <GoogleIcon />
         {pending === 'google' ? t('authRedirecting') : t('authContinueGoogle')}
       </button>
+      {/* Seulement avec `npm run dev` : absent du site en ligne (voir auth.ts). */}
+      {process.env.NODE_ENV === 'development' && (
+        <button onClick={() => go('dev')} disabled={!!pending} className="ui-btn ui-btn-ghost border-dashed !border-[var(--c-line-strong)]">
+          Connexion locale (admin) — dev uniquement
+        </button>
+      )}
     </div>
   )
 }
