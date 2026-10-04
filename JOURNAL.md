@@ -1,5 +1,10 @@
 # Journal
 
+## 2026-10-04 — Ardoise mis en ligne
+- Thème Ardoise poussé en production (commit 4f8da8c) ; le site sert bien `data-theme="ardoise"`, 15 tests e2e OK sur le site en ligne.
+
+Reste ouvert : relecture d'Ardoise par Quentin sur écran et téléphone, bouton de thème dans la table.
+
 ## 2026-10-04 — Thème n°1 « Ardoise » (choisi par Quentin)
 - Ardoise devient le thème par défaut : gris ardoise, accent turquoise, couleur du MJ et du logo corail, police Geist, fond uni quadrillé (`app/themes.css`, `lib/themes.ts`). Classique reste disponible.
 - Bleus, violets et roses en dur remplacés par l'accent et la couleur du MJ du thème dans 22 composants ; vert (validé), rouge (danger) et ambre (MJ dans le chat) gardés, ils ont un sens.
