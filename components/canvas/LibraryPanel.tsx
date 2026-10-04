@@ -69,7 +69,6 @@ export default function LibraryPanel({
               className="ui-well group flex flex-col items-center gap-1 p-1.5 transition hover:!border-accent"
               title={label}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element -- miniature déjà réduite */}
               <img
                 src={libraryUrl(category.id, item.id, true)}
                 alt={label}

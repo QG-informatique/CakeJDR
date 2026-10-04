@@ -295,6 +295,8 @@ const MAX_PLAIN_ADULTS = 3
 export default function SpecialBackground() {
   /* --------- Temps (cycle) ---------- */
   const [timeSec, setTimeSec] = useState(0)
+  // Horloge de la dernière image : le rendu s'en sert au lieu d'appeler performance.now().
+  const [frameNow, setFrameNow] = useState(0)
   useEffect(() => {
     let raf = 0
     let lastRAF = performance.now()
@@ -307,6 +309,7 @@ export default function SpecialBackground() {
       if (acc >= TICK_MS) {
         const t = ((now - start) / 1000) % CYCLE_SEC
         setTimeSec(t)
+        setFrameNow(now)
         acc = 0
       }
       raf = requestAnimationFrame(frame)
@@ -579,12 +582,20 @@ export default function SpecialBackground() {
   const waveId = useRef(1)
   const splashId = useRef(1)
   const bubbleId = useRef(1)
-  const nextDebris = useRef(performance.now() + 6000 + Math.random() * 6000)
-  const nextWaveAt = useRef(performance.now() + 5000 + Math.random() * 6000)
+  const nextDebris = useRef(0)
+  const nextWaveAt = useRef(0)
   const nextAnimalId = useRef(1)
-  const nextSpawnAt = useRef(performance.now() + 4000)
+  const nextSpawnAt = useRef(0)
   const nextShoreId = useRef(3)
-  const lastCrabCheckAt = useRef(performance.now())
+  const lastCrabCheckAt = useRef(0)
+  // Premières échéances, posées au montage (le rendu doit rester pur).
+  useEffect(() => {
+    const now = performance.now()
+    nextDebris.current = now + 6000 + Math.random() * 6000
+    nextWaveAt.current = now + 5000 + Math.random() * 6000
+    nextSpawnAt.current = now + 4000
+    lastCrabCheckAt.current = now
+  }, [])
 
   /* --------- Constantes logique ---------- */
   const PLAIN_Y_MIN = 56,
@@ -1281,7 +1292,7 @@ export default function SpecialBackground() {
 
       {/* Vaguelettes ponctuelles */}
       {waves.map((w) => {
-        const life = Math.max(0, w.until - performance.now())
+        const life = Math.max(0, w.until - frameNow)
         const k = 1 - life / 1600
         const op = 0.45 * (1 - k)
         const size = 20 + 16 * k
@@ -1341,7 +1352,7 @@ export default function SpecialBackground() {
 
       {/* Bulles feuilles */}
       {leafBubbles.map((b) => {
-        const life = Math.max(0, b.until - performance.now())
+        const life = Math.max(0, b.until - frameNow)
         const k = 1 - life / 1400
         const r = 3 + 2 * k
         const op = 0.58 * (1 - k)
@@ -1464,7 +1475,7 @@ export default function SpecialBackground() {
 
       {/* Splashes (optimisés) */}
       {splashes.map((s) => {
-        const life = Math.max(0, s.until - performance.now())
+        const life = Math.max(0, s.until - frameNow)
         const k = 1 - life / 700
         const r = 8 + 9 * k
         const op = 0.5 * (1 - k)
@@ -1497,7 +1508,7 @@ export default function SpecialBackground() {
 
       {/* Bulles shore */}
       {bubbles.map((b) => {
-        const life = Math.max(0, b.until - performance.now())
+        const life = Math.max(0, b.until - frameNow)
         const k = 1 - life / 1300
         const r = 3.5 + 2.0 * k
         const op = 0.55 * (1 - k)
@@ -1530,7 +1541,7 @@ export default function SpecialBackground() {
 
       {/* Cœurs */}
       {hearts.map((h) => {
-        const life = Math.max(0, h.until - performance.now())
+        const life = Math.max(0, h.until - frameNow)
         const alpha = Math.min(1, life / 7000)
         return (
           <motion.div
@@ -1557,7 +1568,7 @@ export default function SpecialBackground() {
         )
       })}
       {shoreHearts.map((h) => {
-        const life = Math.max(0, h.until - performance.now())
+        const life = Math.max(0, h.until - frameNow)
         const alpha = Math.min(1, life / 8000)
         return (
           <motion.div

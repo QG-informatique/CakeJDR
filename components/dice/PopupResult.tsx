@@ -42,6 +42,7 @@ export default function PopupResult({ show, result, diceType, onFinish, onReveal
     if (!show || result === null) return
 
     // reset
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- remise à zéro de l'animation à chaque nouveau lancer
     setShowResult(false)
     setVisible(true)
     setFaceIndex(0) // always finish on the front face

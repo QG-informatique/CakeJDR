@@ -61,7 +61,6 @@ export async function listRooms(): Promise<RoomSummary[]> {
           : r.id.includes('-')
             ? r.id.substring(0, r.id.lastIndexOf('-'))
             : r.id
-      const meta = (r.metadata ?? {}) as Record<string, unknown>
       rooms.push({
         id: r.id,
         name: roomName,

@@ -1,6 +1,6 @@
 'use client'
 import { motion } from 'framer-motion'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 
 /* ╔══════════════════════════════════════════════════════════════╗
    ║  Background 10 – Lucky Clovers  (v14)                        ║
@@ -45,9 +45,8 @@ function Clover4({ size = 96 }: { size?: number }) {
 
 /* ---------- Background component ------------------------------- */
 export default function Background10 () {
-  const [clovers, setClovers] = useState<React.ReactElement[]>([])
-
-  useEffect(() => {
+  // Tirage au sort une seule fois, au premier affichage (fond chargé côté navigateur seulement).
+  const [clovers] = useState<React.ReactElement[]>(() => {
     const arr: React.ReactElement[] = []
     const TOTAL = 30
     const luckyIdx = Math.floor(Math.random() * TOTAL) // 1 lucky
@@ -74,8 +73,8 @@ export default function Background10 () {
         </motion.div>
       )
     }
-    setClovers(arr)
-  }, [])
+    return arr
+  })
 
   return (
     <div className="absolute inset-0 overflow-hidden -z-10">

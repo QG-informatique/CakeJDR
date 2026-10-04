@@ -39,29 +39,38 @@ export default function CharacterCloudModal({
   onImported,
 }: Props) {
   const t = useT()
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [entries, setEntries] = useState<CloudCharacter[]>([])
   const [uploadId, setUploadId] = useState<string>('')
   const [busyAction, setBusyAction] = useState<string | null>(null)
 
-  const refresh = useCallback(async () => {
+  // L'état n'est modifié qu'à l'arrivée de la réponse, jamais pendant l'effet lui-même.
+  const fetchEntries = useCallback(
+    () =>
+      listAccountCharacters()
+        .then((list) => {
+          setEntries(list)
+          setError(null)
+        })
+        .catch((e: unknown) => {
+          setError(e instanceof Error ? e.message : 'List failed')
+          setEntries([])
+        })
+        .finally(() => setLoading(false)),
+    [],
+  )
+
+  const refresh = useCallback(() => {
     setLoading(true)
     setError(null)
-    try {
-      setEntries(await listAccountCharacters())
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'List failed')
-      setEntries([])
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+    return fetchEntries()
+  }, [fetchEntries])
 
   useEffect(() => {
     if (!open) return
-    void refresh()
-  }, [open, refresh])
+    void fetchEntries()
+  }, [open, fetchEntries])
 
   const uploadable = useMemo(
     () =>

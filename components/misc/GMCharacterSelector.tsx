@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { useOthers } from '@liveblocks/react'
 import { useT } from '@/lib/useT'
 import { User2 } from 'lucide-react'
@@ -22,14 +22,14 @@ export default function GMCharacterSelector({
   className = '',
 }: Props) {
   const others = useOthers()
-  const [chars, setChars] = useState<Character[]>([])
   const [open, setOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const t = useT()
 
   // Récupère les personnages en temps réel via les présences
-  useEffect(() => {
-    const list = Array.from(others)
+  const chars = useMemo(
+    () =>
+      Array.from(others)
       .map((o): Character | null => {
         const raw = o.presence?.character as Character | undefined
         if (!raw || raw.id === undefined) return null
@@ -40,9 +40,9 @@ export default function GMCharacterSelector({
           ownerConnectionId: o.connectionId,
         })
       })
-      .filter((c): c is Character => c !== null)
-    setChars(list)
-  }, [others])
+      .filter((c): c is Character => c !== null),
+    [others],
+  )
 
   // Ferme le menu au clic en dehors
   useEffect(() => {

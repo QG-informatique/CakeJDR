@@ -20,7 +20,7 @@
  */
 
 import { motion } from 'framer-motion'
-import React, { useMemo } from 'react'
+import React, { useId, useMemo } from 'react'
 
 // ------------------------------------------------------------
 // Helpers
@@ -221,7 +221,7 @@ function AuroraBlob({
 // Stardust Trails – ton animation (au-dessus du Nebula)
 // ------------------------------------------------------------
 function StarIcon ({ size = 32, hue = 200 }: { size?: number; hue?: number }) {
-  const gradId = useMemo(() => `starGrad_${Math.random().toString(36).slice(2, 8)}`, [])
+  const gradId = `starGrad_${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`
   return (
     <svg viewBox="0 0 64 64" width={size} height={size} style={{ display: 'block' }}>
       <defs>

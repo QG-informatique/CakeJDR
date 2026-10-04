@@ -24,6 +24,10 @@ type Props = {
 
 const LOCAL_KEY = 'cakejdr_perso'
 const CHAR_LIST_KEY = 'jdr_characters'
+
+/** Fiche datée du moment de l'envoi. */
+const stamped = (char: Character) =>
+  normalizeCharacter({ ...char, updatedAt: Date.now() }, char.owner)
 // Une fiche fait quelques Ko : 1 Mo laisse de la marge sans laisser passer
 // n'importe quel fichier choisi par erreur.
 const MAX_IMPORT_BYTES = 1024 * 1024
@@ -79,14 +83,15 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [open])
 
-  useEffect(() => {
-    if (!modal) return
-    if (modal === 'import' || modal === 'delete') {
+  const openModal = (kind: 'export' | 'import' | 'delete') => {
+    setModal(kind)
+    setOpen(false)
+    if (kind === 'import' || kind === 'delete') {
       listAccountCharacters()
         .then(setCloudChars)
         .catch(() => setCloudChars([]))
     }
-    if (modal === 'export') {
+    if (kind === 'export') {
       try {
         const list = JSON.parse(localStorage.getItem(CHAR_LIST_KEY) || '[]')
         setLocalChars(
@@ -96,7 +101,7 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
         )
       } catch { setLocalChars([]) }
     }
-  }, [modal])
+  }
 
   // Export fiche
   const handleExport = () => {
@@ -178,9 +183,7 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
 
   const saveToCloud = async (char: Character) => {
     try {
-      await saveAccountCharacter(
-        normalizeCharacter({ ...char, updatedAt: Date.now() }, char.owner),
-      )
+      await saveAccountCharacter(stamped(char))
       alert(t('saveCloud'))
       setModal(null)
     } catch {
@@ -239,9 +242,9 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
           <button onClick={handleLocalLoad} className="w-full px-3 py-1 rounded hover:bg-surface text-left text-sm">📂 {t('loadLocal')}</button>
           {isSignedIn && (
             <>
-              <button onClick={() => { setModal('export'); setOpen(false) }} className="w-full px-3 py-1 rounded hover:bg-surface text-left text-sm">☁️ {t('exportCloud')}</button>
-              <button onClick={() => { setModal('import'); setOpen(false) }} className="w-full px-3 py-1 rounded hover:bg-surface text-left text-sm">☁️ {t('importCloud')}</button>
-              <button onClick={() => { setModal('delete'); setOpen(false) }} className="w-full px-3 py-1 rounded hover:bg-surface text-left text-sm">🗑 {t('deleteCloud')}</button>
+              <button onClick={() => openModal('export')} className="w-full px-3 py-1 rounded hover:bg-surface text-left text-sm">☁️ {t('exportCloud')}</button>
+              <button onClick={() => openModal('import')} className="w-full px-3 py-1 rounded hover:bg-surface text-left text-sm">☁️ {t('importCloud')}</button>
+              <button onClick={() => openModal('delete')} className="w-full px-3 py-1 rounded hover:bg-surface text-left text-sm">🗑 {t('deleteCloud')}</button>
             </>
           )}
 

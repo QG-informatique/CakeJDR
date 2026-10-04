@@ -163,9 +163,10 @@ export default function DiceStats({ history }: Props) {
   ]
   const [statType, setStatType] = useState<string>('all')
   const [timeRange, setTimeRange] = useState<string>('all')
+  const [rangeNow, setRangeNow] = useState(() => Date.now())
   let filtered = history
   if (timeRange !== 'all') {
-    const now = Date.now()
+    const now = rangeNow
     const limit = timeRange === '7d' ? 7 * 24 * 3600 * 1000 : 24 * 3600 * 1000
     filtered = history.filter((h) => !h.ts || now - h.ts <= limit)
   }
@@ -237,7 +238,10 @@ export default function DiceStats({ history }: Props) {
         />
         <CustomSelect
           value={timeRange}
-          onChange={setTimeRange}
+          onChange={(v) => {
+            setTimeRange(v)
+            setRangeNow(Date.now())
+          }}
           options={TIME_OPTIONS}
         />
       </div>

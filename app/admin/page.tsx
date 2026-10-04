@@ -26,7 +26,7 @@ export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState(false)
 
   const [rooms, setRooms] = useState<RoomInfoResponse[]>([])
-  const [loadingRooms, setLoadingRooms] = useState(false)
+  const [loadingRooms, setLoadingRooms] = useState(true)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [filter, setFilter] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('createdAt')
@@ -34,37 +34,38 @@ export default function AdminPage() {
   const [status, setStatus] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const refreshStatus = useCallback(async () => {
-    try {
-      const data = await fetchAdminStatus()
-      setIsAdmin(data.isAdmin)
-    } catch {
-      setIsAdmin(false)
-    } finally {
-      setChecking(false)
-    }
-  }, [])
+  // L'état n'est modifié qu'à l'arrivée de la réponse, jamais pendant l'effet lui-même.
+  const fetchRoomList = useCallback(
+    () =>
+      fetchRooms()
+        .then((list) => {
+          setRooms(list)
+          setError(null)
+        })
+        .catch((e: unknown) => {
+          setError(e instanceof Error ? e.message : 'Chargement impossible')
+          setRooms([])
+        })
+        .finally(() => setLoadingRooms(false)),
+    [],
+  )
 
-  const loadRooms = useCallback(async () => {
+  const loadRooms = useCallback(() => {
     setLoadingRooms(true)
     setError(null)
-    try {
-      setRooms(await fetchRooms())
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Chargement impossible')
-      setRooms([])
-    } finally {
-      setLoadingRooms(false)
-    }
+    return fetchRoomList()
+  }, [fetchRoomList])
+
+  useEffect(() => {
+    fetchAdminStatus()
+      .then((data) => setIsAdmin(data.isAdmin))
+      .catch(() => setIsAdmin(false))
+      .finally(() => setChecking(false))
   }, [])
 
   useEffect(() => {
-    void refreshStatus()
-  }, [refreshStatus])
-
-  useEffect(() => {
-    if (isAdmin) void loadRooms()
-  }, [isAdmin, loadRooms])
+    if (isAdmin) void fetchRoomList()
+  }, [isAdmin, fetchRoomList])
 
   useEffect(() => {
     if (!status) return

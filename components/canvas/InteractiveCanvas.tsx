@@ -213,11 +213,14 @@ export default function InteractiveCanvas() {
     }
   }, [resolveSize])
 
+  // Lit la taille et les déplacements en cours gardés dans des refs (mis à jour à chaque image
+  // pendant un glisser) ; `renderVersion` déclenche le recalcul.
   const imagesToRender = useMemo<ImageRenderData[]>(() => {
     void renderVersion
     const size = resolveSize()
     const minWorldW = size.width ? MIN_IMAGE_SIZE / size.width : 0
     const minWorldH = size.height ? MIN_IMAGE_SIZE / size.height : 0
+    // eslint-disable-next-line react-hooks/refs -- lecture voulue, voir plus haut
     return images.map((img) => {
       const key = String(img.id)
       const world = resolveImageWorld(img, size)
@@ -679,10 +682,8 @@ export default function InteractiveCanvas() {
   const dragState = useRef({ id: null as string | null, type: null as 'move' | 'resize' | null, offsetX: 0, offsetY: 0 })
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null)
 
-  // Brush limits + canvas interactivity
+  // Canvas interactivity (les tailles de pinceau sont bornées par les curseurs de CanvasTools)
   useEffect(() => {
-    if (drawMode === 'erase') setEraserSize((s) => Math.min(Math.max(s, 8), 200))
-    else setPenSize((s) => Math.min(Math.max(s, 2), 50))
     const canvas = drawingCanvasRef.current
     if (canvas) { canvas.style.zIndex = '2'; canvas.style.pointerEvents = drawMode === 'images' ? 'none' : 'auto' }
   }, [drawMode])
@@ -748,7 +749,7 @@ export default function InteractiveCanvas() {
           {imagesToRender.map((img) => (
             <ImageItem key={img.id} img={img} drawMode={drawMode} onPointerDown={handlePointerDown} onDelete={handleDeleteImage} pending={pendingImages.some((p) => p.id === img.id)} />
           ))}
-          {(drawMode === 'draw' || drawMode === 'erase') && !dragState.current.id && (
+          {(drawMode === 'draw' || drawMode === 'erase') && (
             <div className="absolute rounded-full border border-accent pointer-events-none" style={{ top: mousePos.y - brushSize / 2, left: mousePos.x - brushSize / 2, width: brushSize, height: brushSize, zIndex: 2 }} />
           )}
           <LiveCursors canvasSize={canvasSize} />

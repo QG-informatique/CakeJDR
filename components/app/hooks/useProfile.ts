@@ -56,12 +56,7 @@ export default function useProfile(): Profile | null {
   }, [])
 
   useEffect(() => {
-    if (!isLoaded) return
-    if (!isSignedIn) {
-      setAccount(null)
-      setChecked(true)
-      return
-    }
+    if (!isLoaded || !isSignedIn) return
     let cancelled = false
     fetch('/api/me', { cache: 'no-store' })
       .then((r) => r.json())
@@ -77,8 +72,9 @@ export default function useProfile(): Profile | null {
     }
   }, [isLoaded, isSignedIn, version])
 
-  if (!isLoaded || !checked) return null
+  if (!isLoaded) return null
   if (!isSignedIn) return VISITOR
+  if (!checked) return null
   if (!account) return VISITOR
 
   return {
