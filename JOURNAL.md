@@ -1,5 +1,14 @@
 # Journal
 
+## 2026-10-04 — Dés tirés par le serveur, mentions légales complètes
+- Le dé de la table est tiré par le serveur (`app/api/dice/route.ts`) : il tire, signe, inscrit le lancer dans le chat de la table, puis répond. Le joueur ne peut plus choisir son résultat ni relancer en douce.
+- Chaque navigateur vérifie la signature (`components/chat/useDiceVerification.ts`) : bouclier « Lancé par le serveur », ou alerte orange pour un lancer écrit à la main. Clé dérivée de `AUTH_SECRET` (`lib/diceSigning.ts`), aucune variable Vercel à ajouter.
+- Le résultat reste caché dans le chat pendant les 3 s de l'animation. Testé sur la démo en local, lancer de test retiré ensuite.
+- Restent tirés dans le navigateur : jets de la fiche (la fiche appartient au joueur) et dés décoratifs.
+- `app/conditions/page.tsx` : adresse, SIRET et directeur de publication, repris du site QG Informatique. Build et 15 tests e2e OK.
+
+Reste ouvert : pas encore en ligne.
+
 ## 2026-10-04 — Fond animé : respect de « réduire les animations »
 - `components/ui/BackgroundWrapper.tsx` : si le système demande moins d'animations, le fond uni du thème remplace le fond choisi. Vérifié dans Chrome simulé : 40 dés sans le réglage, 0 avec.
 - `components/ui/RpgBackground.tsx` : `will-change: transform` sur les dés, pour aider les navigateurs qui saccadaient (Firefox). Pas vérifié sur Firefox.

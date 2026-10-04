@@ -62,7 +62,11 @@ export default function ConditionsPage() {
 
       <h2>Mentions légales</h2>
       <p>
-        Éditeur : QG Informatique (Quentin Gaillard), <a href={`mailto:${CONTACT}`}>{CONTACT}</a>.
+        Éditeur : QG Informatique, Quentin Gaillard, entrepreneur individuel (micro-entreprise),
+        62 rue de la République, 30200 Bagnols-sur-Cèze, France. SIRET 943 740 944 00039.
+        Contact : <a href={`mailto:${CONTACT}`}>{CONTACT}</a>.
+        <br />
+        Directeur de la publication : Quentin Gaillard.
         <br />
         Hébergeur : Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis (vercel.com).
       </p>

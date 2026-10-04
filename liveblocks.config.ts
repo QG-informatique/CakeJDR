@@ -40,6 +40,8 @@ type SessionEvent = {
   result?: number
   ts: number
   isMJ?: boolean
+  /** Signature du serveur sur un lancer de dé (`lib/diceSigning.ts`). */
+  sig?: string
 }
 
 type Room = {

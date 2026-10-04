@@ -75,7 +75,7 @@
 - [x] Renseigner `AUTH_DISCORD_ID` et `AUTH_DISCORD_SECRET` dans Vercel, environnement Production
 - [x] Créer l'application Google : compléter le Branding (accueil, `/confidentialite`, `/conditions`, domaine `qg-informatique.fr`), publier, créer le client Web
 - [x] Relire `app/confidentialite` et `app/conditions` (nom, email de contact, hébergeur) avant la mise en ligne
-- [ ] Compléter les mentions légales (`app/conditions`) avec l'adresse et le SIRET de QG Informatique, obligatoires pour un éditeur professionnel
+- [x] Compléter les mentions légales (`app/conditions`) avec l'adresse et le SIRET de QG Informatique, obligatoires pour un éditeur professionnel
 - [x] Rendre les pseudos uniques (sans tenir compte des majuscules) : suffixe automatique à la première connexion si le nom est pris, refus au changement de pseudo
 - [ ] Tester l'écran « Choisis ton pseudo » avec le compte Google de test (CakeSama-2), pseudo libre puis pseudo déjà pris
 - [x] Identifier le propriétaire d'une fiche par l'identifiant du compte et non par le pseudo (`c.owner === profile.pseudo` dans `HomePageInner.tsx` et `MenuAccueil.tsx`)
@@ -167,7 +167,8 @@
 - [x] Limiter la taille des données d'une table (traits et images accumulés sans fin)
 - [ ] Tester avec deux comptes la fiche d'un joueur ouverte et modifiée par le MJ, puis le retour à « Ma fiche »
 - [ ] Passer le résumé de session en vraie co-édition (plugin Lexical de Liveblocks) : aujourd'hui, si deux personnes écrivent en même temps, la dernière gagne
-- [ ] Tirer les dés côté serveur : le résultat est calculé dans le navigateur, donc falsifiable
+- [x] Tirer les dés côté serveur : le résultat est calculé dans le navigateur, donc falsifiable
+- [ ] Vérifier en ligne qu'un lancer de dé s'affiche chez tous les joueurs avec le bouclier « Lancé par le serveur »
 - [ ] Caler la position de la musique pour un joueur qui arrive en cours de morceau
 - [ ] Ne pas perdre la modification du MJ quand le joueur est lui-même en train d'éditer sa fiche
 

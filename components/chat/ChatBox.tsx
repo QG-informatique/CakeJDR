@@ -1,7 +1,7 @@
 'use client'
 
 import { FC, RefObject, useRef, useState, useEffect, useMemo } from 'react'
-import { ChevronLeft, ChevronRight, BarChart3, BookOpen, Dices, MessageSquare } from 'lucide-react'
+import { ChevronLeft, ChevronRight, BarChart3, BookOpen, Dices, MessageSquare, ShieldCheck, TriangleAlert } from 'lucide-react'
 import { useBroadcastEvent, useRoom, useSelf } from '@liveblocks/react'
 import SessionSummary from './SessionSummary'
 import DiceStats from './DiceStats'
@@ -9,6 +9,7 @@ import useEventLog, { SessionEvent } from '../app/hooks/useEventLog'
 import { useT } from '@/lib/useT'
 import { useIsDesktop } from '@/lib/useIsDesktop'
 import { debug } from '@/lib/debug'
+import { useDiceVerification } from './useDiceVerification'
 
 // Longueur maximale d'un message : au-delà, la liste partagée de la table
 // grossit vite et un pavé sans espace déborde du panneau.
@@ -36,14 +37,31 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
     }
     return unique.sort((a, b) => a.ts - b.ts)
   }, [events])
+  // Un lancer porte l'heure de la fin de son animation : il reste caché
+  // jusque-là, pour ne pas dévoiler le résultat avant le dé.
+  const [now, setNow] = useState(() => Date.now())
+  const nextReveal = useMemo(
+    () => sortedEvents.find((ev) => ev.kind === 'dice' && ev.ts > now)?.ts ?? null,
+    [sortedEvents, now],
+  )
+  useEffect(() => {
+    if (nextReveal === null) return
+    const timer = window.setTimeout(() => setNow(Date.now()), Math.max(0, nextReveal - Date.now()))
+    return () => window.clearTimeout(timer)
+  }, [nextReveal])
+  const revealedEvents = useMemo(
+    () => sortedEvents.filter((ev) => ev.kind !== 'dice' || ev.ts <= now),
+    [sortedEvents, now],
+  )
+  const diceChecks = useDiceVerification(room.id, revealedEvents)
   // Les statistiques de dés se calculent sur l'historique partagé de la table :
   // tous les joueurs voient les mêmes chiffres, y compris pour les lancers
   // faits avant leur arrivée.
   const diceRolls = useMemo(
-    () => sortedEvents
+    () => revealedEvents
       .filter((ev) => ev.kind === 'dice' && ev.player != null && ev.dice != null && ev.result != null)
       .map((ev) => ({ player: ev.player!, dice: ev.dice!, result: ev.result!, ts: ev.ts })),
-    [sortedEvents],
+    [revealedEvents],
   )
   const [inputValue, setInputValue] = useState('')
   const endRef = useRef<HTMLDivElement>(null)
@@ -52,8 +70,8 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
   const sessionStart = useRef(Date.now())
   const [showHistory, setShowHistory] = useState(false)
   const displayedEvents = showHistory
-    ? sortedEvents
-    : sortedEvents.filter(ev => ev.ts >= sessionStart.current)
+    ? revealedEvents
+    : revealedEvents.filter(ev => ev.ts >= sessionStart.current)
   const broadcast = useBroadcastEvent()
   const self = useSelf()
   const t = useT()
@@ -227,6 +245,16 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
                     </span>
                     {isCrit && <span className="text-xs">✨</span>}
                     {isFumble && <span className="text-xs">💀</span>}
+                    {diceChecks[ev.id] === 'verified' && (
+                      <ShieldCheck size={13} className="shrink-0 text-ink/35" aria-label={t('diceVerified')}>
+                        <title>{t('diceVerified')}</title>
+                      </ShieldCheck>
+                    )}
+                    {diceChecks[ev.id] === 'unverified' && (
+                      <TriangleAlert size={13} className="shrink-0 text-amber-400" aria-label={t('diceUnverified')}>
+                        <title>{t('diceUnverified')}</title>
+                      </TriangleAlert>
+                    )}
                   </div>
                 )
               }

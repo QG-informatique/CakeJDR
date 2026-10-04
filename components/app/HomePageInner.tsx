@@ -14,7 +14,6 @@ import LiveAvatarStack from '@/components/chat/LiveAvatarStack'
 import SignedOutPanel from '@/components/auth/SignedOutPanel'
 import GMCharacterSelector from '@/components/misc/GMCharacterSelector'
 import ImportExportMenu from '@/components/character/ImportExportMenu'
-import useEventLog from './hooks/useEventLog'
 import useProfile from './hooks/useProfile'
 import ErrorBoundary from '@/components/misc/ErrorBoundary'
 import MobileTabBar, { type MobileTab } from '@/components/app/MobileTabBar'
@@ -22,6 +21,7 @@ import { debug } from '@/lib/debug'
 import { roomAuthHeaders } from '@/lib/roomsApi'
 import { saveAccountCharacter } from '@/lib/charactersApi'
 import { useTheme } from '@/components/context/ThemeContext'
+import { useT } from '@/lib/useT'
 import {
   type Character,
   buildCharacterKey,
@@ -36,6 +36,7 @@ const SELECTED_CHARACTER_KEY = 'selectedCharacterId'
 export default function HomePageInner() {
   const router = useRouter()
   const { theme } = useTheme()
+  const t = useT()
   const [user, setUser] = useState<string | null>(null)
   const profile = useProfile()
   const self = useSelf()
@@ -66,8 +67,7 @@ export default function HomePageInner() {
   const [diceResult, setDiceResult] = useState<number | null>(null)
   const [diceDisabled, setDiceDisabled] = useState(false)
   const { id: roomId } = useParams<{ id: string }>()
-  const [pendingRoll, setPendingRoll] = useState<{ result: number; dice: number; nom: string } | null>(null)
-  const { addEvent } = useEventLog(roomId)
+  const [diceError, setDiceError] = useState(false)
   const chatBoxRef = useRef<HTMLDivElement>(null)
   const [canvasKey, setCanvasKey] = useState(0)
   // Sous 1024 px, un seul panneau à la fois : fiche, table (canevas et dés)
@@ -132,8 +132,8 @@ export default function HomePageInner() {
       if (mobileTab !== 'chat') setChatUnread(true)
       return
     }
-    // Les lancers des autres arrivent par la liste partagée (`useEventLog`),
-    // écrite une seule fois par celui qui lance.
+    // Les lancers arrivent par la liste partagée (`useEventLog`), où le
+    // serveur les inscrit lui-même (`/api/dice`).
     if (event.type === 'dice-roll') {
       debug('dice-roll received', event)
       return
@@ -465,29 +465,31 @@ export default function HomePageInner() {
     )
   }
 
-  const rollDice = () => {
+  // Le dé est tiré par le serveur, qui inscrit aussi le lancer dans le chat :
+  // le résultat n'y apparaît qu'à la fin de l'animation.
+  const rollDice = async () => {
     if (diceDisabled) return
     setDiceDisabled(true)
     setCooldown(true)
-    const result = Math.floor(Math.random() * diceType) + 1
-    setDiceResult(result)
-    setShowPopup(true)
-    setPendingRoll({ result, dice: diceType, nom: perso.nom || profile?.pseudo || '?' })
-  }
-
-  const handlePopupReveal = () => {
-    if (!pendingRoll) return
-    const { nom, dice, result } = pendingRoll
-
-    const ts = Date.now()
-    const entry = { player: nom, dice, result, ts }
-
-    addEvent({ id: crypto.randomUUID(), kind: 'dice', ...entry })
-
-    broadcast({ type: 'dice-roll', player: nom, dice, result, ts })
-    debug('dice-roll send', entry)
-    setPendingRoll(null)
-
+    setDiceError(false)
+    try {
+      const res = await fetch('/api/dice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomId, dice: diceType, player: perso.nom || profile?.pseudo || '' }),
+      })
+      const data = (await res.json().catch(() => null)) as { roll?: { result: number } } | null
+      if (!res.ok || !data?.roll) throw new Error(`dice ${res.status}`)
+      debug('dice-roll', data.roll)
+      setDiceResult(data.roll.result)
+      setShowPopup(true)
+    } catch (e) {
+      debug('dice-roll failed', e)
+      setDiceError(true)
+      window.setTimeout(() => setDiceError(false), 4000)
+      setCooldown(false)
+      setDiceDisabled(false)
+    }
   }
 
   const handlePopupFinish = () => {
@@ -545,8 +547,13 @@ export default function HomePageInner() {
             {/* Bandeau de la salle de démo, en bas du plateau : il ne cache pas les outils. */}
             <DemoBanner />
             <ErrorBoundary fallback={<div className="p-4 text-red-500">Dice display error</div>}>
-              <PopupResult show={showPopup} result={diceResult} diceType={diceType} onReveal={handlePopupReveal} onFinish={handlePopupFinish} />
+              <PopupResult show={showPopup} result={diceResult} diceType={diceType} onFinish={handlePopupFinish} />
             </ErrorBoundary>
+            {diceError && (
+              <p role="alert" className="ui-panel absolute bottom-14 left-1/2 -translate-x-1/2 z-30 px-3 py-1.5 text-sm">
+                {t('diceRollFailed')}
+              </p>
+            )}
           </div>
           <ErrorBoundary fallback={<div className="p-4 text-red-500">Dice roller error</div>}>
             <DiceRoller
