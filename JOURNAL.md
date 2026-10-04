@@ -1,5 +1,10 @@
 # Journal
 
+## 2026-10-04 — Prompt du pack n° 2 refait pour une campagne complète
+- Revirement : Quentin veut un pack complet plutôt que court, pour ne pas en refaire un autre de longtemps. `PROMPT-PACK-IMAGES.md` passe à 97 entrées, environ 129 images.
+- Un monde cohérent : royaume bleu et or, culte, vampire, dragon ; trois actes et un final ; huit factions ennemies avec leurs couleurs, chacune avec troupes, élite et boss.
+- Les alliés du royaume (roi, gardes, héroïne…) ont rencontre et pion ; les PNJ pacifiques ont leur rencontre. Livraison en un zip par partie, pour ne rien perdre si ChatGPT s'arrête.
+
 ## 2026-10-04 — Prompt du pack n° 2 raccourci
 - `PROMPT-PACK-IMAGES.md` ramené de 66 à 38 images, sans images modèles à joindre (ChatGPT a fait le premier pack dans la même conversation) et sans génération une par une : tout d'affilée, puis un zip.
 - Ajout de deux pions boss (liche, chef orc, assortis à leur rencontre) en plus du troll, devenu boss : 40 images.
