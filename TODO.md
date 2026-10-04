@@ -85,7 +85,7 @@
 - [x] Supprimer aussi chez Cloudinary une image retirée du plateau (aujourd'hui seule la suppression de la table entière l'efface)
 - [ ] Tester avec un compte jetable qu'une table supprimée emporte ses images sur Cloudinary (`lib/cloudinaryCleanup.ts`)
 - [ ] Vérifier en ligne qu'une image téléversée puis retirée du plateau disparaît de la médiathèque Cloudinary (`app/api/cloudinary/remove/route.ts`)
-- [ ] Effacer chez Cloudinary les images que les visiteurs ajoutent à la salle de démo, perdues à sa remise à zéro (`lib/demoRoom.ts`)
+- [x] Effacer chez Cloudinary les images que les visiteurs ajoutent à la salle de démo, perdues à sa remise à zéro (`lib/demoRoom.ts`)
 - [x] Copier `AUTH_SECRET` (déjà généré dans `.env.local`) dans Vercel, environnement Production
 - [x] Après la première connexion, transférer la salle démo et le rôle admin vers le nouveau compte (`scripts/transfer-account.mjs`)
 - [x] Retirer l'intégration Clerk de Vercel, avec ses variables `CLERK_*` et `NEXT_PUBLIC_CLERK_*`

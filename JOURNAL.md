@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-04 — Salle de démo : images des visiteurs effacées à la remise à zéro
+- `restoreSnapshot` (`lib/demoRoom.ts`) relève les images Cloudinary de la salle avant de la remettre à zéro, puis efface celles qui ne sont pas dans l'état de référence.
+- Vérifié en lecture seule : les 2 images actuelles de la démo sont dans l'état de référence, donc épargnées.
+- Un échec côté Cloudinary n'empêche pas la remise à zéro. Build et 15 tests e2e OK.
+
+Reste ouvert : pas encore en ligne.
+
 ## 2026-10-04 — Image retirée du plateau effacée chez Cloudinary
 - Retirer une image téléversée (bouton ou touche Suppr) l'efface aussi chez Cloudinary : route `app/api/cloudinary/remove/route.ts`, appelée par `components/canvas/InteractiveCanvas.tsx`.
 - Garde-fous : compte connecté, accès à la table, image plus présente sur la table (revérifiée 1,5 s plus tard), dossier `cakejdr/` seulement, jamais une image de la salle de démo, 60 retraits par 10 min.
