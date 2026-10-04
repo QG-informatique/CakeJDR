@@ -5,6 +5,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ClientLayout from "@/components/ClientLayout";
+import { THEME_STORAGE_KEY, THEMES } from "@/lib/themes";
+
+const THEME_BOOT_SCRIPT = `try{var t=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});if(${JSON.stringify(THEMES.map((t) => t.id))}.indexOf(t)>=0)document.documentElement.dataset.theme=t}catch(e){}`;
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,8 +27,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased relative min-h-screen`} style={{ background: "#13111c" }}>
+    <html lang="fr" data-theme="classique" suppressHydrationWarning>
+      <head>
+        {/* Applique le thème choisi avant le premier affichage, sans clignotement. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+      </head>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased relative min-h-screen`}>
         <ClientLayout>{children}</ClientLayout>
       </body>
     </html>

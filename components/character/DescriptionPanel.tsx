@@ -137,7 +137,7 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
                 <input
                   value={val || ''}
                   onChange={(e) => onChange(key, e.target.value)}
-                  className="px-1 py-0.5 rounded bg-white border text-sm text-black w-full"
+                  className="px-1 py-0.5 rounded bg-field border text-sm text-field-ink w-full"
                   style={{ minWidth: 0 }}
                 />
               ) : (
@@ -162,7 +162,7 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
             <textarea
               value={values.capacite_raciale || ''}
               onChange={e => onChange('capacite_raciale', e.target.value)}
-              className="px-1 py-0.5 rounded bg-white border text-sm text-black w-full min-h-[38px] max-h-[130px] resize-y"
+              className="px-1 py-0.5 rounded bg-field border text-sm text-field-ink w-full min-h-[38px] max-h-[130px] resize-y"
               style={{ minWidth: 0, overflowWrap: 'break-word' }}
             />
           ) : (
@@ -189,7 +189,7 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
                 <textarea
                   value={val || ''}
                   onChange={(e) => onChange(key, e.target.value)}
-                  className="px-1 py-0.5 rounded bg-white border text-sm text-black w-full min-h-[34px] max-h-[130px] resize-y"
+                  className="px-1 py-0.5 rounded bg-field border text-sm text-field-ink w-full min-h-[34px] max-h-[130px] resize-y"
                   style={{ minWidth: 0, overflowWrap: 'break-word' }}
                 />
               ) : (
@@ -209,7 +209,7 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
             {champsPerso.map((f) => (
                 <div key={f.id} className="grid grid-cols-[120px_18px_1fr_80px] gap-1 mb-1 items-start w-full">
                   <input
-                    className="p-1 rounded bg-white text-black text-sm w-full text-right"
+                    className="p-1 rounded bg-field text-field-ink text-sm w-full text-right"
                     value={f.label}
                     onChange={e => {
                       onUpdateChamp(f.id, { ...f, label: e.target.value })
@@ -217,7 +217,7 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
                   />
                   <span className="text-right font-bold">:</span>
                   <textarea
-                    className="p-1 rounded bg-white text-black text-sm flex-1 min-h-[28px] resize-y w-full pl-3"
+                    className="p-1 rounded bg-field text-field-ink text-sm flex-1 min-h-[28px] resize-y w-full pl-3"
                     value={f.value}
                     onChange={e => {
                       onUpdateChamp(f.id, { ...f, value: e.target.value })
@@ -231,14 +231,14 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
             <div className="flex flex-col gap-1 mb-2">
               <div className="grid grid-cols-[120px_18px_1fr_80px] gap-1 w-full">
                 <input
-                  className="p-1 rounded bg-white text-black text-sm w-full text-right"
+                  className="p-1 rounded bg-field text-field-ink text-sm w-full text-right"
                   placeholder={t('fieldName')}
                   value={newChamp.label || ''}
                   onChange={e => setNewChamp({ ...newChamp, label: e.target.value })}
                 />
                 <span className="text-right font-bold">:</span>
                 <textarea
-                  className="p-1 rounded bg-white text-black text-sm flex-1 min-h-[28px] resize-y w-full pl-3"
+                  className="p-1 rounded bg-field text-field-ink text-sm flex-1 min-h-[28px] resize-y w-full pl-3"
                   placeholder={t('value')}
                   value={newChamp.value || ''}
                   onChange={e => setNewChamp({ ...newChamp, value: e.target.value })}
@@ -267,7 +267,7 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
                 <span className="break-words flex-1 pl-3">{f.value}</span>
               </div>
             ))}
-            {champsPerso.length === 0 && <span className="text-gray-400 text-xs">{t('noCustomField')}</span>}
+            {champsPerso.length === 0 && <span className="text-ink/55 text-xs">{t('noCustomField')}</span>}
           </div>
         )}
       </div>

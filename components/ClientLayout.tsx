@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import { SessionProvider } from 'next-auth/react'
 import { BackgroundProvider } from '@/components/context/BackgroundContext'
 import { LanguageProvider } from '@/components/context/LanguageContext'
+import { ThemeProvider } from '@/components/context/ThemeContext'
 import HtmlLangSync from '@/components/ui/HtmlLangSync'
 import CreditQG from '@/components/ui/CreditQG'
 
@@ -45,6 +46,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     // La session de connexion, lue par useSession() dans toute l'application.
     <SessionProvider>
     <LanguageProvider>
+    <ThemeProvider>
       {/* Synchronise document.documentElement.lang avec la langue active */}
       <HtmlLangSync />
       <BackgroundProvider>
@@ -56,6 +58,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         <main className="relative z-10">{children}</main>
         <CreditQG />
       </BackgroundProvider>
+    </ThemeProvider>
     </LanguageProvider>
     </SessionProvider>
   )

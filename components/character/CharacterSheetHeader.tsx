@@ -44,7 +44,7 @@ const CharacterSheetHeader: FC<Props> = ({
       <div className="flex flex-wrap items-center gap-1.5">
         <Link
           href="/menu-accueil"
-          className="rounded-xl p-2 bg-white/5 border border-white/8 text-white/80 hover:bg-white/12 hover:text-white transition-all duration-150 flex items-center justify-center"
+          className="rounded-xl p-2 bg-ink/5 border border-ink/8 text-ink/80 hover:bg-ink/12 hover:text-ink transition-all duration-150 flex items-center justify-center"
         >
           <CakeLogo className="mr-0" showText={false} />
         </Link>
@@ -56,7 +56,7 @@ const CharacterSheetHeader: FC<Props> = ({
             flex items-center justify-center gap-1.5
             ${edit
               ? 'bg-emerald-600/30 border-emerald-400/30 text-emerald-200 hover:bg-emerald-500/40 hover:border-emerald-300/40'
-              : 'bg-white/6 border-white/10 text-white/80 hover:bg-white/12 hover:text-white'}
+              : 'bg-ink/6 border-ink/10 text-ink/80 hover:bg-ink/12 hover:text-ink'}
           `}
         >
           {edit ? '💾 ' + t('save') : '✏️ ' + t('edit')}
@@ -69,15 +69,15 @@ const CharacterSheetHeader: FC<Props> = ({
       </div>
 
       {/* Tab row */}
-      <nav className="flex gap-1 mt-2 bg-black/20 rounded-lg p-0.5">
+      <nav className="flex gap-1 mt-2 bg-shade/20 rounded-lg p-0.5">
         {TABS.map(tItem => (
           <button
             key={tItem.key}
             className={`
               flex-1 px-2 py-1 rounded-md text-xs font-semibold transition-all duration-150
               ${tab === tItem.key
-                ? 'bg-indigo-600/80 text-white shadow-sm shadow-indigo-900/40'
-                : 'text-white/50 hover:text-white/80 hover:bg-white/6'}
+                ? 'bg-indigo-600/80 text-ink shadow-sm shadow-indigo-900/40'
+                : 'text-ink/50 hover:text-ink/80 hover:bg-ink/6'}
             `}
             onClick={() => setTab(tItem.key)}
           >

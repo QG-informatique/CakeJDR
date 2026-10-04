@@ -61,7 +61,7 @@ const DiceRoller: FC<Props> = ({
         <button
           onClick={() => setCollapsed(false)}
           aria-label="Expand dice panel"
-          className="absolute bottom-2 left-1/2 -translate-x-1/2 z-50 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
+          className="absolute bottom-2 left-1/2 -translate-x-1/2 z-50 text-ink/80 hover:text-ink bg-shade/30 rounded-full p-1"
         >
           <ChevronUp size={20} />
         </button>
@@ -76,10 +76,10 @@ const DiceRoller: FC<Props> = ({
       className="
         relative w-full p-4 flex flex-wrap items-center gap-3
         rounded-xl
-        border border-white/10
-        bg-black/15
+        border border-ink/10
+        bg-shade/15
         backdrop-blur-[2px]
-        shadow-lg shadow-black/10
+        shadow-lg shadow-shade/10
         transition flex-shrink-0
       "
       style={{
@@ -91,13 +91,13 @@ const DiceRoller: FC<Props> = ({
         <button
           onClick={() => setCollapsed(true)}
           aria-label="Collapse dice panel"
-          className="z-50 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
+          className="z-50 text-ink/80 hover:text-ink bg-shade/30 rounded-full p-1"
         >
           <ChevronDown size={20} />
         </button>
       </div>
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs font-semibold text-white/50 uppercase tracking-wider">{t('diceType')}</span>
+        <span className="text-xs font-semibold text-ink/50 uppercase tracking-wider">{t('diceType')}</span>
 
         <div className="flex gap-1 flex-wrap">
           {[4, 6, 8, 10, 12, 20, 100].map((val) => (
@@ -108,8 +108,8 @@ const DiceRoller: FC<Props> = ({
               className={`
                 px-2 py-1 rounded-lg text-xs font-bold border transition-all duration-150 active:scale-90
                 ${diceType === val
-                  ? 'bg-indigo-600/70 border-indigo-400/60 text-white shadow-[0_0_8px_2px_rgba(99,102,241,0.3)]'
-                  : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10 hover:text-white/90 hover:border-white/20'}
+                  ? 'bg-indigo-600/70 border-indigo-400/60 text-ink shadow-[0_0_8px_2px_rgba(99,102,241,0.3)]'
+                  : 'bg-ink/5 border-ink/10 text-ink/60 hover:bg-ink/10 hover:text-ink/90 hover:border-ink/20'}
                 ${disabled ? 'opacity-40 cursor-not-allowed' : ''}
               `}
             >
@@ -126,11 +126,11 @@ const DiceRoller: FC<Props> = ({
             relative flex items-center gap-2
             px-8 py-2.5 rounded-2xl
             font-bold text-base tracking-wide
-            text-white
-            border border-white/15
+            text-ink
+            border border-ink/15
             bg-gradient-to-br from-indigo-600/70 to-violet-700/60
             hover:from-indigo-500/80 hover:to-violet-600/70
-            hover:border-white/25
+            hover:border-ink/25
             active:scale-95
             transition-all duration-150
             shadow-[0_2px_16px_-4px_rgba(99,102,241,0.5)]
@@ -144,7 +144,7 @@ const DiceRoller: FC<Props> = ({
 
           {cooldown && (
             <motion.span
-              className="absolute inset-0 rounded-2xl bg-black/50 origin-left pointer-events-none"
+              className="absolute inset-0 rounded-2xl bg-shade/50 origin-left pointer-events-none"
               initial={{ scaleX: 1 }}
               animate={{ scaleX: 0 }}
               transition={{ duration: Math.max(0.1, cooldownDuration / 1000), ease: 'linear' }}

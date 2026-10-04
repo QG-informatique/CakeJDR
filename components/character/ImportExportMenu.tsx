@@ -221,31 +221,31 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
   return (
     <div ref={containerRef} className="relative inline-block ml-2">
       <button
-        className="bg-gray-800 hover:bg-gray-700 text-white p-2 rounded shadow transition-all"
+        className="bg-surface hover:bg-surface-hover text-ink p-2 rounded shadow transition-all"
         onClick={() => setOpen(v => !v)}
         aria-label="Import / Export"
       >
         <Folder size={16} />
       </button>
       {open && (
-        <div className="absolute top-full left-full mt-2 ml-2 z-50 w-56 bg-black/35 backdrop-blur-md border border-white/10 rounded-xl shadow-2xl py-2 flex flex-col gap-1 animate-fadeIn">
-          <button onClick={handleExport} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">📤 {t('exportSheet')}</button>
-          <label className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm cursor-pointer">
+        <div className="absolute top-full left-full mt-2 ml-2 z-50 w-56 bg-shade/35 backdrop-blur-md border border-ink/10 rounded-xl shadow-2xl py-2 flex flex-col gap-1 animate-fadeIn">
+          <button onClick={handleExport} className="w-full px-3 py-1 rounded hover:bg-surface text-left text-sm">📤 {t('exportSheet')}</button>
+          <label className="w-full px-3 py-1 rounded hover:bg-surface text-left text-sm cursor-pointer">
             📥 {t('importSheet')}
             <input type="file" ref={inputRef} accept=".txt,.json" style={{ display: 'none' }} onChange={handleImport} />
           </label>
 
-          <button onClick={handleLocalSave} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">💾 {t('saveLocally')}</button>
-          <button onClick={handleLocalLoad} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">📂 {t('loadLocal')}</button>
+          <button onClick={handleLocalSave} className="w-full px-3 py-1 rounded hover:bg-surface text-left text-sm">💾 {t('saveLocally')}</button>
+          <button onClick={handleLocalLoad} className="w-full px-3 py-1 rounded hover:bg-surface text-left text-sm">📂 {t('loadLocal')}</button>
           {isSignedIn && (
             <>
-              <button onClick={() => { setModal('export'); setOpen(false) }} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">☁️ {t('exportCloud')}</button>
-              <button onClick={() => { setModal('import'); setOpen(false) }} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">☁️ {t('importCloud')}</button>
-              <button onClick={() => { setModal('delete'); setOpen(false) }} className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm">🗑 {t('deleteCloud')}</button>
+              <button onClick={() => { setModal('export'); setOpen(false) }} className="w-full px-3 py-1 rounded hover:bg-surface text-left text-sm">☁️ {t('exportCloud')}</button>
+              <button onClick={() => { setModal('import'); setOpen(false) }} className="w-full px-3 py-1 rounded hover:bg-surface text-left text-sm">☁️ {t('importCloud')}</button>
+              <button onClick={() => { setModal('delete'); setOpen(false) }} className="w-full px-3 py-1 rounded hover:bg-surface text-left text-sm">🗑 {t('deleteCloud')}</button>
             </>
           )}
 
-          <hr className="my-1 border-gray-600" />
+          <hr className="my-1 border-line-strong" />
           <button onClick={() => { setConfirmReset(true); setOpen(false) }} className="w-full px-3 py-1 rounded hover:bg-red-700 bg-red-600 text-white text-left text-sm">🗑 {t('resetSheet')}</button>
         </div>
       )}
@@ -285,7 +285,7 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-black/80 text-white rounded-2xl border border-white/10 shadow-2xl backdrop-blur-md p-5 w-80 max-h-[70vh] overflow-auto"
+            className="bg-shade/80 text-ink rounded-2xl border border-ink/10 shadow-2xl backdrop-blur-md p-5 w-80 max-h-[70vh] overflow-auto"
           >
             {modal === 'import' && (
               <>
@@ -295,14 +295,14 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
                     <li key={String(c.id)}>
                       <button
                         onClick={() => loadFromCloud(c)}
-                        className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm"
+                        className="w-full px-3 py-1 rounded hover:bg-surface text-left text-sm"
                       >
                         {c.nom || c.name || `#${c.id}`}
                       </button>
                     </li>
                   ))}
                   {cloudChars.length === 0 && (
-                    <li className="text-center text-sm text-gray-400">{t('noFile')}</li>
+                    <li className="text-center text-sm text-ink/55">{t('noFile')}</li>
                   )}
                 </ul>
               </>
@@ -315,14 +315,14 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
                     <li key={c.id}>
                       <button
                         onClick={() => saveToCloud(c)}
-                        className="w-full px-3 py-1 rounded hover:bg-gray-800 text-left text-sm"
+                        className="w-full px-3 py-1 rounded hover:bg-surface text-left text-sm"
                       >
                         {c.nom || c.name || `#${c.id}`}
                       </button>
                     </li>
                   ))}
                   {localChars.length === 0 && (
-                    <li className="text-center text-sm text-gray-400">{t('noCharacter')}</li>
+                    <li className="text-center text-sm text-ink/55">{t('noCharacter')}</li>
                   )}
                 </ul>
               </>
@@ -343,7 +343,7 @@ const ImportExportMenu: FC<Props> = ({ perso, onUpdate }) => {
                     </li>
                   ))}
                   {cloudChars.length === 0 && (
-                    <li className="text-center text-sm text-gray-400">{t('noFile')}</li>
+                    <li className="text-center text-sm text-ink/55">{t('noFile')}</li>
                   )}
                 </ul>
               </>

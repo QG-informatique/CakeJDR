@@ -46,7 +46,7 @@ const ImageItem: React.FC<Props> = ({
   const src = img.url || (img as unknown as { src?: string }).src || ''
   return (
   <div
-    className="absolute border border-white/20 rounded-2xl shadow-md group touch-none"
+    className="absolute border border-ink/20 rounded-2xl shadow-md group touch-none"
     style={{
       top: img.y,
       left: img.x,
@@ -58,7 +58,7 @@ const ImageItem: React.FC<Props> = ({
     {drawMode === 'images' && !pending && (
       <button
         onClick={() => onDelete(img.id)}
-        className="absolute top-1 left-1 z-20 p-1 rounded-full bg-black/60 hover:bg-red-600 transition text-white opacity-80 group-hover:opacity-100"
+        className="absolute top-1 left-1 z-20 p-1 rounded-full bg-shade/60 hover:bg-red-600 transition text-white opacity-80 group-hover:opacity-100"
         title={t('delete')}
         style={{ cursor: 'pointer' }}
       >
@@ -66,7 +66,7 @@ const ImageItem: React.FC<Props> = ({
       </button>
     )}
     {failedUrl === src ? (
-      <div className="w-full h-full flex items-center justify-center rounded-2xl border border-dashed border-white/30 bg-black/40 text-xs text-white/70 text-center p-2 select-none">
+      <div className="w-full h-full flex items-center justify-center rounded-2xl border border-dashed border-ink/30 bg-shade/40 text-xs text-ink/70 text-center p-2 select-none">
         {t('imageUnavailable')}
       </div>
     ) : (
@@ -90,7 +90,7 @@ const ImageItem: React.FC<Props> = ({
         />
         <div
           onPointerDown={(e) => onPointerDown(e, img.id, 'resize')}
-          className="absolute bottom-0 right-0 w-4 h-4 bg-white/40 border border-white rounded-full cursor-se-resize"
+          className="absolute bottom-0 right-0 w-4 h-4 bg-ink/40 border border-ink rounded-full cursor-se-resize"
           style={{ zIndex: 4 }}
         />
       </>

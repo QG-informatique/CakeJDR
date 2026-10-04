@@ -59,7 +59,7 @@ export default function LanguageSwitcher() {
       onClick={() => setLang(isEn ? 'fr' : 'en')}
       title={isEn ? 'Switch to French' : 'Passer en anglais'}
       aria-label={isEn ? 'Language: English. Switch to French' : 'Langue : français. Passer en anglais'}
-      className="inline-flex h-8 select-none items-center gap-1.5 rounded-lg border border-white/15 bg-black/40 px-2 text-xs font-semibold tracking-wide text-white/85 backdrop-blur transition hover:bg-white/10"
+      className="inline-flex h-8 select-none items-center gap-1.5 rounded-lg border border-ink/15 bg-shade/40 px-2 text-xs font-semibold tracking-wide text-ink/85 backdrop-blur transition hover:bg-ink/10"
     >
       {isEn ? <FlagGB /> : <FlagFR />}
       {isEn ? 'EN' : 'FR'}

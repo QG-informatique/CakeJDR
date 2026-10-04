@@ -91,11 +91,11 @@ export default function PseudoPicker({ initial }: { initial: string }) {
   return (
     <form
       onSubmit={submit}
-      className="flex w-full max-w-md flex-col gap-5 rounded-2xl border border-white/10 bg-black/40 px-8 py-10 text-center backdrop-blur-md"
+      className="flex w-full max-w-md flex-col gap-5 rounded-2xl border border-ink/10 bg-shade/40 px-8 py-10 text-center backdrop-blur-md"
     >
       <div className="space-y-2">
-        <h1 className="m-0 text-2xl font-bold text-white">{t('pseudoTitle')}</h1>
-        <p className="m-0 text-sm text-white/60">{t('pseudoIntro')}</p>
+        <h1 className="m-0 text-2xl font-bold text-ink">{t('pseudoTitle')}</h1>
+        <p className="m-0 text-sm text-ink/60">{t('pseudoIntro')}</p>
       </div>
 
       <div className="flex flex-col gap-2 text-left">
@@ -110,12 +110,12 @@ export default function PseudoPicker({ initial }: { initial: string }) {
             aria-label={t('pseudoTitle')}
             aria-invalid={bad}
             aria-describedby="pseudo-status"
-            className={`w-full rounded-lg border bg-black/40 px-4 py-3 pr-10 text-lg text-white outline-none transition focus:ring-2 ${
+            className={`w-full rounded-lg border bg-shade/40 px-4 py-3 pr-10 text-lg text-ink outline-none transition focus:ring-2 ${
               good
                 ? 'border-emerald-400/70 focus:ring-emerald-300/30'
                 : bad
                   ? 'border-rose-400/70 focus:ring-rose-300/30'
-                  : 'border-white/20 focus:ring-pink-200/30'
+                  : 'border-ink/20 focus:ring-pink-200/30'
             }`}
           />
           <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
@@ -127,7 +127,7 @@ export default function PseudoPicker({ initial }: { initial: string }) {
           id="pseudo-status"
           aria-live="polite"
           className={`m-0 min-h-[1.25rem] text-sm ${
-            good ? 'text-emerald-300' : bad ? 'text-rose-300' : 'text-white/50'
+            good ? 'text-emerald-300' : bad ? 'text-rose-300' : 'text-ink/50'
           }`}
         >
           {message[status]}

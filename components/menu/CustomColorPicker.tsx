@@ -59,20 +59,20 @@ const CustomColorPicker: FC<Props> = ({ color, onChange }) => {
   }
 
   return (
-    <div className="flex flex-col items-center gap-3 p-3 bg-zinc-900 rounded-xl shadow-lg">
+    <div className="flex flex-col items-center gap-3 p-3 bg-surface-deep rounded-xl shadow-lg">
       <canvas
         ref={canvasRef}
         width={200}
         height={150}
         onClick={handleClick}
-        className="rounded cursor-crosshair border border-white/10"
+        className="rounded cursor-crosshair border border-ink/10"
       />
       <div className="flex items-center gap-4">
         <div
-          className="w-10 h-10 rounded-full border border-white/30"
+          className="w-10 h-10 rounded-full border border-ink/30"
           style={{ background: currentColor }}
         />
-        <span className="text-white text-sm font-mono">{currentColor.toUpperCase()}</span>
+        <span className="text-ink text-sm font-mono">{currentColor.toUpperCase()}</span>
         <button
           onClick={handleValidate}
           className="px-3 py-1 text-sm rounded bg-emerald-600 text-white hover:bg-emerald-500"

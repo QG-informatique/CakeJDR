@@ -51,7 +51,7 @@ const CharacterList: FC<Props> = ({
   return (
     <section
       className="
-        rounded-xl backdrop-blur-md bg-black/18 border border-white/10
+        rounded-xl backdrop-blur-md bg-shade/18 border border-ink/10
         p-3 flex-grow relative overflow-hidden
       "
       style={{
@@ -72,7 +72,7 @@ const CharacterList: FC<Props> = ({
         )
         const all = [...filtered, ...remoteOnly]
         if (all.length === 0) {
-          return <p className="text-xs text-white/65 italic">{t('noSheets')}</p>
+          return <p className="text-xs text-ink/65 italic">{t('noSheets')}</p>
         }
         return (
           <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
@@ -172,7 +172,7 @@ const CharacterList: FC<Props> = ({
                         </div>
                       )}
                     </div>
-                    <div className="flex flex-col gap-1 text-xs text-white/85 mt-1 flex-1">
+                    <div className="flex flex-col gap-1 text-xs text-ink/85 mt-1 flex-1">
                       {ch.niveau !== undefined && (
                         <div>
                           <span className="font-medium text-emerald-200">

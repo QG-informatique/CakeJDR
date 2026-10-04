@@ -47,11 +47,11 @@ const CharacterModal: FC<Props> = ({
         className="
           relative rounded-2xl shadow-xl flex flex-col w-full
           max-w-[98vw] xl:max-w-[2000px]
-          bg-black/40 border border-white/10 backdrop-blur-md
+          bg-shade/40 border border-ink/10 backdrop-blur-md
           px-3 sm:px-8 py-7 h-[94vh] max-h-[98vh] min-h-[480px]
         "
       >
-        <h2 className="text-2xl font-bold mb-5 tracking-wide text-white text-center">
+        <h2 className="text-2xl font-bold mb-5 tracking-wide text-ink text-center">
           {t('characterEditing')}
         </h2>
         {/* Flex column: panels scrollent, boutons fixes en bas */}
@@ -61,7 +61,7 @@ const CharacterModal: FC<Props> = ({
           >
             {/* Statistics */}
             <div
-              className="flex-1 min-w-[260px] bg-white/5 rounded-xl p-4 flex flex-col"
+              className="flex-1 min-w-[260px] bg-ink/5 rounded-xl p-4 flex flex-col"
               style={{ minWidth: 320, minHeight: 0, height: "100%", overflowY: "auto" }}
             >
               <h3 className="font-semibold text-lg mb-2 text-emerald-200">
@@ -71,7 +71,7 @@ const CharacterModal: FC<Props> = ({
             </div>
             {/* Equipment + Skills in the same column */}
             <div
-              className="flex-1 min-w-[260px] bg-white/5 rounded-xl p-0 flex flex-col gap-3"
+              className="flex-1 min-w-[260px] bg-ink/5 rounded-xl p-0 flex flex-col gap-3"
               style={{ minWidth: 320, minHeight: 0, height: "100%" }}
             >
               {/* Equipment (half height) */}
@@ -125,7 +125,7 @@ const CharacterModal: FC<Props> = ({
             </div>
             {/* Description */}
             <div
-              className="flex-1 min-w-[300px] bg-white/5 rounded-xl p-4 flex flex-col"
+              className="flex-1 min-w-[300px] bg-ink/5 rounded-xl p-4 flex flex-col"
               style={{ minWidth: 350, minHeight: 0, height: "100%", overflowY: "auto" }}
             >
               <h3 className="font-semibold text-lg mb-2 text-blue-200">
@@ -166,10 +166,10 @@ const CharacterModal: FC<Props> = ({
               className="
                 inline-flex items-center justify-center
                 px-6 py-2.5 rounded-lg font-semibold
-                bg-gray-800/70 hover:bg-gray-700/80
-                text-gray-200 hover:text-white
+                bg-surface/70 hover:bg-surface-hover/80
+                text-ink/85 hover:text-ink
                 shadow-md transition
-                border border-white/10
+                border border-ink/10
                 backdrop-blur-[2px]
               "
               style={{
@@ -184,7 +184,7 @@ const CharacterModal: FC<Props> = ({
                 inline-flex items-center justify-center
                 px-7 py-2.5 rounded-lg font-semibold
                 bg-blue-900/80 hover:bg-blue-700/80
-                text-blue-100 hover:text-white
+                text-blue-100 hover:text-ink
                 shadow-lg transition
                 border border-blue-200/15
                 backdrop-blur-[2px]

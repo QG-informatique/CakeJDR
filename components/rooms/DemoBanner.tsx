@@ -46,7 +46,7 @@ export default function DemoBanner() {
             {' '}
             <Link
               href="/connexion"
-              className="font-semibold text-inherit underline underline-offset-2 hover:text-white"
+              className="font-semibold text-inherit underline underline-offset-2 hover:text-ink"
             >
               {t('demoBannerCta')}
             </Link>{' '}
@@ -57,7 +57,7 @@ export default function DemoBanner() {
       <button
         onClick={() => setDismissed(true)}
         aria-label={t('demoBannerHide')}
-        className="shrink-0 rounded p-0.5 text-amber-200/70 transition hover:text-white"
+        className="shrink-0 rounded p-0.5 text-amber-200/70 transition hover:text-ink"
       >
         <X size={14} />
       </button>

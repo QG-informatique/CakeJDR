@@ -68,7 +68,7 @@ export default function GMCharacterSelector({
         className={`
           flex items-center justify-center
           rounded-xl shadow border-none
-          bg-black/30
+          bg-shade/30
           text-pink-400
           hover:bg-pink-200/10
           focus-visible:outline-pink-400
@@ -86,7 +86,7 @@ export default function GMCharacterSelector({
         <div
           className="
             absolute left-0 mt-2 w-56
-            bg-black/80
+            bg-shade/80
             rounded-2xl
             shadow-2xl
             py-1
@@ -101,13 +101,13 @@ export default function GMCharacterSelector({
                 onSelectOwn()
                 setOpen(false)
               }}
-              className="w-full text-left px-4 py-2 rounded-xl text-base font-semibold transition hover:bg-pink-400/10 text-white/90 border-b border-white/10"
+              className="w-full text-left px-4 py-2 rounded-xl text-base font-semibold transition hover:bg-pink-400/10 text-ink/90 border-b border-ink/10"
             >
               ← {t('myCharacter')}
             </button>
           )}
           {chars.length === 0 && (
-            <div className="px-4 py-3 text-sm text-gray-400 text-center">
+            <div className="px-4 py-3 text-sm text-ink/55 text-center">
               {t('noActiveChar')}
             </div>
           )}
@@ -121,7 +121,7 @@ export default function GMCharacterSelector({
                 ${
                   viewingConnectionId === c.ownerConnectionId
                     ? 'bg-pink-400/20 text-pink-200'
-                    : 'hover:bg-pink-400/10 text-white/90'
+                    : 'hover:bg-pink-400/10 text-ink/90'
                 }
               `}
             >

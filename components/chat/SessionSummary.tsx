@@ -427,7 +427,7 @@ function LocalSummary({
           <input
             value={current.title}
             onChange={(e) => handleTitleChange(e.target.value)}
-            className="text-center font-semibold mb-2 bg-transparent outline-none w-full text-white placeholder-white/50"
+            className="text-center font-semibold mb-2 bg-transparent outline-none w-full text-ink placeholder-ink/50"
             placeholder={
               (t('untitled') as string) ||
               'Sans titre'
@@ -436,10 +436,10 @@ function LocalSummary({
 
           <RichTextPlugin
             contentEditable={
-              <ContentEditable className="flex-1 min-h-0 p-2 bg-black/20 rounded text-white outline-none" />
+              <ContentEditable className="flex-1 min-h-0 p-2 bg-shade/20 rounded text-ink outline-none" />
             }
             placeholder={
-              <div className="text-white/50">
+              <div className="text-ink/50">
                 {(t('startWriting') as string) || 'Commence à écrire...'}
               </div>
             }
@@ -799,16 +799,16 @@ function LiveSummary({
           <input
             value={current.title}
             onChange={(e) => handleTitleChange(e.target.value)}
-            className="text-center font-semibold mb-2 bg-transparent outline-none w-full text-white placeholder-white/50"
+            className="text-center font-semibold mb-2 bg-transparent outline-none w-full text-ink placeholder-ink/50"
             placeholder={(t('untitled') as string) || 'Sans titre'}
           />
 
           <RichTextPlugin
             contentEditable={
-              <ContentEditable className="flex-1 min-h-0 p-2 bg-black/20 rounded text-white outline-none" />
+              <ContentEditable className="flex-1 min-h-0 p-2 bg-shade/20 rounded text-ink outline-none" />
             }
             placeholder={
-              <div className="text-white/50">
+              <div className="text-ink/50">
                 {(t('startWriting') as string) || 'Commence à écrire...'}
               </div>
             }
@@ -822,7 +822,7 @@ function LiveSummary({
           <AutoSavePlugin onChange={handleAutoSave} />
         </LexicalComposer>
       ) : current ? (
-        <div className="flex-1 flex items-center justify-center text-white/30 text-sm gap-2">
+        <div className="flex-1 flex items-center justify-center text-ink/30 text-sm gap-2">
           <span className="animate-pulse">⟳</span> Synchronisation…
         </div>
       ) : null}
@@ -878,7 +878,7 @@ function TopBar({
     <div className="mb-3 flex w-full items-center justify-end gap-2 relative flex-shrink-0">
       <button
         onClick={onNewPage}
-        className="bg-black/40 text-white px-2 py-1 rounded text-sm"
+        className="bg-shade/40 text-ink px-2 py-1 rounded text-sm"
         title={t('newPage') as string}
       >
         +
@@ -887,7 +887,7 @@ function TopBar({
       <select
         value={currentId ?? ''}
         onChange={(e) => onSwitch(e.target.value)}
-        className="bg-black/40 text-white rounded px-2 py-1 text-sm w-44"
+        className="bg-shade/40 text-ink rounded px-2 py-1 text-sm w-44"
       >
         {pages.map((p) => (
           <option key={p.id} value={p.id}>
@@ -898,7 +898,7 @@ function TopBar({
 
       <button
         onClick={onDelete}
-        className="bg-black/40 text-white px-2 py-1 rounded text-sm"
+        className="bg-shade/40 text-ink px-2 py-1 rounded text-sm"
         title={t('deletePage') as string}
       >
         🗑️
@@ -908,7 +908,7 @@ function TopBar({
         <button
           ref={btnRef}
           onClick={() => setShowFileMenu((m) => !m)}
-          className="bg-black/40 text-white px-2 py-1 rounded text-sm"
+          className="bg-shade/40 text-ink px-2 py-1 rounded text-sm"
           title={t('fileMenu') as string}
         >
           📁
@@ -916,9 +916,9 @@ function TopBar({
         {showFileMenu && (
           <div
             ref={menuRef}
-            className="absolute right-0 mt-1 z-40 bg-black/80 rounded shadow p-1 w-40 flex flex-col"
+            className="absolute right-0 mt-1 z-40 bg-shade/80 rounded shadow p-1 w-40 flex flex-col"
           >
-            <label className="px-2 py-1 hover:bg-white/10 cursor-pointer text-sm text-white">
+            <label className="px-2 py-1 hover:bg-ink/10 cursor-pointer text-sm text-ink">
               {t('importBtn') as string}
               <input
                 ref={fileInputRef}
@@ -930,7 +930,7 @@ function TopBar({
             </label>
             <button
               onClick={onExport}
-              className="text-left px-2 py-1 hover:bg-white/10 text-sm text-white"
+              className="text-left px-2 py-1 hover:bg-ink/10 text-sm text-ink"
             >
               {t('exportBtn') as string}
             </button>
@@ -940,7 +940,7 @@ function TopBar({
 
       <button
         onClick={onClose}
-        className="text-white/80 hover:text-red-500 text-xl"
+        className="text-ink/80 hover:text-red-500 text-xl"
         title={t('close') as string}
       >
         ✕
@@ -970,14 +970,14 @@ function LogsPanel({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="relative z-50 bg-black/50 text-white text-xs px-2 py-1 rounded"
+        className="relative z-50 bg-shade/50 text-ink text-xs px-2 py-1 rounded"
         title="Afficher / masquer les logs"
       >
         {open ? 'Masquer logs' : 'Voir logs'}
       </button>
 
       <span
-        className={`inline-flex items-center ${badgeColor} text-white text-xs px-2 py-1 rounded`}
+        className={`inline-flex items-center ${badgeColor} text-ink text-xs px-2 py-1 rounded`}
       >
         ● {statusText}
       </span>
@@ -989,19 +989,19 @@ function LogsPanel({
             onClick={() => setOpen(false)}
             aria-hidden="true"
           />
-          <div className="absolute right-0 bottom-full mb-2 z-50 w-[420px] max-h-[220px] overflow-auto bg-black/80 text-white text-xs rounded p-2 border border-white/10">
+          <div className="absolute right-0 bottom-full mb-2 z-50 w-[420px] max-h-[220px] overflow-auto bg-shade/80 text-ink text-xs rounded p-2 border border-ink/10">
             <div className="flex items-center justify-between mb-2">
               <b>Logs de synchro</b>
               <button
                 type="button"
                 onClick={clear}
-                className="text-white/70 hover:text-white underline"
+                className="text-ink/70 hover:text-ink underline"
               >
                 Effacer
               </button>
             </div>
             {logs.length === 0 ? (
-              <div className="text-white/60">Aucun log pour le moment.</div>
+              <div className="text-ink/60">Aucun log pour le moment.</div>
             ) : (
               <ul className="space-y-1">
                 {logs.map((l, i) => (
@@ -1043,7 +1043,7 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
 
   return (
     <div
-      className="absolute inset-0 bg-black/35 backdrop-blur-[3px] border border-white/10 rounded-2xl shadow-2xl flex flex-col h-full w-full z-20 p-3 animate-fadeIn overflow-visible"
+      className="absolute inset-0 bg-shade/35 backdrop-blur-[3px] border border-ink/10 rounded-2xl shadow-2xl flex flex-col h-full w-full z-20 p-3 animate-fadeIn overflow-visible"
       style={{ minHeight: 0 }}
     >
       {/* Contenu Live avec filet de sécurité */}

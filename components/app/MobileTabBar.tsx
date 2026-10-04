@@ -29,7 +29,7 @@ export default function MobileTabBar({
   ]
 
   return (
-    <nav className="lg:hidden flex-shrink-0 border-t border-white/10 bg-black/40 px-2 pt-1.5 pb-6 backdrop-blur">
+    <nav className="lg:hidden flex-shrink-0 border-t border-ink/10 bg-shade/40 px-2 pt-1.5 pb-6 backdrop-blur">
       <div role="tablist" className="flex gap-1">
         {tabs.map(({ key, label, Icon }) => {
           const selected = active === key
@@ -41,7 +41,7 @@ export default function MobileTabBar({
               aria-selected={selected}
               onClick={() => onSelect(key)}
               className={`relative flex flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 text-xs font-semibold transition ${
-                selected ? 'bg-white/15 text-white' : 'text-white/60 hover:text-white'
+                selected ? 'bg-ink/15 text-ink' : 'text-ink/60 hover:text-ink'
               }`}
             >
               <Icon size={20} />

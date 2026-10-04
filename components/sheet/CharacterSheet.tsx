@@ -168,7 +168,7 @@ const CharacterSheet: FC<Props> = ({
         <button
           onClick={() => setCollapsed(false)}
           aria-label="Expand character panel"
-          className="absolute top-2 left-2 z-50 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
+          className="absolute top-2 left-2 z-50 text-ink/80 hover:text-ink bg-shade/30 rounded-full p-1"
         >
           <ChevronRight size={20} />
         </button>
@@ -180,8 +180,8 @@ const CharacterSheet: FC<Props> = ({
     <aside
       className="
         relative select-none flex-shrink-0 transition-all duration-300
-        bg-black/10 border border-white/10 backdrop-blur-[2px]
-        shadow shadow-black/5 rounded-2xl text-[15px] text-white
+        bg-shade/10 border border-ink/10 backdrop-blur-[2px]
+        shadow shadow-shade/5 rounded-2xl text-[15px] text-ink
         w-full md:w-[420px] p-5 pt-0 pb-3 px-3 overflow-y-auto
       "
       style={{
@@ -196,7 +196,7 @@ const CharacterSheet: FC<Props> = ({
       <button
         onClick={() => setCollapsed(true)}
         aria-label="Collapse character panel"
-        className="max-lg:hidden absolute top-2 right-2 z-50 text-white/80 hover:text-white bg-black/30 rounded-full p-1"
+        className="max-lg:hidden absolute top-2 right-2 z-50 text-ink/80 hover:text-ink bg-shade/30 rounded-full p-1"
       >
         <ChevronLeft size={20} />
       </button>

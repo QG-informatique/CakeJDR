@@ -39,9 +39,9 @@ const CustomSelect: FC<CustomSelectProps> = ({
         type="button"
         disabled={disabled}
         className={`
-          w-full px-4 py-1.5 text-md rounded-xl font-semibold text-white
-          bg-black/35 border border-white/10 shadow-2xl
-          transition hover:bg-black/50 hover:border-white/20
+          w-full px-4 py-1.5 text-md rounded-xl font-semibold text-ink
+          bg-shade/35 border border-ink/10 shadow-2xl
+          transition hover:bg-shade/50 hover:border-ink/20
           disabled:opacity-60 backdrop-blur-md
           flex items-center justify-between
         `}
@@ -74,7 +74,7 @@ const CustomSelect: FC<CustomSelectProps> = ({
       </button>
       {open && (
         <div
-          className="absolute z-30 left-0 w-full mt-1 rounded-xl bg-black/80 border border-white/10 shadow-2xl py-1 animate-fadeIn backdrop-blur-md"
+          className="absolute z-30 left-0 w-full mt-1 rounded-xl bg-shade/80 border border-ink/10 shadow-2xl py-1 animate-fadeIn backdrop-blur-md"
           style={{
             background:
               'linear-gradient(120deg,rgba(18,28,54,0.91) 60%,rgba(16,18,33,0.77) 100%)',
@@ -88,9 +88,9 @@ const CustomSelect: FC<CustomSelectProps> = ({
               disabled={disabled}
               className={`
                 w-full px-4 py-1.5 text-left text-md font-semibold rounded
-                text-white transition
-                hover:bg-gray-800/80
-                ${value === opt.value ? 'bg-gray-700/80' : ''}
+                text-ink transition
+                hover:bg-surface/80
+                ${value === opt.value ? 'bg-surface-hover/80' : ''}
               `}
               style={{
                 background:
@@ -208,9 +208,9 @@ const LevelUpPanel: FC<Props> = ({
           disabled={processing}
           className="
             px-4 py-1.5 rounded-xl
-            font-semibold text-white bg-black/35
-            border border-white/10 shadow-2xl transition
-            hover:bg-gray-800 hover:border-white/20
+            font-semibold text-ink bg-shade/35
+            border border-ink/10 shadow-2xl transition
+            hover:bg-surface hover:border-ink/20
             disabled:opacity-60 backdrop-blur-md
             focus:ring-2 focus:ring-blue-400/30
           "

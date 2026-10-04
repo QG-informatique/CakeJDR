@@ -123,16 +123,16 @@ export default function CharacterCloudModal({
           exit={{ y: 20, opacity: 0 }}
           transition={{ duration: 0.2 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-black/80 text-white rounded-2xl border border-white/10 shadow-2xl backdrop-blur-md p-5 w-[720px] max-w-full max-h-[80vh] overflow-auto"
+          className="bg-shade/80 text-ink rounded-2xl border border-ink/10 shadow-2xl backdrop-blur-md p-5 w-[720px] max-w-full max-h-[80vh] overflow-auto"
         >
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-lg font-semibold inline-flex items-center gap-2">
               <Cloud size={18} className="text-blue-300" /> Cloud
-              <span className="text-xs font-normal text-white/50">{t('cloudAccountHint')}</span>
+              <span className="text-xs font-normal text-ink/50">{t('cloudAccountHint')}</span>
             </h3>
             <div className="flex items-center gap-2">
               <button
-                className="px-2 py-1 rounded bg-black/40 border border-white/10 text-white/80 hover:text-white"
+                className="px-2 py-1 rounded bg-shade/40 border border-ink/10 text-ink/80 hover:text-ink"
                 onClick={(e) => {
                   e.preventDefault()
                   void refresh()
@@ -143,7 +143,7 @@ export default function CharacterCloudModal({
                 <RefreshCw size={16} />
               </button>
               <button
-                className="px-2 py-1 rounded bg-black/40 border border-white/10 text-white/80 hover:text-white"
+                className="px-2 py-1 rounded bg-shade/40 border border-ink/10 text-ink/80 hover:text-ink"
                 onClick={onClose}
                 aria-label="Close"
               >
@@ -153,13 +153,13 @@ export default function CharacterCloudModal({
           </div>
 
           {/* Envoi d'une fiche locale vers le compte */}
-          <div className="mb-4 p-3 rounded-xl border border-white/10 bg-black/30">
+          <div className="mb-4 p-3 rounded-xl border border-ink/10 bg-shade/30">
             <div className="flex items-center gap-2">
               <select
                 value={uploadId}
                 onChange={(e) => setUploadId(e.target.value)}
                 aria-label={t('cloudUpload')}
-                className="flex-1 px-2 py-1 rounded bg-gray-800 border border-white/20"
+                className="flex-1 px-2 py-1 rounded bg-surface border border-ink/20"
               >
                 <option value="">-- {t('select')} --</option>
                 {uploadable.map((o) => (
@@ -180,13 +180,13 @@ export default function CharacterCloudModal({
 
           {/* Fiches du compte */}
           <div className="space-y-2">
-            {loading && <div className="text-white/70 text-sm">{t('cloudLoading')}</div>}
+            {loading && <div className="text-ink/70 text-sm">{t('cloudLoading')}</div>}
             {error && <div className="text-red-400 text-sm">{error}</div>}
             {!loading && !error && entries.length === 0 && (
-              <div className="text-white/60 text-sm italic">{t('noFile')}</div>
+              <div className="text-ink/60 text-sm italic">{t('noFile')}</div>
             )}
             {!loading && !error && entries.length > 0 && (
-              <ul className="divide-y divide-white/10">
+              <ul className="divide-y divide-ink/10">
                 {entries.map((e) => (
                   <li
                     key={String(e.id)}
@@ -196,7 +196,7 @@ export default function CharacterCloudModal({
                       <div className="text-sm font-semibold truncate">
                         {e.nom || e.name || 'sans_nom'}
                       </div>
-                      <div className="text-[11px] text-white/50">
+                      <div className="text-[11px] text-ink/50">
                         #{String(e.id)}
                         {typeof e.updatedAt === 'number'
                           ? ` · ${new Date(e.updatedAt).toLocaleString()}`

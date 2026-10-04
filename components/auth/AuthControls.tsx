@@ -12,7 +12,7 @@ export default function AuthControls({ pseudo, color }: { pseudo: string; color:
     <span
       title={pseudo}
       aria-label={pseudo}
-      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-sm font-bold text-white shadow"
+      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-ink/20 text-sm font-bold text-ink shadow"
       style={{ background: color }}
     >
       {pseudo.trim().charAt(0).toUpperCase() || '?'}

@@ -36,9 +36,9 @@ const CustomSelect: FC<CustomSelectProps> = ({
         type="button"
         disabled={disabled}
         className={`
-          w-full px-3 py-1.5 rounded-xl font-semibold text-white/85 shadow
-          bg-black/35 border border-white/10 transition
-          hover:bg-black/50 hover:border-white/20
+          w-full px-3 py-1.5 rounded-xl font-semibold text-ink/85 shadow
+          bg-shade/35 border border-ink/10 transition
+          hover:bg-shade/50 hover:border-ink/20
           disabled:opacity-60 backdrop-blur-md
           flex items-center justify-between
         `}
@@ -71,7 +71,7 @@ const CustomSelect: FC<CustomSelectProps> = ({
       </button>
       {open && (
         <div
-          className="absolute z-30 left-0 w-full mt-1 rounded-xl bg-black/80 border border-white/10 shadow-2xl py-1 animate-fadeIn backdrop-blur-md"
+          className="absolute z-30 left-0 w-full mt-1 rounded-xl bg-shade/80 border border-ink/10 shadow-2xl py-1 animate-fadeIn backdrop-blur-md"
           style={{
             background:
               'linear-gradient(120deg,rgba(18,28,54,0.91) 60%,rgba(16,18,33,0.77) 100%)',
@@ -85,9 +85,9 @@ const CustomSelect: FC<CustomSelectProps> = ({
               disabled={disabled}
               className={`
                 w-full px-4 py-1.5 text-left text-sm font-semibold rounded
-                text-white transition
-                hover:bg-gray-800/80
-                ${value === opt.value ? 'bg-gray-700/80' : ''}
+                text-ink transition
+                hover:bg-surface/80
+                ${value === opt.value ? 'bg-surface-hover/80' : ''}
               `}
               style={{
                 background:
@@ -180,7 +180,7 @@ export default function DiceStats({ history }: Props) {
 
   if (statType === 'pct') {
     tableHead = (
-      <tr className="bg-black/25 backdrop-blur-[1px] text-white border-b border-white/10">
+      <tr className="bg-shade/25 backdrop-blur-[1px] text-ink border-b border-ink/10">
         <th className="px-2 py-1">{t('player')}</th>
         <th className="px-2 py-1">% {t('crits')}</th>
         <th className="px-2 py-1">% {t('fails')}</th>
@@ -191,7 +191,7 @@ export default function DiceStats({ history }: Props) {
       const critPct = s.rolls ? ((s.crit / s.rolls) * 100).toFixed(1) : '0'
       const failPct = s.rolls ? ((s.fail / s.rolls) * 100).toFixed(1) : '0'
       return (
-        <tr key={player} className="border-b border-white/10">
+        <tr key={player} className="border-b border-ink/10">
           <td className="px-2 py-1 font-semibold">{player}</td>
           <td className="px-2 py-1 text-center">{critPct} %</td>
           <td className="px-2 py-1 text-center">{failPct} %</td>
@@ -201,7 +201,7 @@ export default function DiceStats({ history }: Props) {
   } else {
     // all
     tableHead = (
-      <tr className="bg-black/25 backdrop-blur-[1px] text-white border-b border-white/10">
+      <tr className="bg-shade/25 backdrop-blur-[1px] text-ink border-b border-ink/10">
         <th className="px-2 py-1">{t('player')}</th>
         <th className="px-2 py-1">{t('rolls')}</th>
         <th className="px-2 py-1">{t('crits')}</th>
@@ -212,7 +212,7 @@ export default function DiceStats({ history }: Props) {
     tableRows = players.map((player) => {
       const s = stats.get(player)!
       return (
-        <tr key={player} className="border-b border-white/10">
+        <tr key={player} className="border-b border-ink/10">
           <td className="px-2 py-1 font-semibold">{player}</td>
           <td className="px-2 py-1 text-center">{s.rolls}</td>
           <td className="px-2 py-1 text-center">{s.crit}</td>
@@ -228,7 +228,7 @@ export default function DiceStats({ history }: Props) {
   }
 
   return (
-    <div className="p-2 text-white">
+    <div className="p-2 text-ink">
       <div className="mb-2 flex items-center gap-2">
         <CustomSelect
           value={statType}
