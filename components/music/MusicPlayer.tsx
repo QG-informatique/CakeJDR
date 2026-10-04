@@ -5,7 +5,7 @@ import { useMutation, useOthers, useSelf, useStorage } from '@liveblocks/react'
 import { LiveList, LiveObject } from '@liveblocks/client'
 import YouTube from 'react-youtube'
 import type { YouTubePlayer } from 'youtube-player/dist/types'
-import { ChevronDown, ChevronUp, Music2, Pause, Play, Plus, SkipForward } from 'lucide-react'
+import { MoreHorizontal, Music2, Pause, Play, Plus, SkipForward, Volume2, VolumeX, X } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import type { TranslationKey } from '@/lib/translations'
 
@@ -79,6 +79,24 @@ export default function MusicPlayer() {
   const isQueueLeader =
     selfConnectionId != null && otherConnectionIds.every((id) => id > selfConnectionId)
   const optionsPanelId = useId()
+  const wrapRef = useRef<HTMLDivElement>(null)
+
+  // Le panneau d'options se ferme au clic ailleurs ou avec Échap.
+  useEffect(() => {
+    if (!optionsOpen) return
+    const onDown = (e: PointerEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) setOptionsOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOptionsOpen(false)
+    }
+    document.addEventListener('pointerdown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('pointerdown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [optionsOpen])
 
   const [volume, setVolume] = useState<number>(() => {
     if (typeof window === 'undefined') return DEFAULT_VOLUME
@@ -300,29 +318,78 @@ export default function MusicPlayer() {
     playerRef.current.seekTo(nextTime, true)
   }
 
+  const canPlay = !!currentId || queueCount > 0
+
   return (
-    <div className="flex flex-col gap-2 min-w-[200px] max-w-[640px] w-full sm:w-auto">
+    <div ref={wrapRef} className="relative flex min-w-0 items-center gap-1.5">
+      <button
+        type="button"
+        onClick={canPlay ? handlePlayPause : () => setOptionsOpen(true)}
+        className="ui-btn ui-btn-icon shrink-0"
+        aria-label={!canPlay ? t('musicOptions') : isPlaying ? t('musicPause') : t('musicPlay')}
+        title={!canPlay ? t('musicOptions') : isPlaying ? t('musicPause') : t('musicPlay')}
+      >
+        {!canPlay ? <Music2 size={16} /> : isPlaying ? <Pause size={16} /> : <Play size={16} />}
+      </button>
+
+      {playerError ? (
+        <span className="min-w-0 max-w-[14rem] truncate text-xs text-red-400" title={playerError}>
+          ⚠ {playerError}
+        </span>
+      ) : (
+        <span
+          className={`min-w-0 max-w-[14rem] truncate text-xs ${currentTitle ? 'text-ink/85' : 'text-ink/55'}`}
+          title={currentTitle || undefined}
+        >
+          {currentTitle || (currentId ? '…' : t('musicNone'))}
+        </span>
+      )}
+
+      <label className="flex shrink-0 items-center gap-1 text-ink/60" title={`${t('musicVolume')} ${volume}`}>
+        {volume === 0 ? <VolumeX size={14} aria-hidden /> : <Volume2 size={14} aria-hidden />}
+        <span className="sr-only">{t('musicVolume')}</span>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          value={volume}
+          onChange={(e) => setVolume(clamp(Number(e.target.value), 0, 100))}
+          className="w-20"
+        />
+      </label>
+
       <button
         type="button"
         onClick={() => setOptionsOpen((open) => !open)}
         aria-expanded={optionsOpen}
         aria-controls={optionsPanelId}
-        className="ui-btn w-full !justify-between"
+        className="ui-btn ui-btn-ghost ui-btn-icon shrink-0"
+        aria-label={optionsOpen ? t('musicCloseOptions') : t('musicOptions')}
+        title={optionsOpen ? t('musicCloseOptions') : t('musicOptions')}
       >
-        <span className="inline-flex items-center gap-2">
-          <Music2 size={14} className="text-accent-soft shrink-0" />
-          {optionsOpen ? t('musicCloseOptions') : t('musicOptions')}
-        </span>
-        {optionsOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        <MoreHorizontal size={16} />
       </button>
 
-      <div
-        id={optionsPanelId}
-        className={`${optionsOpen ? 'flex' : 'hidden'} flex-col gap-2`}
-      >
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-            <Music2 size={16} className="text-accent-soft shrink-0" />
+      {optionsOpen && (
+        <div
+          id={optionsPanelId}
+          className="ui-panel absolute bottom-full left-0 z-50 mb-2 flex w-[min(24rem,calc(100vw-2rem))] flex-col gap-3 p-3 shadow-lg !backdrop-blur-md"
+          style={{ background: 'var(--c-panel-head)' }}
+        >
+          <div className="flex items-center gap-2">
+            <span className="ui-label">{t('musicOptions')}</span>
+            <button
+              type="button"
+              onClick={() => setOptionsOpen(false)}
+              className="ui-btn ui-btn-ghost ui-btn-icon ml-auto !h-7 !min-h-7 !w-7"
+              aria-label={t('close')}
+              title={t('close')}
+            >
+              <X size={14} />
+            </button>
+          </div>
+
+          <div className="flex flex-col gap-2">
             <input
               type="text"
               placeholder={t('youtubeLink')}
@@ -333,62 +400,21 @@ export default function MusicPlayer() {
               }}
               className="ui-input w-full"
             />
+            <div className="flex gap-2">
+              <button onClick={handlePlayNow} className="ui-btn ui-btn-primary flex-1" disabled={!input.trim()}>
+                <Play size={14} />
+                {t('musicPlayNow')}
+              </button>
+              <button onClick={handleAddToQueue} className="ui-btn flex-1" disabled={!input.trim()}>
+                <Plus size={14} />
+                {t('musicAddToQueue')}
+              </button>
+            </div>
           </div>
-          <button
-            onClick={handlePlayNow}
-            className="ui-btn ui-btn-primary"
-          >
-            {t('musicPlayNow')}
-          </button>
-          <button
-            onClick={handleAddToQueue}
-            className="ui-btn"
-          >
-            <Plus size={14} />
-            {t('musicAddToQueue')}
-          </button>
-        </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={handlePlayPause}
-            className="ui-btn"
-            disabled={!currentId && queueCount === 0}
-          >
-            {isPlaying ? (
-              <>
-                <Pause size={14} /> {t('musicPause')}
-              </>
-            ) : (
-              <>
-                <Play size={14} /> {t('musicPlay')}
-              </>
-            )}
-          </button>
-          <button
-            onClick={handleNext}
-            disabled={queueCount === 0}
-            className="ui-btn"
-            title={queueCount > 0 ? t('musicNextTitle').replace('{n}', String(queueCount)) : t('musicQueueEmpty')}
-          >
-            <SkipForward size={14} />
-            {t('musicNext')}
-          </button>
-
-          <div className="flex flex-col flex-1 min-w-[220px]">
-            {playerError ? (
-              <div className="text-xs text-red-400 truncate" title={playerError}>
-                ⚠ {playerError}
-              </div>
-            ) : (
-              <div className="text-xs text-ink/80 truncate">
-                {currentTitle || t('musicNone')}
-              </div>
-            )}
+          <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
-              <span className="text-[11px] text-ink/60 tabular-nums">
-                {formatTime(currentTime)}
-              </span>
+              <span className="text-[11px] tabular-nums text-ink/60">{formatTime(currentTime)}</span>
               <input
                 type="range"
                 min={0}
@@ -403,26 +429,28 @@ export default function MusicPlayer() {
                 onTouchCancel={() => setSeeking(false)}
                 className="flex-1"
                 disabled={!currentId || duration === 0}
+                aria-label={t('musicPosition')}
               />
-              <span className="text-[11px] text-ink/60 tabular-nums">
-                {formatTime(duration)}
-              </span>
+              <span className="text-[11px] tabular-nums text-ink/60">{formatTime(duration)}</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 min-w-[120px]">
-            <span className="text-[11px] text-ink/60">{t('musicVolume')}</span>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              value={volume}
-              onChange={(e) => setVolume(clamp(Number(e.target.value), 0, 100))}
-              className="w-24"
-            />
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-ink/65">
+              {queueCount > 0 ? t('musicQueued').replace('{n}', String(queueCount)) : t('musicQueueEmpty')}
+            </span>
+            <button
+              onClick={handleNext}
+              disabled={queueCount === 0}
+              className="ui-btn ml-auto"
+              title={queueCount > 0 ? t('musicNextTitle').replace('{n}', String(queueCount)) : t('musicQueueEmpty')}
+            >
+              <SkipForward size={14} />
+              {t('musicNext')}
+            </button>
           </div>
         </div>
-      </div>
+      )}
 
       {currentId && (
         <YouTube

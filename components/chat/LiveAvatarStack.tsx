@@ -1,54 +1,85 @@
 'use client'
-import { useOthers } from '@liveblocks/react'
+import { useOthers, useSelf } from '@liveblocks/react'
+import { Crown } from 'lucide-react'
 import { useT } from '@/lib/useT'
 
-interface Props {
-  className?: string
-  size?: number
+const getTextColor = (hex: string) => {
+  const c = hex.replace('#', '')
+  const r = parseInt(c.substring(0, 2), 16)
+  const g = parseInt(c.substring(2, 4), 16)
+  const b = parseInt(c.substring(4, 6), 16)
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000
+  return yiq >= 128 ? '#000' : '#fff'
 }
 
-export default function LiveAvatarStack({ className = 'fixed bottom-4 right-4 z-40 flex flex-row-reverse gap-2 items-center', size = 24 }: Props) {
-  const others = useOthers()
+type Player = { key: number; name: string; color: string; gm: boolean; self: boolean }
+
+/**
+ * Joueurs en ligne, soi compris : un rond par joueur avec son initiale, le
+ * nom au survol. Le MJ porte une couronne.
+ */
+export default function LiveAvatarStack({ size = 28 }: { size?: number }) {
   const t = useT()
-  if (others.length === 0) return null
+  const others = useOthers()
+  const self = useSelf()
+
+  const players: Player[] = []
+  if (self) {
+    players.push({
+      key: self.connectionId,
+      name: self.presence?.name || self.info?.pseudo || '?',
+      color: self.presence?.color || self.info?.color || '#888',
+      gm: self.info?.role === 'gm',
+      self: true,
+    })
+  }
+  for (const o of others) {
+    const name = o.presence?.name || o.info?.pseudo
+    if (!name) continue
+    players.push({
+      key: o.connectionId,
+      name,
+      color: o.presence?.color || o.info?.color || '#888',
+      gm: o.info?.role === 'gm',
+      self: false,
+    })
+  }
+  if (players.length === 0) return null
 
   const gmView = others.find((o) => o.presence?.gmView)?.presence?.gmView as { name?: string } | undefined
 
-  const getTextColor = (hex: string) => {
-    const c = hex.replace('#', '')
-    const r = parseInt(c.substring(0,2),16)
-    const g = parseInt(c.substring(2,4),16)
-    const b = parseInt(c.substring(4,6),16)
-    const yiq = (r*299 + g*587 + b*114)/1000
-    return yiq >= 128 ? '#000' : '#fff'
-  }
-
   return (
-    <div className={className}>
-      {others.map(({ connectionId, presence }) => {
-        const name = presence?.name as string | undefined
-        const color = (presence?.color as string) || '#888'
-        if (!name) return null
-        const text = getTextColor(color)
-        return (
-          <div key={connectionId} className="relative group">
-            <div
-              className="rounded-full ring-2 ring-[var(--c-panel)] flex items-center justify-center font-bold select-none"
-              style={{ backgroundColor: color, color: text, width: size, height: size, fontSize: size * 0.42 }}
-            >
-              {name.charAt(0).toUpperCase()}
-            </div>
-            <div className="absolute bottom-full right-0 mb-1 px-2 py-1 rounded-md ui-panel !backdrop-blur-md text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none">
-              {name}
-            </div>
-          </div>
-        )
-      })}
+    <div className="flex items-center gap-2">
       {gmView?.name && (
-        <div className="px-2 py-1 rounded-md border border-gm/40 text-gm-soft text-xs mr-2">
+        <div className="hidden rounded-md border border-gm/40 px-2 py-1 text-xs text-gm-soft sm:block">
           {t('gmViewing').replace('{n}', gmView.name)}
         </div>
       )}
+      <ul className="flex items-center gap-1.5" aria-label={t('playersOnline')}>
+        {players.map((p) => {
+          const label = `${p.name}${p.self ? ` (${t('playerYou')})` : ''}${p.gm ? ` · ${t('gmLabel')}` : ''}`
+          return (
+            <li key={p.key} className="group relative" aria-label={label}>
+              <div
+                className={`flex select-none items-center justify-center rounded-full font-bold ring-2 ${p.gm ? 'ring-gm' : 'ring-[var(--c-panel)]'}`}
+                style={{ backgroundColor: p.color, color: getTextColor(p.color), width: size, height: size, fontSize: size * 0.42 }}
+              >
+                {p.name.charAt(0).toUpperCase()}
+              </div>
+              {p.gm && (
+                <Crown
+                  size={12}
+                  className="absolute -top-2 left-1/2 -translate-x-1/2 fill-current text-gm"
+                  aria-hidden
+                />
+              )}
+              <div className="ui-panel pointer-events-none absolute bottom-full right-0 z-50 mb-2 whitespace-nowrap rounded-md px-2 py-1 text-xs opacity-0 !backdrop-blur-md transition group-hover:opacity-100">
+                {label}
+              </div>
+            </li>
+          )
+        })}
+      </ul>
     </div>
   )
 }
