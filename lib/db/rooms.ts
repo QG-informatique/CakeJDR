@@ -1,6 +1,6 @@
 import 'server-only'
 import { randomBytes } from 'node:crypto'
-import { and, desc, eq, lt, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, lt, sql } from 'drizzle-orm'
 import { db } from './index'
 import { roomMembers, rooms, users } from './schema'
 
@@ -143,6 +143,40 @@ export async function touchRoom(roomId: string) {
     .update(rooms)
     .set({ lastActiveAt: new Date() })
     .where(and(eq(rooms.id, roomId), lt(rooms.lastActiveAt, sql`now() - interval '1 hour'`)))
+}
+
+export type RoomMember = { userId: string; pseudo: string; color: string; role: string }
+
+/**
+ * Membres de chaque table, MJ d'abord puis joueurs par ordre alphabétique.
+ * Sans liste d'identifiants : toutes les tables (vue administrateur).
+ */
+export async function listRoomMembers(roomIds?: string[]): Promise<Map<string, RoomMember[]>> {
+  if (roomIds && roomIds.length === 0) return new Map()
+  const rows = await db
+    .select({
+      roomId: roomMembers.roomId,
+      userId: roomMembers.userId,
+      role: roomMembers.role,
+      pseudo: users.pseudo,
+      color: users.color,
+    })
+    .from(roomMembers)
+    .innerJoin(users, eq(users.id, roomMembers.userId))
+    .where(roomIds ? inArray(roomMembers.roomId, roomIds) : undefined)
+
+  const byRoom = new Map<string, RoomMember[]>()
+  for (const { roomId, ...m } of rows) {
+    const list = byRoom.get(roomId) ?? []
+    list.push(m)
+    byRoom.set(roomId, list)
+  }
+  for (const list of byRoom.values()) {
+    list.sort((a, b) =>
+      a.role === b.role ? a.pseudo.localeCompare(b.pseudo) : a.role === 'gm' ? -1 : 1,
+    )
+  }
+  return byRoom
 }
 
 export type RoomAccess = {

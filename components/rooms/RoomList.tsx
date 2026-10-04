@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useT } from '@/lib/useT'
-import { AlertTriangle, CheckCircle2, Crown, DoorOpen, LogIn, Pencil, Plus, Trash2 } from 'lucide-react'
+import { AlertTriangle, Check, CheckCircle2, Copy, Crown, DoorOpen, LogIn, Pencil, Plus, Trash2, Users } from 'lucide-react'
 import {
   deleteRoomById,
   fetchRooms as fetchRoomsApi,
@@ -24,7 +24,13 @@ export type RoomInfo = {
   joinCode?: string
   /** Salle de démonstration : jamais supprimée pour inactivité. */
   isDemo?: boolean
+  /** Membres, MJ en premier, et qui est dans la table en ce moment. */
+  members?: Array<{ pseudo: string; role: string; color?: string; online?: boolean }>
+  /** Présents qui ne sont pas membres : visiteurs de la démo, admin. */
+  guestsOnline?: number
 }
+
+const formatDate = (iso?: string) => (iso ? new Date(iso).toLocaleDateString() : '')
 
 interface Props {
   onSelect?: (room: RoomInfo) => void
@@ -46,7 +52,7 @@ export default function RoomList({
   const [rooms, setRooms] = useState<RoomInfo[]>([])
   const [errorMsg, setErrorMsg] = useState('')
   const [myRoom, setMyRoom] = useState<string | null>(null)
-  const [revealIds, setRevealIds] = useState<Record<string, boolean>>({})
+  const [copiedId, setCopiedId] = useState<string | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [inviteCode, setInviteCode] = useState('')
   const [joining, setJoining] = useState(false)
@@ -132,13 +138,26 @@ export default function RoomList({
     onSelect?.(room)
   }
 
+  const copyCode = (room: RoomInfo) => {
+    if (!room.joinCode) return
+    void navigator.clipboard?.writeText(room.joinCode)
+    setCopiedId(room.id)
+    window.setTimeout(() => setCopiedId((id) => (id === room.id ? null : id)), 1500)
+  }
+
 
   return (
     <section className="ui-panel flex flex-col gap-3 p-4">
-      <h2 className="flex items-center gap-2 text-base font-semibold">
-        <DoorOpen size={16} className="text-accent" />
-        {t('rooms')}
-      </h2>
+      <div className="flex items-center gap-2">
+        <h2 className="flex items-center gap-2 text-base font-semibold">
+          <DoorOpen size={16} className="text-accent" />
+          {t('rooms')}
+        </h2>
+        <button onClick={onCreateClick} className="ui-btn ui-btn-primary ml-auto">
+          <Plus size={15} />
+          {t('createRoom')}
+        </button>
+      </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <input
@@ -162,68 +181,112 @@ export default function RoomList({
         </span>
       </div>
       {errorMsg && <p className="text-xs text-red-400">{errorMsg}</p>}
-      <div className="grid max-h-[28rem] grid-cols-1 gap-2.5 overflow-y-auto sm:grid-cols-2 xl:grid-cols-3">
-        <button
-          onClick={onCreateClick}
-          className="ui-well flex min-h-[7.5rem] flex-col items-center justify-center gap-1.5 !border-dashed text-sm font-semibold text-ink/65 transition hover:!border-accent hover:text-accent"
-        >
-          <Plus size={20} />
-          {t('createRoom')}
-        </button>
+      {rooms.length === 0 && (
+        <p className="ui-well px-4 py-6 text-center text-sm text-ink/55">{t('noRoomYet')}</p>
+      )}
+      <ul className="flex max-h-[44rem] flex-col gap-3 overflow-y-auto">
         {rooms.map((r) => {
           const selected = selectedId === r.id
+          const members = r.members ?? []
+          const gm = members.find((m) => m.role === 'gm')
+          // Les joueurs présents en premier.
+          const players = members
+            .filter((m) => m.role !== 'gm')
+            .sort((a, b) => Number(!!b.online) - Number(!!a.online))
+          const online = r.usersConnected ?? 0
           return (
-            <div
+            <li
               key={r.id}
-              className={`ui-well relative flex cursor-pointer flex-col gap-1.5 p-3 transition ${selected ? '!border-accent ring-1 ring-accent' : 'hover:!border-[var(--c-line-strong)]'}`}
+              className={`ui-well relative flex cursor-pointer flex-col gap-3 p-4 transition ${selected ? '!border-accent ring-1 ring-accent' : 'hover:!border-[var(--c-line-strong)]'}`}
               onClick={() => handleSelect(r)}
               onDoubleClick={() => handleEnter(r)}
             >
-              <div className="flex items-center gap-1.5">
-                {selected && <CheckCircle2 size={15} className="shrink-0 text-accent" />}
-                <span className="min-w-0 flex-1 truncate font-semibold">
+              {/* Nom, rôle, présence, puis les actions du MJ */}
+              <div className="flex flex-wrap items-center gap-2">
+                {selected && <CheckCircle2 size={17} className="shrink-0 text-accent" />}
+                <span className="min-w-0 truncate text-lg font-bold">
                   {r.name || t('unnamed')}
                 </span>
-                {myRoom === r.id && (
-                  <span title={t('creator')} className="shrink-0 text-gm"><Crown size={14} /></span>
+                {r.role && (
+                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${r.role === 'gm' ? 'bg-gm/15 text-gm-soft' : 'bg-ink/10 text-ink/70'}`}>
+                    {r.role === 'gm' ? t('roleGm') : t('rolePlayer')}
+                  </span>
+                )}
+                {online > 0 && (
+                  <span className="flex items-center gap-1 text-xs font-semibold text-accent">
+                    <span className="h-2 w-2 rounded-full bg-accent" />
+                    {t('onlineCount').replace('{n}', String(online))}
+                  </span>
                 )}
                 {canManage(r) && (
-                  <span className="flex shrink-0 items-center">
+                  <span className="ml-auto flex shrink-0 items-center">
                     <button
                       onClick={(e) => { e.stopPropagation(); void renameRoom(r) }}
-                      className="ui-btn ui-btn-ghost ui-btn-icon !h-7 !min-h-7 !w-7"
+                      className="ui-btn ui-btn-ghost ui-btn-icon"
                       title={t('rename')}
                       aria-label={t('rename')}
                     >
-                      <Pencil size={13} />
+                      <Pencil size={14} />
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); void deleteRoom(r) }}
-                      className="ui-btn ui-btn-ghost ui-btn-danger ui-btn-icon !h-7 !min-h-7 !w-7"
+                      className="ui-btn ui-btn-ghost ui-btn-danger ui-btn-icon"
                       title={t('delete')}
                       aria-label={t('delete')}
                     >
-                      <Trash2 size={13} />
+                      <Trash2 size={14} />
                     </button>
                   </span>
                 )}
               </div>
-              <span className="flex items-center justify-between gap-2 text-xs text-ink/55">
-                <span className="truncate">
-                  {r.updatedAt
-                    ? new Date(r.updatedAt).toLocaleDateString()
-                    : r.createdAt
-                      ? new Date(r.createdAt).toLocaleDateString()
-                      : ''}
-                </span>
-                {/* Compté par le serveur : ouvrir le menu ne connecte plus à chaque table. */}
-                {(r.usersConnected ?? 0) > 0 && (
-                  <span className="flex shrink-0 items-center gap-1 text-accent">
-                    <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-                    {t('onlineCount').replace('{n}', String(r.usersConnected))}
+
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink/55">
+                {gm && (
+                  <span className="flex items-center gap-1">
+                    <Crown size={12} className="text-gm" />
+                    {t('roomGm').replace('{n}', gm.pseudo)}
+                    {gm.online && <span className="h-1.5 w-1.5 rounded-full bg-accent" title={t('roomOnline')} />}
                   </span>
                 )}
-              </span>
+                {r.createdAt && <span>{t('roomCreatedOn').replace('{d}', formatDate(r.createdAt))}</span>}
+                {r.updatedAt && <span>{t('roomLastPlayed').replace('{d}', formatDate(r.updatedAt))}</span>}
+              </div>
+
+              {/* Les joueurs de la table ; ceux qui y sont en ce moment sont allumés. */}
+              <div className="flex flex-col gap-1.5">
+                <span className="ui-label flex items-center gap-1.5">
+                  <Users size={12} />
+                  {t('roomMembersTitle').replace('{n}', String(players.length))}
+                </span>
+                {players.length === 0 ? (
+                  <span className="text-xs text-ink/45">{t('roomNoPlayers')}</span>
+                ) : (
+                  <ul className="flex flex-wrap gap-1.5">
+                    {players.map((m) => (
+                      <li
+                        key={m.pseudo}
+                        title={m.online ? `${m.pseudo} — ${t('roomOnline')}` : m.pseudo}
+                        className={`flex items-center gap-1.5 rounded-full border py-0.5 pl-0.5 pr-2.5 text-xs ${m.online ? 'border-accent/60 text-ink' : 'border-[var(--c-panel-line)] text-ink/55'}`}
+                      >
+                        <span
+                          className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white ${m.online ? '' : 'opacity-50'}`}
+                          style={{ background: m.color || '#6b7280' }}
+                        >
+                          {m.pseudo.charAt(0).toUpperCase()}
+                        </span>
+                        {m.pseudo}
+                        {m.online && <span className="h-1.5 w-1.5 rounded-full bg-accent" />}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {(r.guestsOnline ?? 0) > 0 && (
+                  <span className="text-xs text-ink/45">
+                    {t('roomGuestsOnline').replace('{n}', String(r.guestsOnline))}
+                  </span>
+                )}
+              </div>
+
               {r.role === 'gm' && !r.isDemo && (() => {
                 // Table bientôt supprimée faute de visite : seul le MJ est prévenu,
                 // et il suffit d'y entrer pour la garder.
@@ -236,38 +299,40 @@ export default function RoomList({
                   </span>
                 )
               })()}
-              {r.joinCode ? (
-                <span
-                  className="w-fit cursor-pointer select-none font-mono text-[11px] tracking-widest text-accent-soft/80 hover:text-accent-soft"
-                  title={t('inviteCodeTitle')}
-                  onClick={(e) => { e.stopPropagation(); void navigator.clipboard?.writeText(r.joinCode!) }}
-                >
-                  {r.joinCode}
-                </span>
-              ) : (
-                <span
-                  className="w-fit cursor-pointer select-none text-[10px] text-ink/40"
-                  onClick={(e) => { e.stopPropagation(); setRevealIds((prev) => ({ ...prev, [r.id]: !prev[r.id] })) }}
-                >
-                  {revealIds[r.id] ? r.id : t('idLabel')}
-                </span>
-              )}
 
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleEnter(r)
-                }}
-                className={`ui-btn mt-auto w-full ${selected ? 'ui-btn-primary' : ''}`}
-              >
-                <LogIn size={15} />
-                {t('enter')}
-              </button>
-            </div>
+              <div className="flex flex-wrap items-end gap-3">
+                {r.joinCode && (
+                  <div className="flex flex-col gap-0.5" title={t('inviteCodeTitle')}>
+                    <span className="ui-label">{t('roomInviteCode')}</span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="font-mono text-base tracking-[0.2em] text-accent-soft">{r.joinCode}</span>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); copyCode(r) }}
+                        className="ui-btn ui-btn-ghost !min-h-7 !px-2 text-xs"
+                      >
+                        {copiedId === r.id ? <Check size={13} /> : <Copy size={13} />}
+                        {copiedId === r.id ? t('codeCopied') : t('copyCode')}
+                      </button>
+                    </span>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleEnter(r)
+                  }}
+                  className={`ui-btn ml-auto !min-h-9 !px-5 ${selected ? 'ui-btn-primary' : ''}`}
+                >
+                  <LogIn size={15} />
+                  {t('enter')}
+                </button>
+              </div>
+            </li>
           )
         })}
-      </div>
+      </ul>
     </section>
   )
 }

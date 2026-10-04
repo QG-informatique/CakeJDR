@@ -25,8 +25,10 @@ export type RoomInfoResponse = {
   isDemo?: boolean
   /** Réservé à l'admin : dernière ouverture de la table par un joueur. */
   lastActiveAt?: string
-  /** Réservé à l'admin : qui a accès à la table, MJ en premier. */
-  members?: Array<{ pseudo: string; role: string }>
+  /** Qui a accès à la table, MJ en premier, et qui y est en ce moment. */
+  members?: Array<{ pseudo: string; role: string; color?: string; online?: boolean }>
+  /** Présents qui ne sont pas membres : visiteurs de la démo, admin. */
+  guestsOnline?: number
 }
 
 export type RoomsListResponse = ApiResult<{

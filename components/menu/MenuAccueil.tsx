@@ -6,7 +6,6 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { useConfirm } from '@/lib/useConfirm'
 import LanguageSwitcher from '../ui/LanguageSwitcher'
 import ThemeSwitcher from '../ui/ThemeSwitcher'
-import AuthControls from '../auth/AuthControls'
 import { LogIn, LogOut } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import SmallSpinner from '../ui/SmallSpinner'
@@ -601,14 +600,12 @@ export default function MenuAccueil({ page }: { page: 'landing' | 'salles' }) {
 
       {/* Header avec le bouton qui change de fond */}
       {user && <MenuHeader />}
-      {/* Barre d'outils en haut a droite : la langue, puis le compte une fois
-          connecte. Un seul conteneur fixe : avant, chacun etait fixe de son
-          cote et le bouton de langue recouvrait l'avatar. */}
+      {/* Barre d'outils en haut a droite : le theme et la langue. La pastille
+          du compte n'y est plus : le pseudo est deja dans la barre profil, et
+          les joueurs en ligne s'affichent dans la table. */}
       <div className="fixed right-3 top-3 z-50 flex items-center gap-2">
         <ThemeSwitcher />
         <LanguageSwitcher />
-        {/* Deconnecte, le panneau de connexion porte deja ces actions. */}
-        {user && <AuthControls pseudo={user.pseudo} color={user.color} />}
       </div>
 
       <div className="w-full min-h-screen relative text-ink px-6 pb-8 flex flex-col max-w-7xl mx-auto bg-transparent overflow-hidden">

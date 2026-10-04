@@ -39,15 +39,26 @@ export type RoomSummary = {
  * valeur prudente.
  */
 export async function countActiveUsers(id: string): Promise<number | null> {
+  const ids = await activeUserIds(id)
+  return ids ? ids.size : null
+}
+
+/**
+ * Identifiants des personnes présentes dans la table en ce moment : le compte
+ * pour un joueur connecté, `guest_…` pour un visiteur. `null` si Liveblocks ne
+ * répond pas.
+ */
+export async function activeUserIds(id: string): Promise<Set<string> | null> {
   try {
     const { data } = await getClient().getActiveUsers(id)
-    return new Set(data.map((u) => u.id ?? `connection-${u.connectionId}`)).size
+    return new Set(data.map((u) => u.id ?? `connection-${u.connectionId}`))
   } catch {
     return null
   }
 }
 
-export async function listRooms(): Promise<RoomSummary[]> {
+/** `withCounts: false` évite un appel à Liveblocks par table, quand l'appelant compte lui-même. */
+export async function listRooms({ withCounts = true } = {}): Promise<RoomSummary[]> {
   const client = getClient()
   const rooms: RoomSummary[] = []
   let cursor: string | undefined
@@ -71,7 +82,9 @@ export async function listRooms(): Promise<RoomSummary[]> {
     }
     cursor = nextCursor ?? undefined
   } while (cursor)
-  await Promise.all(rooms.map(async (r) => { r.usersConnected = (await countActiveUsers(r.id)) ?? 0 }))
+  if (withCounts) {
+    await Promise.all(rooms.map(async (r) => { r.usersConnected = (await countActiveUsers(r.id)) ?? 0 }))
+  }
   return rooms
 }
 

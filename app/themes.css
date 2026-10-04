@@ -65,12 +65,13 @@
   --c-brand: #e8806e;
   --c-font: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   --c-backdrop:
-    linear-gradient(rgb(255 255 255 / 0.025) 1px, transparent 1px) 0 0 / 32px 32px,
-    linear-gradient(90deg, rgb(255 255 255 / 0.025) 1px, transparent 1px) 0 0 / 32px 32px,
+    linear-gradient(rgb(255 255 255 / 0.045) 1px, transparent 1px) 0 0 / 32px 32px,
+    linear-gradient(90deg, rgb(255 255 255 / 0.045) 1px, transparent 1px) 0 0 / 32px 32px,
     radial-gradient(ellipse at 50% 0%, #1d2228, #15181c 70%);
-  /* Panneaux pleins, sans flou : des aplats nets. */
-  --c-panel: #1b1f24;
-  --c-panel-line: #2b3138;
-  --c-panel-blur: 0px;
-  --c-panel-head: #1b1f24;
+  /* Panneaux à peine translucides : le quadrillage du fond se devine
+     derrière, mais le contenu reste net. */
+  --c-panel: rgb(27 31 36 / 0.62);
+  --c-panel-line: rgb(255 255 255 / 0.08);
+  --c-panel-blur: 4px;
+  --c-panel-head: rgb(27 31 36 / 0.85);
 }
