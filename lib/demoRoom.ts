@@ -1,6 +1,7 @@
 import 'server-only'
 import { Liveblocks } from '@liveblocks/node'
 import { LiveList, LiveMap, LiveObject } from '@liveblocks/client'
+import { collectRoomImages, deleteCloudinaryImages } from './cloudinaryCleanup'
 
 /**
  * Salle de démonstration : capture et restauration.
@@ -34,10 +35,19 @@ function client() {
  *
  * Les structures Liveblocks sont remplacées entières plutôt que modifiées clé
  * par clé : c'est plus court, et surtout ça supprime ce qu'un visiteur aurait
- * ajouté.
+ * ajouté. Les images que les visiteurs ont téléversées sont ensuite effacées
+ * chez Cloudinary : plus rien ne les affiche. Celles de l'état de référence
+ * sont épargnées (`collectRoomImages` les exclut).
  */
 export async function restoreSnapshot(roomId: string, snap: DemoSnapshot) {
-  await client().mutateStorage(roomId, ({ root }) => {
+  const liveblocks = client()
+  const added = await collectRoomImages(
+    () => liveblocks.getStorageDocument(roomId, 'json') as Promise<{ images?: unknown }>,
+  ).catch((e: unknown) => {
+    console.error('restoreSnapshot: lecture des images impossible', roomId, e)
+    return []
+  })
+  await liveblocks.mutateStorage(roomId, ({ root }) => {
     root.set(
       'images',
       new LiveMap(Object.entries(snap.images ?? {})) as never,
@@ -50,5 +60,8 @@ export async function restoreSnapshot(roomId: string, snap: DemoSnapshot) {
     root.set('quickNote', new LiveObject(snap.quickNote) as never)
     root.set('music', new LiveObject(snap.music) as never)
     root.set('events', new LiveList(snap.events ?? []) as never)
+  })
+  await deleteCloudinaryImages(added).catch((e: unknown) => {
+    console.error('restoreSnapshot: suppression des images Cloudinary impossible', roomId, e)
   })
 }
