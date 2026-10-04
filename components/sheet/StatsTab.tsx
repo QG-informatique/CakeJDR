@@ -15,6 +15,8 @@ interface Props {
   lastStat: string | null
   lastGain: number | null
   animKey: number
+  /** Fiche verrouillée par le MJ : pas de montée de niveau. */
+  readOnly?: boolean
 }
 
 const StatsTab: FC<Props> = ({
@@ -27,11 +29,12 @@ const StatsTab: FC<Props> = ({
   lastStat,
   lastGain,
   animKey,
+  readOnly = false,
 }) => (
   <>
     <StatsPanel perso={perso} compact={compact} />
     <CompetencesPanel competences={perso.competences || []} compact={compact} />
-    <LevelUpPanel
+    {!readOnly && <LevelUpPanel
       dice={dice}
       setDice={setDice}
       onLevelUp={onLevelUp}
@@ -39,7 +42,7 @@ const StatsTab: FC<Props> = ({
       lastStat={lastStat}
       lastGain={lastGain}
       animKey={animKey}
-    />
+    />}
   </>
 )
 

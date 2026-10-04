@@ -1,5 +1,5 @@
 import { FC } from 'react'
-import { ArrowLeft, ChevronLeft, ImagePlus, LayoutGrid, Pencil, Rows3 } from 'lucide-react'
+import { ArrowLeft, ChevronLeft, ImagePlus, LayoutGrid, Lock, Pencil, Rows3 } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import Link from 'next/link'
 import ThemeSwitcher from '../ui/ThemeSwitcher'
@@ -22,6 +22,8 @@ type Props = {
   setDensity: (d: SheetDensity) => void
   /** Replie la fiche ; absent quand elle ne peut pas l'être (téléphone). */
   onCollapse?: () => void
+  /** Fiche verrouillée : ni portrait ni « Modifier ». */
+  readOnly?: boolean
 }
 
 const getPvColor = (pv: number, pvMax: number) => {
@@ -47,6 +49,7 @@ const CharacterSheetHeader: FC<Props> = ({
   density,
   setDensity,
   onCollapse,
+  readOnly = false,
 }) => {
   const t = useT()
   const pv = Number(perso.pv) || 0
@@ -81,6 +84,7 @@ const CharacterSheetHeader: FC<Props> = ({
       <div className="mt-3 flex gap-3">
         <button
           onClick={onPortrait}
+          disabled={readOnly}
           title={perso.portrait ? t('portraitChange') : t('choosePortrait')}
           aria-label={perso.portrait ? t('portraitChange') : t('choosePortrait')}
           className={`group relative flex h-24 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl transition ${perso.portrait ? 'border border-[var(--c-panel-line)] hover:border-accent' : 'border border-dashed border-[var(--c-line-strong)] bg-ink/5 hover:border-accent'}`}
@@ -104,10 +108,17 @@ const CharacterSheetHeader: FC<Props> = ({
             <span className="text-sm text-ink/70">
               {t('level')} <span className="text-lg font-bold tabular-nums text-ink">{perso.niveau || 1}</span>
             </span>
-            <button onClick={onEdit} className="ui-btn">
-              <Pencil size={14} />
-              {t('edit')}
-            </button>
+            {readOnly ? (
+              <span className="flex items-center gap-1 text-xs text-ink/55" title={t('sheetLockedByGm')}>
+                <Lock size={12} aria-hidden />
+                {t('gmLabel')}
+              </span>
+            ) : (
+              <button onClick={onEdit} className="ui-btn">
+                <Pencil size={14} />
+                {t('edit')}
+              </button>
+            )}
           </div>
         </div>
       </div>
