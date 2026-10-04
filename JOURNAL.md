@@ -1,5 +1,11 @@
 # Journal
 
+## 2026-10-04 — Connexion gardée 30 jours
+- Session de connexion portée de 7 à 30 jours, prolongée à chaque visite (`auth.ts`) : Quentin ne veut pas repasser par Google ou Discord à chaque venue.
+- Les 7 jours d'avant étaient déjà prolongés à chaque visite ; si la connexion saute encore, chercher du côté du navigateur (navigation privée, cookies effacés, panneau de l'app Claude).
+
+Reste ouvert : vérifier en ligne, après une mise en ligne, qu'on reste connecté d'un jour à l'autre.
+
 ## 2026-10-04 — Bibliothèque de départ sur la table
 - 21 images du pack de Quentin (V2) converties en WebP avec miniatures dans `public/bibliotheque/` (2,4 Mo) : 2 cartes, 8 pions détourés, 8 portraits, 3 rencontres.
 - Liste et tailles dans `lib/library.ts` ; panneau `components/canvas/LibraryPanel.tsx` ouvert par un bouton « Bibliothèque » à côté de « Outils ».

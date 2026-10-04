@@ -24,7 +24,9 @@ export const { handlers, auth } = NextAuth({
     ...(process.env.AUTH_GOOGLE_ID ? [Google] : []),
     ...(process.env.AUTH_DISCORD_ID ? [Discord] : []),
   ],
-  session: { strategy: 'jwt', maxAge: 7 * 24 * 60 * 60 },
+  // 30 jours, prolongés à chaque visite (au plus une fois par jour) : un
+  // joueur qui revient chaque semaine ne revoit jamais l'écran de connexion.
+  session: { strategy: 'jwt', maxAge: 30 * 24 * 60 * 60, updateAge: 24 * 60 * 60 },
   pages: { signIn: '/connexion', error: '/connexion' },
   // Vercel garantit l'en-tête Host ; en local, il faut l'accepter aussi.
   trustHost: true,
