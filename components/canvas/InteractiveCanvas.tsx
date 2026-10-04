@@ -9,7 +9,9 @@ import ImageItem, { ImageRenderData } from './ImageItem'
 import SideNotes from '@/components/misc/SideNotes'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { useT } from '@/lib/useT'
-import { Wrench } from 'lucide-react'
+import { Library, Wrench } from 'lucide-react'
+import LibraryPanel from './LibraryPanel'
+import { LIBRARY_DRAG_TYPE, findLibraryItem, libraryUrl, type LibraryPick } from '@/lib/library'
 import {
   extractUploadErrorInfo,
   uploadImageToCloudinary,
@@ -109,6 +111,7 @@ export default function InteractiveCanvas() {
     () => typeof window === 'undefined' || window.matchMedia('(min-width: 1024px)').matches,
   )
   const imageInputRef = useRef<HTMLInputElement>(null)
+  const [libraryOpen, setLibraryOpen] = useState(false)
 
   // Images helpers
   const [pendingImages, setPendingImages] = useState<ImageRenderData[]>([])
@@ -616,10 +619,38 @@ export default function InteractiveCanvas() {
       URL.revokeObjectURL(localUrl)
     }
   }
+  // Image de la bibliothèque : déjà en ligne, on la pose directement à sa taille.
+  function addLibraryImage(pick: LibraryPick, dropX: number, dropY: number, rect: { width: number; height: number }) {
+    const found = findLibraryItem(pick)
+    if (!found || !rect.width || !rect.height) return
+    const { category, item } = found
+    const fit = Math.min(1, (rect.width * category.share) / item.width, (rect.height * category.share) / item.height)
+    const size = screenToWorldSize(item.width * fit, item.height * fit, rect)
+    const w = clamp(size.w, MIN_IMAGE_SIZE / rect.width, 1)
+    const h = clamp(size.h, MIN_IMAGE_SIZE / rect.height, 1)
+    const at = screenToWorldPoint(dropX, dropY, rect)
+    addImage({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      url: libraryUrl(category.id, item.id),
+      x: clamp(at.x - w / 2, 0, Math.max(0, 1 - w)),
+      y: clamp(at.y - h / 2, 0, Math.max(0, 1 - h)),
+      width: w,
+      height: h,
+      createdAt: Date.now(),
+    })
+    setDrawMode('images')
+  }
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault()
     const rect = drawingCanvasRef.current?.getBoundingClientRect()
     if (!rect) return
+    const libraryData = e.dataTransfer.getData(LIBRARY_DRAG_TYPE)
+    if (libraryData) {
+      try {
+        addLibraryImage(JSON.parse(libraryData) as LibraryPick, e.clientX - rect.left, e.clientY - rect.top, rect)
+      } catch { /* donnée de glisser illisible : on ignore */ }
+      return
+    }
     const files = Array.from(e.dataTransfer.files)
     for (const file of files) {
       await uploadOneImage(file, e.clientX - rect.left, e.clientY - rect.top, rect)
@@ -651,12 +682,34 @@ export default function InteractiveCanvas() {
             <Wrench size={14} />
             {t('tools')}
           </button>
+          <button
+            onClick={() => setLibraryOpen(!libraryOpen)}
+            aria-expanded={libraryOpen}
+            className={`pointer-events-auto ui-btn shadow-lg !min-h-9 ${libraryOpen ? 'ui-btn-primary' : '!bg-[var(--c-panel-head)]'}`}
+          >
+            <Library size={14} />
+            {t('library')}
+          </button>
           {toolsVisible && (
             <div className="pointer-events-auto min-w-0">
               <CanvasTools drawMode={drawMode} setDrawMode={setDrawMode} color={color} setColor={setColor} brushSize={brushSize} setPenSize={setPenSize} setEraserSize={setEraserSize} clearCanvas={() => setConfirmClear(true)} onAddImage={() => imageInputRef.current?.click()} />
             </div>
           )}
         </div>
+        {libraryOpen && (
+          <div
+            className="absolute top-14 left-3 z-30"
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <LibraryPanel
+              onClose={() => setLibraryOpen(false)}
+              onPick={(pick) => {
+                const rect = drawingCanvasRef.current?.getBoundingClientRect()
+                if (rect) addLibraryImage(pick, rect.width / 2, rect.height / 2, rect)
+              }}
+            />
+          </div>
+        )}
         {uploadMessage && (
           <div className="absolute top-14 right-3 z-40 max-w-sm pointer-events-auto ui-panel !backdrop-blur-md px-4 py-3 shadow-lg">
             <p className="text-sm font-semibold leading-snug">{uploadMessage}</p>
