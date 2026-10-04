@@ -171,7 +171,9 @@
 - [x] Choisir la direction du thème n°1 (Ardoise retenu) puis remplir ses couleurs
 - [x] Brancher les fonds animés et les couleurs d'accent (bleu, violet, rose en dur) sur le thème
 - [x] Ajouter un sélecteur de thème dans l'interface (choix par joueur, gardé dans le navigateur)
-- [ ] Ajouter le bouton de thème dans la table elle-même (aujourd'hui seulement sur l'accueil)
+- [x] Ajouter le bouton de thème dans la table elle-même (aujourd'hui seulement sur l'accueil)
+- [x] Retravailler l'interface du menu et de la table dans le style Ardoise (panneaux, boutons, onglets communs)
+- [ ] Faire relire la nouvelle interface (menu connecté, table, téléphone) par Quentin, puis la mettre en ligne
 - [ ] Faire relire Ardoise par Quentin sur un vrai écran et un téléphone, ajuster les couleurs si besoin
 - [ ] Faire de la maquette V2 un second thème (phase 6)
 - [ ] Faire du pack « Papier & Sauge » (thème clair, accent vert sauge) un thème : maquettes et couleurs dans `C:\DEV\CakeJDR-themes\CakeJDR-theme-papier-sauge`

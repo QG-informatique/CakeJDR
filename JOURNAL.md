@@ -1,5 +1,13 @@
 # Journal
 
+## 2026-10-04 — Interface retravaillée façon Ardoise (menu et table)
+- Panneaux, boutons, champs et onglets communs (`ui-panel`, `ui-btn`, `ui-seg`…) dans `app/globals.css`, avec un fond et un flou par thème (`app/themes.css`) : aplats nets en Ardoise, voiles translucides en Classique.
+- Table : trois panneaux espacés ; fiche avec en-tête collant (retour à l'accueil, thème, repli) et stats en cases ; chat, barre de dés, outils du plateau, notes et onglets du téléphone redessinés ; bandeau de démo déplacé en bas du plateau pour ne plus cacher les outils.
+- Menu : barre de profil avec un grand bouton « Entrer dans … », tables et fiches côte à côte sur grand écran, textes anglais restants traduits, en-tête réduit.
+- Build et 15 tests e2e OK (le test « fiche » vise désormais l'onglet, plus un bouton).
+
+Reste ouvert : relecture par Quentin sur écran et téléphone ; pas encore en ligne.
+
 ## 2026-10-04 — Ardoise mis en ligne
 - Thème Ardoise poussé en production (commit 4f8da8c) ; le site sert bien `data-theme="ardoise"`, 15 tests e2e OK sur le site en ligne.
 

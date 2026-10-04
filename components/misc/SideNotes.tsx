@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { useStorage, useMutation, useStatus } from '@liveblocks/react'
 import { LiveObject } from '@liveblocks/client'
 import { useT } from '@/lib/useT'
+import { NotebookPen, X } from 'lucide-react'
 
 const LIVE_KEY = 'quickNote' as const
 const LOCAL_KEY = 'codex_quicknote'
@@ -129,26 +130,31 @@ export default function SideNotes() {
 
   return (
     <div
-      className="absolute bottom-4 left-4 z-50"
+      className="absolute bottom-3 left-3 z-30"
       onPointerDown={(e) => e.stopPropagation()}
       onPointerMove={(e) => e.stopPropagation()}
       onPointerUp={(e) => e.stopPropagation()}
     >
       {open ? (
-        <div className="relative rounded-2xl border border-ink/12 bg-shade/40 backdrop-blur-[8px] shadow-2xl text-ink p-3 w-72 animate-fadeInScale"
-          style={{ boxShadow: '0 8px 32px -8px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)' }}>
-          <div className="flex items-center gap-1.5 mb-2 text-ink/40">
-            <svg width="13" height="13" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-              <rect x="4" y="3.5" width="14" height="15" rx="3.5" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-              <line x1="7" y1="7.7" x2="15" y2="7.7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-              <line x1="7" y1="11" x2="15" y2="11" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-              <line x1="7" y1="14.3" x2="13" y2="14.3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-            </svg>
-            <span className="text-[10px] uppercase tracking-widest font-semibold">{t('notes')}</span>
+        <div
+          className="ui-panel relative w-72 p-3 shadow-2xl !backdrop-blur-md animate-fadeInScale"
+          style={{ background: 'var(--c-panel-head)' }}
+        >
+          <div className="mb-2 flex items-center gap-1.5">
+            <NotebookPen size={13} className="text-ink/50" />
+            <span className="ui-label">{t('notes')}</span>
+            <button
+              className="ui-btn ui-btn-ghost ui-btn-icon ml-auto !h-6 !w-6 !min-h-6"
+              onClick={() => { handleResize(); setOpen(false) }}
+              title={t('close')}
+              aria-label={t('close')}
+            >
+              <X size={14} />
+            </button>
           </div>
           <textarea
             ref={textareaRef}
-            className="w-full bg-ink/5 rounded-xl p-2.5 text-sm resize-y border border-ink/8 focus:outline-none focus:border-accent/30 focus:bg-ink/8 transition-all placeholder:text-ink/20 text-ink/90 leading-relaxed"
+            className="ui-input w-full !p-2.5 text-sm resize-y leading-relaxed placeholder:text-ink/25"
             style={{ height }}
             value={notes}
             onChange={handleChange}
@@ -156,35 +162,15 @@ export default function SideNotes() {
             onMouseUp={handleResize}
             placeholder="…"
           />
-          <button
-            className="absolute -right-3 top-4 bg-shade/70 hover:bg-shade/90 text-ink/60 hover:text-ink border border-ink/12 rounded-lg shadow-lg flex items-center justify-center transition-all duration-150 hover:scale-110"
-            onClick={() => { handleResize(); setOpen(false) }}
-            title={t('close')}
-            style={{ width: 26, height: 26, padding: 0 }}
-          >
-            <span style={{ fontWeight: 700, fontSize: '1.1em', lineHeight: '1' }}>×</span>
-          </button>
         </div>
       ) : (
         <button
-          className="bg-shade/30 hover:bg-shade/55 border border-ink/12 rounded-xl shadow-lg backdrop-blur-[4px] flex items-center justify-center transition-all duration-150 hover:scale-105 hover:border-ink/20"
+          className="ui-btn ui-btn-icon !h-10 !w-10 shadow-lg !bg-[var(--c-panel-head)]"
           onClick={() => setOpen(true)}
           title={t('notes')}
-          style={{ width: 40, height: 40, fontSize: '1.2rem', padding: 0 }}
+          aria-label={t('notes')}
         >
-          <svg
-            width="22"
-            height="22"
-            viewBox="0 0 22 22"
-            fill="none"
-            aria-hidden="true"
-            className="opacity-80"
-          >
-            <rect x="4" y="3.5" width="14" height="15" rx="3.5" stroke="white" strokeWidth="1.3" fill="none"/>
-            <line x1="7" y1="7.7" x2="15" y2="7.7" stroke="white" strokeWidth="1.1" strokeLinecap="round"/>
-            <line x1="7" y1="11" x2="15" y2="11" stroke="white" strokeWidth="1.1" strokeLinecap="round"/>
-            <line x1="7" y1="14.3" x2="13" y2="14.3" stroke="white" strokeWidth="1.1" strokeLinecap="round"/>
-          </svg>
+          <NotebookPen size={18} />
         </button>
       )}
     </div>

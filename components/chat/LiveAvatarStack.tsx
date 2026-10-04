@@ -33,19 +33,19 @@ export default function LiveAvatarStack({ className = 'fixed bottom-4 right-4 z-
         return (
           <div key={connectionId} className="relative group">
             <div
-              className="rounded-full border border-ink flex items-center justify-center font-bold select-none"
+              className="rounded-full ring-2 ring-[var(--c-panel)] flex items-center justify-center font-bold select-none"
               style={{ backgroundColor: color, color: text, width: size, height: size, fontSize: size * 0.42 }}
             >
               {name.charAt(0).toUpperCase()}
             </div>
-            <div className="absolute bottom-full right-0 mb-1 px-2 py-1 rounded bg-shade text-ink text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none">
+            <div className="absolute bottom-full right-0 mb-1 px-2 py-1 rounded-md ui-panel !backdrop-blur-md text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none">
               {name}
             </div>
           </div>
         )
       })}
       {gmView?.name && (
-        <div className="px-2 py-1 rounded bg-shade/70 text-ink text-xs mr-2">
+        <div className="px-2 py-1 rounded-md border border-gm/40 text-gm-soft text-xs mr-2">
           {t('gmViewing').replace('{n}', gmView.name)}
         </div>
       )}

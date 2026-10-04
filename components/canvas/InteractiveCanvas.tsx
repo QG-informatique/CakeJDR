@@ -9,6 +9,7 @@ import ImageItem, { ImageRenderData } from './ImageItem'
 import SideNotes from '@/components/misc/SideNotes'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { useT } from '@/lib/useT'
+import { Wrench } from 'lucide-react'
 import {
   extractUploadErrorInfo,
   uploadImageToCloudinary,
@@ -640,23 +641,28 @@ export default function InteractiveCanvas() {
   return (
     <>
       <div className="relative w-full h-full select-none">
-        {/* Tools */}
-        <div className="absolute top-3 left-3 z-30 pointer-events-auto">
-          <button onClick={() => setToolsVisible(!toolsVisible)} className="rounded-xl px-5 py-2 text-base font-semibold shadow border-none bg-shade/30 text-ink/90 hover:bg-emerald-600 hover:text-white transition duration-100 flex items-center justify-center min-h-[38px]">
-            <span className="text-sm">{t('tools')}</span>
+        {/* Outils : le bouton, puis la barre quand elle est ouverte */}
+        <div className="absolute top-3 left-3 right-3 z-30 flex items-start gap-2 pointer-events-none">
+          <button
+            onClick={() => setToolsVisible(!toolsVisible)}
+            aria-expanded={toolsVisible}
+            className={`pointer-events-auto ui-btn shadow-lg !min-h-9 ${toolsVisible ? 'ui-btn-primary' : '!bg-[var(--c-panel-head)]'}`}
+          >
+            <Wrench size={14} />
+            {t('tools')}
           </button>
+          {toolsVisible && (
+            <div className="pointer-events-auto min-w-0">
+              <CanvasTools drawMode={drawMode} setDrawMode={setDrawMode} color={color} setColor={setColor} brushSize={brushSize} setPenSize={setPenSize} setEraserSize={setEraserSize} clearCanvas={() => setConfirmClear(true)} onAddImage={() => imageInputRef.current?.click()} />
+            </div>
+          )}
         </div>
         {uploadMessage && (
-          <div className="absolute top-3 right-3 z-40 max-w-sm pointer-events-auto rounded-xl bg-shade/80 text-ink px-4 py-3 shadow-lg border border-ink/10 backdrop-blur-sm">
+          <div className="absolute top-14 right-3 z-40 max-w-sm pointer-events-auto ui-panel !backdrop-blur-md px-4 py-3 shadow-lg">
             <p className="text-sm font-semibold leading-snug">{uploadMessage}</p>
             {isDev && uploadDebug && (
               <p className="mt-1 text-xs text-amber-100/80">[{uploadDebug}]</p>
             )}
-          </div>
-        )}
-        {toolsVisible && (
-          <div className="absolute top-3 left-36 z-30 origin-top-left pointer-events-auto">
-            <CanvasTools drawMode={drawMode} setDrawMode={setDrawMode} color={color} setColor={setColor} brushSize={brushSize} setPenSize={setPenSize} setEraserSize={setEraserSize} clearCanvas={() => setConfirmClear(true)} onAddImage={() => imageInputRef.current?.click()} />
           </div>
         )}
         {/* Surface */}
@@ -672,7 +678,7 @@ export default function InteractiveCanvas() {
             <ImageItem key={img.id} img={img} drawMode={drawMode} onPointerDown={handlePointerDown} onDelete={handleDeleteImage} pending={pendingImages.some((p) => p.id === img.id)} />
           ))}
           {(drawMode === 'draw' || drawMode === 'erase') && !dragState.current.id && (
-            <div className="absolute rounded-full border border-emerald-500 pointer-events-none" style={{ top: mousePos.y - brushSize / 2, left: mousePos.x - brushSize / 2, width: brushSize, height: brushSize, zIndex: 2 }} />
+            <div className="absolute rounded-full border border-accent pointer-events-none" style={{ top: mousePos.y - brushSize / 2, left: mousePos.x - brushSize / 2, width: brushSize, height: brushSize, zIndex: 2 }} />
           )}
           <LiveCursors canvasSize={canvasSize} />
           <SideNotes />

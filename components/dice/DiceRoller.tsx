@@ -60,10 +60,11 @@ const DiceRoller: FC<Props> = ({
       <>
         <button
           onClick={() => setCollapsed(false)}
-          aria-label="Expand dice panel"
-          className="absolute bottom-2 left-1/2 -translate-x-1/2 z-50 text-ink/80 hover:text-ink bg-shade/30 rounded-full p-1"
+          aria-label={t('expandPanel')}
+          title={t('expandPanel')}
+          className="ui-btn ui-btn-icon absolute bottom-3 left-1/2 -translate-x-1/2 z-50"
         >
-          <ChevronUp size={20} />
+          <ChevronUp size={18} />
         </button>
         {afterRoll && <div className="hidden">{afterRoll}</div>}
         {children && <div className="hidden">{children}</div>}
@@ -72,46 +73,18 @@ const DiceRoller: FC<Props> = ({
   }
 
   return (
-    <div
-      className="
-        relative w-full p-4 flex flex-wrap items-center gap-3
-        rounded-xl
-        border border-ink/10
-        bg-shade/15
-        backdrop-blur-[2px]
-        shadow-lg shadow-shade/10
-        transition flex-shrink-0
-      "
-      style={{
-        boxShadow: '0 4px 18px -8px rgba(0,0,0,0.24), 0 0 0 1px rgba(255,255,255,0.05)',
-      }}
-    >
-      {/* Center collapse toggle using flex so it remains responsive */}
-      <div className="absolute -top-3 left-0 right-0 flex justify-center">
-        <button
-          onClick={() => setCollapsed(true)}
-          aria-label="Collapse dice panel"
-          className="z-50 text-ink/80 hover:text-ink bg-shade/30 rounded-full p-1"
-        >
-          <ChevronDown size={20} />
-        </button>
-      </div>
+    <div className="ui-panel relative w-full px-3 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-2 flex-shrink-0">
+      {/* Choix du dé */}
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs font-semibold text-ink/50 uppercase tracking-wider">{t('diceType')}</span>
-
-        <div className="flex gap-1 flex-wrap">
+        <span className="ui-label">{t('dieShort')}</span>
+        <div className="ui-seg" role="group" aria-label={t('diceType')}>
           {[4, 6, 8, 10, 12, 20, 100].map((val) => (
             <button
               key={val}
               onClick={() => !disabled && onChange(val)}
               disabled={disabled}
-              className={`
-                px-2 py-1 rounded-lg text-xs font-bold border transition-all duration-150 active:scale-90
-                ${diceType === val
-                  ? 'bg-accent/70 border-accent/60 text-on-accent shadow-[0_0_8px_2px_color-mix(in_srgb,var(--c-accent)_30%,transparent)]'
-                  : 'bg-ink/5 border-ink/10 text-ink/60 hover:bg-ink/10 hover:text-ink/90 hover:border-ink/20'}
-                ${disabled ? 'opacity-40 cursor-not-allowed' : ''}
-              `}
+              aria-pressed={diceType === val}
+              className="!flex-none !px-2"
             >
               D{val}
             </button>
@@ -119,42 +92,37 @@ const DiceRoller: FC<Props> = ({
         </div>
       </div>
 
-      <div className="flex items-center gap-3 flex-wrap">
+      <button
+        onClick={handleRollClick}
+        className="ui-btn ui-btn-primary relative overflow-hidden !min-h-10 !px-6 !text-[15px]"
+        disabled={disabled || cooldown}
+      >
+        <Dice3 size={18} />
+        {t('roll')}
+
+        {cooldown && (
+          <motion.span
+            className="absolute inset-0 bg-shade/40 origin-left pointer-events-none"
+            initial={{ scaleX: 1 }}
+            animate={{ scaleX: 0 }}
+            transition={{ duration: Math.max(0.1, cooldownDuration / 1000), ease: 'linear' }}
+          />
+        )}
+      </button>
+
+      {afterRoll && <div className="flex items-center">{afterRoll}</div>}
+
+      <div className="ml-auto flex items-center gap-2">
+        {children}
         <button
-          onClick={handleRollClick}
-          className={`
-            relative flex items-center gap-2
-            px-8 py-2.5 rounded-2xl
-            font-bold text-base tracking-wide
-            text-ink
-            border border-ink/15
-            bg-gradient-to-br from-accent/70 to-accent-hover/60
-            hover:from-accent/80 hover:to-accent-hover/70
-            hover:border-ink/25
-            active:scale-95
-            transition-all duration-150
-            shadow-[0_2px_16px_-4px_color-mix(in_srgb,var(--c-accent)_50%,transparent)]
-            hover:shadow-[0_4px_24px_-4px_color-mix(in_srgb,var(--c-accent)_70%,transparent)]
-            ${(disabled || cooldown) ? 'opacity-50 cursor-not-allowed !shadow-none' : ''}
-          `}
-          disabled={disabled || cooldown}
+          onClick={() => setCollapsed(true)}
+          aria-label={t('collapsePanel')}
+          title={t('collapsePanel')}
+          className="ui-btn ui-btn-ghost ui-btn-icon"
         >
-          <Dice3 className="inline -mt-0.5" size={18} />
-          {t('roll')}
-
-          {cooldown && (
-            <motion.span
-              className="absolute inset-0 rounded-2xl bg-shade/50 origin-left pointer-events-none"
-              initial={{ scaleX: 1 }}
-              animate={{ scaleX: 0 }}
-              transition={{ duration: Math.max(0.1, cooldownDuration / 1000), ease: 'linear' }}
-            />
-          )}
+          <ChevronDown size={18} />
         </button>
-        {afterRoll && <div className="flex items-center">{afterRoll}</div>}
       </div>
-
-      {children && <div className="ml-auto flex items-center gap-1">{children}</div>}
     </div>
   )
 }

@@ -38,18 +38,7 @@ const CustomSelect: FC<CustomSelectProps> = ({
       <button
         type="button"
         disabled={disabled}
-        className={`
-          w-full px-4 py-1.5 text-md rounded-xl font-semibold text-ink
-          bg-shade/35 border border-ink/10 shadow-2xl
-          transition hover:bg-shade/50 hover:border-ink/20
-          disabled:opacity-60 backdrop-blur-md
-          flex items-center justify-between
-        `}
-        style={{
-          boxShadow: '0 2px 16px 0 #0007, 0 0 0 1px #fff1 inset',
-          background:
-            'linear-gradient(120deg,rgba(18,28,54,0.35) 60%,rgba(16,18,33,0.23) 100%)',
-        }}
+        className="ui-btn w-full !justify-between"
         onClick={() => !disabled && setOpen((v) => !v)}
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -66,7 +55,7 @@ const CustomSelect: FC<CustomSelectProps> = ({
         >
           <path
             d="M6 8l4 4 4-4"
-            stroke="#fff"
+            stroke="currentColor"
             strokeWidth="2"
             strokeLinecap="round"
           />
@@ -74,11 +63,8 @@ const CustomSelect: FC<CustomSelectProps> = ({
       </button>
       {open && (
         <div
-          className="absolute z-30 left-0 w-full mt-1 rounded-xl bg-shade/80 border border-ink/10 shadow-2xl py-1 animate-fadeIn backdrop-blur-md"
-          style={{
-            background:
-              'linear-gradient(120deg,rgba(18,28,54,0.91) 60%,rgba(16,18,33,0.77) 100%)',
-          }}
+          className="ui-panel absolute z-30 left-0 w-full mt-1 py-1 shadow-xl animate-fadeIn !backdrop-blur-md"
+          style={{ background: 'var(--c-panel-head)' }}
           role="listbox"
         >
           {options.map((opt) => (
@@ -87,17 +73,10 @@ const CustomSelect: FC<CustomSelectProps> = ({
               key={opt.value}
               disabled={disabled}
               className={`
-                w-full px-4 py-1.5 text-left text-md font-semibold rounded
-                text-ink transition
-                hover:bg-surface/80
-                ${value === opt.value ? 'bg-surface-hover/80' : ''}
+                w-full px-3 py-1.5 text-left text-sm font-semibold text-ink transition
+                hover:bg-ink/8
+                ${value === opt.value ? 'text-accent' : ''}
               `}
-              style={{
-                background:
-                  value === opt.value
-                    ? 'linear-gradient(120deg,#23364aBB 60%,#131b2455 100%)'
-                    : undefined,
-              }}
               onClick={() => {
                 setOpen(false)
                 onChange(opt.value)
@@ -195,8 +174,8 @@ const LevelUpPanel: FC<Props> = ({
   }
 
   return (
-    <div className="mt-5 relative">
-      <div className="flex justify-center gap-2 mt-2">
+    <div className="mt-4 relative">
+      <div className="flex justify-center gap-2">
         <CustomSelect
           value={dice}
           onChange={setDice}
@@ -206,21 +185,8 @@ const LevelUpPanel: FC<Props> = ({
         <button
           onClick={onLevelUp}
           disabled={processing}
-          className="
-            px-4 py-1.5 rounded-xl
-            font-semibold text-ink bg-shade/35
-            border border-ink/10 shadow-2xl transition
-            hover:bg-surface hover:border-ink/20
-            disabled:opacity-60 backdrop-blur-md
-            focus:ring-2 focus:ring-accent/30
-          "
-          style={{
-            width: BUTTON_WIDTH,
-            maxWidth: BUTTON_WIDTH,
-            boxShadow: '0 2px 16px 0 #0007, 0 0 0 1px #fff1 inset',
-            background:
-              'linear-gradient(120deg,rgba(18,28,54,0.35) 60%,rgba(16,18,33,0.23) 100%)',
-          }}
+          className="ui-btn ui-btn-primary"
+          style={{ width: BUTTON_WIDTH, maxWidth: BUTTON_WIDTH }}
         >
           <span className="truncate">
             {processing ? t('launching') : t('launchLevelUp')}

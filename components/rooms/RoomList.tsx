@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useT } from '@/lib/useT'
-import { AlertTriangle, CheckCircle2, LogIn } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Crown, DoorOpen, LogIn, Pencil, Plus, Trash2 } from 'lucide-react'
 import {
   deleteRoomById,
   fetchRooms as fetchRoomsApi,
@@ -134,10 +134,13 @@ export default function RoomList({
 
 
   return (
-    <div className="rounded-xl backdrop-blur-md bg-shade/20 p-4 border border-ink/10 shadow-lg">
-      <h2 className="text-lg font-semibold mb-2">{t('rooms')}</h2>
+    <section className="ui-panel flex flex-col gap-3 p-4">
+      <h2 className="flex items-center gap-2 text-base font-semibold">
+        <DoorOpen size={16} className="text-accent" />
+        {t('rooms')}
+      </h2>
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <input
           value={inviteCode}
           onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
@@ -145,112 +148,126 @@ export default function RoomList({
           placeholder={t('inviteCodePlaceholder')}
           aria-label={t('inviteCodePlaceholder')}
           maxLength={12}
-          className="w-44 rounded-lg border border-ink/15 bg-shade/30 px-3 py-1.5 font-mono text-sm tracking-widest uppercase placeholder:font-sans placeholder:tracking-normal placeholder:text-ink/30 focus:border-emerald-400/40 focus:outline-none"
+          className="ui-input w-44 font-mono tracking-widest uppercase placeholder:font-sans placeholder:tracking-normal placeholder:text-ink/30"
         />
         <button
           onClick={() => void joinByCode()}
           disabled={joining || !inviteCode.trim()}
-          className="rounded-lg bg-emerald-600/80 px-3 py-1.5 text-sm font-semibold text-ink transition hover:bg-emerald-500/90 disabled:opacity-40"
+          className="ui-btn"
         >
           {joining ? '...' : t('inviteJoin')}
         </button>
-        <span className="text-xs text-ink/40">
+        <span className="text-xs text-ink/45">
           {t('inviteOnlyHint')}
         </span>
       </div>
-      {errorMsg && <p className="mb-2 text-xs text-red-400">{errorMsg}</p>}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-96 overflow-y-auto p-3">
+      {errorMsg && <p className="text-xs text-red-400">{errorMsg}</p>}
+      <div className="grid max-h-[28rem] grid-cols-1 gap-2.5 overflow-y-auto sm:grid-cols-2 xl:grid-cols-3">
         <button
           onClick={onCreateClick}
-          className="flex flex-col items-center justify-center p-3 rounded-lg bg-[#ff90cc]/60 hover:bg-[#ff90cc] text-center"
+          className="ui-well flex min-h-[7.5rem] flex-col items-center justify-center gap-1.5 !border-dashed text-sm font-semibold text-ink/65 transition hover:!border-accent hover:text-accent"
         >
-          <span className="text-2xl">🧁</span>
-          <span className="text-sm font-semibold mt-1">{t('createRoom')}</span>
+          <Plus size={20} />
+          {t('createRoom')}
         </button>
-        {rooms.map((r) => (
-          <div
-            key={r.id}
-            className={`relative p-3 rounded-xl border cursor-pointer flex flex-col gap-2 transition ${selectedId === r.id ? 'bg-emerald-500/15 border-emerald-300 ring-2 ring-emerald-300 shadow-[0_0_16px_2px_rgba(110,231,183,0.35)]' : 'bg-shade/30 border-ink/10 hover:border-emerald-300/60 hover:ring-2 hover:ring-emerald-300/30'}`}
-            onClick={() => handleSelect(r)}
-            onDoubleClick={() => handleEnter(r)}
-          >
-            {selectedId === r.id && (
-              <div className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-emerald-300 px-2 py-0.5 text-[11px] font-semibold text-emerald-950">
-                <CheckCircle2 size={12} />
-                Selected
-              </div>
-            )}
-            <div className="flex justify-between items-center gap-1 pt-6">
-              <span className="truncate flex-1 flex items-center gap-1 text-sm">
-                {r.name || t('unnamed')}
-              </span>
-              {myRoom === r.id && <span title={t('creator')}>👑</span>}
-              {canManage(r) && (
-                <>
-                  <button onClick={(e) => { e.stopPropagation(); void renameRoom(r) }} className="ml-1 text-yellow-300" title={t('rename')}>✏️</button>
-                  <button onClick={(e) => { e.stopPropagation(); void deleteRoom(r) }} className="ml-1 text-red-400" title={t('delete')}>🗑️</button>
-                </>
-              )}
-            </div>
-            <span className="flex items-center justify-between gap-2 text-xs text-ink/60">
-              <span className="truncate">
-                {r.updatedAt
-                  ? new Date(r.updatedAt).toLocaleDateString()
-                  : r.createdAt
-                    ? new Date(r.createdAt).toLocaleDateString()
-                    : ''}
-              </span>
-              {/* Compté par le serveur : ouvrir le menu ne connecte plus à chaque table. */}
-              {(r.usersConnected ?? 0) > 0 && (
-                <span className="flex shrink-0 items-center gap-1 text-emerald-300">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  {t('onlineCount').replace('{n}', String(r.usersConnected))}
-                </span>
-              )}
-            </span>
-            {r.role === 'gm' && !r.isDemo && (() => {
-              // Table bientôt supprimée faute de visite : seul le MJ est prévenu,
-              // et il suffit d'y entrer pour la garder.
-              const until = roomDeletionDate(r.updatedAt)
-              if (!until) return null
-              return (
-                <span className="flex items-start gap-1 rounded-md bg-amber-500/15 px-2 py-1 text-[11px] leading-snug text-amber-200">
-                  <AlertTriangle size={12} className="mt-0.5 shrink-0" />
-                  {t('roomInactiveWarning').replace('{date}', until.toLocaleDateString())}
-                </span>
-              )
-            })()}
-            {r.joinCode ? (
-              <span
-                className="cursor-pointer select-none font-mono text-[11px] tracking-widest text-emerald-300/80"
-                title={t('inviteCodeTitle')}
-                onClick={(e) => { e.stopPropagation(); void navigator.clipboard?.writeText(r.joinCode!) }}
-              >
-                {r.joinCode}
-              </span>
-            ) : (
-              <span
-                className="text-[10px] text-ink/40 cursor-pointer select-none"
-                onClick={(e) => { e.stopPropagation(); setRevealIds((prev) => ({ ...prev, [r.id]: !prev[r.id] })) }}
-              >
-                {revealIds[r.id] ? r.id : t('idLabel')}
-              </span>
-            )}
-
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                handleEnter(r)
-              }}
-              className={`mt-1 inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition ${selectedId === r.id ? 'bg-emerald-400 text-emerald-950 hover:bg-emerald-300 shadow-[0_0_14px_rgba(110,231,183,0.35)]' : 'bg-ink/10 text-white hover:bg-ink/20'}`}
+        {rooms.map((r) => {
+          const selected = selectedId === r.id
+          return (
+            <div
+              key={r.id}
+              className={`ui-well relative flex cursor-pointer flex-col gap-1.5 p-3 transition ${selected ? '!border-accent ring-1 ring-accent' : 'hover:!border-[var(--c-line-strong)]'}`}
+              onClick={() => handleSelect(r)}
+              onDoubleClick={() => handleEnter(r)}
             >
-              <LogIn size={16} />
-              {selectedId === r.id ? 'Enter selected room' : t('enter')}
-            </button>
-          </div>
-        ))}
+              <div className="flex items-center gap-1.5">
+                {selected && <CheckCircle2 size={15} className="shrink-0 text-accent" />}
+                <span className="min-w-0 flex-1 truncate font-semibold">
+                  {r.name || t('unnamed')}
+                </span>
+                {myRoom === r.id && (
+                  <span title={t('creator')} className="shrink-0 text-gm"><Crown size={14} /></span>
+                )}
+                {canManage(r) && (
+                  <span className="flex shrink-0 items-center">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); void renameRoom(r) }}
+                      className="ui-btn ui-btn-ghost ui-btn-icon !h-7 !min-h-7 !w-7"
+                      title={t('rename')}
+                      aria-label={t('rename')}
+                    >
+                      <Pencil size={13} />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); void deleteRoom(r) }}
+                      className="ui-btn ui-btn-ghost ui-btn-danger ui-btn-icon !h-7 !min-h-7 !w-7"
+                      title={t('delete')}
+                      aria-label={t('delete')}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </span>
+                )}
+              </div>
+              <span className="flex items-center justify-between gap-2 text-xs text-ink/55">
+                <span className="truncate">
+                  {r.updatedAt
+                    ? new Date(r.updatedAt).toLocaleDateString()
+                    : r.createdAt
+                      ? new Date(r.createdAt).toLocaleDateString()
+                      : ''}
+                </span>
+                {/* Compté par le serveur : ouvrir le menu ne connecte plus à chaque table. */}
+                {(r.usersConnected ?? 0) > 0 && (
+                  <span className="flex shrink-0 items-center gap-1 text-accent">
+                    <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                    {t('onlineCount').replace('{n}', String(r.usersConnected))}
+                  </span>
+                )}
+              </span>
+              {r.role === 'gm' && !r.isDemo && (() => {
+                // Table bientôt supprimée faute de visite : seul le MJ est prévenu,
+                // et il suffit d'y entrer pour la garder.
+                const until = roomDeletionDate(r.updatedAt)
+                if (!until) return null
+                return (
+                  <span className="flex items-start gap-1 rounded-md bg-amber-500/15 px-2 py-1 text-[11px] leading-snug text-amber-200">
+                    <AlertTriangle size={12} className="mt-0.5 shrink-0" />
+                    {t('roomInactiveWarning').replace('{date}', until.toLocaleDateString())}
+                  </span>
+                )
+              })()}
+              {r.joinCode ? (
+                <span
+                  className="w-fit cursor-pointer select-none font-mono text-[11px] tracking-widest text-accent-soft/80 hover:text-accent-soft"
+                  title={t('inviteCodeTitle')}
+                  onClick={(e) => { e.stopPropagation(); void navigator.clipboard?.writeText(r.joinCode!) }}
+                >
+                  {r.joinCode}
+                </span>
+              ) : (
+                <span
+                  className="w-fit cursor-pointer select-none text-[10px] text-ink/40"
+                  onClick={(e) => { e.stopPropagation(); setRevealIds((prev) => ({ ...prev, [r.id]: !prev[r.id] })) }}
+                >
+                  {revealIds[r.id] ? r.id : t('idLabel')}
+                </span>
+              )}
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleEnter(r)
+                }}
+                className={`ui-btn mt-auto w-full ${selected ? 'ui-btn-primary' : ''}`}
+              >
+                <LogIn size={15} />
+                {t('enter')}
+              </button>
+            </div>
+          )
+        })}
       </div>
-    </div>
+    </section>
   )
 }

@@ -37,7 +37,7 @@ export default function DemoBanner() {
   if (!isDemo || dismissed) return null
 
   return (
-    <div className="pointer-events-auto fixed left-1/2 top-2 z-50 flex max-w-[92vw] -translate-x-1/2 items-center gap-3 rounded-xl border border-amber-400/25 bg-amber-500/12 px-3 py-2 text-amber-100 shadow-lg backdrop-blur">
+    <div className="pointer-events-auto absolute bottom-3 left-1/2 z-30 flex w-max max-w-[calc(100%-1.5rem)] -translate-x-1/2 items-center gap-3 rounded-lg border border-amber-400/30 bg-[color-mix(in_srgb,var(--c-panel-head)_88%,#f59e0b)] px-3 py-2 text-amber-100 shadow-lg">
       <Info size={16} className="shrink-0 text-amber-300" />
       <p className="m-0 text-xs leading-snug">
         {t('demoBannerText')}

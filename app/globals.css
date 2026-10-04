@@ -121,3 +121,124 @@ body {
     0 4px 24px -8px rgba(0,0,0,0.4),
     0 0 0 1px color-mix(in srgb, var(--c-ink) 4%, transparent);
 }
+
+/* ─── Briques d'interface communes ─────────────────────────────────────
+   Panneaux, boutons, champs et onglets de la table et du menu. Elles ne
+   connaissent que les couleurs du thème : chaque thème les habille. Les
+   classes Tailwind ajoutées à côté gardent le dernier mot. */
+@layer components {
+  .ui-panel {
+    background: var(--c-panel);
+    border: 1px solid var(--c-panel-line);
+    border-radius: 14px;
+    color: var(--c-ink);
+    backdrop-filter: blur(var(--c-panel-blur));
+    -webkit-backdrop-filter: blur(var(--c-panel-blur));
+  }
+  /* Encart dans un panneau : une marche plus sombre. */
+  .ui-well {
+    background: color-mix(in srgb, var(--c-surface-deep) 70%, transparent);
+    border: 1px solid var(--c-panel-line);
+    border-radius: 10px;
+  }
+  .ui-label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--c-ink) 50%, transparent);
+  }
+
+  .ui-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    min-height: 2rem;
+    padding: 0 0.75rem;
+    border-radius: 8px;
+    border: 1px solid var(--c-line-strong);
+    background: color-mix(in srgb, var(--c-surface-hover) 70%, transparent);
+    color: var(--c-ink);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+  }
+  .ui-btn:hover:not(:disabled) {
+    background: var(--c-surface-hover);
+    border-color: color-mix(in srgb, var(--c-ink) 25%, transparent);
+  }
+  .ui-btn:active:not(:disabled) { transform: scale(0.97); }
+  .ui-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .ui-btn-primary {
+    background: var(--c-accent);
+    border-color: var(--c-accent);
+    color: var(--c-on-accent);
+  }
+  .ui-btn-primary:hover:not(:disabled) {
+    background: var(--c-accent-hover);
+    border-color: var(--c-accent-hover);
+  }
+  .ui-btn-ghost {
+    background: transparent;
+    border-color: transparent;
+    color: color-mix(in srgb, var(--c-ink) 70%, transparent);
+  }
+  .ui-btn-ghost:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--c-ink) 8%, transparent);
+    border-color: transparent;
+    color: var(--c-ink);
+  }
+  .ui-btn-danger:hover:not(:disabled) {
+    background: rgb(220 38 38 / 0.85);
+    border-color: rgb(220 38 38);
+    color: #fff;
+  }
+  .ui-btn-icon {
+    width: 2rem;
+    padding: 0;
+  }
+
+  .ui-input {
+    min-height: 2rem;
+    padding: 0 0.625rem;
+    border-radius: 8px;
+    border: 1px solid var(--c-line-strong);
+    background: color-mix(in srgb, var(--c-surface-deep) 80%, transparent);
+    color: var(--c-ink);
+    font-size: 0.875rem;
+    transition: border-color 0.15s;
+  }
+  .ui-input::placeholder { color: color-mix(in srgb, var(--c-ink) 35%, transparent); }
+  .ui-input:focus { outline: none; border-color: var(--c-accent); }
+
+  /* Onglets ou choix exclusifs côte à côte (aria-pressed / aria-selected). */
+  .ui-seg {
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--c-surface-deep) 80%, transparent);
+    border: 1px solid var(--c-panel-line);
+  }
+  .ui-seg > button {
+    flex: 1 1 0;
+    min-height: 1.75rem;
+    padding: 0 0.6rem;
+    border-radius: 7px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: color-mix(in srgb, var(--c-ink) 60%, transparent);
+    transition: background-color 0.15s, color 0.15s;
+  }
+  .ui-seg > button:hover:not(:disabled) { color: var(--c-ink); }
+  .ui-seg > button[aria-pressed="true"],
+  .ui-seg > button[aria-selected="true"] {
+    background: var(--c-accent);
+    color: var(--c-on-accent);
+  }
+  .ui-seg > button:disabled { opacity: 0.45; cursor: not-allowed; }
+}

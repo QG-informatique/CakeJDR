@@ -1,7 +1,9 @@
 import { FC, ReactElement } from 'react'
+import { ChevronLeft, Pencil, Save } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import Link from 'next/link'
 import CakeLogo from '../ui/CakeLogo'
+import ThemeSwitcher from '../ui/ThemeSwitcher'
 
 type Tab = { key: string, label: string }
 
@@ -14,6 +16,8 @@ type Props = {
   TABS: Tab[],
   children?: React.ReactNode,
   logoOnly?: boolean
+  /** Replie la fiche ; absent quand elle ne peut pas l'être (téléphone, création). */
+  onCollapse?: () => void
 }
 
 const CharacterSheetHeader: FC<Props> = ({
@@ -24,6 +28,7 @@ const CharacterSheetHeader: FC<Props> = ({
   setTab,
   TABS,
   children,
+  onCollapse,
 }) => {
 
   const childrenArray = children ? (Array.isArray(children) ? children : [children]) : []
@@ -31,54 +36,55 @@ const CharacterSheetHeader: FC<Props> = ({
 
   return (
     <div
-      className="sticky top-0 left-0 right-0 z-40 rounded-xl pb-2 pt-1.5 -mx-3 px-3 flex flex-col"
-      style={{
-        background: 'rgba(0,0,0,0.40)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
-        boxShadow: '0 4px 20px -4px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04)'
-      }}
+      className="sticky top-0 z-40 -mx-3 px-3 pt-3 pb-3 mb-3 flex flex-col gap-3 border-b border-[var(--c-panel-line)] backdrop-blur-md"
+      style={{ background: 'var(--c-panel-head)' }}
     >
-      {/* Top row : logo + actions */}
+      {/* Ligne du haut : retour à l'accueil, actions de la fiche, réglages */}
       <div className="flex flex-wrap items-center gap-1.5">
         <Link
           href="/menu-accueil"
-          className="rounded-xl p-2 bg-ink/5 border border-ink/8 text-ink/80 hover:bg-ink/12 hover:text-ink transition-all duration-150 flex items-center justify-center"
+          className="ui-btn ui-btn-ghost ui-btn-icon !w-9 !h-9 !p-1"
+          aria-label={t('backToMenu')}
+          title={t('backToMenu')}
         >
           <CakeLogo className="mr-0" showText={false} />
         </Link>
 
         <button
           onClick={edit ? onSave : onToggleEdit}
-          className={`
-            rounded-xl px-4 py-1.5 text-sm font-semibold border transition-all duration-150 active:scale-95
-            flex items-center justify-center gap-1.5
-            ${edit
-              ? 'bg-emerald-600/30 border-emerald-400/30 text-emerald-200 hover:bg-emerald-500/40 hover:border-emerald-300/40'
-              : 'bg-ink/6 border-ink/10 text-ink/80 hover:bg-ink/12 hover:text-ink'}
-          `}
+          className={`ui-btn ${edit ? 'ui-btn-primary' : ''}`}
         >
-          {edit ? '💾 ' + t('save') : '✏️ ' + t('edit')}
+          {edit ? <Save size={14} /> : <Pencil size={14} />}
+          {edit ? t('save') : t('edit')}
         </button>
 
         {childrenArray.map((child, i) => {
           const key = (child as ReactElement)?.key ?? `child-${i}`
           return <span key={String(key)} className="flex items-center">{child}</span>
         })}
+
+        <span className="ml-auto flex items-center gap-1">
+          <ThemeSwitcher compact />
+          {onCollapse && (
+            <button
+              onClick={onCollapse}
+              aria-label={t('collapsePanel')}
+              title={t('collapsePanel')}
+              className="max-lg:hidden ui-btn ui-btn-ghost ui-btn-icon"
+            >
+              <ChevronLeft size={18} />
+            </button>
+          )}
+        </span>
       </div>
 
-      {/* Tab row */}
-      <nav className="flex gap-1 mt-2 bg-shade/20 rounded-lg p-0.5">
+      {/* Onglets de la fiche */}
+      <nav className="ui-seg" role="tablist">
         {TABS.map(tItem => (
           <button
             key={tItem.key}
-            className={`
-              flex-1 px-2 py-1 rounded-md text-xs font-semibold transition-all duration-150
-              ${tab === tItem.key
-                ? 'bg-accent/80 text-on-accent shadow-sm shadow-shade/40'
-                : 'text-ink/50 hover:text-ink/80 hover:bg-ink/6'}
-            `}
+            role="tab"
+            aria-selected={tab === tItem.key}
             onClick={() => setTab(tItem.key)}
           >
             {tItem.label}
