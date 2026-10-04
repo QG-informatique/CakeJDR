@@ -13,7 +13,6 @@ import MusicPlayer from '@/components/music/MusicPlayer'
 import LiveAvatarStack from '@/components/chat/LiveAvatarStack'
 import SignedOutPanel from '@/components/auth/SignedOutPanel'
 import GMCharacterSelector from '@/components/misc/GMCharacterSelector'
-import ImportExportMenu from '@/components/character/ImportExportMenu'
 import useProfile from './hooks/useProfile'
 import ErrorBoundary from '@/components/misc/ErrorBoundary'
 import MobileTabBar, { type MobileTab } from '@/components/app/MobileTabBar'
@@ -501,24 +500,11 @@ export default function HomePageInner() {
 
   return (
     <div className="relative w-screen h-dvh font-sans overflow-hidden bg-transparent">
-      <div className={`relative z-10 flex flex-col w-full h-full lg:gap-3 lg:p-3 ${theme.layout.sheetSide === 'right' ? 'lg:flex-row-reverse' : 'lg:flex-row'}`}>
+      <div className={`relative z-10 flex flex-col w-full h-full lg:gap-3 lg:p-3 lg:pb-6 ${theme.layout.sheetSide === 'right' ? 'lg:flex-row-reverse' : 'lg:flex-row'}`}>
         {/* `lg:contents` efface l'enveloppe sur grand écran : la mise en page
             côte à côte reste celle d'avant les onglets. */}
         <div className={`${mobilePanel('sheet')} flex-1 min-h-0 flex-col items-center overflow-y-auto p-2 lg:contents`}>
-          <CharacterSheet perso={perso} onUpdate={handleUpdatePerso} chatBoxRef={chatBoxRef} logoOnly>
-            <span className="ml-2">
-              {isGM && (
-                <GMCharacterSelector
-                  onSelect={handleGMSelect}
-                  onSelectOwn={handleGMBackToOwn}
-                  viewingConnectionId={viewedConnectionId}
-                />
-              )}
-            </span>
-            <span className="ml-1">
-              <ImportExportMenu perso={perso} onUpdate={handleUpdatePerso} />
-            </span>
-          </CharacterSheet>
+          <CharacterSheet perso={perso} onUpdate={handleUpdatePerso} />
         </div>
 
         <main className={`${mobilePanel('table')} lg:flex flex-1 flex-col min-h-0 min-w-0 gap-2 max-lg:p-2 lg:gap-3`}>

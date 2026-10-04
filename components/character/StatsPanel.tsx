@@ -1,9 +1,6 @@
 import { FC } from 'react'
 import { useT } from '@/lib/useT'
-import {
-  type Character,
-  type CharacterChangeHandler,
-} from '@/types/character'
+import { type Character } from '@/types/character'
 import type { TranslationKey } from '@/lib/translations'
 
 const STATS = [
@@ -35,16 +32,7 @@ const getStatColor = (value: number) => {
   return 'text-red-400'
 }
 
-const getPvColor = (pv: number, pvMax: number) => {
-  if (!pvMax) return 'bg-ink/30'
-  const ratio = pv / pvMax
-  if (ratio > 0.7) return 'bg-emerald-500'
-  if (ratio > 0.3) return 'bg-amber-500'
-  return 'bg-red-500'
-}
-
-const fieldClass =
-  'w-full min-w-0 rounded-md bg-field border px-1.5 py-0.5 text-sm text-field-ink text-center'
+const signed = (n: number) => `${n >= 0 ? '+' : ''}${n}`
 
 /** Case d'une valeur : petit intitulé, grand chiffre. */
 const Tile: FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
@@ -54,87 +42,67 @@ const Tile: FC<{ label: string; children: React.ReactNode }> = ({ label, childre
   </div>
 )
 
+/** Ligne de l'affichage compact : intitulé à gauche, valeur à droite. */
+const Row: FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
+  <div className="flex min-w-0 items-baseline justify-between gap-2 px-2.5 py-1 text-sm">
+    <span className="truncate text-ink/65">{label}</span>
+    <span className="shrink-0 tabular-nums font-semibold">{children}</span>
+  </div>
+)
+
 type Props = {
-  edit: boolean
   perso: Character
-  onChange: CharacterChangeHandler
+  compact?: boolean
 }
 
-const StatsPanel: FC<Props> = ({ edit, perso, onChange }) => {
-  const pvActuel = Number(perso.pv) || 0
-  const pvMax = Number(perso.pv_max ?? perso.pvMax ?? perso.pv) || pvActuel
-  const pvRatio = pvMax ? Math.max(0, Math.min(1, pvActuel / pvMax)) : 0
+const StatsPanel: FC<Props> = ({ perso, compact = false }) => {
   const t = useT()
+  const statValue = (key: string) => Number(Reflect.get(perso, key) ?? 0)
+  const modValue = (key: string) => Number(Reflect.get(perso, `${key}_mod`) ?? 0)
+
+  if (compact) {
+    return (
+      <div className="flex flex-col gap-3">
+        <div className="ui-well grid grid-cols-3 divide-x divide-[var(--c-panel-line)]">
+          {BASICS.map(b => (
+            <div key={b.key} className="flex flex-col items-center py-1.5">
+              <span className="ui-label !text-[10px]">{t(b.label as TranslationKey)}</span>
+              <span className="font-bold tabular-nums">{perso[b.key] || '—'}</span>
+            </div>
+          ))}
+        </div>
+        <div>
+          <div className="ui-label mb-1">{t('attributes')}</div>
+          <div className="ui-well grid grid-cols-2 py-1">
+            {STATS.map(stat => (
+              <Row key={stat.key} label={t(stat.label as TranslationKey)}>
+                <span className={getStatColor(statValue(stat.key))}>{statValue(stat.key)}</span>
+                <span className="ml-1 text-xs font-medium text-ink/55">{signed(modValue(stat.key))}</span>
+              </Row>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div className="ui-label mb-1">{t('attackMods')}</div>
+          <div className="ui-well grid grid-cols-3 py-1">
+            {ATTACKS.map(att => (
+              <Row key={att.key} label={t(att.label as TranslationKey)}>
+                {perso[att.key] ?? 0}
+              </Row>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Identité : nom et niveau */}
-      <div className="flex items-end gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="ui-label mb-0.5">{t('name')}</div>
-          {edit
-            ? <input value={perso.nom || ''} onChange={e => onChange('nom', e.target.value)} className={`${fieldClass} !text-left !text-base font-semibold`} />
-            : <div className="truncate text-xl font-bold leading-tight">{perso.nom || t('unnamed')}</div>
-          }
-        </div>
-        <div className="w-20 shrink-0 text-right">
-          <div className="ui-label mb-0.5">{t('level')}</div>
-          {edit
-            ? <input type="text" value={perso.niveau || ''} onChange={e => onChange('niveau', e.target.value)} className={fieldClass} />
-            : <div className="text-xl font-bold leading-tight tabular-nums">{perso.niveau}</div>
-          }
-        </div>
-      </div>
-
-      {/* Points de vie */}
-      <div className="ui-well px-3 py-2.5">
-        <div className="flex items-baseline justify-between gap-2">
-          <span className="ui-label">{t('hp')}</span>
-          {edit
-            ? (
-              <span className="flex items-center gap-1">
-                <input
-                  type="number"
-                  min={0}
-                  value={perso.pv ?? ''}
-                  onChange={e => onChange('pv', e.target.value)}
-                  className={`${fieldClass} !w-16`}
-                  placeholder={t('hp')}
-                />
-                <span className="text-ink/50 font-bold">/</span>
-                <input
-                  type="number"
-                  min={0}
-                  value={perso.pv_max ?? perso.pvMax ?? ''}
-                  onChange={e => onChange('pv_max', e.target.value)}
-                  className={`${fieldClass} !w-16`}
-                  placeholder={t('max')}
-                />
-              </span>
-            )
-            : (
-              <span className="tabular-nums">
-                <span className="text-2xl font-bold">{pvActuel}</span>
-                <span className="text-sm text-ink/55"> / {pvMax}</span>
-              </span>
-            )}
-        </div>
-        <div className="mt-2 h-2 overflow-hidden rounded-full bg-ink/10">
-          <div
-            className={`h-full rounded-full transition-[width] duration-300 ${getPvColor(pvActuel, pvMax)}`}
-            style={{ width: `${pvRatio * 100}%` }}
-          />
-        </div>
-      </div>
-
       {/* Défense, chance, initiative */}
       <div className="grid grid-cols-3 gap-2">
         {BASICS.map(b => (
           <Tile key={b.key} label={t(b.label as TranslationKey)}>
-            {edit
-              ? <input type="text" value={perso[b.key] || ''} onChange={e => onChange(b.key, e.target.value)} className={fieldClass} />
-              : <span className="text-lg font-bold tabular-nums">{perso[b.key]}</span>
-            }
+            <span className="text-lg font-bold tabular-nums">{perso[b.key] || '—'}</span>
           </Tile>
         ))}
       </div>
@@ -143,29 +111,14 @@ const StatsPanel: FC<Props> = ({ edit, perso, onChange }) => {
       <div>
         <div className="ui-label mb-1.5">{t('attributes')}</div>
         <div className="grid grid-cols-3 gap-2">
-          {STATS.map(stat => {
-            const statValue = Number(perso[stat.key] ?? 0)
-            const modValue = Number(
-              (perso as Record<string, unknown>)[`${stat.key}_mod`] ?? 0,
-            )
-            return (
-              <Tile key={stat.key} label={t(stat.label as TranslationKey)}>
-                {edit
-                  ? (
-                    <span className="flex w-full items-center gap-1">
-                      <input type="text" value={perso[stat.key] ?? ''} onChange={e => onChange(stat.key, e.target.value)} className={fieldClass} aria-label={t(stat.label as TranslationKey)} />
-                      <input type="text" value={perso[`${stat.key}_mod`] ?? ''} onChange={e => onChange(`${stat.key}_mod`, e.target.value)} className={fieldClass} placeholder={t('mod')} aria-label={`${t(stat.label as TranslationKey)} — ${t('mod')}`} />
-                    </span>
-                  )
-                  : (
-                    <span className="flex items-baseline gap-1.5 tabular-nums">
-                      <span className={`text-xl font-bold ${getStatColor(statValue)}`}>{statValue}</span>
-                      <span className="text-xs font-semibold text-ink/55">{modValue >= 0 ? '+' : ''}{modValue}</span>
-                    </span>
-                  )}
-              </Tile>
-            )
-          })}
+          {STATS.map(stat => (
+            <Tile key={stat.key} label={t(stat.label as TranslationKey)}>
+              <span className="flex items-baseline gap-1.5 tabular-nums">
+                <span className={`text-xl font-bold ${getStatColor(statValue(stat.key))}`}>{statValue(stat.key)}</span>
+                <span className="text-xs font-semibold text-ink/55">{signed(modValue(stat.key))}</span>
+              </span>
+            </Tile>
+          ))}
         </div>
       </div>
 
@@ -175,10 +128,7 @@ const StatsPanel: FC<Props> = ({ edit, perso, onChange }) => {
         <div className="grid grid-cols-3 gap-2">
           {ATTACKS.map(att => (
             <Tile key={att.key} label={t(att.label as TranslationKey)}>
-              {edit
-                ? <input type="text" value={perso[att.key] ?? ''} onChange={e => onChange(att.key, e.target.value)} className={fieldClass} />
-                : <span className="text-lg font-bold tabular-nums">{perso[att.key] ?? 0}</span>
-              }
+              <span className="text-lg font-bold tabular-nums">{perso[att.key] ?? 0}</span>
             </Tile>
           ))}
         </div>

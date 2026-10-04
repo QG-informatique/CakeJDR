@@ -3,16 +3,15 @@
 import { FC, useState, useEffect, useCallback } from 'react'
 import { ChevronRight } from 'lucide-react'
 import StatsTab from './StatsTab'
-import EquipTab from './EquipTab'
+import PortraitPicker from './PortraitPicker'
+import EquipPanel from '../character/EquipPanel'
 import DescriptionPanel from '../character/DescriptionPanel'
-import CharacterSheetHeader from '../character/CharacterSheetHeader'
+import CharacterSheetHeader, { type SheetDensity } from '../character/CharacterSheetHeader'
 import CharacterEditor from '../character/CharacterEditor'
 import { useT } from '@/lib/useT'
 import { useIsDesktop } from '@/lib/useIsDesktop'
 import {
   type Character,
-  type CharacterChangeHandler,
-  type CustomField,
   defaultCharacter,
   normalizeCharacter,
 } from '@/types/character'
@@ -20,10 +19,9 @@ import {
 type Props = {
   perso: Character // Fiche perso initiale
   onUpdate: (perso: Character) => void
-  chatBoxRef?: React.RefObject<HTMLDivElement | null>
-  children?: React.ReactNode
-  logoOnly?: boolean
 }
+
+const DENSITY_KEY = 'sheetDensity'
 
 export const defaultPerso: Character = { ...defaultCharacter }
 
@@ -35,15 +33,23 @@ const rollDice = (dice: string): number => {
   return Math.floor(Math.random() * sides) + 1
 }
 
-const CharacterSheet: FC<Props> = ({
-  perso,
-  onUpdate,
-  children,
-  logoOnly = false,
-}) => {
+const CharacterSheet: FC<Props> = ({ perso, onUpdate }) => {
   // La fiche se modifie dans l'écran d'édition (CharacterEditor) ; ici elle
   // ne fait que s'afficher.
   const [editorOpen, setEditorOpen] = useState(false)
+  const [portraitOpen, setPortraitOpen] = useState(false)
+  // Compact ou complet : un choix d'affichage, gardé dans ce navigateur.
+  const [density, setDensity] = useState<SheetDensity>(() => {
+    try {
+      return typeof window !== 'undefined' && localStorage.getItem(DENSITY_KEY) === 'compact' ? 'compact' : 'full'
+    } catch {
+      return 'full'
+    }
+  })
+  const chooseDensity = (d: SheetDensity) => {
+    setDensity(d)
+    try { localStorage.setItem(DENSITY_KEY, d) } catch { /* stockage indisponible */ }
+  }
   const [tab, setTab] = useState('main')
   const [localPerso, setLocalPerso] = useState<Character>(() =>
     normalizeCharacter(perso),
@@ -74,9 +80,6 @@ const CharacterSheet: FC<Props> = ({
     // eslint-disable-next-line react-hooks/set-state-in-effect -- la fiche affichée suit celle du parent
     setLocalPerso(normalizeCharacter(next))
   }, [perso])
-
-  // Les panneaux ne sont plus modifiables ici : ce gestionnaire ne sert plus.
-  const handleChange: CharacterChangeHandler = () => {}
 
   const [processing, setProcessing] = useState(false)
   const [dice, setDice] = useState('d6')
@@ -152,6 +155,13 @@ const CharacterSheet: FC<Props> = ({
     onUpdate(edited)
   }
 
+  const pickPortrait = (url: string) => {
+    setPortraitOpen(false)
+    const next = { ...cFiche, portrait: url || undefined }
+    setLocalPerso(normalizeCharacter(next))
+    onUpdate(next)
+  }
+
   // When collapsed, render only an expand button so the panel frees all space.
   // Sur téléphone la fiche a son propre onglet : on ne la replie jamais.
   if (collapsed && isDesktop) {
@@ -174,16 +184,17 @@ const CharacterSheet: FC<Props> = ({
       className="ui-panel relative select-none flex-shrink-0 text-[15px] w-full md:w-[400px] px-3 pb-4 overflow-y-auto"
       style={{ boxSizing: 'border-box', overflowX: 'hidden' }}
     >
-        <CharacterSheetHeader
-          onEdit={() => setEditorOpen(true)}
-          tab={tab}
-          setTab={setTab}
-          TABS={TABS}
-          logoOnly={logoOnly}
-          onCollapse={isDesktop ? () => setCollapsed(true) : undefined}
-        >
-          {children}
-        </CharacterSheetHeader>
+      <CharacterSheetHeader
+        perso={localPerso}
+        onEdit={() => setEditorOpen(true)}
+        onPortrait={() => setPortraitOpen(true)}
+        tab={tab}
+        setTab={setTab}
+        TABS={TABS}
+        density={density}
+        setDensity={chooseDensity}
+        onCollapse={isDesktop ? () => setCollapsed(true) : undefined}
+      />
 
       <CharacterEditor
         open={editorOpen}
@@ -191,14 +202,18 @@ const CharacterSheet: FC<Props> = ({
         onSave={saveFromEditor}
         onClose={() => setEditorOpen(false)}
       />
+      {portraitOpen && (
+        <PortraitPicker
+          current={cFiche.portrait}
+          onPick={pickPortrait}
+          onClose={() => setPortraitOpen(false)}
+        />
+      )}
 
       {tab === 'main' && (
         <StatsTab
-          edit={false}
           perso={localPerso}
-          onChange={handleChange}
-          setLocalPerso={setLocalPerso}
-          localPerso={localPerso}
+          compact={density === 'compact'}
           dice={dice}
           setDice={setDice}
           onLevelUp={handleLevelUp}
@@ -208,61 +223,8 @@ const CharacterSheet: FC<Props> = ({
           animKey={animKey}
         />
       )}
-      {tab === 'equip' && (
-        <EquipTab
-          edit={false}
-          localPerso={localPerso}
-          setLocalPerso={setLocalPerso}
-          onChange={handleChange}
-        />
-      )}
-
-      {tab === 'desc' && (
-        <DescriptionPanel
-          edit={false}
-          values={{
-            race: localPerso.race,
-            classe: localPerso.classe,
-            sexe: localPerso.sexe,
-            age: localPerso.age,
-            taille: localPerso.taille,
-            poids: localPerso.poids,
-            capacite_raciale: localPerso.capacite_raciale,
-            bourse: localPerso.bourse,
-            traits: localPerso.traits,
-            ideal: localPerso.ideal,
-            obligations: localPerso.obligations,
-            failles: localPerso.failles,
-            avantages: localPerso.avantages,
-            background: localPerso.background,
-            champs_perso: localPerso.champs_perso,
-          }}
-          onChange={handleChange}
-          champsPerso={localPerso.champs_perso}
-          onAddChamp={(champ) => {
-            setLocalPerso({
-              ...localPerso,
-              champs_perso: [...(localPerso.champs_perso || []), champ],
-            })
-          }}
-          onDelChamp={(id) => {
-            setLocalPerso({
-              ...localPerso,
-              champs_perso: (localPerso.champs_perso || []).filter(
-                (c: CustomField) => c.id !== id,
-              ),
-            })
-          }}
-          onUpdateChamp={(id, champ) => {
-            setLocalPerso({
-              ...localPerso,
-              champs_perso: (localPerso.champs_perso || []).map(
-                (c: CustomField) => (c.id === id ? champ : c),
-              ),
-            })
-          }}
-        />
-      )}
+      {tab === 'equip' && <EquipPanel perso={localPerso} compact={density === 'compact'} />}
+      {tab === 'desc' && <DescriptionPanel perso={localPerso} compact={density === 'compact'} />}
     </aside>
   )
 }
