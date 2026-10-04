@@ -182,6 +182,7 @@
 - [x] Créer une bibliothèque de départ (cartes, monstres, PNJ, images) utilisable par tous les MJ, en plus de leurs propres images — uniquement des images dont on a les droits
 - [ ] Ajouter des monstres et des PNJ à la bibliothèque (seulement 3 rencontres pour l'instant) : WebP + miniature dans `public/bibliotheque/`, puis une ligne dans `lib/library.ts`
 - [ ] Proposer les portraits de la bibliothèque comme image de fiche de personnage
+- [ ] Vérifier sur le site en ligne qu'on reste connecté d'un jour à l'autre (session de 30 jours dans `auth.ts`)
 
 ## Maquette V2 (ChatGPT) — après le rework
 - [x] Copier la maquette V2 hors du dossier caché de Codex — copiée dans `C:\DEV\CakeJDR-V2` le 2026-10-04
