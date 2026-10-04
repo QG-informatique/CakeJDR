@@ -37,27 +37,29 @@ PIONS ALLIÉS (chacun avec son portrait assorti, même nom dans portraits/)
 19-20. paladine-femme : armure argentée, épée, symbole sacré
 21-22. barde-homme : luth, cape colorée
 
-PIONS ENNEMIS
-23. ennemis/gobelin-archer
-24. ennemis/orc-guerrier
-25. ennemis/squelette-soldat
-26. ennemis/zombie
-27. ennemis/loup-sombre
-28. ennemis/bandit
-29. ennemis/cultiste
-30. ennemis/troll : boss, troll massif, peau verte moussue, énorme massue
-31. ennemis/liche : boss, liche couronnée en pied, robe en lambeaux, yeux de flamme bleue (même liche que sa rencontre)
-32. ennemis/chef-orc : boss, chef de guerre orc couvert de cicatrices, armure lourde, hache géante (même orc que sa rencontre)
+ENNEMIS EN DOUBLE : RENCONTRE + PION
+Ces ennemis existent à la fois en image de rencontre et en pion : le MJ montre d'abord la rencontre, et si ça tourne mal, le pion arrive sur le plateau. La rencontre et le pion doivent montrer exactement le même personnage (même visage, mêmes vêtements, mêmes couleurs).
+23-24. liche : boss, liche couronnée, robe en lambeaux, yeux de flamme bleue (rencontres/liche + ennemis/liche)
+25-26. chef-orc : boss, chef de guerre orc couvert de cicatrices, armure lourde, hache géante (rencontres/chef-orc + ennemis/chef-orc)
+27-28. dragon-rouge : boss, jeune dragon rouge, fumée aux naseaux (rencontres/dragon-rouge + ennemis/dragon-rouge)
+29-30. vampire : vampire aristocrate au sourire inquiétant (rencontres/vampire + ennemis/vampire)
+31-32. sorciere-marais : sorcière des marais, vieille et rusée (rencontres/sorciere-marais + ennemis/sorciere-marais)
+(Le Golem de Mie Brûlée, plus haut, est lui aussi en double.)
 
-RENCONTRES
-33. rencontres/dragon-rouge
-34. rencontres/liche
-35. rencontres/chef-orc
-36. rencontres/vampire
-37. rencontres/sorciere-marais
-38. rencontres/marchand-ambulant
-39. rencontres/garde-ville
-40. rencontres/capitaine-port
+PIONS ENNEMIS SEULS
+33. ennemis/gobelin-archer
+34. ennemis/orc-guerrier
+35. ennemis/squelette-soldat
+36. ennemis/zombie
+37. ennemis/loup-sombre
+38. ennemis/bandit
+39. ennemis/cultiste
+40. ennemis/troll : boss, troll massif, peau verte moussue, énorme massue
+
+RENCONTRES SEULES (personnages non hostiles)
+41. rencontres/marchand-ambulant
+42. rencontres/garde-ville
+43. rencontres/capitaine-port
 
 Génère toutes les images à la suite, sans attendre ma validation entre chaque. Ensuite, rassemble-les dans un seul zip téléchargeable « cakejdr-pack-2.zip », avec les dossiers cartes/, pions/, portraits/, ennemis/, rencontres/, chaque image nommée comme dans la liste (en .png).
 ```
