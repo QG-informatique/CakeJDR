@@ -24,8 +24,8 @@ interface Props {
 
 const btnBase =
   'inline-flex items-center justify-center gap-2 px-2.5 py-1.5 rounded-lg ' +
-  'bg-blue-900/30 hover:bg-blue-800/60 active:bg-blue-900/70 border border-blue-200/10 ' +
-  'transition-all shadow-sm text-blue-100 font-semibold text-sm backdrop-blur-[2px] ' +
+  'bg-accent/10 hover:bg-accent/25 active:bg-accent/30 border border-accent/10 ' +
+  'transition-all shadow-sm text-accent-soft font-semibold text-sm backdrop-blur-[2px] ' +
   'disabled:opacity-40 disabled:cursor-not-allowed'
 
 const CharacterList: FC<Props> = ({
@@ -208,7 +208,7 @@ const CharacterList: FC<Props> = ({
                     </div>
                     <div className="flex items-center gap-1 justify-end mt-auto">
                       {cloud && (
-                        <Cloud size={14} className="text-blue-200/80" />
+                        <Cloud size={14} className="text-accent-soft/80" />
                       )}
                       {needsUpload && (
                         <button
@@ -276,7 +276,7 @@ const CharacterList: FC<Props> = ({
         </button>
         <button
           onClick={onImportClick}
-          className={btnBase + ' hover:bg-purple-700/80 text-purple-100'}
+          className={btnBase + ' hover:bg-accent-hover/80 text-accent-soft hover:text-on-accent'}
         >
           <Upload size={17} /> {t('importBtn')}
         </button>
@@ -293,7 +293,7 @@ const CharacterList: FC<Props> = ({
         </button>
         <button
           onClick={onOpenCloud}
-          className={btnBase + ' hover:bg-blue-600/80 text-blue-100'}
+          className={btnBase + ' hover:bg-accent/80 text-accent-soft hover:text-on-accent'}
           title="Cloud"
         >
           <Cloud size={17} /> Cloud

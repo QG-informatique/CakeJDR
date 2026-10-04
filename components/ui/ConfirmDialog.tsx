@@ -64,7 +64,7 @@ const ConfirmDialog: FC<Props> = ({
               className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all active:scale-95 border ${
                 danger
                   ? 'bg-red-600/80 border-red-500/40 text-ink hover:bg-red-500/90 shadow-[0_0_12px_rgba(239,68,68,0.3)]'
-                  : 'bg-indigo-600/80 border-indigo-500/40 text-ink hover:bg-indigo-500/90 shadow-[0_0_12px_rgba(99,102,241,0.3)]'
+                  : 'bg-accent/80 border-accent/40 text-on-accent hover:bg-accent-hover/90 shadow-[0_0_12px_color-mix(in_srgb,var(--c-accent)_30%,transparent)]'
               }`}
             >
               {confirmLabel ?? t('confirm')}

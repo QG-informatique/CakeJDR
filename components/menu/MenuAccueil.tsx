@@ -5,6 +5,7 @@ import { useT } from '@/lib/useT'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { useConfirm } from '@/lib/useConfirm'
 import LanguageSwitcher from '../ui/LanguageSwitcher'
+import ThemeSwitcher from '../ui/ThemeSwitcher'
 import AuthControls from '../auth/AuthControls'
 import { Crown, LogIn, LogOut } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -593,6 +594,7 @@ export default function MenuAccueil() {
           connecte. Un seul conteneur fixe : avant, chacun etait fixe de son
           cote et le bouton de langue recouvrait l'avatar. */}
       <div className="fixed right-3 top-3 z-50 flex items-center gap-2">
+        <ThemeSwitcher />
         <LanguageSwitcher />
         {/* Deconnecte, le panneau de connexion porte deja ces actions. */}
         {user && <AuthControls pseudo={user.pseudo} color={user.color} />}
@@ -626,7 +628,7 @@ export default function MenuAccueil() {
                   type="button"
                   aria-label="Enter room"
                   onClick={handlePlay}
-                  className={`relative inline-flex items-center justify-center gap-2 rounded-lg border-2 px-4 shadow-md transition focus:outline-none focus:ring-2 focus:ring-pink-200/40 focus:ring-offset-2 focus:ring-offset-black ${selectedRoom ? 'animate-pulse' : ''}`}
+                  className={`relative inline-flex items-center justify-center gap-2 rounded-lg border-2 px-4 shadow-md transition focus:outline-none focus:ring-2 focus:ring-gm-soft/40 focus:ring-offset-2 focus:ring-offset-black ${selectedRoom ? 'animate-pulse' : ''}`}
                   style={{
                     height: DICE_SIZE,
                     minWidth: selectedRoom ? 180 : DICE_SIZE,
@@ -707,13 +709,13 @@ export default function MenuAccueil() {
                   }}
                 >
                   <span className="flex items-center gap-1">
-                    <Crown size={18} className="text-pink-400" />
+                    <Crown size={18} className="text-gm" />
                     <span
                       className={`
                         block w-2.5 h-2.5 rounded-full transition
                         ${
                           isGMHere
-                            ? 'bg-fuchsia-300 shadow-[0_0_6px_2px_rgba(217,70,239,0.5)]'
+                            ? 'bg-gm-soft shadow-[0_0_6px_2px_color-mix(in_srgb,var(--c-gm)_50%,transparent)]'
                             : 'bg-ink/40'
                         }
                       `}
@@ -726,9 +728,9 @@ export default function MenuAccueil() {
                   className="
                     inline-flex items-center justify-center px-3 h-10 rounded-md
                     bg-gradient-to-br from-slate-700/80 to-slate-800/80
-                    hover:from-pink-600/80 hover:to-pink-700/80
+                    hover:from-gm/70 hover:to-gm/60
                     font-semibold text-sm text-ink shadow-lg shadow-shade/40 transition
-                    focus:outline-none focus:ring-2 focus:ring-pink-400/30 focus:ring-offset-2 focus:ring-offset-black
+                    focus:outline-none focus:ring-2 focus:ring-gm/30 focus:ring-offset-2 focus:ring-offset-black
                   "
                   style={{
                     transition: 'background 0.2s, box-shadow 0.2s',

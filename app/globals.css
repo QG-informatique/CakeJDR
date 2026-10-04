@@ -17,7 +17,11 @@
   --color-field: var(--c-field);
   --color-field-ink: var(--c-field-ink);
   --color-accent: var(--c-accent);
+  --color-accent-hover: var(--c-accent-hover);
+  --color-accent-soft: var(--c-accent-soft);
   --color-on-accent: var(--c-on-accent);
+  --color-gm: var(--c-gm);
+  --color-gm-soft: var(--c-gm-soft);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -25,14 +29,20 @@
 body {
   background: var(--c-page);
   color: var(--c-ink);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--c-font);
+}
+
+/* Champs de la fiche : leur bordure suit le thème (sinon elle prend la
+   couleur du texte, noire en Classique, presque blanche en Ardoise). */
+[class~="bg-field"] {
+  border-color: var(--c-field-line);
 }
 
 /* ─── Scrollbars fines & discrètes ─────────────────────────────────────── */
 :root {
   --scrollbar-bg: transparent;
-  --scrollbar-thumb: rgba(255, 255, 255, 0.12);
-  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.28);
+  --scrollbar-thumb: color-mix(in srgb, var(--c-ink) 12%, transparent);
+  --scrollbar-thumb-hover: color-mix(in srgb, var(--c-ink) 28%, transparent);
 }
 
 *::-webkit-scrollbar {
@@ -57,13 +67,13 @@ body {
 
 /* ─── Sélection de texte ────────────────────────────────────────────────── */
 ::selection {
-  background: rgba(99, 102, 241, 0.35);
-  color: #fff;
+  background: color-mix(in srgb, var(--c-accent) 35%, transparent);
+  color: var(--c-ink);
 }
 
 /* ─── Focus visible global (accessible) ────────────────────────────────── */
 :focus-visible {
-  outline: 2px solid rgba(99, 102, 241, 0.7);
+  outline: 2px solid color-mix(in srgb, var(--c-accent) 70%, transparent);
   outline-offset: 2px;
 }
 
@@ -81,8 +91,8 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0); }
-  50%       { box-shadow: 0 0 16px 4px rgba(99,102,241,0.35); }
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50%       { box-shadow: 0 0 16px 4px color-mix(in srgb, var(--c-accent) 35%, transparent); }
 }
 @keyframes shimmer {
   from { background-position: -200% center; }
@@ -102,12 +112,12 @@ body {
 
 /* ─── Glass card utilitaire ─────────────────────────────────────────────── */
 .glass-card {
-  background: rgba(0,0,0,0.18);
-  border: 1px solid rgba(255,255,255,0.09);
+  background: color-mix(in srgb, var(--c-shade) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--c-ink) 9%, transparent);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border-radius: 1rem;
   box-shadow:
     0 4px 24px -8px rgba(0,0,0,0.4),
-    0 0 0 1px rgba(255,255,255,0.04);
+    0 0 0 1px color-mix(in srgb, var(--c-ink) 4%, transparent);
 }

@@ -37,7 +37,7 @@ const CompetencesPanel: FC<Props> = ({ competences = [], edit, onAdd, onDelete }
             onAdd={comp => { setShowCompModal(false); onAdd(comp); }}
           />
           <button
-            className="bg-blue-600 hover:bg-blue-700 text-white text-sm rounded px-2 py-1"
+            className="bg-accent hover:bg-accent-hover text-on-accent text-sm rounded px-2 py-1"
             onClick={() => setShowCompModal(true)}
           >
             {t('addSkill')}

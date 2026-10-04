@@ -104,7 +104,7 @@ const CharacterModal: FC<Props> = ({
               </div>
               {/* Skills (half height) */}
               <div className="flex-1 flex flex-col min-h-0 p-4 pt-0">
-                <h3 className="font-semibold text-lg mb-2 text-fuchsia-200">
+                <h3 className="font-semibold text-lg mb-2 text-accent-soft">
                   {t('skills')}
                 </h3>
                 <CompetencesPanel
@@ -128,7 +128,7 @@ const CharacterModal: FC<Props> = ({
               className="flex-1 min-w-[300px] bg-ink/5 rounded-xl p-4 flex flex-col"
               style={{ minWidth: 350, minHeight: 0, height: "100%", overflowY: "auto" }}
             >
-              <h3 className="font-semibold text-lg mb-2 text-blue-200">
+              <h3 className="font-semibold text-lg mb-2 text-accent-soft">
                 {t('description')}
               </h3>
               <DescriptionPanel
@@ -183,10 +183,10 @@ const CharacterModal: FC<Props> = ({
               className="
                 inline-flex items-center justify-center
                 px-7 py-2.5 rounded-lg font-semibold
-                bg-blue-900/80 hover:bg-blue-700/80
-                text-blue-100 hover:text-ink
+                bg-accent/20 hover:bg-accent/40
+                text-accent-soft hover:text-ink
                 shadow-lg transition
-                border border-blue-200/15
+                border border-accent/15
                 backdrop-blur-[2px]
               "
               style={{

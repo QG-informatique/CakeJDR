@@ -76,7 +76,7 @@ const CharacterSheetHeader: FC<Props> = ({
             className={`
               flex-1 px-2 py-1 rounded-md text-xs font-semibold transition-all duration-150
               ${tab === tItem.key
-                ? 'bg-indigo-600/80 text-ink shadow-sm shadow-indigo-900/40'
+                ? 'bg-accent/80 text-on-accent shadow-sm shadow-shade/40'
                 : 'text-ink/50 hover:text-ink/80 hover:bg-ink/6'}
             `}
             onClick={() => setTab(tItem.key)}

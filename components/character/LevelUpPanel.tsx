@@ -212,7 +212,7 @@ const LevelUpPanel: FC<Props> = ({
             border border-ink/10 shadow-2xl transition
             hover:bg-surface hover:border-ink/20
             disabled:opacity-60 backdrop-blur-md
-            focus:ring-2 focus:ring-blue-400/30
+            focus:ring-2 focus:ring-accent/30
           "
           style={{
             width: BUTTON_WIDTH,

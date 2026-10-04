@@ -577,9 +577,9 @@ export default function HeroDie({ dockId }: { dockId: string }) {
                 position: 'absolute',
                 inset: 0,
                 background: 'linear-gradient(145deg,#181818,#0f0f0f)',
-                border: `${BORDER}px solid #D6336C`,
+                border: `${BORDER}px solid var(--c-brand)`,
                 borderRadius: 14,
-                boxShadow: '0 4px 10px rgba(0,0,0,0.6), inset 0 0 12px rgba(214,51,108,0.15)',
+                boxShadow: '0 4px 10px rgba(0,0,0,0.6), inset 0 0 12px color-mix(in srgb, var(--c-brand) 15%, transparent)',
                 transform: `rotateX(${f.rx}deg) rotateY(${f.ry}deg) translateZ(${HALF}px)`,
                 backfaceVisibility: 'hidden',
               }}

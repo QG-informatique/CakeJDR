@@ -114,7 +114,7 @@ export const AddCompetenceModal: React.FC<AddCompetenceModalProps> = ({
                         {t('cancel')}
                     </button>
                     <button
-                        className="bg-blue-600 hover:bg-blue-700 text-white rounded px-3 py-1"
+                        className="bg-accent hover:bg-accent-hover text-on-accent rounded px-3 py-1"
                         onClick={handleAdd}
                         disabled={!nom || !type || !effets}
                     >

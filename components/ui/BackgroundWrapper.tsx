@@ -19,6 +19,7 @@ const Background10 = dynamic(() => import('./Background10'), { ssr: false })
 import { useBackground, BackgroundType } from '../context/BackgroundContext'
 
 function renderBackground(bg: BackgroundType) {
+  if (bg === 'plain') return <div className="absolute inset-0" style={{ background: 'var(--c-backdrop)' }} />
   if (bg === 'cake') return <CakeBackground />
   if (bg === 'banana') return <BananaBackground />
   if (bg === 'unicorn') return <UnicornBackground />

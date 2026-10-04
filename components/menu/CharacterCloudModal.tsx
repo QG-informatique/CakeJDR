@@ -127,7 +127,7 @@ export default function CharacterCloudModal({
         >
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-lg font-semibold inline-flex items-center gap-2">
-              <Cloud size={18} className="text-blue-300" /> Cloud
+              <Cloud size={18} className="text-accent-soft" /> Cloud
               <span className="text-xs font-normal text-ink/50">{t('cloudAccountHint')}</span>
             </h3>
             <div className="flex items-center gap-2">
@@ -169,7 +169,7 @@ export default function CharacterCloudModal({
                 ))}
               </select>
               <button
-                className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+                className="px-3 py-1 rounded bg-accent hover:bg-accent-hover text-on-accent disabled:opacity-50"
                 disabled={!uploadId || !!busyAction}
                 onClick={handleUpload}
               >

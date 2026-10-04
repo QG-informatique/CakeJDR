@@ -59,7 +59,7 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
       <div onClick={(e) => e.stopPropagation()} className="bg-shade/80 text-ink rounded-2xl border border-ink/10 shadow-2xl backdrop-blur-md p-5 w-80">
         <h2 className="text-lg font-semibold mb-2">{t('createRoom')}</h2>
         <input
-          className="w-full mb-2 px-2 py-1 rounded bg-surface text-ink placeholder-ink border border-ink/20 focus:outline-none focus:ring-2 focus:ring-pink-400/30"
+          className="w-full mb-2 px-2 py-1 rounded bg-surface text-ink placeholder-ink border border-ink/20 focus:outline-none focus:ring-2 focus:ring-gm/30"
           placeholder={t('name')}
           value={name}
           onChange={(e) => setName(e.target.value)}

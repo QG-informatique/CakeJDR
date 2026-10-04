@@ -108,7 +108,7 @@ const DiceRoller: FC<Props> = ({
               className={`
                 px-2 py-1 rounded-lg text-xs font-bold border transition-all duration-150 active:scale-90
                 ${diceType === val
-                  ? 'bg-indigo-600/70 border-indigo-400/60 text-ink shadow-[0_0_8px_2px_rgba(99,102,241,0.3)]'
+                  ? 'bg-accent/70 border-accent/60 text-on-accent shadow-[0_0_8px_2px_color-mix(in_srgb,var(--c-accent)_30%,transparent)]'
                   : 'bg-ink/5 border-ink/10 text-ink/60 hover:bg-ink/10 hover:text-ink/90 hover:border-ink/20'}
                 ${disabled ? 'opacity-40 cursor-not-allowed' : ''}
               `}
@@ -128,13 +128,13 @@ const DiceRoller: FC<Props> = ({
             font-bold text-base tracking-wide
             text-ink
             border border-ink/15
-            bg-gradient-to-br from-indigo-600/70 to-violet-700/60
-            hover:from-indigo-500/80 hover:to-violet-600/70
+            bg-gradient-to-br from-accent/70 to-accent-hover/60
+            hover:from-accent/80 hover:to-accent-hover/70
             hover:border-ink/25
             active:scale-95
             transition-all duration-150
-            shadow-[0_2px_16px_-4px_rgba(99,102,241,0.5)]
-            hover:shadow-[0_4px_24px_-4px_rgba(99,102,241,0.7)]
+            shadow-[0_2px_16px_-4px_color-mix(in_srgb,var(--c-accent)_50%,transparent)]
+            hover:shadow-[0_4px_24px_-4px_color-mix(in_srgb,var(--c-accent)_70%,transparent)]
             ${(disabled || cooldown) ? 'opacity-50 cursor-not-allowed !shadow-none' : ''}
           `}
           disabled={disabled || cooldown}

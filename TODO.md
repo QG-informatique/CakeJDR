@@ -166,11 +166,13 @@
 - [ ] Ne pas perdre la modification du MJ quand le joueur est lui-même en train d'éditer sa fiche
 
 ## Refonte et thèmes — phase 4 puis 6
-- [ ] Concevoir la refonte graphique comme thème n°1 : couleurs, images et disposition des panneaux réunies dans un thème, pour en brancher d'autres ensuite
+- [x] Concevoir la refonte graphique comme thème n°1 : couleurs, images et disposition des panneaux réunies dans un thème, pour en brancher d'autres ensuite
 - [x] Poser le socle des thèmes : couleurs nommées (`app/themes.css`), liste et disposition (`lib/themes.ts`), choix gardé par joueur
-- [ ] Choisir la direction du thème n°1 (Taverne, Nuit arcane ou Ardoise) puis remplir ses couleurs
-- [ ] Brancher les fonds animés et les couleurs d'accent (bleu, violet, rose, émeraude en dur) sur le thème
-- [ ] Ajouter un sélecteur de thème dans l'interface (choix par joueur, gardé dans le navigateur)
+- [x] Choisir la direction du thème n°1 (Ardoise retenu) puis remplir ses couleurs
+- [x] Brancher les fonds animés et les couleurs d'accent (bleu, violet, rose en dur) sur le thème
+- [x] Ajouter un sélecteur de thème dans l'interface (choix par joueur, gardé dans le navigateur)
+- [ ] Ajouter le bouton de thème dans la table elle-même (aujourd'hui seulement sur l'accueil)
+- [ ] Faire relire Ardoise par Quentin sur un vrai écran et un téléphone, ajuster les couleurs si besoin
 - [ ] Faire de la maquette V2 un second thème (phase 6)
 - [ ] Faire du pack « Papier & Sauge » (thème clair, accent vert sauge) un thème : maquettes et couleurs dans `C:\DEV\CakeJDR-themes\CakeJDR-theme-papier-sauge`
 
