@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-05 — Pack d'images n° 2 branché, set « Cake » prêt pour la démo
+- 131 images du pack converties en webp avec miniatures dans `public/bibliotheque/` (26 Mo) : 30 cartes, 16 pions alliés, 40 ennemis, 8 portraits, 37 rencontres, toutes déclarées dans `lib/library.ts`.
+- Bonus du pack gardés : la carte du royaume d'Aurélion, avec des noms de lieux, et le portrait de Cake à la brioche.
+- Nouveau `scripts/install-demo-cake.mjs` : met en place la pâtisserie en fond, Cake, le Golem, deux levains, la rencontre de Mila, et le portrait sur la fiche. Le portrait est aussi ajouté dans `scripts/seed-demo-character.mjs`. Vérifié dans la salle de test, en 1280 et en 1920.
+- Pas encore appliqué à la vraie salle de démo : elle est partagée avec le site en ligne, qui n'a pas encore ces images. Les anciennes images de la démo sont retirées du plateau sans être effacées chez Cloudinary.
+Reste ouvert : lancer le script sur la démo juste après la mise en ligne, puis capturer l'état de référence.
+
 ## 2026-10-04 — Démo solo avec MJ automatique ajoutée au plan
 - `PLAN-CAMPAGNES.md` : nouvelle étape « Démo solo ». Un visiteur seul joue la petite aventure de Cake, menée par un MJ automatique (récit, jets demandés, réponses en boutons). Un bouton « Voir côté MJ » lui montre l'envers du décor.
 - MJ automatique scripté plutôt qu'une IA : fiable, gratuit, toujours propre pour une vitrine.

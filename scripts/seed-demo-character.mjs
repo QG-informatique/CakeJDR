@@ -18,6 +18,7 @@ const character = {
   id: ID,
   owner: OWNER,
   nom: 'Cake',
+  portrait: '/bibliotheque/portraits/cake-patissier.webp',
   race: 'Halfelin pâtissier',
   classe: 'Mage de la Fournaise',
   sexe: 'Non précisé',
