@@ -1,5 +1,10 @@
 # Journal
 
+## 2026-10-04 — Plan des campagnes, de la bibliothèque du MJ et des systèmes de jeu
+- `PLAN-CAMPAGNES.md` : phase G (bibliothèque réservée au MJ, filtres, paires rencontre-pion), H (campagne toute prête avec carnet du MJ, choix qui mènent aux scènes suivantes, journal des joueurs), I (systèmes de jeu en presets, « Narratif CakeJDR » en base), J (créateurs de système et de campagne).
+- Ordre proposé : pack n° 2 et démo, phase G, mise en ligne 1.0, puis H, I, J. La phase G passe avant le public pour que les joueurs ne voient pas toute la bibliothèque.
+- Les campagnes toutes prêtes vivent d'abord en fichiers dans le projet, pour ne pas toucher à la base. Les systèmes par table et les créations des MJ demanderont des changements en base, avec accord.
+
 ## 2026-10-04 — Prompt du pack n° 2 refait pour une campagne complète
 - Revirement : Quentin veut un pack complet plutôt que court, pour ne pas en refaire un autre de longtemps. `PROMPT-PACK-IMAGES.md` passe à 97 entrées, environ 129 images.
 - Un monde cohérent : royaume bleu et or, culte, vampire, dragon ; trois actes et un final ; huit factions ennemies avec leurs couleurs, chacune avec troupes, élite et boss.

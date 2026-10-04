@@ -172,6 +172,23 @@
 - [ ] Essayer les réglages du panneau du MJ avec un vrai compte joueur : fiche verrouillée par le MJ, dessin retiré, dessin autorisé joueur par joueur
 - [ ] Protéger côté serveur les réglages du MJ (fiches, dessin) et la suppression d'images de la bibliothèque, aujourd'hui bloqués dans l'interface seulement, si une table publique en a besoin
 
+## Campagnes, bibliothèque du MJ, systèmes de jeu — détail dans `PLAN-CAMPAGNES.md`
+- [ ] Phase G : réserver la bibliothèque au MJ (le joueur ne pose que le pion de son personnage, choisi dans sa fiche)
+- [ ] Phase G : ajouter recherche et filtres à la bibliothèque (type, faction, acte, troupe/élite/boss/allié/PNJ)
+- [ ] Phase G : ajouter « Poser le pion » sur les rencontres qui ont un pion assorti, et « Montrer » une rencontre en grand à tous les joueurs
+- [ ] Phase G : protéger la bibliothèque côté serveur (permissions Liveblocks selon le rôle)
+- [ ] Phase H : définir le format d'une campagne (scènes, déroulé du MJ, part des joueurs, mise en place, boutons de choix vers la scène suivante)
+- [ ] Phase H : créer le carnet de campagne du MJ (scène en cours, « Préparer la scène », choix validés, chemin parcouru, saut de scène)
+- [ ] Phase H : créer le journal des joueurs (résumé et indices révélés par le MJ)
+- [ ] Phase H : écrire la campagne du dragon du pack n° 2, avec ses pistes, et la faire relire par Quentin
+- [ ] Phase H : proposer « Partie libre » ou une campagne toute prête à la création d'une table
+- [ ] Phase I : décrire la fiche de personnage comme un système (caractéristiques, ressources, compétences, dés, niveaux) et en faire le preset « Narratif CakeJDR »
+- [ ] Phase I : choisir avec Quentin deux ou trois autres presets, en vérifiant la licence de toute règle reprise
+- [ ] Phase I : choisir le système à la création d'une table (colonne en base, avec accord)
+- [ ] Phase J : créer l'éditeur de système (partir d'un preset, aperçu de la fiche en direct)
+- [ ] Phase J : créer l'éditeur de campagne (scènes reliées, images, boutons de choix), rangé dans le compte du MJ (tables en base, avec accord)
+- [ ] Phase J : exporter et importer une campagne en fichier, puis permettre le partage entre MJ
+
 ## Ordre validé (2026-10-04) : débug → refonte en thème → bibliothèque → public → autres thèmes
 
 ## Débug — fin de phase 3
