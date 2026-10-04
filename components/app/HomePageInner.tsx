@@ -12,7 +12,7 @@ import DemoBanner from '@/components/rooms/DemoBanner'
 import MusicPlayer from '@/components/music/MusicPlayer'
 import LiveAvatarStack from '@/components/chat/LiveAvatarStack'
 import SignedOutPanel from '@/components/auth/SignedOutPanel'
-import GMCharacterSelector from '@/components/misc/GMCharacterSelector'
+import GMPanel from '@/components/gm/GMPanel'
 import useProfile from './hooks/useProfile'
 import ErrorBoundary from '@/components/misc/ErrorBoundary'
 import MobileTabBar, { type MobileTab } from '@/components/app/MobileTabBar'
@@ -21,6 +21,8 @@ import { roomAuthHeaders } from '@/lib/roomsApi'
 import { saveAccountCharacter } from '@/lib/charactersApi'
 import { useTheme } from '@/components/context/ThemeContext'
 import { useT } from '@/lib/useT'
+import { canEditSheet, useRoomSettings } from '@/lib/roomSettings'
+import { Crown } from 'lucide-react'
 import {
   type Character,
   buildCharacterKey,
@@ -42,6 +44,9 @@ export default function HomePageInner() {
   const myConnectionId = self?.connectionId ?? null
   // Rôle dans cette table, fixé par le serveur à l'ouverture de la session.
   const isGM = self?.info?.role === 'gm'
+  const { settings } = useRoomSettings()
+  const sheetEditable = canEditSheet(settings, isGM)
+  const [gmPanelOpen, setGmPanelOpen] = useState(false)
   const [perso, setPerso] = useState<Character>(() =>
     normalizeCharacter(defaultPerso),
   )
@@ -357,6 +362,8 @@ export default function HomePageInner() {
       broadcast({ type: 'gm-select', character: forPlayer, targetConnectionId: viewedConnectionId })
       return
     }
+    // Le MJ s'est réservé les fiches : le joueur ne modifie plus la sienne.
+    if (!sheetEditable) return
     const updatedPerso = normalizeCharacter(
       {
         ...incoming,
@@ -504,7 +511,25 @@ export default function HomePageInner() {
         {/* `lg:contents` efface l'enveloppe sur grand écran : la mise en page
             côte à côte reste celle d'avant les onglets. */}
         <div className={`${mobilePanel('sheet')} flex-1 min-h-0 flex-col items-center overflow-y-auto p-2 lg:contents`}>
-          <CharacterSheet perso={perso} onUpdate={handleUpdatePerso} />
+          <CharacterSheet
+            perso={perso}
+            onUpdate={handleUpdatePerso}
+            readOnly={!sheetEditable}
+            notice={viewedConnectionId !== null ? (
+              <div className="-mx-3 mb-1 flex items-center gap-2 border-b border-gm/30 bg-gm/10 px-3 py-2 text-xs">
+                <Crown size={13} className="shrink-0 text-gm" aria-hidden />
+                <span className="min-w-0 flex-1">{t('gmEditingSheet').replace('{n}', perso.nom || '?')}</span>
+                <button onClick={handleGMBackToOwn} className="ui-btn ui-btn-ghost shrink-0 !min-h-7 !px-2 text-xs">
+                  ← {t('myCharacter')}
+                </button>
+              </div>
+            ) : !sheetEditable ? (
+              <div className="-mx-3 mb-1 flex items-center gap-2 border-b border-[var(--c-panel-line)] px-3 py-2 text-xs text-ink/65">
+                <Crown size={13} className="shrink-0 text-gm" aria-hidden />
+                {t('sheetLockedByGm')}
+              </div>
+            ) : null}
+          />
         </div>
 
         <main className={`${mobilePanel('table')} lg:flex flex-1 flex-col min-h-0 min-w-0 gap-2 max-lg:p-2 lg:gap-3`}>
@@ -526,7 +551,31 @@ export default function HomePageInner() {
                 </div>
               )}
             >
-              <InteractiveCanvas />
+              <InteractiveCanvas
+                toolbarExtra={isGM ? (
+                  <button
+                    onClick={() => setGmPanelOpen((o) => !o)}
+                    aria-expanded={gmPanelOpen}
+                    className={`ui-btn shadow-lg !min-h-9 ${gmPanelOpen ? 'ui-btn-primary' : '!bg-[var(--c-panel-head)]'}`}
+                  >
+                    <Crown size={14} className={gmPanelOpen ? '' : 'text-gm'} />
+                    {t('gmLabel')}
+                  </button>
+                ) : null}
+                overlay={isGM && gmPanelOpen ? (
+                  <div
+                    className="pointer-events-none absolute top-14 left-3 right-3 bottom-3 z-40 flex items-start justify-end"
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    <GMPanel
+                      viewingConnectionId={viewedConnectionId}
+                      onOpenSheet={handleGMSelect}
+                      onBackToOwn={handleGMBackToOwn}
+                      onClose={() => setGmPanelOpen(false)}
+                    />
+                  </div>
+                ) : null}
+              />
             </ErrorBoundary>
             {/* Bandeau de la salle de démo, en bas du plateau : il ne cache pas les outils. */}
             <DemoBanner />

@@ -10,6 +10,7 @@ import SideNotes from '@/components/misc/SideNotes'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { useT } from '@/lib/useT'
 import { Library, Pencil } from 'lucide-react'
+import { canDraw, useRoomSettings } from '@/lib/roomSettings'
 import LibraryPanel from './LibraryPanel'
 import {
   BOARD_LIBRARY,
@@ -75,7 +76,15 @@ const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min)
 const clamp01 = (v: number) => Math.min(Math.max(v, 0), 1)
 const roundRatio = (v: number) => Math.round(v * 1000) / 1000
 
-export default function InteractiveCanvas() {
+export default function InteractiveCanvas({
+  toolbarExtra,
+  overlay,
+}: {
+  /** Boutons ajoutés au bout de la barre d'outils (panneau du MJ). */
+  toolbarExtra?: React.ReactNode
+  /** Panneau posé sur le plateau, sous la barre d'outils. */
+  overlay?: React.ReactNode
+} = {}) {
   const t = useT()
   const isDev = process.env.NODE_ENV !== 'production'
   // Storage
@@ -103,6 +112,8 @@ export default function InteractiveCanvas() {
   )
   const self = useSelf()
   const isGM = self?.info?.role === 'gm'
+  const { settings } = useRoomSettings()
+  const drawAllowed = canDraw(settings, { id: self?.id, gm: isGM })
   const strokes = useMemo<StrokeSegment[]>(() => {
     if (!strokesList) return []
     const anyList = strokesList as unknown as { toArray?: () => unknown; get?: (i: number) => unknown; length?: number }
@@ -134,7 +145,9 @@ export default function InteractiveCanvas() {
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null)
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null)
   const canvasSizeRef = useRef<CanvasSize>({ width: 0, height: 0 })
-  const [drawMode, setDrawMode] = useState<ToolMode>('images')
+  const [chosenMode, setDrawMode] = useState<ToolMode>('images')
+  // Le MJ peut retirer le dessin : on repasse alors au déplacement des pions.
+  const drawMode: ToolMode = drawAllowed ? chosenMode : 'images'
   const [color, setColor] = useState('#ffffff')
   const [penSize, setPenSize] = useState(6)
   const [eraserSize, setEraserSize] = useState(24)
@@ -143,7 +156,8 @@ export default function InteractiveCanvas() {
   const [isDrawing, setIsDrawing] = useState(false)
   const lastPointRef = useRef<{ x: number; y: number } | null>(null)
   // Palette de dessin : l'ouvrir passe au crayon, la fermer rend la main aux pions.
-  const [toolsVisible, setToolsVisible] = useState(false)
+  const [toolsOpen, setToolsVisible] = useState(false)
+  const toolsVisible = toolsOpen && drawAllowed
   const toggleTools = () => {
     setDrawMode(toolsVisible ? 'images' : 'draw')
     setToolsVisible(!toolsVisible)
@@ -709,14 +723,14 @@ export default function InteractiveCanvas() {
       <div className="relative w-full h-full select-none">
         {/* Outils : le bouton, puis la barre quand elle est ouverte */}
         <div className="absolute top-3 left-3 right-3 z-30 flex items-start gap-2 pointer-events-none">
-          <button
+          {drawAllowed && <button
             onClick={toggleTools}
             aria-expanded={toolsVisible}
             className={`pointer-events-auto ui-btn shadow-lg !min-h-9 ${toolsVisible ? 'ui-btn-primary' : '!bg-[var(--c-panel-head)]'}`}
           >
             <Pencil size={14} />
             {t('draw')}
-          </button>
+          </button>}
           <button
             onClick={() => setLibraryOpen(!libraryOpen)}
             aria-expanded={libraryOpen}
@@ -730,7 +744,9 @@ export default function InteractiveCanvas() {
               <CanvasTools drawMode={drawMode} setDrawMode={setDrawMode} color={color} setColor={setColor} brushSize={brushSize} setPenSize={setPenSize} setEraserSize={setEraserSize} clearCanvas={() => setConfirmClear(true)} />
             </div>
           )}
+          {toolbarExtra && <div className="pointer-events-auto ml-auto shrink-0">{toolbarExtra}</div>}
         </div>
+        {overlay}
         {libraryOpen && (
           <div
             className="pointer-events-none absolute top-14 left-3 right-3 bottom-3 z-30 flex items-start"

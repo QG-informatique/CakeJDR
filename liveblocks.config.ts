@@ -1,5 +1,6 @@
 // Define Liveblocks types for your application
 // https://liveblocks.io/docs/api-reference/liveblocks-react#Typing-your-data
+import type { RoomSettings } from './lib/roomSettings'
 import type { LiveMap, LiveObject, LiveList } from '@liveblocks/client'
 import type { Character } from '@/types/character'
 
@@ -99,6 +100,8 @@ declare global {
       editor: LiveMap<string, string>
       events: LiveList<SessionEvent>
       rooms: LiveList<Room>
+      /** Réglages posés par le MJ (absents tant qu'il n'a rien changé). */
+      settings?: LiveObject<RoomSettings>
     }
 
     // Custom user info set when authenticating with a secret key

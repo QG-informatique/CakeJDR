@@ -19,6 +19,10 @@ import {
 type Props = {
   perso: Character // Fiche perso initiale
   onUpdate: (perso: Character) => void
+  /** Le MJ s'est réservé les fiches : on la lit sans la modifier. */
+  readOnly?: boolean
+  /** Bandeau au-dessus de la fiche (fiche d'un joueur ouverte par le MJ, fiche verrouillée). */
+  notice?: React.ReactNode
 }
 
 const DENSITY_KEY = 'sheetDensity'
@@ -33,7 +37,7 @@ const rollDice = (dice: string): number => {
   return Math.floor(Math.random() * sides) + 1
 }
 
-const CharacterSheet: FC<Props> = ({ perso, onUpdate }) => {
+const CharacterSheet: FC<Props> = ({ perso, onUpdate, readOnly = false, notice }) => {
   // La fiche se modifie dans l'écran d'édition (CharacterEditor) ; ici elle
   // ne fait que s'afficher.
   const [editorOpen, setEditorOpen] = useState(false)
@@ -184,6 +188,7 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate }) => {
       className="ui-panel relative select-none flex-shrink-0 text-[15px] w-full md:w-[400px] px-3 pb-4 overflow-y-auto"
       style={{ boxSizing: 'border-box', overflowX: 'hidden' }}
     >
+      {notice}
       <CharacterSheetHeader
         perso={localPerso}
         onEdit={() => setEditorOpen(true)}
@@ -194,15 +199,16 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate }) => {
         density={density}
         setDensity={chooseDensity}
         onCollapse={isDesktop ? () => setCollapsed(true) : undefined}
+        readOnly={readOnly}
       />
 
       <CharacterEditor
-        open={editorOpen}
+        open={editorOpen && !readOnly}
         character={cFiche}
         onSave={saveFromEditor}
         onClose={() => setEditorOpen(false)}
       />
-      {portraitOpen && (
+      {portraitOpen && !readOnly && (
         <PortraitPicker
           current={cFiche.portrait}
           onPick={pickPortrait}
@@ -221,6 +227,7 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate }) => {
           lastStat={lastStat}
           lastGain={lastGain}
           animKey={animKey}
+          readOnly={readOnly}
         />
       )}
       {tab === 'equip' && <EquipPanel perso={localPerso} compact={density === 'compact'} />}
