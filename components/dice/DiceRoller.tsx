@@ -110,7 +110,7 @@ const DiceRoller: FC<Props> = ({
         )}
       </button>
 
-      {afterRoll && <div className="flex items-center">{afterRoll}</div>}
+      {afterRoll && <div className="flex min-w-0 items-center">{afterRoll}</div>}
 
       <div className="ml-auto flex items-center gap-2">
         {children}
