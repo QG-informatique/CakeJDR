@@ -53,7 +53,7 @@ export function cloudinaryPublicId(url: string, cloudName: string): string | nul
 }
 
 /** Adresses des images d'un contenu de table (`images` est rangé par identifiant). */
-function imageUrls(images: unknown): string[] {
+export function imageUrls(images: unknown): string[] {
   if (!images || typeof images !== 'object') return []
   return Object.values(images as Record<string, unknown>)
     .map((img) => (img && typeof img === 'object' ? (img as { url?: unknown }).url : null))
@@ -95,6 +95,19 @@ export async function collectRoomImages(
   if (ids.size === 0) return []
   const protectedIds = await demoPublicIds(cloudName)
   return [...ids].filter((id) => !protectedIds.has(id))
+}
+
+/**
+ * Identifiant Cloudinary d'une image qu'on vient de retirer d'une table, ou
+ * `null` si elle n'est pas à nous, si Cloudinary n'est pas configuré, ou si
+ * une salle de démonstration s'en sert.
+ */
+export async function removableImageId(url: string): Promise<string | null> {
+  const { cloudName, apiKey, apiSecret } = resolveConfig()
+  if (!cloudName || !apiKey || !apiSecret) return null
+  const id = cloudinaryPublicId(url, cloudName)
+  if (!id) return null
+  return (await demoPublicIds(cloudName)).has(id) ? null : id
 }
 
 /** Supprime ces images chez Cloudinary, par paquets de 100 (limite de l'API). */
