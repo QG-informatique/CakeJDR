@@ -56,14 +56,57 @@ interface Summary extends LsonObject {
 }
 
 // ===================== Plugins Lexical =====================
+
+/** Marque les mises à jour qui viennent du stockage, pas de la frappe. */
+const REMOTE_TAG = 'remote-sync'
+/** Délai sans frappe avant d'appliquer le texte d'un autre joueur. */
+const REMOTE_IDLE_MS = 2000
+
+/**
+ * Texte de l'éditeur, une ligne par paragraphe. `getTextContent()` sépare les
+ * paragraphes par une ligne vide, qui redevenait un paragraphe au rechargement :
+ * chaque ouverture de la page doublait les sauts de ligne.
+ */
+function $readText(): string {
+  return $getRoot()
+    .getChildren()
+    .map((node) => node.getTextContent())
+    .join('\n')
+}
+
+function $writeText(text: string) {
+  const root = $getRoot()
+  root.clear()
+  if (text) {
+    text.split('\n').forEach((line) => {
+      const p = $createParagraphNode()
+      p.append($createTextNode(line))
+      root.append(p)
+    })
+  } else {
+    root.append($createParagraphNode())
+  }
+}
+
+/** Vrai si la mise à jour change le texte et vient de la frappe locale. */
+const isLocalTextChange = ({
+  dirtyElements,
+  dirtyLeaves,
+  tags,
+}: {
+  dirtyElements: Map<string, boolean>
+  dirtyLeaves: Set<string>
+  tags: Set<string>
+}) => (dirtyElements.size > 0 || dirtyLeaves.size > 0) && !tags.has(REMOTE_TAG)
+
 function AutoSavePlugin({ onChange }: { onChange: (text: string) => void }) {
   const [editor] = useLexicalComposerContext()
   useEffect(() => {
-    return editor.registerUpdateListener(({ editorState }) => {
-      editorState.read(() => {
-        const text = $getRoot().getTextContent()
-        onChange(text)
-      })
+    return editor.registerUpdateListener((update) => {
+      // Un clic ou un déplacement du curseur ne change pas le texte : les
+      // enregistrer écrasait ce qu'un autre joueur venait d'écrire.
+      if (!isLocalTextChange(update)) return
+      update.editorState.read(() => onChange($readText()))
     })
   }, [editor, onChange])
   return null
@@ -73,21 +116,50 @@ function AutoSavePlugin({ onChange }: { onChange: (text: string) => void }) {
 function LocalInitContentPlugin({ text }: { text: string }) {
   const [editor] = useLexicalComposerContext()
   useEffect(() => {
-    editor.update(() => {
-      const root = $getRoot()
-      root.clear()
-      if (text) {
-        text.split('\n').forEach((line) => {
-          const p = $createParagraphNode()
-          p.append($createTextNode(line))
-          root.append(p)
-        })
-      } else {
-        root.append($createParagraphNode())
-      }
-    })
+    editor.update(() => $writeText(text), { tag: REMOTE_TAG })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // Intentionnellement sans dépendances : ne s'exécute qu'à la création de l'instance (editorKey change)
+  return null
+}
+
+/**
+ * Affiche le texte écrit par les autres joueurs. Le texte n'était chargé qu'à
+ * l'ouverture : on ne voyait pas ce que les autres écrivaient, et la frappe
+ * suivante l'effaçait. Pendant qu'on écrit soi-même, on attend une pause.
+ * Deux joueurs qui écrivent en même temps : le dernier l'emporte.
+ */
+function RemoteSyncPlugin({ text }: { text: string }) {
+  const [editor] = useLexicalComposerContext()
+  const lastLocalEdit = useRef(0)
+
+  useEffect(() => {
+    return editor.registerUpdateListener((update) => {
+      if (isLocalTextChange(update)) lastLocalEdit.current = Date.now()
+    })
+  }, [editor])
+
+  useEffect(() => {
+    const apply = () => {
+      if (editor.getEditorState().read($readText) === text) return
+      const root = editor.getRootElement()
+      const focused = root !== null && root.contains(document.activeElement)
+      editor.update(
+        () => {
+          $writeText(text)
+          if (focused) $getRoot().selectEnd()
+        },
+        { tag: REMOTE_TAG },
+      )
+    }
+    const wait = REMOTE_IDLE_MS - (Date.now() - lastLocalEdit.current)
+    if (wait <= 0) {
+      apply()
+      return
+    }
+    const id = window.setTimeout(apply, wait)
+    return () => window.clearTimeout(id)
+  }, [editor, text])
+
   return null
 }
 
@@ -305,7 +377,8 @@ function LocalSummary({
     a.href = url
     a.download = 'summary.txt'
     a.click()
-    URL.revokeObjectURL(url)
+    // Révoquer tout de suite peut annuler le téléchargement sur certains navigateurs.
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
 
   const initialText = current ? state.editor[current.id] || '' : ''
@@ -422,10 +495,10 @@ function LiveSummary({
     currentId?: string
   } | null
 
-  const editorPlain = useStorage((root) => root.editor) as Record<
-    string,
-    string
-  > | null
+  // `editor` est une LiveMap : useStorage la rend en Map, pas en objet. La lire
+  // comme un objet ne trouvait jamais la page, la recréait en boucle, et le
+  // résumé basculait en mode local à chaque ouverture : rien n'était partagé.
+  const editorMap = useStorage((root) => root.editor) as ReadonlyMap<string, string> | null
 
   const pages = summaryPlain?.acts ?? undefined
   const currentId = summaryPlain?.currentId ?? undefined
@@ -576,10 +649,10 @@ function LiveSummary({
   // S'assurer qu'on a un slot texte pour la page courante
   useEffect(() => {
     if (!current || status !== 'connected') return
-    if (!editorPlain || !(current.id in editorPlain)) {
+    if (editorMap && !editorMap.has(current.id)) {
       updateEditor({ id: current.id, content: '' })
     }
-  }, [current, editorPlain, updateEditor, status])
+  }, [current, editorMap, updateEditor, status])
 
   // Actions UI
   const createPage = (title: string) => {
@@ -652,7 +725,7 @@ function LiveSummary({
   const handleExport = () => {
     if (!pages) return
     const txt = pages
-      .map((p) => `=== Page: ${p.title} ===\n${editorPlain?.[p.id] || ''}\n`)
+      .map((p) => `=== Page: ${p.title} ===\n${editorMap?.get(p.id) || ''}\n`)
       .join('\n')
     const blob = new Blob([txt], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
@@ -660,14 +733,15 @@ function LiveSummary({
     a.href = url
     a.download = 'summary.txt'
     a.click()
-    URL.revokeObjectURL(url)
+    // Révoquer tout de suite peut annuler le téléchargement sur certains navigateurs.
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
 
-  // On attend que editorPlain soit chargé ET que le slot de la page existe
+  // On attend que editorMap soit chargé ET que le slot de la page existe
   // avant de monter l'éditeur. Ça garantit que LocalInitContentPlugin reçoit
   // le bon texte initial dès le premier rendu (pas de loop isReady/autosave).
-  const editorReady = Boolean(current && editorPlain && current.id in editorPlain)
-  const initialText = editorReady ? (editorPlain![current!.id] || '') : ''
+  const editorReady = Boolean(current && editorMap?.has(current.id))
+  const initialText = (current && editorMap?.get(current.id)) || ''
 
   // Callback stable pour AutoSavePlugin (évite de re-register le listener à chaque rendu)
   const handleAutoSave = useCallback((txt: string) => {
@@ -716,7 +790,7 @@ function LiveSummary({
         fileInputRef={fileInputRef}
       />
 
-      {/* Éditeur — monté seulement quand le slot est prêt dans editorPlain */}
+      {/* Éditeur — monté seulement quand le slot est prêt dans editorMap */}
       {current && editorReady ? (
         <LexicalComposer key={editorKey} initialConfig={editorConfig}>
           {/* HistoryPlugin pour undo/redo local */}
@@ -744,6 +818,7 @@ function LiveSummary({
           {/* LocalInitContentPlugin : s'exécute UNE FOIS au montage (deps=[]),
               pas de dépendance à useIsEditorReady → pas de boucle */}
           <LocalInitContentPlugin text={initialText} />
+          <RemoteSyncPlugin text={initialText} />
           <AutoSavePlugin onChange={handleAutoSave} />
         </LexicalComposer>
       ) : current ? (

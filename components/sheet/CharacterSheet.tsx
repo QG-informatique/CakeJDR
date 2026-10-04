@@ -10,12 +10,10 @@ import { useT } from '@/lib/useT'
 import { useIsDesktop } from '@/lib/useIsDesktop'
 import {
   type Character,
-  type CharacterSelection,
   type CharacterChangeHandler,
   type CustomField,
   defaultCharacter,
   normalizeCharacter,
-  parseSelectionKey,
 } from '@/types/character'
 
 type Props = {
@@ -24,21 +22,10 @@ type Props = {
   chatBoxRef?: React.RefObject<HTMLDivElement | null>
   creation?: boolean
   children?: React.ReactNode
-  allCharacters?: Character[] // facultatif, si tu veux passer la liste complète
   logoOnly?: boolean
 }
 
 export const defaultPerso: Character = { ...defaultCharacter }
-
-const SELECTED_CHARACTER_KEY = 'selectedCharacterId'
-
-const loadSelectedCharacter = (): CharacterSelection => {
-  if (typeof window === 'undefined') {
-    return { owner: null, id: null }
-  }
-  const raw = localStorage.getItem(SELECTED_CHARACTER_KEY)
-  return parseSelectionKey(raw)
-}
 
 const CharacterSheet: FC<Props> = ({
   perso,
@@ -46,7 +33,6 @@ const CharacterSheet: FC<Props> = ({
   chatBoxRef,
   creation = false,
   children,
-  allCharacters = [],
   logoOnly = false,
 }) => {
   // NE PAS relier edit à creation sauf à l'init
@@ -74,26 +60,9 @@ const CharacterSheet: FC<Props> = ({
     }
   }, [collapsed])
 
-  // On met à jour la fiche sélectionnée au chargement/changement
-  useEffect(() => {
-    const { owner, id } = loadSelectedCharacter()
-    if (id && allCharacters.length > 0) {
-      const found = allCharacters.find(
-        (c) =>
-          c.id?.toString() === id && (!owner || c.owner === owner),
-      )
-      if (found) {
-        setLocalPerso(normalizeCharacter(found))
-        return
-      }
-    }
-    const fallback = Object.keys(perso || {}).length
-      ? { ...perso }
-      : { ...defaultPerso }
-    setLocalPerso(normalizeCharacter(fallback))
-  }, [perso, allCharacters])
-
-  // Quand on QUITTE le mode édition, on recharge depuis les props
+  // Hors édition, la fiche affichée suit celle du parent. En édition, on n'y
+  // touche pas : une fiche reçue entre-temps (chargement, MJ, liste mise à
+  // jour) effaçait les modifications en cours avant « Enregistrer ».
   useEffect(() => {
     if (!edit) {
       const next = Object.keys(perso || {}).length ? perso : defaultPerso
