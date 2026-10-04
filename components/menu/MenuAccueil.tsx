@@ -7,7 +7,7 @@ import { useConfirm } from '@/lib/useConfirm'
 import LanguageSwitcher from '../ui/LanguageSwitcher'
 import ThemeSwitcher from '../ui/ThemeSwitcher'
 import AuthControls from '../auth/AuthControls'
-import { Crown, LogIn, LogOut } from 'lucide-react'
+import { LogIn, LogOut } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import SmallSpinner from '../ui/SmallSpinner'
 import RoomList, { RoomInfo } from '../rooms/RoomList'
@@ -44,7 +44,13 @@ const SELECTED_KEY = 'selectedCharacterId'
 
 const ROOM_KEY = 'jdr_selected_room'
 
-export default function MenuAccueil() {
+/**
+ * `landing` : la page d'arrivée (`/`), qui propose la connexion ; un joueur
+ * déjà connecté passe directement aux salles.
+ * `salles` : la page des salles et des fiches (`/salles`), réservée aux
+ * joueurs connectés.
+ */
+export default function MenuAccueil({ page }: { page: 'landing' | 'salles' }) {
   const router = useRouter()
   const t = useT()
   const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm()
@@ -67,9 +73,15 @@ export default function MenuAccueil() {
   const [roomLoading, setRoomLoading] = useState(false)
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const [cloudOpen, setCloudOpen] = useState(false)
-  // Le role de MJ est propre a chaque table : l'indicateur suit la table
-  // selectionnee (l'administrateur a les outils du MJ partout).
-  const isGMHere = !!user?.isMJ || selectedRoom?.role === 'gm'
+  // Tant que le compte n'est pas lu, on ne sait pas quel écran montrer : une
+  // attente plutôt que l'écran de connexion, qui clignotait au retour d'une table.
+  const profileLoading = profile === null
+  const wrongPage = !profileLoading && (page === 'landing' ? !!user : !user)
+
+  useEffect(() => {
+    if (!wrongPage) return
+    router.replace(page === 'landing' ? '/salles' : '/')
+  }, [wrongPage, page, router])
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -259,7 +271,7 @@ export default function MenuAccueil() {
     if (loggingOut) return
     setLoggingOut(true)
     setSelectedIdx(null)
-    void signOut({ redirectTo: '/menu' })
+    void signOut({ redirectTo: '/' })
   }
 
   const handlePlay = () => {
@@ -588,7 +600,7 @@ export default function MenuAccueil() {
       />
 
       {/* Header avec le bouton qui change de fond */}
-      {user && <MenuHeader user={user} />}
+      {user && <MenuHeader />}
       {/* Barre d'outils en haut a droite : la langue, puis le compte une fois
           connecte. Un seul conteneur fixe : avant, chacun etait fixe de son
           cote et le bouton de langue recouvrait l'avatar. */}
@@ -600,7 +612,11 @@ export default function MenuAccueil() {
       </div>
 
       <div className="w-full min-h-screen relative text-ink px-6 pb-8 flex flex-col max-w-7xl mx-auto bg-transparent overflow-hidden">
-        {!user ? (
+        {profileLoading || wrongPage ? (
+          <div className="flex-grow flex items-center justify-center" aria-busy="true">
+            <SmallSpinner />
+          </div>
+        ) : !user ? (
           <div className="flex-grow flex items-center justify-center">
             <SignedOutPanel />
           </div>
@@ -628,21 +644,6 @@ export default function MenuAccueil() {
               </div>
 
               <div className="ml-auto flex flex-wrap items-center gap-2">
-                <span
-                  title={
-                    !selectedRoom
-                      ? t('gmPickTable')
-                      : isGMHere
-                        ? t('gmToolsActive')
-                        : t('gmPlayerHere')
-                  }
-                  className={`inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 transition ${
-                    isGMHere ? 'border-gm/40 bg-gm/10' : 'border-line-strong'
-                  }`}
-                >
-                  <Crown size={16} className={isGMHere ? 'text-gm' : 'text-ink/40'} />
-                  <span className={`block h-2 w-2 rounded-full ${isGMHere ? 'bg-gm-soft' : 'bg-ink/30'}`} />
-                </span>
                 <button
                   type="button"
                   onClick={handlePlay}

@@ -1,11 +1,11 @@
 'use client'
 import MenuAccueil from '@/components/menu/MenuAccueil'
 
-export default function MenuAccueilPage() {
+// Page des salles et des fiches de personnage, pour un joueur connecté.
+export default function SallesPage() {
   return (
     <div className="relative w-screen h-screen overflow-hidden">
-      {/* Plus de BackgroundWrapper ici */}
-      <MenuAccueil />
+      <MenuAccueil page="salles" />
     </div>
   )
 }

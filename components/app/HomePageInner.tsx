@@ -193,7 +193,7 @@ export default function HomePageInner() {
     if (typeof window === 'undefined') return
     if (!sessionStorage.getItem('visitedMenu')) {
       sessionStorage.setItem('visitedMenu', 'true')
-      router.push('/menu')
+      router.push('/salles')
     }
   }, [router])
 

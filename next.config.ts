@@ -56,6 +56,13 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Anciennes adresses de la page des salles, encore dans des favoris.
+  async redirects() {
+    return [
+      { source: "/menu", destination: "/salles", permanent: true },
+      { source: "/menu-accueil", destination: "/salles", permanent: true },
+    ];
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

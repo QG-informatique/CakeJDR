@@ -12,7 +12,7 @@ type Provider = 'discord' | 'google'
  * Il n'y a pas d'inscription séparée : le compte est créé à la première
  * connexion. Un seul geste pour les deux cas, donc un seul jeu de boutons.
  */
-export default function SignInButtons({ redirectTo = '/menu-accueil' }: { redirectTo?: string }) {
+export default function SignInButtons({ redirectTo = '/salles' }: { redirectTo?: string }) {
   const t = useT()
   const [pending, setPending] = useState<Provider | null>(null)
 

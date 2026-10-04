@@ -4,15 +4,14 @@ import { expect, test } from '@playwright/test'
 // Discord) restent dans MANUAL_TEST_PLAN.md : ils passent par de vrais
 // fournisseurs d'identité.
 
-test('landing leads to the sign-in menu', async ({ page }) => {
+test('landing shows the sign-in options', async ({ page }) => {
   await page.goto('/')
-  await page.waitForURL(/\/menu-accueil/)
   await expect(page.getByRole('button', { name: /Discord/ })).toBeVisible()
   await expect(page.getByRole('button', { name: /Google/ })).toBeVisible()
 })
 
 test('QG Informatique credit is visible and links to the site', async ({ page }) => {
-  await page.goto('/menu-accueil')
+  await page.goto('/')
   const credit = page.getByRole('link', { name: 'QG Informatique' })
   await expect(credit).toBeVisible()
   await expect(credit).toHaveAttribute('href', 'https://www.qg-informatique.fr')
@@ -27,7 +26,7 @@ test('legal pages render', async ({ page }) => {
 
 test('a guest can open the demo table', async ({ page }) => {
   await page.setViewportSize({ width: 1500, height: 900 })
-  await page.goto('/menu-accueil')
+  await page.goto('/')
   await page.getByRole('button', { name: /invité|guest/i }).click()
   await page.waitForURL(/\/room\//, { timeout: 15_000 })
   // La table est chargée quand la connexion Liveblocks est établie et que
@@ -40,7 +39,7 @@ test('a guest can open the demo table', async ({ page }) => {
 
 test('on a phone, the table shows one panel at a time', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 })
-  await page.goto('/menu-accueil')
+  await page.goto('/')
   await page.getByRole('button', { name: /invité|guest/i }).click()
   await page.waitForURL(/\/room\//, { timeout: 15_000 })
   // Onglet Table par défaut : canevas et dés, avec une vraie hauteur.

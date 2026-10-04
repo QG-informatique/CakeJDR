@@ -67,7 +67,7 @@ test('removed routes stay removed', async ({ request }) => {
 })
 
 test('security headers are present', async ({ request }) => {
-  const res = await request.get('/menu-accueil')
+  const res = await request.get('/')
   const headers = res.headers()
   expect(headers['content-security-policy']).toContain("default-src 'self'")
   expect(headers['x-frame-options']).toBe('DENY')

@@ -6,7 +6,6 @@ import { useSession } from 'next-auth/react'
 export type Profile = {
   pseudo: string
   color: string
-  isMJ: boolean
   /** Faux pour un visiteur sans compte. */
   signedIn: boolean
   /** Identifiant du compte, absent pour un visiteur. */
@@ -27,7 +26,6 @@ type ApiUser = {
 const VISITOR: Profile = {
   pseudo: 'Visiteur',
   color: '#9ca3af',
-  isMJ: false,
   signedIn: false,
 }
 
@@ -81,9 +79,6 @@ export default function useProfile(): Profile | null {
     id: account.id,
     pseudo: account.pseudo,
     color: account.color,
-    // Le rôle de MJ est propre à chaque table ; seul l'administrateur dispose
-    // des outils du MJ partout.
-    isMJ: account.isAdmin,
     signedIn: true,
     pseudoChosen: account.pseudoChosen,
   }

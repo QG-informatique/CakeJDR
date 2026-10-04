@@ -155,6 +155,15 @@
 - [ ] Vérifier le provider Liveblocks/Lexical sur plusieurs rooms (éviter un second RoomProvider caché)
 - [ ] Envisager une persistance Blob debouncée (60–120s) pour les snapshots de session
 
+## Refonte d'octobre 2026 — détail dans `PLAN-REFONTE.md`
+- [x] Phase A : garder deux thèmes (Ardoise fixe, Classique aux dés roses), ranger les autres fonds, `/` pour la connexion et `/salles` pour les salles, retirer l'indicateur de MJ du menu
+- [ ] Phase B : refaire l'écran de création et de modification de fiche (un seul écran, sections qui défilent, plus de chevauchement des compétences)
+- [ ] Phase C : refaire la fiche en partie (portrait choisi dans la bibliothèque, barre de PV, affichage compact ou complet, bouton Modifier sur la fiche, sans sélecteur de personnage ni menu import/export)
+- [ ] Phase D : faire de la bibliothèque le seul moyen d'ajouter une image (envoi par « + », carte en fond plein plateau, pions alliés et ennemis posés et retirés d'un clic, onglet Outils renommé Dessin)
+- [ ] Phase E : simplifier la barre du bas (dés, musique lecture/pause + volume avec options repliées, joueurs en ligne y compris soi)
+- [ ] Phase F : créer le panneau du MJ de la salle (joueurs et fiches en temps réel, droits de modification des fiches, droits de dessin)
+- [ ] Vérifier les boutons import, export et cloud des fiches sur la page des salles
+
 ## Ordre validé (2026-10-04) : débug → refonte en thème → bibliothèque → public → autres thèmes
 
 ## Débug — fin de phase 3
@@ -189,7 +198,6 @@
 ## Bibliothèque partagée — avant le public
 - [x] Créer une bibliothèque de départ (cartes, monstres, PNJ, images) utilisable par tous les MJ, en plus de leurs propres images — uniquement des images dont on a les droits
 - [ ] Dessiner les images de nouveaux monstres et PNJ (Quentin) : WebP + miniature `-mini` dans `public/bibliotheque/rencontres/`, puis Claude ajoute une ligne par image dans `lib/library.ts`
-- [ ] Proposer les portraits de la bibliothèque comme image de fiche de personnage
 - [ ] Vérifier sur le site en ligne qu'on reste connecté d'un jour à l'autre (session de 30 jours dans `auth.ts`)
 
 ## Maquette V2 (ChatGPT) — après le rework

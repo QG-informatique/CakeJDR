@@ -80,7 +80,7 @@ export default function DeleteAccount({ pseudo }: { pseudo: string }) {
         localStorage.removeItem('selectedCharacterId')
         localStorage.removeItem('jdr_my_room')
       } catch {}
-      await signOut({ redirectTo: '/menu' })
+      await signOut({ redirectTo: '/' })
     } catch {
       setError(t('deleteAccountError'))
       setDeleting(false)

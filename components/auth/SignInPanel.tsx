@@ -25,7 +25,7 @@ export default function SignInPanel({ error, redirectTo }: { error?: string; red
         )}
         <SignInButtons redirectTo={redirectTo} />
         <Link
-          href="/menu-accueil"
+          href="/"
           className="inline-flex items-center gap-2 text-sm text-ink/60 no-underline transition hover:text-ink"
         >
           <Home size={15} aria-hidden="true" />

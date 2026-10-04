@@ -1,6 +1,6 @@
 // Liste des thèmes de l'interface. Les couleurs de chacun sont dans
 // app/themes.css, sous [data-theme="<id>"] ; ici, ce qui ne tient pas en CSS :
-// le nom affiché, la disposition des panneaux de la table et le fond par défaut.
+// le nom affiché, la disposition des panneaux de la table et le fond.
 
 export type ThemeLayout = {
   /** Côté de la fiche de personnage sur grand écran ; le chat prend l'autre. */
@@ -11,14 +11,15 @@ export type Theme = {
   id: string
   name: string
   layout: ThemeLayout
-  /** Fond affiché tant que le joueur n'en a pas choisi un autre : 'plain' = le
-   *  fond uni du thème, sinon un des fonds animés (voir BackgroundContext). */
-  defaultBackground: 'plain' | 'rpg'
+  /** 'plain' = le fond fixe du thème (--c-backdrop), 'rpg' = les dés roses
+   *  animés. Chaque thème a un seul fond : les neuf autres fonds animés ont été
+   *  rangés hors du site en octobre 2026 (dossier CakeJDR-themes/fonds-archives, à côté du projet). */
+  background: 'plain' | 'rpg'
 }
 
 export const THEMES: Theme[] = [
-  { id: 'ardoise', name: 'Ardoise', layout: { sheetSide: 'left' }, defaultBackground: 'plain' },
-  { id: 'classique', name: 'Classique', layout: { sheetSide: 'left' }, defaultBackground: 'rpg' },
+  { id: 'ardoise', name: 'Ardoise', layout: { sheetSide: 'left' }, background: 'plain' },
+  { id: 'classique', name: 'Classique', layout: { sheetSide: 'left' }, background: 'rpg' },
 ]
 
 export const DEFAULT_THEME_ID = 'ardoise'

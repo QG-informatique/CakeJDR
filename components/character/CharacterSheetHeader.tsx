@@ -1,8 +1,7 @@
 import { FC, ReactElement } from 'react'
-import { ChevronLeft, Pencil, Save } from 'lucide-react'
+import { ArrowLeft, ChevronLeft, Pencil, Save } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import Link from 'next/link'
-import CakeLogo from '../ui/CakeLogo'
 import ThemeSwitcher from '../ui/ThemeSwitcher'
 
 type Tab = { key: string, label: string }
@@ -39,15 +38,11 @@ const CharacterSheetHeader: FC<Props> = ({
       className="sticky top-0 z-40 -mx-3 px-3 pt-3 pb-3 mb-3 flex flex-col gap-3 border-b border-[var(--c-panel-line)] backdrop-blur-md"
       style={{ background: 'var(--c-panel-head)' }}
     >
-      {/* Ligne du haut : retour à l'accueil, actions de la fiche, réglages */}
+      {/* Ligne du haut : retour aux salles, actions de la fiche, réglages */}
       <div className="flex flex-wrap items-center gap-1.5">
-        <Link
-          href="/menu-accueil"
-          className="ui-btn ui-btn-ghost ui-btn-icon !w-9 !h-9 !p-1"
-          aria-label={t('backToMenu')}
-          title={t('backToMenu')}
-        >
-          <CakeLogo className="mr-0" showText={false} />
+        <Link href="/salles" className="ui-btn ui-btn-ghost" title={t('backToMenu')}>
+          <ArrowLeft size={14} aria-hidden="true" />
+          {t('rooms')}
         </Link>
 
         <button
