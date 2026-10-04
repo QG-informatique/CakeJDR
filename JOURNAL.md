@@ -2,6 +2,7 @@
 
 ## 2026-10-04 — Prompt du pack n° 2 raccourci
 - `PROMPT-PACK-IMAGES.md` ramené de 66 à 38 images, sans images modèles à joindre (ChatGPT a fait le premier pack dans la même conversation) et sans génération une par une : tout d'affilée, puis un zip.
+- Ajout de deux pions boss (liche, chef orc, assortis à leur rencontre) en plus du troll, devenu boss : 40 images.
 
 ## 2026-10-04 — Barre du bas sur une ligne, prompt du pack d'images n° 2
 - Barre du bas en trois zones sur une seule ligne : musique à gauche, choix du dé en menu déroulant et « Lancer » au centre, joueurs en ligne à droite (`components/dice/DiceRoller.tsx`).

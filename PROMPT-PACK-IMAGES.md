@@ -45,17 +45,19 @@ PIONS ENNEMIS
 27. ennemis/loup-sombre
 28. ennemis/bandit
 29. ennemis/cultiste
-30. ennemis/troll
+30. ennemis/troll : boss, troll massif, peau verte moussue, énorme massue
+31. ennemis/liche : boss, liche couronnée en pied, robe en lambeaux, yeux de flamme bleue (même liche que sa rencontre)
+32. ennemis/chef-orc : boss, chef de guerre orc couvert de cicatrices, armure lourde, hache géante (même orc que sa rencontre)
 
 RENCONTRES
-31. rencontres/dragon-rouge
-32. rencontres/liche
-33. rencontres/chef-orc
-34. rencontres/vampire
-35. rencontres/sorciere-marais
-36. rencontres/marchand-ambulant
-37. rencontres/garde-ville
-38. rencontres/capitaine-port
+33. rencontres/dragon-rouge
+34. rencontres/liche
+35. rencontres/chef-orc
+36. rencontres/vampire
+37. rencontres/sorciere-marais
+38. rencontres/marchand-ambulant
+39. rencontres/garde-ville
+40. rencontres/capitaine-port
 
 Génère toutes les images à la suite, sans attendre ma validation entre chaque. Ensuite, rassemble-les dans un seul zip téléchargeable « cakejdr-pack-2.zip », avec les dossiers cartes/, pions/, portraits/, ennemis/, rencontres/, chaque image nommée comme dans la liste (en .png).
 ```
