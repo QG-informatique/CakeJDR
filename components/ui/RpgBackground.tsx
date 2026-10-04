@@ -1,7 +1,7 @@
 'use client'
 import { Dice1, Dice2, Dice3, Dice4, Dice5, Dice6 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 
 /**
  * Fond animé – dés ascendants (40) – SAFE POUR NEXT/SSR !
@@ -11,9 +11,8 @@ export default function RpgBackground() {
     () => [Dice1, Dice2, Dice3, Dice4, Dice5, Dice6],
     [],
   )
-  const [dice, setDice] = useState<React.ReactElement[]>([])
-
-  useEffect(() => {
+  // Tirage au sort une seule fois, au premier affichage (fond chargé côté navigateur seulement).
+  const [dice] = useState<React.ReactElement[]>(() => {
     // ⚠️ Tout le random ici, jamais dans le render !
     const arr: React.ReactElement[] = []
     for (let i = 0; i < 40; ++i) {
@@ -37,8 +36,8 @@ export default function RpgBackground() {
         </motion.div>,
       )
     }
-    setDice(arr)
-  }, [icons]) // ← Random/JSX généré **seulement** après le mount client
+    return arr
+  })
 
   return (
     <div className="absolute inset-0 overflow-hidden -z-10">

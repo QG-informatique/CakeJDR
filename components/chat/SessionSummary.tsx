@@ -268,6 +268,7 @@ function LocalSummary({
   useEffect(() => {
     if (state.acts.length === 0) {
       const title = (t('pageNamePrompt') as string) || 'New page'
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- première page créée à l'ouverture d'un résumé vide
       createPage(title)
     } else if (!currentId) {
       setCurrentId(state.acts[0]?.id)
@@ -347,7 +348,6 @@ function LocalSummary({
         const content = contentLines.join('\n').trim()
         const id = crypto.randomUUID()
         incoming.push({ id, title })
-        // eslint-disable-next-line security/detect-object-injection
         editor[id] = content
       })
 
@@ -636,6 +636,7 @@ function LiveSummary({
       addPage(newPage)
       updateEditor({ id: newPage.id, content: '' })
       setCurrentId(newPage.id)
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- première page créée une fois Liveblocks connecté
       setEditorKey((k) => k + 1)
     } else if (!currentId) {
       setCurrentId(pages[0]!.id)

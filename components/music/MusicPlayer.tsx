@@ -176,6 +176,7 @@ export default function MusicPlayer() {
     if (!musicReady) return
     const nextId =
       typeof musicId === 'string' && musicId.length > 0 ? musicId : null
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- suit la musique partagée de la table (Liveblocks)
     setCurrentId(nextId)
     if (!hasSyncedRef.current) {
       hasSyncedRef.current = true
@@ -186,6 +187,7 @@ export default function MusicPlayer() {
   }, [musicReady, musicId, musicPlaying])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- remise à zéro au changement de morceau
     setCurrentTitle('')
     setCurrentTime(0)
     setDuration(0)

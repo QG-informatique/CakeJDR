@@ -37,8 +37,8 @@ export default function HomePageInner() {
   const router = useRouter()
   const { theme } = useTheme()
   const t = useT()
-  const [user, setUser] = useState<string | null>(null)
   const profile = useProfile()
+  const user = profile?.pseudo ?? null
   const self = useSelf()
   const myConnectionId = self?.connectionId ?? null
   // Rôle dans cette table, fixé par le serveur à l'ouverture de la session.
@@ -198,10 +198,6 @@ export default function HomePageInner() {
   }, [router])
 
   useEffect(() => {
-    if (profile) setUser(profile.pseudo)
-  }, [profile])
-
-  useEffect(() => {
     if (profile) {
       updateMyPresence({ name: profile.pseudo, color: profile.color })
     }
@@ -220,6 +216,7 @@ export default function HomePageInner() {
           chars = parsed.map((c) =>
             normalizeCharacter(c, profile?.pseudo ?? null),
           )
+          // eslint-disable-next-line react-hooks/set-state-in-effect -- fiches gardées dans le navigateur, lues à l'arrivée sur la table
           setCharacters(chars)
         }
       } catch {}
@@ -447,6 +444,7 @@ export default function HomePageInner() {
   useEffect(() => {
     if (viewedConnectionId === null) return
     if (!viewedStillHere) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- suit la fiche du joueur consulté, reçue par Liveblocks
       handleGMBackToOwn()
       return
     }

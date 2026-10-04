@@ -1,11 +1,12 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
 
-export default function Portal({ children }: { children: React.ReactNode }) {
-  const [mounted, setMounted] = useState(false)
+const noSubscribe = () => () => {}
 
-  useEffect(() => setMounted(true), [])
+export default function Portal({ children }: { children: React.ReactNode }) {
+  // Faux côté serveur, vrai dans le navigateur : `document.body` n'existe qu'ici.
+  const mounted = useSyncExternalStore(noSubscribe, () => true, () => false)
   if (!mounted) return null
 
   return createPortal(children, document.body)

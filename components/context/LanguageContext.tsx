@@ -1,5 +1,5 @@
 'use client'
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useSyncExternalStore, ReactNode } from 'react'
 
 export type Language = 'en' | 'fr'
 
@@ -10,21 +10,40 @@ interface LangCtx {
 
 const LanguageContext = createContext<LangCtx | undefined>(undefined)
 
-export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = // Francais par defaut : le public est francophone. Un choix explicite,
-  // memorise dans le navigateur, reste prioritaire.
-  useState<Language>('fr')
+// Francais par defaut : le public est francophone. Un choix explicite,
+// memorise dans le navigateur, reste prioritaire.
+const LANG_EVENT = 'cakejdr-lang-change'
+// Choix de la session en cours, au cas ou le navigateur refuse le stockage.
+let chosenLang: Language | null = null
 
-  useEffect(() => {
-    const stored = localStorage.getItem('lang') as Language | null
-    if (stored === 'en' || stored === 'fr') setLangState(stored)
-  }, [])
+function readStoredLang(): Language {
+  if (chosenLang) return chosenLang
+  try {
+    const stored = localStorage.getItem('lang')
+    return stored === 'en' ? 'en' : 'fr'
+  } catch {
+    return 'fr'
+  }
+}
+
+function subscribeLang(onChange: () => void) {
+  window.addEventListener(LANG_EVENT, onChange)
+  window.addEventListener('storage', onChange)
+  return () => {
+    window.removeEventListener(LANG_EVENT, onChange)
+    window.removeEventListener('storage', onChange)
+  }
+}
+
+export function LanguageProvider({ children }: { children: ReactNode }) {
+  const lang = useSyncExternalStore(subscribeLang, readStoredLang, (): Language => 'fr')
 
   const setLang = (l: Language) => {
-    setLangState(l)
-    if (typeof localStorage !== 'undefined') {
+    chosenLang = l
+    try {
       localStorage.setItem('lang', l)
-    }
+    } catch {}
+    window.dispatchEvent(new Event(LANG_EVENT))
   }
 
   return (

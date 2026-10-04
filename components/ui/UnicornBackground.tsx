@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 
 /**
  * UnicornBackground – v4 (SVG intégral + yeux mignons)
@@ -47,9 +47,8 @@ function UnicornIcon({ size = 160, rotate = 0 }: { size?: number; rotate?: numbe
 }
 
 export default function UnicornBackground() {
-  const [unicorns, setUnicorns] = useState<React.ReactElement[]>([])
-
-  useEffect(() => {
+  // Tirage au sort une seule fois, au premier affichage (fond chargé côté navigateur seulement).
+  const [unicorns] = useState<React.ReactElement[]>(() => {
     const arr: React.ReactElement[] = []
     const COUNT = 12
     for (let i = 0; i < COUNT; ++i) {
@@ -70,8 +69,8 @@ export default function UnicornBackground() {
         </motion.div>
       )
     }
-    setUnicorns(arr)
-  }, [])
+    return arr
+  })
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden isolate z-0">

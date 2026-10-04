@@ -1,6 +1,6 @@
 'use client'
 import { motion } from 'framer-motion'
-import React, { useEffect, useState } from 'react'
+import React, { useId, useState } from 'react'
 
 /**
  * Background 6 – “Floating Runes”
@@ -28,8 +28,8 @@ import React, { useEffect, useState } from 'react'
  * les collisions dans le DOM.
  */
 function RuneIcon ({ size = 48, rotate = 0, hue = 280 }: { size?: number, rotate?: number, hue?: number }) {
-  // id unique (6 caractères aléatoires) ⇒ évite doublons defs/gradients
-  const gradientId = `runeGrad_${Math.random().toString(36).slice(2, 8)}`
+  // id unique par instance ⇒ évite doublons defs/gradients
+  const gradientId = `runeGrad_${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`
 
   return (
     <svg
@@ -75,9 +75,8 @@ function RuneIcon ({ size = 48, rotate = 0, hue = 280 }: { size?: number, rotate
 }
 
 export default function Background6 () {
-  const [runes, setRunes] = useState<React.ReactElement[]>([])
-
-  useEffect(() => {
+  // Tirage au sort une seule fois, au premier affichage (fond chargé côté navigateur seulement).
+  const [runes] = useState<React.ReactElement[]>(() => {
     /**
      * Génère 36 runes avec attributs aléatoires
      * ------------------------------------------------
@@ -123,8 +122,8 @@ export default function Background6 () {
       )
     }
 
-    setRunes(elements)
-  }, [])
+    return elements
+  })
 
   return (
     <div className="absolute inset-0 overflow-hidden -z-10">

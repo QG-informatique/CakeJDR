@@ -105,7 +105,8 @@
 
 ## Issu de la phase 0 — à finir plus tard
 - [x] Ajouter le crédit QG Informatique, absent du projet (règle `C:\DEV\CLAUDE.md`) — footer fixe rendu par `ClientLayout`
-- [ ] Corriger les 58 avertissements `react-hooks` (`purity`, `set-state-in-effect`, `refs`) concentrés dans les fonds animés, puis repasser ces trois règles en erreur dans `eslint.config.mjs` — phase 4
+- [x] Corriger les 58 avertissements `react-hooks` (`purity`, `set-state-in-effect`, `refs`) concentrés dans les fonds animés, puis repasser ces trois règles en erreur dans `eslint.config.mjs` — phase 4
+- [ ] Corriger les 16 avertissements d'accessibilité `jsx-a11y` restants (fonds de fenêtre et blocs cliquables dans `InteractiveCanvas`, `ImportExportMenu`, `RoomCreateModal`, `RoomList`), puis passer ces règles en erreur
 - [x] Restreindre les paramètres signés de `/api/cloudinary/signature` (formats, taille) après vérification de la doc Cloudinary — formats signés et compte requis ; Cloudinary n'a pas de paramètre de taille
 - [x] Donner une propriété par utilisateur aux fiches (Blob remplacé par la base)
 - [x] Remplacer le jeton d'accès à la room par la session utilisateur une fois l'auth en place (phase 1) — le jeton reste, mais n'est remis qu'aux membres reconnus par leur session
@@ -187,7 +188,7 @@
 
 ## Bibliothèque partagée — avant le public
 - [x] Créer une bibliothèque de départ (cartes, monstres, PNJ, images) utilisable par tous les MJ, en plus de leurs propres images — uniquement des images dont on a les droits
-- [ ] Ajouter des monstres et des PNJ à la bibliothèque (seulement 3 rencontres pour l'instant) : WebP + miniature dans `public/bibliotheque/`, puis une ligne dans `lib/library.ts`
+- [ ] Dessiner les images de nouveaux monstres et PNJ (Quentin) : WebP + miniature `-mini` dans `public/bibliotheque/rencontres/`, puis Claude ajoute une ligne par image dans `lib/library.ts`
 - [ ] Proposer les portraits de la bibliothèque comme image de fiche de personnage
 - [ ] Vérifier sur le site en ligne qu'on reste connecté d'un jour à l'autre (session de 30 jours dans `auth.ts`)
 

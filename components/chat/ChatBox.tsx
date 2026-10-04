@@ -67,11 +67,11 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
   const endRef = useRef<HTMLDivElement>(null)
   const [showSummary, setShowSummary] = useState(false)
   const [showStats, setShowStats] = useState(false)
-  const sessionStart = useRef(Date.now())
+  const [sessionStart] = useState(() => Date.now())
   const [showHistory, setShowHistory] = useState(false)
   const displayedEvents = showHistory
     ? revealedEvents
-    : revealedEvents.filter(ev => ev.ts >= sessionStart.current)
+    : revealedEvents.filter(ev => ev.ts >= sessionStart)
   const broadcast = useBroadcastEvent()
   const self = useSelf()
   const t = useT()

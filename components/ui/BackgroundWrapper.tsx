@@ -47,15 +47,12 @@ export default function BackgroundWrapper() {
   const reducedMotion = useSyncExternalStore(subscribeReducedMotion, prefersReducedMotion, () => false)
   const background: BackgroundType = reducedMotion ? 'plain' : chosen
   const [prev, setPrev] = useState<BackgroundType>(background)
-  const [fading, setFading] = useState(false)
+  // L'ancien fond reste affiché le temps de son fondu, puis laisse la place.
+  const fading = background !== prev
 
   useEffect(() => {
     if (background === prev) return
-    setFading(true)
-    const t = setTimeout(() => {
-      setPrev(background)
-      setFading(false)
-    }, 300)
+    const t = setTimeout(() => setPrev(background), 300)
     return () => clearTimeout(t)
   }, [background, prev])
 

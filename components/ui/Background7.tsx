@@ -1,6 +1,6 @@
 'use client'
 import { motion } from 'framer-motion'
-import React, { useEffect, useState } from 'react'
+import React, { useId, useState } from 'react'
 
 /**
  * Background 7 – “Paper Lanterns” (v7) 🔥
@@ -12,10 +12,10 @@ import React, { useEffect, useState } from 'react'
  * ------------------------------------------------------------
  */
 
-function LanternIcon ({ size = 56, hue = 30 }: { size?: number, hue?: number }) {
-  const gradId   = `lanternGrad_${Math.random().toString(36).slice(2, 8)}`
-  const flameId  = `flameBlur_${Math.random().toString(36).slice(2, 8)}`
-  const flickDur = 0.7 + Math.random() * 1.1
+function LanternIcon ({ size = 56, hue = 30, flickDur = 1.2 }: { size?: number, hue?: number, flickDur?: number }) {
+  const uid      = useId().replace(/[^a-zA-Z0-9_-]/g, '')
+  const gradId   = `lanternGrad_${uid}`
+  const flameId  = `flameBlur_${uid}`
   const flameHue = 10
 
   return (
@@ -54,9 +54,8 @@ function LanternIcon ({ size = 56, hue = 30 }: { size?: number, hue?: number }) 
 }
 
 export default function Background7 () {
-  const [lanterns, setLanterns] = useState<React.ReactElement[]>([])
-
-  useEffect(() => {
+  // Tirage au sort une seule fois, au premier affichage (fond chargé côté navigateur seulement).
+  const [lanterns] = useState<React.ReactElement[]>(() => {
     const items: React.ReactElement[] = []
     const n = 30
     for (let i = 0; i < n; i++) {
@@ -75,12 +74,12 @@ export default function Background7 () {
           transition={{ duration, repeat: Infinity, delay, ease: 'linear', times: [0, 0.25, 0.75, 1] }}
           style={{ position: 'absolute', left: `${left}vw`, pointerEvents: 'none' }}
         >
-          <LanternIcon size={size} hue={hue} />
+          <LanternIcon size={size} hue={hue} flickDur={0.7 + Math.random() * 1.1} />
         </motion.div>
       )
     }
-    setLanterns(items)
-  }, [])
+    return items
+  })
 
   return (
     <div className="absolute inset-0 overflow-hidden -z-10">

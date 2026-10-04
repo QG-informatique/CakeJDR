@@ -35,7 +35,6 @@ export default function SideNotes() {
   const [open, setOpen] = useState(false)
   const [notes, setNotes] = useState('')
   const [height, setHeight] = useState<number>(192)
-  const [updated, setUpdated] = useState(0)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const t = useT()
 
@@ -59,8 +58,8 @@ export default function SideNotes() {
   // Initial load
   useEffect(() => {
     const local = loadLocal()
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- notes gardées dans le navigateur, lues au premier affichage
     setNotes(local.text)
-    setUpdated(local.updatedAt)
     const savedHeight = localStorage.getItem(HEIGHT_KEY)
     if (savedHeight) setHeight(Number(savedHeight))
   }, [])
@@ -73,23 +72,20 @@ export default function SideNotes() {
       if (local.updatedAt > remote.updatedAt) {
         // La storage Liveblocks peut ne pas être encore disponible au premier montage
         try { updateLive(local) } catch { /* sera retenté quand liveNote changera */ }
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- rapprochement des notes locales et de Liveblocks
         setNotes(local.text)
-        setUpdated(local.updatedAt)
       } else {
         setNotes(remote.text)
-        setUpdated(remote.updatedAt)
         saveLocal(remote)
       }
     } else if (status === 'disconnected') {
       const local = loadLocal()
       setNotes(local.text)
-      setUpdated(local.updatedAt)
     } else {
       const id = setTimeout(() => {
         if (status !== 'connected') {
           const local = loadLocal()
           setNotes(local.text)
-          setUpdated(local.updatedAt)
         }
       }, 3000)
       return () => clearTimeout(id)
@@ -100,8 +96,8 @@ export default function SideNotes() {
   useEffect(() => {
     if (status === 'connected' && liveNote) {
       const { text, updatedAt } = liveNote
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- suit les notes reçues de Liveblocks
       setNotes(text)
-      setUpdated(updatedAt)
       saveLocal({ text, updatedAt })
     }
   }, [liveNote, status])
@@ -115,7 +111,6 @@ export default function SideNotes() {
     const val = e.target.value
     const ts = Date.now()
     setNotes(val)
-    setUpdated(ts)
     saveLocal({ text: val, updatedAt: ts })
     if (status === 'connected') {
       updateLive({ text: val, updatedAt: ts })

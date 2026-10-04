@@ -1,5 +1,13 @@
 # Journal
 
+## 2026-10-04 — Alertes techniques React corrigées
+- Les 58 avertissements `react-hooks` (`purity`, `set-state-in-effect`, `refs`) sont corrigés, et ces trois règles repassent en erreur (`eslint.config.mjs`).
+- Fonds animés : tirage au sort fait une seule fois au montage, identifiants SVG stables (`useId`). Ailleurs : valeurs déduites au lieu d'être recopiées (`HomePageInner`, `GMCharacterSelector`, `BackgroundWrapper`), langue lue via `useSyncExternalStore` (`LanguageContext`).
+- Les effets qui se calent vraiment sur le navigateur ou Liveblocks gardent une exception commentée, ligne par ligne, avec sa raison.
+- Table de démo vérifiée à la main, build et 15 tests e2e OK.
+
+Reste ouvert : 16 avertissements d'accessibilité `jsx-a11y` ; images de monstres et PNJ à dessiner ; pas encore en ligne.
+
 ## 2026-10-04 — Dés tirés par le serveur, mentions légales complètes
 - Le dé de la table est tiré par le serveur (`app/api/dice/route.ts`) : il tire, signe, inscrit le lancer dans le chat de la table, puis répond. Le joueur ne peut plus choisir son résultat ni relancer en douce.
 - Chaque navigateur vérifie la signature (`components/chat/useDiceVerification.ts`) : bouclier « Lancé par le serveur », ou alerte orange pour un lancer écrit à la main. Clé dérivée de `AUTH_SECRET` (`lib/diceSigning.ts`), aucune variable Vercel à ajouter.

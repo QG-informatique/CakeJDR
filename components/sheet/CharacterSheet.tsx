@@ -27,10 +27,17 @@ type Props = {
 
 export const defaultPerso: Character = { ...defaultCharacter }
 
+/** Jet de montée de niveau (ex. « d6 ») : la fiche appartient au joueur, le tirage reste local. */
+const rollDice = (dice: string): number => {
+  const match = dice.match(/d(\d+)/i)
+  if (!match) return 0
+  const sides = parseInt(match[1] ?? '0')
+  return Math.floor(Math.random() * sides) + 1
+}
+
 const CharacterSheet: FC<Props> = ({
   perso,
   onUpdate,
-  chatBoxRef,
   creation = false,
   children,
   logoOnly = false,
@@ -66,19 +73,13 @@ const CharacterSheet: FC<Props> = ({
   useEffect(() => {
     if (!edit) {
       const next = Object.keys(perso || {}).length ? perso : defaultPerso
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- hors édition, la fiche suit celle du parent
       setLocalPerso(normalizeCharacter(next))
     }
   }, [edit, perso])
 
   const handleChange: CharacterChangeHandler = (field, value) => {
     setLocalPerso({ ...localPerso, [field]: value })
-  }
-
-  const rollDice = (dice: string): number => {
-    const match = dice.match(/d(\d+)/i)
-    if (!match) return 0
-    const sides = parseInt(match[1] ?? '0')
-    return Math.floor(Math.random() * sides) + 1
   }
 
   const [processing, setProcessing] = useState(false)
@@ -151,7 +152,7 @@ const CharacterSheet: FC<Props> = ({
     // Une seule sauvegarde à la fin (au lieu de 7) → réduit les appels cloud × 7
     onUpdate(updatedPerso)
     setProcessing(false)
-  }, [processing, cFiche, dice, rollDice, onUpdate])
+  }, [processing, cFiche, dice, onUpdate])
 
   const save = () => {
     setEdit(false)

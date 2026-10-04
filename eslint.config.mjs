@@ -59,16 +59,13 @@ export default [
       // Beaucoup de faux positifs sur l'accès à des objets par clé calculée.
       'security/detect-object-injection': 'off',
 
-      // Règles apportées par la version récente du plugin React Hooks. Elles
-      // n'avaient jamais tourné ici — le linter ne démarrait pas — et signalent
-      // 58 cas réels, concentrés dans les fonds animés (appels à Math.random()
-      // pendant le rendu, setState synchrone dans un effet). Ce sont de vrais
-      // défauts, mais les corriger revient à réécrire une trentaine de
-      // composants avec vérification visuelle : c'est le travail de la phase de
-      // consolidation, pas celui d'un correctif de sécurité. Signalées d'ici là.
-      'react-hooks/set-state-in-effect': 'warn',
-      'react-hooks/purity': 'warn',
-      'react-hooks/refs': 'warn',
+      // Règles de la version récente du plugin React Hooks : les cas signalés
+      // ont été corrigés en octobre 2026. Les effets qui se calent vraiment sur
+      // le navigateur ou Liveblocks portent une exception commentée, ligne par
+      // ligne, avec sa raison.
+      'react-hooks/set-state-in-effect': 'error',
+      'react-hooks/purity': 'error',
+      'react-hooks/refs': 'error',
     },
   },
 ]

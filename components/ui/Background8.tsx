@@ -1,6 +1,6 @@
 'use client'
 import { motion } from 'framer-motion'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 
 /**
  * Background 8 – “Pixel Hearts” ❤️ (v3)
@@ -45,9 +45,8 @@ function PixelHeartIcon (
    ║  BACKGROUND COMPONENT v3  ║
    ╚═══════════════════════════╝ */
 export default function Background8 () {
-  const [hearts, setHearts] = useState<React.ReactElement[]>([])
-
-  useEffect(() => {
+  // Tirage au sort une seule fois, au premier affichage (fond chargé côté navigateur seulement).
+  const [hearts] = useState<React.ReactElement[]>(() => {
     const palette = ['#ff4d4f', '#ff7aa8', '#ffd23f']
     const items: React.ReactElement[] = []
     const n = 40
@@ -85,8 +84,8 @@ export default function Background8 () {
         </motion.div>
       )
     }
-    setHearts(items)
-  }, [])
+    return items
+  })
 
   return (
     <div className="absolute inset-0 overflow-hidden -z-10">

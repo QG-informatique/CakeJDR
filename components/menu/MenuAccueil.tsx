@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useT } from '@/lib/useT'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { useConfirm } from '@/lib/useConfirm'
@@ -39,7 +39,6 @@ import {
   isOwnedBy,
 } from '@/types/character'
 
-const PROFILE_KEY = 'jdr_profile'
 const SELECTED_KEY = 'selectedCharacterId'
 // Dice button size consistent with main repo
 
@@ -75,6 +74,7 @@ export default function MenuAccueil() {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- lecture du navigateur au premier affichage
     setHydrated(true)
     try {
       // Le pseudo sert de proprietaire par defaut aux fiches heritees, le
@@ -346,7 +346,7 @@ export default function MenuAccueil() {
     setSelectedIdx(updated.findIndex((c) => buildCharacterKey(c) === key))
   }
 
-  const handleDeleteChar = useCallback(async (id: string | number) => {
+  const handleDeleteChar = async (id: string | number) => {
     const ok = await confirm(t('deleteSheetConfirm'), { danger: true })
     if (!ok) return
     const idx = characters.findIndex((c) => String(c.id) === String(id))
@@ -372,7 +372,7 @@ export default function MenuAccueil() {
     } else {
       setSelectedIdx(null)
     }
-  }, [characters, confirm, t, saveCharacters])
+  }
 
   const handleImportClick = () => fileInputRef.current?.click()
   const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
