@@ -257,6 +257,9 @@ export const translations = {
     library: "Library",
     libraryHint: "Click or drag onto the table",
     roomLimitReached: "You've reached 5 tables. Delete one to create another.",
+    diceRollFailed: "The roll didn't go through. Try again.",
+    diceVerified: "Rolled by the server",
+    diceUnverified: "Unverified roll: it didn't come from the server",
   },
   fr: {
     addSkill: 'Ajouter une compétence',
@@ -516,6 +519,9 @@ export const translations = {
     library: "Bibliothèque",
     libraryHint: "Clique ou glisse sur la table",
     roomLimitReached: "Tu as atteint 5 tables. Supprimes-en une pour en créer une autre.",
+    diceRollFailed: "Le lancer n'est pas passé. Réessaie.",
+    diceVerified: "Lancé par le serveur",
+    diceUnverified: "Lancer non vérifié : il ne vient pas du serveur",
   },
 } as const
 
