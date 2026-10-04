@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-04 — Fond animé : respect de « réduire les animations »
+- `components/ui/BackgroundWrapper.tsx` : si le système demande moins d'animations, le fond uni du thème remplace le fond choisi. Vérifié dans Chrome simulé : 40 dés sans le réglage, 0 avec.
+- `components/ui/RpgBackground.tsx` : `will-change: transform` sur les dés, pour aider les navigateurs qui saccadaient (Firefox). Pas vérifié sur Firefox.
+- Le fond fixe existait déjà : « fond uni » dans la rotation du gâteau, et par défaut sur Ardoise.
+
+Reste ouvert : essai sur Firefox ; pas encore en ligne.
+
 ## 2026-10-04 — Salle de démo : images des visiteurs effacées à la remise à zéro
 - `restoreSnapshot` (`lib/demoRoom.ts`) relève les images Cloudinary de la salle avant de la remettre à zéro, puis efface celles qui ne sont pas dans l'état de référence.
 - Vérifié en lecture seule : les 2 images actuelles de la démo sont dans l'état de référence, donc épargnées.

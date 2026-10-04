@@ -28,7 +28,7 @@ export default function RpgBackground() {
           initial={{ y: '110vh', opacity: 0 }}
           animate={{ y: '-110vh', opacity: 0.6 }}
           transition={{ duration, repeat: Infinity, delay, ease: 'linear' }}
-          style={{ position: 'absolute', left: `${left}vw` }}
+          style={{ position: 'absolute', left: `${left}vw`, willChange: 'transform' }}
         >
           <Icon
             style={{ width: size, height: size }}

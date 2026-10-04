@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useSyncExternalStore } from 'react'
 
 import dynamic from 'next/dynamic'
 
@@ -32,8 +32,20 @@ function renderBackground(bg: BackgroundType) {
   return <RpgBackground />
 }
 
+/* Qui a demandé à son système de réduire les animations garde le fond uni du
+   thème, quel que soit le fond choisi. */
+const REDUCED_MOTION = '(prefers-reduced-motion: reduce)'
+function subscribeReducedMotion(onChange: () => void) {
+  const query = window.matchMedia(REDUCED_MOTION)
+  query.addEventListener('change', onChange)
+  return () => query.removeEventListener('change', onChange)
+}
+const prefersReducedMotion = () => window.matchMedia(REDUCED_MOTION).matches
+
 export default function BackgroundWrapper() {
-  const { background } = useBackground()
+  const { background: chosen } = useBackground()
+  const reducedMotion = useSyncExternalStore(subscribeReducedMotion, prefersReducedMotion, () => false)
+  const background: BackgroundType = reducedMotion ? 'plain' : chosen
   const [prev, setPrev] = useState<BackgroundType>(background)
   const [fading, setFading] = useState(false)
 
