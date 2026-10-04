@@ -1,5 +1,5 @@
 import { FC, ReactElement } from 'react'
-import { ArrowLeft, ChevronLeft, Pencil, Save } from 'lucide-react'
+import { ArrowLeft, ChevronLeft, Pencil } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import Link from 'next/link'
 import ThemeSwitcher from '../ui/ThemeSwitcher'
@@ -7,9 +7,8 @@ import ThemeSwitcher from '../ui/ThemeSwitcher'
 type Tab = { key: string, label: string }
 
 type Props = {
-  edit: boolean,
-  onToggleEdit: () => void,
-  onSave: () => void,
+  /** Ouvre l'écran de modification de la fiche. */
+  onEdit: () => void,
   tab: string,
   setTab: (tabKey: string) => void,
   TABS: Tab[],
@@ -20,9 +19,7 @@ type Props = {
 }
 
 const CharacterSheetHeader: FC<Props> = ({
-  edit,
-  onToggleEdit,
-  onSave,
+  onEdit,
   tab,
   setTab,
   TABS,
@@ -45,12 +42,9 @@ const CharacterSheetHeader: FC<Props> = ({
           {t('rooms')}
         </Link>
 
-        <button
-          onClick={edit ? onSave : onToggleEdit}
-          className={`ui-btn ${edit ? 'ui-btn-primary' : ''}`}
-        >
-          {edit ? <Save size={14} /> : <Pencil size={14} />}
-          {edit ? t('save') : t('edit')}
+        <button onClick={onEdit} className="ui-btn">
+          <Pencil size={14} />
+          {t('edit')}
         </button>
 
         {childrenArray.map((child, i) => {

@@ -65,7 +65,7 @@ la table. Il remplace l'ancienne fenêtre, où les éléments se chevauchaient.
    gauche, avec la possibilité d'envoyer sa propre image. Le portrait est enregistré dans la
    fiche.
 6. **Retirés de la fiche :**
-   - le sélecteur « personnage actif », qui passe dans le panneau du MJ (phase E) ;
+   - le sélecteur « personnage actif », qui passe dans le panneau du MJ (phase F) ;
    - le menu import, export et sauvegarde.
 
 ## Phase D — La bibliothèque remplace l'outil Images

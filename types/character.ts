@@ -67,6 +67,8 @@ export type Character = {
   background: string
   champs_perso: CustomField[]
   notes: string
+  /** Adresse de l'image du portrait ; absente tant qu'aucun n'est choisi. */
+  portrait?: string
 }
 
 export type CharacterLike = Partial<Character> & {
