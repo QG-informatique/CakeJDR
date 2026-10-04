@@ -305,10 +305,10 @@ export default function MusicPlayer() {
         onClick={() => setOptionsOpen((open) => !open)}
         aria-expanded={optionsOpen}
         aria-controls={optionsPanelId}
-        className="w-full rounded-xl px-3 py-2 text-xs font-semibold shadow border border-ink/10 bg-shade/30 text-ink/90 hover:bg-purple-600 hover:text-white flex items-center justify-between gap-2"
+        className="w-full rounded-xl px-3 py-2 text-xs font-semibold shadow border border-ink/10 bg-shade/30 text-ink/90 hover:bg-accent hover:text-on-accent flex items-center justify-between gap-2"
       >
         <span className="inline-flex items-center gap-2">
-          <Music2 size={14} className="text-purple-300 shrink-0" />
+          <Music2 size={14} className="text-accent-soft shrink-0" />
           {optionsOpen ? t('musicCloseOptions') : t('musicOptions')}
         </span>
         {optionsOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -320,7 +320,7 @@ export default function MusicPlayer() {
       >
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-            <Music2 size={16} className="text-purple-300 shrink-0" />
+            <Music2 size={16} className="text-accent-soft shrink-0" />
             <input
               type="text"
               placeholder={t('youtubeLink')}
@@ -334,13 +334,13 @@ export default function MusicPlayer() {
           </div>
           <button
             onClick={handlePlayNow}
-            className="rounded-xl px-3 py-2 text-xs font-semibold shadow border-none bg-blue-600 text-white hover:bg-blue-700"
+            className="rounded-xl px-3 py-2 text-xs font-semibold shadow border-none bg-accent text-on-accent hover:bg-accent-hover"
           >
             {t('musicPlayNow')}
           </button>
           <button
             onClick={handleAddToQueue}
-            className="rounded-xl px-3 py-2 text-xs font-semibold shadow border border-ink/10 bg-shade/30 text-ink/90 hover:bg-purple-600 hover:text-white inline-flex items-center gap-1"
+            className="rounded-xl px-3 py-2 text-xs font-semibold shadow border border-ink/10 bg-shade/30 text-ink/90 hover:bg-accent hover:text-on-accent inline-flex items-center gap-1"
           >
             <Plus size={14} />
             {t('musicAddToQueue')}
@@ -350,7 +350,7 @@ export default function MusicPlayer() {
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={handlePlayPause}
-            className="rounded-xl px-3 py-2 text-xs font-semibold shadow border border-ink/10 bg-shade/30 text-ink/90 hover:bg-purple-600 hover:text-white inline-flex items-center gap-1"
+            className="rounded-xl px-3 py-2 text-xs font-semibold shadow border border-ink/10 bg-shade/30 text-ink/90 hover:bg-accent hover:text-on-accent inline-flex items-center gap-1"
             disabled={!currentId && queueCount === 0}
           >
             {isPlaying ? (

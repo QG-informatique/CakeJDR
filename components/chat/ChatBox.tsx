@@ -157,8 +157,8 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
             border active:scale-95 transition-all duration-150
             flex items-center justify-center gap-1.5 min-h-[38px]
             ${showStats
-              ? 'bg-blue-600/30 border-blue-400/30 text-blue-200 hover:bg-blue-600/40'
-              : 'bg-shade/30 border-ink/10 text-ink/70 hover:bg-blue-900/30 hover:text-blue-200 hover:border-blue-400/20'
+              ? 'bg-accent/30 border-accent/30 text-accent-soft hover:bg-accent/40'
+              : 'bg-shade/30 border-ink/10 text-ink/70 hover:bg-accent/10 hover:text-accent-soft hover:border-accent/20'
             }`}
           onClick={() => setShowStats(s => !s)}
           title={t('diceStats')}
@@ -224,12 +224,12 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
                   ? 'text-yellow-300'
                   : isFumble
                   ? 'text-red-400'
-                  : 'text-blue-300'
+                  : 'text-accent-soft'
                 const bgColor = isCrit
                   ? 'from-yellow-500/15 to-amber-600/8 border-yellow-400/20'
                   : isFumble
                   ? 'from-red-500/15 to-red-600/8 border-red-400/20'
-                  : 'from-blue-500/10 to-indigo-600/5 border-blue-400/15'
+                  : 'from-accent/10 to-accent/5 border-accent/15'
                 return (
                   <div key={ev.id} className={`animate-fadeIn flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-gradient-to-r ${bgColor} border text-sm`}>
                     <span className="text-base leading-none">🎲</span>
@@ -261,8 +261,8 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
             <button
               onClick={sendMessage}
               className="mr-1 px-3 py-1.5 rounded-lg text-sm font-semibold
-                bg-emerald-600/20 border border-emerald-500/20 text-emerald-300
-                hover:bg-emerald-500/30 hover:border-emerald-400/40 hover:text-emerald-100
+                bg-accent/20 border border-accent/20 text-accent-soft
+                hover:bg-accent/30 hover:border-accent/40 hover:text-ink
                 active:scale-95 transition-all duration-150 flex-shrink-0"
             >
               {t('send')}

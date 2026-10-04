@@ -1,5 +1,13 @@
 # Journal
 
+## 2026-10-04 — Thème n°1 « Ardoise » (choisi par Quentin)
+- Ardoise devient le thème par défaut : gris ardoise, accent turquoise, couleur du MJ et du logo corail, police Geist, fond uni quadrillé (`app/themes.css`, `lib/themes.ts`). Classique reste disponible.
+- Bleus, violets et roses en dur remplacés par l'accent et la couleur du MJ du thème dans 22 composants ; vert (validé), rouge (danger) et ambre (MJ dans le chat) gardés, ils ont un sens.
+- Fond choisi gardé par thème ; le clic sur le gâteau fait toujours défiler les fonds animés (`BackgroundContext.tsx`).
+- Bouton de thème à côté de la langue sur l'accueil (`components/ui/ThemeSwitcher.tsx`). Build et 15 tests e2e OK.
+
+Reste ouvert : pas encore en ligne ; pas de bouton de thème dans la table elle-même.
+
 ## 2026-10-04 — Refonte lancée : socle des thèmes
 - Couleurs de l'interface passées en noms de thème (`bg-surface`, `text-ink/60`…) dans 45 composants ; valeurs dans `app/themes.css`, liste et disposition des panneaux dans `lib/themes.ts`.
 - Choix du thème gardé par joueur dans son navigateur (`components/context/ThemeContext.tsx`), appliqué avant l'affichage pour éviter un flash (`app/layout.tsx`).

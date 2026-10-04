@@ -69,9 +69,9 @@ export default function GMCharacterSelector({
           flex items-center justify-center
           rounded-xl shadow border-none
           bg-shade/30
-          text-pink-400
-          hover:bg-pink-200/10
-          focus-visible:outline-pink-400
+          text-gm
+          hover:bg-gm-soft/10
+          focus-visible:outline-gm
           transition duration-100
           p-2
         `}
@@ -79,7 +79,7 @@ export default function GMCharacterSelector({
         aria-haspopup="listbox"
         aria-expanded={open}
       >
-        <User2 size={20} className="text-pink-400" />
+        <User2 size={20} className="text-gm" />
       </button>
 
       {open && (
@@ -101,7 +101,7 @@ export default function GMCharacterSelector({
                 onSelectOwn()
                 setOpen(false)
               }}
-              className="w-full text-left px-4 py-2 rounded-xl text-base font-semibold transition hover:bg-pink-400/10 text-ink/90 border-b border-ink/10"
+              className="w-full text-left px-4 py-2 rounded-xl text-base font-semibold transition hover:bg-gm/10 text-ink/90 border-b border-ink/10"
             >
               ← {t('myCharacter')}
             </button>
@@ -120,8 +120,8 @@ export default function GMCharacterSelector({
                 font-semibold transition
                 ${
                   viewingConnectionId === c.ownerConnectionId
-                    ? 'bg-pink-400/20 text-pink-200'
-                    : 'hover:bg-pink-400/10 text-ink/90'
+                    ? 'bg-gm/20 text-gm-soft'
+                    : 'hover:bg-gm/10 text-ink/90'
                 }
               `}
             >

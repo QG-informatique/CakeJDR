@@ -115,7 +115,7 @@ export default function PseudoPicker({ initial }: { initial: string }) {
                 ? 'border-emerald-400/70 focus:ring-emerald-300/30'
                 : bad
                   ? 'border-rose-400/70 focus:ring-rose-300/30'
-                  : 'border-ink/20 focus:ring-pink-200/30'
+                  : 'border-ink/20 focus:ring-gm-soft/30'
             }`}
           />
           <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
@@ -137,7 +137,7 @@ export default function PseudoPicker({ initial }: { initial: string }) {
       <button
         type="submit"
         disabled={!good || saving}
-        className="rounded-lg bg-pink-400 px-4 py-3 font-semibold text-black transition hover:bg-pink-300 disabled:cursor-not-allowed disabled:opacity-40"
+        className="rounded-lg bg-gm px-4 py-3 font-semibold text-black transition hover:bg-gm-soft disabled:cursor-not-allowed disabled:opacity-40"
       >
         {t('pseudoConfirm')}
       </button>

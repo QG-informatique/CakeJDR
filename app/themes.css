@@ -4,7 +4,11 @@
 
    ink   : couleur du texte et des traits fins
    shade : couleur des voiles posés sur le fond (panneaux translucides)
-   field : champs de saisie de la fiche */
+   field : champs de saisie de la fiche
+   accent : boutons et éléments actifs ; accent-soft : texte teinté
+   gm    : couleur du MJ (couronne, vue MJ) et du logo
+   brand : bordure du dé de l'accueil
+   backdrop : fond uni affiché quand aucun fond animé n'est choisi */
 
 :root,
 [data-theme="classique"] {
@@ -19,6 +23,42 @@
   --c-line-strong: #4b5563;
   --c-field: #ffffff;
   --c-field-ink: #000000;
+  --c-field-line: #000000;
   --c-accent: #2563eb;
+  --c-accent-hover: #1d4ed8;
+  --c-accent-soft: #bfdbfe;
   --c-on-accent: #ffffff;
+  --c-gm: #f472b6;
+  --c-gm-soft: #fbcfe8;
+  --c-brand: #d6336c;
+  --c-font: Arial, Helvetica, sans-serif;
+  --c-backdrop: #13111c;
+}
+
+/* Ardoise : gris ardoise sobre, accent turquoise, aplats nets. */
+[data-theme="ardoise"] {
+  color-scheme: dark;
+  --c-page: #15181c;
+  --c-ink: #e6e9ec;
+  --c-shade: #0b0d10;
+  --c-surface: #1e2227;
+  --c-surface-hover: #2a3037;
+  --c-surface-deep: #121519;
+  --c-line: #2e343b;
+  --c-line-strong: #3b424a;
+  --c-field: #262b31;
+  --c-field-ink: #e6e9ec;
+  --c-field-line: #3b424a;
+  --c-accent: #2bb5a0;
+  --c-accent-hover: #3cc9b3;
+  --c-accent-soft: #8fe0d3;
+  --c-on-accent: #0d1a18;
+  --c-gm: #e8806e;
+  --c-gm-soft: #f4b8ad;
+  --c-brand: #e8806e;
+  --c-font: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  --c-backdrop:
+    linear-gradient(rgb(255 255 255 / 0.025) 1px, transparent 1px) 0 0 / 32px 32px,
+    linear-gradient(90deg, rgb(255 255 255 / 0.025) 1px, transparent 1px) 0 0 / 32px 32px,
+    radial-gradient(ellipse at 50% 0%, #1d2228, #15181c 70%);
 }

@@ -148,7 +148,7 @@ export default function SideNotes() {
           </div>
           <textarea
             ref={textareaRef}
-            className="w-full bg-ink/5 rounded-xl p-2.5 text-sm resize-y border border-ink/8 focus:outline-none focus:border-indigo-400/30 focus:bg-ink/8 transition-all placeholder:text-ink/20 text-ink/90 leading-relaxed"
+            className="w-full bg-ink/5 rounded-xl p-2.5 text-sm resize-y border border-ink/8 focus:outline-none focus:border-accent/30 focus:bg-ink/8 transition-all placeholder:text-ink/20 text-ink/90 leading-relaxed"
             style={{ height }}
             value={notes}
             onChange={handleChange}

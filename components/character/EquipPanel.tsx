@@ -98,7 +98,7 @@ const EquipPanel: FC<Props> = ({
               onChange={e => setNewObj({ ...newObj, quantite: e.target.value })}
             />
             <button
-              className="bg-blue-600 hover:bg-blue-700 text-white text-sm rounded p-1"
+              className="bg-accent hover:bg-accent-hover text-on-accent text-sm rounded p-1"
               onClick={handleAddObj}
             >
               {t('add')}

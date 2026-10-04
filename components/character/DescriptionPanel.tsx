@@ -48,7 +48,7 @@ const LimiteChamp: FC<{ value: string }> = ({ value }) => {
     <span className="text-sm whitespace-pre-line break-words">
       {value}
       {value.length > LMAX && (
-        <button className="text-blue-400 underline ml-1 text-xs" onClick={() => setOpen(false)}>
+        <button className="text-accent-soft underline ml-1 text-xs" onClick={() => setOpen(false)}>
           {t('close')}
         </button>
       )}
@@ -57,7 +57,7 @@ const LimiteChamp: FC<{ value: string }> = ({ value }) => {
   return (
     <span className="text-sm whitespace-pre-line break-words">
       {value.slice(0, LMAX) + '...'}
-      <button className="text-blue-400 underline ml-1 text-xs" onClick={() => setOpen(true)}>
+      <button className="text-accent-soft underline ml-1 text-xs" onClick={() => setOpen(true)}>
         {t('seeMore')}
       </button>
     </span>
@@ -247,7 +247,7 @@ const DescriptionPanel: FC<DescriptionPanelProps> = ({
                 <span />
               </div>
               <button
-                className="bg-blue-600 hover:bg-blue-700 text-white text-sm rounded p-1 mt-1 w-fit self-end"
+                className="bg-accent hover:bg-accent-hover text-on-accent text-sm rounded p-1 mt-1 w-fit self-end"
                 onClick={() => {
                   if (!newChamp.label || !newChamp.value) return
                   onAddChamp({ id: crypto.randomUUID(), label: newChamp.label, value: newChamp.value })

@@ -528,7 +528,7 @@ export default function HomePageInner() {
                 <div className="p-4 text-red-500 flex flex-col items-center gap-2">
                   <div>Canvas error: {String(error?.message || 'Unknown')}</div>
                   <button
-                    className="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700"
+                    className="px-3 py-1 rounded bg-accent text-on-accent hover:bg-accent-hover"
                     onClick={() => { reset(); setCanvasKey((k) => k + 1) }}
                   >Reload canvas</button>
                   <button

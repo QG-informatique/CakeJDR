@@ -182,7 +182,7 @@ export default function AdminPage() {
           </p>
           <a
             href="/connexion?callbackUrl=/admin"
-            className="block w-full rounded-xl bg-indigo-600/80 px-4 py-2 text-center font-semibold text-ink transition hover:bg-indigo-500/90"
+            className="block w-full rounded-xl bg-accent/80 px-4 py-2 text-center font-semibold text-on-accent transition hover:bg-accent-hover/90"
           >
             Se connecter
           </a>
@@ -310,7 +310,7 @@ export default function AdminPage() {
                         {r.members.map((m) => (
                           <li key={m.pseudo} className="flex items-center gap-1">
                             {m.role === 'gm' && (
-                              <Crown size={12} className="text-pink-400" aria-label="MJ" />
+                              <Crown size={12} className="text-gm" aria-label="MJ" />
                             )}
                             <span className={m.role === 'gm' ? 'text-ink' : 'text-ink/60'}>
                               {m.pseudo}
@@ -337,7 +337,7 @@ export default function AdminPage() {
                   <td className="p-3">
                     <div className="flex gap-1 text-xs">
                       {r.isDemo && (
-                        <span className="rounded bg-sky-500/15 px-1.5 py-0.5 text-sky-300">
+                        <span className="rounded bg-accent/15 px-1.5 py-0.5 text-accent-soft">
                           démo
                         </span>
                       )}

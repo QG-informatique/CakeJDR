@@ -29,7 +29,7 @@ export default function RoomAccessDenied({ reason }: { reason: DeniedReason }) {
   return (
     <div className="flex min-h-dvh w-full items-center justify-center p-6">
       <div className="flex w-full max-w-md flex-col items-center gap-5 rounded-2xl border border-ink/10 bg-shade/50 px-8 py-9 text-center text-ink backdrop-blur-md">
-        <Lock size={28} className="text-pink-400" aria-hidden="true" />
+        <Lock size={28} className="text-gm" aria-hidden="true" />
         <h1 className="m-0 text-xl font-bold">{t('roomDeniedTitle')}</h1>
         <p className="m-0 text-sm text-ink/70">{t(MESSAGE[reason])}</p>
         <div className="flex w-full flex-col gap-2">
