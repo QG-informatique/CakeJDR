@@ -60,6 +60,11 @@ export function imageUrls(images: unknown): string[] {
     .filter((url): url is string => typeof url === 'string')
 }
 
+/** Images posées sur le plateau et images envoyées dans la bibliothèque. */
+export function storageImageUrls(storage: { images?: unknown; library?: unknown } | null | undefined): string[] {
+  return [...imageUrls(storage?.images), ...imageUrls(storage?.library)]
+}
+
 async function demoPublicIds(cloudName: string): Promise<Set<string>> {
   const rows = await db
     .select({ snapshot: rooms.demoSnapshot })
@@ -67,8 +72,8 @@ async function demoPublicIds(cloudName: string): Promise<Set<string>> {
     .where(eq(rooms.isDemo, true))
   const ids = new Set<string>()
   for (const row of rows) {
-    const snapshot = row.snapshot as { images?: unknown } | null
-    for (const url of imageUrls(snapshot?.images)) {
+    const snapshot = row.snapshot as { images?: unknown; library?: unknown } | null
+    for (const url of storageImageUrls(snapshot)) {
       const id = cloudinaryPublicId(url, cloudName)
       if (id) ids.add(id)
     }
@@ -82,13 +87,13 @@ async function demoPublicIds(cloudName: string): Promise<Set<string>> {
  * si Cloudinary n'est pas configuré ou si le contenu est illisible.
  */
 export async function collectRoomImages(
-  getStorage: () => Promise<{ images?: unknown }>,
+  getStorage: () => Promise<{ images?: unknown; library?: unknown }>,
 ): Promise<string[]> {
   const { cloudName, apiKey, apiSecret } = resolveConfig()
   if (!cloudName || !apiKey || !apiSecret) return []
   const storage = await getStorage()
   const ids = new Set<string>()
-  for (const url of imageUrls(storage.images)) {
+  for (const url of storageImageUrls(storage)) {
     const id = cloudinaryPublicId(url, cloudName)
     if (id) ids.add(id)
   }

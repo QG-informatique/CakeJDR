@@ -17,6 +17,21 @@ type CanvasImage = {
   widthRatio?: number
   heightRatio?: number
   local?: boolean
+  createdAt?: number
+  /** Carte posée en fond du plateau : couvre tout, ne bouge pas. */
+  kind?: 'map'
+}
+
+/** Image envoyée dans la bibliothèque de la table (voir lib/library.ts). */
+type LibraryUpload = {
+  id: string
+  url: string
+  category: string
+  width: number
+  height: number
+  ownerId: string
+  ownerName?: string
+  createdAt: number
 }
 
 type StrokeSegment = {
@@ -72,6 +87,7 @@ declare global {
     Storage: {
       characters: LiveMap<string, CharacterData>
       images: LiveMap<string, CanvasImage>
+      library: LiveMap<string, LibraryUpload>
       strokes: LiveList<StrokeSegment>
       music: LiveObject<{ id: string; playing: boolean; volume?: number }>
       musicQueue: LiveList<{ id: string }>
