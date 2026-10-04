@@ -1,5 +1,31 @@
 # Journal
 
+## 2026-10-04 — Refonte, phase F : panneau du MJ
+- Bouton « MJ » sur le plateau, visible du seul MJ (`components/gm/GMPanel.tsx`) : joueurs connectés avec leur personnage, niveau et PV ; « Ouvrir la fiche » la passe dans la fiche du MJ, qui la modifie, et le joueur voit le changement en direct. Bandeau « Tu modifies la fiche de… » avec retour à sa fiche.
+- Réglages partagés de la table (`lib/roomSettings.ts`, clé `settings` dans Liveblocks) : qui modifie les fiches (chacun la sienne par défaut, ou le MJ seulement : fiche en lecture, sans « Modifier », portrait ni montée de niveau) ; qui dessine (tout le monde par défaut, le MJ, ou au choix joueur par joueur).
+- Ces verrous sont dans l'interface seulement, comme prévu au plan : suffisant entre amis, contournable par un joueur qui bidouille. L'ancien `GMCharacterSelector`, inutilisé, est supprimé.
+
+Reste ouvert : essayer les verrous avec un vrai compte joueur (testé seulement côté MJ).
+
+## 2026-10-04 — Refonte, phase E : barre du bas
+- Musique sur une ligne : lecture/pause, titre, volume ; « ⋯ » ouvre le lien YouTube, la position dans le morceau et la file d'attente, et se ferme au clic ailleurs ou avec Échap (`components/music/MusicPlayer.tsx`).
+- Joueurs en ligne à droite, soi compris, initiale dans un rond, nom au survol, MJ couronné (`components/chat/LiveAvatarStack.tsx`). La rangée de dés D4 à D100 et « Lancer » restent telles quelles.
+
+## 2026-10-04 — Refonte, phase D : la bibliothèque remplace l'outil Images
+- Catégories Cartes, Pions alliés, Pions ennemis, Rencontres (`lib/library.ts`) ; une carte devient le fond plein plateau, un pion se pose ou se retire d'un clic (`components/canvas/LibraryPanel.tsx`, `InteractiveCanvas.tsx`).
+- « + Ajouter une image » dans chaque catégorie : l'image est gardée pour toute la salle (clé `library`), supprimable par son auteur ou le MJ. Retirer du plateau n'efface plus rien chez Cloudinary ; seul « Supprimer » le fait.
+- Onglet « Anciennes images » pour retirer ce qui avait été posé avant. « Outils » devient « Dessin » (crayon, gomme, effacer tout). La démo remet aussi la bibliothèque à zéro.
+
+Reste ouvert : envoi d'image jamais essayé pour de vrai (pas d'envoi sur le Cloudinary de Quentin sans son accord).
+
+## 2026-10-04 — Refonte, phase C : la fiche en partie
+- Haut de fiche : portrait cliquable, nom, classe, niveau, « Modifier », barre de PV colorée ; onglets et choix compact ou complet (`components/character/CharacterSheetHeader.tsx`).
+- Portrait choisi dans la bibliothèque (`components/sheet/PortraitPicker.tsx`). Les panneaux de fiche ne sont plus qu'en lecture : on modifie dans l'écran d'édition.
+- Le menu import/export et le sélecteur de fiche du MJ quittent la fiche.
+
+## 2026-10-04 — Salles : cartes agrandies, Ardoise translucide
+- Cartes de salle plus grandes avec membres et présence ; pastille « C » du compte retirée ; panneaux du thème Ardoise translucides.
+
 ## 2026-10-04 — Connexion locale en un clic, sans Discord ni Google
 - Bouton « Connexion locale (admin) » sur la page d'accueil, qui connecte au premier compte administrateur (`auth.ts`, `components/auth/SignInButtons.tsx`).
 - N'existe qu'avec `npm run dev` et depuis localhost : vérifié absent du site construit pour la mise en ligne. Demandé par Quentin, dont le compte Discord n'est pas enregistré dans le navigateur intégré.
