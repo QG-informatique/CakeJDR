@@ -165,7 +165,6 @@
 - [x] Mettre la barre du bas sur une seule ligne : musique à gauche, dé en menu déroulant et « Lancer » au centre, joueurs à droite
 - [ ] Faire générer le pack d'images n° 2 par ChatGPT avec `PROMPT-PACK-IMAGES.md` (Quentin), puis le rapporter en zip
 - [ ] Intégrer le pack n° 2 : convertir en webp avec miniatures dans `public/bibliotheque/`, déclarer les images dans `lib/library.ts`
-- [ ] Refaire la salle de démo avec le set « Cake » : sa pâtisserie en fond, son pion, le Golem de Mie Brûlée et ses levains, la rencontre de Mila
 - [ ] Vérifier les boutons import, export et cloud des fiches sur la page des salles (possible en local avec « Connexion locale (admin) » ; attention, c'est la vraie base)
 - [x] Retirer le mode édition devenu inutile des panneaux de fiche (`StatsPanel`, `EquipPanel`, `DescriptionPanel`, `CompetencesPanel`) en refaisant la fiche en partie (phase C)
 - [ ] Envoyer une vraie image par le « + » de la bibliothèque, la poser, puis la supprimer, pour vérifier l'envoi et l'effacement chez Cloudinary (avec l'accord de Quentin)
@@ -173,6 +172,12 @@
 - [ ] Protéger côté serveur les réglages du MJ (fiches, dessin) et la suppression d'images de la bibliothèque, aujourd'hui bloqués dans l'interface seulement, si une table publique en a besoin
 
 ## Campagnes, bibliothèque du MJ, systèmes de jeu — détail dans `PLAN-CAMPAGNES.md`
+- [ ] Démo solo : donner à chaque visiteur sa propre partie de démo (choisir entre une salle Liveblocks par visiteur et une démo sans temps réel)
+- [ ] Démo solo : écrire la petite aventure de Cake (Mila, pâtisserie, cave, levains, Golem de Mie Brûlée, fins selon les choix) avec le set « Cake »
+- [ ] Démo solo : créer le MJ automatique (raconte, pose carte, pions et musique, demande des jets et lit le résultat, propose des réponses en boutons, passe à la scène suivante)
+- [ ] Démo solo : ajouter le bouton « Voir côté MJ » (carnet, secrets, choix à venir, bibliothèque) et le retour au côté joueur
+- [ ] Démo solo : ajouter l'écran de fin (chemin parcouru, « Crée ta table », « Rejoue autrement ») et la faire tester par Quentin
+- [ ] Phase H : proposer « avec MJ » ou « MJ automatique » pour les campagnes toutes prêtes, en réutilisant le moteur de la démo
 - [ ] Phase G : réserver la bibliothèque au MJ (le joueur ne pose que le pion de son personnage, choisi dans sa fiche)
 - [ ] Phase G : ajouter recherche et filtres à la bibliothèque (type, faction, acte, troupe/élite/boss/allié/PNJ)
 - [ ] Phase G : ajouter « Poser le pion » sur les rencontres qui ont un pion assorti, et « Montrer » une rencontre en grand à tous les joueurs

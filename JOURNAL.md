@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-04 — Démo solo avec MJ automatique ajoutée au plan
+- `PLAN-CAMPAGNES.md` : nouvelle étape « Démo solo ». Un visiteur seul joue la petite aventure de Cake, menée par un MJ automatique (récit, jets demandés, réponses en boutons). Un bouton « Voir côté MJ » lui montre l'envers du décor.
+- MJ automatique scripté plutôt qu'une IA : fiable, gratuit, toujours propre pour une vitrine.
+- Ordre revu : ce qui est en attente sur la refonte d'abord, puis la démo solo, puis G et la 1.0. Le mode « MJ automatique » des campagnes viendra avec la phase H.
+- La tâche « Refaire la salle de démo avec le set Cake » est remplacée par les tâches de la démo solo.
+Reste ouvert : une salle par visiteur ou une démo sans temps réel, à trancher au démarrage.
+
 ## 2026-10-04 — Plan des campagnes, de la bibliothèque du MJ et des systèmes de jeu
 - `PLAN-CAMPAGNES.md` : phase G (bibliothèque réservée au MJ, filtres, paires rencontre-pion), H (campagne toute prête avec carnet du MJ, choix qui mènent aux scènes suivantes, journal des joueurs), I (systèmes de jeu en presets, « Narratif CakeJDR » en base), J (créateurs de système et de campagne).
 - Ordre proposé : pack n° 2 et démo, phase G, mise en ligne 1.0, puis H, I, J. La phase G passe avant le public pour que les joueurs ne voient pas toute la bibliothèque.
