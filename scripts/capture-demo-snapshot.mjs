@@ -17,7 +17,10 @@ const doc = await lb.getStorageDocument(ROOM, 'json')
 const snapshot = {
   images: doc?.images ?? {},
   strokes: doc?.strokes ?? [],
-  characters: doc?.characters ?? {},
+  // Les fiches laissées par les visiteurs ne font pas partie de la démo.
+  characters: Object.fromEntries(
+    Object.entries(doc?.characters ?? {}).filter(([key]) => !key.startsWith('Visiteur:')),
+  ),
   quickNote: doc?.quickNote ?? { text: '', updatedAt: 0 },
   music: doc?.music ?? { id: '', playing: false },
   events: doc?.events ?? [],
