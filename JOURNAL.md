@@ -1,5 +1,11 @@
 # Journal
 
+## 2026-10-05 — Next.js 16.3.8 (pas encore en ligne)
+- Next.js et `eslint-config-next` passent de 16.3.4 à 16.3.8, et `npm audit fix` corrige `baseline-browser-mapping` (`package.json`, `package-lock.json`). La vérification `npm audit` de la CI ne signale plus rien.
+- Vérifié en local : types, lint, construction du site, 15 tests Playwright, salle de test avec un jet de dé passé par le serveur.
+- Sauvegarde avant la mise à jour : tag git `avant-maj-next`, sur la version actuellement en ligne.
+Reste ouvert : mettre en ligne quand Quentin le dit.
+
 ## 2026-10-05 — Salle de démo nettoyée et mise en scène
 - `scripts/install-demo-cake.mjs` pose aussi des dessins qui montrent qu'on peut dessiner : une croix sur un levain vaincu, un cercle autour du Golem, une flèche pour le déplacement de Cake. Il remplace aussi la note et l'historique par un début de partie cohérent : trois messages du MJ, sans jets écrits à la main, car ils s'afficheraient « non vérifiés ».
 - Les croix de l'ancienne carte, une note pleine de charabia et des messages de test ont disparu de la démo. Démo refigée et vérifiée en invité sur le site.
