@@ -1,5 +1,10 @@
 # Journal
 
+## 2026-10-05 — Retours de Quentin sur la version en ligne
+- Next.js 16.3.8 vérifié en ligne : salle de démo complète (7 images, dessins, note, historique), aucune erreur dans la console. Quentin juge la démo suffisante pour montrer ce que fait l'application.
+- Retours notés dans `TODO.md`, rien de codé : bouton de montée de niveau à retirer du joueur, montée de niveau et tests de caractéristique pilotés par le MJ, plusieurs jets en une fois, couleur du critique trop tôt, vrai dé physique synchronisé comme sur l'accueil.
+Reste ouvert : définir avec Quentin le calcul d'un test (dé + modificateur contre difficulté).
+
 ## 2026-10-05 — Next.js 16.3.8 en ligne, CI réparée
 - Montée de Next.js mise en ligne. Vercel a déployé sans erreur, et l'audit de la CI passe.
 - La CI échouait ensuite à la construction : `lib/db/index.ts` exige `DATABASE_URL` dès le chargement, et la CI n'en a pas. Ce problème était caché tant que l'audit bloquait avant. Une adresse factice est ajoutée dans `.github/workflows/ci.yml`, comme pour Liveblocks : la construction ne contacte pas la base. Testé dans une copie propre sans `.env.local`.

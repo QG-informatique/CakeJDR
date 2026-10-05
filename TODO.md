@@ -201,6 +201,17 @@
 - [ ] Phase J : créer l'éditeur de campagne (scènes reliées, images, boutons de choix), rangé dans le compte du MJ (tables en base, avec accord)
 - [ ] Phase J : exporter et importer une campagne en fichier, puis permettre le partage entre MJ
 
+## Retours de Quentin sur la version en ligne (2026-10-05) — tests, niveaux, dés
+- [ ] Retirer le bouton « D6 montée de niveau » de la fiche du joueur (panneau de gauche)
+- [ ] Laisser le MJ choisir comment se passe une montée de niveau : jets de dés qui donnent des points, ou caractéristiques augmentées directement par le MJ
+- [ ] Permettre au MJ de demander plusieurs jets d'un coup à un joueur (par exemple 6 D6, un par caractéristique, pour une montée de niveau), lancés en une seule fois
+- [ ] Créer les tests demandés par le MJ : il choisit le joueur, la caractéristique et la difficulté (par exemple Force contre 10), sans forcément l'annoncer au joueur
+- [ ] Définir avec Quentin le calcul d'un test (résultat du dé + modificateur de la caractéristique, comparé à la difficulté) et l'expliquer dans l'interface
+- [ ] Afficher le résultat d'un test à toute la table (« Cake a réussi son test de Force »), avec réglages du MJ (difficulté visible ou cachée, texte)
+- [ ] Rendre visible d'où vient un modificateur de caractéristique (par exemple Force 8 donne −1) : règle ou équipement
+- [ ] Ne colorer le dé (jaune pour un critique, etc.) qu'au moment où le résultat apparaît, pas dès le début du lancer
+- [ ] Remplacer le dé actuel de la table par un vrai dé physique comme celui de la page d'accueil (rebonds sur les bords), synchronisé chez tous les joueurs : tout le monde voit le lancer et le résultat, qui reste tiré par le serveur
+
 ## Ordre validé (2026-10-04) : débug → refonte en thème → bibliothèque → public → autres thèmes
 
 ## Débug — fin de phase 3
