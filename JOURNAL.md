@@ -1,5 +1,9 @@
 # Journal
 
+## 2026-10-05 — Next.js 16.3.8 en ligne, CI réparée
+- Montée de Next.js mise en ligne. Vercel a déployé sans erreur, et l'audit de la CI passe.
+- La CI échouait ensuite à la construction : `lib/db/index.ts` exige `DATABASE_URL` dès le chargement, et la CI n'en a pas. Ce problème était caché tant que l'audit bloquait avant. Une adresse factice est ajoutée dans `.github/workflows/ci.yml`, comme pour Liveblocks : la construction ne contacte pas la base. Testé dans une copie propre sans `.env.local`.
+
 ## 2026-10-05 — Next.js 16.3.8 (pas encore en ligne)
 - Next.js et `eslint-config-next` passent de 16.3.4 à 16.3.8, et `npm audit fix` corrige `baseline-browser-mapping` (`package.json`, `package-lock.json`). La vérification `npm audit` de la CI ne signale plus rien.
 - Vérifié en local : types, lint, construction du site, 15 tests Playwright, salle de test avec un jet de dé passé par le serveur.
