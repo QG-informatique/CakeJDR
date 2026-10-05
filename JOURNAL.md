@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-05 — Pack n° 2 en ligne, salle de démo refaite
+- Pack d'images n° 2 mis en ligne. Set « Cake » installé dans la vraie salle de démo, puis figé (`scripts/capture-demo-snapshot.mjs`). Vérifié en invité sur le site : carte, Golem, levains, Cake, Mila et portrait affichés.
+- Pions : on garde les figurines vues de face, lisibles et habituelles en jeu narratif. On ajoutera en phase G des pions simples de couleur, générés par le code, pour les scènes tactiques.
+- La vérification `npm audit` de la CI échoue depuis le 4 octobre : faille critique dans `next/og`, que le site n'utilise pas. Corrigée par une montée de Next.js, notée dans la TODO.
+- Les anciennes images Cloudinary de la démo ne sont plus utilisées, mais n'ont pas été effacées.
+Reste ouvert : effacer les trois croix de l'ancienne carte encore figées dans la démo.
+
 ## 2026-10-05 — Pack d'images n° 2 branché, set « Cake » prêt pour la démo
 - 131 images du pack converties en webp avec miniatures dans `public/bibliotheque/` (26 Mo) : 30 cartes, 16 pions alliés, 40 ennemis, 8 portraits, 37 rencontres, toutes déclarées dans `lib/library.ts`.
 - Bonus du pack gardés : la carte du royaume d'Aurélion, avec des noms de lieux, et le portrait de Cake à la brioche.
