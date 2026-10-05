@@ -173,7 +173,8 @@
 - [ ] Protéger côté serveur les réglages du MJ (fiches, dessin) et la suppression d'images de la bibliothèque, aujourd'hui bloqués dans l'interface seulement, si une table publique en a besoin
 
 ## Sécurité
-- [ ] Monter Next.js en 16.3.7 ou plus (faille critique GHSA-vcvr-r3jv-pc5j dans `next/og`, que le site n'utilise pas) et `baseline-browser-mapping` : la vérification `npm audit` de la CI échoue depuis le 4 octobre
+- [ ] Mettre en ligne la montée de Next.js 16.3.8, puis vérifier que la CI repasse au vert et faire un tour rapide du site (connexion, salle, dés, démo) ; en cas de souci, revenir au tag git `avant-maj-next`
+- [x] Monter Next.js en 16.3.7 ou plus (faille critique GHSA-vcvr-r3jv-pc5j dans `next/og`, que le site n'utilise pas) et `baseline-browser-mapping` : la vérification `npm audit` de la CI échoue depuis le 4 octobre
 
 ## Campagnes, bibliothèque du MJ, systèmes de jeu — détail dans `PLAN-CAMPAGNES.md`
 - [ ] Démo solo : donner à chaque visiteur sa propre partie de démo (choisir entre une salle Liveblocks par visiteur et une démo sans temps réel)
