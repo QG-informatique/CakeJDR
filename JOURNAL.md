@@ -1,5 +1,10 @@
 # Journal
 
+## 2026-10-05 — Salle de démo nettoyée et mise en scène
+- `scripts/install-demo-cake.mjs` pose aussi des dessins qui montrent qu'on peut dessiner : une croix sur un levain vaincu, un cercle autour du Golem, une flèche pour le déplacement de Cake. Il remplace aussi la note et l'historique par un début de partie cohérent : trois messages du MJ, sans jets écrits à la main, car ils s'afficheraient « non vérifiés ».
+- Les croix de l'ancienne carte, une note pleine de charabia et des messages de test ont disparu de la démo. Démo refigée et vérifiée en invité sur le site.
+- `scripts/capture-demo-snapshot.mjs` ignore désormais les fiches laissées par les visiteurs.
+
 ## 2026-10-05 — Pack n° 2 en ligne, salle de démo refaite
 - Pack d'images n° 2 mis en ligne. Set « Cake » installé dans la vraie salle de démo, puis figé (`scripts/capture-demo-snapshot.mjs`). Vérifié en invité sur le site : carte, Golem, levains, Cake, Mila et portrait affichés.
 - Pions : on garde les figurines vues de face, lisibles et habituelles en jeu narratif. On ajoutera en phase G des pions simples de couleur, générés par le code, pour les scènes tactiques.
