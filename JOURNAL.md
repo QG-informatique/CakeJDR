@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-07 — Jets multiples et montée de niveau choisie par le MJ
+- Le bouton « Jet » du panneau MJ propose trois demandes : test, dés (jusqu'à 10 dés d'un type, avec raison) ou montée de niveau (`components/gm/GMPanel.tsx`). Le serveur tire tous les dés, signés comme les autres lancers (`app/api/check/route.ts`, `lib/dicePayload.ts`).
+- Le joueur lance tout d'un coup : une rangée de dés tourne puis se révèle (`components/dice/MultiDicePopup.tsx`) ; le chat et le bandeau montrent chaque dé et le total.
+- Montée de niveau, au choix du MJ sous la fiche : « Le joueur lance » (un dé pour les PV, un par caractéristique, ajoutés à la fiche après la révélation, même si le MJ s'est réservé les fiches) ou « Je modifie la fiche » (niveau +1 et édition ouverte) (`components/character/LevelUpPanel.tsx`, `lib/levelUp.ts`). L'ancien tirage local sur la fiche est supprimé.
+- Vérifié dans la salle de test : montée de niveau sur la fiche du MJ (gains exacts), 3 D6 et 7 D6 demandés à un joueur, « Je modifie la fiche ». Fiche Cake remise à ses valeurs ensuite.
+Reste ouvert : essai avec un vrai second compte joueur.
+
 ## 2026-10-07 — Tests de caractéristique demandés par le MJ
 - Dans son panneau, le MJ clique « Test » sur un joueur : caractéristique, modificateur repris de la fiche (modifiable pour un bonus d'équipement), difficulté, raison facultative, difficulté montrée ou cachée (`components/gm/GMPanel.tsx`).
 - Le joueur voit une carte « Le MJ te demande un test de… » et lance le D20 ; le serveur tire le dé, ajoute le modificateur et compare : réussi si le total atteint la difficulté, calcul validé par Quentin (`app/api/check/route.ts`, `components/checks/CheckPrompt.tsx`).

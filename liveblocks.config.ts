@@ -3,7 +3,7 @@
 import type { RoomSettings } from './lib/roomSettings'
 import type { LiveMap, LiveObject, LiveList } from '@liveblocks/client'
 import type { Character } from '@/types/character'
-import type { CheckOutcome, CheckRequest } from '@/lib/checks'
+import type { CheckOutcome, GmRequest, RollsOutcome } from '@/lib/checks'
 
 // Canvas images stored in Liveblocks. Keep in sync with components/canvas/ImageItem.tsx
 // but defined here to satisfy Liveblocks Lson constraints.
@@ -50,7 +50,7 @@ type StrokeSegment = {
 type SessionEvent = {
   id: string
   /** `check` : test demandé par le MJ, un lancer de dé avec son résultat. */
-  kind: 'chat' | 'dice' | 'check'
+  kind: 'chat' | 'dice' | 'check' | 'rolls'
   author?: string
   text?: string
   player?: string
@@ -61,6 +61,8 @@ type SessionEvent = {
   /** Signature du serveur sur un lancer de dé (`lib/diceSigning.ts`). */
   sig?: string
   check?: CheckOutcome
+  /** `rolls` : plusieurs dés demandés par le MJ, `result` est leur somme. */
+  rolls?: RollsOutcome
 }
 
 type Room = {
@@ -106,7 +108,7 @@ declare global {
       /** Réglages posés par le MJ (absents tant qu'il n'a rien changé). */
       settings?: LiveObject<RoomSettings>
       /** Tests demandés par le MJ, en attente du jet du joueur (`app/api/check`). */
-      checks?: LiveMap<string, CheckRequest>
+      checks?: LiveMap<string, GmRequest>
     }
 
     // Custom user info set when authenticating with a secret key

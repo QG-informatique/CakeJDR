@@ -10,7 +10,7 @@ import { useT } from '@/lib/useT'
 import { useIsDesktop } from '@/lib/useIsDesktop'
 import { debug } from '@/lib/debug'
 import { useDiceVerification } from './useDiceVerification'
-import { checkStatLabel, signedMod, withStat } from '@/lib/checks'
+import { checkStatLabel, levelUpLabel, signedMod, withStat } from '@/lib/checks'
 
 // Longueur maximale d'un message : au-delà, la liste partagée de la table
 // grossit vite et un pavé sans espace déborde du panneau.
@@ -61,7 +61,8 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
   const diceRolls = useMemo(
     () => revealedEvents
       .filter((ev) => ev.kind !== 'chat' && ev.player != null && ev.dice != null && ev.result != null)
-      .map((ev) => ({ player: ev.player!, dice: ev.dice!, result: ev.result!, ts: ev.ts })),
+      // Des jets multiples comptent dé par dé : leur somme fausserait les moyennes.
+      .flatMap((ev) => (ev.rolls?.results ?? [ev.result!]).map((result) => ({ player: ev.player!, dice: ev.dice!, result, ts: ev.ts }))),
     [revealedEvents],
   )
   const [inputValue, setInputValue] = useState('')
@@ -219,6 +220,44 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
                       whitespace-pre-wrap [overflow-wrap:anywhere]
                     `}>
                       {ev.text}
+                    </div>
+                  </div>
+                )
+              } else if (ev.kind === 'rolls' && ev.rolls) {
+                // Jets demandés par le MJ, dont la montée de niveau.
+                const r = ev.rolls
+                return (
+                  <div key={ev.id} className="animate-fadeIn ui-well flex flex-col gap-0.5 px-2.5 py-1.5 border-l-2 border-l-accent text-sm">
+                    <div className="flex items-center gap-2">
+                      <Dices size={15} className="shrink-0 text-ink/50" />
+                      <span className="truncate text-ink/75 text-xs font-semibold">{ev.player}</span>
+                      <span className="truncate text-ink/45 text-xs">
+                        {r.levelUp ? t('rollModeLevel') : `${r.results.length} D${ev.dice}`}
+                      </span>
+                      {!r.levelUp && r.results.length > 1 && (
+                        <span className="ml-auto shrink-0 text-xs text-ink/50 tabular-nums">
+                          {t('rollsTotal')} <span className="text-base font-bold leading-none text-ink">{ev.result}</span>
+                        </span>
+                      )}
+                      {diceChecks[ev.id] === 'verified' && (
+                        <ShieldCheck size={13} className={`shrink-0 text-ink/35 ${r.levelUp || r.results.length < 2 ? 'ml-auto' : ''}`} aria-label={t('diceVerified')}>
+                          <title>{t('diceVerified')}</title>
+                        </ShieldCheck>
+                      )}
+                      {diceChecks[ev.id] === 'unverified' && (
+                        <TriangleAlert size={13} className={`shrink-0 text-amber-400 ${r.levelUp || r.results.length < 2 ? 'ml-auto' : ''}`} aria-label={t('diceUnverified')}>
+                          <title>{t('diceUnverified')}</title>
+                        </TriangleAlert>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 pl-6 text-xs text-ink/60 tabular-nums">
+                      {r.results.map((n, i) => (
+                        <span key={i}>
+                          {r.levelUp && `${t(levelUpLabel(i))} `}
+                          <span className="font-bold text-ink">{r.levelUp ? `+${n}` : n}</span>
+                        </span>
+                      ))}
+                      {r.reason && <span className="min-w-0 truncate text-ink/45">· {r.reason}</span>}
                     </div>
                   </div>
                 )

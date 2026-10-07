@@ -7,6 +7,7 @@ import CharacterSheet, { defaultPerso } from '@/components/sheet/CharacterSheet'
 import DiceRoller from '@/components/dice/DiceRoller'
 import ChatBox from '@/components/chat/ChatBox'
 import PopupResult from '@/components/dice/PopupResult'
+import MultiDicePopup from '@/components/dice/MultiDicePopup'
 import CheckPrompt from '@/components/checks/CheckPrompt'
 import CheckBanner from '@/components/checks/CheckBanner'
 import InteractiveCanvas from '@/components/canvas/InteractiveCanvas'
@@ -24,6 +25,8 @@ import { saveAccountCharacter } from '@/lib/charactersApi'
 import { useTheme } from '@/components/context/ThemeContext'
 import { useT } from '@/lib/useT'
 import { canEditSheet, useRoomSettings } from '@/lib/roomSettings'
+import { levelUpLabel, type RollsOutcome } from '@/lib/checks'
+import { applyLevelUp } from '@/lib/levelUp'
 import { Crown } from 'lucide-react'
 import {
   type Character,
@@ -67,6 +70,10 @@ export default function HomePageInner() {
         : others.find((o) => o.connectionId === viewedConnectionId)?.presence?.character ?? null,
     (a, b) => a?.id === b?.id && a?.updatedAt === b?.updatedAt,
   )
+  // Compte Liveblocks du joueur consulté : c'est lui que vise une montée de niveau.
+  const viewedUserId = useOthers((others) =>
+    viewedConnectionId === null ? null : others.find((o) => o.connectionId === viewedConnectionId)?.id ?? null,
+  )
 
   const [showPopup, setShowPopup] = useState(false)
   const [diceType, setDiceType] = useState(6)
@@ -74,6 +81,8 @@ export default function HomePageInner() {
   // Dé montré par l'animation : celui du lanceur, ou le D20 d'un test du MJ.
   const [popupDice, setPopupDice] = useState(6)
   const [diceDisabled, setDiceDisabled] = useState(false)
+  // Plusieurs dés demandés par le MJ, dont la montée de niveau.
+  const [multiRoll, setMultiRoll] = useState<{ results: number[]; dice: number; levelUp: boolean } | null>(null)
   const { id: roomId } = useParams<{ id: string }>()
   const [diceError, setDiceError] = useState(false)
   const chatBoxRef = useRef<HTMLDivElement>(null)
@@ -357,7 +366,9 @@ export default function HomePageInner() {
     void saveCharacterToCloud(perso)
   }, [roomId, perso, saveCharacterToCloud])
 
-  const handleUpdatePerso = (incoming: Character) => {
+  // `gmApproved` : gains d'une montée de niveau lancée à la demande du MJ,
+  // appliqués même quand il s'est réservé les fiches.
+  const handleUpdatePerso = (incoming: Character, gmApproved = false) => {
     if (viewedConnectionId !== null) {
       // Fiche d'un joueur ouverte par le MJ : on la lui envoie, il l'applique
       // et l'enregistre de son côté. Rien n'est écrit sur la fiche du MJ.
@@ -367,7 +378,7 @@ export default function HomePageInner() {
       return
     }
     // Le MJ s'est réservé les fiches : le joueur ne modifie plus la sienne.
-    if (!sheetEditable) return
+    if (!sheetEditable && !gmApproved) return
     const updatedPerso = normalizeCharacter(
       {
         ...incoming,
@@ -513,9 +524,15 @@ export default function HomePageInner() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ roomId, action: 'roll', id }),
       })
-      const data = (await res.json().catch(() => null)) as { roll?: { result: number; dice: number } } | null
+      const data = (await res.json().catch(() => null)) as
+        | { roll?: { result: number; dice: number; rolls?: RollsOutcome } }
+        | null
       if (!res.ok || !data?.roll) throw new Error(`check ${res.status}`)
       debug('check-roll', data.roll)
+      if (data.roll.rolls) {
+        setMultiRoll({ results: data.roll.rolls.results, dice: data.roll.dice, levelUp: data.roll.rolls.levelUp })
+        return
+      }
       setPopupDice(data.roll.dice)
       setDiceResult(data.roll.result)
       setShowPopup(true)
@@ -526,6 +543,19 @@ export default function HomePageInner() {
       setCooldown(false)
       setDiceDisabled(false)
     }
+  }
+
+  // Les gains arrivent sur la fiche une fois les dés révélés à toute la table.
+  // Pendant que le MJ consulte une autre fiche, sa montée de niveau attend
+  // (`levelUpBlocked`) : la fiche affichée est donc bien la sienne.
+  const handleMultiFinish = () => {
+    const roll = multiRoll
+    setMultiRoll(null)
+    if (roll?.levelUp && viewedConnectionId === null) handleUpdatePerso(applyLevelUp(perso, roll.results), true)
+    window.setTimeout(() => {
+      setCooldown(false)
+      setDiceDisabled(false)
+    }, 1000)
   }
 
   const handlePopupFinish = () => {
@@ -548,6 +578,11 @@ export default function HomePageInner() {
             onUpdate={handleUpdatePerso}
             readOnly={!sheetEditable}
             canLevelUp={isGM}
+            levelUpTarget={
+              viewedConnectionId === null
+                ? self ? { id: self.id, name: perso.nom || profile?.pseudo || '?' } : null
+                : viewedUserId ? { id: viewedUserId, name: perso.nom || '?' } : null
+            }
             notice={viewedConnectionId !== null ? (
               <div className="-mx-3 mb-1 flex items-center gap-2 border-b border-gm/30 bg-gm/10 px-3 py-2 text-xs">
                 <Crown size={13} className="shrink-0 text-gm" aria-hidden />
@@ -614,9 +649,17 @@ export default function HomePageInner() {
             <DemoBanner />
             <ErrorBoundary fallback={<div className="p-4 text-red-500">Dice display error</div>}>
               <PopupResult show={showPopup} result={diceResult} diceType={popupDice} onFinish={handlePopupFinish} />
+              <MultiDicePopup
+                results={multiRoll?.results ?? null}
+                dice={multiRoll?.dice ?? 6}
+                labels={multiRoll?.levelUp ? multiRoll.results.map((_, i) => t(levelUpLabel(i))) : undefined}
+                onFinish={handleMultiFinish}
+              />
             </ErrorBoundary>
             <CheckBanner isGM={isGM} />
-            {!showPopup && <CheckPrompt onRoll={rollCheck} disabled={diceDisabled} />}
+            {!showPopup && !multiRoll && (
+              <CheckPrompt onRoll={rollCheck} disabled={diceDisabled} levelUpBlocked={viewedConnectionId !== null} />
+            )}
             {diceError && (
               <p role="alert" className="ui-panel absolute bottom-14 left-1/2 -translate-x-1/2 z-30 px-3 py-1.5 text-sm">
                 {t('diceRollFailed')}

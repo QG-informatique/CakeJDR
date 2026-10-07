@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useOthers, useRoom, useStorage } from '@liveblocks/react'
-import { Crown, FileText, Target, X } from 'lucide-react'
+import { Crown, Dices, FileText, Target, X } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import {
   CHECK_DC_MAX,
@@ -10,11 +10,15 @@ import {
   CHECK_MOD_RANGE,
   CHECK_REASON_MAX,
   CHECK_STATS,
+  LEVEL_UP_TARGETS,
+  ROLLS_MAX,
   checkStatLabel,
   signedMod,
   withStat,
   type CheckStat,
 } from '@/lib/checks'
+import { DICE_TYPES } from '@/lib/dicePayload'
+import { postCheck } from '@/components/checks/postCheck'
 import { useRoomSettings, type DrawPermission, type SheetEditMode } from '@/lib/roomSettings'
 import { type Character, normalizeCharacter } from '@/types/character'
 
@@ -129,7 +133,7 @@ export default function GMPanel({ viewingConnectionId, onOpenSheet, onBackToOwn,
                       title={t('gmCheckTitle').replace('{n}', c?.nom || p.name)}
                       className={`ui-btn shrink-0 !min-h-8 !px-2.5 text-xs ${checkFor === p.connectionId ? 'ui-btn-primary' : ''}`}
                     >
-                      <Target size={13} />
+                      <Dices size={13} />
                       {t('gmCheck')}
                     </button>
                     <button
@@ -142,7 +146,7 @@ export default function GMPanel({ viewingConnectionId, onOpenSheet, onBackToOwn,
                     </button>
                   </div>
                   {checkFor === p.connectionId && c && p.id && (
-                    <CheckForm
+                    <RequestForm
                       targetId={p.id}
                       targetName={c.nom || p.name}
                       character={c}
@@ -216,15 +220,116 @@ function writeHiddenDcs(dcs: Record<string, number>) {
   } catch { /* stockage indisponible */ }
 }
 
-async function postCheck(roomId: string, payload: Record<string, unknown>) {
-  const res = await fetch('/api/check', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ roomId, ...payload }),
-  })
-  const data = (await res.json().catch(() => null)) as { id?: string } | null
-  if (!res.ok) throw new Error(`check ${res.status}`)
-  return data
+type RequestMode = 'check' | 'dice' | 'level'
+
+/** Ce que le MJ demande à un joueur : un test, des dés, ou une montée de niveau. */
+function RequestForm(props: {
+  targetId: string
+  targetName: string
+  character: Character
+  onDone: () => void
+}) {
+  const t = useT()
+  const [mode, setMode] = useState<RequestMode>('check')
+  const MODES: Array<[RequestMode, string]> = [
+    ['check', t('rollModeCheck')],
+    ['dice', t('rollModeDice')],
+    ['level', t('rollModeLevel')],
+  ]
+  return (
+    <div className="ui-well flex flex-col gap-2 p-2.5 text-xs">
+      <div className="ui-seg" role="group" aria-label={t('gmCheckTitle').replace('{n}', props.targetName)}>
+        {MODES.map(([value, label]) => (
+          <button key={value} aria-pressed={mode === value} onClick={() => setMode(value)}>
+            {label}
+          </button>
+        ))}
+      </div>
+      {mode === 'check' ? <CheckForm {...props} /> : <RollsForm {...props} levelUp={mode === 'level'} />}
+    </div>
+  )
+}
+
+/** Plusieurs dés lancés en une fois ; pour une montée de niveau, le nombre est fixé. */
+function RollsForm({ targetId, targetName, levelUp, onDone }: {
+  targetId: string
+  targetName: string
+  levelUp: boolean
+  onDone: () => void
+}) {
+  const t = useT()
+  const room = useRoom()
+  const [count, setCount] = useState('2')
+  const [dice, setDice] = useState(6)
+  const [reason, setReason] = useState('')
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState(false)
+
+  const countNum = levelUp ? LEVEL_UP_TARGETS.length : Math.round(Number(count))
+  const valid = Number.isFinite(countNum) && countNum >= 1 && countNum <= ROLLS_MAX
+
+  const send = async () => {
+    if (!valid || sending) return
+    setSending(true)
+    setError(false)
+    try {
+      await postCheck(room.id, {
+        action: 'ask', type: 'rolls', targetId, targetName, dice, count: countNum, levelUp, reason: reason.trim(),
+      })
+      onDone()
+    } catch {
+      setError(true)
+      setSending(false)
+    }
+  }
+
+  return (
+    <>
+      <div className={`grid gap-2 ${levelUp ? 'grid-cols-[5rem]' : 'grid-cols-[4.5rem_5rem]'}`}>
+        {!levelUp && (
+          <label className="flex min-w-0 flex-col gap-1">
+            <span className="text-ink/60">{t('rollsCount')}</span>
+            <input
+              type="number"
+              inputMode="numeric"
+              value={count}
+              min={1}
+              max={ROLLS_MAX}
+              onChange={(e) => setCount(e.target.value)}
+              className="ui-input w-full min-w-0 !min-h-8"
+            />
+          </label>
+        )}
+        <label className="flex min-w-0 flex-col gap-1">
+          <span className="text-ink/60">{t('rollsDice')}</span>
+          <select value={dice} onChange={(e) => setDice(Number(e.target.value))} className="ui-input w-full min-w-0 !min-h-8">
+            {DICE_TYPES.map((d) => (
+              <option key={d} value={d}>D{d}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+      {levelUp ? (
+        <p className="text-[11px] text-ink/50">{t('levelUpHint')}</p>
+      ) : (
+        <label className="flex flex-col gap-1">
+          <span className="text-ink/60">{t('checkReasonLabel')}</span>
+          <input
+            type="text"
+            value={reason}
+            maxLength={CHECK_REASON_MAX}
+            onChange={(e) => setReason(e.target.value)}
+            className="ui-input w-full min-w-0 !min-h-8"
+          />
+        </label>
+      )}
+      {error && <p role="alert" className="text-red-400">{t('checkFailed')}</p>}
+      <button onClick={send} disabled={!valid || sending} className="ui-btn ui-btn-primary !min-h-8 text-xs">
+        <Dices size={13} />
+        {t(levelUp ? 'levelUpSend' : 'rollsSend')}
+      </button>
+    </>
+  )
 }
 
 const modFromSheet = (c: Character, stat: CheckStat) => {
@@ -277,7 +382,7 @@ function CheckForm({ targetId, targetName, character, onDone }: {
   }
 
   return (
-    <div className="ui-well flex flex-col gap-2 p-2.5 text-xs">
+    <>
       <div className="grid grid-cols-[1fr_4.5rem_4.5rem] gap-2">
         <label className="flex min-w-0 flex-col gap-1">
           <span className="text-ink/60">{t('checkStatLabel')}</span>
@@ -333,7 +438,7 @@ function CheckForm({ targetId, targetName, character, onDone }: {
         <Target size={13} />
         {t('checkSend')}
       </button>
-    </div>
+    </>
   )
 }
 
@@ -358,6 +463,23 @@ function PendingChecks() {
       <h3 className="ui-label !text-[10px]">{t('checkPending')}</h3>
       <ul className="ui-well divide-y divide-[var(--c-panel-line)]">
         {pending.map((c) => {
+          if (c.type === 'rolls') {
+            return (
+              <li key={c.id} className="flex items-center gap-2 px-2.5 py-2 text-xs">
+                <Dices size={13} className="shrink-0 text-ink/50" aria-hidden />
+                <span className="min-w-0 flex-1 truncate">
+                  <span className="font-semibold">{c.targetName}</span>
+                  {' · '}
+                  {c.levelUp && `${t('rollModeLevel')} · `}
+                  {c.count} D{c.dice}
+                  {c.reason && ` · ${c.reason}`}
+                </span>
+                <button onClick={() => cancel(c.id)} className="ui-btn ui-btn-ghost shrink-0 !min-h-7 !px-2 text-xs">
+                  {t('checkCancel')}
+                </button>
+              </li>
+            )
+          }
           const dc = c.dc ?? hiddenDcs[c.id]
           return (
             <li key={c.id} className="flex items-center gap-2 px-2.5 py-2 text-xs">
