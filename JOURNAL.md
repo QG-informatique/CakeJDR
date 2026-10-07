@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-07 — Dé à vraie physique et résultat connu dès la prise en main
+- Le dé ne tournait que sur un axe : c'était ma simulation maison, pas le tirage serveur. Remplacée par un vrai moteur physique, cannon-es (celui des dépôts de dés 3D) : le cube culbute dans tous les sens, rebondit sur le tapis, les bords et les autres dés, et finit toujours à plat (`lib/diceThrow.ts`, 1 200 lancers simulés sans dé coincé).
+- Le résultat reste tiré par le serveur (anti-triche). Nouveau : il est tiré dès qu'on attrape le dé, scellé dans les métadonnées de la table, et repris au lâcher ; on ne peut ni le lire d'avance ni l'effacer pour relancer (`lib/diceDraw.ts`, `peek` dans `app/api/dice/route.ts` et `app/api/check/route.ts`).
+- Le navigateur connaît donc le chiffre avant le lâcher et l'inscrit sur la face qui finira en haut : plus de chiffre qui change pendant le roulé (`components/dice/TableDice.tsx`, `components/app/HomePageInner.tsx`).
+- Testé dans salletest : jets libres D6/D20 et demande du MJ 3 D8, tirage annoncé = tirage jeté, nom de la salle conservé, tirages effacés après usage.
+Reste ouvert : délai du tirage d'avance à mesurer en ligne ; fluidité sur téléphone ; info-bulle d'origine des modificateurs.
+
 ## 2026-10-07 — Dé de table pris en main et lancé d'un geste
 - Revirement après le retour de Quentin : le dé attend au milieu du plateau, on l'attrape à la souris, on le traîne et on le lâche ; plus le geste est fort, plus il va loin et rebondit sur les bords (`components/dice/TableDice.tsx`, physique déplacée dans `lib/diceThrow.ts`).
 - Geste trop mou : rien ne part, « Lance-le plus fort ! ». Le résultat reste tiré par le serveur, qui garde le geste avec le lancer (hors signature) et révèle le chat quand le dé se pose (`app/api/dice/route.ts`, `app/api/check/route.ts`).

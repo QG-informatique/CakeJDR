@@ -551,8 +551,30 @@ export default function HomePageInner() {
     }
   }
 
-  // Le dé lâché sur la table part pour la demande du MJ s'il y en a une.
-  const throwDice = (gesture: ThrowParams) => (pending ? rollCheck(pending.id, gesture) : rollDice(gesture))
+  // Résultat du prochain jet, demandé quand on attrape le dé : le serveur le
+  // tire d'avance et le garde pour ce jet (`lib/diceDraw.ts`).
+  const peekDice = async (): Promise<number[] | null> => {
+    try {
+      const res = await fetch(pending ? '/api/check' : '/api/dice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(
+          pending ? { roomId, action: 'peek', id: pending.id } : { roomId, dice: diceType, peek: true },
+        ),
+      })
+      const data = (await res.json().catch(() => null)) as { results?: number[] | null } | null
+      return res.ok && Array.isArray(data?.results) ? data.results : null
+    } catch {
+      return null
+    }
+  }
+
+  // Le dé lâché sur la table part pour la demande du MJ s'il y en a une. On
+  // laisse d'abord au tirage d'avance le temps d'être rangé : le jet le reprend.
+  const throwDice = async (gesture: ThrowParams, peek: Promise<number[] | null> | null) => {
+    if (peek) await Promise.race([peek, new Promise((r) => window.setTimeout(r, 1500))])
+    return pending ? rollCheck(pending.id, gesture) : rollDice(gesture)
+  }
   const levelUpWaits = pending?.type === 'rolls' && pending.levelUp && viewedConnectionId !== null
 
   // Les gains arrivent sur la fiche une fois les dés révélés à toute la table.
@@ -664,6 +686,8 @@ export default function HomePageInner() {
                 count={pending?.type === 'rolls' ? pending.count : 1}
                 disabled={diceDisabled || levelUpWaits}
                 name={perso.nom || profile?.pseudo || ''}
+                drawKey={pending ? `check:${pending.id}` : `free:${diceType}`}
+                onPeek={peekDice}
                 onThrow={throwDice}
                 onDone={handleThrowDone}
               />
