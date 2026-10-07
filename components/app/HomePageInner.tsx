@@ -7,6 +7,8 @@ import CharacterSheet, { defaultPerso } from '@/components/sheet/CharacterSheet'
 import DiceRoller from '@/components/dice/DiceRoller'
 import ChatBox from '@/components/chat/ChatBox'
 import PopupResult from '@/components/dice/PopupResult'
+import CheckPrompt from '@/components/checks/CheckPrompt'
+import CheckBanner from '@/components/checks/CheckBanner'
 import InteractiveCanvas from '@/components/canvas/InteractiveCanvas'
 import DemoBanner from '@/components/rooms/DemoBanner'
 import MusicPlayer from '@/components/music/MusicPlayer'
@@ -69,6 +71,8 @@ export default function HomePageInner() {
   const [showPopup, setShowPopup] = useState(false)
   const [diceType, setDiceType] = useState(6)
   const [diceResult, setDiceResult] = useState<number | null>(null)
+  // Dé montré par l'animation : celui du lanceur, ou le D20 d'un test du MJ.
+  const [popupDice, setPopupDice] = useState(6)
   const [diceDisabled, setDiceDisabled] = useState(false)
   const { id: roomId } = useParams<{ id: string }>()
   const [diceError, setDiceError] = useState(false)
@@ -485,10 +489,38 @@ export default function HomePageInner() {
       const data = (await res.json().catch(() => null)) as { roll?: { result: number } } | null
       if (!res.ok || !data?.roll) throw new Error(`dice ${res.status}`)
       debug('dice-roll', data.roll)
+      setPopupDice(diceType)
       setDiceResult(data.roll.result)
       setShowPopup(true)
     } catch (e) {
       debug('dice-roll failed', e)
+      setDiceError(true)
+      window.setTimeout(() => setDiceError(false), 4000)
+      setCooldown(false)
+      setDiceDisabled(false)
+    }
+  }
+
+  // Test demandé par le MJ : le serveur tire le D20 et calcule la réussite.
+  const rollCheck = async (id: string) => {
+    if (diceDisabled) return
+    setDiceDisabled(true)
+    setCooldown(true)
+    setDiceError(false)
+    try {
+      const res = await fetch('/api/check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomId, action: 'roll', id }),
+      })
+      const data = (await res.json().catch(() => null)) as { roll?: { result: number; dice: number } } | null
+      if (!res.ok || !data?.roll) throw new Error(`check ${res.status}`)
+      debug('check-roll', data.roll)
+      setPopupDice(data.roll.dice)
+      setDiceResult(data.roll.result)
+      setShowPopup(true)
+    } catch (e) {
+      debug('check-roll failed', e)
       setDiceError(true)
       window.setTimeout(() => setDiceError(false), 4000)
       setCooldown(false)
@@ -581,8 +613,10 @@ export default function HomePageInner() {
             {/* Bandeau de la salle de démo, en bas du plateau : il ne cache pas les outils. */}
             <DemoBanner />
             <ErrorBoundary fallback={<div className="p-4 text-red-500">Dice display error</div>}>
-              <PopupResult show={showPopup} result={diceResult} diceType={diceType} onFinish={handlePopupFinish} />
+              <PopupResult show={showPopup} result={diceResult} diceType={popupDice} onFinish={handlePopupFinish} />
             </ErrorBoundary>
+            <CheckBanner isGM={isGM} />
+            {!showPopup && <CheckPrompt onRoll={rollCheck} disabled={diceDisabled} />}
             {diceError && (
               <p role="alert" className="ui-panel absolute bottom-14 left-1/2 -translate-x-1/2 z-30 px-3 py-1.5 text-sm">
                 {t('diceRollFailed')}

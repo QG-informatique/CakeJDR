@@ -1,7 +1,7 @@
 'use client'
 
 import { FC, RefObject, useRef, useState, useEffect, useMemo } from 'react'
-import { ChevronLeft, ChevronRight, BarChart3, BookOpen, Dices, MessageSquare, ShieldCheck, TriangleAlert } from 'lucide-react'
+import { ChevronLeft, ChevronRight, BarChart3, BookOpen, Dices, MessageSquare, ShieldCheck, Target, TriangleAlert } from 'lucide-react'
 import { useBroadcastEvent, useRoom, useSelf } from '@liveblocks/react'
 import SessionSummary from './SessionSummary'
 import DiceStats from './DiceStats'
@@ -10,6 +10,7 @@ import { useT } from '@/lib/useT'
 import { useIsDesktop } from '@/lib/useIsDesktop'
 import { debug } from '@/lib/debug'
 import { useDiceVerification } from './useDiceVerification'
+import { checkStatLabel, signedMod, withStat } from '@/lib/checks'
 
 // Longueur maximale d'un message : au-delà, la liste partagée de la table
 // grossit vite et un pavé sans espace déborde du panneau.
@@ -41,7 +42,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
   // jusque-là, pour ne pas dévoiler le résultat avant le dé.
   const [now, setNow] = useState(() => Date.now())
   const nextReveal = useMemo(
-    () => sortedEvents.find((ev) => ev.kind === 'dice' && ev.ts > now)?.ts ?? null,
+    () => sortedEvents.find((ev) => ev.kind !== 'chat' && ev.ts > now)?.ts ?? null,
     [sortedEvents, now],
   )
   useEffect(() => {
@@ -50,7 +51,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
     return () => window.clearTimeout(timer)
   }, [nextReveal])
   const revealedEvents = useMemo(
-    () => sortedEvents.filter((ev) => ev.kind !== 'dice' || ev.ts <= now),
+    () => sortedEvents.filter((ev) => ev.kind === 'chat' || ev.ts <= now),
     [sortedEvents, now],
   )
   const diceChecks = useDiceVerification(room.id, revealedEvents)
@@ -59,7 +60,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
   // faits avant leur arrivée.
   const diceRolls = useMemo(
     () => revealedEvents
-      .filter((ev) => ev.kind === 'dice' && ev.player != null && ev.dice != null && ev.result != null)
+      .filter((ev) => ev.kind !== 'chat' && ev.player != null && ev.dice != null && ev.result != null)
       .map((ev) => ({ player: ev.player!, dice: ev.dice!, result: ev.result!, ts: ev.ts })),
     [revealedEvents],
   )
@@ -218,6 +219,38 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
                       whitespace-pre-wrap [overflow-wrap:anywhere]
                     `}>
                       {ev.text}
+                    </div>
+                  </div>
+                )
+              } else if (ev.kind === 'check' && ev.check) {
+                // Test demandé par le MJ : la difficulté cachée n'apparaît qu'au MJ.
+                const c = ev.check
+                const showDc = c.showDc || self?.info?.role === 'gm'
+                return (
+                  <div key={ev.id} className={`animate-fadeIn ui-well flex flex-col gap-0.5 px-2.5 py-1.5 border-l-2 ${c.success ? 'border-l-emerald-400' : 'border-l-red-400'} text-sm`}>
+                    <div className="flex items-center gap-2">
+                      <Target size={15} className="shrink-0 text-ink/50" />
+                      <span className="truncate text-ink/75 text-xs font-semibold">{ev.player}</span>
+                      <span className="truncate text-ink/45 text-xs">{withStat(t('checkOf'), t(checkStatLabel(c.stat)))}</span>
+                      <span className={`ml-auto shrink-0 rounded px-1.5 py-0.5 text-[11px] font-bold ${c.success ? 'bg-emerald-500/15 text-emerald-300' : 'bg-red-500/15 text-red-300'}`}>
+                        {t(c.success ? 'checkPassed' : 'checkMissed')}
+                      </span>
+                      {diceChecks[ev.id] === 'verified' && (
+                        <ShieldCheck size={13} className="shrink-0 text-ink/35" aria-label={t('diceVerified')}>
+                          <title>{t('diceVerified')}</title>
+                        </ShieldCheck>
+                      )}
+                      {diceChecks[ev.id] === 'unverified' && (
+                        <TriangleAlert size={13} className="shrink-0 text-amber-400" aria-label={t('diceUnverified')}>
+                          <title>{t('diceUnverified')}</title>
+                        </TriangleAlert>
+                      )}
+                    </div>
+                    <div className="flex items-baseline gap-1.5 pl-6 text-xs text-ink/60 tabular-nums">
+                      <span>D20 {ev.result} {signedMod(c.mod)} =</span>
+                      <span className="text-base font-bold leading-none text-ink">{c.total}</span>
+                      {showDc && <span>{t('checkVs')} {c.dc}</span>}
+                      {c.reason && <span className="min-w-0 truncate text-ink/45">· {c.reason}</span>}
                     </div>
                   </div>
                 )

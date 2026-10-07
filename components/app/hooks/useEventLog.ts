@@ -1,9 +1,11 @@
 import { useEffect, useMemo } from 'react'
 import { useMutation, useStorage } from '@liveblocks/react'
+import type { CheckOutcome } from '@/lib/checks'
 
 export type SessionEvent = {
   id: string
-  kind: 'chat' | 'dice'
+  /** `check` : test demandé par le MJ, un lancer de dé avec son résultat. */
+  kind: 'chat' | 'dice' | 'check'
   author?: string
   text?: string
   player?: string
@@ -13,6 +15,7 @@ export type SessionEvent = {
   isMJ?: boolean
   /** Signature du serveur sur un lancer de dé (`lib/diceSigning.ts`). */
   sig?: string
+  check?: CheckOutcome
 }
 
 const prefix = 'jdr_events_'
