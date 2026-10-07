@@ -1,5 +1,10 @@
 # Journal
 
+## 2026-10-07 — Montée de niveau réservée au MJ, couleur du dé à la révélation
+- Le bouton « Montée de niveau » n'apparaît plus que pour le MJ, sur sa fiche ou celle d'un joueur qu'il ouvre (`CharacterSheet.tsx`, `StatsTab.tsx`, `HomePageInner.tsx`). Choix provisoire : la montée de niveau reste possible, en attendant que le MJ choisisse sa règle.
+- Le dé tourne en bleu neutre ; le doré du critique et le rouge de l'échec n'apparaissent qu'avec le chiffre (`components/dice/PopupResult.tsx`). Vérifié dans la salle de test sur une dizaine de lancers.
+Reste ouvert : les tests de caractéristique du MJ et les jets multiples, puis le vrai dé physique synchronisé.
+
 ## 2026-10-05 — Retours de Quentin sur la version en ligne
 - Next.js 16.3.8 vérifié en ligne : salle de démo complète (7 images, dessins, note, historique), aucune erreur dans la console. Quentin juge la démo suffisante pour montrer ce que fait l'application.
 - Retours notés dans `TODO.md`, rien de codé : bouton de montée de niveau à retirer du joueur, montée de niveau et tests de caractéristique pilotés par le MJ, plusieurs jets en une fois, couleur du critique trop tôt, vrai dé physique synchronisé comme sur l'accueil.

@@ -23,13 +23,15 @@ type Props = {
   readOnly?: boolean
   /** Bandeau au-dessus de la fiche (fiche d'un joueur ouverte par le MJ, fiche verrouillée). */
   notice?: React.ReactNode
+  /** Montée de niveau : le MJ la fait faire, le joueur ne la lance plus lui-même. */
+  canLevelUp?: boolean
 }
 
 const DENSITY_KEY = 'sheetDensity'
 
 export const defaultPerso: Character = { ...defaultCharacter }
 
-/** Jet de montée de niveau (ex. « d6 ») : la fiche appartient au joueur, le tirage reste local. */
+/** Jet de montée de niveau (ex. « d6 ») : lancé par le MJ sur la fiche, le tirage reste local. */
 const rollDice = (dice: string): number => {
   const match = dice.match(/d(\d+)/i)
   if (!match) return 0
@@ -37,7 +39,7 @@ const rollDice = (dice: string): number => {
   return Math.floor(Math.random() * sides) + 1
 }
 
-const CharacterSheet: FC<Props> = ({ perso, onUpdate, readOnly = false, notice }) => {
+const CharacterSheet: FC<Props> = ({ perso, onUpdate, readOnly = false, notice, canLevelUp = false }) => {
   // La fiche se modifie dans l'écran d'édition (CharacterEditor) ; ici elle
   // ne fait que s'afficher.
   const [editorOpen, setEditorOpen] = useState(false)
@@ -228,6 +230,7 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, readOnly = false, notice }
           lastGain={lastGain}
           animKey={animKey}
           readOnly={readOnly}
+          canLevelUp={canLevelUp}
         />
       )}
       {tab === 'equip' && <EquipPanel perso={localPerso} compact={density === 'compact'} />}

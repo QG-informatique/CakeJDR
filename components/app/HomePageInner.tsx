@@ -515,6 +515,7 @@ export default function HomePageInner() {
             perso={perso}
             onUpdate={handleUpdatePerso}
             readOnly={!sheetEditable}
+            canLevelUp={isGM}
             notice={viewedConnectionId !== null ? (
               <div className="-mx-3 mb-1 flex items-center gap-2 border-b border-gm/30 bg-gm/10 px-3 py-2 text-xs">
                 <Crown size={13} className="shrink-0 text-gm" aria-hidden />
