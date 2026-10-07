@@ -40,7 +40,7 @@ export default function CheckPrompt({ onRoll, disabled, levelUpBlocked = false }
           {check.levelUp ? t('levelUpPromptHint').replace('{dice}', dice) : dice}
           {more}
         </p>
-        {blocked && <p className="text-xs text-amber-300">{t('levelUpBlocked')}</p>}
+        {blocked ? <p className="text-xs text-amber-300">{t('levelUpBlocked')}</p> : <GrabHint />}
         <button onClick={() => onRoll(check.id)} disabled={disabled || blocked} className="ui-btn ui-btn-primary">
           {t('rollsRoll')}
         </button>
@@ -63,9 +63,16 @@ export default function CheckPrompt({ onRoll, disabled, levelUpBlocked = false }
           : t('checkPromptDcHidden')}
         {more}
       </p>
+      <GrabHint />
       <button onClick={() => onRoll(check.id)} disabled={disabled} className="ui-btn ui-btn-primary">
         {t('checkRoll')}
       </button>
     </div>
   )
+}
+
+/** Le bouton lance le dé tout seul ; on peut aussi le prendre en main sur la table. */
+function GrabHint() {
+  const t = useT()
+  return <p className="text-xs text-ink/60">{t('diceGrabHint')}</p>
 }

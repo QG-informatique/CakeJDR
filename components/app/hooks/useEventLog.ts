@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { useMutation, useStorage } from '@liveblocks/react'
 import type { CheckOutcome, RollsOutcome } from '@/lib/checks'
+import type { ThrowParams } from '@/lib/diceThrow'
 
 export type SessionEvent = {
   id: string
@@ -18,6 +19,8 @@ export type SessionEvent = {
   check?: CheckOutcome
   /** `rolls` : plusieurs dés demandés par le MJ, `result` est leur somme. */
   rolls?: RollsOutcome
+  /** Geste du lanceur, rejoué sur la table de chacun (`lib/diceThrow.ts`). */
+  throw?: ThrowParams
 }
 
 const prefix = 'jdr_events_'

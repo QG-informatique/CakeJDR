@@ -10,6 +10,7 @@ import { resolveRoomAccess } from '@/lib/db/roomAccess'
 import { signDiceRoll } from '@/lib/diceSigning'
 import { sealCheck, unsealCheck, type SealedCheck, type SealedRolls } from '@/lib/checkSeal'
 import { DICE_REVEAL_DELAY_MS, DICE_TYPES, type SignedDiceRoll } from '@/lib/dicePayload'
+import { parseThrow, revealDelayMs } from '@/lib/diceThrow'
 import {
   CHECK_DC_MAX,
   CHECK_DC_MIN,
@@ -182,6 +183,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (action !== 'roll') return fail('bad action', 400)
+  const gesture = parseThrow(body.throw)
 
   // Écrits dans le rappel de `mutateStorage` : on les déclare ainsi pour que
   // TypeScript ne les croie pas toujours nuls après l'appel.
@@ -212,7 +214,10 @@ export async function POST(req: NextRequest) {
       }
       map.delete(id)
 
-      const base = { id: randomUUID(), player: check.targetName, ts: Date.now() + DICE_REVEAL_DELAY_MS }
+      // Le geste fixe la durée du roulement : le résultat paraît quand les dés se posent.
+      const count = check.type === 'rolls' ? check.count : 1
+      const delay = gesture ? revealDelayMs(gesture, count) : DICE_REVEAL_DELAY_MS
+      const base = { id: randomUUID(), player: check.targetName, ts: Date.now() + delay }
       let unsigned: Omit<SignedDiceRoll, 'sig'>
       if (check.type === 'rolls') {
         const results = Array.from({ length: check.count }, () => randomInt(1, check.dice + 1))
@@ -244,7 +249,7 @@ export async function POST(req: NextRequest) {
           },
         }
       }
-      roll = { ...unsigned, sig: signDiceRoll(roomId, unsigned) }
+      roll = { ...unsigned, sig: signDiceRoll(roomId, unsigned), ...(gesture ? { throw: gesture } : {}) }
 
       let list = root.get('events') as LiveList<Lson> | undefined
       if (!list || typeof list.push !== 'function') {

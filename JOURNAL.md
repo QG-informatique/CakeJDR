@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-07 — Dé de table pris en main et lancé d'un geste
+- Revirement après le retour de Quentin : le dé attend au milieu du plateau, on l'attrape à la souris, on le traîne et on le lâche ; plus le geste est fort, plus il va loin et rebondit sur les bords (`components/dice/TableDice.tsx`, physique déplacée dans `lib/diceThrow.ts`).
+- Geste trop mou : rien ne part, « Lance-le plus fort ! ». Le résultat reste tiré par le serveur, qui garde le geste avec le lancer (hors signature) et révèle le chat quand le dé se pose (`app/api/dice/route.ts`, `app/api/check/route.ts`).
+- Les autres voient le dé dans la main du joueur (« Cake a le dé en main ») puis le même lancer, à la même vitesse (événements `dice-hold` / `dice-drop`, `liveblocks.config.ts`). Les demandes du MJ passent par le même dé (D20 ou N dés).
+- Testé dans salletest : faces finales = chat sur D6 et 3 D8, critique en or, échec en rouge, vue d'un second onglet.
+Reste ouvert : sur ~4 % des lancers lents, le lanceur voit le chiffre changer en fin de course ; info-bulle d'origine des modificateurs pas commencée.
+
 ## 2026-10-07 — Dé de table lancé et vu par toute la table
 - Les dés roulent maintenant sur le plateau comme celui de la page d'accueil : ils partent d'un bord, basculent, rebondissent sur les bords et entre eux, puis se posent sur le résultat tiré par le serveur (`components/dice/TableDice.tsx`, `components/dice/diceThrow.ts`, calcul du cube partagé dans `lib/cubeMath.ts`).
 - Toute la table voit le même lancer au même moment : la trajectoire est rejouée à partir de l'identifiant du lancer, seule l'échelle suit l'écran de chacun. Un lancer à la signature invalide n'est pas montré.
