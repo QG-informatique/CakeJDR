@@ -45,8 +45,12 @@ type Props = {
   disabled: boolean
   /** Nom montré aux autres pendant qu'on tient le dé. */
   name: string
+  /** Tirage visé par le prochain jet (jet libre de tel dé, demande du MJ) : un tirage d'avance ne sert qu'à lui. */
+  drawKey: string
+  /** Demande au serveur le résultat du prochain jet, quand on attrape le dé ; `null` s'il ne le donne pas. */
+  onPeek: () => Promise<number[] | null>
   /** Envoie le geste au serveur, qui tire le résultat ; `null` en cas d'échec. */
-  onThrow: (p: ThrowParams) => Promise<ThrowResult | null>
+  onThrow: (p: ThrowParams, peek: Promise<number[] | null> | null) => Promise<ThrowResult | null>
   /** Appelé quand les dés d'un lancer ont disparu de la table. */
   onDone?: (id: string) => void
 }
@@ -65,9 +69,13 @@ type Active = {
   /** Heure du lâcher, horloge locale. */
   start: number
   labels: number[][]
+  /** Résultat reçu d'avance, avant la réponse au lancer. */
+  known: number[] | null
   results: number[] | null
   levelUp: boolean
 }
+
+type Peek = { key: string; promise: Promise<number[] | null>; value: number[] | null }
 
 type Remote = { x: number; y: number; name: string; dice: number; count: number; rot: number }
 
@@ -79,13 +87,15 @@ type Remote = { x: number; y: number; name: string; dice: number; count: number;
  * (`lib/diceThrow.ts`). Un geste trop mou ne lance rien, le dé revient à sa
  * place : on ne peut pas le poser sur la face voulue. Le résultat est tiré par
  * le serveur, qui range le geste avec le lancer ; chaque navigateur rejoue
- * alors le même lancer, à la même vitesse. Pendant qu'un joueur tient le dé,
+ * alors le même lancer, à la même vitesse. Le lanceur reçoit son résultat dès
+ * qu'il attrape le dé : le chiffre est inscrit sur la face qui finira en haut
+ * avant même le lâcher. Pendant qu'un joueur tient le dé,
  * les autres le voient bouger dans sa main.
  *
  * La couleur du critique ou de l'échec n'apparaît qu'une fois le dé posé. Un
  * lancer dont la signature du serveur ne correspond pas n'est pas montré.
  */
-export default function TableDice({ ref, dice, count, disabled, name, onThrow, onDone }: Props) {
+export default function TableDice({ ref, dice, count, disabled, name, drawKey, onPeek, onThrow, onDone }: Props) {
   const room = useRoom()
   const events = useStorage((root) => root.events)
   const broadcast = useBroadcastEvent()
@@ -99,9 +109,11 @@ export default function TableDice({ ref, dice, count, disabled, name, onThrow, o
   const [hand, setHand] = useState(() => ({ seed: randomSeed(), rot: Math.floor(Math.random() * CUBE_ROTATIONS.length) }))
   const [remote, setRemote] = useState<Remote | null>(null)
   const [weak, setWeak] = useState(false)
-  const callbacks = useRef({ onThrow, onDone })
+  const peekRef = useRef<Peek | null>(null)
+  const waiting = useRef(false)
+  const callbacks = useRef({ onPeek, onThrow, onDone })
   useEffect(() => {
-    callbacks.current = { onThrow, onDone }
+    callbacks.current = { onPeek, onThrow, onDone }
     activeRef.current = active
   })
 
@@ -168,7 +180,7 @@ export default function TableDice({ ref, dice, count, disabled, name, onThrow, o
         const entry: Active = {
           key: ev.id, seed: p.seed, id: ev.id, own: false, dice: evDice, plan,
           sx: w / p.w, sy: h / p.h, size: dieSize(w, h),
-          start: ev.ts - plan.settleMs, labels, results, levelUp,
+          start: ev.ts - plan.settleMs, labels, known: null, results, levelUp,
         }
         setRemote(null)
         // Quatre lancers à la fois au plus : au-delà, le plus ancien laisse la place.
@@ -177,16 +189,43 @@ export default function TableDice({ ref, dice, count, disabled, name, onThrow, o
     }
   }, [events, room.id])
 
+  // Le résultat du prochain jet, demandé une fois par tirage.
+  const peekKey = `${drawKey}x${count}`
+  const startPeek = () => {
+    if (peekRef.current?.key === peekKey) return peekRef.current
+    const peek: Peek = { key: peekKey, promise: callbacks.current.onPeek(), value: null }
+    peekRef.current = peek
+    void peek.promise.then((v) => {
+      peek.value = v && v.length === count ? v : null
+    })
+    return peek
+  }
+
   const launch = (p: ThrowParams) => {
     ownSeeds.current.add(p.seed)
     const plan = simulateThrow(p, count)
+    // Le tirage sert à ce lancer ; le suivant en demandera un autre.
+    const peek = peekRef.current?.key === peekKey ? peekRef.current : null
+    peekRef.current = null
+    const known = peek?.value ?? null
+    const blank = startLabels(p.seed, dice, count)
     const entry: Active = {
       key: `own-${p.seed}`, seed: p.seed, id: null, own: true, dice, plan, sx: 1, sy: 1, size: plan.size,
-      start: Date.now(), labels: startLabels(p.seed, dice, count), results: null, levelUp: false,
+      start: Date.now(),
+      labels: known ? blank.map((l, k) => finalLabels(l, plan.dice[k]?.top ?? 0, known[k] ?? 1, dice)) : blank,
+      known, results: null, levelUp: false,
     }
     setActive((prev) => [...prev.slice(-3), entry])
     setHand({ seed: randomSeed(), rot: Math.floor(Math.random() * CUBE_ROTATIONS.length) })
-    void callbacks.current.onThrow(p).then((r) => {
+    // Tirage pas encore arrivé : le chiffre se pose en route, face cachée.
+    if (peek && !known) {
+      void peek.promise.then((v) => {
+        if (v && v.length === count) {
+          setActive((prev) => prev.map((a) => (a.key === entry.key && !a.known ? { ...a, known: v } : a)))
+        }
+      })
+    }
+    void callbacks.current.onThrow(p, peek?.promise ?? null).then((r) => {
       setActive((prev) =>
         r
           ? prev.map((a) => (a.key === entry.key
@@ -202,8 +241,14 @@ export default function TableDice({ ref, dice, count, disabled, name, onThrow, o
 
   useImperativeHandle(ref, () => ({
     throwNow: () => {
-      if (!canGrab) return
-      launch(autoThrow(hand.seed, box.w, box.h, hand.rot))
+      if (!canGrab || waiting.current) return
+      // Le temps de recevoir le tirage, pour que le chiffre soit là dès le départ.
+      waiting.current = true
+      const peek = startPeek()
+      void Promise.race([peek.promise, new Promise((r) => window.setTimeout(r, 700))]).then(() => {
+        waiting.current = false
+        launch(autoThrow(hand.seed, box.w, box.h, hand.rot))
+      })
     },
   }))
 
@@ -233,6 +278,7 @@ export default function TableDice({ ref, dice, count, disabled, name, onThrow, o
           remote={remote ? { x: remote.x * box.w, y: remote.y * box.h } : null}
           canGrab={canGrab}
           title={t('diceGrabHint')}
+          onGrab={() => void startPeek()}
           onHold={(x, y) =>
             broadcast({ type: 'dice-hold', x: x / box.w, y: y / box.h, name, dice, count, rot: hand.rot })
           }
@@ -292,6 +338,7 @@ type HandProps = {
   remote: { x: number; y: number } | null
   canGrab: boolean
   title: string
+  onGrab: () => void
   onHold: (x: number, y: number) => void
   onRelease: (x: number, y: number, vx: number, vy: number) => void
 }
@@ -302,14 +349,16 @@ type HandProps = {
  * d'accueil. La vitesse du lâcher est mesurée sur les derniers mouvements
  * seulement : un geste qui ralentit avant de lâcher n'est pas un lancer.
  */
-function HandDie({ boxRef, size, dice, count, labels, m, home, remote, canGrab, title, onHold, onRelease }: HandProps) {
+function HandDie({
+  boxRef, size, dice, count, labels, m, home, remote, canGrab, title, onGrab, onHold, onRelease,
+}: HandProps) {
   const dieRef = useRef<HTMLDivElement>(null)
   const cubeRef = useRef<HTMLDivElement>(null)
   const shadowRef = useRef<HTMLDivElement>(null)
   const [dragging, setDragging] = useState(false)
-  const props = useRef({ home, remote, canGrab, size, m, onHold, onRelease })
+  const props = useRef({ home, remote, canGrab, size, m, onGrab, onHold, onRelease })
   useEffect(() => {
-    props.current = { home, remote, canGrab, size, m, onHold, onRelease }
+    props.current = { home, remote, canGrab, size, m, onGrab, onHold, onRelease }
   })
   const s = useRef({
     drag: false,
@@ -384,6 +433,7 @@ function HandDie({ boxRef, size, dice, count, labels, m, home, remote, canGrab, 
       st.grab = { x: at.x - st.pos.x, y: at.y - st.pos.y }
       st.samples = [{ x: e.clientX, y: e.clientY, t: performance.now() }]
       setDragging(true)
+      props.current.onGrab()
     }
 
     const onMove = (e: PointerEvent) => {
@@ -482,6 +532,10 @@ function Throw({ entry, onEnd }: { entry: Active; onEnd: (key: string) => void }
   const cubeRefs = useRef<(HTMLDivElement | null)[]>([])
   const shadowRefs = useRef<(HTMLDivElement | null)[]>([])
   const [labels, setLabels] = useState(entry.labels)
+  const labelsRef = useRef(labels)
+  useEffect(() => {
+    labelsRef.current = labels
+  }, [labels])
   const [settled, setSettled] = useState(false)
   const [fading, setFading] = useState(false)
   const steps = useRef<Array<{ die: number; frame: number; labels: number[] }>>([])
@@ -494,13 +548,16 @@ function Throw({ entry, onEnd }: { entry: Active; onEnd: (key: string) => void }
   const half = size / 2
   const scale = size / plan.size
 
-  // Résultat connu : on prépare les changements de chiffres, faits face cachée.
+  // Résultat connu (reçu d'avance, ou à la réponse du serveur s'il diffère) :
+  // on prépare les changements de chiffres, faits face cachée.
   const { results, dice } = entry
+  const target = results ?? entry.known
+  const targetKey = target?.join() ?? ''
   useEffect(() => {
-    if (!results) return
+    if (!target) return
     const from = Math.floor((Date.now() - start) / FRAME_MS) + 2
     const planned = plan.dice.flatMap((d, i) =>
-      steerLabels(d, entry.labels[i] ?? [], results[i] ?? 1, dice, from).map((s) => ({ die: i, ...s })),
+      steerLabels(d, labelsRef.current[i] ?? [], target[i] ?? 1, dice, from).map((s) => ({ die: i, ...s })),
     )
     steps.current = planned.sort((a, b) => a.frame - b.frame)
     // Dé déjà posé (réponse tardive, animations réduites) : tout de suite.
@@ -513,9 +570,9 @@ function Throw({ entry, onEnd }: { entry: Active; onEnd: (key: string) => void }
         return next
       })
     }
-    // `entry.labels` ne change pas après la création du lancer.
+    // `target` ne compte que par ses valeurs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [results, plan, start, dice])
+  }, [targetKey, plan, start, dice])
 
   useEffect(() => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches

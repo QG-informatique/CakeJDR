@@ -1,15 +1,13 @@
-import {
-  type Axis, CUBE_ROTATIONS, FACES, type Mat, faceNormal, mul, rotation, snap, tipFromVelocity, topFace,
-} from './cubeMath'
+import { Body, Box, ContactMaterial, type GSSolver, Material, Plane, Quaternion, Vec3, World } from 'cannon-es'
+import { CUBE_ROTATIONS, FACES, type Mat, faceNormal, mul, rotation } from './cubeMath'
 
 /**
  * Lancer de dés sur la table, à la main.
  *
  * Le joueur attrape le dé, le traîne et le lâche : la vitesse de son geste
- * part avec le dé, qui roule, rebondit sur les bords et sur les autres dés,
- * ralentit, retombe toujours à plat et oscille un instant. Le roulement est
- * celui du dé de la page d'accueil : un cube bascule par-dessus ses arêtes,
- * un quart de tour à la fois.
+ * part avec le dé. C'est un vrai cube soumis à la pesanteur (moteur physique
+ * cannon-es) : il culbute dans tous les sens, rebondit sur le tapis, les bords
+ * et les autres dés, puis s'arrête toujours à plat.
  *
  * La trajectoire ne dépend que du geste (`ThrowParams`) : le serveur la range
  * avec le lancer, et chaque navigateur la rejoue à l'identique, à l'échelle de
@@ -31,9 +29,6 @@ const MAX_THROW_S = 3.4
 export const MAX_THROW_MS = MAX_THROW_S * 1000 + 100
 /** Avance laissée aux autres joueurs pour recevoir le lancer avant qu'il ne parte chez eux. */
 export const THROW_LEAD_MS = 350
-const REST_SPEED = 70
-const FRICTION = 1.8
-const WALL_BOUNCE = 0.62
 
 /** Inclinaison du regard : assez pour voir un cube, pas trop pour lire la face du dessus. */
 export const TILT_X = -14
@@ -132,37 +127,98 @@ export function autoThrow(seed: number, w: number, h: number, rot: number): Thro
   return { x: home.x, y: home.y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, w, h, seed, rot }
 }
 
-type Mode = 'thrown' | 'fall' | 'rock' | 'still'
+/*
+ * Repères. Le plateau est vu de dessus : x vers la droite, y vers le bas,
+ * comme à l'écran. Le moteur physique travaille en repère direct, z vers le
+ * haut (vers le joueur) : on y retourne l'axe y, et on compte en tailles de
+ * dé pour que les réglages tiennent sur tous les écrans.
+ */
 
-type Body = {
-  mode: Mode
-  x: number
-  y: number
-  vx: number
-  vy: number
-  base: Mat
-  tipAxis: Axis
-  tipSign: number
-  tipP: number
-  rockDeg: number
-  rockAmp: number
-  hop: number
-  phase: number
-  t0: number
-  dur: number
-  fallFrom: number
-  fallTo: number
+/** Pesanteur, en tailles de dé par seconde². */
+const GRAVITY = 70
+/** Sous ces vitesses, un dé est immobile. */
+const REST_SPEED = 0.12
+const REST_SPIN = 0.25
+/** Un dé immobile est à plat quand une de ses faces regarde le ciel à moins de 2,5°. */
+const FLAT = Math.cos((2.5 * Math.PI) / 180)
+/** Nombre d'images d'immobilité avant de déclarer le lancer fini. */
+const REST_FRAMES = 8
+/** Sous-pas de simulation par image : assez pour que les chocs restent nets. */
+const SUBSTEPS = 3
+
+/** Matrice écran (y vers le bas) ↔ matrice du moteur (y vers le haut). */
+const flipY = (m: Mat): Mat => [m[0], -m[1], m[2], -m[3], m[4], -m[5], m[6], -m[7], m[8]]
+
+function toQuat(m: Mat): Quaternion {
+  const r = flipY(m)
+  const q = new Quaternion()
+  const trace = r[0] + r[4] + r[8]
+  if (trace > 0) {
+    const s = 0.5 / Math.sqrt(trace + 1)
+    q.set((r[7] - r[5]) * s, (r[2] - r[6]) * s, (r[3] - r[1]) * s, 0.25 / s)
+  } else if (r[0] > r[4] && r[0] > r[8]) {
+    const s = 2 * Math.sqrt(1 + r[0] - r[4] - r[8])
+    q.set(0.25 * s, (r[1] + r[3]) / s, (r[2] + r[6]) / s, (r[7] - r[5]) / s)
+  } else if (r[4] > r[8]) {
+    const s = 2 * Math.sqrt(1 + r[4] - r[0] - r[8])
+    q.set((r[1] + r[3]) / s, 0.25 * s, (r[5] + r[7]) / s, (r[2] - r[6]) / s)
+  } else {
+    const s = 2 * Math.sqrt(1 + r[8] - r[0] - r[4])
+    q.set((r[2] + r[6]) / s, (r[5] + r[7]) / s, 0.25 * s, (r[3] - r[1]) / s)
+  }
+  return q.normalize()
 }
 
-/** Simule le lancer de `count` dés lâchés d'un même geste. */
+function toMat(q: Quaternion): Mat {
+  const { x, y, z, w } = q
+  return flipY([
+    1 - 2 * (y * y + z * z), 2 * (x * y - z * w), 2 * (x * z + y * w),
+    2 * (x * y + z * w), 1 - 2 * (x * x + z * z), 2 * (y * z - x * w),
+    2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y),
+  ])
+}
+
+/** Combien le dé est à plat : 1 quand une face regarde exactement le ciel. */
+const flatness = (q: Quaternion) => {
+  const m = toMat(q)
+  return Math.max(Math.abs(m[6]), Math.abs(m[7]), Math.abs(m[8]))
+}
+
+/** Orientation à plat la plus proche : la face la plus haute est redressée, sans tourner le dé sur lui-même. */
+function layFlat(q: Quaternion): Quaternion {
+  const axes = [new Vec3(1, 0, 0), new Vec3(0, 1, 0), new Vec3(0, 0, 1)].map((a) => q.vmult(a))
+  let best = axes[0] as Vec3
+  for (const a of axes) if (Math.abs(a.z) > Math.abs(best.z)) best = a
+  const up = best.z >= 0 ? best : best.negate()
+  return new Quaternion().setFromVectors(up, new Vec3(0, 0, 1)).mult(q).normalize()
+}
+
+/** Face du dessus d'une orientation à plat. */
+const upperFace = (m: Mat) => {
+  let top = 0
+  let best = -Infinity
+  FACES.forEach((_, k) => {
+    const n = faceNormal(k)
+    const z = m[6] * n[0] + m[7] * n[1] + m[8] * n[2]
+    if (z > best) {
+      best = z
+      top = k
+    }
+  })
+  return top
+}
+
+/**
+ * Simule le lancer de `count` dés lâchés d'un même geste : de vrais cubes,
+ * avec leur poids, qui culbutent, rebondissent sur le tapis, les bords et les
+ * autres dés, puis s'arrêtent à plat.
+ */
 export function simulateThrow(p: ThrowParams, count: number): DiceThrow {
   const rand = seeded(p.seed)
-  const { w, h } = p
-  const size = dieSize(w, h)
-  const half = size / 2
+  const size = dieSize(p.w, p.h)
+  const W = p.w / size
+  const H = p.h / size
   const n = Math.max(1, count)
-  const clampX = (x: number) => Math.max(half, Math.min(w - half, x))
-  const clampY = (y: number) => Math.max(half, Math.min(h - half, y))
 
   let vx = p.vx
   let vy = p.vy
@@ -172,154 +228,126 @@ export function simulateThrow(p: ThrowParams, count: number): DiceThrow {
     vy *= MAX_THROW_SPEED / speed0
   }
 
+  const world = new World({ gravity: new Vec3(0, 0, -GRAVITY) })
+  ;(world.solver as GSSolver).iterations = 12
+  const dieMat = new Material('die')
+  const floorMat = new Material('floor')
+  const wallMat = new Material('wall')
+  world.addContactMaterial(new ContactMaterial(dieMat, floorMat, { friction: 0.2, restitution: 0.4 }))
+  world.addContactMaterial(new ContactMaterial(dieMat, wallMat, { friction: 0.1, restitution: 0.6 }))
+  world.addContactMaterial(new ContactMaterial(dieMat, dieMat, { friction: 0.2, restitution: 0.45 }))
+
+  const floor = new Body({ mass: 0, shape: new Plane(), material: floorMat })
+  world.addBody(floor)
+  // Quatre bords, tournés vers l'intérieur du plateau.
+  const walls: Array<[number, number, number, number, number]> = [
+    [0, 0, 0, 1, Math.PI / 2],
+    [W, 0, 0, 1, -Math.PI / 2],
+    [0, 0, 1, 0, Math.PI / 2],
+    [0, -H, 1, 0, -Math.PI / 2],
+  ]
+  for (const [x, y, ax, ay, angle] of walls) {
+    const wall = new Body({ mass: 0, shape: new Plane(), material: wallMat, position: new Vec3(x, y, 0) })
+    wall.quaternion.setFromAxisAngle(new Vec3(ax, ay, 0), angle)
+    world.addBody(wall)
+  }
+
   // Une poignée de dés : le premier sous la main, les autres serrés autour.
-  const bodies: Body[] = Array.from({ length: n }, (_, i) => {
+  const clamp = (v: number, max: number) => Math.max(0.55, Math.min(max - 0.55, v))
+  const bodies = Array.from({ length: n }, (_, i) => {
     const ring = i === 0 ? 0 : 1 + Math.floor((i - 1) / 6)
     const a = ((i - 1) % 6) * (Math.PI / 3) + ring * 0.5
-    const x = clampX(p.x + Math.cos(a) * ring * size * 1.05)
-    const y = clampY(p.y + Math.sin(a) * ring * size * 1.05)
+    const x = clamp(p.x / size + Math.cos(a) * ring * 1.5, W)
+    const y = clamp(p.y / size + Math.sin(a) * ring * 1.5, H)
     const turn = (rand() - 0.5) * (n > 1 ? 0.35 : 0.12)
-    const k = 0.9 + rand() * 0.2
+    const k = (0.9 + rand() * 0.2) / size
     const dvx = (Math.cos(turn) * vx - Math.sin(turn) * vy) * k
-    const dvy = (Math.sin(turn) * vx + Math.cos(turn) * vy) * k
-    const tip = tipFromVelocity(dvx, dvy)
-    return {
-      mode: 'thrown', x, y, vx: dvx, vy: dvy, base: dieRotation(p.rot, i), tipAxis: tip.axis, tipSign: tip.sign,
-      tipP: rand() * 0.4, rockDeg: 0, rockAmp: 0, hop: 14, phase: rand() * 0.2, t0: 0, dur: 0, fallFrom: 0, fallTo: 0,
-    }
+    const dvy = -(Math.sin(turn) * vx + Math.cos(turn) * vy) * k
+    const body = new Body({
+      mass: 1,
+      shape: new Box(new Vec3(0.5, 0.5, 0.5)),
+      material: dieMat,
+      position: new Vec3(x, -y, 1.6 + rand() * 0.8 + ring * 0.3),
+      quaternion: toQuat(dieRotation(p.rot, i)),
+      velocity: new Vec3(dvx, dvy, 2 + rand() * 3),
+      linearDamping: 0.03,
+      angularDamping: 0.03,
+    })
+    // Le dé part en culbutant dans le sens du geste, avec un peu de vrille
+    // et de travers : il roule dans tous les sens, comme lâché par une main.
+    const v = Math.hypot(dvx, dvy)
+    const roll = 1.2 + rand() * 0.8
+    const twist = () => (rand() - 0.5) * (12 + v * 0.5)
+    body.angularVelocity.set(-dvy * roll + twist(), dvx * roll + twist(), twist())
+    world.addBody(body)
+    return body
   })
 
   const frames: DieFrame[][] = bodies.map(() => [])
-  let settle = 0
+  const record = (i: number, pos: Vec3, q: Quaternion) =>
+    frames[i]?.push({ x: pos.x * size, y: -pos.y * size, lift: Math.max(0, pos.z - 0.5) * size, m: toMat(q) })
 
-  const commitTip = (b: Body) => {
-    b.base = snap(mul(rotation(b.tipAxis, b.tipSign * 90), b.base))
-    b.tipP = 0
+  // Pour décoincer un dé, on le pousse vers le milieu du plateau, où il y a de la place.
+  const towardCentre = (b: Body, speed: number) => {
+    const a = Math.atan2(-H / 2 - b.position.y, W / 2 - b.position.x) + (rand() - 0.5) * 1.6
+    return new Vec3(Math.cos(a) * speed, Math.sin(a) * speed, 0)
   }
-  const startFall = (b: Body, t: number) => {
-    b.vx = 0
-    b.vy = 0
-    b.mode = 'fall'
-    b.t0 = t
-    b.fallFrom = b.tipP
-    b.fallTo = b.tipP >= 0.5 ? 1 : 0
-    b.dur = 0.12 + Math.abs(b.fallTo - b.fallFrom) * 0.36
-  }
-
-  for (let step = 0; ; step += 1) {
-    const t = step * DT
-    for (const b of bodies) {
-      if (b.mode === 'thrown') {
-        b.x += b.vx * DT
-        b.y += b.vy * DT
-        // Les bords renvoient le dé vers l'intérieur : il ne peut ni sortir, ni rester collé.
-        if (b.x < half) { b.x = half; b.vx = Math.abs(b.vx) * WALL_BOUNCE }
-        else if (b.x > w - half) { b.x = w - half; b.vx = -Math.abs(b.vx) * WALL_BOUNCE }
-        if (b.y < half) { b.y = half; b.vy = Math.abs(b.vy) * WALL_BOUNCE }
-        else if (b.y > h - half) { b.y = h - half; b.vy = -Math.abs(b.vy) * WALL_BOUNCE }
-        // Vers la fin, le tapis freine plus fort : tout est posé à temps.
-        const friction = Math.exp(-(t > MAX_THROW_S - 0.9 ? FRICTION * 4 : FRICTION) * DT)
-        b.vx *= friction
-        b.vy *= friction
-        const v = Math.hypot(b.vx, b.vy)
-        b.phase += DT
-        b.hop = Math.min(v / 90, 20) * Math.abs(Math.sin((b.phase * Math.PI) / 0.2))
-        // Il roule sans glisser : un quart de tour par longueur de côté parcourue.
-        const move = b.tipAxis === 'y' ? b.vx * b.tipSign : -b.vy * b.tipSign
-        b.tipP += (move * DT) / size
-        if (b.tipP >= 1 || b.tipP < 0) {
-          if (b.tipP >= 1) commitTip(b)
-          const next = tipFromVelocity(b.vx, b.vy)
-          b.tipAxis = next.axis
-          b.tipSign = next.sign
-          b.tipP = 0
-        }
-        if (v < REST_SPEED) startFall(b, t)
-      } else if (b.mode === 'fall') {
-        const k = Math.min((t - b.t0) / b.dur, 1)
-        // La chute accélère, comme sous l'effet de la pesanteur ; le dé finit toujours à plat.
-        b.tipP = b.fallFrom + (b.fallTo - b.fallFrom) * k * k
-        b.hop *= Math.exp(-14 * DT)
-        if (k >= 1) {
-          const forward = b.fallTo === 1
-          if (forward) commitTip(b)
-          b.hop = 0
-          b.mode = 'rock'
-          b.t0 = t
-          b.rockAmp = forward ? 5 : -5
-        }
-      } else if (b.mode === 'rock') {
-        const k = t - b.t0
-        b.rockDeg = b.tipSign * b.rockAmp * Math.exp(-k * 9) * Math.sin(k * 38)
-        if (k > 0.45) {
-          b.rockDeg = 0
-          b.mode = 'still'
-        }
-      }
-    }
-
-    // Deux dés qui se touchent rebondissent l'un sur l'autre ; un dé déjà
-    // posé ne bouge plus et renvoie celui qui le heurte.
-    for (let i = 0; i < n; i += 1) {
-      for (let j = i + 1; j < n; j += 1) {
-        const a = bodies[i] as Body
-        const b = bodies[j] as Body
-        const dx = b.x - a.x
-        const dy = b.y - a.y
-        const dist = Math.hypot(dx, dy)
-        if (dist >= size || (a.mode !== 'thrown' && b.mode !== 'thrown')) continue
-        const nx = dist > 0 ? dx / dist : 1
-        const ny = dist > 0 ? dy / dist : 0
-        const overlap = size - dist
-        const aMoves = a.mode === 'thrown'
-        const bMoves = b.mode === 'thrown'
-        const share = aMoves && bMoves ? 0.5 : 1
-        if (aMoves) { a.x = clampX(a.x - nx * overlap * share); a.y = clampY(a.y - ny * overlap * share) }
-        if (bMoves) { b.x = clampX(b.x + nx * overlap * share); b.y = clampY(b.y + ny * overlap * share) }
-        const va = aMoves ? a.vx * nx + a.vy * ny : 0
-        const vb = bMoves ? b.vx * nx + b.vy * ny : 0
-        if (va - vb <= 0) continue
-        if (aMoves && bMoves) {
-          a.vx += (vb - va) * nx * 0.9; a.vy += (vb - va) * ny * 0.9
-          b.vx += (va - vb) * nx * 0.9; b.vy += (va - vb) * ny * 0.9
-        } else if (aMoves) {
-          a.vx -= 1.6 * va * nx; a.vy -= 1.6 * va * ny
-        } else {
-          b.vx -= 1.6 * vb * nx; b.vy -= 1.6 * vb * ny
-        }
-      }
-    }
-
+  const resting = bodies.map(() => 0)
+  const maxSteps = Math.round(MAX_THROW_S / DT) - 11
+  let step = 0
+  for (; step < maxSteps; step += 1) {
+    for (let s = 0; s < SUBSTEPS; s += 1) world.step(DT / SUBSTEPS)
     bodies.forEach((b, i) => {
-      const angle = b.tipSign * b.tipP * 90 + b.rockDeg
-      const m = angle === 0 ? b.base : mul(rotation(b.tipAxis, angle), b.base)
-      const a = (Math.min(Math.abs(b.tipP), 1) * Math.PI) / 2
-      const lift = b.hop + 0.5 * half * (Math.cos(a) + Math.sin(a) - 1)
-      frames[i]?.push({ x: b.x, y: b.y, lift, m })
+      record(i, b.position, b.quaternion)
+      const speed = b.velocity.length()
+      // Perché sur un autre dé : il glisse et retombe sur le tapis.
+      if (b.position.z > 0.9 && speed < 1.5) {
+        resting[i] = 0
+        b.velocity.copy(towardCentre(b, 4)).z = 1
+        return
+      }
+      const still = speed < REST_SPEED && b.angularVelocity.length() < REST_SPIN
+      if (!still) {
+        resting[i] = 0
+        return
+      }
+      if (flatness(b.quaternion) >= FLAT && b.position.z < 0.56) {
+        resting[i] = (resting[i] ?? 0) + 1
+        return
+      }
+      // Calé contre un bord, sur une arête, ou posé sur un autre dé : une
+      // pichenette le remet en route, et il finit par tomber à plat.
+      resting[i] = 0
+      b.velocity.copy(towardCentre(b, 1.5)).z = 3
+      b.angularVelocity.set((rand() - 0.5) * 10, (rand() - 0.5) * 10, 0)
     })
+    if (resting.every((r) => r >= REST_FRAMES)) break
+  }
 
-    if (bodies.every((b) => b.mode === 'still')) {
-      settle = t
-      break
-    }
-    // Filet de sécurité : un dé encore en mouvement est posé d'office, à plat.
-    if (t >= MAX_THROW_S) {
-      bodies.forEach((b) => {
-        if (b.mode !== 'still' && b.tipP >= 0.5) commitTip(b)
-        b.tipP = 0
-        b.rockDeg = 0
-        b.hop = 0
-        b.mode = 'still'
-      })
-      bodies.forEach((b, i) => frames[i]?.push({ x: b.x, y: b.y, lift: 0, m: b.base }))
-      settle = t + DT
-      break
-    }
+  // Pour finir, chaque dé se pose exactement à plat ; ceux qui bougent encore
+  // à la limite de temps sont posés d'office, en quelques images.
+  const blend = step >= maxSteps ? 10 : 3
+  for (let f = 1; f <= blend; f += 1) {
+    const t = f / blend
+    const ease = t * t * (3 - 2 * t)
+    bodies.forEach((b, i) => {
+      const target = layFlat(b.quaternion)
+      const q = b.quaternion.slerp(target, ease)
+      const pos = new Vec3(
+        Math.max(0.5, Math.min(W - 0.5, b.position.x)),
+        Math.max(-H + 0.5, Math.min(-0.5, b.position.y)),
+        0.5 + Math.max(0, b.position.z - 0.5) * (1 - ease),
+      )
+      record(i, pos, f === blend ? target : q)
+    })
   }
 
   return {
-    dice: bodies.map((b, i) => ({ frames: frames[i] ?? [], top: topFace(b.base) })),
-    settleMs: settle * 1000,
+    dice: frames.map((f) => {
+      const last = f[f.length - 1]
+      return { frames: f, top: last ? upperFace(last.m) : 0 }
+    }),
+    settleMs: (step + 1 + blend) * FRAME_MS,
     size,
   }
 }
