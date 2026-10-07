@@ -1,9 +1,10 @@
 import type { CheckOutcome, RollsOutcome } from './checks'
+import type { ThrowParams } from './diceThrow'
 
 /** Faces proposées par le lanceur de dés. */
 export const DICE_TYPES = [4, 6, 8, 10, 12, 20, 100] as const
 
-/** Délai entre le lancer et l'affichage du résultat (durée de l'animation). */
+/** Délai entre le lancer et l'affichage du résultat, quand le lancer n'a pas de geste. */
 export const DICE_REVEAL_DELAY_MS = 3000
 
 export type SignedDiceRoll = {
@@ -18,6 +19,8 @@ export type SignedDiceRoll = {
   /** Jets demandés par le MJ : `result` est alors la somme des dés. */
   rolls?: RollsOutcome
   sig: string
+  /** Geste du lanceur, rejoué par chaque navigateur. Hors signature : il ne change pas le résultat. */
+  throw?: ThrowParams
 }
 
 /** Texte signé par le serveur et vérifié par chaque navigateur : les deux doivent l'écrire à l'identique. */

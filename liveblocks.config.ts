@@ -144,6 +144,9 @@ declare global {
         }
       | { type: 'chat'; author: string; text: string; isMJ?: boolean; ts?: number }
       | { type: 'dice-roll'; player: string; dice: number; result: number; ts?: number }
+      // Dé tenu en main par un joueur, position en fraction du plateau ; `dice-drop` : reposé sans lancer.
+      | { type: 'dice-hold'; x: number; y: number; name: string; dice: number; count: number; rot: number }
+      | { type: 'dice-drop' }
       | { type: 'gm-select'; character: CharacterData; targetConnectionId?: number | null }
 
     // Custom metadata set on threads, for useThreads, useCreateThread, etc.

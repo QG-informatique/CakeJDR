@@ -9,6 +9,7 @@ import { syncCurrentUser } from '@/lib/db/users'
 import { resolveRoomAccess } from '@/lib/db/roomAccess'
 import { signDiceRoll } from '@/lib/diceSigning'
 import { DICE_REVEAL_DELAY_MS, DICE_TYPES, type SignedDiceRoll } from '@/lib/dicePayload'
+import { parseThrow, revealDelayMs } from '@/lib/diceThrow'
 
 /**
  * Lancer de dé tiré par le serveur.
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
   const secret = process.env.LIVEBLOCKS_SECRET_KEY
   if (!secret) return fail('Liveblocks key missing', 500)
 
-  const body = (await req.json().catch(() => ({}))) as { roomId?: unknown; dice?: unknown; player?: unknown }
+  const body = (await req.json().catch(() => ({}))) as { roomId?: unknown; dice?: unknown; player?: unknown; throw?: unknown }
   const { roomId, dice } = body
   if (typeof roomId !== 'string' || !roomId) return fail('missing roomId', 400)
   if (typeof dice !== 'number' || !(DICE_TYPES as readonly number[]).includes(dice)) return fail('bad dice', 400)
@@ -50,14 +51,20 @@ export async function POST(req: NextRequest) {
 
   const rawPlayer = typeof body.player === 'string' ? body.player.trim() : ''
   const player = (rawPlayer || account?.pseudo || 'Visiteur').slice(0, MAX_PLAYER_LENGTH)
+  // Le geste fixe la durée du roulement : le résultat paraît quand le dé se pose.
+  const gesture = parseThrow(body.throw)
   const unsigned = {
     id: randomUUID(),
     player,
     dice,
     result: randomInt(1, dice + 1),
-    ts: Date.now() + DICE_REVEAL_DELAY_MS,
+    ts: Date.now() + (gesture ? revealDelayMs(gesture, 1) : DICE_REVEAL_DELAY_MS),
   }
-  const roll: SignedDiceRoll = { ...unsigned, sig: signDiceRoll(roomId, unsigned) }
+  const roll: SignedDiceRoll = {
+    ...unsigned,
+    sig: signDiceRoll(roomId, unsigned),
+    ...(gesture ? { throw: gesture } : {}),
+  }
 
   const liveblocks = new Liveblocks({ secret })
   try {
