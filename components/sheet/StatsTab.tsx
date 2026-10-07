@@ -17,6 +17,8 @@ interface Props {
   animKey: number
   /** Fiche verrouillée par le MJ : pas de montée de niveau. */
   readOnly?: boolean
+  /** Seul le MJ lance la montée de niveau. */
+  canLevelUp?: boolean
 }
 
 const StatsTab: FC<Props> = ({
@@ -30,11 +32,12 @@ const StatsTab: FC<Props> = ({
   lastGain,
   animKey,
   readOnly = false,
+  canLevelUp = false,
 }) => (
   <>
     <StatsPanel perso={perso} compact={compact} />
     <CompetencesPanel competences={perso.competences || []} compact={compact} />
-    {!readOnly && <LevelUpPanel
+    {!readOnly && canLevelUp && <LevelUpPanel
       dice={dice}
       setDice={setDice}
       onLevelUp={onLevelUp}

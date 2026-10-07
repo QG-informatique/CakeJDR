@@ -108,33 +108,38 @@ export default function PopupResult({ show, result, diceType, onFinish, onReveal
           transition={{ duration: SPIN_DURATION / 1000, ease: 'easeOut' }}
         >
           {['front','back','left','right','top','bottom'].map((face, i) => {
+            // Le dé tourne en neutre : la couleur du critique ou de l'échec
+            // n'apparaît qu'avec le chiffre, sinon elle trahit le résultat.
             const isCrit   = result === diceType
             const isFumble = result === 1
-            const faceBg = isCrit
-              ? 'linear-gradient(145deg, #2a1f06, #1a1200)'
+            const revealed = showResult && i === faceIndex
+            const tone = isCrit
+              ? { bg: 'linear-gradient(145deg, #2a1f06, #1a1200)', border: '#c9a227', text: '#fde68a' }
               : isFumble
-              ? 'linear-gradient(145deg, #200808, #100404)'
-              : 'linear-gradient(145deg, #131828, #0a0f1c)'
-            const faceBorder = isCrit
-              ? '#c9a227'
-              : isFumble
-              ? '#b91c1c'
-              : '#4f6eb7'
-            const textColor = isCrit
-              ? '#fde68a'
-              : isFumble
-              ? '#fca5a5'
-              : '#e0eaff'
+              ? { bg: 'linear-gradient(145deg, #200808, #100404)', border: '#b91c1c', text: '#fca5a5' }
+              : null
+            const neutral = { bg: 'linear-gradient(145deg, #131828, #0a0f1c)', border: '#4f6eb7', text: '#e0eaff' }
+            const shown = revealed && tone ? tone : neutral
             return (
             <div
               key={face}
               className={`face-${face} absolute w-full h-full flex items-center justify-center rounded-xl backface-hidden`}
               style={{
-                background: faceBg,
-                border: `2px solid ${faceBorder}`,
+                background: neutral.bg,
+                border: `2px solid ${shown.border}`,
                 boxShadow: `inset 0 0 12px rgba(0,0,0,0.6), 0 0 6px rgba(0,0,0,0.4)`,
+                transition: `border-color 0.5s ease ${(RESULT_DELAY + 200) / 1000}s`,
               }}
             >
+              {tone && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: revealed ? 1 : 0 }}
+                  transition={{ delay: (RESULT_DELAY + 200) / 1000, duration: 0.5 }}
+                  className="absolute inset-0 rounded-[10px]"
+                  style={{ background: tone.bg }}
+                />
+              )}
               <motion.div
                 initial={{ opacity: 1 }}
                 animate={{ opacity: showResult && i === faceIndex ? 0 : 1 }}
@@ -149,7 +154,7 @@ export default function PopupResult({ show, result, diceType, onFinish, onReveal
                 animate={{ opacity: showResult && i === faceIndex ? 1 : 0 }}
                 transition={{ delay: (RESULT_DELAY + 200) / 1000, duration: 0.5 }}
                 className="absolute text-5xl font-black select-none"
-                style={{ color: textColor, textShadow: `0 0 16px ${faceBorder}` }}
+                style={{ color: shown.text, textShadow: `0 0 16px ${shown.border}` }}
               >
                 {result}
               </motion.div>
