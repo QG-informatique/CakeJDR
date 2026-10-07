@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-07 — Tests de caractéristique demandés par le MJ
+- Dans son panneau, le MJ clique « Test » sur un joueur : caractéristique, modificateur repris de la fiche (modifiable pour un bonus d'équipement), difficulté, raison facultative, difficulté montrée ou cachée (`components/gm/GMPanel.tsx`).
+- Le joueur voit une carte « Le MJ te demande un test de… » et lance le D20 ; le serveur tire le dé, ajoute le modificateur et compare : réussi si le total atteint la difficulté, calcul validé par Quentin (`app/api/check/route.ts`, `components/checks/CheckPrompt.tsx`).
+- Le résultat s'affiche à toute la table dans un bandeau et dans le chat, signé comme les autres lancers ; la difficulté cachée n'apparaît qu'au MJ (`components/checks/CheckBanner.tsx`, `components/chat/ChatBox.tsx`). La demande en attente est chiffrée par le serveur (`lib/checkSeal.ts`) : un joueur ne peut ni lire la difficulté cachée, ni changer la demande.
+- Vérifié dans la salle de test avec deux onglets : demande, jet, bandeau, chat, annulation, refus d'un jet par un autre joueur, pas de second jet sur la même demande.
+Reste ouvert : essai avec un vrai second compte joueur ; jets multiples et règle de montée de niveau du MJ.
+
 ## 2026-10-07 — Montée de niveau réservée au MJ, couleur du dé à la révélation
 - Le bouton « Montée de niveau » n'apparaît plus que pour le MJ, sur sa fiche ou celle d'un joueur qu'il ouvre (`CharacterSheet.tsx`, `StatsTab.tsx`, `HomePageInner.tsx`). Choix provisoire : la montée de niveau reste possible, en attendant que le MJ choisisse sa règle.
 - Le dé tourne en bleu neutre ; le doré du critique et le rouge de l'échec n'apparaissent qu'avec le chiffre (`components/dice/PopupResult.tsx`). Vérifié dans la salle de test sur une dizaine de lancers.

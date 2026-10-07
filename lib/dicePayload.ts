@@ -1,3 +1,5 @@
+import type { CheckOutcome } from './checks'
+
 /** Faces proposées par le lanceur de dés. */
 export const DICE_TYPES = [4, 6, 8, 10, 12, 20, 100] as const
 
@@ -11,10 +13,16 @@ export type SignedDiceRoll = {
   result: number
   /** Moment où le résultat s'affiche, c'est-à-dire à la fin de l'animation. */
   ts: number
+  /** Test demandé par le MJ : le jet est alors un D20 comparé à une difficulté. */
+  check?: CheckOutcome
   sig: string
 }
 
 /** Texte signé par le serveur et vérifié par chaque navigateur : les deux doivent l'écrire à l'identique. */
 export function diceSignedPayload(roomId: string, roll: Omit<SignedDiceRoll, 'sig'>) {
-  return JSON.stringify([roomId, roll.id, roll.player, roll.dice, roll.result, roll.ts])
+  const base = [roomId, roll.id, roll.player, roll.dice, roll.result, roll.ts]
+  // Un lancer simple garde le texte d'avant : ses anciennes signatures restent valables.
+  if (!roll.check) return JSON.stringify(base)
+  const c = roll.check
+  return JSON.stringify([...base, c.stat, c.mod, c.total, c.dc, c.showDc, c.success, c.reason ?? ''])
 }

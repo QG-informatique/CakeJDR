@@ -66,6 +66,7 @@ export async function restoreSnapshot(roomId: string, snap: DemoSnapshot) {
     root.set('quickNote', new LiveObject(snap.quickNote) as never)
     root.set('music', new LiveObject(snap.music) as never)
     root.set('events', new LiveList(snap.events ?? []) as never)
+    root.set('checks', new LiveMap() as never)
   })
   await deleteCloudinaryImages(added).catch((e: unknown) => {
     console.error('restoreSnapshot: suppression des images Cloudinary impossible', roomId, e)
