@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { type Axis, FACES, IDENTITY, type Mat, mul, PIPS, rotation, snap, tipFromVelocity, toCss } from '@/lib/cubeMath'
 
 /**
  * Dé de la page d'accueil.
@@ -37,26 +38,6 @@ const BORDER = 3
 const TILT_X = -18
 const TILT_Y = 24
 
-/** Faces opposées dont la somme fait 7, comme sur un vrai dé. */
-const FACES = [
-  { value: 1, rx: 0, ry: 0 },
-  { value: 6, rx: 0, ry: 180 },
-  { value: 3, rx: 0, ry: 90 },
-  { value: 4, rx: 0, ry: -90 },
-  { value: 2, rx: 90, ry: 0 },
-  { value: 5, rx: -90, ry: 0 },
-] as const
-
-/** Position des points sur une grille 3×3, en [ligne, colonne]. */
-const PIPS: Record<number, ReadonlyArray<readonly [number, number]>> = {
-  1: [[1, 1]],
-  2: [[0, 0], [2, 2]],
-  3: [[0, 0], [1, 1], [2, 2]],
-  4: [[0, 0], [0, 2], [2, 0], [2, 2]],
-  5: [[0, 0], [0, 2], [1, 1], [2, 0], [2, 2]],
-  6: [[0, 0], [1, 0], [2, 0], [0, 2], [1, 2], [2, 2]],
-}
-
 function Pips({ value }: { value: number }) {
   const inner = SIZE - BORDER * 2
   const dot = SIZE * 0.15
@@ -86,42 +67,6 @@ function Pips({ value }: { value: number }) {
 /* Rotations                                                           */
 /* ------------------------------------------------------------------ */
 
-/** Matrice de rotation 3×3, rangée ligne par ligne. */
-type Mat = [number, number, number, number, number, number, number, number, number]
-type Axis = 'x' | 'y'
-
-const IDENTITY: Mat = [1, 0, 0, 0, 1, 0, 0, 0, 1]
-
-function mul(a: Mat, b: Mat): Mat {
-  return [
-    a[0] * b[0] + a[1] * b[3] + a[2] * b[6],
-    a[0] * b[1] + a[1] * b[4] + a[2] * b[7],
-    a[0] * b[2] + a[1] * b[5] + a[2] * b[8],
-    a[3] * b[0] + a[4] * b[3] + a[5] * b[6],
-    a[3] * b[1] + a[4] * b[4] + a[5] * b[7],
-    a[3] * b[2] + a[4] * b[5] + a[5] * b[8],
-    a[6] * b[0] + a[7] * b[3] + a[8] * b[6],
-    a[6] * b[1] + a[7] * b[4] + a[8] * b[7],
-    a[6] * b[2] + a[7] * b[5] + a[8] * b[8],
-  ]
-}
-
-/** Même convention que `rotateX()` / `rotateY()` en CSS. */
-function rotation(axis: Axis, deg: number): Mat {
-  const r = (deg * Math.PI) / 180
-  const c = Math.cos(r)
-  const s = Math.sin(r)
-  return axis === 'x' ? [1, 0, 0, 0, c, -s, 0, s, c] : [c, 0, s, 0, 1, 0, -s, 0, c]
-}
-
-/** Après une bascule complète, la matrice ne contient que -1, 0 et 1 : on arrondit
- *  pour que les erreurs d'arrondi ne s'accumulent pas de lancer en lancer. */
-const snap = (m: Mat): Mat => m.map((v) => Math.round(v)) as Mat
-
-/** `matrix3d()` attend les colonnes, pas les lignes. */
-const toCss = (m: Mat) =>
-  `matrix3d(${m[0]},${m[3]},${m[6]},0,${m[1]},${m[4]},${m[7]},0,${m[2]},${m[5]},${m[8]},0,0,0,0,1)`
-
 /**
  * Élévation du centre du dé pendant une bascule : il pivote sur une arête, et
  * son centre décrit un arc qui culmine à 45°. Réduite de moitié à l'écran,
@@ -131,15 +76,6 @@ const tipLift = (p: number) => {
   const a = (Math.min(Math.abs(p), 1) * Math.PI) / 2
   return 0.5 * HALF * (Math.cos(a) + Math.sin(a) - 1)
 }
-
-/**
- * Axe et sens de la bascule qui accompagne un déplacement : le dé bascule sur
- * l'arête qui fait face au mouvement, selon la composante dominante.
- */
-const tipFromVelocity = (vx: number, vy: number): { axis: Axis; sign: number } =>
-  Math.abs(vx) >= Math.abs(vy)
-    ? { axis: 'y', sign: Math.sign(vx) || 1 }
-    : { axis: 'x', sign: -(Math.sign(vy) || 1) }
 
 type Vec = { x: number; y: number }
 type Mode = 'rest' | 'roll' | 'drag' | 'thrown' | 'fall' | 'rock' | 'wait' | 'home'

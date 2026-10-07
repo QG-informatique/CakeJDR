@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-07 — Dé de table lancé et vu par toute la table
+- Les dés roulent maintenant sur le plateau comme celui de la page d'accueil : ils partent d'un bord, basculent, rebondissent sur les bords et entre eux, puis se posent sur le résultat tiré par le serveur (`components/dice/TableDice.tsx`, `components/dice/diceThrow.ts`, calcul du cube partagé dans `lib/cubeMath.ts`).
+- Toute la table voit le même lancer au même moment : la trajectoire est rejouée à partir de l'identifiant du lancer, seule l'échelle suit l'écran de chacun. Un lancer à la signature invalide n'est pas montré.
+- Les anciennes fenêtres de dés (`PopupResult`, `MultiDicePopup`) sont supprimées ; jets multiples et montée de niveau passent par le même dé (`components/app/HomePageInner.tsx`).
+- Vérifié dans la salle de test : D6, D20 critique (doré une fois posé), lancer vu depuis un second onglet, montée de niveau à 7 D6. Fiche Cake remise à ses valeurs ensuite.
+Reste ouvert : essai avec un vrai second compte joueur ; règle d'affichage des modificateurs à choisir avec Quentin.
+
 ## 2026-10-07 — Jets multiples et montée de niveau choisie par le MJ
 - Le bouton « Jet » du panneau MJ propose trois demandes : test, dés (jusqu'à 10 dés d'un type, avec raison) ou montée de niveau (`components/gm/GMPanel.tsx`). Le serveur tire tous les dés, signés comme les autres lancers (`app/api/check/route.ts`, `lib/dicePayload.ts`).
 - Le joueur lance tout d'un coup : une rangée de dés tourne puis se révèle (`components/dice/MultiDicePopup.tsx`) ; le chat et le bandeau montrent chaque dé et le total.

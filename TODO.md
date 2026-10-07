@@ -210,10 +210,11 @@
 - [x] Afficher le résultat d'un test à toute la table (« Cake a réussi son test de Force »), avec réglages du MJ (difficulté visible ou cachée, texte)
 - [ ] Tester un test du MJ avec un second compte joueur : vérifier que le joueur ne voit jamais la difficulté cachée, ni sur sa carte, ni dans le chat, ni dans le bandeau
 - [ ] Tester une montée de niveau « Le joueur lance » avec un second compte joueur, fiches réservées au MJ : les gains doivent arriver sur la fiche du joueur et sur son compte
+- [ ] Vérifier avec un second compte joueur que le lancer des dés sur la table apparaît chez lui au même moment et sur le même résultat
 - [ ] Garder les gains de la montée de niveau du MJ s'il ouvre la fiche d'un joueur pendant l'animation de ses dés (aujourd'hui ils sont perdus)
 - [ ] Rendre visible d'où vient un modificateur de caractéristique (par exemple Force 8 donne −1) : règle ou équipement
 - [x] Ne colorer le dé (jaune pour un critique, etc.) qu'au moment où le résultat apparaît, pas dès le début du lancer
-- [ ] Remplacer le dé actuel de la table par un vrai dé physique comme celui de la page d'accueil (rebonds sur les bords), synchronisé chez tous les joueurs : tout le monde voit le lancer et le résultat, qui reste tiré par le serveur
+- [x] Remplacer le dé actuel de la table par un vrai dé physique comme celui de la page d'accueil (rebonds sur les bords), synchronisé chez tous les joueurs : tout le monde voit le lancer et le résultat, qui reste tiré par le serveur
 
 ## Ordre validé (2026-10-04) : débug → refonte en thème → bibliothèque → public → autres thèmes
 

@@ -6,8 +6,7 @@ import { useRouter, useParams } from 'next/navigation'
 import CharacterSheet, { defaultPerso } from '@/components/sheet/CharacterSheet'
 import DiceRoller from '@/components/dice/DiceRoller'
 import ChatBox from '@/components/chat/ChatBox'
-import PopupResult from '@/components/dice/PopupResult'
-import MultiDicePopup from '@/components/dice/MultiDicePopup'
+import TableDice, { THROW_FADE_MS, THROW_HOLD_MS } from '@/components/dice/TableDice'
 import CheckPrompt from '@/components/checks/CheckPrompt'
 import CheckBanner from '@/components/checks/CheckBanner'
 import InteractiveCanvas from '@/components/canvas/InteractiveCanvas'
@@ -25,7 +24,8 @@ import { saveAccountCharacter } from '@/lib/charactersApi'
 import { useTheme } from '@/components/context/ThemeContext'
 import { useT } from '@/lib/useT'
 import { canEditSheet, useRoomSettings } from '@/lib/roomSettings'
-import { levelUpLabel, type RollsOutcome } from '@/lib/checks'
+import type { RollsOutcome } from '@/lib/checks'
+import { DICE_REVEAL_DELAY_MS } from '@/lib/dicePayload'
 import { applyLevelUp } from '@/lib/levelUp'
 import { Crown } from 'lucide-react'
 import {
@@ -75,14 +75,12 @@ export default function HomePageInner() {
     viewedConnectionId === null ? null : others.find((o) => o.connectionId === viewedConnectionId)?.id ?? null,
   )
 
-  const [showPopup, setShowPopup] = useState(false)
   const [diceType, setDiceType] = useState(6)
-  const [diceResult, setDiceResult] = useState<number | null>(null)
-  // Dé montré par l'animation : celui du lanceur, ou le D20 d'un test du MJ.
-  const [popupDice, setPopupDice] = useState(6)
   const [diceDisabled, setDiceDisabled] = useState(false)
-  // Plusieurs dés demandés par le MJ, dont la montée de niveau.
-  const [multiRoll, setMultiRoll] = useState<{ results: number[]; dice: number; levelUp: boolean } | null>(null)
+  // Mon lancer en cours sur la table, jusqu'à ce que ses dés disparaissent ;
+  // `levelUp` : gains d'une montée de niveau, ajoutés à la fiche à ce moment-là.
+  const [myThrow, setMyThrow] = useState<{ id: string; levelUp?: number[] } | null>(null)
+  const myThrowRef = useRef<{ id: string; levelUp?: number[] } | null>(null)
   const { id: roomId } = useParams<{ id: string }>()
   const [diceError, setDiceError] = useState(false)
   const chatBoxRef = useRef<HTMLDivElement>(null)
@@ -107,7 +105,7 @@ export default function HomePageInner() {
   const accountSaveTimer = useRef<number | null>(null)
   const pendingAccountSave = useRef<Character | null>(null)
   // total durée d'indisponibilité du bouton (animation + hold + cooldown)
-  const ROLL_TOTAL_MS = 2000 + 300 + 2000 + 1000
+  const ROLL_TOTAL_MS = DICE_REVEAL_DELAY_MS + THROW_HOLD_MS + THROW_FADE_MS + 1000
 
   const broadcast = useBroadcastEvent()
   const [, updateMyPresence] = useMyPresence()
@@ -497,12 +495,10 @@ export default function HomePageInner() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ roomId, dice: diceType, player: perso.nom || profile?.pseudo || '' }),
       })
-      const data = (await res.json().catch(() => null)) as { roll?: { result: number } } | null
+      const data = (await res.json().catch(() => null)) as { roll?: { id: string; result: number } } | null
       if (!res.ok || !data?.roll) throw new Error(`dice ${res.status}`)
       debug('dice-roll', data.roll)
-      setPopupDice(diceType)
-      setDiceResult(data.roll.result)
-      setShowPopup(true)
+      startThrow({ id: data.roll.id })
     } catch (e) {
       debug('dice-roll failed', e)
       setDiceError(true)
@@ -525,17 +521,12 @@ export default function HomePageInner() {
         body: JSON.stringify({ roomId, action: 'roll', id }),
       })
       const data = (await res.json().catch(() => null)) as
-        | { roll?: { result: number; dice: number; rolls?: RollsOutcome } }
+        | { roll?: { id: string; result: number; dice: number; rolls?: RollsOutcome } }
         | null
       if (!res.ok || !data?.roll) throw new Error(`check ${res.status}`)
       debug('check-roll', data.roll)
-      if (data.roll.rolls) {
-        setMultiRoll({ results: data.roll.rolls.results, dice: data.roll.dice, levelUp: data.roll.rolls.levelUp })
-        return
-      }
-      setPopupDice(data.roll.dice)
-      setDiceResult(data.roll.result)
-      setShowPopup(true)
+      const rolls = data.roll.rolls
+      startThrow({ id: data.roll.id, ...(rolls?.levelUp ? { levelUp: rolls.results } : {}) })
     } catch (e) {
       debug('check-roll failed', e)
       setDiceError(true)
@@ -548,22 +539,22 @@ export default function HomePageInner() {
   // Les gains arrivent sur la fiche une fois les dés révélés à toute la table.
   // Pendant que le MJ consulte une autre fiche, sa montée de niveau attend
   // (`levelUpBlocked`) : la fiche affichée est donc bien la sienne.
-  const handleMultiFinish = () => {
-    const roll = multiRoll
-    setMultiRoll(null)
-    if (roll?.levelUp && viewedConnectionId === null) handleUpdatePerso(applyLevelUp(perso, roll.results), true)
-    window.setTimeout(() => {
-      setCooldown(false)
-      setDiceDisabled(false)
-    }, 1000)
+  // Si mes dés n'apparaissent jamais sur la table, le bouton revient quand même.
+  const startThrow = (roll: { id: string; levelUp?: number[] }) => {
+    myThrowRef.current = roll
+    setMyThrow(roll)
+    window.setTimeout(() => handleThrowDone(roll.id), DICE_REVEAL_DELAY_MS + THROW_HOLD_MS + THROW_FADE_MS + 4000)
   }
 
-  const handlePopupFinish = () => {
-    setShowPopup(false)
+  const handleThrowDone = (id: string) => {
+    const mine = myThrowRef.current
+    if (mine?.id !== id) return
+    myThrowRef.current = null
+    setMyThrow(null)
+    if (mine.levelUp && viewedConnectionId === null) handleUpdatePerso(applyLevelUp(perso, mine.levelUp), true)
     window.setTimeout(() => {
       setCooldown(false)
       setDiceDisabled(false)
-      setDiceResult(null)
     }, 1000)
   }
 
@@ -648,16 +639,10 @@ export default function HomePageInner() {
             {/* Bandeau de la salle de démo, en bas du plateau : il ne cache pas les outils. */}
             <DemoBanner />
             <ErrorBoundary fallback={<div className="p-4 text-red-500">Dice display error</div>}>
-              <PopupResult show={showPopup} result={diceResult} diceType={popupDice} onFinish={handlePopupFinish} />
-              <MultiDicePopup
-                results={multiRoll?.results ?? null}
-                dice={multiRoll?.dice ?? 6}
-                labels={multiRoll?.levelUp ? multiRoll.results.map((_, i) => t(levelUpLabel(i))) : undefined}
-                onFinish={handleMultiFinish}
-              />
+              <TableDice onDone={handleThrowDone} />
             </ErrorBoundary>
             <CheckBanner isGM={isGM} />
-            {!showPopup && !multiRoll && (
+            {!myThrow && (
               <CheckPrompt onRoll={rollCheck} disabled={diceDisabled} levelUpBlocked={viewedConnectionId !== null} />
             )}
             {diceError && (

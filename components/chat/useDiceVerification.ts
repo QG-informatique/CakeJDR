@@ -58,6 +58,16 @@ async function check(key: CryptoKey, roomId: string, ev: SessionEvent): Promise<
   }
 }
 
+/**
+ * Vérifie un seul lancer, pour l'animer sur la table : `null` quand la
+ * vérification est impossible ici (on montre alors le lancer quand même).
+ */
+export async function verifyDiceEvent(roomId: string, ev: SessionEvent): Promise<DiceCheck | null> {
+  const key = await loadKey()
+  if (!key) return null
+  return check(key, roomId, ev)
+}
+
 export function useDiceVerification(roomId: string, events: SessionEvent[]) {
   const [checks, setChecks] = useState<Record<string, DiceCheck>>({})
 
