@@ -13,6 +13,7 @@ import type { CheckStat } from './checks'
  * La clé est dérivée de `AUTH_SECRET`, comme celle des dés.
  */
 export type SealedCheck = {
+  type?: 'check'
   id: string
   targetId: string
   targetName: string
@@ -23,6 +24,19 @@ export type SealedCheck = {
   reason?: string
 }
 
+export type SealedRolls = {
+  type: 'rolls'
+  id: string
+  targetId: string
+  targetName: string
+  dice: number
+  count: number
+  levelUp: boolean
+  reason?: string
+}
+
+export type SealedRequest = SealedCheck | SealedRolls
+
 let cachedKey: Buffer | null = null
 function key() {
   if (cachedKey) return cachedKey
@@ -32,7 +46,7 @@ function key() {
   return cachedKey
 }
 
-export function sealCheck(roomId: string, check: SealedCheck): string {
+export function sealCheck(roomId: string, check: SealedRequest): string {
   const iv = randomBytes(12)
   const cipher = createCipheriv('aes-256-gcm', key(), iv)
   cipher.setAAD(Buffer.from(roomId))
@@ -41,14 +55,14 @@ export function sealCheck(roomId: string, check: SealedCheck): string {
 }
 
 /** La demande d'origine, ou null si le scellé a été modifié ou vient d'une autre table. */
-export function unsealCheck(roomId: string, seal: string): SealedCheck | null {
+export function unsealCheck(roomId: string, seal: string): SealedRequest | null {
   try {
     const raw = Buffer.from(seal, 'base64url')
     const decipher = createDecipheriv('aes-256-gcm', key(), raw.subarray(0, 12))
     decipher.setAAD(Buffer.from(roomId))
     decipher.setAuthTag(raw.subarray(12, 28))
     const text = Buffer.concat([decipher.update(raw.subarray(28)), decipher.final()]).toString('utf8')
-    return JSON.parse(text) as SealedCheck
+    return JSON.parse(text) as SealedRequest
   } catch {
     return null
   }

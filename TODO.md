@@ -203,12 +203,14 @@
 
 ## Retours de Quentin sur la version en ligne (2026-10-05) — tests, niveaux, dés
 - [x] Retirer le bouton « D6 montée de niveau » de la fiche du joueur (panneau de gauche) — gardé pour le MJ seulement, en attendant mieux
-- [ ] Laisser le MJ choisir comment se passe une montée de niveau : jets de dés qui donnent des points, ou caractéristiques augmentées directement par le MJ
-- [ ] Permettre au MJ de demander plusieurs jets d'un coup à un joueur (par exemple 6 D6, un par caractéristique, pour une montée de niveau), lancés en une seule fois
+- [x] Laisser le MJ choisir comment se passe une montée de niveau : jets de dés qui donnent des points, ou caractéristiques augmentées directement par le MJ
+- [x] Permettre au MJ de demander plusieurs jets d'un coup à un joueur (par exemple 6 D6, un par caractéristique, pour une montée de niveau), lancés en une seule fois
 - [x] Créer les tests demandés par le MJ : il choisit le joueur, la caractéristique et la difficulté (par exemple Force contre 10), sans forcément l'annoncer au joueur
 - [x] Définir avec Quentin le calcul d'un test (résultat du dé + modificateur de la caractéristique, comparé à la difficulté) et l'expliquer dans l'interface — validé : D20 + modificateur, réussi si le total atteint la difficulté
 - [x] Afficher le résultat d'un test à toute la table (« Cake a réussi son test de Force »), avec réglages du MJ (difficulté visible ou cachée, texte)
 - [ ] Tester un test du MJ avec un second compte joueur : vérifier que le joueur ne voit jamais la difficulté cachée, ni sur sa carte, ni dans le chat, ni dans le bandeau
+- [ ] Tester une montée de niveau « Le joueur lance » avec un second compte joueur, fiches réservées au MJ : les gains doivent arriver sur la fiche du joueur et sur son compte
+- [ ] Garder les gains de la montée de niveau du MJ s'il ouvre la fiche d'un joueur pendant l'animation de ses dés (aujourd'hui ils sont perdus)
 - [ ] Rendre visible d'où vient un modificateur de caractéristique (par exemple Force 8 donne −1) : règle ou équipement
 - [x] Ne colorer le dé (jaune pour un critique, etc.) qu'au moment où le résultat apparaît, pas dès le début du lancer
 - [ ] Remplacer le dé actuel de la table par un vrai dé physique comme celui de la page d'accueil (rebonds sur les bords), synchronisé chez tous les joueurs : tout le monde voit le lancer et le résultat, qui reste tiré par le serveur

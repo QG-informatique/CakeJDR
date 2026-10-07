@@ -1,6 +1,6 @@
 'use client'
 
-import { FC, useState, useEffect, useCallback } from 'react'
+import { FC, useState, useEffect } from 'react'
 import { ChevronRight } from 'lucide-react'
 import StatsTab from './StatsTab'
 import PortraitPicker from './PortraitPicker'
@@ -8,6 +8,7 @@ import EquipPanel from '../character/EquipPanel'
 import DescriptionPanel from '../character/DescriptionPanel'
 import CharacterSheetHeader, { type SheetDensity } from '../character/CharacterSheetHeader'
 import CharacterEditor from '../character/CharacterEditor'
+import LevelUpPanel from '../character/LevelUpPanel'
 import { useT } from '@/lib/useT'
 import { useIsDesktop } from '@/lib/useIsDesktop'
 import {
@@ -25,21 +26,15 @@ type Props = {
   notice?: React.ReactNode
   /** Montée de niveau : le MJ la fait faire, le joueur ne la lance plus lui-même. */
   canLevelUp?: boolean
+  /** Joueur à qui demander les dés de la montée de niveau (le MJ lui-même sur sa fiche). */
+  levelUpTarget?: { id: string; name: string } | null
 }
 
 const DENSITY_KEY = 'sheetDensity'
 
 export const defaultPerso: Character = { ...defaultCharacter }
 
-/** Jet de montée de niveau (ex. « d6 ») : lancé par le MJ sur la fiche, le tirage reste local. */
-const rollDice = (dice: string): number => {
-  const match = dice.match(/d(\d+)/i)
-  if (!match) return 0
-  const sides = parseInt(match[1] ?? '0')
-  return Math.floor(Math.random() * sides) + 1
-}
-
-const CharacterSheet: FC<Props> = ({ perso, onUpdate, readOnly = false, notice, canLevelUp = false }) => {
+const CharacterSheet: FC<Props> = ({ perso, onUpdate, readOnly = false, notice, canLevelUp = false, levelUpTarget = null }) => {
   // La fiche se modifie dans l'écran d'édition (CharacterEditor) ; ici elle
   // ne fait que s'afficher.
   const [editorOpen, setEditorOpen] = useState(false)
@@ -87,73 +82,13 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, readOnly = false, notice, 
     setLocalPerso(normalizeCharacter(next))
   }, [perso])
 
-  const [processing, setProcessing] = useState(false)
-  const [dice, setDice] = useState('d6')
-  const [lastStat, setLastStat] = useState<string | null>(null)
-  const [lastGain, setLastGain] = useState<number | null>(null)
-  const [animKey, setAnimKey] = useState(0)
-
   const cFiche: Character = Object.keys(perso || {}).length ? perso : defaultPerso
 
-  const handleLevelUp = useCallback(async () => {
-    if (processing) return
-    setProcessing(true)
-    let updatedPerso: Character = {
-      ...cFiche,
-      niveau: Number(cFiche.niveau) + 1,
-    }
-    const pvMaxKey =
-      updatedPerso.pv_max !== undefined
-        ? 'pv_max'
-        : updatedPerso.pvMax !== undefined
-          ? 'pvMax'
-          : 'pv_max'
-
-    for (const stat of [
-      'pv',
-      'force',
-      'dexterite',
-      'constitution',
-      'intelligence',
-      'sagesse',
-      'charisme',
-    ]) {
-      const gain = rollDice(dice)
-
-      setLastStat(stat)
-      setLastGain(gain)
-      setAnimKey((k) => k + 1)
-
-      setTimeout(() => {
-        setLastStat(null)
-        setLastGain(null)
-      }, 1200)
-
-      if (stat === 'pv') {
-        const currentMax = Number(
-          Reflect.get(updatedPerso, pvMaxKey) ?? updatedPerso.pv ?? 0,
-        )
-        const newPvMax = currentMax + gain
-        const currentPv = Number(updatedPerso.pv ?? 0)
-        const newPv = Math.min(currentPv + gain, newPvMax)
-        updatedPerso = { ...updatedPerso }
-        Reflect.set(updatedPerso, pvMaxKey, newPvMax)
-        updatedPerso.pv = newPv
-      } else {
-        updatedPerso = { ...updatedPerso }
-        const prev = Number(Reflect.get(updatedPerso, stat) ?? 0)
-        Reflect.set(updatedPerso, stat, prev + gain)
-      }
-
-      // Mise à jour UI uniquement — pas de sauvegarde intermédiaire
-      setLocalPerso({ ...updatedPerso })
-      await new Promise((resolve) => setTimeout(resolve, 1200))
-    }
-
-    // Une seule sauvegarde à la fin (au lieu de 7) → réduit les appels cloud × 7
-    onUpdate(updatedPerso)
-    setProcessing(false)
-  }, [processing, cFiche, dice, onUpdate])
+  // Le MJ augmente lui-même les caractéristiques : un niveau de plus, puis l'édition.
+  const levelUpByHand = () => {
+    onUpdate({ ...cFiche, niveau: Number(cFiche.niveau) + 1 })
+    setEditorOpen(true)
+  }
 
   const saveFromEditor = (edited: Character) => {
     setEditorOpen(false)
@@ -222,15 +157,7 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, readOnly = false, notice, 
         <StatsTab
           perso={localPerso}
           compact={density === 'compact'}
-          dice={dice}
-          setDice={setDice}
-          onLevelUp={handleLevelUp}
-          processing={processing}
-          lastStat={lastStat}
-          lastGain={lastGain}
-          animKey={animKey}
-          readOnly={readOnly}
-          canLevelUp={canLevelUp}
+          levelUp={canLevelUp && !readOnly ? <LevelUpPanel target={levelUpTarget} onByHand={levelUpByHand} /> : null}
         />
       )}
       {tab === 'equip' && <EquipPanel perso={localPerso} compact={density === 'compact'} />}

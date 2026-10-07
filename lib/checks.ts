@@ -45,6 +45,7 @@ export const CHECK_NAME_MAX = 60
  * lire une difficulté cachée.
  */
 export type CheckRequest = {
+  type?: 'check'
   id: string
   targetId: string
   targetName: string
@@ -68,6 +69,42 @@ export type CheckOutcome = {
   success: boolean
   reason?: string
 }
+
+/**
+ * Jets demandés par le MJ : plusieurs dés d'un coup, lancés par le joueur en
+ * une fois. Une montée de niveau en est un cas particulier : un dé pour les PV
+ * et un par caractéristique, ajoutés à la fiche du joueur.
+ */
+export const ROLLS_MAX = 10
+export const LEVEL_UP_TARGETS = ['pv', ...CHECK_STATS.map((s) => s.key)] as const
+export type LevelUpTarget = (typeof LEVEL_UP_TARGETS)[number]
+
+export type RollsRequest = {
+  type: 'rolls'
+  id: string
+  targetId: string
+  targetName: string
+  dice: number
+  count: number
+  levelUp: boolean
+  reason?: string
+  createdAt: number
+  seal: string
+}
+
+/** Demande en attente dans la liste `checks` : un test ou des jets. */
+export type GmRequest = CheckRequest | RollsRequest
+
+/** Résultat de jets demandés, joint au lancer inscrit dans l'historique. */
+export type RollsOutcome = {
+  results: number[]
+  levelUp: boolean
+  reason?: string
+}
+
+/** Intitulé d'un dé de montée de niveau dans `lib/translations.ts`. */
+export const levelUpLabel = (i: number) =>
+  i === 0 ? 'hp' : checkStatLabel(LEVEL_UP_TARGETS[i] ?? '')
 
 export const signedMod = (n: number) => `${n >= 0 ? '+' : '−'}${Math.abs(n)}`
 

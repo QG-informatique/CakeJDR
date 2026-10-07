@@ -44,6 +44,7 @@ async function check(key: CryptoKey, roomId: string, ev: SessionEvent): Promise<
       result: ev.result,
       ts: ev.ts,
       ...(ev.check ? { check: ev.check } : {}),
+      ...(ev.rolls ? { rolls: ev.rolls } : {}),
     })
     const ok = await crypto.subtle.verify(
       { name: 'Ed25519' },
@@ -62,13 +63,13 @@ export function useDiceVerification(roomId: string, events: SessionEvent[]) {
 
   useEffect(() => {
     let cancelled = false
-    const dice = events.filter((ev) => ev.kind === 'dice' || ev.kind === 'check')
+    const dice = events.filter((ev) => ev.kind !== 'chat')
     if (dice.length === 0) return
     void loadKey().then(async (key) => {
       if (!key || cancelled) return
       const next: Record<string, DiceCheck> = {}
       for (const ev of dice) {
-        const cacheKey = `${roomId}:${ev.id}:${ev.sig ?? ''}:${ev.player}:${ev.dice}:${ev.result}:${ev.ts}:${JSON.stringify(ev.check ?? null)}`
+        const cacheKey = `${roomId}:${ev.id}:${ev.sig ?? ''}:${ev.player}:${ev.dice}:${ev.result}:${ev.ts}:${JSON.stringify(ev.check ?? null)}:${JSON.stringify(ev.rolls ?? null)}`
         let result = known.get(cacheKey)
         if (!result) {
           result = await check(key, roomId, ev)
