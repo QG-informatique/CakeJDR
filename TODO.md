@@ -242,7 +242,7 @@
 - [ ] Tester avec deux comptes la fiche d'un joueur ouverte et modifiée par le MJ, puis le retour à « Ma fiche »
 - [ ] Passer le résumé de session en vraie co-édition (plugin Lexical de Liveblocks) : aujourd'hui, si deux personnes écrivent en même temps, la dernière gagne
 - [x] Tirer les dés côté serveur : le résultat est calculé dans le navigateur, donc falsifiable
-- [ ] Vérifier en ligne qu'un lancer de dé s'affiche chez tous les joueurs avec le bouclier « Lancé par le serveur »
+- [x] Vérifier en ligne qu'un lancer de dé s'affiche chez tous les joueurs avec le bouclier « Lancé par le serveur » — bouclier retiré le 2026-10-08, l'affichage chez l'autre joueur reste vérifié par la ligne « second compte joueur » des dés
 - [ ] Caler la position de la musique pour un joueur qui arrive en cours de morceau
 - [ ] Ne pas perdre la modification du MJ quand le joueur est lui-même en train d'éditer sa fiche
 
@@ -272,11 +272,12 @@
 ## Retours de Quentin après les tests en ligne (2026-10-08)
 - [x] Rendre moins transparent le panneau qui s'ouvre au bouton des dés (choix des dés, `components/dice/DiceRoller.tsx`) : fond à ~50 % d'opacité au moins, texte et cases bien lisibles — à confirmer avec Quentin que c'est bien ce panneau
 - [x] Renommer « Règles du narrateur » dans la bulle des modificateurs : la règle (10 donne +0, ±1 tous les 2 points) est celle de D&D, pas un choix du narrateur — trouver un nom honnête (« Règle de base », « Règle D&D ») ou laisser le MJ choisir la règle
-- [ ] Décider s'il faut garder la limite de 20 dés par lancer (`POOL_MAX`, `lib/dicePool.ts`), après avoir mesuré jusqu'où ça reste fluide (ordinateur et téléphone)
+- [x] Décider s'il faut garder la limite de 20 dés par lancer (`POOL_MAX`, `lib/dicePool.ts`) — gardée pour l'instant, « largement suffisant » (Quentin, 2026-10-08)
 - [x] Ajouter au dessin un sélecteur de couleur libre, avec 3 à 5 emplacements de couleurs perso enregistrés dans la barre du haut ; la barre garde toujours la même taille
 - [x] Refaire complètement le Résumé de partie : plus simple, plus clair, au style de la nouvelle interface (revoir les boutons importer, exporter, supprimer)
 - [x] Écrire un résumé d'histoire d'exemple pour la salle de test (pourquoi Cake est là, pourquoi il se bat contre ces monstres, où il en est), une demi-page au plus
-- [ ] Proposer d'autres statistiques de dés en plus des taux d'échecs et de critiques (moyenne obtenue comparée à la moyenne attendue, chance par joueur, meilleur et pire lancer, séries, dé le plus lancé) et choisir avec Quentin
+- [x] Proposer d'autres statistiques de dés en plus des taux d'échecs et de critiques — retenus : chance de chaque joueur (barre, 50 % = moyenne), le plus chanceux de la table, dé le plus lancé
+- [ ] Vérifier à deux joueurs la ligne « Le plus chanceux de la table » dans les statistiques des dés
 - [x] Dans le chat, toujours afficher le nom du lanceur en entier ; c'est la liste des dés qui se coupe quand elle est trop longue
 - [x] Expliquer ou retirer le petit bouclier à côté des lancers dans le chat (il veut dire « Lancer enregistré par le serveur », mais personne ne le comprend sans survol)
 - [x] Musique : garder les liens YouTube pour l'instant ; Spotify demanderait que chaque joueur relie son compte (abonnement, autorisations), écarté pour la 1.0
