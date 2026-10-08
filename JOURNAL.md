@@ -1,5 +1,13 @@
 # Journal
 
+## 2026-10-08 — Plateau : pions de couleur, bibliothèque au MJ
+- Pions de couleur dessinés par le code (rond avec une ou deux lettres) : onglet « Pions de couleur » de la bibliothèque (`components/canvas/LibraryPanel.tsx`, `ImageItem.tsx`)
+- Bibliothèque réservée au MJ ; le joueur a un bouton « Mon pion » qui pose ou retire le pion de son personnage (`components/canvas/InteractiveCanvas.tsx`)
+- Le pion se choisit dans la fiche (onglet Pion du sélecteur de portrait) : pion illustré ou pion de couleur ; celui du plateau suit le changement (`components/sheet/PortraitPicker.tsx`, `CharacterSheet.tsx`, champ `pion`)
+- Décision : un joueur ne déplace plus que son propre pion, le MJ déplace tout ; croix « Retirer du plateau » au survol
+- Vérifié dans salletest en MJ et en joueur (rôle forcé le temps du test, puis remis)
+Reste ouvert : recherche et filtres de la bibliothèque, « Poser le pion » et « Montrer » sur les rencontres, protection côté serveur.
+
 ## 2026-10-08 — Résumé : vraie co-édition
 - Chaque page du Résumé est un texte Yjs partagé par Liveblocks (`@liveblocks/yjs`, `yjs`) : deux joueurs qui écrivent en même temps gardent tous les deux leurs mots, le curseur ne saute plus (`components/chat/SessionSummary.tsx`)
 - Le plugin Lexical officiel n'a pas été retenu : il ne gère qu'un document par salle, pas une page par onglet ; liaison Lexical ↔ Yjs écrite à la main, le texte restant en paragraphes simples

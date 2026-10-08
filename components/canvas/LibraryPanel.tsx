@@ -7,6 +7,7 @@ import { useLanguage } from '@/components/context/LanguageContext'
 import {
   BOARD_LIBRARY,
   LIBRARY_DRAG_TYPE,
+  TOKEN_COLORS,
   libraryUrl,
   uploadThumbUrl,
   type BoardEntry,
@@ -14,6 +15,7 @@ import {
 } from '@/lib/library'
 
 const OLD_TAB = 'anciennes'
+const TOKENS_TAB = 'jetons'
 
 type Tile = {
   key: string
@@ -36,6 +38,7 @@ export default function LibraryPanel({
   uploading,
   canDelete,
   onToggle,
+  onPlaceToken,
   onUpload,
   onDelete,
   onRemoveOld,
@@ -52,6 +55,8 @@ export default function LibraryPanel({
   uploading: Record<string, number>
   canDelete: (upload: LibraryUpload) => boolean
   onToggle: (entry: BoardEntry) => void
+  /** Pose un pion de couleur (rond avec une lettre). */
+  onPlaceToken: (text: string, color: string) => void
   onUpload: (categoryId: string, file: File) => void
   onDelete: (upload: LibraryUpload) => void
   onRemoveOld: (id: string) => void
@@ -63,6 +68,9 @@ export default function LibraryPanel({
   const [categoryId, setCategoryId] = useState(BOARD_LIBRARY[0]!.id)
   const fileRef = useRef<HTMLInputElement>(null)
   const showOld = categoryId === OLD_TAB && oldImages.length > 0
+  const showTokens = categoryId === TOKENS_TAB
+  const [tokenText, setTokenText] = useState('A')
+  const [tokenColor, setTokenColor] = useState(TOKEN_COLORS[0]!)
   const category = BOARD_LIBRARY.find((c) => c.id === categoryId) ?? BOARD_LIBRARY[0]!
 
   const tiles: Tile[] = [
@@ -92,7 +100,7 @@ export default function LibraryPanel({
       <div className="flex items-center gap-2">
         <span className="ui-label">{t('library')}</span>
         <span className="min-w-0 truncate text-xs text-ink/55">
-          {showOld ? t('libraryOldHint') : category.map ? t('libraryMapHint') : t('libraryHint')}
+          {showTokens ? t('libraryTokensHint') : showOld ? t('libraryOldHint') : category.map ? t('libraryMapHint') : t('libraryHint')}
         </span>
         <button
           onClick={onClose}
@@ -109,12 +117,15 @@ export default function LibraryPanel({
           <button
             key={c.id}
             role="tab"
-            aria-selected={!showOld && c.id === category.id}
+            aria-selected={!showOld && !showTokens && c.id === category.id}
             onClick={() => setCategoryId(c.id)}
           >
             {c.label[l]}
           </button>
         ))}
+        <button role="tab" aria-selected={showTokens} onClick={() => setCategoryId(TOKENS_TAB)}>
+          {t('libraryTokens')}
+        </button>
         {oldImages.length > 0 && (
           <button role="tab" aria-selected={showOld} onClick={() => setCategoryId(OLD_TAB)}>
             {t('libraryOld')} ({oldImages.length})
@@ -134,6 +145,43 @@ export default function LibraryPanel({
         }}
       />
 
+      {showTokens ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <span
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 border-white/80 text-2xl font-bold text-white shadow"
+            style={{ background: tokenColor, textShadow: '0 1px 2px rgba(0,0,0,.45)' }}
+            aria-hidden
+          >
+            {tokenText || '?'}
+          </span>
+          <label className="flex flex-col gap-1 text-xs text-ink/65">
+            {t('tokenText')}
+            <input
+              value={tokenText}
+              onChange={(e) => setTokenText(e.target.value.toUpperCase().slice(0, 2))}
+              maxLength={2}
+              className="ui-input !w-16 text-center text-base font-bold"
+            />
+          </label>
+          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t('libraryTokens')}>
+            {TOKEN_COLORS.map((c) => (
+              <button
+                key={c}
+                role="radio"
+                aria-checked={tokenColor === c}
+                aria-label={c}
+                onClick={() => setTokenColor(c)}
+                className={`h-7 w-7 rounded-full border-2 transition ${tokenColor === c ? 'border-ink scale-110' : 'border-transparent'}`}
+                style={{ background: c }}
+              />
+            ))}
+          </div>
+          <button onClick={() => onPlaceToken(tokenText.trim() || '?', tokenColor)} className="ui-btn ui-btn-primary">
+            <Plus size={14} />
+            {t('tokenPlace')}
+          </button>
+        </div>
+      ) : (
       <div className="grid max-h-[22rem] min-h-0 grid-cols-3 gap-2 overflow-y-auto sm:grid-cols-4">
         {showOld ? (
           oldImages.map((img) => (
@@ -219,6 +267,7 @@ export default function LibraryPanel({
           </>
         )}
       </div>
+      )}
     </div>
   )
 }

@@ -82,6 +82,8 @@ export type Character = {
   notes: string
   /** Adresse de l'image du portrait ; absente tant qu'aucun n'est choisi. */
   portrait?: string
+  /** Image du pion sur le plateau ; absente, c'est un pion de couleur avec l'initiale. */
+  pion?: string
 }
 
 export type CharacterLike = Partial<Character> & {

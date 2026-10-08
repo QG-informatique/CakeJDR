@@ -10,6 +10,7 @@ import CharacterSheetHeader, { type SheetDensity } from '../character/CharacterS
 import CharacterEditor from '../character/CharacterEditor'
 import LevelUpPanel from '../character/LevelUpPanel'
 import { useT } from '@/lib/useT'
+import { libraryItemOf, libraryUrl, matchingPion } from '@/lib/library'
 import { useIsDesktop } from '@/lib/useIsDesktop'
 import {
   type Character,
@@ -96,12 +97,24 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, readOnly = false, notice, 
     onUpdate(edited)
   }
 
-  const pickPortrait = (url: string) => {
+  // Un portrait de la bibliothèque propose son pion assorti, sauf si le
+  // joueur a déjà choisi un autre pion lui-même.
+  const pionFor = (portrait: string | undefined) => {
+    const item = libraryItemOf(portrait)
+    const pion = item?.categoryId === 'portraits' ? matchingPion(item.itemId) : null
+    return pion?.categoryId === 'pions' ? libraryUrl('pions', pion.item.id) : undefined
+  }
+  const saveImages = (next: Character) => {
     setPortraitOpen(false)
-    const next = { ...cFiche, portrait: url || undefined }
     setLocalPerso(normalizeCharacter(next))
     onUpdate(next)
   }
+  const pickPortrait = (url: string) => {
+    const keepPion = cFiche.pion && cFiche.pion !== pionFor(cFiche.portrait)
+    const portrait = url || undefined
+    saveImages({ ...cFiche, portrait, pion: keepPion ? cFiche.pion : pionFor(portrait) ?? cFiche.pion })
+  }
+  const pickPion = (url: string) => saveImages({ ...cFiche, pion: url || undefined })
 
   // When collapsed, render only an expand button so the panel frees all space.
   // Sur téléphone la fiche a son propre onglet : on ne la replie jamais.
@@ -148,7 +161,10 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, readOnly = false, notice, 
       {portraitOpen && !readOnly && (
         <PortraitPicker
           current={cFiche.portrait}
+          currentPion={cFiche.pion}
+          name={cFiche.nom}
           onPick={pickPortrait}
+          onPickPion={pickPion}
           onClose={() => setPortraitOpen(false)}
         />
       )}

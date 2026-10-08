@@ -259,3 +259,101 @@ export type BoardEntry = {
 export function boardCategory(id: string) {
   return BOARD_LIBRARY.find((c) => c.id === id)
 }
+
+// ── Étiquettes du pack n° 2 (voir PROMPT-PACK-IMAGES.md) ──────────────────
+// Un même identifiant dans plusieurs dossiers est le même personnage : la
+// rencontre « liche » et le pion ennemi « liche » partagent leurs étiquettes.
+
+export type LibraryRole = 'troupe' | 'elite' | 'boss' | 'allie' | 'pnj'
+export type LibraryAct = '1' | '2' | '3' | 'final'
+
+export const LIBRARY_FACTIONS: { id: string; label: LibraryLabel; act?: LibraryAct }[] = [
+  { id: 'royaume', label: { fr: 'Royaume', en: 'Kingdom' } },
+  { id: 'fournil', label: { fr: 'Fournil de Cake', en: 'Cake\'s bakery' } },
+  { id: 'gobelins', label: { fr: 'Gobelins', en: 'Goblins' }, act: '1' },
+  { id: 'bandits', label: { fr: 'Bandits', en: 'Bandits' }, act: '1' },
+  { id: 'culte', label: { fr: 'Culte', en: 'Cult' }, act: '2' },
+  { id: 'orcs', label: { fr: 'Orcs', en: 'Orcs' }, act: '3' },
+  { id: 'marais', label: { fr: 'Marais', en: 'Swamp' }, act: '3' },
+  { id: 'morts-vivants', label: { fr: 'Morts-vivants', en: 'Undead' }, act: '3' },
+  { id: 'vampires', label: { fr: 'Vampires', en: 'Vampires' }, act: 'final' },
+  { id: 'dragon', label: { fr: 'Dragon', en: 'Dragon' }, act: 'final' },
+]
+
+export const LIBRARY_ACTS: { id: LibraryAct; label: LibraryLabel }[] = [
+  { id: '1', label: { fr: 'Acte 1', en: 'Act 1' } },
+  { id: '2', label: { fr: 'Acte 2', en: 'Act 2' } },
+  { id: '3', label: { fr: 'Acte 3', en: 'Act 3' } },
+  { id: 'final', label: { fr: 'Final', en: 'Finale' } },
+]
+
+export const LIBRARY_ROLES: { id: LibraryRole; label: LibraryLabel }[] = [
+  { id: 'troupe', label: { fr: 'Troupe', en: 'Minion' } },
+  { id: 'elite', label: { fr: 'Élite', en: 'Elite' } },
+  { id: 'boss', label: { fr: 'Boss', en: 'Boss' } },
+  { id: 'allie', label: { fr: 'Allié', en: 'Ally' } },
+  { id: 'pnj', label: { fr: 'PNJ', en: 'NPC' } },
+]
+
+const FACTION_OF: Record<string, string> = {}
+const tagFaction = (faction: string, ids: string) => ids.split(' ').forEach((id) => { FACTION_OF[id] = faction })
+tagFaction('fournil', 'golem-mie-brulee levain-affame levain-geant patisserie-cake cave-farine')
+tagFaction('gobelins', 'gobelin-guerrier gobelin-archer gobelin-chaman loup-sombre roi-gobelin creature-gobelin camp-gobelins grotte-gobelins')
+tagFaction('bandits', 'bandit arbaletriere-bandit brute-bandit cheffe-bandits route-embuscade')
+tagFaction('culte', 'cultiste fanatique diablotin demon-cornu grand-pretre noble-intrigante sanctuaire-culte')
+tagFaction('orcs', 'orc-guerrier orc-archer ogre orc-chaman chef-orc camp-orc col-montagne')
+tagFaction('marais', 'homme-lezard araignee-geante troll sorciere-marais marais')
+tagFaction('morts-vivants', 'squelette-soldat squelette-archer zombie goule spectre necromancien liche crypte')
+tagFaction('vampires', 'rejeton-vampire chauve-souris-geante loup-garou seigneur-vampire chateau-vampire ambiance-chateau-vampire')
+tagFaction('dragon', 'kobold drakeide-garde dragon-rouge repaire-dragon ambiance-montagne-dragon')
+tagFaction('royaume', 'roi capitaine-garde garde-ville chevaliere-heroine mage-cour pretresse-temple guide-elfe capitaine-port milicien-village princesse-heritiere salle-trone royaume-aurelion ambiance-royaume ambiance-ville-royale')
+
+/** Lieux sans faction, rangés par acte. */
+const ACT_OF: Record<string, LibraryAct> = {}
+const tagAct = (act: LibraryAct, ids: string) => ids.split(' ').forEach((id) => { ACT_OF[id] = act })
+tagAct('1', 'place-village taverne-interieur foret-clairiere ambiance-foret-brume bourgmestre paysanne')
+tagAct('2', 'rues-ville port-quais egouts temple informateur-voleur')
+tagAct('3', 'mine-abandonnee pont-gorge donjon-salles tour-mage ermite-sage')
+
+const ENEMY_IDS = new Set(LIBRARY.find((c) => c.id === 'ennemis')?.items.map((i) => i.id) ?? [])
+const ALLY_IDS = new Set(LIBRARY.find((c) => c.id === 'pions')?.items.map((i) => i.id) ?? [])
+
+export type LibraryTags = { role?: LibraryRole; faction?: string; act?: LibraryAct }
+
+/** Rôle, faction et acte d'une image offerte, pour les filtres de la bibliothèque. */
+export function libraryTags(categoryId: string, item: LibraryItem): LibraryTags {
+  const faction = FACTION_OF[item.id]
+  const act = ACT_OF[item.id] ?? LIBRARY_FACTIONS.find((f) => f.id === faction)?.act
+  if (categoryId === 'cartes') return { faction, act }
+  const label = item.label.fr
+  const role: LibraryRole = label.includes('(boss)') ? 'boss'
+    : label.includes('(élite)') ? 'elite'
+    : label.includes('(PNJ)') ? 'pnj'
+    : ALLY_IDS.has(item.id) ? 'allie'
+    : ENEMY_IDS.has(item.id) || categoryId === 'ennemis' || (faction && faction !== 'royaume') ? 'troupe'
+    : 'pnj'
+  return { role, faction, act }
+}
+
+/** Pion assorti à une rencontre ou à un portrait (même identifiant), s'il existe. */
+export function matchingPion(itemId: string): { categoryId: string; item: LibraryItem } | null {
+  for (const categoryId of ['pions', 'ennemis']) {
+    const item = LIBRARY.find((c) => c.id === categoryId)?.items.find((i) => i.id === itemId)
+    if (item) return { categoryId, item }
+  }
+  return null
+}
+
+/** Identifiant d'une image offerte à partir de son adresse, si c'en est une. */
+export function libraryItemOf(url: string | undefined): { categoryId: string; itemId: string } | null {
+  const m = url?.match(/^\/bibliotheque\/([^/]+)\/([^/]+?)\.webp$/)
+  return m ? { categoryId: m[1]!, itemId: m[2]! } : null
+}
+
+/** Couleurs des pions dessinés par le code. */
+export const TOKEN_COLORS = ['#dc2626', '#ea580c', '#ca8a04', '#16a34a', '#0891b2', '#2563eb', '#7c3aed', '#db2777', '#57534e']
+
+/** Initiale d'un nom pour un pion de couleur. */
+export function tokenInitial(name: string | undefined): string {
+  return (name?.trim()[0] ?? '?').toUpperCase()
+}
