@@ -1,5 +1,11 @@
 # Journal
 
+## 2026-10-08 — Résumé pré-rempli dans la salle de démo
+- La remise à zéro de la démo réécrit le Résumé avec deux pages d'exemple : à quoi il sert, et une « Séance 1 » chez Mila (`lib/demoRoom.ts`)
+- Pages neuves à chaque remise à zéro, texte passé par la copie `editor` : le Résumé le verse lui-même dans Yjs à la première ouverture ; les anciens textes Yjs sont vidés pour ne pas alourdir la salle
+- Texte dans le code et non dans la capture, qui ne lit pas Yjs ; testé sur salletest
+Reste ouvert : vérifier en ligne après la mise en ligne
+
 ## 2026-10-08 — Protection serveur des règles du plateau : mise de côté
 - Décision de Quentin : on ne fait pas passer les actions des joueurs par le serveur pour l'instant
 - Pourquoi : chaque déplacement de pion, trait de dessin ou frappe dans le Résumé deviendrait un appel au serveur Vercel gratuit (quota mensuel, latence au glisser), pour un risque de triche faible tant que les tables sont entre amis
