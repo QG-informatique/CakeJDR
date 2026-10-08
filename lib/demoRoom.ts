@@ -1,6 +1,7 @@
 import 'server-only'
 import { Liveblocks } from '@liveblocks/node'
 import { LiveList, LiveMap, LiveObject } from '@liveblocks/client'
+import * as Y from 'yjs'
 import { collectRoomImages, deleteCloudinaryImages } from './cloudinaryCleanup'
 
 /**
@@ -25,6 +26,36 @@ export type DemoSnapshot = {
   events: Json[]
   capturedAt: number
 }
+
+/**
+ * Résumé déjà rempli à l'arrivée : un visiteur voit tout de suite que c'est
+ * ici que la table garde son histoire d'une séance à l'autre. Le texte vit
+ * dans le code plutôt que dans la capture, qui ne sait pas lire Yjs.
+ */
+const DEMO_SUMMARY: { title: string; text: string }[] = [
+  {
+    title: 'À quoi sert ce Résumé',
+    text: [
+      "Ici, la table garde son histoire d'une séance à l'autre.",
+      '',
+      "Après chaque partie, quelqu'un note ce qui s'est passé : où en est le groupe, qui a été rencontré, ce qui reste à faire. La semaine suivante, tout le monde relit la page et la partie reprend là où elle s'était arrêtée.",
+      '',
+      "Tout le monde peut écrire en même temps, comme dans un document partagé. Une page par séance, ou par acte : ajoute-en une avec le bouton +.",
+      '',
+      'Le Résumé reste dans la salle : tu le retrouves à chaque fois que tu reviens.',
+    ].join('\n'),
+  },
+  {
+    title: 'Séance 1 — La pâtisserie de Mila',
+    text: [
+      'Mila nous a accueillis dans sa pâtisserie, au petit matin. Ses levains disparaissent la nuit, et la porte de la cave est rayée de traces de croûte brûlée.',
+      '',
+      "On est descendus voir. Au fond de la cave, une chose faite de mie noircie s'est relevée et nous a barré le passage.",
+      '',
+      "À faire la prochaine fois : retourner à la cave avec une lanterne, et demander à Mila d'où vient le plus vieux de ses levains.",
+    ].join('\n'),
+  },
+]
 
 function client() {
   const secret = process.env.LIVEBLOCKS_SECRET_KEY
@@ -67,8 +98,44 @@ export async function restoreSnapshot(roomId: string, snap: DemoSnapshot) {
     root.set('music', new LiveObject(snap.music) as never)
     root.set('events', new LiveList(snap.events ?? []) as never)
     root.set('checks', new LiveMap() as never)
+    // Pages neuves à chaque remise à zéro : leur texte passe par la copie
+    // `editor`, que le Résumé verse dans Yjs à la première ouverture.
+    const pages = DEMO_SUMMARY.map((p) => ({ id: crypto.randomUUID(), ...p }))
+    root.set(
+      'summary',
+      new LiveObject({
+        acts: new LiveList(pages.map(({ id, title }) => ({ id, title }))),
+        currentId: pages[0]!.id,
+      }) as never,
+    )
+    root.set('editor', new LiveMap(pages.map(({ id, text }) => [id, text])) as never)
+  })
+  await clearSummaryTexts(liveblocks, roomId).catch((e: unknown) => {
+    console.error('restoreSnapshot: effacement des textes du Résumé impossible', roomId, e)
   })
   await deleteCloudinaryImages(added).catch((e: unknown) => {
     console.error('restoreSnapshot: suppression des images Cloudinary impossible', roomId, e)
   })
+}
+
+/**
+ * Vide dans Yjs les textes des anciennes pages du Résumé. Plus aucune page ne
+ * les affiche, mais ils pèseraient dans la salle à chaque remise à zéro.
+ */
+async function clearSummaryTexts(liveblocks: Liveblocks, roomId: string) {
+  const doc = new Y.Doc()
+  Y.applyUpdate(doc, new Uint8Array(await liveblocks.getYjsDocumentAsBinaryUpdate(roomId)))
+  const before = Y.encodeStateVector(doc)
+  doc.transact(() => {
+    for (const key of Array.from(doc.share.keys())) {
+      if (!key.startsWith('summary:')) continue
+      const text = doc.getText(key)
+      if (text.length > 0) text.delete(0, text.length)
+    }
+    const moved = doc.getMap('summaryMoved')
+    for (const key of Array.from(moved.keys())) moved.delete(key)
+  })
+  const update = Y.encodeStateAsUpdate(doc, before)
+  // Une mise à jour vide fait encore deux octets : rien à envoyer.
+  if (update.length > 2) await liveblocks.sendYjsBinaryUpdate(roomId, update)
 }

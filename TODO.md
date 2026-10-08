@@ -242,7 +242,8 @@
 - [ ] Tester avec deux comptes la fiche d'un joueur ouverte et modifiée par le MJ, puis le retour à « Ma fiche »
 - [x] Passer le résumé de session en vraie co-édition (plugin Lexical de Liveblocks) : aujourd'hui, si deux personnes écrivent en même temps, la dernière gagne — fait avec `@liveblocks/yjs`, une page = un texte Yjs
 - [ ] Vérifier la co-édition du Résumé avec deux vrais comptes sur deux appareils (testé avec deux onglets du même compte)
-- [ ] Remettre aussi le Résumé (pages et textes Yjs) à zéro avec la salle de démo, sinon ce qu'y écrit un visiteur reste (`lib/demoRoom.ts`)
+- [x] Remettre aussi le Résumé (pages et textes Yjs) à zéro avec la salle de démo, sinon ce qu'y écrit un visiteur reste (`lib/demoRoom.ts`) — remis avec deux pages d'exemple (« À quoi sert ce Résumé », « Séance 1 »)
+- [ ] Vérifier en ligne, à la prochaine remise à zéro de la salle de démo, que le Résumé montre bien ses deux pages d'exemple
 - [x] Tirer les dés côté serveur : le résultat est calculé dans le navigateur, donc falsifiable
 - [x] Vérifier en ligne qu'un lancer de dé s'affiche chez tous les joueurs avec le bouclier « Lancé par le serveur » — bouclier retiré le 2026-10-08, l'affichage chez l'autre joueur reste vérifié par la ligne « second compte joueur » des dés
 - [x] Caler la position de la musique pour un joueur qui arrive en cours de morceau (position partagée `pos`/`at`, curseur déplacé suivi par toute la table)
