@@ -73,7 +73,7 @@ export default function LiveAvatarStack({ size = 28 }: { size?: number }) {
                   aria-hidden
                 />
               )}
-              <div className="ui-panel pointer-events-none absolute bottom-full right-0 z-50 mb-2 whitespace-nowrap rounded-md px-2 py-1 text-xs opacity-0 !backdrop-blur-md transition group-hover:opacity-100">
+              <div className="ui-panel ui-pop pointer-events-none absolute bottom-full right-0 z-50 mb-2 whitespace-nowrap rounded-md px-2 py-1 text-xs opacity-0 transition group-hover:opacity-100">
                 {label}
               </div>
             </li>

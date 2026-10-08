@@ -1,7 +1,7 @@
 'use client'
 
 import { FC, RefObject, useRef, useState, useEffect, useMemo } from 'react'
-import { ChevronLeft, ChevronRight, BarChart3, BookOpen, Dices, MessageSquare, ShieldCheck, Target, TriangleAlert } from 'lucide-react'
+import { ChevronLeft, ChevronRight, BarChart3, BookOpen, Dices, MessageSquare, Target, TriangleAlert } from 'lucide-react'
 import { useBroadcastEvent, useRoom, useSelf } from '@liveblocks/react'
 import SessionSummary from './SessionSummary'
 import DiceStats from './DiceStats'
@@ -148,9 +148,8 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
   // Summary view
   if (showSummary) {
     return (
-      <aside className={`${panelClass} p-3`}>
-        <div className="flex justify-end">{collapseButton}</div>
-        <SessionSummary onClose={() => setShowSummary(false)} />
+      <aside className={panelClass}>
+        <SessionSummary onClose={() => setShowSummary(false)} collapseButton={collapseButton} />
       </aside>
     )
   }
@@ -236,7 +235,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
                   <div key={ev.id} className="animate-fadeIn ui-well flex flex-col gap-0.5 px-2.5 py-1.5 border-l-2 border-l-accent text-sm">
                     <div className="flex items-center gap-2">
                       <Dices size={15} className="shrink-0 text-ink/50" />
-                      <span className="truncate text-ink/75 text-xs font-semibold">{ev.player}</span>
+                      <span className="max-w-[60%] shrink-0 truncate text-ink/75 text-xs font-semibold">{ev.player}</span>
                       <span className="truncate text-ink/45 text-xs">
                         {r.levelUp ? t('rollModeLevel') : `${r.results.length} D${ev.dice}`}
                       </span>
@@ -244,11 +243,6 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
                         <span className="ml-auto shrink-0 text-xs text-ink/50 tabular-nums">
                           {t('rollsTotal')} <span className="text-base font-bold leading-none text-ink">{ev.result}</span>
                         </span>
-                      )}
-                      {diceChecks[ev.id] === 'verified' && (
-                        <ShieldCheck size={13} className={`shrink-0 text-ink/35 ${r.levelUp || r.results.length < 2 ? 'ml-auto' : ''}`} aria-label={t('diceVerified')}>
-                          <title>{t('diceVerified')}</title>
-                        </ShieldCheck>
                       )}
                       {diceChecks[ev.id] === 'unverified' && (
                         <TriangleAlert size={13} className={`shrink-0 text-amber-400 ${r.levelUp || r.results.length < 2 ? 'ml-auto' : ''}`} aria-label={t('diceUnverified')}>
@@ -275,16 +269,11 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
                   <div key={ev.id} className={`animate-fadeIn ui-well flex flex-col gap-0.5 px-2.5 py-1.5 border-l-2 ${c.success ? 'border-l-emerald-400' : 'border-l-red-400'} text-sm`}>
                     <div className="flex items-center gap-2">
                       <Target size={15} className="shrink-0 text-ink/50" />
-                      <span className="truncate text-ink/75 text-xs font-semibold">{ev.player}</span>
+                      <span className="max-w-[60%] shrink-0 truncate text-ink/75 text-xs font-semibold">{ev.player}</span>
                       <span className="truncate text-ink/45 text-xs">{withStat(t('checkOf'), t(checkStatLabel(c.stat)))}</span>
                       <span className={`ml-auto shrink-0 rounded px-1.5 py-0.5 text-[11px] font-bold ${c.success ? 'bg-emerald-500/15 text-emerald-300' : 'bg-red-500/15 text-red-300'}`}>
                         {t(c.success ? 'checkPassed' : 'checkMissed')}
                       </span>
-                      {diceChecks[ev.id] === 'verified' && (
-                        <ShieldCheck size={13} className="shrink-0 text-ink/35" aria-label={t('diceVerified')}>
-                          <title>{t('diceVerified')}</title>
-                        </ShieldCheck>
-                      )}
                       {diceChecks[ev.id] === 'unverified' && (
                         <TriangleAlert size={13} className="shrink-0 text-amber-400" aria-label={t('diceUnverified')}>
                           <title>{t('diceUnverified')}</title>
@@ -317,7 +306,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
                 return (
                   <div key={ev.id} className={`animate-fadeIn ui-well flex items-center gap-2 px-2.5 py-1.5 border-l-2 ${edge} text-sm`}>
                     <Dices size={15} className="shrink-0 text-ink/50" />
-                    <span className="truncate text-ink/75 text-xs font-semibold">{ev.player}</span>
+                    <span className="max-w-[60%] shrink-0 truncate text-ink/75 text-xs font-semibold">{ev.player}</span>
                     {pool ? (
                       <span className="min-w-0 truncate text-ink/45 text-xs tabular-nums" title={pool.results.join(' + ')}>
                         {poolLabel(pool.dice)} · {pool.results.join(' + ')}
@@ -330,11 +319,6 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
                     </span>
                     {isCrit && <span className="text-xs">✨</span>}
                     {isFumble && <span className="text-xs">💀</span>}
-                    {diceChecks[ev.id] === 'verified' && (
-                      <ShieldCheck size={13} className="shrink-0 text-ink/35" aria-label={t('diceVerified')}>
-                        <title>{t('diceVerified')}</title>
-                      </ShieldCheck>
-                    )}
                     {diceChecks[ev.id] === 'unverified' && (
                       <TriangleAlert size={13} className="shrink-0 text-amber-400" aria-label={t('diceUnverified')}>
                         <title>{t('diceUnverified')}</title>

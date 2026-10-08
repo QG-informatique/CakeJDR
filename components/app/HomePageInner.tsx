@@ -696,7 +696,7 @@ export default function HomePageInner() {
               />
             )}
             {diceError && (
-              <p role="alert" className="ui-panel absolute bottom-14 left-1/2 -translate-x-1/2 z-30 px-3 py-1.5 text-sm">
+              <p role="alert" className="ui-panel ui-pop absolute bottom-14 left-1/2 -translate-x-1/2 z-30 px-3 py-1.5 text-sm">
                 {t('diceRollFailed')}
               </p>
             )}

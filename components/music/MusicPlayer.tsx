@@ -378,7 +378,7 @@ export default function MusicPlayer() {
       {optionsOpen && (
         <div
           id={optionsPanelId}
-          className="ui-panel absolute bottom-full left-0 z-50 mb-2 flex w-[min(24rem,calc(100vw-2rem))] flex-col gap-3 p-3 shadow-lg !backdrop-blur-md"
+          className="ui-panel ui-pop absolute bottom-full left-0 z-50 mb-2 flex w-[min(24rem,calc(100vw-2rem))] flex-col gap-3 p-3"
           style={{ background: 'var(--c-panel-head)' }}
         >
           <div className="flex items-center gap-2">
