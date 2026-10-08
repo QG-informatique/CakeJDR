@@ -3,7 +3,8 @@ import { useOthers, useSelf } from '@liveblocks/react'
 import { Crown } from 'lucide-react'
 import { useT } from '@/lib/useT'
 
-const getTextColor = (hex: string) => {
+/** Noir ou blanc, selon ce qui se lit le mieux sur la couleur du joueur. */
+export const getTextColor = (hex: string) => {
   const c = hex.replace('#', '')
   const r = parseInt(c.substring(0, 2), 16)
   const g = parseInt(c.substring(2, 4), 16)

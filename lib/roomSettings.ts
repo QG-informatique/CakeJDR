@@ -13,12 +13,15 @@ export type RoomSettings = {
   draw: DrawPermission
   /** Comptes autorisés à dessiner quand `draw` vaut « some ». */
   drawAllowed: string[]
+  /** Votes du MJ automatique : chacun voit qui a voté quoi, sauf s'ils sont anonymes. */
+  anonymousVotes: boolean
 }
 
 export const DEFAULT_ROOM_SETTINGS: RoomSettings = {
   sheetEdit: 'own',
   draw: 'all',
   drawAllowed: [],
+  anonymousVotes: false,
 }
 
 /**

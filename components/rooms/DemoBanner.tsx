@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useState } from 'react'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { Info, X } from 'lucide-react'
 import { useT } from '@/lib/useT'
+import { useIsDemoRoom } from '@/lib/useIsDemoRoom'
 
 /**
  * Bandeau affiché dans la salle de démonstration.
@@ -15,24 +15,10 @@ import { useT } from '@/lib/useT'
  * perdu son travail alors que la salle a simplement été remise à zéro.
  */
 export default function DemoBanner() {
-  const { id } = useParams<{ id: string }>()
-  const [isDemo, setIsDemo] = useState(false)
+  const isDemo = useIsDemoRoom()
   const [dismissed, setDismissed] = useState(false)
   const { status } = useSession()
   const t = useT()
-
-  useEffect(() => {
-    let cancelled = false
-    fetch('/api/demo', { cache: 'no-store' })
-      .then((r) => r.json())
-      .then((d) => {
-        if (!cancelled) setIsDemo(Boolean(d?.roomId) && d.roomId === id)
-      })
-      .catch(() => {})
-    return () => {
-      cancelled = true
-    }
-  }, [id])
 
   if (!isDemo || dismissed) return null
 

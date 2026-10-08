@@ -199,6 +199,18 @@ export default function GMPanel({ viewingConnectionId, onOpenSheet, onBackToOwn,
         )}
       </section>
 
+      <section className="flex flex-col gap-1.5">
+        <h3 className="ui-label !text-[10px]">{t('gmVotes')}</h3>
+        <div className="ui-seg" role="group" aria-label={t('gmVotes')}>
+          <button aria-pressed={!settings.anonymousVotes} onClick={() => update({ anonymousVotes: false })}>
+            {t('gmVotesVisible')}
+          </button>
+          <button aria-pressed={settings.anonymousVotes} onClick={() => update({ anonymousVotes: true })}>
+            {t('gmVotesAnonymous')}
+          </button>
+        </div>
+      </section>
+
       <p className="text-[11px] leading-snug text-ink/50">{t('gmSettingsLimit')}</p>
     </div>
   )
