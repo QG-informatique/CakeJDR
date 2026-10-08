@@ -1,5 +1,10 @@
 # Journal
 
+## 2026-10-08 — Protection serveur des règles du plateau : mise de côté
+- Décision de Quentin : on ne fait pas passer les actions des joueurs par le serveur pour l'instant
+- Pourquoi : chaque déplacement de pion, trait de dessin ou frappe dans le Résumé deviendrait un appel au serveur Vercel gratuit (quota mensuel, latence au glisser), pour un risque de triche faible tant que les tables sont entre amis
+Reste ouvert : à reprendre si des tables publiques entre inconnus apparaissent (`TODO.md`, section Refonte).
+
 ## 2026-10-08 — Rencontres : poser le pion, montrer en grand
 - Sous chaque rencontre de la bibliothèque : « Poser le pion » quand un pion assorti existe (25 sur 40), et « Montrer » (`components/canvas/LibraryPanel.tsx`)
 - « Montrer » affiche l'image en grand chez toute la table ; chacun la ferme d'un clic, le MJ a « Fermer chez tout le monde » ; un joueur ne peut pas en envoyer, le rôle de l'expéditeur est vérifié (`components/canvas/ShownImage.tsx`, `liveblocks.config.ts`)
