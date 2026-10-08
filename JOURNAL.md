@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-08 — Résumé : vraie co-édition
+- Chaque page du Résumé est un texte Yjs partagé par Liveblocks (`@liveblocks/yjs`, `yjs`) : deux joueurs qui écrivent en même temps gardent tous les deux leurs mots, le curseur ne saute plus (`components/chat/SessionSummary.tsx`)
+- Le plugin Lexical officiel n'a pas été retenu : il ne gère qu'un document par salle, pas une page par onglet ; liaison Lexical ↔ Yjs écrite à la main, le texte restant en paragraphes simples
+- Ctrl+Z n'annule que sa propre frappe ; chacun reste sur sa page quand un autre change d'onglet ; les anciens textes sont repris à la première ouverture, la copie dans `editor` sert toujours à l'export et au mode hors ligne
+- Vérifié à deux onglets dans salletest (écriture simultanée début/fin, annulation, création et suppression de page)
+Reste ouvert : essai avec deux vrais comptes ; Résumé non remis à zéro avec la démo.
+
 ## 2026-10-08 — Fiche : la modification du MJ n'est plus écrasée
 - À l'enregistrement de l'écran « Modifier la fiche », seuls les champs changés par le joueur remplacent la fiche du moment ; un changement du MJ arrivé entre-temps reste (`components/character/CharacterEditor.tsx`)
 - Enregistrement normal revérifié dans salletest (poids changé puis remis à 41 kg)
