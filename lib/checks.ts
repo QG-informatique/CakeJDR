@@ -1,3 +1,5 @@
+import { NARRATIF } from './gameSystems'
+
 /**
  * Tests de caractéristique demandés par le MJ.
  *
@@ -7,18 +9,11 @@
  * la difficulté.
  */
 
-/** Dé lancé pour un test. */
-export const CHECK_DICE = 20
+/** Dé lancé pour un test, celui du système de jeu (`lib/gameSystems.ts`). */
+export const CHECK_DICE = NARRATIF.checkDie
 
 /** Caractéristiques qu'on peut tester, avec leur intitulé dans `lib/translations.ts`. */
-export const CHECK_STATS = [
-  { key: 'force', label: 'strength' },
-  { key: 'dexterite', label: 'dexterity' },
-  { key: 'constitution', label: 'constitution' },
-  { key: 'intelligence', label: 'intelligence' },
-  { key: 'sagesse', label: 'wisdom' },
-  { key: 'charisme', label: 'charisma' },
-] as const
+export const CHECK_STATS = NARRATIF.stats
 
 export type CheckStat = (typeof CHECK_STATS)[number]['key']
 
@@ -77,7 +72,7 @@ export type CheckOutcome = {
  * et un par caractéristique, ajoutés à la fiche du joueur.
  */
 export const ROLLS_MAX = 10
-export const LEVEL_UP_TARGETS = ['pv', ...CHECK_STATS.map((s) => s.key)] as const
+export const LEVEL_UP_TARGETS = NARRATIF.levelUp
 export type LevelUpTarget = (typeof LEVEL_UP_TARGETS)[number]
 
 export type RollsRequest = {

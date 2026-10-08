@@ -203,7 +203,8 @@
 - [ ] Phase H : créer le journal des joueurs (résumé et indices révélés par le MJ)
 - [ ] Phase H : écrire la campagne du dragon du pack n° 2, avec ses pistes, et la faire relire par Quentin
 - [ ] Phase H : proposer « Partie libre » ou une campagne toute prête à la création d'une table
-- [ ] Phase I : décrire la fiche de personnage comme un système (caractéristiques, ressources, compétences, dés, niveaux) et en faire le preset « Narratif CakeJDR »
+- [x] Phase I : décrire la fiche de personnage comme un système (caractéristiques, ressources, compétences, dés, niveaux) et en faire le preset « Narratif CakeJDR »
+- [ ] Phase I : faire lire au système toute la fiche (ressources, montée de niveau, champs d'identité et d'histoire), pas seulement caractéristiques, attaques et types de compétences (`lib/gameSystems.ts`)
 - [ ] Phase I : choisir avec Quentin deux ou trois autres presets, en vérifiant la licence de toute règle reprise
 - [ ] Phase I : choisir le système à la création d'une table (colonne en base, avec accord)
 - [ ] Phase J : créer l'éditeur de système (partir d'un preset, aperçu de la fiche en direct)

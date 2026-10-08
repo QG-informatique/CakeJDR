@@ -2,26 +2,10 @@ import { FC } from 'react'
 import { useT } from '@/lib/useT'
 import { type Character } from '@/types/character'
 import type { TranslationKey } from '@/lib/translations'
+import { NARRATIF } from '@/lib/gameSystems'
 import ModBadge from './ModBadge'
 
-const STATS = [
-  { key: 'force', label: 'strength' },
-  { key: 'dexterite', label: 'dexterity' },
-  { key: 'constitution', label: 'constitution' },
-  { key: 'intelligence', label: 'intelligence' },
-  { key: 'sagesse', label: 'wisdom' },
-  { key: 'charisme', label: 'charisma' }
-] as const
-const ATTACKS = [
-  { key: 'mod_contact', label: 'melee' },
-  { key: 'mod_distance', label: 'ranged' },
-  { key: 'mod_magique', label: 'magic' }
-] as const
-const BASICS = [
-  { key: 'defense', label: 'defense' },
-  { key: 'chance', label: 'luck' },
-  { key: 'initiative', label: 'initiative' },
-] as const
+const { stats: STATS, attacks: ATTACKS, basics: BASICS } = NARRATIF
 
 // Couleur de la valeur d'une caractéristique : on lit d'un coup d'œil les
 // points forts (vert, or) et les faiblesses (orange, rouge).

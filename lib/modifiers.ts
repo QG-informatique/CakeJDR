@@ -8,12 +8,13 @@
 import type { Character } from '@/types/character'
 import type { TranslationKey } from './translations'
 import type { CheckStat } from './checks'
+import { GAME_SYSTEMS, type GameSystemId } from './gameSystems'
 
 /**
- * Règles de jeu d'une table. Une seule pour l'instant, le jeu narratif ; les
- * systèmes de jeu à venir (préréglages, règles créées par le MJ) s'ajoutent ici.
+ * Règles de jeu d'une table : celles de son système de jeu
+ * (`lib/gameSystems.ts`). Un seul pour l'instant, le jeu narratif.
  */
-export type RuleSystem = 'narratif'
+export type RuleSystem = GameSystemId
 
 type Rule = {
   /** Nom des règles, montré comme origine du modificateur. */
@@ -24,8 +25,7 @@ type Rule = {
 }
 
 export const RULES: Record<RuleSystem, Rule> = {
-  // La règle de D&D : 10 donne +0, puis ±1 tous les 2 points.
-  narratif: { label: 'modRulesBase', detail: 'modRulesBaseDetail', mod: (v) => Math.floor((v - 10) / 2) },
+  narratif: GAME_SYSTEMS.narratif.modRule,
 }
 
 export type ModPart =

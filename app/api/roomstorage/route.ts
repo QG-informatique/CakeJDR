@@ -16,8 +16,12 @@ import { fail, ok } from '@/lib/api-response'
  * écraser ou supprimer les fiches de n'importe quelle room.
  */
 
-/** Regex permissive pour valider owner/id : alphanum, tirets, underscores, points, espaces limités. */
-const SAFE_ID = /^[\w\-.@: ]{1,120}$/
+/**
+ * Format accepté pour owner/id. Le propriétaire est le pseudo, qui peut porter
+ * des accents ou une apostrophe (« Élodie », « O'Neil ») : toute lettre ou
+ * chiffre est accepté, seuls les caractères de contrôle sont refusés.
+ */
+const SAFE_ID = /^[\p{L}\p{N}\p{M}_\-.@:' ]{1,120}$/u
 
 /** Garde-fou de taille : une fiche de personnage n'a aucune raison d'être énorme. */
 const MAX_CHARACTER_BYTES = 256 * 1024
