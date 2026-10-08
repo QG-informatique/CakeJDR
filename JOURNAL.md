@@ -1,5 +1,11 @@
 # Journal
 
+## 2026-10-08 — Musique au même endroit pour tout le monde
+- La position du morceau est partagée (`pos` relevée à l'heure `at`, `liveblocks.config.ts`) : un joueur qui arrive ou relance tombe là où en est la table, la reprise après pause repart du bon endroit, le curseur déplacé recale les autres (`components/music/MusicPlayer.tsx`)
+- En local, le script YouTube est chargé en http : autorisé dans la CSP de développement seulement (`next.config.ts`)
+- Vérifié dans salletest : relancé à 0:52 après rechargement, reprise de pause à 1:01
+Reste ouvert : à voir à deux joueurs.
+
 ## 2026-10-08 — Statistiques de dés : la chance de chaque joueur
 - Stats des dés refaites en cartes : chance de chaque joueur (barre, 50 % = ce que le hasard donne), critiques et échecs, dé le plus lancé, le plus chanceux de la table (`components/chat/DiceStats.tsx`)
 - Choix de Quentin : la chance pour chacun, le reste choisi par Claude sans surcharger ; limite de 20 dés gardée

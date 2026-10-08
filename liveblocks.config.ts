@@ -95,7 +95,9 @@ declare global {
       images: LiveMap<string, CanvasImage>
       library: LiveMap<string, LibraryUpload>
       strokes: LiveList<StrokeSegment>
-      music: LiveObject<{ id: string; playing: boolean; volume?: number }>
+      // `pos` (secondes) relevée à `at` (horloge en ms) : d'où on en est dans
+      // le morceau, pour qu'un joueur qui arrive ou reprend tombe au même endroit.
+      music: LiveObject<{ id: string; playing: boolean; volume?: number; pos?: number; at?: number }>
       musicQueue: LiveList<{ id: string }>
       summary: LiveObject<{
         acts: LiveList<{ id: string; title: string }>
