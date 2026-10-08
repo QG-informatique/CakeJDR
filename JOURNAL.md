@@ -1,5 +1,11 @@
 # Journal
 
+## 2026-10-08 — Bibliothèque : recherche et filtres
+- Champ de recherche par nom (sans tenir compte des accents) et trois filtres : rôle (troupe, élite, boss, allié, PNJ), faction, acte (`components/canvas/LibraryPanel.tsx`)
+- Rôles, factions et actes déduits du pack d'images (`lib/library.ts`, d'après `PROMPT-PACK-IMAGES.md`) ; rien à remplir à la main
+- Décision : la recherche vaut pour toutes les catégories, chaque onglet affiche son nombre de résultats ; les images envoyées par la table, sans nom ni faction, sont masquées pendant un filtre
+Reste ouvert : « Poser le pion » et « Montrer » sur les rencontres, protection côté serveur.
+
 ## 2026-10-08 — Plateau : pions de couleur, bibliothèque au MJ
 - Pions de couleur dessinés par le code (rond avec une ou deux lettres) : onglet « Pions de couleur » de la bibliothèque (`components/canvas/LibraryPanel.tsx`, `ImageItem.tsx`)
 - Bibliothèque réservée au MJ ; le joueur a un bouton « Mon pion » qui pose ou retire le pion de son personnage (`components/canvas/InteractiveCanvas.tsx`)

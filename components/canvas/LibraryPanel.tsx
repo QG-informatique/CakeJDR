@@ -1,21 +1,31 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { Check, Loader2, Plus, Trash2, X } from 'lucide-react'
+import { Check, Loader2, Plus, Search, Trash2, X } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import { useLanguage } from '@/components/context/LanguageContext'
 import {
   BOARD_LIBRARY,
+  LIBRARY_ACTS,
   LIBRARY_DRAG_TYPE,
+  LIBRARY_FACTIONS,
+  LIBRARY_ROLES,
   TOKEN_COLORS,
+  libraryTags,
   libraryUrl,
   uploadThumbUrl,
   type BoardEntry,
+  type LibraryAct,
+  type LibraryItem,
+  type LibraryRole,
   type LibraryUpload,
 } from '@/lib/library'
 
 const OLD_TAB = 'anciennes'
 const TOKENS_TAB = 'jetons'
+
+/** Sans majuscules ni accents : « elite » trouve « Élite ». */
+const fold = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
 
 type Tile = {
   key: string
@@ -72,16 +82,33 @@ export default function LibraryPanel({
   const [tokenText, setTokenText] = useState('A')
   const [tokenColor, setTokenColor] = useState(TOKEN_COLORS[0]!)
   const category = BOARD_LIBRARY.find((c) => c.id === categoryId) ?? BOARD_LIBRARY[0]!
+  const [query, setQuery] = useState('')
+  const [role, setRole] = useState<LibraryRole | ''>('')
+  const [faction, setFaction] = useState('')
+  const [act, setAct] = useState<LibraryAct | ''>('')
+  const q = fold(query.trim())
+  const filtering = Boolean(q || role || faction || act)
+  const resetFilters = () => { setQuery(''); setRole(''); setFaction(''); setAct('') }
+
+  // La recherche et les filtres valent pour toutes les catégories : chaque
+  // onglet affiche combien d'images correspondent. Les images envoyées par la
+  // table n'ont ni nom ni faction, elles disparaissent tant qu'on filtre.
+  const matches = (catId: string, item: LibraryItem) => {
+    if (q && !fold(item.label[l]).includes(q)) return false
+    if (!role && !faction && !act) return true
+    const tags = libraryTags(catId, item)
+    return (!role || tags.role === role) && (!faction || tags.faction === faction) && (!act || tags.act === act)
+  }
 
   const tiles: Tile[] = [
-    ...category.items.map((item) => ({
+    ...category.items.filter((item) => matches(category.id, item)).map((item) => ({
       key: `static-${item.id}`,
       entry: { url: libraryUrl(category.id, item.id), categoryId: category.id, width: item.width, height: item.height },
       thumb: libraryUrl(category.id, item.id, true),
       label: item.label[l],
     })),
     ...uploads
-      .filter((u) => u.category === category.id)
+      .filter((u) => !filtering && u.category === category.id)
       .map((u) => ({
         key: u.id,
         entry: { url: u.url, categoryId: u.category, width: u.width, height: u.height },
@@ -121,6 +148,7 @@ export default function LibraryPanel({
             onClick={() => setCategoryId(c.id)}
           >
             {c.label[l]}
+            {filtering && ` (${c.items.filter((item) => matches(c.id, item)).length})`}
           </button>
         ))}
         <button role="tab" aria-selected={showTokens} onClick={() => setCategoryId(TOKENS_TAB)}>
@@ -132,6 +160,36 @@ export default function LibraryPanel({
           </button>
         )}
       </div>
+
+      {!showTokens && !showOld && (
+        <div className="flex flex-col gap-1.5">
+          <label className="relative block">
+            <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink/45" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t('librarySearch')}
+              aria-label={t('librarySearch')}
+              className="ui-input w-full !min-h-8 !pl-8"
+            />
+          </label>
+          <div className="grid grid-cols-3 gap-1.5">
+            <select value={role} onChange={(e) => setRole(e.target.value as LibraryRole | '')} aria-label={t('filterRoleAll')} className="ui-input w-full min-w-0 !min-h-8 text-xs">
+              <option value="">{t('filterRoleAll')}</option>
+              {LIBRARY_ROLES.map((r) => <option key={r.id} value={r.id}>{r.label[l]}</option>)}
+            </select>
+            <select value={faction} onChange={(e) => setFaction(e.target.value)} aria-label={t('filterFactionAll')} className="ui-input w-full min-w-0 !min-h-8 text-xs">
+              <option value="">{t('filterFactionAll')}</option>
+              {LIBRARY_FACTIONS.map((f) => <option key={f.id} value={f.id}>{f.label[l]}</option>)}
+            </select>
+            <select value={act} onChange={(e) => setAct(e.target.value as LibraryAct | '')} aria-label={t('filterActAll')} className="ui-input w-full min-w-0 !min-h-8 text-xs">
+              <option value="">{t('filterActAll')}</option>
+              {LIBRARY_ACTS.map((a) => <option key={a.id} value={a.id}>{a.label[l]}</option>)}
+            </select>
+          </div>
+        </div>
+      )}
 
       <input
         ref={fileRef}
@@ -262,7 +320,16 @@ export default function LibraryPanel({
               )
             })}
             {tiles.length === 0 && pending === 0 && (
-              <p className="col-span-2 self-center text-xs text-ink/55 sm:col-span-3">{t('libraryEmpty')}</p>
+              filtering ? (
+                <div className="col-span-2 flex flex-col items-start gap-1.5 self-center text-xs text-ink/55 sm:col-span-3">
+                  {t('libraryNoMatch')}
+                  <button onClick={resetFilters} className="ui-btn ui-btn-ghost !min-h-7 text-xs">
+                    <X size={12} /> {t('filterReset')}
+                  </button>
+                </div>
+              ) : (
+                <p className="col-span-2 self-center text-xs text-ink/55 sm:col-span-3">{t('libraryEmpty')}</p>
+              )
             )}
           </>
         )}
