@@ -145,7 +145,10 @@
 
 ## Dés 3D
 - [ ] Implémenter une file d'attente par joueur (limiter à 1 lancer actif/joueur) au-delà du cooldown local
-- [ ] Ajouter une version cube simulé D20/D6/D4/D100 avec orientation finale selon le résultat
+- [x] Ajouter une version cube simulé D20/D6/D4/D100 avec orientation finale selon le résultat — sans objet : remplacé par Dice Box
+- [x] Remplacer les dés de la table par Dice Box : tous les types de dés, plusieurs et mélangés par lancer, départ d'un bord au hasard, vus par toute la table
+- [ ] Décider s'il faut un contrôle anti-triche des lancers : la face vient du navigateur du lanceur, le serveur ne fait que la vérifier et la signer
+- [ ] Faire passer les dés au-dessus du portrait en bas à droite du plateau (ils roulent dessous)
 
 ## Musique YouTube
 - [ ] Synchroniser proprement le `playing` post-initialisation sans reprise automatique au premier chargement
@@ -213,10 +216,10 @@
 - [ ] Vérifier avec un second compte joueur que le lancer des dés sur la table apparaît chez lui au même moment et sur le même résultat
 - [ ] Garder les gains de la montée de niveau du MJ s'il ouvre la fiche d'un joueur pendant l'animation de ses dés (aujourd'hui ils sont perdus)
 - [ ] Rendre visible d'où vient un modificateur de caractéristique (par exemple Force 8 donne −1) : règle ou équipement
-- [ ] Tester le dé pris en main avec un second compte joueur et sur téléphone (doigt), en conditions réelles de latence
+- [x] Tester le dé pris en main avec un second compte joueur et sur téléphone (doigt), en conditions réelles de latence — sans objet : plus de prise en main avec Dice Box
 - [x] Réduire les lancers lents où le lanceur voit le chiffre du dé changer en fin de course (`steerLabels`, `lib/diceThrow.ts`) — résolu par le tirage d'avance (`lib/diceDraw.ts`)
-- [ ] Vérifier en ligne le délai du tirage d'avance (`/api/dice` avec `peek`) : sous ~300 ms, le chiffre est déjà sur le dé au lâcher
-- [ ] Vérifier sur téléphone que le dé physique (cannon-es) reste fluide avec 8 dés
+- [x] Vérifier en ligne le délai du tirage d'avance (`/api/dice` avec `peek`) : sous ~300 ms, le chiffre est déjà sur le dé au lâcher — sans objet : plus de tirage d'avance
+- [ ] Vérifier sur téléphone que les dés Dice Box se chargent et restent fluides avec 8 dés mélangés
 - [ ] Faire venir la règle des modificateurs du système de jeu de la table (narratif : pas de règle, système perso : règles du créateur)
 - [x] Ne colorer le dé (jaune pour un critique, etc.) qu'au moment où le résultat apparaît, pas dès le début du lancer
 - [x] Remplacer le dé actuel de la table par un vrai dé physique comme celui de la page d'accueil (rebonds sur les bords), synchronisé chez tous les joueurs : tout le monde voit le lancer et le résultat, qui reste tiré par le serveur

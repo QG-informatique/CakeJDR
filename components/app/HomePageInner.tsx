@@ -6,9 +6,9 @@ import { useRouter, useParams } from 'next/navigation'
 import CharacterSheet, { defaultPerso } from '@/components/sheet/CharacterSheet'
 import DiceRoller from '@/components/dice/DiceRoller'
 import ChatBox from '@/components/chat/ChatBox'
-import TableDice, {
-  THROW_FADE_MS, THROW_HOLD_MS, type TableDiceHandle, type ThrowResult,
-} from '@/components/dice/TableDice'
+import DiceBoxTable, {
+  THROW_FADE_MS, THROW_HOLD_MS, type DiceBoxHandle, type ThrowResult, type ThrowSent,
+} from '@/components/dice/DiceBoxTable'
 import CheckPrompt from '@/components/checks/CheckPrompt'
 import CheckBanner from '@/components/checks/CheckBanner'
 import InteractiveCanvas from '@/components/canvas/InteractiveCanvas'
@@ -27,8 +27,8 @@ import { useTheme } from '@/components/context/ThemeContext'
 import { useT } from '@/lib/useT'
 import { canEditSheet, useRoomSettings } from '@/lib/roomSettings'
 import type { RollsOutcome } from '@/lib/checks'
-import { DICE_REVEAL_DELAY_MS } from '@/lib/dicePayload'
-import { MAX_THROW_MS, THROW_LEAD_MS, type ThrowParams } from '@/lib/diceThrow'
+import { DICE_MAX_ROLL_MS, DICE_REVEAL_DELAY_MS } from '@/lib/dicePayload'
+import { isDiceType, POOL_MAX, poolLabel, sortDice } from '@/lib/dicePool'
 import { applyLevelUp } from '@/lib/levelUp'
 import { Crown } from 'lucide-react'
 import {
@@ -41,6 +41,16 @@ import {
 } from '@/types/character'
 
 const SELECTED_CHARACTER_KEY = 'selectedCharacterId'
+const DICE_POOL_KEY = 'dicePool'
+
+// Le dernier choix du menu de dés, un D20 sinon.
+function loadDicePool(): number[] {
+  try {
+    const saved = JSON.parse(localStorage.getItem(DICE_POOL_KEY) ?? 'null')
+    if (Array.isArray(saved) && saved.length <= POOL_MAX && saved.every(isDiceType)) return sortDice(saved)
+  } catch {}
+  return [20]
+}
 
 export default function HomePageInner() {
   const router = useRouter()
@@ -78,14 +88,21 @@ export default function HomePageInner() {
     viewedConnectionId === null ? null : others.find((o) => o.connectionId === viewedConnectionId)?.id ?? null,
   )
 
-  const [diceType, setDiceType] = useState(6)
+  // Dés choisis dans le menu, gardés d'une visite à l'autre.
+  const [dicePool, setDicePool] = useState<number[]>(loadDicePool)
+  const changeDicePool = (dice: number[]) => {
+    setDicePool(dice)
+    try {
+      localStorage.setItem(DICE_POOL_KEY, JSON.stringify(dice))
+    } catch {}
+  }
   const [diceDisabled, setDiceDisabled] = useState(false)
   // Mon lancer en cours sur la table, jusqu'à ce que ses dés disparaissent ;
   // `levelUp` : gains d'une montée de niveau, ajoutés à la fiche à ce moment-là.
   const [myThrow, setMyThrow] = useState<{ id: string; levelUp?: number[] } | null>(null)
   const myThrowRef = useRef<{ id: string; levelUp?: number[] } | null>(null)
-  const tableDiceRef = useRef<TableDiceHandle>(null)
-  // Première demande du MJ qui m'attend : le dé en main est alors le sien.
+  const tableDiceRef = useRef<DiceBoxHandle>(null)
+  // Première demande du MJ qui m'attend : les dés lancés sont alors les siens.
   const checks = useStorage((root) => root.checks)
   const pending = checks && self?.id
     ? Array.from(checks.values())
@@ -493,9 +510,9 @@ export default function HomePageInner() {
     )
   }
 
-  // Le dé est tiré par le serveur, qui inscrit aussi le lancer dans le chat :
-  // le résultat n'y apparaît qu'à la fin de l'animation.
-  const rollDice = async (gesture: ThrowParams): Promise<ThrowResult | null> => {
+  // Les dés roulent ici et la physique décide ; le serveur inscrit le lancer
+  // dans le chat, où le résultat n'apparaît qu'une fois les dés posés.
+  const rollDice = async (sent: ThrowSent): Promise<ThrowResult | null> => {
     if (diceDisabled) return null
     setDiceDisabled(true)
     setCooldown(true)
@@ -504,13 +521,13 @@ export default function HomePageInner() {
       const res = await fetch('/api/dice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roomId, dice: diceType, player: perso.nom || profile?.pseudo || '', throw: gesture }),
+        body: JSON.stringify({ roomId, player: perso.nom || profile?.pseudo || '', ...sent }),
       })
-      const data = (await res.json().catch(() => null)) as { roll?: { id: string; result: number } } | null
+      const data = (await res.json().catch(() => null)) as { roll?: { id: string } } | null
       if (!res.ok || !data?.roll) throw new Error(`dice ${res.status}`)
       debug('dice-roll', data.roll)
       startThrow({ id: data.roll.id })
-      return { id: data.roll.id, results: [data.roll.result] }
+      return { id: data.roll.id }
     } catch (e) {
       debug('dice-roll failed', e)
       setDiceError(true)
@@ -521,8 +538,8 @@ export default function HomePageInner() {
     }
   }
 
-  // Test demandé par le MJ : le serveur tire le D20 et calcule la réussite.
-  const rollCheck = async (id: string, gesture: ThrowParams): Promise<ThrowResult | null> => {
+  // Demande du MJ : le serveur vérifie les dés et calcule la réussite d'un test.
+  const rollCheck = async (id: string, sent: ThrowSent): Promise<ThrowResult | null> => {
     if (diceDisabled) return null
     setDiceDisabled(true)
     setCooldown(true)
@@ -531,16 +548,16 @@ export default function HomePageInner() {
       const res = await fetch('/api/check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roomId, action: 'roll', id, throw: gesture }),
+        body: JSON.stringify({ roomId, action: 'roll', id, results: sent.results, throw: sent.throw, ms: sent.ms }),
       })
       const data = (await res.json().catch(() => null)) as
-        | { roll?: { id: string; result: number; dice: number; rolls?: RollsOutcome } }
+        | { roll?: { id: string; rolls?: RollsOutcome } }
         | null
       if (!res.ok || !data?.roll) throw new Error(`check ${res.status}`)
       debug('check-roll', data.roll)
       const rolls = data.roll.rolls
       startThrow({ id: data.roll.id, ...(rolls?.levelUp ? { levelUp: rolls.results } : {}) })
-      return { id: data.roll.id, results: rolls?.results ?? [data.roll.result], levelUp: rolls?.levelUp }
+      return { id: data.roll.id, levelUp: rolls?.levelUp }
     } catch (e) {
       debug('check-roll failed', e)
       setDiceError(true)
@@ -551,30 +568,11 @@ export default function HomePageInner() {
     }
   }
 
-  // Résultat du prochain jet, demandé quand on attrape le dé : le serveur le
-  // tire d'avance et le garde pour ce jet (`lib/diceDraw.ts`).
-  const peekDice = async (): Promise<number[] | null> => {
-    try {
-      const res = await fetch(pending ? '/api/check' : '/api/dice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(
-          pending ? { roomId, action: 'peek', id: pending.id } : { roomId, dice: diceType, peek: true },
-        ),
-      })
-      const data = (await res.json().catch(() => null)) as { results?: number[] | null } | null
-      return res.ok && Array.isArray(data?.results) ? data.results : null
-    } catch {
-      return null
-    }
-  }
-
-  // Le dé lâché sur la table part pour la demande du MJ s'il y en a une. On
-  // laisse d'abord au tirage d'avance le temps d'être rangé : le jet le reprend.
-  const throwDice = async (gesture: ThrowParams, peek: Promise<number[] | null> | null) => {
-    if (peek) await Promise.race([peek, new Promise((r) => window.setTimeout(r, 1500))])
-    return pending ? rollCheck(pending.id, gesture) : rollDice(gesture)
-  }
+  // Les dés lancés partent pour la demande du MJ s'il y en a une.
+  const throwDice = (sent: ThrowSent) => (pending ? rollCheck(pending.id, sent) : rollDice(sent))
+  const pendingDice = pending
+    ? pending.type === 'rolls' ? Array.from({ length: pending.count }, () => pending.dice) : [20]
+    : null
   const levelUpWaits = pending?.type === 'rolls' && pending.levelUp && viewedConnectionId !== null
 
   // Les gains arrivent sur la fiche une fois les dés révélés à toute la table.
@@ -584,7 +582,7 @@ export default function HomePageInner() {
   const startThrow = (roll: { id: string; levelUp?: number[] }) => {
     myThrowRef.current = roll
     setMyThrow(roll)
-    window.setTimeout(() => handleThrowDone(roll.id), THROW_LEAD_MS + MAX_THROW_MS + THROW_HOLD_MS + THROW_FADE_MS + 4000)
+    window.setTimeout(() => handleThrowDone(roll.id), DICE_MAX_ROLL_MS + THROW_HOLD_MS + THROW_FADE_MS + 4000)
   }
 
   const handleThrowDone = (id: string) => {
@@ -680,14 +678,10 @@ export default function HomePageInner() {
             {/* Bandeau de la salle de démo, en bas du plateau : il ne cache pas les outils. */}
             <DemoBanner />
             <ErrorBoundary fallback={<div className="p-4 text-red-500">Dice display error</div>}>
-              <TableDice
+              <DiceBoxTable
                 ref={tableDiceRef}
-                dice={pending ? (pending.type === 'rolls' ? pending.dice : 20) : diceType}
-                count={pending?.type === 'rolls' ? pending.count : 1}
+                dice={pendingDice ?? dicePool}
                 disabled={diceDisabled || levelUpWaits}
-                name={perso.nom || profile?.pseudo || ''}
-                drawKey={pending ? `check:${pending.id}` : `free:${diceType}`}
-                onPeek={peekDice}
                 onThrow={throwDice}
                 onDone={handleThrowDone}
               />
@@ -708,8 +702,9 @@ export default function HomePageInner() {
           </div>
           <ErrorBoundary fallback={<div className="p-4 text-red-500">Dice roller error</div>}>
             <DiceRoller
-              diceType={diceType}
-              onChange={setDiceType}
+              dice={dicePool}
+              onChange={changeDicePool}
+              lockedLabel={pendingDice ? poolLabel(pendingDice) : undefined}
               onRoll={() => tableDiceRef.current?.throwNow()}
               disabled={diceDisabled}
               cooldown={cooldown}

@@ -21,12 +21,12 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@3d-dice/dice-box-threejs": "0.0.12",
     "@lexical/react": "0.24.0",
     "@liveblocks/client": "^3.2.1",
     "@liveblocks/node": "^3.2.1",
     "@liveblocks/react": "^3.2.1",
     "@neondatabase/serverless": "^1.1.0",
-    "cannon-es": "^0.20.0",
     "drizzle-orm": "^0.45.2",
     "framer-motion": "^12.23.6",
     "lexical": "0.24.0",

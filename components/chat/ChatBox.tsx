@@ -11,6 +11,7 @@ import { useIsDesktop } from '@/lib/useIsDesktop'
 import { debug } from '@/lib/debug'
 import { useDiceVerification } from './useDiceVerification'
 import { checkStatLabel, levelUpLabel, signedMod, withStat } from '@/lib/checks'
+import { poolLabel } from '@/lib/dicePool'
 
 // Longueur maximale d'un message : au-delà, la liste partagée de la table
 // grossit vite et un pavé sans espace déborde du panneau.
@@ -62,7 +63,12 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
     () => revealedEvents
       .filter((ev) => ev.kind !== 'chat' && ev.player != null && ev.dice != null && ev.result != null)
       // Des jets multiples comptent dé par dé : leur somme fausserait les moyennes.
-      .flatMap((ev) => (ev.rolls?.results ?? [ev.result!]).map((result) => ({ player: ev.player!, dice: ev.dice!, result, ts: ev.ts }))),
+      .flatMap((ev) => ev.pool
+        ? ev.pool.dice.flatMap((dice, i) => {
+            const result = ev.pool!.results[i]
+            return result == null ? [] : [{ player: ev.player!, dice, result, ts: ev.ts }]
+          })
+        : (ev.rolls?.results ?? [ev.result!]).map((result) => ({ player: ev.player!, dice: ev.dice!, result, ts: ev.ts }))),
     [revealedEvents],
   )
   const [inputValue, setInputValue] = useState('')
@@ -294,9 +300,10 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
                   </div>
                 )
               } else {
-                // dice roll
-                const isCrit = ev.result !== undefined && ev.dice !== undefined && ev.result === ev.dice
-                const isFumble = ev.result === 1
+                // dice roll ; plusieurs dés : leur total, sans critique ni échec
+                const pool = ev.pool
+                const isCrit = !pool && ev.result !== undefined && ev.dice !== undefined && ev.result === ev.dice
+                const isFumble = !pool && ev.result === 1
                 const resultColor = isCrit
                   ? 'text-yellow-300'
                   : isFumble
@@ -311,7 +318,13 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
                   <div key={ev.id} className={`animate-fadeIn ui-well flex items-center gap-2 px-2.5 py-1.5 border-l-2 ${edge} text-sm`}>
                     <Dices size={15} className="shrink-0 text-ink/50" />
                     <span className="truncate text-ink/75 text-xs font-semibold">{ev.player}</span>
-                    {ev.dice != null && <span className="text-ink/45 text-xs">D{ev.dice}</span>}
+                    {pool ? (
+                      <span className="min-w-0 truncate text-ink/45 text-xs tabular-nums" title={pool.results.join(' + ')}>
+                        {poolLabel(pool.dice)} · {pool.results.join(' + ')}
+                      </span>
+                    ) : (
+                      ev.dice != null && <span className="text-ink/45 text-xs">D{ev.dice}</span>
+                    )}
                     <span className="ml-auto font-bold text-lg leading-none tabular-nums">
                       <span className={resultColor}>{ev.result ?? '?'}</span>
                     </span>
