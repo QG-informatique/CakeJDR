@@ -154,6 +154,9 @@ declare global {
       | { type: 'dice-hold'; x: number; y: number; name: string; dice: number; count: number; rot: number }
       | { type: 'dice-drop' }
       | { type: 'gm-select'; character: CharacterData; targetConnectionId?: number | null }
+      // Rencontre montrée en grand par le MJ à toute la table (`components/canvas/ShownImage.tsx`).
+      | { type: 'show-image'; url: string; label: string }
+      | { type: 'show-close' }
 
     // Custom metadata set on threads, for useThreads, useCreateThread, etc.
     ThreadMetadata: Record<string, never>

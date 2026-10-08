@@ -12,6 +12,7 @@ import { useT } from '@/lib/useT'
 import { Library, Pencil, UserRound } from 'lucide-react'
 import { canDraw, useRoomSettings } from '@/lib/roomSettings'
 import LibraryPanel from './LibraryPanel'
+import { useShowImage } from './ShownImage'
 import {
   BOARD_LIBRARY,
   LIBRARY_DRAG_TYPE,
@@ -92,6 +93,7 @@ export default function InteractiveCanvas({
   overlay?: React.ReactNode
 } = {}) {
   const t = useT()
+  const showImage = useShowImage()
   const isDev = process.env.NODE_ENV !== 'production'
   // Storage
   const imagesMap = useStorage((root) => root.images)
@@ -827,6 +829,7 @@ export default function InteractiveCanvas({
               canDelete={(u) => isGM || u.ownerId === self?.id}
               onToggle={toggleEntry}
               onPlaceToken={placeToken}
+              onShow={showImage}
               onUpload={uploadToLibrary}
               onDelete={setToDelete}
               onRemoveOld={(id) => {
