@@ -267,3 +267,15 @@
 - [x] Copier la maquette V2 hors du dossier caché de Codex — copiée dans `C:\DEV\CakeJDR-V2` le 2026-10-04
 - [ ] Trier avec Quentin ce qu'on garde de la V2 (bibliothèque de visuels, pions détourés sur la carte, barre de PV, menu en liste, style sobre)
 - [x] Convertir en WebP les visuels V2 retenus (PNG de ~2,5 Mo chacun, 53 Mo au total) avant de les intégrer
+
+## Retours de Quentin après les tests en ligne (2026-10-08)
+- [ ] Rendre moins transparent le panneau qui s'ouvre au bouton des dés (choix des dés, `components/dice/DiceRoller.tsx`) : fond à ~50 % d'opacité au moins, texte et cases bien lisibles — à confirmer avec Quentin que c'est bien ce panneau
+- [ ] Renommer « Règles du narrateur » dans la bulle des modificateurs : la règle (10 donne +0, ±1 tous les 2 points) est celle de D&D, pas un choix du narrateur — trouver un nom honnête (« Règle de base », « Règle D&D ») ou laisser le MJ choisir la règle
+- [ ] Décider s'il faut garder la limite de 20 dés par lancer (`POOL_MAX`, `lib/dicePool.ts`), après avoir mesuré jusqu'où ça reste fluide (ordinateur et téléphone)
+- [ ] Ajouter au dessin un sélecteur de couleur libre, avec 3 à 5 emplacements de couleurs perso enregistrés dans la barre du haut ; la barre garde toujours la même taille
+- [ ] Refaire complètement le Résumé de partie : plus simple, plus clair, au style de la nouvelle interface (revoir les boutons importer, exporter, supprimer)
+- [ ] Écrire un résumé d'histoire d'exemple pour la salle de test (pourquoi Cake est là, pourquoi il se bat contre ces monstres, où il en est), une demi-page au plus
+- [ ] Proposer d'autres statistiques de dés en plus des taux d'échecs et de critiques (moyenne obtenue comparée à la moyenne attendue, chance par joueur, meilleur et pire lancer, séries, dé le plus lancé) et choisir avec Quentin
+- [ ] Dans le chat, toujours afficher le nom du lanceur en entier ; c'est la liste des dés qui se coupe quand elle est trop longue
+- [ ] Expliquer ou retirer le petit bouclier à côté des lancers dans le chat (il veut dire « Lancer enregistré par le serveur », mais personne ne le comprend sans survol)
+- [ ] Musique : garder les liens YouTube pour l'instant ; Spotify demanderait que chaque joueur relie son compte (abonnement, autorisations), écarté pour la 1.0
