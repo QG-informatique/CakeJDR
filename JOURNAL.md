@@ -1,5 +1,11 @@
 # Journal
 
+## 2026-10-08 — Mise en ligne des dés, retours de Quentin notés
+- Mise en ligne de Dice Box, de la bulle des modificateurs et du bouton Lancer rendu plus vite ; déploiement Vercel réussi.
+- Retours de Quentin après test : dés et relance bien meilleurs ; nouveaux chantiers notés dans `TODO.md` (panneau des dés trop transparent, sélecteur de couleur du dessin, refonte du Résumé, stats de dés, nom coupé dans le chat).
+- Rien n'a été modifié dans le code : Quentin a demandé de noter seulement.
+Reste ouvert : tout ce qui est listé sous « Retours de Quentin après les tests en ligne ».
+
 ## 2026-10-08 — Relancer les dés sans attendre
 - Le bouton « Lancer » revient 0,4 s après l'arrêt de mes dés, au lieu d'environ 4 s (2,5 s posés + 0,4 s de fondu + 1 s de pause) : demande de Quentin, gagner au moins 3 s (`components/dice/DiceBoxTable.tsx`, `components/app/HomePageInner.tsx`).
 - Les dés restent posés 2,5 s pour qu'on lise le résultat ; un nouveau lancer les efface. Les gains de montée de niveau passent sur la fiche au même moment.
