@@ -22,6 +22,10 @@ type CanvasImage = {
   createdAt?: number
   /** Carte posée en fond du plateau : couvre tout, ne bouge pas. */
   kind?: 'map'
+  /** Pion d'un joueur (celui de son personnage) : lui seul et le MJ le déplacent. */
+  ownerId?: string
+  /** Pion de couleur dessiné par le code : un rond avec une initiale. */
+  token?: { text: string; color: string }
 }
 
 /** Image envoyée dans la bibliothèque de la table (voir lib/library.ts). */

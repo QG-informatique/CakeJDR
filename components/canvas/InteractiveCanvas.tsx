@@ -9,14 +9,16 @@ import ImageItem, { ImageRenderData } from './ImageItem'
 import SideNotes from '@/components/misc/SideNotes'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { useT } from '@/lib/useT'
-import { Library, Pencil } from 'lucide-react'
+import { Library, Pencil, UserRound } from 'lucide-react'
 import { canDraw, useRoomSettings } from '@/lib/roomSettings'
 import LibraryPanel from './LibraryPanel'
 import {
   BOARD_LIBRARY,
   LIBRARY_DRAG_TYPE,
   boardCategory,
+  libraryItemOf,
   libraryUrl,
+  tokenInitial,
   type BoardEntry,
   type LibraryUpload,
 } from '@/lib/library'
@@ -53,6 +55,10 @@ type StoredImageData = {
   heightRatio?: number
   /** Carte en fond du plateau. */
   kind?: 'map'
+  /** Pion d'un joueur : lui seul et le MJ le déplacent. */
+  ownerId?: string
+  /** Pion de couleur, dessiné par le code. */
+  token?: { text: string; color: string }
 }
 
 /** Vue du LiveMap `images` sans les contraintes de types Liveblocks. */
@@ -103,15 +109,22 @@ export default function InteractiveCanvas({
       .sort((a, b) => a.createdAt - b.createdAt),
     [libraryStore],
   )
-  const onBoardUrls = useMemo(() => new Set(images.map((i) => i.url)), [images])
+  // Les pions des joueurs et les pions de couleur ne sont pas à la bibliothèque.
+  const libraryImages = useMemo(() => images.filter((i) => !i.ownerId && !i.token), [images])
+  const onBoardUrls = useMemo(() => new Set(libraryImages.map((i) => i.url)), [libraryImages])
   const uploadUrls = useMemo(() => new Set(uploads.map((u) => u.url)), [uploads])
   // Images posées avant la bibliothèque : ni offertes, ni envoyées dedans.
   const oldImages = useMemo(
-    () => images.filter((i) => !STATIC_BOARD_URLS.has(i.url) && !uploadUrls.has(i.url)),
-    [images, uploadUrls],
+    () => libraryImages.filter((i) => !STATIC_BOARD_URLS.has(i.url) && !uploadUrls.has(i.url)),
+    [libraryImages, uploadUrls],
   )
   const self = useSelf()
   const isGM = self?.info?.role === 'gm'
+  const myCharacter = useSelf((me) => me.presence.character)
+  const myPionId = self ? `pion-${self.id}` : null
+  const myPion = images.find((i) => i.id === myPionId) ?? null
+  // Le joueur ne déplace que son pion ; le MJ déplace tout.
+  const canMove = (img: { ownerId?: string }) => isGM || (!!img.ownerId && img.ownerId === self?.id)
   const { settings } = useRoomSettings()
   const drawAllowed = canDraw(settings, { id: self?.id, gm: isGM })
   const strokes = useMemo<StrokeSegment[]>(() => {
@@ -351,9 +364,12 @@ export default function InteractiveCanvas({
       if (!(toggle && wasActive)) map.set(placed.id, placed)
       return
     }
-    const same = entries.filter(([, img]) => img.kind !== 'map' && img.url === entry.url)
+    const same = entries.filter(([, img]) => img.kind !== 'map' && !img.ownerId && !img.token && img.url === entry.url)
     if (toggle && same.length > 0) same.forEach(([key]) => map.delete(key))
     else map.set(placed.id, placed)
+  }, [])
+  const setBoardImage = useMutation(({ storage }, image: StoredImageData) => {
+    ;(storage.get('images') as unknown as ImagesStore).set(image.id, image)
   }, [])
   const addLibraryUpload = useMutation(({ storage }, upload: LibraryUpload) => {
     // Les tables créées avant la bibliothèque n'ont pas encore ce dossier.
@@ -529,7 +545,7 @@ export default function InteractiveCanvas({
     if (drawMode === 'images' && id && type) {
       const key = String(id)
       const img = renderedImageMap.get(key)
-      if (!img) return
+      if (!img || !canMove(img)) return
       dragState.current = { id: key, type, offsetX: x - img.x, offsetY: y - img.y }
       localTransforms.current.set(key, { x: img.x, y: img.y, width: img.width, height: img.height })
       scheduleRender()
@@ -696,6 +712,42 @@ export default function InteractiveCanvas({
     const placed = rect && placement(entry, rect)
     if (placed) placeOnBoard(entry, placed, true)
   }
+  // Pion de couleur posé par le MJ, au centre du plateau.
+  function placeToken(text: string, color: string) {
+    const rect = drawingCanvasRef.current?.getBoundingClientRect()
+    const placed = rect && placement({ url: '', categoryId: 'pions', width: 200, height: 200 }, rect)
+    if (placed) setBoardImage({ ...placed, token: { text, color } })
+  }
+  // Le pion du personnage : l'image choisie dans la fiche, sinon son initiale
+  // dans la couleur du joueur.
+  const myPionLook = useMemo(() => {
+    const url = myCharacter?.pion
+    if (url) return { url, token: undefined }
+    return { url: '', token: { text: tokenInitial(myCharacter?.nom), color: self?.info?.color ?? '#9ca3af' } }
+  }, [myCharacter?.pion, myCharacter?.nom, self?.info?.color])
+  function toggleMyPion() {
+    if (!myPionId || !self) return
+    if (myPion) { removeBoardImage(myPionId); return }
+    const rect = drawingCanvasRef.current?.getBoundingClientRect()
+    const item = libraryItemOf(myPionLook.url)
+    const size = item ? BOARD_LIBRARY.find((c) => c.id === item.categoryId)?.items.find((i) => i.id === item.itemId) : null
+    const placed = rect && placement(
+      { url: myPionLook.url, categoryId: 'pions', width: size?.width ?? (myPionLook.token ? 200 : 400), height: size?.height ?? (myPionLook.token ? 200 : 400) },
+      rect,
+    )
+    if (placed) setBoardImage({ ...placed, id: myPionId, ownerId: self.id, ...(myPionLook.token ? { token: myPionLook.token } : {}) })
+  }
+  // Un pion déjà posé suit les changements de la fiche (image, nom, couleur).
+  useEffect(() => {
+    if (!myPion || !myPionId) return
+    const sameToken = myPion.token?.text === myPionLook.token?.text && myPion.token?.color === myPionLook.token?.color
+    if (myPion.url === myPionLook.url && sameToken) return
+    // Réécrit en entier : Liveblocks ne garde pas un champ laissé à `undefined`.
+    const { token: _old, ...rest } = myPion
+    void _old
+    setBoardImage({ ...rest, url: myPionLook.url, ...(myPionLook.token ? { token: myPionLook.token } : {}) })
+  }, [myPion, myPionId, myPionLook, setBoardImage])
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     const rect = drawingCanvasRef.current?.getBoundingClientRect()
@@ -731,14 +783,28 @@ export default function InteractiveCanvas({
             <Pencil size={14} />
             {t('draw')}
           </button>}
-          <button
-            onClick={() => setLibraryOpen(!libraryOpen)}
-            aria-expanded={libraryOpen}
-            className={`pointer-events-auto ui-btn shadow-lg !min-h-9 ${libraryOpen ? 'ui-btn-primary' : '!bg-[var(--c-panel-head)]'}`}
-          >
-            <Library size={14} />
-            {t('library')}
-          </button>
+          {/* La bibliothèque est l'outil du MJ ; le joueur pose seulement son pion. */}
+          {/* Rien tant que la session n'a pas dit qui on est : pas de « Mon pion » éclair chez le MJ. */}
+          {!self ? null : isGM ? (
+            <button
+              onClick={() => setLibraryOpen(!libraryOpen)}
+              aria-expanded={libraryOpen}
+              className={`pointer-events-auto ui-btn shadow-lg !min-h-9 ${libraryOpen ? 'ui-btn-primary' : '!bg-[var(--c-panel-head)]'}`}
+            >
+              <Library size={14} />
+              {t('library')}
+            </button>
+          ) : (
+            <button
+              onClick={toggleMyPion}
+              aria-pressed={!!myPion}
+              title={t('myPionHint')}
+              className={`pointer-events-auto ui-btn shadow-lg !min-h-9 ${myPion ? 'ui-btn-primary' : '!bg-[var(--c-panel-head)]'}`}
+            >
+              <UserRound size={14} />
+              {t('myPion')}
+            </button>
+          )}
           {toolsVisible && (
             <div className="pointer-events-auto min-w-0">
               <CanvasTools drawMode={drawMode} setDrawMode={setDrawMode} color={color} setColor={setColor} brushSize={brushSize} setPenSize={setPenSize} setEraserSize={setEraserSize} clearCanvas={() => setConfirmClear(true)} />
@@ -747,7 +813,7 @@ export default function InteractiveCanvas({
           {toolbarExtra && <div className="pointer-events-auto ml-auto shrink-0">{toolbarExtra}</div>}
         </div>
         {overlay}
-        {libraryOpen && (
+        {libraryOpen && isGM && (
           <div
             className="pointer-events-none absolute top-14 left-3 right-3 bottom-3 z-30 flex items-start"
             onPointerDown={(e) => e.stopPropagation()}
@@ -760,6 +826,7 @@ export default function InteractiveCanvas({
               uploading={uploading}
               canDelete={(u) => isGM || u.ownerId === self?.id}
               onToggle={toggleEntry}
+              onPlaceToken={placeToken}
               onUpload={uploadToLibrary}
               onDelete={setToDelete}
               onRemoveOld={(id) => {
@@ -791,7 +858,14 @@ export default function InteractiveCanvas({
           )}
           <canvas ref={drawingCanvasRef} className="absolute top-0 left-0 w-full h-full" />
           {imagesToRender.map((img) => (
-            <ImageItem key={img.id} img={img} drawMode={drawMode} onPointerDown={handlePointerDown} />
+            <ImageItem
+              key={img.id}
+              img={img}
+              drawMode={drawMode}
+              movable={canMove(img)}
+              onRemove={() => removeBoardImage(img.id)}
+              onPointerDown={handlePointerDown}
+            />
           ))}
           {(drawMode === 'draw' || drawMode === 'erase') && (
             <div className="absolute rounded-full border border-accent pointer-events-none" style={{ top: mousePos.y - brushSize / 2, left: mousePos.x - brushSize / 2, width: brushSize, height: brushSize, zIndex: 2 }} />
