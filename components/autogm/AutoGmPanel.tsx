@@ -303,7 +303,8 @@ export default function AutoGmPanel({ adventureId, onEffect }: Props) {
 
   // Jet : demandé au meilleur du groupe dans la caractéristique, puis suivi
   // jusqu'au résultat. Si le lanceur part, on redemande à quelqu'un d'autre.
-  const asked = useRef(0)
+  // Visite déjà demandée, partie comprise : une nouvelle partie repasse par les mêmes numéros.
+  const asked = useRef('')
   // Demande vue dans la liste partagée : si elle en disparaît sans résultat,
   // le MJ l'a annulée. Avant de l'y avoir vue, elle peut simplement ne pas
   // être encore arrivée.
@@ -318,15 +319,16 @@ export default function AutoGmPanel({ adventureId, onEffect }: Props) {
       const cancelled = listed.current === current.id && !pending?.has(current.id)
       if (gone || cancelled) {
         if (gone) void postCheck(roomId, { action: 'cancel', id: current.id }).catch(() => {})
-        asked.current = 0
+        asked.current = ''
         dropCheck(gm.visit)
       }
       return
     }
-    if (asked.current === gm.visit || askFailed) return
+    const visitId = `${gm.run}:${gm.visit}`
+    if (asked.current === visitId || askFailed) return
     const roller = best(voters, step.stat)
     if (!roller) return
-    asked.current = gm.visit
+    asked.current = visitId
     const expected = gm.visit
     postCheck(roomId, {
       action: 'ask',
@@ -342,7 +344,7 @@ export default function AutoGmPanel({ adventureId, onEffect }: Props) {
         if (d?.id) setCheck({ id: d.id, userId: roller.id, name: roller.name, visit: expected })
       })
       .catch(() => {
-        asked.current = 0
+        asked.current = ''
         setAskFailed(true)
       })
   }, [isLeader, gm, ready, step, voters, result, pending, roomId, askFailed, dropCheck, setCheck])

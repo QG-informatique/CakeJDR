@@ -10,6 +10,7 @@ import { Check, Pencil, Plus, Trash2, UserRound, X } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import { useConfirm } from '@/lib/useConfirm'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
+import { NARRATIF } from '@/lib/gameSystems'
 import ModBadge from './ModBadge'
 import type { TranslationKey } from '@/lib/translations'
 import {
@@ -39,16 +40,7 @@ const SECTIONS: { key: Section; label: TranslationKey }[] = [
   { key: 'story', label: 'story' },
 ]
 
-const STATS = [
-  { key: 'force', label: 'strength' },
-  { key: 'dexterite', label: 'dexterity' },
-  { key: 'constitution', label: 'constitution' },
-  { key: 'intelligence', label: 'intelligence' },
-  { key: 'sagesse', label: 'wisdom' },
-  { key: 'charisme', label: 'charisma' },
-] as const
-
-const SKILL_TYPES = ['Physique', 'Magique', 'Sociale', 'Technique', 'Spéciale', 'Passive', 'Active']
+const { stats: STATS, skillTypes: SKILL_TYPES } = NARRATIF
 
 const STORY_FIELDS = [
   { key: 'traits', label: 'traits' },

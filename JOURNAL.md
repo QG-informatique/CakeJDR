@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-09 — Systèmes de jeu : le preset « Narratif CakeJDR »
+- La fiche est décrite comme un système de jeu : caractéristiques, règle des modificateurs, valeurs de base, attaques, ressources, types de compétences, dés, montée de niveau (`lib/gameSystems.ts`)
+- Tests du MJ, modificateurs, fiche et éditeur lisent ces listes au lieu de les recopier : rien ne change à l'écran, c'est la base pour ajouter d'autres systèmes
+- Correctif : la fiche d'un joueur au pseudo accentué ou avec apostrophe (« Élodie », « Démo ») n'était jamais enregistrée dans la salle et revenait à une ancienne version au rechargement (`app/api/roomstorage/route.ts`)
+- Correctif MJ automatique : après « Arrêter » puis une nouvelle partie, le jet de la même étape n'était plus demandé (`components/autogm/AutoGmPanel.tsx`)
+Reste ouvert : choisir avec Quentin les autres systèmes, et le choix du système à la création d'une table (colonne en base, avec accord)
+
 ## 2026-10-09 — MJ automatique scripté dans la démo
 - Aventure « La fournée maudite » écrite comme une suite de scènes (récit, plateau, vote, jet, fin) : réutilisable pour les campagnes toutes prêtes (`lib/autoGm/`)
 - Panneau du MJ automatique : vote du groupe avec bulles couleur + initiale (ou anonyme, réglage de table), vote neutre, égalité tranchée par le meilleur Charisme, jets demandés et lus tout seuls, « Côté MJ », écran de fin (`components/autogm/AutoGmPanel.tsx`)
