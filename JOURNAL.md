@@ -1,5 +1,10 @@
 # Journal
 
+## 2026-10-08 — Statistiques de dés : la chance de chaque joueur
+- Stats des dés refaites en cartes : chance de chaque joueur (barre, 50 % = ce que le hasard donne), critiques et échecs, dé le plus lancé, le plus chanceux de la table (`components/chat/DiceStats.tsx`)
+- Choix de Quentin : la chance pour chacun, le reste choisi par Claude sans surcharger ; limite de 20 dés gardée
+Reste ouvert : ligne « le plus chanceux » à voir à deux joueurs.
+
 ## 2026-10-08 — Montée de niveau du MJ : gains gardés
 - Si le MJ ouvre la fiche d'un joueur pendant ses dés de montée de niveau, les gains sont mis de côté et appliqués à son retour sur sa fiche (`components/app/HomePageInner.tsx`)
 Reste ouvert : à vérifier avec un second compte joueur (impossible seul en local).
