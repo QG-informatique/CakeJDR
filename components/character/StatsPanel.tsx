@@ -2,6 +2,7 @@ import { FC } from 'react'
 import { useT } from '@/lib/useT'
 import { type Character } from '@/types/character'
 import type { TranslationKey } from '@/lib/translations'
+import ModBadge from './ModBadge'
 
 const STATS = [
   { key: 'force', label: 'strength' },
@@ -32,8 +33,6 @@ const getStatColor = (value: number) => {
   return 'text-red-400'
 }
 
-const signed = (n: number) => `${n >= 0 ? '+' : ''}${n}`
-
 /** Case d'une valeur : petit intitulé, grand chiffre. */
 const Tile: FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
   <div className="ui-well flex min-w-0 flex-col items-center gap-0.5 px-1.5 py-2">
@@ -58,7 +57,6 @@ type Props = {
 const StatsPanel: FC<Props> = ({ perso, compact = false }) => {
   const t = useT()
   const statValue = (key: string) => Number(Reflect.get(perso, key) ?? 0)
-  const modValue = (key: string) => Number(Reflect.get(perso, `${key}_mod`) ?? 0)
 
   if (compact) {
     return (
@@ -77,7 +75,7 @@ const StatsPanel: FC<Props> = ({ perso, compact = false }) => {
             {STATS.map(stat => (
               <Row key={stat.key} label={t(stat.label as TranslationKey)}>
                 <span className={getStatColor(statValue(stat.key))}>{statValue(stat.key)}</span>
-                <span className="ml-1 text-xs font-medium text-ink/55">{signed(modValue(stat.key))}</span>
+                <ModBadge character={perso} stat={stat.key} className="ml-1 text-xs font-medium text-ink/55" />
               </Row>
             ))}
           </div>
@@ -115,7 +113,7 @@ const StatsPanel: FC<Props> = ({ perso, compact = false }) => {
             <Tile key={stat.key} label={t(stat.label as TranslationKey)}>
               <span className="flex items-baseline gap-1.5 tabular-nums">
                 <span className={`text-xl font-bold ${getStatColor(statValue(stat.key))}`}>{statValue(stat.key)}</span>
-                <span className="text-xs font-semibold text-ink/55">{signed(modValue(stat.key))}</span>
+                <ModBadge character={perso} stat={stat.key} className="text-xs font-semibold text-ink/55" />
               </span>
             </Tile>
           ))}
