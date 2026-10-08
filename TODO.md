@@ -215,12 +215,13 @@
 - [ ] Tester une montée de niveau « Le joueur lance » avec un second compte joueur, fiches réservées au MJ : les gains doivent arriver sur la fiche du joueur et sur son compte
 - [ ] Vérifier avec un second compte joueur que le lancer des dés sur la table apparaît chez lui au même moment et sur le même résultat
 - [ ] Garder les gains de la montée de niveau du MJ s'il ouvre la fiche d'un joueur pendant l'animation de ses dés (aujourd'hui ils sont perdus)
-- [ ] Rendre visible d'où vient un modificateur de caractéristique (par exemple Force 8 donne −1) : règle ou équipement
+- [x] Rendre visible d'où vient un modificateur de caractéristique (par exemple Force 8 donne −1) : règle ou équipement — bulle au survol, règle calculée + bonus d'équipement (`lib/modifiers.ts`)
+- [ ] Vérifier sur téléphone que la bulle d'origine des modificateurs s'ouvre au toucher et se referme
 - [x] Tester le dé pris en main avec un second compte joueur et sur téléphone (doigt), en conditions réelles de latence — sans objet : plus de prise en main avec Dice Box
 - [x] Réduire les lancers lents où le lanceur voit le chiffre du dé changer en fin de course (`steerLabels`, `lib/diceThrow.ts`) — résolu par le tirage d'avance (`lib/diceDraw.ts`)
 - [x] Vérifier en ligne le délai du tirage d'avance (`/api/dice` avec `peek`) : sous ~300 ms, le chiffre est déjà sur le dé au lâcher — sans objet : plus de tirage d'avance
 - [ ] Vérifier sur téléphone que les dés Dice Box se chargent et restent fluides avec 8 dés mélangés
-- [ ] Faire venir la règle des modificateurs du système de jeu de la table (narratif : pas de règle, système perso : règles du créateur)
+- [ ] Faire venir la règle des modificateurs du système de jeu de la table (narratif : pas de règle, système perso : règles du créateur) — brancher `RULES` de `lib/modifiers.ts` sur le système choisi à la création de la table (Phase I)
 - [x] Ne colorer le dé (jaune pour un critique, etc.) qu'au moment où le résultat apparaît, pas dès le début du lancer
 - [x] Remplacer le dé actuel de la table par un vrai dé physique comme celui de la page d'accueil (rebonds sur les bords), synchronisé chez tous les joueurs : tout le monde voit le lancer et le résultat, qui reste tiré par le serveur
 

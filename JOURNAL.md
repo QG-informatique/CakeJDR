@@ -1,5 +1,11 @@
 # Journal
 
+## 2026-10-08 — Modificateurs calculés, et leur origine au survol
+- Le modificateur d'une caractéristique n'est plus tapé à la main : il vient de la règle de la table (10 donne +0, ±1 tous les 2 points), plus un bonus d'équipement et sa source, saisis dans l'éditeur de fiche (`lib/modifiers.ts`, `components/character/CharacterEditor.tsx`).
+- Au survol (ou au toucher) du modificateur, une bulle dit d'où il vient : « −1 Règles du narrateur », « +2 Épée » (`components/character/ModBadge.tsx`, fiche et éditeur). Pas d'étiquette D&D : la règle porte le nom des règles de la table.
+- Le test demandé par le MJ reprend ce total (`components/gm/GMPanel.tsx`). Les nouvelles fiches démarrent à 10 partout. Vérifié en lecture sur la base : la seule fiche remplie suivait déjà cette règle, l'ancien champ `_mod` n'est plus lu.
+Reste ouvert : brancher la règle sur le système de jeu de la table (Phase I), bulle au toucher sur téléphone.
+
 ## 2026-10-08 — Dés de la table remplacés par Dice Box, la physique décide
 - Revirement sur le dé maison pris en main et le tirage d'avance du serveur : la table passe à Dice Box (`@3d-dice/dice-box-threejs`, `components/dice/DiceBoxTable.tsx`). Les dés partent d'un bord au hasard avec une force au hasard, sans main ; `lib/diceDraw.ts`, `lib/diceThrow.ts` et `TableDice.tsx` sont supprimés.
 - Le menu du bas propose tous les dés (D4 à D100), plusieurs et mélangés par lancer, retenus dans le navigateur (`lib/dicePool.ts`, `components/dice/DiceRoller.tsx`) ; le chat montre chaque dé et le total (`components/chat/ChatBox.tsx`).

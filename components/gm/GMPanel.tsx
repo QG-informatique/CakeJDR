@@ -17,6 +17,7 @@ import {
   withStat,
   type CheckStat,
 } from '@/lib/checks'
+import { statMod } from '@/lib/modifiers'
 import { DICE_TYPES } from '@/lib/dicePayload'
 import { postCheck } from '@/components/checks/postCheck'
 import { useRoomSettings, type DrawPermission, type SheetEditMode } from '@/lib/roomSettings'
@@ -333,7 +334,7 @@ function RollsForm({ targetId, targetName, levelUp, onDone }: {
 }
 
 const modFromSheet = (c: Character, stat: CheckStat) => {
-  const n = Math.round(Number(c[`${stat}_mod`]) || 0)
+  const n = statMod(c, stat).total
   return Math.max(-CHECK_MOD_RANGE, Math.min(CHECK_MOD_RANGE, n))
 }
 

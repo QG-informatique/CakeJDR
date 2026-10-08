@@ -43,12 +43,25 @@ export type Character = {
   intelligence: number | string
   sagesse: number | string
   charisme: number | string
+  /** Ancien modificateur tapé à la main, plus lu : il est calculé (`lib/modifiers.ts`). */
   force_mod?: number | string
   dexterite_mod?: number | string
   constitution_mod?: number | string
   intelligence_mod?: number | string
   sagesse_mod?: number | string
   charisme_mod?: number | string
+  force_bonus?: number | string
+  force_bonus_from?: string
+  dexterite_bonus?: number | string
+  dexterite_bonus_from?: string
+  constitution_bonus?: number | string
+  constitution_bonus_from?: string
+  intelligence_bonus?: number | string
+  intelligence_bonus_from?: string
+  sagesse_bonus?: number | string
+  sagesse_bonus_from?: string
+  charisme_bonus?: number | string
+  charisme_bonus_from?: string
   mod_contact?: number | string
   mod_distance?: number | string
   mod_magique?: number | string
@@ -100,12 +113,12 @@ export const defaultCharacter: Character = {
   initiative: '',
   pv: 10,
   pv_max: 10,
-  force: 1,
-  dexterite: 1,
-  constitution: 1,
-  intelligence: 1,
-  sagesse: 1,
-  charisme: 1,
+  force: 10,
+  dexterite: 10,
+  constitution: 10,
+  intelligence: 10,
+  sagesse: 10,
+  charisme: 10,
   force_mod: 0,
   dexterite_mod: 0,
   constitution_mod: 0,
@@ -250,6 +263,12 @@ export const normalizeCharacter = (
     ),
     sagesse_mod: coerceNumber(raw?.sagesse_mod, base.sagesse_mod ?? ''),
     charisme_mod: coerceNumber(raw?.charisme_mod, base.charisme_mod ?? ''),
+    force_bonus: coerceNumber(raw?.force_bonus, ''),
+    dexterite_bonus: coerceNumber(raw?.dexterite_bonus, ''),
+    constitution_bonus: coerceNumber(raw?.constitution_bonus, ''),
+    intelligence_bonus: coerceNumber(raw?.intelligence_bonus, ''),
+    sagesse_bonus: coerceNumber(raw?.sagesse_bonus, ''),
+    charisme_bonus: coerceNumber(raw?.charisme_bonus, ''),
     defense: coerceNumber(raw?.defense, base.defense ?? ''),
     chance: coerceNumber(raw?.chance, base.chance ?? ''),
     initiative: coerceNumber(raw?.initiative, base.initiative ?? ''),

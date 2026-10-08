@@ -10,6 +10,7 @@ import { Check, Pencil, Plus, Trash2, UserRound, X } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import { useConfirm } from '@/lib/useConfirm'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
+import ModBadge from './ModBadge'
 import type { TranslationKey } from '@/lib/translations'
 import {
   type Character,
@@ -258,15 +259,21 @@ const StatsSection: FC<SectionProps> = ({ draft, set }) => {
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
       {STATS.map((s) => (
         <div key={s.key} className="ui-well flex flex-col gap-2 p-3">
-          <span className="text-sm font-semibold">{t(s.label)}</span>
+          <span className="flex items-baseline justify-between gap-2 text-sm font-semibold">
+            {t(s.label)}
+            <ModBadge character={draft} stat={s.key} className="text-sm" />
+          </span>
           <div className="flex gap-2">
             <Field label={t('value')} className="flex-1">
               <input inputMode="numeric" value={str(draft[s.key])} onChange={(e) => set(s.key, e.target.value)} className={`${inputClass} text-center`} />
             </Field>
-            <Field label={t('mod')} className="flex-1">
-              <input inputMode="numeric" value={str(draft[`${s.key}_mod`])} onChange={(e) => set(`${s.key}_mod`, e.target.value)} className={`${inputClass} text-center`} />
+            <Field label={t('equipBonus')} className="flex-1">
+              <input inputMode="numeric" value={str(draft[`${s.key}_bonus`])} onChange={(e) => set(`${s.key}_bonus`, e.target.value)} className={`${inputClass} text-center`} placeholder="0" />
             </Field>
           </div>
+          <Field label={t('equipBonusFrom')}>
+            <input value={str(draft[`${s.key}_bonus_from`])} onChange={(e) => set(`${s.key}_bonus_from`, e.target.value)} className={inputClass} placeholder={t('equipBonusFromHint')} maxLength={40} />
+          </Field>
         </div>
       ))}
     </div>
