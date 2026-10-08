@@ -216,7 +216,8 @@
 - [ ] Tester un test du MJ avec un second compte joueur : vérifier que le joueur ne voit jamais la difficulté cachée, ni sur sa carte, ni dans le chat, ni dans le bandeau
 - [ ] Tester une montée de niveau « Le joueur lance » avec un second compte joueur, fiches réservées au MJ : les gains doivent arriver sur la fiche du joueur et sur son compte
 - [ ] Vérifier avec un second compte joueur que le lancer des dés sur la table apparaît chez lui au même moment et sur le même résultat
-- [ ] Garder les gains de la montée de niveau du MJ s'il ouvre la fiche d'un joueur pendant l'animation de ses dés (aujourd'hui ils sont perdus)
+- [x] Garder les gains de la montée de niveau du MJ s'il ouvre la fiche d'un joueur pendant l'animation de ses dés (mis de côté, appliqués à son retour sur sa fiche)
+- [ ] Vérifier avec un second compte joueur que les gains du MJ arrivent bien quand il revient sur sa fiche après en avoir ouvert une autre pendant ses dés
 - [x] Rendre visible d'où vient un modificateur de caractéristique (par exemple Force 8 donne −1) : règle ou équipement — bulle au survol, règle calculée + bonus d'équipement (`lib/modifiers.ts`)
 - [ ] Vérifier sur téléphone que la bulle d'origine des modificateurs s'ouvre au toucher et se referme
 - [x] Tester le dé pris en main avec un second compte joueur et sur téléphone (doigt), en conditions réelles de latence — sans objet : plus de prise en main avec Dice Box
