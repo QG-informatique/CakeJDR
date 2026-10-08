@@ -192,8 +192,8 @@
 - [x] Phase G : ajouter des pions simples de couleur (rond avec initiale, une couleur par joueur) pour les scènes tactiques, générés par le code, en plus des pions illustrés vus de face
 - [x] Phase G : réserver la bibliothèque au MJ (le joueur ne pose que le pion de son personnage, choisi dans sa fiche)
 - [x] Phase G : ajouter recherche et filtres à la bibliothèque (type, faction, acte, troupe/élite/boss/allié/PNJ)
-- [ ] Phase G : ajouter « Poser le pion » sur les rencontres qui ont un pion assorti, et « Montrer » une rencontre en grand à tous les joueurs
-- [ ] Phase G : protéger la bibliothèque côté serveur (permissions Liveblocks selon le rôle)
+- [x] Phase G : ajouter « Poser le pion » sur les rencontres qui ont un pion assorti, et « Montrer » une rencontre en grand à tous les joueurs
+- [ ] Phase G : décider avec Quentin de la protection côté serveur — Liveblocks ne donne des droits que par salle entière : il faudrait passer les joueurs en lecture seule et faire passer toutes leurs écritures (fiche, chat, dessin, pion, résumé) par des routes API ; aujourd'hui la règle « bibliothèque au MJ, un joueur ne déplace que son pion » n'est tenue que dans l'interface
 - [ ] Phase H : définir le format d'une campagne (scènes, déroulé du MJ, part des joueurs, mise en place, boutons de choix vers la scène suivante)
 - [ ] Phase H : créer le carnet de campagne du MJ (scène en cours, « Préparer la scène », choix validés, chemin parcouru, saut de scène)
 - [ ] Phase H : créer le journal des joueurs (résumé et indices révélés par le MJ)

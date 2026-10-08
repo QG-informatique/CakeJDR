@@ -31,6 +31,7 @@ import { DICE_MAX_ROLL_MS, DICE_REVEAL_DELAY_MS } from '@/lib/dicePayload'
 import { isDiceType, POOL_MAX, poolLabel, sortDice } from '@/lib/dicePool'
 import { applyLevelUp } from '@/lib/levelUp'
 import { Crown } from 'lucide-react'
+import ShownImage from '@/components/canvas/ShownImage'
 import {
   type Character,
   buildCharacterKey,
@@ -745,6 +746,7 @@ export default function HomePageInner() {
 
         <MobileTabBar active={mobileTab} onSelect={showMobileTab} chatUnread={chatUnread} />
       </div>
+      <ShownImage />
     </div>
   )
 }

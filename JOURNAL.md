@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-08 — Rencontres : poser le pion, montrer en grand
+- Sous chaque rencontre de la bibliothèque : « Poser le pion » quand un pion assorti existe (25 sur 40), et « Montrer » (`components/canvas/LibraryPanel.tsx`)
+- « Montrer » affiche l'image en grand chez toute la table ; chacun la ferme d'un clic, le MJ a « Fermer chez tout le monde » ; un joueur ne peut pas en envoyer, le rôle de l'expéditeur est vérifié (`components/canvas/ShownImage.tsx`, `liveblocks.config.ts`)
+- Vérifié à deux onglets dans salletest ; pion du roi posé puis retiré
+- Protection côté serveur non faite : Liveblocks ne gère les droits que par salle entière, le chantier est noté au TODO comme décision à prendre
+Reste ouvert : décision sur la protection serveur ; essai avec un vrai compte joueur.
+
 ## 2026-10-08 — Bibliothèque : recherche et filtres
 - Champ de recherche par nom (sans tenir compte des accents) et trois filtres : rôle (troupe, élite, boss, allié, PNJ), faction, acte (`components/canvas/LibraryPanel.tsx`)
 - Rôles, factions et actes déduits du pack d'images (`lib/library.ts`, d'après `PROMPT-PACK-IMAGES.md`) ; rien à remplir à la main

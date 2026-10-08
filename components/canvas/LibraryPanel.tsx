@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { Check, Loader2, Plus, Search, Trash2, X } from 'lucide-react'
+import { Check, Eye, Loader2, Plus, Search, Trash2, UserRound, X } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import { useLanguage } from '@/components/context/LanguageContext'
 import {
@@ -12,6 +12,7 @@ import {
   LIBRARY_ROLES,
   TOKEN_COLORS,
   libraryTags,
+  matchingPion,
   libraryUrl,
   uploadThumbUrl,
   type BoardEntry,
@@ -27,12 +28,22 @@ const TOKENS_TAB = 'jetons'
 /** Sans majuscules ni accents : « elite » trouve « Élite ». */
 const fold = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
 
+function pionEntry(categoryId: string, itemId: string): BoardEntry | undefined {
+  if (categoryId !== 'rencontres') return undefined
+  const pion = matchingPion(itemId)
+  return pion
+    ? { url: libraryUrl(pion.categoryId, pion.item.id), categoryId: pion.categoryId, width: pion.item.width, height: pion.item.height }
+    : undefined
+}
+
 type Tile = {
   key: string
   entry: BoardEntry
   thumb: string
   label: string
   upload?: LibraryUpload
+  /** Pion assorti à une rencontre, posé à part sur le plateau. */
+  pion?: BoardEntry
 }
 
 /**
@@ -49,6 +60,7 @@ export default function LibraryPanel({
   canDelete,
   onToggle,
   onPlaceToken,
+  onShow,
   onUpload,
   onDelete,
   onRemoveOld,
@@ -67,6 +79,8 @@ export default function LibraryPanel({
   onToggle: (entry: BoardEntry) => void
   /** Pose un pion de couleur (rond avec une lettre). */
   onPlaceToken: (text: string, color: string) => void
+  /** Montre une rencontre en grand à toute la table. */
+  onShow: (url: string, label: string) => void
   onUpload: (categoryId: string, file: File) => void
   onDelete: (upload: LibraryUpload) => void
   onRemoveOld: (id: string) => void
@@ -106,6 +120,7 @@ export default function LibraryPanel({
       entry: { url: libraryUrl(category.id, item.id), categoryId: category.id, width: item.width, height: item.height },
       thumb: libraryUrl(category.id, item.id, true),
       label: item.label[l],
+      pion: pionEntry(category.id, item.id),
     })),
     ...uploads
       .filter((u) => !filtering && u.category === category.id)
@@ -118,6 +133,7 @@ export default function LibraryPanel({
       })),
   ]
   const pending = uploading[category.id] ?? 0
+  const encounters = category.id === 'rencontres'
 
   return (
     <div
@@ -306,6 +322,29 @@ export default function LibraryPanel({
                       </span>
                     )}
                   </button>
+                  {encounters && (
+                    <div className="mt-1 flex gap-1">
+                      {tile.pion && (
+                        <button
+                          onClick={() => onToggle(tile.pion!)}
+                          aria-pressed={onBoard.has(tile.pion.url)}
+                          className={`ui-btn ui-btn-ghost !min-h-7 flex-1 !px-1 ${onBoard.has(tile.pion.url) ? '!border-accent text-accent' : ''}`}
+                          aria-label={`${t('encounterPlacePion')} : ${tile.label}`}
+                          title={t('encounterPlacePion')}
+                        >
+                          <UserRound size={14} />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => onShow(tile.entry.url, tile.upload ? '' : tile.label)}
+                        className="ui-btn ui-btn-ghost !min-h-7 flex-1 !px-1"
+                        aria-label={`${t('encounterShow')} : ${tile.label}`}
+                        title={t('encounterShowHint')}
+                      >
+                        <Eye size={14} />
+                      </button>
+                    </div>
+                  )}
                   {tile.upload && canDelete(tile.upload) && (
                     <button
                       onClick={() => onDelete(tile.upload!)}
