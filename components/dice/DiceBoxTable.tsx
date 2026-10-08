@@ -14,6 +14,8 @@ import type { SessionEvent } from '@/components/app/hooks/useEventLog'
 /** Les dés restent posés un moment après l'affichage du résultat, puis s'effacent. */
 export const THROW_HOLD_MS = 2500
 export const THROW_FADE_MS = 400
+/** Après l'arrêt de mes dés, le bouton « Lancer » revient vite : un nouveau lancer efface les dés posés. */
+export const RELAUNCH_MS = 400
 /** Lancers des autres en attente pendant que des dés roulent déjà. */
 const QUEUE_MAX = 3
 
@@ -49,6 +51,10 @@ type Job = {
   id: string | null
   levelUp: boolean
   settled: boolean
+  /** Mes dés sont posés depuis assez longtemps pour relancer. */
+  relaunch?: boolean
+  /** `onDone` déjà appelé pour ce lancer. */
+  released?: boolean
 }
 
 type Label = { x: number; y: number; text: string }
@@ -318,6 +324,12 @@ export default function DiceBoxTable({ ref, dice, disabled, onThrow, onDone }: P
     if (current.current !== job) return
     job.settled = true
     if (job.levelUp) showLevelUp(owners)
+    if (job.own) {
+      later(() => {
+        job.relaunch = true
+        release(job)
+      }, RELAUNCH_MS)
+    }
     later(() => setFading(true), THROW_HOLD_MS)
     later(() => {
       if (current.current !== job) return
@@ -325,9 +337,15 @@ export default function DiceBoxTable({ ref, dice, disabled, onThrow, onDone }: P
       current.current = null
       setLabels([])
       setFading(false)
-      if (job.own && job.id) callbacks.current.onDone?.(job.id)
       next()
     }, THROW_HOLD_MS + THROW_FADE_MS)
+  }
+
+  // Mon lancer est fini pour la page : le bouton revient, les gains passent sur la fiche.
+  const release = (job: Job) => {
+    if (job.released || !job.id) return
+    job.released = true
+    callbacks.current.onDone?.(job.id)
   }
 
   // Montée de niveau : sous chaque dé, ce qu'il fait gagner.
@@ -398,7 +416,8 @@ export default function DiceBoxTable({ ref, dice, disabled, onThrow, onDone }: P
 
   useImperativeHandle(ref, () => ({
     throwNow: () => {
-      if (disabled || current.current?.own || dice.length === 0) return
+      const mine = current.current?.own ? current.current : null
+      if (disabled || (mine && !mine.relaunch) || dice.length === 0) return
       const box = boxRef.current
       const host = hostRef.current
       const seed = randomSeed()
@@ -432,8 +451,9 @@ export default function DiceBoxTable({ ref, dice, disabled, onThrow, onDone }: P
         job.id ??= r.id
         job.levelUp ||= Boolean(r.levelUp)
         if (job.settled && job.levelUp && current.current === job) showLevelUp(boxRoll(job.dice).owners)
-        // Dés déjà effacés avant la réponse : le lancer est terminé.
-        if (status === 'failed' || (job.settled && current.current !== job)) callbacks.current.onDone?.(r.id)
+        // Dés déjà posés avant la réponse : le lancer est terminé.
+        if (status === 'failed') callbacks.current.onDone?.(r.id)
+        else if (job.relaunch) release(job)
       })
     },
   }))

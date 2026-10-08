@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-08 — Relancer les dés sans attendre
+- Le bouton « Lancer » revient 0,4 s après l'arrêt de mes dés, au lieu d'environ 4 s (2,5 s posés + 0,4 s de fondu + 1 s de pause) : demande de Quentin, gagner au moins 3 s (`components/dice/DiceBoxTable.tsx`, `components/app/HomePageInner.tsx`).
+- Les dés restent posés 2,5 s pour qu'on lise le résultat ; un nouveau lancer les efface. Les gains de montée de niveau passent sur la fiche au même moment.
+- La barre du bouton suit la vraie durée du roulement. Mesuré dans salletest : roulement 2,5 s, bouton revenu 0,4 s après.
+- Les dés passent déjà au-dessus du portrait en bas à droite (couche au-dessus du plateau) : rien à changer.
+Reste ouvert : test à deux joueurs en ligne.
+
 ## 2026-10-08 — Modificateurs calculés, et leur origine au survol
 - Le modificateur d'une caractéristique n'est plus tapé à la main : il vient de la règle de la table (10 donne +0, ±1 tous les 2 points), plus un bonus d'équipement et sa source, saisis dans l'éditeur de fiche (`lib/modifiers.ts`, `components/character/CharacterEditor.tsx`).
 - Au survol (ou au toucher) du modificateur, une bulle dit d'où il vient : « −1 Règles du narrateur », « +2 Épée » (`components/character/ModBadge.tsx`, fiche et éditeur). Pas d'étiquette D&D : la règle porte le nom des règles de la table.
