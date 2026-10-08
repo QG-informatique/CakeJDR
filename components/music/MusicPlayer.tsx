@@ -10,6 +10,7 @@ import { useT } from '@/lib/useT'
 import type { TranslationKey } from '@/lib/translations'
 
 type QueueItem = { id: string }
+type MusicState = { id: string; playing: boolean; pos?: number; at?: number }
 type PlayerVideoData = { title?: string }
 type PlayerWithData = YouTubePlayer & {
   getVideoData?: () => PlayerVideoData | Promise<PlayerVideoData>
@@ -20,6 +21,9 @@ const DEFAULT_VOLUME = 5
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max)
+
+/** Écart toléré avec la position de la table avant de recaler le lecteur. */
+const DRIFT_S = 2
 
 const parseYouTubeId = (input: string) => {
   const trimmed = input.trim()
@@ -126,6 +130,27 @@ export default function MusicPlayer() {
     musicObj instanceof LiveObject
       ? ((musicObj.get('playing') as boolean | undefined) ?? undefined)
       : (musicObj as { playing?: boolean } | null)?.playing
+  const musicPos = (musicObj as { pos?: number } | null)?.pos
+  const musicAt = (musicObj as { at?: number } | null)?.at
+  // Lu par les rappels du lecteur YouTube : où en est le morceau à la table.
+  const sharedRef = useRef<{ pos?: number; at?: number; playing?: boolean }>({})
+  useEffect(() => { sharedRef.current = { pos: musicPos, at: musicAt, playing: musicPlaying } }, [musicPos, musicAt, musicPlaying])
+  const sharedTime = () => {
+    const { pos, at, playing } = sharedRef.current
+    if (typeof pos !== 'number') return null
+    return playing && typeof at === 'number' ? pos + Math.max(0, Date.now() - at) / 1000 : pos
+  }
+  // Recale le lecteur sur la position de la table s'il s'en écarte trop.
+  const alignToTable = () => {
+    const p = playerRef.current
+    const target = sharedTime()
+    if (!p || target === null) return
+    void Promise.resolve(p.getCurrentTime())
+      .then((now) => {
+        if (Number.isFinite(now) && Math.abs(now - target) > DRIFT_S) p.seekTo(target, true)
+      })
+      .catch(() => {})
+  }
 
   const queueCount = (() => {
     if (queueObj instanceof LiveList) return queueObj.length
@@ -133,17 +158,14 @@ export default function MusicPlayer() {
   })()
 
   const updateMusic = useMutation(
-    ({ storage }, patch: Partial<{ id: string; playing: boolean }>) => {
+    ({ storage }, patch: Partial<MusicState>) => {
       let obj = storage.get('music')
       if (!(obj instanceof LiveObject)) {
         obj = new LiveObject({ id: '', playing: false })
         storage.set('music', obj)
       }
       Object.entries(patch).forEach(([key, value]) => {
-        ;(obj as LiveObject<{ id: string; playing: boolean }>).set(
-          key as 'id' | 'playing',
-          value,
-        )
+        ;(obj as LiveObject<MusicState>).set(key as keyof MusicState, value)
       })
     },
     [],
@@ -182,8 +204,10 @@ export default function MusicPlayer() {
       storage.set('music', obj)
     }
     if (next?.id) {
-      ;(obj as LiveObject<{ id: string; playing: boolean }>).set('id', next.id)
-      ;(obj as LiveObject<{ id: string; playing: boolean }>).set('playing', true)
+      ;(obj as LiveObject<MusicState>).set('id', next.id)
+      ;(obj as LiveObject<MusicState>).set('playing', true)
+      ;(obj as LiveObject<MusicState>).set('pos', 0)
+      ;(obj as LiveObject<MusicState>).set('at', Date.now())
     } else {
       ;(obj as LiveObject<{ id: string; playing: boolean }>).set('playing', false)
     }
@@ -222,6 +246,12 @@ export default function MusicPlayer() {
     if (isPlaying) p.playVideo()
     else p.pauseVideo()
   }, [isPlaying, currentId])
+
+  // Quelqu'un a déplacé le curseur ou relancé le morceau : on le suit.
+  useEffect(() => {
+    if (isPlaying) alignToTable()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- seulement quand la position de la table change
+  }, [musicPos, musicAt])
 
   useEffect(() => {
     if (!currentId) return
@@ -270,7 +300,7 @@ export default function MusicPlayer() {
     hasSyncedRef.current = true
     setInput('')
     setIsPlaying(true)
-    updateMusic({ id, playing: true })
+    updateMusic({ id, playing: true, pos: 0, at: Date.now() })
   }
 
   const handleAddToQueue = () => {
@@ -280,7 +310,7 @@ export default function MusicPlayer() {
     setInput('')
     if (!currentId) {
       setIsPlaying(true)
-      updateMusic({ id, playing: true })
+      updateMusic({ id, playing: true, pos: 0, at: Date.now() })
       return
     }
     enqueueTrack(id)
@@ -298,7 +328,15 @@ export default function MusicPlayer() {
     hasSyncedRef.current = true
     const next = !isPlaying
     setIsPlaying(next)
-    updateMusic({ playing: next })
+    // Le morceau tourne déjà à la table (j'arrive, ou j'avais coupé chez moi) :
+    // je le rejoins là où il en est, sans rien changer pour les autres.
+    if (next && musicPlaying) {
+      alignToTable()
+      return
+    }
+    // Pause : on note où on s'est arrêté. Reprise : on repart de là.
+    const pos = next ? (sharedTime() ?? currentTime) : currentTime
+    updateMusic({ playing: next, pos, at: Date.now() })
   }
 
   const handleNext = () => {
@@ -316,6 +354,7 @@ export default function MusicPlayer() {
     const nextTime = clamp((value / 100) * duration, 0, duration)
     setCurrentTime(nextTime)
     playerRef.current.seekTo(nextTime, true)
+    updateMusic({ pos: nextTime, at: Date.now() })
   }
 
   const canPlay = !!currentId || queueCount > 0
@@ -487,6 +526,7 @@ export default function MusicPlayer() {
               }
               // Morceau changé pendant la lecture : YouTube le charge à l'arrêt.
               if (e.data === 5 && isPlayingRef.current) e.target.playVideo()
+              if (e.data === 1) alignToTable()
               if (e.data === 1 || e.data === 5) {
                 setPlayerError(null) // lecture OK → effacer une erreur précédente
                 syncTitleFromPlayer()

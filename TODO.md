@@ -243,7 +243,8 @@
 - [ ] Passer le résumé de session en vraie co-édition (plugin Lexical de Liveblocks) : aujourd'hui, si deux personnes écrivent en même temps, la dernière gagne
 - [x] Tirer les dés côté serveur : le résultat est calculé dans le navigateur, donc falsifiable
 - [x] Vérifier en ligne qu'un lancer de dé s'affiche chez tous les joueurs avec le bouclier « Lancé par le serveur » — bouclier retiré le 2026-10-08, l'affichage chez l'autre joueur reste vérifié par la ligne « second compte joueur » des dés
-- [ ] Caler la position de la musique pour un joueur qui arrive en cours de morceau
+- [x] Caler la position de la musique pour un joueur qui arrive en cours de morceau (position partagée `pos`/`at`, curseur déplacé suivi par toute la table)
+- [ ] Vérifier à deux joueurs que la musique tombe au même endroit chez celui qui arrive, et que le curseur déplacé par l'un recale l'autre
 - [ ] Ne pas perdre la modification du MJ quand le joueur est lui-même en train d'éditer sa fiche
 
 ## Refonte et thèmes — phase 4 puis 6
