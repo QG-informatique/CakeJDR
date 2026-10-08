@@ -245,7 +245,8 @@
 - [x] Vérifier en ligne qu'un lancer de dé s'affiche chez tous les joueurs avec le bouclier « Lancé par le serveur » — bouclier retiré le 2026-10-08, l'affichage chez l'autre joueur reste vérifié par la ligne « second compte joueur » des dés
 - [x] Caler la position de la musique pour un joueur qui arrive en cours de morceau (position partagée `pos`/`at`, curseur déplacé suivi par toute la table)
 - [ ] Vérifier à deux joueurs que la musique tombe au même endroit chez celui qui arrive, et que le curseur déplacé par l'un recale l'autre
-- [ ] Ne pas perdre la modification du MJ quand le joueur est lui-même en train d'éditer sa fiche
+- [x] Ne pas perdre la modification du MJ quand le joueur est lui-même en train d'éditer sa fiche (à l'enregistrement, seuls les champs modifiés par le joueur remplacent la fiche)
+- [ ] Vérifier avec un second compte : le MJ retire des PV pendant que le joueur a l'écran « Modifier la fiche » ouvert, le joueur enregistre, les PV retirés restent
 
 ## Refonte et thèmes — phase 4 puis 6
 - [x] Concevoir la refonte graphique comme thème n°1 : couleurs, images et disposition des panneaux réunies dans un thème, pour en brancher d'autres ensuite
