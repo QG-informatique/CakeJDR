@@ -1,5 +1,13 @@
 # Journal
 
+## 2026-10-08 — Retours de Quentin appliqués (hors ligne)
+- Menus flottants (dés, musique, jets demandés, présence) sur un fond plus plein : classe `ui-pop` (`app/globals.css`)
+- « Règles du narrateur » devient « Règle de base (comme D&D) » (`lib/modifiers.ts`, `lib/translations.ts`)
+- Chat : nom du lanceur toujours entier, bouclier « vérifié » retiré (`components/chat/ChatBox.tsx`)
+- Dessin : 4 emplacements de couleurs perso, gardés dans le navigateur (`components/canvas/CanvasTools.tsx`)
+- Résumé refait : onglets de pages, titre, importer / exporter / supprimer en bas, badge Hors ligne (`components/chat/SessionSummary.tsx`) ; histoire d'exemple écrite dans salletest
+Reste ouvert : choix des statistiques de dés et de la limite de 20 dés par Quentin ; vérification sur téléphone ; rien n'est en ligne.
+
 ## 2026-10-08 — Mise en ligne des dés, retours de Quentin notés
 - Mise en ligne de Dice Box, de la bulle des modificateurs et du bouton Lancer rendu plus vite ; déploiement Vercel réussi.
 - Retours de Quentin après test : dés et relance bien meilleurs ; nouveaux chantiers notés dans `TODO.md` (panneau des dés trop transparent, sélecteur de couleur du dessin, refonte du Résumé, stats de dés, nom coupé dans le chat).

@@ -24,8 +24,8 @@ type Rule = {
 }
 
 export const RULES: Record<RuleSystem, Rule> = {
-  // 10 donne +0, puis ±1 tous les 2 points.
-  narratif: { label: 'modRulesNarrator', detail: 'modRulesNarratorDetail', mod: (v) => Math.floor((v - 10) / 2) },
+  // La règle de D&D : 10 donne +0, puis ±1 tous les 2 points.
+  narratif: { label: 'modRulesBase', detail: 'modRulesBaseDetail', mod: (v) => Math.floor((v - 10) / 2) },
 }
 
 export type ModPart =

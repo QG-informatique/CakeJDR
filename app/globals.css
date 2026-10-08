@@ -135,6 +135,14 @@ body {
     backdrop-filter: blur(var(--c-panel-blur));
     -webkit-backdrop-filter: blur(var(--c-panel-blur));
   }
+  /* Menu ou bulle posé au-dessus de la table : bien plus couvrant qu'un
+     panneau, pour que le texte se lise quel que soit le dessin dessous. */
+  .ui-pop {
+    background: color-mix(in srgb, var(--c-surface-deep) 80%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgb(0 0 0 / 0.35);
+  }
   /* Encart dans un panneau : une marche plus sombre. */
   .ui-well {
     background: color-mix(in srgb, var(--c-surface-deep) 70%, transparent);

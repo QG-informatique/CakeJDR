@@ -28,7 +28,7 @@ export default function CheckPrompt({ onRoll, disabled, levelUpBlocked = false }
     const dice = `${check.count} D${check.dice}`
     const blocked = check.levelUp && levelUpBlocked
     return (
-      <div className="ui-panel absolute bottom-3 left-1/2 z-30 flex w-[min(22rem,calc(100%-1.5rem))] -translate-x-1/2 flex-col gap-2 p-3 shadow-lg animate-fadeIn">
+      <div className="ui-panel ui-pop absolute bottom-3 left-1/2 z-30 flex w-[min(22rem,calc(100%-1.5rem))] -translate-x-1/2 flex-col gap-2 p-3 shadow-lg animate-fadeIn">
         <div className="flex items-center gap-2">
           <Dices size={16} className="shrink-0 text-gm" aria-hidden />
           <span className="text-sm font-semibold">
@@ -50,7 +50,7 @@ export default function CheckPrompt({ onRoll, disabled, levelUpBlocked = false }
 
   const stat = t(checkStatLabel(check.stat))
   return (
-    <div className="ui-panel absolute bottom-3 left-1/2 z-30 flex w-[min(22rem,calc(100%-1.5rem))] -translate-x-1/2 flex-col gap-2 p-3 shadow-lg animate-fadeIn">
+    <div className="ui-panel ui-pop absolute bottom-3 left-1/2 z-30 flex w-[min(22rem,calc(100%-1.5rem))] -translate-x-1/2 flex-col gap-2 p-3 shadow-lg animate-fadeIn">
       <div className="flex items-center gap-2">
         <Target size={16} className="shrink-0 text-gm" aria-hidden />
         <span className="text-sm font-semibold">{withStat(t('checkPromptTitle'), stat)}</span>

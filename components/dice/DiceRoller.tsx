@@ -132,7 +132,7 @@ const DiceRoller: FC<Props> = ({
             <div
               role="dialog"
               aria-label={t('diceMenu')}
-              className="ui-panel absolute bottom-full left-1/2 z-50 mb-2 w-[min(19rem,calc(100vw-2rem))] -translate-x-1/2 p-3 animate-fadeIn"
+              className="ui-panel ui-pop absolute bottom-full left-1/2 z-50 mb-2 w-[min(19rem,calc(100vw-2rem))] -translate-x-1/2 p-3 animate-fadeIn"
             >
               <p className="mb-2 text-xs opacity-75">{t('diceMenuHint')}</p>
               <div className="grid grid-cols-4 gap-2">

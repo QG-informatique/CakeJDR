@@ -1,11 +1,6 @@
-﻿// SessionSummary.tsx
-// ================== PAGE COMPLÈTE AVEC FALLBACK LOCAL + INDICATEUR & LOGS ==================
-//
-// [CHANGEMENTS VISUELS SEULEMENT]
-// - Le badge d'état n'est plus dans la TopBar.
-// - Il s'affiche désormais à côté du bouton "Voir logs", au même emplacement (absolute, top-16, right-3).
-//
-// ───────────────────────────────────────────────────────────────────────────────────────────
+﻿// Résumé de la partie : des pages de texte partagées par toute la table.
+// Partagé en direct par Liveblocks ; si la connexion échoue, il reste
+// utilisable et se garde sur cet appareil.
 
 'use client'
 
@@ -18,6 +13,7 @@ import React, {
   useState,
 } from 'react'
 import { useT } from '@/lib/useT'
+import { ArrowLeft, BookOpen, Download, Plus, Trash2, Upload } from 'lucide-react'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { useConfirm } from '@/lib/useConfirm'
 
@@ -46,6 +42,8 @@ type Page = {
 }
 interface Props {
   onClose: () => void
+  /** Bouton pour replier le panneau, fourni par le chat. */
+  collapseButton?: React.ReactNode
 }
 
 // [FIX] Déclaration manquante : le type Summary était utilisé mais non défini.
@@ -223,14 +221,149 @@ function saveLocal(data: {
   localStorage.setItem(LOCAL_KEY, JSON.stringify(data))
 }
 
+// ===================== Fichier texte : import et export =====================
+
+/** Pages lues dans un fichier exporté (« === Page: titre === » puis le texte). */
+function parseExport(text: string, fallbackTitle: string): { title: string; content: string }[] {
+  return text
+    .split(/=== Page: /)
+    .slice(1)
+    .map((part) => {
+      const [titleLine = '', ...contentLines] = part.split('\n')
+      return {
+        title: titleLine.replace(/===\s*$/, '').trim() || fallbackTitle,
+        content: contentLines.join('\n').trim(),
+      }
+    })
+}
+
+function downloadExport(pages: Page[], textOf: (id: string) => string) {
+  const txt = pages
+    .map((p) => `=== Page: ${p.title} ===\n${textOf(p.id)}\n`)
+    .join('\n')
+  const blob = new Blob([txt], { type: 'text/plain' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'resume-de-partie.txt'
+  a.click()
+  // Révoquer tout de suite peut annuler le téléchargement sur certains navigateurs.
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+// ===================== Présentation commune aux deux modes =====================
+
+type ViewProps = {
+  pages: Page[]
+  current?: Page
+  onSwitch: (id: string) => void
+  onNewPage: () => void
+  onTitle: (title: string) => void
+  onDelete: () => void
+  onImport: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onExport: () => void
+  fileInputRef: React.RefObject<HTMLInputElement | null>
+  /** L'éditeur de la page ouverte, ou un message d'attente. */
+  children: React.ReactNode
+}
+
+/** Onglets des pages, titre de la page, texte, puis import, export, suppression. */
+function SummaryView({
+  pages,
+  current,
+  onSwitch,
+  onNewPage,
+  onTitle,
+  onDelete,
+  onImport,
+  onExport,
+  fileInputRef,
+  children,
+}: ViewProps) {
+  const t = useT()
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-2.5 p-3">
+      <div role="tablist" aria-label={t('summaryPages')} className="-mx-1 flex items-center gap-1 overflow-x-auto px-1 pb-0.5">
+        {pages.map((p) => (
+          <button
+            key={p.id}
+            role="tab"
+            aria-selected={p.id === current?.id}
+            onClick={() => onSwitch(p.id)}
+            className={`ui-btn !min-h-8 max-w-[9rem] shrink-0 !px-2.5 text-xs ${p.id === current?.id ? 'ui-btn-primary' : 'ui-btn-ghost'}`}
+            title={p.title || t('untitled')}
+          >
+            <span className="truncate">{p.title || t('untitled')}</span>
+          </button>
+        ))}
+        <button
+          onClick={onNewPage}
+          className="ui-btn ui-btn-ghost !min-h-8 shrink-0 !px-2 text-xs"
+          title={t('newPage')}
+        >
+          <Plus size={14} /> {t('summaryAddPage')}
+        </button>
+      </div>
+
+      {current && (
+        <input
+          value={current.title}
+          onChange={(e) => onTitle(e.target.value)}
+          maxLength={60}
+          aria-label={t('summaryPageTitle')}
+          placeholder={t('untitled')}
+          className="w-full rounded-md border border-transparent bg-transparent px-1 py-0.5 text-base font-semibold text-ink outline-none placeholder:text-ink/40 hover:border-[var(--c-panel-line)] focus:border-accent"
+        />
+      )}
+
+      <div className="ui-well relative min-h-0 flex-1 overflow-y-auto">{children}</div>
+
+      <div className="flex flex-wrap items-center gap-1.5">
+        <label className="ui-btn ui-btn-ghost !min-h-8 cursor-pointer text-xs" title={t('summaryImportHint')}>
+          <Upload size={14} /> {t('importBtn')}
+          <input ref={fileInputRef} type="file" accept=".txt,text/plain" onChange={onImport} className="hidden" />
+        </label>
+        <button onClick={onExport} className="ui-btn ui-btn-ghost !min-h-8 text-xs" title={t('summaryExportHint')}>
+          <Download size={14} /> {t('exportBtn')}
+        </button>
+        {current && (
+          <button
+            onClick={onDelete}
+            disabled={pages.length <= 1}
+            className="ui-btn ui-btn-ghost ml-auto !min-h-8 text-xs !text-red-300 disabled:opacity-40"
+            title={pages.length <= 1 ? t('lastPageDeleteError') : t('deletePage')}
+          >
+            <Trash2 size={14} /> {t('summaryDeletePage')}
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/** Zone de texte Lexical d'une page. */
+function PageText() {
+  const t = useT()
+  return (
+    <RichTextPlugin
+      contentEditable={
+        <ContentEditable
+          aria-label={t('summaryText')}
+          className="min-h-full whitespace-pre-wrap p-3 text-sm leading-relaxed text-ink outline-none [&_p]:mb-2"
+        />
+      }
+      placeholder={
+        <div className="pointer-events-none absolute left-3 top-3 text-sm text-ink/40">
+          {t('startWriting')}
+        </div>
+      }
+      ErrorBoundary={LexicalErrorBoundary}
+    />
+  )
+}
+
 // ===================== Sous-composant : Mode LOCAL =====================
-function LocalSummary({
-  onClose,
-  pushLog,
-}: {
-  onClose: () => void
-  pushLog: (msg: string) => void
-}) {
+function LocalSummary({ pushLog }: { pushLog: (msg: string) => void }) {
   const t = useT() as (key: string) => string
   const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm()
 
@@ -267,9 +400,8 @@ function LocalSummary({
   // Bootstrapping
   useEffect(() => {
     if (state.acts.length === 0) {
-      const title = (t('pageNamePrompt') as string) || 'New page'
       // eslint-disable-next-line react-hooks/set-state-in-effect -- première page créée à l'ouverture d'un résumé vide
-      createPage(title)
+      createPage(t('summaryFirstPage'))
     } else if (!currentId) {
       setCurrentId(state.acts[0]?.id)
     }
@@ -306,18 +438,8 @@ function LocalSummary({
 
   // Supprimer page (async pour attendre la réponse du ConfirmDialog)
   const handleDelete = useCallback(async () => {
-    if (!current) return
-    if (state.acts.length <= 1) {
-      await confirm(
-        (t('lastPageDeleteError') as string) || 'Impossible de supprimer la dernière page.',
-        { title: t('deletePage') as string },
-      )
-      return
-    }
-    const ok = await confirm(
-      (t('deletePageConfirm') as string) || 'Supprimer cette page ?',
-      { title: t('deletePage') as string, danger: true },
-    )
+    if (!current || state.acts.length <= 1) return
+    const ok = await confirm(t('deletePageConfirm'), { title: t('deletePage'), danger: true })
     if (!ok) return
     const acts = state.acts.filter((p) => p.id !== current.id)
     const nextId = acts[0]?.id
@@ -334,24 +456,14 @@ function LocalSummary({
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-
     file.text().then((text) => {
-      const parts = text.split(/=== Page: /).slice(1)
       const incoming: Page[] = []
       const editor = { ...state.editor }
-      parts.forEach((part) => {
-        const [titleLine = '', ...contentLines] = part.split('\n')
-        const title =
-          titleLine.replace(/===$/, '').trim() ||
-          (t('newPage') as string) ||
-          'New page'
-        const content = contentLines.join('\n').trim()
+      parseExport(text, t('newPage')).forEach(({ title, content }) => {
         const id = crypto.randomUUID()
         incoming.push({ id, title })
         editor[id] = content
       })
-
-      // [FIX] Fin manquante : mise à jour de l'état + reset input
       const next = {
         ...state,
         acts: [...state.acts, ...incoming],
@@ -366,21 +478,6 @@ function LocalSummary({
     })
   }
 
-  // Export
-  const handleExport = () => {
-    const txt = state.acts
-      .map((p) => `=== Page: ${p.title} ===\n${state.editor[p.id] || ''}\n`)
-      .join('\n')
-    const blob = new Blob([txt], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'summary.txt'
-    a.click()
-    // Révoquer tout de suite peut annuler le téléchargement sur certains navigateurs.
-    setTimeout(() => URL.revokeObjectURL(url), 1000)
-  }
-
   const initialText = current ? state.editor[current.id] || '' : ''
 
   // Mode local : config Lexical simple, sans liveblocksConfig (pas de LiveblocksPlugin)
@@ -392,8 +489,7 @@ function LocalSummary({
   }
 
   return (
-    <div className="flex flex-col h-full" style={{ minHeight: 0 }}>
-      {/* ConfirmDialog — remplace window.confirm / window.alert */}
+    <>
       <ConfirmDialog
         open={!!confirmState}
         message={confirmState?.message ?? ''}
@@ -404,63 +500,35 @@ function LocalSummary({
         onConfirm={handleConfirm}
         onCancel={handleCancel}
       />
-
-      {/* Barre d'actions */}
-      <TopBar
-        onNewPage={() => createPage((t('newPage') as string) || 'New page')}
+      <SummaryView
         pages={state.acts}
-        currentId={currentId}
+        current={current}
         onSwitch={switchPage}
+        onNewPage={() => createPage(t('newPage'))}
+        onTitle={handleTitleChange}
         onDelete={handleDelete}
         onImport={handleImport}
-        onExport={handleExport}
-        onClose={onClose}
+        onExport={() => downloadExport(state.acts, (id) => state.editor[id] || '')}
         fileInputRef={fileInputRef}
-      />
-
-      {/* Editeur */}
-      {current && (
-        <LexicalComposer key={editorKey} initialConfig={editorConfig}>
-          {/* Mode local : pas de LiveblocksPlugin, pas de Toolbar Liveblocks */}
-          <HistoryPlugin />
-
-          <input
-            value={current.title}
-            onChange={(e) => handleTitleChange(e.target.value)}
-            className="text-center font-semibold mb-2 bg-transparent outline-none w-full text-ink placeholder-ink/50"
-            placeholder={
-              (t('untitled') as string) ||
-              'Sans titre'
-            }
-          />
-
-          <RichTextPlugin
-            contentEditable={
-              <ContentEditable className="flex-1 min-h-0 p-2 bg-shade/20 rounded text-ink outline-none" />
-            }
-            placeholder={
-              <div className="text-ink/50">
-                {(t('startWriting') as string) || 'Commence à écrire...'}
-              </div>
-            }
-            ErrorBoundary={LexicalErrorBoundary}
-          />
-
-          <LocalInitContentPlugin text={initialText} />
-          <AutoSavePlugin onChange={handleAutoSave} />
-        </LexicalComposer>
-      )}
-    </div>
+      >
+        {current && (
+          <LexicalComposer key={editorKey} initialConfig={editorConfig}>
+            <HistoryPlugin />
+            <PageText />
+            <LocalInitContentPlugin text={initialText} />
+            <AutoSavePlugin onChange={handleAutoSave} />
+          </LexicalComposer>
+        )}
+      </SummaryView>
+    </>
   )
 }
 
 // ===================== Sous-composant : Mode LIVE (collaboratif) =====================
 function LiveSummary({
-  onClose,
   pushLog,
   tripToLocal, // si on doit basculer en local
 }: {
-  onClose: () => void
   pushLog: (msg: string) => void
   tripToLocal: (reason?: string) => void
 }) {
@@ -577,39 +645,20 @@ function LiveSummary({
         ;(s as LiveObject<Summary>).set('acts', list)
       }
       const arr = (list as LiveList<Page>).toArray()
-      let target: Page | undefined
-      let idx = -1
-      arr.some((p, i) => {
-        if (p.id === data.id) {
-          target = p
-          idx = i
-          return true
-        }
-        return false
-      })
-      if (target && idx !== -1) {
-        ;(list as LiveList<Page>).set(idx, { ...target, title: data.title })
+      const idx = arr.findIndex((p) => p.id === data.id)
+      if (idx !== -1) {
+        ;(list as LiveList<Page>).set(idx, { ...arr[idx]!, title: data.title })
       }
     },
     [],
   )
 
   const removePage = useMutation(({ storage }, id: string) => {
-    let s = storage.get('summary')
-    if (!(s instanceof LiveObject)) {
-      s = new LiveObject<Summary>({
-        acts: new LiveList<Page>([]),
-        currentId: undefined,
-      })
-      storage.set('summary', s)
-    }
-    let list = (s as LiveObject<Summary>).get('acts')
-    if (!(list instanceof LiveList)) {
-      list = new LiveList<Page>([])
-      ;(s as LiveObject<Summary>).set('acts', list)
-    }
-    const arr = (list as LiveList<Page>).toArray()
-    const index = arr.findIndex((p) => p.id === id)
+    const s = storage.get('summary')
+    if (!(s instanceof LiveObject)) return
+    const list = (s as LiveObject<Summary>).get('acts')
+    if (!(list instanceof LiveList)) return
+    const index = (list as LiveList<Page>).toArray().findIndex((p) => p.id === id)
     if (index !== -1) {
       ;(list as LiveList<Page>).delete(index)
     }
@@ -631,14 +680,13 @@ function LiveSummary({
   useEffect(() => {
     if (status !== 'connected' || !pages) return
     if (pages.length === 0) {
-      const title = (t('pageNamePrompt') as string) || 'New page'
-      const newPage = { id: crypto.randomUUID(), title }
+      const newPage = { id: crypto.randomUUID(), title: t('summaryFirstPage') }
       addPage(newPage)
       updateEditor({ id: newPage.id, content: '' })
       setCurrentId(newPage.id)
       // eslint-disable-next-line react-hooks/set-state-in-effect -- première page créée une fois Liveblocks connecté
       setEditorKey((k) => k + 1)
-    } else if (!currentId) {
+    } else if (!currentId || !pages.some((p) => p.id === currentId)) {
       setCurrentId(pages[0]!.id)
       setEditorKey((k) => k + 1)
     }
@@ -671,18 +719,8 @@ function LiveSummary({
   }
 
   const handleDelete = useCallback(async () => {
-    if (status !== 'connected' || !pages || !current) return
-    if (pages.length <= 1) {
-      await confirm(
-        (t('lastPageDeleteError') as string) || 'Impossible de supprimer la dernière page.',
-        { title: t('deletePage') as string },
-      )
-      return
-    }
-    const ok = await confirm(
-      (t('deletePageConfirm') as string) || 'Supprimer cette page ?',
-      { title: t('deletePage') as string, danger: true },
-    )
+    if (status !== 'connected' || !pages || !current || pages.length <= 1) return
+    const ok = await confirm(t('deletePageConfirm'), { title: t('deletePage'), danger: true })
     if (!ok) return
     const rest = pages.filter((p) => p.id !== current.id)
     removePage(current.id)
@@ -697,20 +735,12 @@ function LiveSummary({
     file
       .text()
       .then((text) => {
-        const parts = text.split(/=== Page: /).slice(1)
         const newPages: Page[] = []
-        parts.forEach((part) => {
-          const [titleLine = '', ...contentLines] = part.split('\n')
-          const title =
-            titleLine.replace(/===$/, '').trim() ||
-            (t('newPage') as string) ||
-            'New page'
-          const content = contentLines.join('\n').trim()
-          const id = crypto.randomUUID()
-          const page = { id, title }
+        parseExport(text, t('newPage')).forEach(({ title, content }) => {
+          const page = { id: crypto.randomUUID(), title }
           newPages.push(page)
           addPage(page)
-          updateEditor({ id, content })
+          updateEditor({ id: page.id, content })
         })
         if (newPages.length > 0) {
           setCurrentId(newPages[0]!.id)
@@ -721,21 +751,6 @@ function LiveSummary({
       .catch((err) => {
         pushLog('Import live: ' + (err?.message ?? String(err)))
       })
-  }
-
-  const handleExport = () => {
-    if (!pages) return
-    const txt = pages
-      .map((p) => `=== Page: ${p.title} ===\n${editorMap?.get(p.id) || ''}\n`)
-      .join('\n')
-    const blob = new Blob([txt], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'summary.txt'
-    a.click()
-    // Révoquer tout de suite peut annuler le téléchargement sur certains navigateurs.
-    setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
 
   // On attend que editorMap soit chargé ET que le slot de la page existe
@@ -761,8 +776,7 @@ function LiveSummary({
   }
 
   return (
-    <div className="flex flex-col h-full" style={{ minHeight: 0 }}>
-      {/* ConfirmDialog — remplace window.confirm / window.alert */}
+    <>
       <ConfirmDialog
         open={!!confirmState}
         message={confirmState?.message ?? ''}
@@ -773,269 +787,55 @@ function LiveSummary({
         onConfirm={confirmOk}
         onCancel={confirmNo}
       />
-
-      {/* Barre d'actions */}
-      <TopBar
-        onNewPage={() => createPage((t('newPage') as string) || 'New page')}
+      <SummaryView
         pages={pages || []}
-        currentId={currentId}
+        current={current}
         onSwitch={(id) => {
           if (status !== 'connected') return
           setCurrentId(id)
           setEditorKey((k) => k + 1)
         }}
+        onNewPage={() => createPage(t('newPage'))}
+        onTitle={handleTitleChange}
         onDelete={handleDelete}
         onImport={handleImport}
-        onExport={handleExport}
-        onClose={onClose}
+        onExport={() => pages && downloadExport(pages, (id) => editorMap?.get(id) || '')}
         fileInputRef={fileInputRef}
-      />
-
-      {/* Éditeur — monté seulement quand le slot est prêt dans editorMap */}
-      {current && editorReady ? (
-        <LexicalComposer key={editorKey} initialConfig={editorConfig}>
-          {/* HistoryPlugin pour undo/redo local */}
-          <HistoryPlugin />
-
-          <input
-            value={current.title}
-            onChange={(e) => handleTitleChange(e.target.value)}
-            className="text-center font-semibold mb-2 bg-transparent outline-none w-full text-ink placeholder-ink/50"
-            placeholder={(t('untitled') as string) || 'Sans titre'}
-          />
-
-          <RichTextPlugin
-            contentEditable={
-              <ContentEditable className="flex-1 min-h-0 p-2 bg-shade/20 rounded text-ink outline-none" />
-            }
-            placeholder={
-              <div className="text-ink/50">
-                {(t('startWriting') as string) || 'Commence à écrire...'}
-              </div>
-            }
-            ErrorBoundary={LexicalErrorBoundary}
-          />
-
-          {/* LocalInitContentPlugin : s'exécute UNE FOIS au montage (deps=[]),
-              pas de dépendance à useIsEditorReady → pas de boucle */}
-          <LocalInitContentPlugin text={initialText} />
-          <RemoteSyncPlugin text={initialText} />
-          <AutoSavePlugin onChange={handleAutoSave} />
-        </LexicalComposer>
-      ) : current ? (
-        <div className="flex-1 flex items-center justify-center text-ink/30 text-sm gap-2">
-          <span className="animate-pulse">⟳</span> Synchronisation…
-        </div>
-      ) : null}
-    </div>
-  )
-}
-
-// ===================== Barre du haut commune (badge + actions + file menu) =====================
-function TopBar({
-  onNewPage,
-  pages,
-  currentId,
-  onSwitch,
-  onDelete,
-  onImport,
-  onExport,
-  onClose,
-  fileInputRef,
-}: {
-  onNewPage: () => void
-  pages: Page[]
-  currentId?: string
-  onSwitch: (id: string) => void
-  onDelete: () => void
-  onImport: (e: React.ChangeEvent<HTMLInputElement>) => void
-  onExport: () => void
-  onClose: () => void
-  fileInputRef: React.RefObject<HTMLInputElement | null>
-}) {
-  const t = useT()
-
-  const [showFileMenu, setShowFileMenu] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
-  const btnRef = useRef<HTMLButtonElement>(null)
-
-  useEffect(() => {
-    if (!showFileMenu) return
-    const onDown = (e: MouseEvent) => {
-      if (
-        !menuRef.current?.contains(e.target as Node) &&
-        !btnRef.current?.contains(e.target as Node)
-      ) {
-        setShowFileMenu(false)
-      }
-    }
-    document.addEventListener('mousedown', onDown)
-    return () => document.removeEventListener('mousedown', onDown)
-  }, [showFileMenu])
-
-  // [CHANGEMENT VISUEL] — suppression du badge dans la TopBar (il masquait des éléments)
-
-  return (
-    <div className="mb-3 flex w-full items-center justify-end gap-2 relative flex-shrink-0">
-      <button
-        onClick={onNewPage}
-        className="bg-shade/40 text-ink px-2 py-1 rounded text-sm"
-        title={t('newPage') as string}
       >
-        +
-      </button>
-
-      <select
-        value={currentId ?? ''}
-        onChange={(e) => onSwitch(e.target.value)}
-        className="bg-shade/40 text-ink rounded px-2 py-1 text-sm w-44"
-      >
-        {pages.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.title}
-          </option>
-        ))}
-      </select>
-
-      <button
-        onClick={onDelete}
-        className="bg-shade/40 text-ink px-2 py-1 rounded text-sm"
-        title={t('deletePage') as string}
-      >
-        🗑️
-      </button>
-
-      <div className="relative">
-        <button
-          ref={btnRef}
-          onClick={() => setShowFileMenu((m) => !m)}
-          className="bg-shade/40 text-ink px-2 py-1 rounded text-sm"
-          title={t('fileMenu') as string}
-        >
-          📁
-        </button>
-        {showFileMenu && (
-          <div
-            ref={menuRef}
-            className="absolute right-0 mt-1 z-40 bg-shade/80 rounded shadow p-1 w-40 flex flex-col"
-          >
-            <label className="px-2 py-1 hover:bg-ink/10 cursor-pointer text-sm text-ink">
-              {t('importBtn') as string}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="text/plain"
-                onChange={onImport}
-                className="hidden"
-              />
-            </label>
-            <button
-              onClick={onExport}
-              className="text-left px-2 py-1 hover:bg-ink/10 text-sm text-ink"
-            >
-              {t('exportBtn') as string}
-            </button>
+        {current && editorReady ? (
+          <LexicalComposer key={editorKey} initialConfig={editorConfig}>
+            <HistoryPlugin />
+            <PageText />
+            {/* LocalInitContentPlugin : s'exécute UNE FOIS au montage (deps=[]),
+                pas de dépendance à useIsEditorReady → pas de boucle */}
+            <LocalInitContentPlugin text={initialText} />
+            <RemoteSyncPlugin text={initialText} />
+            <AutoSavePlugin onChange={handleAutoSave} />
+          </LexicalComposer>
+        ) : (
+          <div className="flex h-full items-center justify-center gap-2 p-6 text-sm text-ink/40">
+            <span className="animate-pulse">⟳</span> {t('summarySyncing')}
           </div>
         )}
-      </div>
-
-      <button
-        onClick={onClose}
-        className="text-ink/80 hover:text-red-500 text-xl"
-        title={t('close') as string}
-      >
-        ✕
-      </button>
-    </div>
-  )
-}
-
-// ===================== Panneau de LOGS (+ badge à côté) =====================
-function LogsPanel({
-  logs,
-  clear,
-  statusText, // [CHANGEMENT VISUEL] — nouveau libellé passé depuis le parent
-  isLocal, // [CHANGEMENT VISUEL] — pour la couleur
-}: {
-  logs: string[]
-  clear: () => void
-  statusText: string
-  isLocal: boolean
-}) {
-  const [open, setOpen] = useState(false)
-  const badgeColor = isLocal ? 'bg-red-600' : 'bg-green-600'
-
-  // Positionné en bas à droite pour ne pas couvrir le titre de page
-  return (
-    <div className="absolute right-3 bottom-3 z-50 flex items-center gap-2">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="relative z-50 bg-shade/50 text-ink text-xs px-2 py-1 rounded"
-        title="Afficher / masquer les logs"
-      >
-        {open ? 'Masquer logs' : 'Voir logs'}
-      </button>
-
-      <span
-        className={`inline-flex items-center ${badgeColor} text-ink text-xs px-2 py-1 rounded`}
-      >
-        ● {statusText}
-      </span>
-
-      {open && (
-        <>
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setOpen(false)}
-            aria-hidden="true"
-          />
-          <div className="absolute right-0 bottom-full mb-2 z-50 w-[420px] max-h-[220px] overflow-auto bg-shade/80 text-ink text-xs rounded p-2 border border-ink/10">
-            <div className="flex items-center justify-between mb-2">
-              <b>Logs de synchro</b>
-              <button
-                type="button"
-                onClick={clear}
-                className="text-ink/70 hover:text-ink underline"
-              >
-                Effacer
-              </button>
-            </div>
-            {logs.length === 0 ? (
-              <div className="text-ink/60">Aucun log pour le moment.</div>
-            ) : (
-              <ul className="space-y-1">
-                {logs.map((l, i) => (
-                  <li key={i} className="whitespace-pre-wrap">
-                    • {l}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </>
-      )}
-    </div>
+      </SummaryView>
+    </>
   )
 }
 
 // ===================== Composant principal =====================
-const SessionSummary: FC<Props> = ({ onClose }) => {
+const SessionSummary: FC<Props> = ({ onClose, collapseButton }) => {
+  const t = useT()
   const [isLocal, setIsLocal] = useState(false)
-  const [logs, setLogs] = useState<string[]>([])
 
+  // Journal de synchro : seulement dans la console, pour le débogage.
   const pushLog = useCallback((msg: string) => {
-    setLogs((prev) =>
-      [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`].slice(-200),
-    )
+    console.warn('[Résumé]', msg)
   }, [])
 
   const tripToLocal = useCallback(
     (reason?: string) => {
       if (!isLocal) {
-        pushLog(
-          'Bascule en mode LOCAL' + (reason ? ` (raison: ${reason})` : ''),
-        )
+        pushLog('Bascule en mode local' + (reason ? ` (${reason})` : ''))
         setIsLocal(true)
       }
     },
@@ -1043,10 +843,28 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
   )
 
   return (
-    <div
-      className="absolute inset-0 bg-shade/35 backdrop-blur-[3px] border border-ink/10 rounded-2xl shadow-2xl flex flex-col h-full w-full z-20 p-3 animate-fadeIn overflow-visible"
-      style={{ minHeight: 0 }}
-    >
+    <div className="flex min-h-0 flex-1 flex-col animate-fadeIn">
+      <div className="flex items-center gap-1.5 border-b border-[var(--c-panel-line)] px-3 py-2.5" style={{ background: 'var(--c-panel-head)' }}>
+        <button
+          onClick={onClose}
+          className="ui-btn ui-btn-ghost ui-btn-icon"
+          aria-label={t('summaryBackToChat')}
+          title={t('summaryBackToChat')}
+        >
+          <ArrowLeft size={16} />
+        </button>
+        <BookOpen size={16} className="shrink-0 text-amber-300" />
+        <h2 className="truncate text-sm font-semibold">{t('sessionSummary')}</h2>
+        <span className="ml-auto flex items-center gap-1">
+          {isLocal && (
+            <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[11px] text-amber-200" title={t('summaryOfflineHint')}>
+              {t('summaryOffline')}
+            </span>
+          )}
+          {collapseButton}
+        </span>
+      </div>
+
       {/* Contenu Live avec filet de sécurité */}
       {!isLocal ? (
         <ErrorBoundary
@@ -1058,23 +876,11 @@ const SessionSummary: FC<Props> = ({ onClose }) => {
             tripToLocal('Exception')
           }}
         >
-          <LiveSummary
-            onClose={onClose}
-            pushLog={pushLog}
-            tripToLocal={tripToLocal}
-          />
+          <LiveSummary pushLog={pushLog} tripToLocal={tripToLocal} />
         </ErrorBoundary>
       ) : (
-        <LocalSummary onClose={onClose} pushLog={pushLog} />
+        <LocalSummary pushLog={pushLog} />
       )}
-
-      {/* [CHANGEMENT VISUEL] — Logs + badge côte à côte, sous la barre du haut */}
-      <LogsPanel
-        logs={logs}
-        clear={() => setLogs([])}
-        statusText={isLocal ? 'Local (hors‑ligne)' : 'En ligne'}
-        isLocal={isLocal}
-      />
     </div>
   )
 }
