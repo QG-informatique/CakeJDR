@@ -20,6 +20,8 @@ export type SessionEvent = {
   check?: CheckOutcome
   /** `rolls` : plusieurs dés demandés par le MJ, `result` est leur somme. */
   rolls?: RollsOutcome
+  /** `check` : la demande à laquelle ce jet répond (`app/api/check`). */
+  requestId?: string
   /** Plusieurs dés lancés librement, de types mélangés ; `result` est leur somme. */
   pool?: DicePool
   /** Départ des dés du lanceur, rejoué sur la table de chacun (`components/dice/DiceBoxTable.tsx`). */

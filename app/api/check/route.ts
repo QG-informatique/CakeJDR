@@ -273,7 +273,8 @@ export async function POST(req: NextRequest) {
         list = new LiveList<Lson>([])
         root.set('events', list as never)
       }
-      list.push({ kind: roll.rolls ? 'rolls' : 'check', ...roll } as Lson)
+      // `requestId` relie le jet à sa demande : le MJ automatique attend celui-là.
+      list.push({ kind: roll.rolls ? 'rolls' : 'check', ...roll, requestId: id } as Lson)
       for (let i = list.length - MAX_EVENTS; i > 0; i -= 1) list.delete(0)
     })
   } catch (e) {

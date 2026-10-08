@@ -32,6 +32,9 @@ import { isDiceType, POOL_MAX, poolLabel, sortDice } from '@/lib/dicePool'
 import { applyLevelUp } from '@/lib/levelUp'
 import { Crown } from 'lucide-react'
 import ShownImage from '@/components/canvas/ShownImage'
+import AutoGmPanel, { type AutoGmEffect } from '@/components/autogm/AutoGmPanel'
+import { DEMO_ADVENTURE } from '@/lib/autoGm'
+import { useIsDemoRoom } from '@/lib/useIsDemoRoom'
 import {
   type Character,
   buildCharacterKey,
@@ -65,6 +68,9 @@ export default function HomePageInner() {
   const isGM = self?.info?.role === 'gm'
   const { settings } = useRoomSettings()
   const sheetEditable = canEditSheet(settings, isGM)
+  // MJ automatique : dans la salle de démo pour l'instant, partout en développement.
+  const isDemoRoom = useIsDemoRoom()
+  const autoGmEnabled = isDemoRoom || process.env.NODE_ENV === 'development'
   const [gmPanelOpen, setGmPanelOpen] = useState(false)
   const [perso, setPerso] = useState<Character>(() =>
     normalizeCharacter(defaultPerso),
@@ -462,6 +468,16 @@ export default function HomePageInner() {
     }
   }
 
+  // Dégâts ou soins d'une scène du MJ automatique, sur sa propre fiche. Pas
+  // pendant que le MJ regarde la fiche d'un joueur : elle n'est pas la sienne.
+  const handleAutoGmEffect = (effect: AutoGmEffect) => {
+    if (viewedConnectionId !== null) return
+    const max = Number(perso.pv_max) || 0
+    const pv = effect.heal ? max : Math.max(0, (Number(perso.pv) || 0) - (effect.damage ?? 0))
+    if (pv === Number(perso.pv)) return
+    handleUpdatePerso({ ...perso, pv }, true)
+  }
+
   // En quittant la table, une modification encore en attente est envoyee
   // tout de suite plutot que perdue.
   useEffect(() => () => {
@@ -692,6 +708,7 @@ export default function HomePageInner() {
                 ) : null}
               />
             </ErrorBoundary>
+            {autoGmEnabled && <AutoGmPanel adventureId={DEMO_ADVENTURE} onEffect={handleAutoGmEffect} />}
             {/* Bandeau de la salle de démo, en bas du plateau : il ne cache pas les outils. */}
             <DemoBanner />
             <ErrorBoundary fallback={<div className="p-4 text-red-500">Dice display error</div>}>

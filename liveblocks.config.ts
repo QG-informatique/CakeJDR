@@ -4,6 +4,7 @@ import type { RoomSettings } from './lib/roomSettings'
 import type { LiveMap, LiveObject, LiveList } from '@liveblocks/client'
 import type { Character } from '@/types/character'
 import type { CheckOutcome, GmRequest, RollsOutcome } from '@/lib/checks'
+import type { AutoGmCheck, AutoGmTiebreak } from '@/lib/autoGm/types'
 
 // Canvas images stored in Liveblocks. Keep in sync with components/canvas/ImageItem.tsx
 // but defined here to satisfy Liveblocks Lson constraints.
@@ -67,6 +68,8 @@ type SessionEvent = {
   check?: CheckOutcome
   /** `rolls` : plusieurs dés demandés par le MJ, `result` est leur somme. */
   rolls?: RollsOutcome
+  /** `check` : la demande à laquelle ce jet répond (`app/api/check`). */
+  requestId?: string
 }
 
 type Room = {
@@ -115,6 +118,26 @@ declare global {
       settings?: LiveObject<RoomSettings>
       /** Tests demandés par le MJ, en attente du jet du joueur (`app/api/check`). */
       checks?: LiveMap<string, GmRequest>
+      /**
+       * Partie menée par le MJ automatique (`components/autogm/AutoGmPanel.tsx`).
+       * `visit` compte les passages de scène en scène ; `setup` est le dernier
+       * passage dont le plateau et le récit ont été mis en place.
+       */
+      autoGm?: LiveObject<{
+        /** Tiré à chaque lancement : distingue deux parties de la même aventure. */
+        run: string
+        adventure: string
+        scene: string
+        visit: number
+        setup: number
+        path: string[]
+        flags: string[]
+        /** Vote de chaque joueur (identifiant Liveblocks), une option ou `neutral`. */
+        votes: LiveMap<string, string>
+        voteStart?: number
+        tiebreak?: AutoGmTiebreak
+        check?: AutoGmCheck
+      }>
     }
 
     // Custom user info set when authenticating with a secret key

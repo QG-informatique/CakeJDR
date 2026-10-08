@@ -183,10 +183,14 @@
 
 ## Campagnes, bibliothèque du MJ, systèmes de jeu — détail dans `PLAN-CAMPAGNES.md`
 - [ ] Démo solo : donner à chaque visiteur sa propre partie de démo (choisir entre une salle Liveblocks par visiteur et une démo sans temps réel)
-- [ ] Démo solo : écrire la petite aventure de Cake (Mila, pâtisserie, cave, levains, Golem de Mie Brûlée, fins selon les choix) avec le set « Cake »
-- [ ] Démo solo : créer le MJ automatique (raconte, pose carte, pions et musique, demande des jets et lit le résultat, propose des réponses en boutons, passe à la scène suivante)
-- [ ] Démo solo : ajouter le bouton « Voir côté MJ » (carnet, secrets, choix à venir, bibliothèque) et le retour au côté joueur
-- [ ] Démo solo : ajouter l'écran de fin (chemin parcouru, « Crée ta table », « Rejoue autrement ») et la faire tester par Quentin
+- [x] Démo solo : écrire la petite aventure de Cake (Mila, pâtisserie, cave, levains, Golem de Mie Brûlée, fins selon les choix) avec le set « Cake »
+- [x] Démo solo : créer le MJ automatique (raconte, pose carte, pions et musique, demande des jets et lit le résultat, propose des réponses en boutons, passe à la scène suivante)
+- [x] Démo solo : ajouter le bouton « Voir côté MJ » (carnet, secrets, choix à venir, bibliothèque) et le retour au côté joueur
+- [x] Démo solo : ajouter l'écran de fin (chemin parcouru, « Crée ta table », « Rejoue autrement »)
+- [ ] Faire tester par Quentin le MJ automatique dans la salle de démo en ligne (vote à plusieurs, égalité tranchée au Charisme, jets, dégâts, les quatre fins)
+- [ ] MJ automatique : laisser le MJ humain trancher les égalités de vote dans les tables normales (aujourd'hui le meilleur Charisme tranche)
+- [ ] MJ automatique : traduire en anglais le texte de l'aventure « La fournée maudite » (`lib/autoGm/cakeDemo.ts`)
+- [ ] MJ automatique : le proposer hors de la salle de démo (bouton dans le panneau MJ, choix de l'aventure)
 - [ ] Phase H : proposer « avec MJ » ou « MJ automatique » pour les campagnes toutes prêtes, en réutilisant le moteur de la démo
 - [x] Effacer les trois croix dessinées pour l'ancienne carte dans la salle de démo (liste `strokes` de Liveblocks), puis refiger avec `scripts/capture-demo-snapshot.mjs`
 - [x] Phase G : ajouter des pions simples de couleur (rond avec initiale, une couleur par joueur) pour les scènes tactiques, générés par le code, en plus des pions illustrés vus de face

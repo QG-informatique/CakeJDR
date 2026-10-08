@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-09 — MJ automatique scripté dans la démo
+- Aventure « La fournée maudite » écrite comme une suite de scènes (récit, plateau, vote, jet, fin) : réutilisable pour les campagnes toutes prêtes (`lib/autoGm/`)
+- Panneau du MJ automatique : vote du groupe avec bulles couleur + initiale (ou anonyme, réglage de table), vote neutre, égalité tranchée par le meilleur Charisme, jets demandés et lus tout seuls, « Côté MJ », écran de fin (`components/autogm/AutoGmPanel.tsx`)
+- Un seul joueur mène la partie (premier MJ connecté) pour que le plateau ne soit pas monté deux fois ; dégâts et soins appliqués par chacun sur sa fiche
+- Visible dans la salle de démo seulement (et en local) ; la remise à zéro repart de la carte de départ (`lib/demoRoom.ts`)
+Reste ouvert : faire tester par Quentin en ligne, arbitrage par un MJ humain dans les tables normales, texte anglais de l'aventure
+
 ## 2026-10-08 — Résumé pré-rempli dans la salle de démo
 - La remise à zéro de la démo réécrit le Résumé avec deux pages d'exemple : à quoi il sert, et une « Séance 1 » chez Mila (`lib/demoRoom.ts`)
 - Pages neuves à chaque remise à zéro, texte passé par la copie `editor` : le Résumé le verse lui-même dans Yjs à la première ouverture ; les anciens textes Yjs sont vidés pour ne pas alourdir la salle

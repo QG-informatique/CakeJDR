@@ -46,13 +46,13 @@ const DEMO_SUMMARY: { title: string; text: string }[] = [
     ].join('\n'),
   },
   {
-    title: 'Séance 1 — La pâtisserie de Mila',
+    title: 'Séance 1 — La pâtisserie de Cake',
     text: [
-      'Mila nous a accueillis dans sa pâtisserie, au petit matin. Ses levains disparaissent la nuit, et la porte de la cave est rayée de traces de croûte brûlée.',
+      "Au petit matin, Mila, l'apprentie de Cake, nous a ouvert la pâtisserie. Les levains disparaissent la nuit, et la porte de la cave est rayée de traces de croûte brûlée.",
       '',
       "On est descendus voir. Au fond de la cave, une chose faite de mie noircie s'est relevée et nous a barré le passage.",
       '',
-      "À faire la prochaine fois : retourner à la cave avec une lanterne, et demander à Mila d'où vient le plus vieux de ses levains.",
+      "À faire la prochaine fois : retourner à la cave avec une lanterne, et demander à Mila ce qu'elle fabriquait près du vieux four.",
     ].join('\n'),
   },
 ]
@@ -98,6 +98,8 @@ export async function restoreSnapshot(roomId: string, snap: DemoSnapshot) {
     root.set('music', new LiveObject(snap.music) as never)
     root.set('events', new LiveList(snap.events ?? []) as never)
     root.set('checks', new LiveMap() as never)
+    // Une partie du MJ automatique en cours repart de la carte de départ.
+    root.delete('autoGm')
     // Pages neuves à chaque remise à zéro : leur texte passe par la copie
     // `editor`, que le Résumé verse dans Yjs à la première ouverture.
     const pages = DEMO_SUMMARY.map((p) => ({ id: crypto.randomUUID(), ...p }))
