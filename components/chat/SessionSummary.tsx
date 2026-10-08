@@ -1,6 +1,7 @@
 ﻿// Résumé de la partie : des pages de texte partagées par toute la table.
-// Partagé en direct par Liveblocks ; si la connexion échoue, il reste
-// utilisable et se garde sur cet appareil.
+// Plusieurs joueurs peuvent écrire en même temps sur la même page : le texte
+// est un document Yjs que Liveblocks fusionne lettre par lettre. Si la
+// connexion échoue, il reste utilisable et se garde sur cet appareil.
 
 'use client'
 
@@ -11,6 +12,7 @@ import React, {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from 'react'
 import { useT } from '@/lib/useT'
 import { ArrowLeft, BookOpen, Download, Plus, Trash2, Upload } from 'lucide-react'
@@ -18,9 +20,11 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { useConfirm } from '@/lib/useConfirm'
 
 // ====== Liveblocks (collaboratif) ======
-import { useStorage, useMutation, useStatus } from '@liveblocks/react'
+import { useStorage, useMutation, useStatus, useRoom } from '@liveblocks/react'
 import { LiveMap, LiveObject, LiveList } from '@liveblocks/client'
 import type { LsonObject } from '@liveblocks/client'
+import { getYjsProviderForRoom, type LiveblocksYjsProvider } from '@liveblocks/yjs'
+import * as Y from 'yjs'
 
 // ====== Lexical ======
 import { LexicalComposer } from '@lexical/react/LexicalComposer'
@@ -28,12 +32,26 @@ import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin'
 import { ContentEditable } from '@lexical/react/LexicalContentEditable'
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary'
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin'
-// Note: LiveblocksPlugin/liveblocksConfig retirés intentionnellement.
-// LiveblocksPlugin gère lui-même le contenu Lexical et entre en conflit
-// avec nos plugins InitialContent/AutoSave → boucle infinie setState.
-// On utilise notre editor LiveMap pour le partage multi-pages.
+// Le LiveblocksPlugin officiel ne gère qu'un document par salle, pas une page
+// par onglet : on relie nous-mêmes chaque page à un texte Yjs (YjsPagePlugin).
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
-import { $createParagraphNode, $createTextNode, $getRoot } from 'lexical'
+import {
+  $createParagraphNode,
+  $createRangeSelection,
+  $createTextNode,
+  $getRoot,
+  $getSelection,
+  $isElementNode,
+  $isParagraphNode,
+  $isRangeSelection,
+  $isTextNode,
+  $setSelection,
+  COMMAND_PRIORITY_EDITOR,
+  REDO_COMMAND,
+  UNDO_COMMAND,
+  type LexicalNode,
+  type PointType,
+} from 'lexical'
 
 // ===================== Types =====================
 type Page = {
@@ -57,8 +75,6 @@ interface Summary extends LsonObject {
 
 /** Marque les mises à jour qui viennent du stockage, pas de la frappe. */
 const REMOTE_TAG = 'remote-sync'
-/** Délai sans frappe avant d'appliquer le texte d'un autre joueur. */
-const REMOTE_IDLE_MS = 2000
 
 /**
  * Texte de l'éditeur, une ligne par paragraphe. `getTextContent()` sépare les
@@ -120,43 +136,229 @@ function LocalInitContentPlugin({ text }: { text: string }) {
   return null
 }
 
+// ===================== Co-édition : une page = un texte Yjs =====================
+
+/** Origine des écritures faites par la frappe locale (pour l'annulation). */
+const LOCAL_ORIGIN = 'summary-local'
+/** Délai avant de recopier le texte dans `editor` (export, ancienne version). */
+const MIRROR_MS = 600
+
+const yTextOf = (doc: Y.Doc, pageId: string) => doc.getText(`summary:${pageId}`)
 /**
- * Affiche le texte écrit par les autres joueurs. Le texte n'était chargé qu'à
- * l'ouverture : on ne voyait pas ce que les autres écrivaient, et la frappe
- * suivante l'effaçait. Pendant qu'on écrit soi-même, on attend une pause.
- * Deux joueurs qui écrivent en même temps : le dernier l'emporte.
+ * Pages dont le texte vit déjà dans Yjs. Les autres n'ont que leur copie dans
+ * `editor` (pages écrites avant la co-édition, ou importées) : elle est versée
+ * dans Yjs à la première ouverture.
  */
-function RemoteSyncPlugin({ text }: { text: string }) {
-  const [editor] = useLexicalComposerContext()
-  const lastLocalEdit = useRef(0)
+const yMovedOf = (doc: Y.Doc) => doc.getMap<boolean>('summaryMoved')
 
-  useEffect(() => {
-    return editor.registerUpdateListener((update) => {
-      if (isLocalTextChange(update)) lastLocalEdit.current = Date.now()
-    })
-  }, [editor])
+/** Texte d'une page pour l'export : Yjs s'il l'a déjà, sinon l'ancienne copie. */
+function pageText(doc: Y.Doc | null, pageId: string, legacy: ReadonlyMap<string, string> | null) {
+  if (doc && yMovedOf(doc).get(pageId)) return yTextOf(doc, pageId).toString()
+  return legacy?.get(pageId) ?? ''
+}
 
-  useEffect(() => {
-    const apply = () => {
-      if (editor.getEditorState().read($readText) === text) return
-      const root = editor.getRootElement()
-      const focused = root !== null && root.contains(document.activeElement)
-      editor.update(
-        () => {
-          $writeText(text)
-          if (focused) $getRoot().selectEnd()
-        },
-        { tag: REMOTE_TAG },
-      )
+/** Place d'un point Lexical dans le texte (paragraphes séparés par « \n »). */
+function $offsetOf(point: PointType): number {
+  const node = point.getNode()
+  const blocks = $getRoot().getChildren()
+  const before = (list: LexicalNode[]) =>
+    list.reduce((n, c) => n + c.getTextContentSize(), 0)
+  const blockStart = (i: number) =>
+    blocks.slice(0, i).reduce((n, b) => n + b.getTextContentSize() + 1, 0)
+
+  if (node.is($getRoot())) {
+    return point.offset < blocks.length
+      ? blockStart(point.offset)
+      : Math.max(0, blockStart(blocks.length) - 1)
+  }
+  const top = node.getTopLevelElementOrThrow()
+  const start = blockStart(blocks.findIndex((b) => b.is(top)))
+  const inside = node.is(top) ? 0 : before(node.getPreviousSiblings())
+  if ($isTextNode(node)) return start + inside + point.offset
+  if ($isElementNode(node)) return start + inside + before(node.getChildren().slice(0, point.offset))
+  return start + inside
+}
+
+/** Pose un point Lexical à une place du texte. */
+function $setPoint(point: PointType, offset: number) {
+  const blocks = $getRoot().getChildren()
+  let rest = offset
+  for (const block of blocks) {
+    const size = block.getTextContentSize()
+    if (rest <= size && $isElementNode(block)) {
+      const kids = block.getChildren()
+      for (let i = 0; i < kids.length; i++) {
+        const kid = kids[i]!
+        const s = kid.getTextContentSize()
+        if ($isTextNode(kid) && rest <= s) return point.set(kid.getKey(), rest, 'text')
+        if (rest === 0) return point.set(block.getKey(), i, 'element')
+        rest -= s
+      }
+      return point.set(block.getKey(), kids.length, 'element')
     }
-    const wait = REMOTE_IDLE_MS - (Date.now() - lastLocalEdit.current)
-    if (wait <= 0) {
-      apply()
+    rest -= size + 1
+  }
+  const last = blocks[blocks.length - 1]
+  if (last && $isElementNode(last)) point.set(last.getKey(), last.getChildrenSize(), 'element')
+}
+
+/** Décale une place du texte selon une modification venue d'ailleurs. */
+function shiftOffset(offset: number, delta: Y.YTextEvent['delta']) {
+  let at = 0
+  let out = offset
+  for (const op of delta) {
+    if (op.retain) at += op.retain
+    else if (typeof op.insert === 'string') {
+      if (at < out) out += op.insert.length
+      at += op.insert.length
+    } else if (op.delete) {
+      if (at < out) out -= Math.min(op.delete, out - at)
+    }
+  }
+  return out
+}
+
+/**
+ * Remet le texte dans l'éditeur en ne touchant que les paragraphes changés :
+ * celui qu'on est en train d'écrire n'est pas recréé si un autre joueur écrit
+ * plus bas.
+ */
+function $applyLines(text: string) {
+  const root = $getRoot()
+  const blocks = root.getChildren()
+  const lines = text.split('\n')
+  lines.forEach((line, i) => {
+    const block = blocks[i]
+    if (block && $isParagraphNode(block)) {
+      if (block.getTextContent() === line) return
+      block.clear()
+      if (line) block.append($createTextNode(line))
       return
     }
-    const id = window.setTimeout(apply, wait)
-    return () => window.clearTimeout(id)
-  }, [editor, text])
+    const p = $createParagraphNode()
+    if (line) p.append($createTextNode(line))
+    if (block) block.replace(p)
+    else root.append(p)
+  })
+  blocks.slice(lines.length).forEach((b) => b.remove())
+}
+
+/**
+ * Relie l'éditeur d'une page à son texte Yjs.
+ * - La frappe locale est envoyée comme une petite modification (ce qui change
+ *   entre l'ancien et le nouveau texte), pas comme le texte entier : deux
+ *   joueurs qui écrivent en même temps gardent tous les deux leurs mots.
+ * - Ce qu'écrivent les autres arrive aussitôt, et le curseur reste au même
+ *   endroit du texte.
+ * - Annuler (Ctrl+Z) ne défait que ce qu'on a écrit soi-même.
+ */
+function YjsPagePlugin({
+  doc,
+  pageId,
+  legacyText,
+  onMirror,
+}: {
+  doc: Y.Doc
+  pageId: string
+  /** Copie d'avant la co-édition, versée dans Yjs si la page n'y est pas encore. */
+  legacyText: string
+  /** Recopie du texte dans `editor`, pour l'export et les anciennes versions. */
+  onMirror: (pageId: string, text: string) => void
+}) {
+  const [editor] = useLexicalComposerContext()
+  const mirrorRef = useRef(onMirror)
+  useEffect(() => {
+    mirrorRef.current = onMirror
+  }, [onMirror])
+
+  useEffect(() => {
+    const ytext = yTextOf(doc, pageId)
+    const moved = yMovedOf(doc)
+    // Deux joueurs qui ouvriraient la même ancienne page à la même seconde
+    // pourraient la verser deux fois ; c'est rare et se corrige à la main.
+    if (!moved.get(pageId)) {
+      doc.transact(() => {
+        if (ytext.length === 0 && legacyText) ytext.insert(0, legacyText)
+        moved.set(pageId, true)
+      }, LOCAL_ORIGIN)
+    }
+
+    editor.update(() => $applyLines(ytext.toString()), { tag: REMOTE_TAG, discrete: true })
+
+    const undo = new Y.UndoManager(ytext, { trackedOrigins: new Set([LOCAL_ORIGIN]), captureTimeout: 600 })
+
+    let mirrorTimer: number | undefined
+    const flushMirror = () => {
+      window.clearTimeout(mirrorTimer)
+      mirrorTimer = undefined
+      mirrorRef.current(pageId, ytext.toString())
+    }
+
+    const stopLocal = editor.registerUpdateListener((update) => {
+      if (!isLocalTextChange(update)) return
+      const next = update.editorState.read($readText)
+      const prev = ytext.toString()
+      if (next === prev) return
+      // Ce qui change : on garde le début et la fin communs.
+      let start = 0
+      while (start < prev.length && start < next.length && prev[start] === next[start]) start++
+      let end = 0
+      while (
+        end < prev.length - start &&
+        end < next.length - start &&
+        prev[prev.length - 1 - end] === next[next.length - 1 - end]
+      ) end++
+      doc.transact(() => {
+        const removed = prev.length - start - end
+        if (removed > 0) ytext.delete(start, removed)
+        const added = next.slice(start, next.length - end)
+        if (added) ytext.insert(start, added)
+      }, LOCAL_ORIGIN)
+    })
+
+    const observer = (event: Y.YTextEvent, tx: Y.Transaction) => {
+      if (tx.local) {
+        window.clearTimeout(mirrorTimer)
+        mirrorTimer = window.setTimeout(flushMirror, MIRROR_MS)
+      }
+      if (tx.origin === LOCAL_ORIGIN) return
+      const root = editor.getRootElement()
+      const focused = root !== null && root.contains(document.activeElement)
+      // `discrete` : appliqué tout de suite, pour que la frappe suivante parte
+      // bien du texte qui contient déjà les mots des autres.
+      editor.update(
+        () => {
+          const sel = $getSelection()
+          const marks =
+            focused && $isRangeSelection(sel)
+              ? [$offsetOf(sel.anchor), $offsetOf(sel.focus)].map((o) => shiftOffset(o, event.delta))
+              : null
+          $applyLines(ytext.toString())
+          if (!marks) return
+          const next = $createRangeSelection()
+          $setPoint(next.anchor, marks[0]!)
+          $setPoint(next.focus, marks[1]!)
+          $setSelection(next)
+        },
+        { tag: REMOTE_TAG, discrete: true },
+      )
+    }
+    ytext.observe(observer)
+
+    const stopUndo = editor.registerCommand(UNDO_COMMAND, () => (undo.undo(), true), COMMAND_PRIORITY_EDITOR)
+    const stopRedo = editor.registerCommand(REDO_COMMAND, () => (undo.redo(), true), COMMAND_PRIORITY_EDITOR)
+
+    return () => {
+      stopLocal()
+      stopUndo()
+      stopRedo()
+      ytext.unobserve(observer)
+      undo.destroy()
+      if (mirrorTimer !== undefined) flushMirror()
+    }
+    // La copie d'avant ne sert qu'à la première ouverture de la page.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editor, doc, pageId])
 
   return null
 }
@@ -571,6 +773,32 @@ function LiveSummary({
   const pages = summaryPlain?.acts ?? undefined
   const currentId = summaryPlain?.currentId ?? undefined
 
+  // Texte des pages : document Yjs de la salle, gardé par Liveblocks.
+  const room = useRoom()
+  // Créé après le rendu : le créer pendant réveille d'autres composants de la salle.
+  const [provider, setProvider] = useState<LiveblocksYjsProvider | null>(null)
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- branché une fois la salle prête
+    setProvider(getYjsProviderForRoom(room))
+  }, [room])
+  const yjsSynced = useSyncExternalStore(
+    useCallback(
+      (cb: () => void) => {
+        provider?.on('sync', cb)
+        return () => provider?.off('sync', cb)
+      },
+      [provider],
+    ),
+    () => provider?.synced ?? false,
+    () => false,
+  )
+  const ydoc = provider && yjsSynced ? provider.getYDoc() : null
+
+  // Chacun lit la page de son choix : quand un joueur change d'onglet, les
+  // autres restent sur la leur. La page partagée (`currentId`) sert seulement
+  // de page d'ouverture, la dernière créée ou ouverte.
+  const [myPageId, setMyPageId] = useState<string | null>(null)
+
   const [editorKey, setEditorKey] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -693,7 +921,19 @@ function LiveSummary({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pages, currentId, status])
 
-  const current = pages?.find((p) => p.id === currentId)
+  const current =
+    pages?.find((p) => p.id === myPageId) ?? pages?.find((p) => p.id === currentId)
+  // La page d'ouverture devient la sienne : si un autre joueur crée une page,
+  // on n'y est pas emmené en pleine phrase.
+  if (current && myPageId !== current.id && !pages?.some((p) => p.id === myPageId)) {
+    setMyPageId(current.id)
+  }
+
+  const openPage = (id: string) => {
+    setMyPageId(id)
+    setCurrentId(id)
+    setEditorKey((k) => k + 1)
+  }
 
   // S'assurer qu'on a un slot texte pour la page courante
   useEffect(() => {
@@ -709,8 +949,7 @@ function LiveSummary({
     const newPage = { id: crypto.randomUUID(), title }
     addPage(newPage)
     updateEditor({ id: newPage.id, content: '' })
-    setCurrentId(newPage.id)
-    setEditorKey((k) => k + 1)
+    openPage(newPage.id)
   }
 
   const handleTitleChange = (title: string) => {
@@ -724,9 +963,19 @@ function LiveSummary({
     if (!ok) return
     const rest = pages.filter((p) => p.id !== current.id)
     removePage(current.id)
-    setCurrentId(rest[0]?.id)
+    // Le texte de la page supprimée ne sert plus à personne.
+    if (ydoc) {
+      const ytext = yTextOf(ydoc, current.id)
+      ydoc.transact(() => {
+        ytext.delete(0, ytext.length)
+        yMovedOf(ydoc).delete(current.id)
+      })
+    }
+    const next = rest[0]?.id
+    setMyPageId(next ?? null)
+    setCurrentId(next)
     setEditorKey((k) => k + 1)
-  }, [status, pages, current, confirm, t, removePage, setCurrentId])
+  }, [status, pages, current, confirm, t, removePage, setCurrentId, ydoc])
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (status !== 'connected') return
@@ -742,10 +991,7 @@ function LiveSummary({
           addPage(page)
           updateEditor({ id: page.id, content })
         })
-        if (newPages.length > 0) {
-          setCurrentId(newPages[0]!.id)
-          setEditorKey((k) => k + 1)
-        }
+        if (newPages.length > 0) openPage(newPages[0]!.id)
         if (fileInputRef.current) fileInputRef.current.value = ''
       })
       .catch((err) => {
@@ -753,21 +999,16 @@ function LiveSummary({
       })
   }
 
-  // On attend que editorMap soit chargé ET que le slot de la page existe
-  // avant de monter l'éditeur. Ça garantit que LocalInitContentPlugin reçoit
-  // le bon texte initial dès le premier rendu (pas de loop isReady/autosave).
-  const editorReady = Boolean(current && editorMap?.has(current.id))
-  const initialText = (current && editorMap?.get(current.id)) || ''
+  // On attend le document Yjs et la liste des textes (`editor`) avant de
+  // monter l'éditeur : il démarre directement avec le bon texte.
+  const editorReady = Boolean(current && ydoc && editorMap)
+  const legacyText = (current && editorMap?.get(current.id)) || ''
 
-  // Callback stable pour AutoSavePlugin (évite de re-register le listener à chaque rendu)
-  const handleAutoSave = useCallback((txt: string) => {
-    if (!current || status !== 'connected') return
-    updateEditor({ id: current.id, content: txt })
-  }, [current, status, updateEditor])
+  const handleMirror = useCallback(
+    (id: string, txt: string) => updateEditor({ id, content: txt }),
+    [updateEditor],
+  )
 
-  // Config Lexical simple — pas de liveblocksConfig car LiveblocksPlugin crée
-  // sa propre boucle de sync qui conflicte avec AutoSavePlugin + notre editor LiveMap.
-  // Le partage se fait via l'editor LiveMap (contenu mis à jour à chaque frappe).
   const editorConfig = {
     namespace: `session-summary-live-${current ? current.id : 'global'}`,
     nodes: [] as [],
@@ -792,25 +1033,24 @@ function LiveSummary({
         current={current}
         onSwitch={(id) => {
           if (status !== 'connected') return
-          setCurrentId(id)
-          setEditorKey((k) => k + 1)
+          openPage(id)
         }}
         onNewPage={() => createPage(t('newPage'))}
         onTitle={handleTitleChange}
         onDelete={handleDelete}
         onImport={handleImport}
-        onExport={() => pages && downloadExport(pages, (id) => editorMap?.get(id) || '')}
+        onExport={() => pages && downloadExport(pages, (id) => pageText(ydoc, id, editorMap))}
         fileInputRef={fileInputRef}
       >
-        {current && editorReady ? (
-          <LexicalComposer key={editorKey} initialConfig={editorConfig}>
-            <HistoryPlugin />
+        {current && ydoc && editorReady ? (
+          <LexicalComposer key={`${editorKey}-${current.id}`} initialConfig={editorConfig}>
             <PageText />
-            {/* LocalInitContentPlugin : s'exécute UNE FOIS au montage (deps=[]),
-                pas de dépendance à useIsEditorReady → pas de boucle */}
-            <LocalInitContentPlugin text={initialText} />
-            <RemoteSyncPlugin text={initialText} />
-            <AutoSavePlugin onChange={handleAutoSave} />
+            <YjsPagePlugin
+              doc={ydoc}
+              pageId={current.id}
+              legacyText={legacyText}
+              onMirror={handleMirror}
+            />
           </LexicalComposer>
         ) : (
           <div className="flex h-full items-center justify-center gap-2 p-6 text-sm text-ink/40">
