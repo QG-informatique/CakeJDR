@@ -7,7 +7,7 @@ import CharacterSheet, { defaultPerso } from '@/components/sheet/CharacterSheet'
 import DiceRoller from '@/components/dice/DiceRoller'
 import ChatBox from '@/components/chat/ChatBox'
 import DiceBoxTable, {
-  THROW_FADE_MS, THROW_HOLD_MS, type DiceBoxHandle, type ThrowResult, type ThrowSent,
+  RELAUNCH_MS, THROW_FADE_MS, THROW_HOLD_MS, type DiceBoxHandle, type ThrowResult, type ThrowSent,
 } from '@/components/dice/DiceBoxTable'
 import CheckPrompt from '@/components/checks/CheckPrompt'
 import CheckBanner from '@/components/checks/CheckBanner'
@@ -132,8 +132,8 @@ export default function HomePageInner() {
   // Enregistrement de la fiche sur le compte, regroupe sur deux secondes.
   const accountSaveTimer = useRef<number | null>(null)
   const pendingAccountSave = useRef<Character | null>(null)
-  // total durée d'indisponibilité du bouton (animation + hold + cooldown)
-  const ROLL_TOTAL_MS = DICE_REVEAL_DELAY_MS + THROW_HOLD_MS + THROW_FADE_MS + 1000
+  // Durée d'indisponibilité du bouton : le roulement de mes dés, puis un court instant.
+  const [rollMs, setRollMs] = useState(DICE_REVEAL_DELAY_MS + RELAUNCH_MS)
 
   const broadcast = useBroadcastEvent()
   const [, updateMyPresence] = useMyPresence()
@@ -569,7 +569,10 @@ export default function HomePageInner() {
   }
 
   // Les dés lancés partent pour la demande du MJ s'il y en a une.
-  const throwDice = (sent: ThrowSent) => (pending ? rollCheck(pending.id, sent) : rollDice(sent))
+  const throwDice = (sent: ThrowSent) => {
+    if (!diceDisabled) setRollMs(sent.ms + RELAUNCH_MS)
+    return pending ? rollCheck(pending.id, sent) : rollDice(sent)
+  }
   const pendingDice = pending
     ? pending.type === 'rolls' ? Array.from({ length: pending.count }, () => pending.dice) : [20]
     : null
@@ -591,10 +594,8 @@ export default function HomePageInner() {
     myThrowRef.current = null
     setMyThrow(null)
     if (mine.levelUp && viewedConnectionId === null) handleUpdatePerso(applyLevelUp(perso, mine.levelUp), true)
-    window.setTimeout(() => {
-      setCooldown(false)
-      setDiceDisabled(false)
-    }, 1000)
+    setCooldown(false)
+    setDiceDisabled(false)
   }
 
   return (
@@ -708,7 +709,7 @@ export default function HomePageInner() {
               onRoll={() => tableDiceRef.current?.throwNow()}
               disabled={diceDisabled}
               cooldown={cooldown}
-              cooldownDuration={ROLL_TOTAL_MS}
+              cooldownDuration={rollMs}
               leading={<MusicPlayer />}
             >
               <LiveAvatarStack />

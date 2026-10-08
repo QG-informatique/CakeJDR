@@ -148,7 +148,9 @@
 - [x] Ajouter une version cube simulé D20/D6/D4/D100 avec orientation finale selon le résultat — sans objet : remplacé par Dice Box
 - [x] Remplacer les dés de la table par Dice Box : tous les types de dés, plusieurs et mélangés par lancer, départ d'un bord au hasard, vus par toute la table
 - [ ] Décider s'il faut un contrôle anti-triche des lancers : la face vient du navigateur du lanceur, le serveur ne fait que la vérifier et la signer
-- [ ] Faire passer les dés au-dessus du portrait en bas à droite du plateau (ils roulent dessous)
+- [x] Faire passer les dés au-dessus du portrait en bas à droite du plateau (ils roulent dessous) — déjà le cas avec Dice Box : la couche des dés est au-dessus des images du plateau
+- [x] Rendre le bouton « Lancer » 0,4 s après l'arrêt de mes dés au lieu de ~4 s ; un nouveau lancer efface les dés encore posés
+- [ ] Vérifier en ligne avec un second joueur que deux lancers rapprochés du même joueur se rejouent bien chez l'autre, l'un après l'autre
 
 ## Musique YouTube
 - [ ] Synchroniser proprement le `playing` post-initialisation sans reprise automatique au premier chargement
