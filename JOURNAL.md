@@ -1,5 +1,9 @@
 # Journal
 
+## 2026-10-08 — Montée de niveau du MJ : gains gardés
+- Si le MJ ouvre la fiche d'un joueur pendant ses dés de montée de niveau, les gains sont mis de côté et appliqués à son retour sur sa fiche (`components/app/HomePageInner.tsx`)
+Reste ouvert : à vérifier avec un second compte joueur (impossible seul en local).
+
 ## 2026-10-08 — Retours de Quentin appliqués (hors ligne)
 - Menus flottants (dés, musique, jets demandés, présence) sur un fond plus plein : classe `ui-pop` (`app/globals.css`)
 - « Règles du narrateur » devient « Règle de base (comme D&D) » (`lib/modifiers.ts`, `lib/translations.ts`)

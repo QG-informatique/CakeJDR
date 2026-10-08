@@ -101,6 +101,8 @@ export default function HomePageInner() {
   // `levelUp` : gains d'une montée de niveau, ajoutés à la fiche à ce moment-là.
   const [myThrow, setMyThrow] = useState<{ id: string; levelUp?: number[] } | null>(null)
   const myThrowRef = useRef<{ id: string; levelUp?: number[] } | null>(null)
+  // Gains d'une montée de niveau arrivés pendant que le MJ regardait une autre fiche.
+  const [levelUpLater, setLevelUpLater] = useState<number[] | null>(null)
   const tableDiceRef = useRef<DiceBoxHandle>(null)
   // Première demande du MJ qui m'attend : les dés lancés sont alors les siens.
   const checks = useStorage((root) => root.checks)
@@ -500,6 +502,15 @@ export default function HomePageInner() {
     }
   }, [viewedConnectionId, viewedStillHere, viewedCharacter, handleGMBackToOwn])
 
+  // Retour du MJ sur sa fiche : `perso` est de nouveau la sienne.
+  useEffect(() => {
+    if (!levelUpLater || viewedConnectionId !== null) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- gains mis de côté pendant qu'une autre fiche était ouverte
+    setLevelUpLater(null)
+    handleUpdatePerso(applyLevelUp(perso, levelUpLater), true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- seulement au retour sur sa fiche
+  }, [levelUpLater, viewedConnectionId])
+
   if (!user) {
     // Profil pas encore resolu : useProfile renvoie un profil « Visiteur »
     // des qu'il a tranche, donc cet ecran ne s'affiche qu'a l'initialisation.
@@ -580,7 +591,8 @@ export default function HomePageInner() {
 
   // Les gains arrivent sur la fiche une fois les dés révélés à toute la table.
   // Pendant que le MJ consulte une autre fiche, sa montée de niveau attend
-  // (`levelUpBlocked`) : la fiche affichée est donc bien la sienne.
+  // (`levelUpBlocked`) : la fiche affichée est donc bien la sienne. S'il en
+  // ouvre une pendant que ses dés roulent, les gains attendent son retour.
   // Si mes dés n'apparaissent jamais sur la table, le bouton revient quand même.
   const startThrow = (roll: { id: string; levelUp?: number[] }) => {
     myThrowRef.current = roll
@@ -593,7 +605,10 @@ export default function HomePageInner() {
     if (mine?.id !== id) return
     myThrowRef.current = null
     setMyThrow(null)
-    if (mine.levelUp && viewedConnectionId === null) handleUpdatePerso(applyLevelUp(perso, mine.levelUp), true)
+    if (mine.levelUp) {
+      if (viewedConnectionId === null) handleUpdatePerso(applyLevelUp(perso, mine.levelUp), true)
+      else setLevelUpLater(mine.levelUp)
+    }
     setCooldown(false)
     setDiceDisabled(false)
   }
