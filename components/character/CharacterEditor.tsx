@@ -108,7 +108,17 @@ function EditorDialog({ character, isNew = false, onSave, onClose }: Props) {
     onClose()
   }
 
-  const save = () => onSave(normalizeCharacter(draft))
+  // Seuls les champs modifiés ici remplacent la fiche du moment : un changement
+  // arrivé pendant l'édition (le MJ qui retire des PV) n'est pas écrasé.
+  const save = () => {
+    const latest = normalizeCharacter(character)
+    const merged = { ...latest } as Record<string, unknown>
+    const before = initial as Record<string, unknown>
+    for (const [key, value] of Object.entries(draft)) {
+      if (JSON.stringify(value) !== JSON.stringify(before[key])) merged[key] = value
+    }
+    onSave(normalizeCharacter(merged as Character))
+  }
 
   // Échap ferme l'écran, en demandant d'abord si des modifications seraient perdues.
   const requestCloseRef = useRef(requestClose)

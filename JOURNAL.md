@@ -1,5 +1,10 @@
 # Journal
 
+## 2026-10-08 — Fiche : la modification du MJ n'est plus écrasée
+- À l'enregistrement de l'écran « Modifier la fiche », seuls les champs changés par le joueur remplacent la fiche du moment ; un changement du MJ arrivé entre-temps reste (`components/character/CharacterEditor.tsx`)
+- Enregistrement normal revérifié dans salletest (poids changé puis remis à 41 kg)
+Reste ouvert : à voir avec un second compte ; il ne reste en débug que la vraie co-édition du Résumé.
+
 ## 2026-10-08 — Musique au même endroit pour tout le monde
 - La position du morceau est partagée (`pos` relevée à l'heure `at`, `liveblocks.config.ts`) : un joueur qui arrive ou relance tombe là où en est la table, la reprise après pause repart du bon endroit, le curseur déplacé recale les autres (`components/music/MusicPlayer.tsx`)
 - En local, le script YouTube est chargé en http : autorisé dans la CSP de développement seulement (`next.config.ts`)
