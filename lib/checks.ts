@@ -2,8 +2,9 @@
  * Tests de caractéristique demandés par le MJ.
  *
  * Le MJ choisit le joueur, la caractéristique, la difficulté, et s'il la
- * montre. Le joueur lance un D20 ; le serveur tire le dé, ajoute le
- * modificateur, et le test est réussi si le total atteint la difficulté.
+ * montre. Le joueur lance un D20 sur la table ; le serveur reçoit la face
+ * obtenue, ajoute le modificateur, et le test est réussi si le total atteint
+ * la difficulté.
  */
 
 /** Dé lancé pour un test. */

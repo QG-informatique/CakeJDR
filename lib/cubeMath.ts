@@ -1,7 +1,6 @@
 /**
- * Calcul d'orientation d'un dé cubique, partagé par le dé de la page d'accueil
- * (`components/ui/HeroDie.tsx`) et les dés lancés sur la table
- * (`components/dice/TableDice.tsx`).
+ * Calcul d'orientation d'un dé cubique, pour le dé de la page d'accueil
+ * (`components/ui/HeroDie.tsx`).
  *
  * L'orientation est une matrice 3×3. Chaque bascule par-dessus une arête est
  * un quart de tour dans le repère de la table, appliqué à gauche de la

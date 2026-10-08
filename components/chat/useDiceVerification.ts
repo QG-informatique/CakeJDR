@@ -6,7 +6,7 @@ import type { SessionEvent } from '@/components/app/hooks/useEventLog'
 /**
  * Vérifie la signature du serveur sur chaque lancer de dé du chat.
  *
- * - `verified` : tiré par le serveur ;
+ * - `verified` : enregistré et signé par le serveur ;
  * - `unverified` : écrit par un navigateur (ancien lancer, ou tentative de triche) ;
  * - absent : vérification impossible ici (navigateur trop ancien pour Ed25519,
  *   clé injoignable) — on n'affiche alors rien plutôt qu'un faux soupçon.
@@ -45,6 +45,7 @@ async function check(key: CryptoKey, roomId: string, ev: SessionEvent): Promise<
       ts: ev.ts,
       ...(ev.check ? { check: ev.check } : {}),
       ...(ev.rolls ? { rolls: ev.rolls } : {}),
+      ...(ev.pool ? { pool: ev.pool } : {}),
     })
     const ok = await crypto.subtle.verify(
       { name: 'Ed25519' },
@@ -79,7 +80,7 @@ export function useDiceVerification(roomId: string, events: SessionEvent[]) {
       if (!key || cancelled) return
       const next: Record<string, DiceCheck> = {}
       for (const ev of dice) {
-        const cacheKey = `${roomId}:${ev.id}:${ev.sig ?? ''}:${ev.player}:${ev.dice}:${ev.result}:${ev.ts}:${JSON.stringify(ev.check ?? null)}:${JSON.stringify(ev.rolls ?? null)}`
+        const cacheKey = `${roomId}:${ev.id}:${ev.sig ?? ''}:${ev.player}:${ev.dice}:${ev.result}:${ev.ts}:${JSON.stringify(ev.check ?? null)}:${JSON.stringify(ev.rolls ?? null)}:${JSON.stringify(ev.pool ?? null)}`
         let result = known.get(cacheKey)
         if (!result) {
           result = await check(key, roomId, ev)

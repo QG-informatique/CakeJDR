@@ -1,5 +1,13 @@
 # Journal
 
+## 2026-10-08 — Dés de la table remplacés par Dice Box, la physique décide
+- Revirement sur le dé maison pris en main et le tirage d'avance du serveur : la table passe à Dice Box (`@3d-dice/dice-box-threejs`, `components/dice/DiceBoxTable.tsx`). Les dés partent d'un bord au hasard avec une force au hasard, sans main ; `lib/diceDraw.ts`, `lib/diceThrow.ts` et `TableDice.tsx` sont supprimés.
+- Le menu du bas propose tous les dés (D4 à D100), plusieurs et mélangés par lancer, retenus dans le navigateur (`lib/dicePool.ts`, `components/dice/DiceRoller.tsx`) ; le chat montre chaque dé et le total (`components/chat/ChatBox.tsx`).
+- Choix de Quentin, « la physique décide » : la face sur laquelle les dés se posent chez le lanceur fait le résultat ; le serveur la vérifie et la signe, les autres rejouent le même lancer avec les mêmes faces (`app/api/dice/route.ts`, `app/api/check/route.ts`). Risque de triche accepté.
+- Corrigé : l'animation de Dice Box recalculait la physique en direct et, quand la page saccade, posait parfois les dés sur une autre face que celle envoyée. Le roulement calculé est maintenant rejoué image par image, sons compris.
+- Testé dans salletest : D20 seul, 5 dés mélangés (faces = chat), lanceur en arrière-plan et rejeu dans un second onglet identique.
+Reste ouvert : téléphone, anti-triche éventuel, info-bulle d'origine des modificateurs.
+
 ## 2026-10-07 — Dé à vraie physique et résultat connu dès la prise en main
 - Le dé ne tournait que sur un axe : c'était ma simulation maison, pas le tirage serveur. Remplacée par un vrai moteur physique, cannon-es (celui des dépôts de dés 3D) : le cube culbute dans tous les sens, rebondit sur le tapis, les bords et les autres dés, et finit toujours à plat (`lib/diceThrow.ts`, 1 200 lancers simulés sans dé coincé).
 - Le résultat reste tiré par le serveur (anti-triche). Nouveau : il est tiré dès qu'on attrape le dé, scellé dans les métadonnées de la table, et repris au lâcher ; on ne peut ni le lire d'avance ni l'effacer pour relancer (`lib/diceDraw.ts`, `peek` dans `app/api/dice/route.ts` et `app/api/check/route.ts`).

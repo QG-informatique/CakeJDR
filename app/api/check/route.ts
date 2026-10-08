@@ -9,9 +9,7 @@ import { syncCurrentUser } from '@/lib/db/users'
 import { resolveRoomAccess } from '@/lib/db/roomAccess'
 import { signDiceRoll } from '@/lib/diceSigning'
 import { sealCheck, unsealCheck, type SealedCheck, type SealedRequest, type SealedRolls } from '@/lib/checkSeal'
-import { DICE_REVEAL_DELAY_MS, DICE_TYPES, type SignedDiceRoll } from '@/lib/dicePayload'
-import { parseThrow, revealDelayMs } from '@/lib/diceThrow'
-import { checkDrawKey, drawFaces, dropDraw, readDraw, saveDraw } from '@/lib/diceDraw'
+import { DICE_TYPES, parseDiceThrow, revealAt, type SignedDiceRoll } from '@/lib/dicePayload'
 import {
   CHECK_DC_MAX,
   CHECK_DC_MIN,
@@ -34,10 +32,10 @@ import {
  *   (`type: 'check'`, par défaut) ou plusieurs dés (`type: 'rolls'`, dont la
  *   montée de niveau) ;
  * - `cancel` (MJ) : la retire ;
- * - `peek` (le joueur visé, quand il attrape le dé) : le résultat d'avance,
- *   pour l'inscrire sur le dé dès le lâcher (`lib/diceDraw.ts`) ;
- * - `roll` (le joueur visé) : le serveur tire les dés, calcule la réussite
- *   d'un test, et inscrit le résultat signé dans l'historique.
+ * - `roll` (le joueur visé) : ses dés ont roulé dans son navigateur, qui
+ *   envoie les faces sur lesquelles ils se sont posés ; le serveur les
+ *   vérifie, calcule la réussite d'un test, et inscrit le résultat signé
+ *   dans l'historique.
  */
 const LIMIT = 30
 const WINDOW_MS = 60 * 1000
@@ -182,7 +180,6 @@ export async function POST(req: NextRequest) {
       console.error('check: annulation impossible', roomId, e)
       return fail('not saved', 502)
     }
-    await dropDraw(liveblocks, roomId, checkDrawKey(id))
     return NextResponse.json({ ok: true })
   }
 
@@ -191,35 +188,21 @@ export async function POST(req: NextRequest) {
   // vérifier, on s'en tient donc à l'accès à la table.
   const isTarget = (check: SealedRequest) =>
     account ? check.targetId === account.id : check.targetId.startsWith('guest_')
-  const diceOf = (check: SealedRequest) =>
-    check.type === 'rolls' ? { dice: check.dice, count: check.count } : { dice: CHECK_DICE, count: 1 }
-  const slot = checkDrawKey(id)
-
-  if (action === 'peek') {
-    const storage = (await liveblocks.getStorageDocument(roomId, 'json').catch(() => null)) as
-      | { checks?: Record<string, { seal?: unknown } | undefined> }
-      | null
-    const entry = storage?.checks?.[id]
-    const check = typeof entry?.seal === 'string' ? unsealCheck(roomId, entry.seal) : null
-    if (!check || check.id !== id) return fail('no such check', 409)
-    if (!isTarget(check)) return fail('not your check', 403)
-    const { dice, count } = diceOf(check)
-    const draw = await readDraw(liveblocks, roomId, slot, count)
-    if (!draw.stored) {
-      try {
-        await saveDraw(liveblocks, roomId, slot, draw)
-      } catch (e) {
-        console.error('check: tirage non rangé', roomId, e)
-        return NextResponse.json({ ok: true, results: null })
-      }
-    }
-    return NextResponse.json({ ok: true, results: drawFaces(draw.values, dice, count) })
+  // Les faces posées doivent exister sur les dés demandés.
+  const fits = (check: SealedRequest, results: unknown): results is number[] => {
+    const dice = check.type === 'rolls' ? check.dice : CHECK_DICE
+    const count = check.type === 'rolls' ? check.count : 1
+    return (
+      Array.isArray(results) &&
+      results.length === count &&
+      results.every((v) => isInt(v, 1, dice))
+    )
   }
 
   if (action !== 'roll') return fail('bad action', 400)
-  const gesture = parseThrow(body.throw)
-  // Le tirage reçu d'avance par le joueur, s'il l'a demandé.
-  const draw = await readDraw(liveblocks, roomId, slot, ROLLS_MAX)
+  const gesture = parseDiceThrow(body.throw)
+  const sent = body.results
+  if (!Array.isArray(sent) || sent.length < 1 || sent.length > ROLLS_MAX) return fail('bad results', 400)
 
   // Écrits dans le rappel de `mutateStorage` : on les déclare ainsi pour que
   // TypeScript ne les croie pas toujours nuls après l'appel.
@@ -244,15 +227,17 @@ export async function POST(req: NextRequest) {
         error = ['not your check', 403]
         return
       }
+      if (!fits(check, sent)) {
+        error = ['bad results', 400]
+        return
+      }
       map.delete(id)
 
-      // Le geste fixe la durée du roulement : le résultat paraît quand les dés se posent.
-      const count = check.type === 'rolls' ? check.count : 1
-      const delay = gesture ? revealDelayMs(gesture, count) : DICE_REVEAL_DELAY_MS
-      const base = { id: randomUUID(), player: check.targetName, ts: Date.now() + delay }
+      // Le résultat paraît quand les dés se posent chez le lanceur.
+      const base = { id: randomUUID(), player: check.targetName, ts: revealAt(body.ms) }
       let unsigned: Omit<SignedDiceRoll, 'sig'>
       if (check.type === 'rolls') {
-        const results = drawFaces(draw.values, check.dice, check.count)
+        const results = sent
         unsigned = {
           ...base,
           dice: check.dice,
@@ -264,7 +249,7 @@ export async function POST(req: NextRequest) {
           },
         }
       } else {
-        const result = drawFaces(draw.values, CHECK_DICE, 1)[0] ?? 1
+        const result = sent[0] ?? 1
         const total = result + check.mod
         unsigned = {
           ...base,
@@ -297,6 +282,5 @@ export async function POST(req: NextRequest) {
   }
   if (error) return fail(error[0], error[1])
   if (!roll) return fail('roll not saved', 502)
-  if (draw.metadata[slot] !== undefined) await dropDraw(liveblocks, roomId, slot)
   return NextResponse.json({ ok: true, roll })
 }
