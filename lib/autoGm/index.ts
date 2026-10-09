@@ -6,12 +6,15 @@
  * Liveblocks, pour rester lisible et vérifiable.
  */
 import { CAKE_DEMO } from './cakeDemo'
-import type { Adventure, Scene, SceneOption } from './types'
+import { DRAGON_CAMPAIGN } from './dragonCampaign'
+import type { Adventure, RandomOutcome, Scene, SceneOption, SceneStep } from './types'
 
 export type { Adventure, Scene, SceneOption } from './types'
+export { estimateDuration, formatMinutes } from './duration'
 
 export const ADVENTURES: Record<string, Adventure> = {
   [CAKE_DEMO.id]: CAKE_DEMO,
+  [DRAGON_CAMPAIGN.id]: DRAGON_CAMPAIGN,
 }
 
 /** Aventure lancée dans la salle de démonstration. */
@@ -47,6 +50,26 @@ export type Voter = {
 export function availableOptions(scene: Scene, flags: readonly string[]): SceneOption[] {
   if (scene.step.kind !== 'vote') return []
   return scene.step.options.filter((o) => !o.needs || flags.includes(o.needs))
+}
+
+type RandomStep = Extract<SceneStep, { kind: 'random' }>
+
+/** Suites possibles d'un tirage, selon les indices déjà gagnés. */
+export function drawable(step: RandomStep, flags: readonly string[]): RandomOutcome[] {
+  const open = step.outcomes.filter((o) => (!o.needs || flags.includes(o.needs)) && (!o.unless || !flags.includes(o.unless)))
+  return open.length > 0 ? open : step.outcomes
+}
+
+/** Tire la scène suivante, chaque suite pesant son poids. */
+export function draw(step: RandomStep, flags: readonly string[], roll: number = Math.random()): string {
+  const open = drawable(step, flags)
+  const total = open.reduce((sum, o) => sum + (o.weight ?? 1), 0)
+  let left = roll * total
+  for (const o of open) {
+    left -= o.weight ?? 1
+    if (left < 0) return o.next
+  }
+  return open[open.length - 1]!.next
 }
 
 /** Celui qui a le meilleur score dans une caractéristique ; à égalité, le premier arrivé. */
