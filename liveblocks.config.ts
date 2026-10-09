@@ -4,7 +4,7 @@ import type { RoomSettings } from './lib/roomSettings'
 import type { LiveMap, LiveObject, LiveList } from '@liveblocks/client'
 import type { Character } from '@/types/character'
 import type { CheckOutcome, GmRequest, RollsOutcome } from '@/lib/checks'
-import type { AutoGmCheck, AutoGmTiebreak } from '@/lib/autoGm/types'
+import type { AutoGmCheck, AutoGmMode, AutoGmTiebreak } from '@/lib/autoGm/types'
 
 // Canvas images stored in Liveblocks. Keep in sync with components/canvas/ImageItem.tsx
 // but defined here to satisfy Liveblocks Lson constraints.
@@ -127,6 +127,8 @@ declare global {
         /** Tiré à chaque lancement : distingue deux parties de la même aventure. */
         run: string
         adventure: string
+        /** Absent : MJ automatique (parties lancées avant le mode « gm »). */
+        mode?: AutoGmMode
         scene: string
         visit: number
         setup: number

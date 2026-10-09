@@ -84,7 +84,13 @@ export type Adventure = {
   scenes: Record<string, Scene>
 }
 
-/** Égalité au vote : le joueur au meilleur Charisme choisit parmi ces options. */
+/**
+ * Qui mène l'aventure : le MJ automatique seul, ou le MJ de la table, qui
+ * laisse les joueurs voter et tranche lui-même les égalités.
+ */
+export type AutoGmMode = 'auto' | 'gm'
+
+/** Égalité au vote : le MJ (mode « gm »), sinon le joueur au meilleur Charisme, choisit parmi ces options. */
 export type AutoGmTiebreak = { userId: string; name: string; options: string[] }
 
 /** Jet demandé par le MJ automatique pour la scène en cours (`/api/check`). */

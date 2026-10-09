@@ -188,9 +188,10 @@
 - [x] Démo solo : ajouter le bouton « Voir côté MJ » (carnet, secrets, choix à venir, bibliothèque) et le retour au côté joueur
 - [x] Démo solo : ajouter l'écran de fin (chemin parcouru, « Crée ta table », « Rejoue autrement »)
 - [ ] Faire tester par Quentin le MJ automatique dans la salle de démo en ligne (vote à plusieurs, égalité tranchée au Charisme, jets, dégâts, les quatre fins)
-- [ ] MJ automatique : laisser le MJ humain trancher les égalités de vote dans les tables normales (aujourd'hui le meilleur Charisme tranche)
+- [x] MJ automatique : laisser le MJ humain trancher les égalités de vote dans les tables normales — mode « Je mène » lancé depuis le panneau du MJ
+- [ ] Tester le mode « Je mène » avec deux comptes joueurs et un MJ : égalité tranchée par le MJ, le MJ ne vote pas et ne lance pas les jets du groupe
 - [ ] MJ automatique : traduire en anglais le texte de l'aventure « La fournée maudite » (`lib/autoGm/cakeDemo.ts`)
-- [ ] MJ automatique : le proposer hors de la salle de démo (bouton dans le panneau MJ, choix de l'aventure)
+- [x] MJ automatique : le proposer hors de la salle de démo (bouton dans le panneau MJ, choix de l'aventure)
 - [ ] Phase H : proposer « avec MJ » ou « MJ automatique » pour les campagnes toutes prêtes, en réutilisant le moteur de la démo
 - [ ] Campagne automatique complète : écrire une campagne jouable sans MJ avec le moteur de la démo (`lib/autoGm/`), plusieurs branches et tirages au hasard pour qu'elle ne se joue jamais deux fois pareil
 - [ ] Campagne automatique complète : faire toutes ses images (cartes, PNJ, rencontres) et demander à Quentin l'accord pour les envoyer sur Cloudinary
