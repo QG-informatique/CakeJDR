@@ -19,6 +19,7 @@ import {
 import { statMod } from '@/lib/modifiers'
 import { DICE_TYPES } from '@/lib/dicePayload'
 import { postCheck } from '@/components/checks/postCheck'
+import AdventureLauncher from '@/components/autogm/AdventureLauncher'
 import { useGameSystem, useRoomSettings, type DrawPermission, type SheetEditMode } from '@/lib/roomSettings'
 import { GAME_SYSTEMS, GAME_SYSTEM_IDS, type GameSystem, type GameSystemId } from '@/lib/gameSystems'
 import { type Character, normalizeCharacter } from '@/types/character'
@@ -213,6 +214,8 @@ export default function GMPanel({ viewingConnectionId, onOpenSheet, onBackToOwn,
         </select>
         <p className="text-xs text-ink/55">{t('gmSystemHint')}</p>
       </section>
+
+      <AdventureLauncher />
 
       <section className="flex flex-col gap-1.5">
         <h3 className="ui-label !text-[10px]">{t('gmVotes')}</h3>

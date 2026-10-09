@@ -68,9 +68,11 @@ export default function HomePageInner() {
   const isGM = self?.info?.role === 'gm'
   const { settings } = useRoomSettings()
   const sheetEditable = canEditSheet(settings, isGM)
-  // MJ automatique : dans la salle de démo pour l'instant, partout en développement.
+  // Aventure toute prête : proposée d'office dans la salle de démo (et partout
+  // en développement), ailleurs dès que le MJ en lance une depuis son panneau.
   const isDemoRoom = useIsDemoRoom()
-  const autoGmEnabled = isDemoRoom || process.env.NODE_ENV === 'development'
+  const adventureRunning = useStorage((root) => !!root.autoGm)
+  const autoGmEnabled = isDemoRoom || adventureRunning || process.env.NODE_ENV === 'development'
   const [gmPanelOpen, setGmPanelOpen] = useState(false)
   const [perso, setPerso] = useState<Character>(() =>
     normalizeCharacter(defaultPerso),

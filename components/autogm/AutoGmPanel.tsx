@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useMutation, useOthers, useSelf, useStorage } from '@liveblocks/react'
-import { LiveMap, LiveObject } from '@liveblocks/client'
+import { LiveMap } from '@liveblocks/client'
 import { Bot, Check, ChevronUp, Eye, EyeOff, Target, X } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import { useRoomSettings } from '@/lib/roomSettings'
@@ -14,6 +14,7 @@ import { libraryUrl } from '@/lib/library'
 import { useShowImage } from '@/components/canvas/ShownImage'
 import { postCheck } from '@/components/checks/postCheck'
 import { getTextColor } from '@/components/chat/LiveAvatarStack'
+import { useStartAdventure } from './useStartAdventure'
 import type { Character } from '@/types/character'
 import {
   ADVENTURES,
@@ -72,6 +73,10 @@ function Bubble({ voter, size = 20 }: { voter: Voter; size?: number }) {
  * MJ automatique : raconte une aventure écrite d'avance (`lib/autoGm`),
  * installe le plateau, fait voter le groupe et demande les jets.
  *
+ * En mode « gm », le MJ de la table mène : il ne vote pas, ne lance pas les
+ * jets du groupe et tranche les égalités. S'il part, on revient à la règle du
+ * meilleur Charisme.
+ *
  * Tout le monde voit le même panneau. Un seul navigateur, le « meneur »,
  * fait avancer la partie : le premier MJ connecté, ou le premier joueur
  * connecté s'il n'y a pas de MJ. S'il part, le suivant prend le relais là où
@@ -125,6 +130,11 @@ export default function AutoGmPanel({ adventureId, onEffect }: Props) {
 
   const leader = voters.find((v) => v.gm) ?? voters[0]
   const isLeader = !!me && leader?.connectionId === me.connectionId
+  // Mode « gm » : le MJ mène, seuls les joueurs votent et lancent.
+  const gmLeads = gm?.mode === 'gm' && voters.some((v) => v.gm) && voters.some((v) => !v.gm)
+  const players = useMemo(() => (gmLeads ? voters.filter((v) => !v.gm) : voters), [gmLeads, voters])
+  const humanGm = gmLeads ? voters.find((v) => v.gm) : undefined
+  const iWatch = gmLeads && !!me?.gm
 
   const adventure = ADVENTURES[gm?.adventure ?? adventureId]
   const scene = gm && adventure ? adventure.scenes[gm.scene] : undefined
@@ -141,25 +151,7 @@ export default function AutoGmPanel({ adventureId, onEffect }: Props) {
 
   // ── Mutations ──────────────────────────────────────────────────────────
 
-  const start = useMutation(({ storage }, adventureKey: string) => {
-    const adv = ADVENTURES[adventureKey]
-    if (!adv) return
-    const previous = storage.get('autoGm')?.get('check')
-    if (previous) storage.get('checks')?.delete(previous.id)
-    storage.set(
-      'autoGm',
-      new LiveObject({
-        run: crypto.randomUUID(),
-        adventure: adv.id,
-        scene: adv.start,
-        visit: 1,
-        setup: 0,
-        path: [adv.start],
-        flags: [...(adv.scenes[adv.start]?.gains ?? [])],
-        votes: new LiveMap<string, string>(),
-      }),
-    )
-  }, [])
+  const start = useStartAdventure()
 
   const stop = useMutation(({ storage }) => {
     const previous = storage.get('autoGm')?.get('check')
@@ -267,7 +259,7 @@ export default function AutoGmPanel({ adventureId, onEffect }: Props) {
 
   useEffect(() => {
     if (!isLeader || !gm || gm.setup >= gm.visit) return
-    const shown = setUp(gm.visit, t('autoGmTitle'))
+    const shown = setUp(gm.visit, t(gm.mode === 'gm' ? 'autoGmTitleGm' : 'autoGmTitle'))
     if (shown) showImage(libraryUrl(shown.category, shown.item), shown.label)
   }, [isLeader, gm, setUp, showImage, t])
 
@@ -280,7 +272,7 @@ export default function AutoGmPanel({ adventureId, onEffect }: Props) {
     }
     const tie = gm.tiebreak
     if (tie && voters.some((v) => v.id === tie.userId)) return
-    const allVoted = voters.every((v) => votes.has(v.id))
+    const allVoted = players.every((v) => votes.has(v.id))
     let wait: number
     if (tie) wait = 0
     else if (allVoted) wait = VOTE_SETTLE_MS
@@ -288,7 +280,7 @@ export default function AutoGmPanel({ adventureId, onEffect }: Props) {
     else return
     const expected = gm.visit
     const timer = setTimeout(() => {
-      const outcome = decide(options, votes, voters)
+      const outcome = decide(options, votes, players, humanGm)
       if (!outcome) return
       if (outcome.kind === 'winner') go(outcome.option.next, expected)
       else
@@ -299,7 +291,7 @@ export default function AutoGmPanel({ adventureId, onEffect }: Props) {
         })
     }, wait)
     return () => clearTimeout(timer)
-  }, [isLeader, gm, ready, step, votes, voters, options, go, markVoteStart, setTiebreak])
+  }, [isLeader, gm, ready, step, votes, voters, players, humanGm, options, go, markVoteStart, setTiebreak])
 
   // Jet : demandé au meilleur du groupe dans la caractéristique, puis suivi
   // jusqu'au résultat. Si le lanceur part, on redemande à quelqu'un d'autre.
@@ -326,7 +318,7 @@ export default function AutoGmPanel({ adventureId, onEffect }: Props) {
     }
     const visitId = `${gm.run}:${gm.visit}`
     if (asked.current === visitId || askFailed) return
-    const roller = best(voters, step.stat)
+    const roller = best(players, step.stat)
     if (!roller) return
     asked.current = visitId
     const expected = gm.visit
@@ -347,7 +339,7 @@ export default function AutoGmPanel({ adventureId, onEffect }: Props) {
         asked.current = ''
         setAskFailed(true)
       })
-  }, [isLeader, gm, ready, step, voters, result, pending, roomId, askFailed, dropCheck, setCheck])
+  }, [isLeader, gm, ready, step, voters, players, result, pending, roomId, askFailed, dropCheck, setCheck])
 
   useEffect(() => {
     if (!isLeader || !gm || !result || step?.kind !== 'check' || !result.check) return
@@ -370,8 +362,10 @@ export default function AutoGmPanel({ adventureId, onEffect }: Props) {
       return
     }
     seen.current = visitKey
+    // Le MJ qui mène ne joue pas de personnage dans l'aventure.
+    if (iWatch) return
     if (scene && (scene.damage || scene.heal)) onEffect({ damage: scene.damage, heal: scene.heal })
-  }, [visitKey, scene, onEffect])
+  }, [visitKey, scene, onEffect, iWatch])
 
   // Horloge du compte à rebours et de l'apparition du résultat.
   const ticking = (step?.kind === 'vote' && !!gm?.voteStart) || (!!result && !revealed)
@@ -384,6 +378,7 @@ export default function AutoGmPanel({ adventureId, onEffect }: Props) {
   // ── Affichage ───────────────────────────────────────────────────────────
 
   if (!adventure) return null
+  const title = t(gm?.mode === 'gm' ? 'autoGmTitleGm' : 'autoGmTitle')
   const box =
     'ui-panel ui-pop pointer-events-auto absolute left-3 top-14 z-30 flex max-h-[calc(100%-8rem)] w-[min(24rem,calc(100%-1.5rem))] flex-col shadow-lg'
 
@@ -394,7 +389,7 @@ export default function AutoGmPanel({ adventureId, onEffect }: Props) {
         className="ui-btn pointer-events-auto absolute left-3 top-14 z-30 !bg-[var(--c-panel-head)] shadow-lg"
       >
         <Bot size={15} className="text-gm" aria-hidden />
-        {t('autoGmTitle')}
+        {title}
         {scene && <span className="max-w-[10rem] truncate text-ink/60">· {scene.title}</span>}
       </button>
     )
@@ -404,7 +399,7 @@ export default function AutoGmPanel({ adventureId, onEffect }: Props) {
     <div className="flex items-center gap-2 border-b border-[var(--c-panel-line)] px-3 py-2">
       <Bot size={16} className="shrink-0 text-gm" aria-hidden />
       <span className="min-w-0 flex-1 truncate text-sm font-semibold">
-        {t('autoGmTitle')} <span className="font-normal text-ink/60">· {adventure.title}</span>
+        {title} <span className="font-normal text-ink/60">· {adventure.title}</span>
       </span>
       {gm && (
         <button
@@ -430,7 +425,7 @@ export default function AutoGmPanel({ adventureId, onEffect }: Props) {
         <div className="flex flex-col gap-3 p-3">
           <p className="text-sm text-ink/80">{t('autoGmIntro')}</p>
           <p className="text-sm italic text-ink/70">{adventure.pitch}</p>
-          <button onClick={() => start(adventure.id)} className="ui-btn ui-btn-primary">
+          <button onClick={() => start(adventure.id, 'auto')} className="ui-btn ui-btn-primary">
             {t('autoGmStart')}
           </button>
         </div>
@@ -439,11 +434,12 @@ export default function AutoGmPanel({ adventureId, onEffect }: Props) {
   }
 
   const byId = new Map(voters.map((v) => [v.id, v]))
-  const votersFor = (option: string) => voters.filter((v) => votes?.get(v.id) === option)
+  const votersFor = (option: string) => players.filter((v) => votes?.get(v.id) === option)
   const myVote = me ? votes?.get(me.id) : undefined
   const tie = gm.tiebreak
   const iDecide = !!me && tie?.userId === me.id
-  const voteCount = voters.filter((v) => votes?.has(v.id)).length
+  const gmDecides = !!tie && gm.mode === 'gm' && !!byId.get(tie.userId)?.gm
+  const voteCount = players.filter((v) => votes?.has(v.id)).length
   const secondsLeft = gm.voteStart ? Math.max(0, Math.ceil((gm.voteStart + VOTE_WINDOW_MS - now) / 1000)) : null
   const titleOf = (id: string) => adventure.scenes[id]?.title ?? id
 
@@ -454,7 +450,7 @@ export default function AutoGmPanel({ adventureId, onEffect }: Props) {
       <button
         key={id}
         onClick={() => vote(id, gm.visit)}
-        disabled={!ready || !!tie}
+        disabled={!ready || !!tie || iWatch}
         aria-pressed={mine}
         className={`flex w-full flex-col gap-1 rounded-lg border px-3 py-2 text-left text-sm transition disabled:opacity-60 ${
           mine
@@ -495,7 +491,9 @@ export default function AutoGmPanel({ adventureId, onEffect }: Props) {
         {tie ? (
           <>
             <p className="text-sm text-amber-300">
-              {iDecide ? t('autoGmTieYou') : t('autoGmTie').replace('{n}', byId.get(tie.userId)?.name ?? tie.name)}
+              {iDecide
+                ? t(gmDecides ? 'autoGmTieGmYou' : 'autoGmTieYou')
+                : t(gmDecides ? 'autoGmTieGm' : 'autoGmTie').replace('{n}', byId.get(tie.userId)?.name ?? tie.name)}
             </p>
             {options
               .filter((o) => tie.options.includes(o.id))
@@ -526,9 +524,10 @@ export default function AutoGmPanel({ adventureId, onEffect }: Props) {
                 ),
               ),
             )}
-            {voters.length > 1 && voteButton(NEUTRAL, t('autoGmNeutral'))}
+            {players.length > 1 && voteButton(NEUTRAL, t('autoGmNeutral'))}
+            {iWatch && <p className="text-xs text-gm">{t('autoGmGmWatch')}</p>}
             <p className="text-xs text-ink/55">
-              {t('autoGmVoted').replace('{n}', String(voteCount)).replace('{m}', String(voters.length))}
+              {t('autoGmVoted').replace('{n}', String(voteCount)).replace('{m}', String(players.length))}
               {' · '}
               {secondsLeft !== null
                 ? t('autoGmVoteEndsIn').replace('{n}', String(secondsLeft))
@@ -590,7 +589,7 @@ export default function AutoGmPanel({ adventureId, onEffect }: Props) {
           </ol>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button onClick={() => start(gm.adventure)} className="ui-btn ui-btn-primary">
+          <button onClick={() => start(gm.adventure, gm.mode)} className="ui-btn ui-btn-primary">
             {t('autoGmReplay')}
           </button>
           <Link href="/salles" className="ui-btn">

@@ -65,7 +65,8 @@ export type VoteResult =
 
 /**
  * Dépouille le vote. Une option seule en tête l'emporte. À égalité (ou si
- * tout le monde est sans avis), le joueur au meilleur Charisme tranche : son
+ * tout le monde est sans avis), le MJ qui mène la partie choisit parmi les
+ * options à égalité. Sans lui, le joueur au meilleur Charisme tranche : son
  * propre vote compte s'il porte sur une des options à égalité, sinon il
  * choisit parmi elles.
  */
@@ -73,6 +74,7 @@ export function decide(
   options: readonly SceneOption[],
   votes: ReadonlyMap<string, string>,
   voters: readonly Voter[],
+  gm?: Voter,
 ): VoteResult | null {
   if (options.length === 0) return null
   const counts = new Map(options.map((o) => [o.id, 0]))
@@ -83,6 +85,7 @@ export function decide(
   const top = Math.max(...counts.values())
   const leading = options.filter((o) => counts.get(o.id) === top)
   if (leading.length === 1) return { kind: 'winner', option: leading[0]! }
+  if (gm) return { kind: 'tie', decider: gm, options: leading }
   const decider = best(voters, 'charisme')
   if (!decider) return null
   const own = leading.find((o) => o.id === votes.get(decider.id))

@@ -1,5 +1,11 @@
 # Journal
 
+## 2026-10-09 — Aventures toutes prêtes dans toutes les tables, le MJ tranche les égalités
+- Le MJ lance une aventure depuis son panneau, en mode « Je mène » ou « MJ automatique » (`components/autogm/AdventureLauncher.tsx`)
+- Mode « Je mène » : seuls les joueurs votent et lancent les jets du groupe ; à égalité, le MJ choisit. S'il part, retour au meilleur Charisme (`lib/autoGm/index.ts`, `components/autogm/AutoGmPanel.tsx`)
+- Le panneau de l'aventure s'affiche dans n'importe quelle table dès qu'une partie est lancée, plus seulement dans la démo
+Reste ouvert : essai à plusieurs comptes ; ensuite la campagne automatique complète
+
 ## 2026-10-09 — Trois systèmes de jeu au choix à la création d'une table
 - Deux presets ajoutés au « Narratif CakeJDR » : « Fantasy 5E » (d20, bonus de maîtrise, dé de vie) et « Enquête d100 » (jet sous un pourcentage, sans niveaux) (`lib/gameSystems.ts`)
 - Licences vérifiées avant reprise : SRD 5.2.1 sous CC-BY-4.0, BRP UGE sous ORC ; mentions dans les conditions (`app/conditions/page.tsx`). « Comme D&D » retiré de l'interface (marque)
