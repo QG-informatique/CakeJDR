@@ -10,21 +10,24 @@ import { signedMod, withStat, checkStatLabel, type CheckStat } from '@/lib/check
 import { statMod } from '@/lib/modifiers'
 import type { Character } from '@/types/character'
 import type { TranslationKey } from '@/lib/translations'
+import { GAME_SYSTEMS, type GameSystem } from '@/lib/gameSystems'
 
 type Props = {
   character: Character
   stat: CheckStat
   className?: string
+  /** Système de la table ; hors d'une table, le narratif. */
+  system?: GameSystem
 }
 
 const BUBBLE_W = 240
 
-const ModBadge: FC<Props> = ({ character, stat, className = '' }) => {
+const ModBadge: FC<Props> = ({ character, stat, className = '', system = GAME_SYSTEMS.narratif }) => {
   const t = useT()
   const id = useId()
   const ref = useRef<HTMLButtonElement>(null)
   const [at, setAt] = useState<{ x: number; y: number; below: boolean } | null>(null)
-  const { value, total, parts } = statMod(character, stat)
+  const { value, total, parts } = statMod(character, stat, system.id)
   const statName = t(checkStatLabel(stat) as TranslationKey)
 
   const show = () => {
@@ -67,7 +70,7 @@ const ModBadge: FC<Props> = ({ character, stat, className = '' }) => {
         aria-describedby={at ? id : undefined}
         className={`cursor-help rounded px-0.5 tabular-nums underline decoration-dotted decoration-from-font underline-offset-2 ${className}`}
       >
-        {signedMod(total)}
+        {system.rollUnder ? `${total} %` : signedMod(total)}
       </button>
       {at && typeof document !== 'undefined' && createPortal(
         <div

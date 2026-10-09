@@ -1,4 +1,4 @@
-import { NARRATIF } from './gameSystems'
+import { ALL_STATS, NARRATIF, type D100, type GameSystem } from './gameSystems'
 
 /**
  * Tests de caractéristique demandés par le MJ.
@@ -9,26 +9,30 @@ import { NARRATIF } from './gameSystems'
  * la difficulté.
  */
 
-/** Dé lancé pour un test, celui du système de jeu (`lib/gameSystems.ts`). */
+/** Dé d'un test quand la demande ne dit pas lequel (demandes d'avant les systèmes). */
 export const CHECK_DICE = NARRATIF.checkDie
 
-/** Caractéristiques qu'on peut tester, avec leur intitulé dans `lib/translations.ts`. */
+/** Caractéristiques du jeu narratif, avec leur intitulé dans `lib/translations.ts`. */
 export const CHECK_STATS = NARRATIF.stats
 
-export type CheckStat = (typeof CHECK_STATS)[number]['key']
+/** Une caractéristique, de n'importe quel système (`lib/gameSystems.ts`). */
+export type CheckStat = (typeof NARRATIF.stats)[number]['key'] | (typeof D100.stats)[number]['key']
 
-export function isCheckStat(value: unknown): value is CheckStat {
-  return CHECK_STATS.some((s) => s.key === value)
+/** Vrai si la caractéristique existe dans ce système. */
+export function isCheckStat(value: unknown, system: GameSystem = NARRATIF): value is CheckStat {
+  return system.stats.some((s) => s.key === value)
 }
 
 export function checkStatLabel(stat: string) {
-  return CHECK_STATS.find((s) => s.key === stat)?.label ?? 'strength'
+  return ALL_STATS.find((s) => s.key === stat)?.label ?? 'strength'
 }
 
 /** Bornes acceptées par le serveur. */
 export const CHECK_MOD_RANGE = 30
 export const CHECK_DC_MIN = 1
 export const CHECK_DC_MAX = 60
+/** Seuil d'un test sous un seuil : jusqu'au double d'une caractéristique de 20 (test facile). */
+export const CHECK_THRESHOLD_MAX = 200
 export const CHECK_REASON_MAX = 120
 export const CHECK_NAME_MAX = 60
 
@@ -50,6 +54,10 @@ export type CheckRequest = {
   showDc: boolean
   /** Présente seulement si le MJ montre la difficulté. */
   dc?: number
+  /** Dé à lancer ; absent sur les demandes d'avant les systèmes : un D20. */
+  dice?: number
+  /** Test sous un seuil (d100) : `dc` est le seuil, en %. */
+  under?: boolean
   reason?: string
   createdAt: number
   seal: string
@@ -63,6 +71,8 @@ export type CheckOutcome = {
   dc: number
   showDc: boolean
   success: boolean
+  /** Test sous un seuil (d100) : réussi si le dé fait au plus `dc`. */
+  under?: boolean
   reason?: string
 }
 

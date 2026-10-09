@@ -43,6 +43,9 @@ export type Character = {
   intelligence: number | string
   sagesse: number | string
   charisme: number | string
+  /** Caractéristiques du système d100 (`lib/gameSystems.ts`), absentes des autres fiches. */
+  corpulence?: number | string
+  pouvoir?: number | string
   /** Ancien modificateur tapé à la main, plus lu : il est calculé (`lib/modifiers.ts`). */
   force_mod?: number | string
   dexterite_mod?: number | string
@@ -62,6 +65,10 @@ export type Character = {
   sagesse_bonus_from?: string
   charisme_bonus?: number | string
   charisme_bonus_from?: string
+  corpulence_bonus?: number | string
+  corpulence_bonus_from?: string
+  pouvoir_bonus?: number | string
+  pouvoir_bonus_from?: string
   mod_contact?: number | string
   mod_distance?: number | string
   mod_magique?: number | string

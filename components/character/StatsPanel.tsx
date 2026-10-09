@@ -2,10 +2,9 @@ import { FC } from 'react'
 import { useT } from '@/lib/useT'
 import { type Character } from '@/types/character'
 import type { TranslationKey } from '@/lib/translations'
-import { NARRATIF } from '@/lib/gameSystems'
+import { GAME_SYSTEMS, type GameSystem } from '@/lib/gameSystems'
+import type { CheckStat } from '@/lib/checks'
 import ModBadge from './ModBadge'
-
-const { stats: STATS, attacks: ATTACKS, basics: BASICS } = NARRATIF
 
 // Couleur de la valeur d'une caractéristique : on lit d'un coup d'œil les
 // points forts (vert, or) et les faiblesses (orange, rouge).
@@ -36,11 +35,21 @@ const Row: FC<{ label: string; children: React.ReactNode }> = ({ label, children
 type Props = {
   perso: Character
   compact?: boolean
+  /** Système de la table (`lib/gameSystems.ts`). */
+  system?: GameSystem
 }
 
-const StatsPanel: FC<Props> = ({ perso, compact = false }) => {
+const StatsPanel: FC<Props> = ({ perso, compact = false, system = GAME_SYSTEMS.narratif }) => {
   const t = useT()
-  const statValue = (key: string) => Number(Reflect.get(perso, key) ?? 0)
+  const { stats: STATS, attacks: ATTACKS } = system
+  const field = (key: string) => Reflect.get(perso, key) as string | number | undefined
+  const statValue = (key: string) => Number(field(key) ?? 0)
+  // Valeurs de base, puis le bonus qui vient du niveau (bonus de maîtrise).
+  const level = Math.max(1, Math.round(Number(perso.niveau)) || 1)
+  const BASICS = [
+    ...system.basics.map((b) => ({ key: b.key, label: b.label, value: field(b.key) || '—' })),
+    ...(system.levelBonus ? [{ key: 'levelBonus', label: system.levelBonus.label, value: `+${system.levelBonus.value(level)}` }] : []),
+  ]
 
   if (compact) {
     return (
@@ -49,7 +58,7 @@ const StatsPanel: FC<Props> = ({ perso, compact = false }) => {
           {BASICS.map(b => (
             <div key={b.key} className="flex flex-col items-center py-1.5">
               <span className="ui-label !text-[10px]">{t(b.label as TranslationKey)}</span>
-              <span className="font-bold tabular-nums">{perso[b.key] || '—'}</span>
+              <span className="font-bold tabular-nums">{b.value}</span>
             </div>
           ))}
         </div>
@@ -59,7 +68,7 @@ const StatsPanel: FC<Props> = ({ perso, compact = false }) => {
             {STATS.map(stat => (
               <Row key={stat.key} label={t(stat.label as TranslationKey)}>
                 <span className={getStatColor(statValue(stat.key))}>{statValue(stat.key)}</span>
-                <ModBadge character={perso} stat={stat.key} className="ml-1 text-xs font-medium text-ink/55" />
+                <ModBadge character={perso} stat={stat.key as CheckStat} system={system} className="ml-1 text-xs font-medium text-ink/55" />
               </Row>
             ))}
           </div>
@@ -69,7 +78,7 @@ const StatsPanel: FC<Props> = ({ perso, compact = false }) => {
           <div className="ui-well grid grid-cols-3 py-1">
             {ATTACKS.map(att => (
               <Row key={att.key} label={t(att.label as TranslationKey)}>
-                {perso[att.key] ?? 0}
+                {field(att.key) ?? 0}
               </Row>
             ))}
           </div>
@@ -80,11 +89,11 @@ const StatsPanel: FC<Props> = ({ perso, compact = false }) => {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Défense, chance, initiative */}
+      {/* Valeurs de base du système : défense, chance, initiative… */}
       <div className="grid grid-cols-3 gap-2">
         {BASICS.map(b => (
           <Tile key={b.key} label={t(b.label as TranslationKey)}>
-            <span className="text-lg font-bold tabular-nums">{perso[b.key] || '—'}</span>
+            <span className="text-lg font-bold tabular-nums">{b.value}</span>
           </Tile>
         ))}
       </div>
@@ -97,7 +106,7 @@ const StatsPanel: FC<Props> = ({ perso, compact = false }) => {
             <Tile key={stat.key} label={t(stat.label as TranslationKey)}>
               <span className="flex items-baseline gap-1.5 tabular-nums">
                 <span className={`text-xl font-bold ${getStatColor(statValue(stat.key))}`}>{statValue(stat.key)}</span>
-                <ModBadge character={perso} stat={stat.key} className="text-xs font-semibold text-ink/55" />
+                <ModBadge character={perso} stat={stat.key as CheckStat} system={system} className="text-xs font-semibold text-ink/55" />
               </span>
             </Tile>
           ))}
@@ -110,7 +119,7 @@ const StatsPanel: FC<Props> = ({ perso, compact = false }) => {
         <div className="grid grid-cols-3 gap-2">
           {ATTACKS.map(att => (
             <Tile key={att.key} label={t(att.label as TranslationKey)}>
-              <span className="text-lg font-bold tabular-nums">{perso[att.key] ?? 0}</span>
+              <span className="text-lg font-bold tabular-nums">{field(att.key) ?? 0}</span>
             </Tile>
           ))}
         </div>

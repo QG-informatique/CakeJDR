@@ -1,6 +1,7 @@
 export const runtime = 'nodejs'
 import { NextRequest } from 'next/server'
-import { createRoom, deleteRoom, renameRoom } from '@/lib/liveRooms'
+import { createRoom, deleteRoom, renameRoom, setRoomSystem } from '@/lib/liveRooms'
+import { DEFAULT_SYSTEM, isGameSystemId } from '@/lib/gameSystems'
 import { isAdminRequest } from '@/lib/adminAuth'
 import { countOwnedRooms, forgetRoom, isRoomOwner, recordRoom, renameRoomRecord } from '@/lib/db/rooms'
 import { currentUserId, syncCurrentUser } from '@/lib/db/users'
@@ -44,7 +45,12 @@ export async function POST(req: NextRequest) {
     if (!account.isAdmin && (await countOwnedRooms(account.id)) >= MAX_ROOMS_PER_ACCOUNT) {
       return fail('room limit reached', 403)
     }
+    const system = isGameSystemId(body?.system) ? body.system : DEFAULT_SYSTEM
     const { id } = await createRoom(name)
+    // Une table sans réglage joue au narratif : inutile de l'écrire.
+    if (system !== DEFAULT_SYSTEM) {
+      await setRoomSystem(id, system).catch((e) => console.error('setRoomSystem', e))
+    }
     await recordRoom({ id, name, ownerId: account.id }).catch((e) =>
       console.error('recordRoom', e),
     )

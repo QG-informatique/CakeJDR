@@ -192,6 +192,12 @@
 - [ ] MJ automatique : traduire en anglais le texte de l'aventure « La fournée maudite » (`lib/autoGm/cakeDemo.ts`)
 - [ ] MJ automatique : le proposer hors de la salle de démo (bouton dans le panneau MJ, choix de l'aventure)
 - [ ] Phase H : proposer « avec MJ » ou « MJ automatique » pour les campagnes toutes prêtes, en réutilisant le moteur de la démo
+- [ ] Campagne automatique complète : écrire une campagne jouable sans MJ avec le moteur de la démo (`lib/autoGm/`), plusieurs branches et tirages au hasard pour qu'elle ne se joue jamais deux fois pareil
+- [ ] Campagne automatique complète : faire toutes ses images (cartes, PNJ, rencontres) et demander à Quentin l'accord pour les envoyer sur Cloudinary
+- [ ] Campagne automatique complète : estimer et afficher sa durée en heures (par branche et en moyenne)
+- [ ] Proposer au début d'une partie une petite sélection de personnages tout faits, au choix
+- [ ] Créer son personnage guidé par le MJ automatique : il pose les questions et fait tirer les dés des caractéristiques
+- [ ] Traduire en anglais toutes les aventures automatiques une fois la campagne complète écrite
 - [x] Effacer les trois croix dessinées pour l'ancienne carte dans la salle de démo (liste `strokes` de Liveblocks), puis refiger avec `scripts/capture-demo-snapshot.mjs`
 - [x] Phase G : ajouter des pions simples de couleur (rond avec initiale, une couleur par joueur) pour les scènes tactiques, générés par le code, en plus des pions illustrés vus de face
 - [x] Phase G : réserver la bibliothèque au MJ (le joueur ne pose que le pion de son personnage, choisi dans sa fiche)
@@ -205,8 +211,11 @@
 - [ ] Phase H : proposer « Partie libre » ou une campagne toute prête à la création d'une table
 - [x] Phase I : décrire la fiche de personnage comme un système (caractéristiques, ressources, compétences, dés, niveaux) et en faire le preset « Narratif CakeJDR »
 - [ ] Phase I : faire lire au système toute la fiche (ressources, montée de niveau, champs d'identité et d'histoire), pas seulement caractéristiques, attaques et types de compétences (`lib/gameSystems.ts`)
-- [ ] Phase I : choisir avec Quentin deux ou trois autres presets, en vérifiant la licence de toute règle reprise
-- [ ] Phase I : choisir le système à la création d'une table (colonne en base, avec accord)
+- [x] Phase I : choisir deux ou trois autres presets, en vérifiant la licence de toute règle reprise — « Fantasy 5E » (SRD 5.2.1, CC-BY-4.0) et « Enquête d100 » (BRP UGE, ORC), mentions dans `app/conditions/page.tsx`
+- [x] Phase I : choisir le système à la création d'une table — rangé dans les réglages Liveblocks de la salle (`settings.system`), sans colonne en base ; le MJ peut le changer dans son panneau
+- [ ] Phase I : ajouter au système d100 ses ressources propres (points de magie, santé mentale) et les afficher sur la fiche
+- [ ] Phase I : afficher « — » plutôt que « 0 % » pour Corpulence et Pouvoir tant que la fiche d100 ne les a pas remplis
+- [ ] Tester les trois systèmes avec un second compte joueur : fiche, test du MJ (seuil d100 caché), montée de niveau Fantasy 5E (un seul dé de vie)
 - [ ] Phase J : créer l'éditeur de système (partir d'un preset, aperçu de la fiche en direct)
 - [ ] Phase J : créer l'éditeur de campagne (scènes reliées, images, boutons de choix), rangé dans le compte du MJ (tables en base, avec accord)
 - [ ] Phase J : exporter et importer une campagne en fichier, puis permettre le partage entre MJ
@@ -229,7 +238,7 @@
 - [x] Réduire les lancers lents où le lanceur voit le chiffre du dé changer en fin de course (`steerLabels`, `lib/diceThrow.ts`) — résolu par le tirage d'avance (`lib/diceDraw.ts`)
 - [x] Vérifier en ligne le délai du tirage d'avance (`/api/dice` avec `peek`) : sous ~300 ms, le chiffre est déjà sur le dé au lâcher — sans objet : plus de tirage d'avance
 - [ ] Vérifier sur téléphone que les dés Dice Box se chargent et restent fluides avec 8 dés mélangés
-- [ ] Faire venir la règle des modificateurs du système de jeu de la table (narratif : pas de règle, système perso : règles du créateur) — brancher `RULES` de `lib/modifiers.ts` sur le système choisi à la création de la table (Phase I)
+- [x] Faire venir la règle des modificateurs du système de jeu de la table (narratif : pas de règle, système perso : règles du créateur) — brancher `RULES` de `lib/modifiers.ts` sur le système choisi à la création de la table (Phase I)
 - [x] Ne colorer le dé (jaune pour un critique, etc.) qu'au moment où le résultat apparaît, pas dès le début du lancer
 - [x] Remplacer le dé actuel de la table par un vrai dé physique comme celui de la page d'accueil (rebonds sur les bords), synchronisé chez tous les joueurs : tout le monde voit le lancer et le résultat, qui reste tiré par le serveur
 

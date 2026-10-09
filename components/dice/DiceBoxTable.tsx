@@ -166,6 +166,8 @@ function replay(box: DiceBox, run: number, frames: number[][], knocks: Knock[], 
       return
     }
     pose(last, (d) => d.body)
+    // Une face forcée vide la lecture du dé ; la table la refait à l'arrêt, le rejeu aussi.
+    box.diceList.forEach((d) => { if (d.result.length === 0) d.storeRolledValue(d.resultReason) })
     box.rolling = false
     done?.call(box, box.notationVectors)
     box.running = Date.now()

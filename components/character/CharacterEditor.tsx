@@ -10,7 +10,8 @@ import { Check, Pencil, Plus, Trash2, UserRound, X } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import { useConfirm } from '@/lib/useConfirm'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
-import { NARRATIF } from '@/lib/gameSystems'
+import { GAME_SYSTEMS, type GameSystem } from '@/lib/gameSystems'
+import type { CheckStat } from '@/lib/checks'
 import ModBadge from './ModBadge'
 import type { TranslationKey } from '@/lib/translations'
 import {
@@ -26,6 +27,8 @@ type Props = {
   character: Character
   /** Vrai pour une nouvelle fiche : change le titre. */
   isNew?: boolean
+  /** Système de la table ; hors d'une table, le narratif. */
+  system?: GameSystem
   onSave: (character: Character) => void
   onClose: () => void
 }
@@ -40,7 +43,6 @@ const SECTIONS: { key: Section; label: TranslationKey }[] = [
   { key: 'story', label: 'story' },
 ]
 
-const { stats: STATS, skillTypes: SKILL_TYPES } = NARRATIF
 
 const STORY_FIELDS = [
   { key: 'traits', label: 'traits' },
@@ -75,7 +77,7 @@ export default function CharacterEditor(props: Props) {
   return createPortal(<EditorDialog {...props} />, document.body)
 }
 
-function EditorDialog({ character, isNew = false, onSave, onClose }: Props) {
+function EditorDialog({ character, isNew = false, system = GAME_SYSTEMS.narratif, onSave, onClose }: Props) {
   const t = useT()
   const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm()
   const [initial] = useState(() => normalizeCharacter(character))
@@ -221,11 +223,11 @@ function EditorDialog({ character, isNew = false, onSave, onClose }: Props) {
             </div>
 
             <div className="flex-1 p-4 lg:overflow-y-auto" role="tabpanel">
-              {section === 'stats' && <StatsSection draft={draft} set={set} />}
-              {section === 'combat' && <CombatSection draft={draft} set={set} />}
-              {section === 'skills' && <SkillsSection draft={draft} set={set} />}
-              {section === 'equip' && <EquipSection draft={draft} set={set} />}
-              {section === 'story' && <StorySection draft={draft} set={set} />}
+              {section === 'stats' && <StatsSection draft={draft} set={set} system={system} />}
+              {section === 'combat' && <CombatSection draft={draft} set={set} system={system} />}
+              {section === 'skills' && <SkillsSection draft={draft} set={set} system={system} />}
+              {section === 'equip' && <EquipSection draft={draft} set={set} system={system} />}
+              {section === 'story' && <StorySection draft={draft} set={set} system={system} />}
             </div>
           </div>
         </div>
@@ -253,28 +255,33 @@ function EditorDialog({ character, isNew = false, onSave, onClose }: Props) {
   )
 }
 
-type SectionProps = { draft: Character; set: CharacterChangeHandler }
+type SectionProps = { draft: Character; set: CharacterChangeHandler; system: GameSystem }
 
-const StatsSection: FC<SectionProps> = ({ draft, set }) => {
+/** Un champ de la fiche que le système nomme : on l'écrit sans passer par le type. */
+const fieldOf = (draft: Character, key: string) => Reflect.get(draft, key) as unknown
+const setField = (set: CharacterChangeHandler, key: string, value: string) =>
+  set(key as keyof Character, value as never)
+
+const StatsSection: FC<SectionProps> = ({ draft, set, system }) => {
   const t = useT()
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-      {STATS.map((s) => (
+      {system.stats.map((s) => (
         <div key={s.key} className="ui-well flex flex-col gap-2 p-3">
           <span className="flex items-baseline justify-between gap-2 text-sm font-semibold">
             {t(s.label)}
-            <ModBadge character={draft} stat={s.key} className="text-sm" />
+            <ModBadge character={draft} stat={s.key as CheckStat} system={system} className="text-sm" />
           </span>
           <div className="flex gap-2">
             <Field label={t('value')} className="flex-1">
-              <input inputMode="numeric" value={str(draft[s.key])} onChange={(e) => set(s.key, e.target.value)} className={`${inputClass} text-center`} />
+              <input inputMode="numeric" value={str(fieldOf(draft, s.key))} onChange={(e) => setField(set, s.key, e.target.value)} className={`${inputClass} text-center`} />
             </Field>
             <Field label={t('equipBonus')} className="flex-1">
-              <input inputMode="numeric" value={str(draft[`${s.key}_bonus`])} onChange={(e) => set(`${s.key}_bonus`, e.target.value)} className={`${inputClass} text-center`} placeholder="0" />
+              <input inputMode="numeric" value={str(fieldOf(draft, `${s.key}_bonus`))} onChange={(e) => setField(set, `${s.key}_bonus`, e.target.value)} className={`${inputClass} text-center`} placeholder="0" />
             </Field>
           </div>
           <Field label={t('equipBonusFrom')}>
-            <input value={str(draft[`${s.key}_bonus_from`])} onChange={(e) => set(`${s.key}_bonus_from`, e.target.value)} className={inputClass} placeholder={t('equipBonusFromHint')} maxLength={40} />
+            <input value={str(fieldOf(draft, `${s.key}_bonus_from`))} onChange={(e) => setField(set, `${s.key}_bonus_from`, e.target.value)} className={inputClass} placeholder={t('equipBonusFromHint')} maxLength={40} />
           </Field>
         </div>
       ))}
@@ -282,7 +289,7 @@ const StatsSection: FC<SectionProps> = ({ draft, set }) => {
   )
 }
 
-const CombatSection: FC<SectionProps> = ({ draft, set }) => {
+const CombatSection: FC<SectionProps> = ({ draft, set, system }) => {
   const t = useT()
   return (
     <>
@@ -296,17 +303,13 @@ const CombatSection: FC<SectionProps> = ({ draft, set }) => {
         </Field>
       </div>
 
-      <SectionTitle>{t('defense')} · {t('luck')} · {t('initiative')}</SectionTitle>
+      <SectionTitle>{system.basics.map((b) => t(b.label)).join(' · ')}</SectionTitle>
       <div className="grid grid-cols-3 gap-3 sm:max-w-md">
-        <Field label={t('defense')}>
-          <input inputMode="numeric" value={str(draft.defense)} onChange={(e) => set('defense', e.target.value)} className={inputClass} />
-        </Field>
-        <Field label={t('luck')}>
-          <input inputMode="numeric" value={str(draft.chance)} onChange={(e) => set('chance', e.target.value)} className={inputClass} />
-        </Field>
-        <Field label={t('initiative')}>
-          <input inputMode="numeric" value={str(draft.initiative)} onChange={(e) => set('initiative', e.target.value)} className={inputClass} />
-        </Field>
+        {system.basics.map((b) => (
+          <Field key={b.key} label={t(b.label)}>
+            <input inputMode="numeric" value={str(fieldOf(draft, b.key))} onChange={(e) => setField(set, b.key, e.target.value)} className={inputClass} />
+          </Field>
+        ))}
       </div>
 
       <SectionTitle>{t('attackMods')}</SectionTitle>
@@ -326,20 +329,21 @@ const CombatSection: FC<SectionProps> = ({ draft, set }) => {
 }
 
 type SkillDraft = { nom: string; type: string; effets: string; degats: string }
-const emptySkill: SkillDraft = { nom: '', type: SKILL_TYPES[0]!, effets: '', degats: '' }
+const emptySkill = (system: GameSystem): SkillDraft => ({ nom: '', type: system.skillTypes[0]!, effets: '', degats: '' })
 
 /** Formulaire d'une compétence, dans la liste : pour en ajouter ou en modifier une. */
 const SkillForm: FC<{
   initial: SkillDraft
+  skillTypes: readonly string[]
   onSubmit: (s: SkillDraft) => void
   onCancel: () => void
-}> = ({ initial, onSubmit, onCancel }) => {
+}> = ({ initial, skillTypes, onSubmit, onCancel }) => {
   const t = useT()
   const [s, setS] = useState(initial)
   const nomRef = useRef<HTMLInputElement>(null)
   // Le formulaire s'ouvre sur un clic : on place le curseur dans le nom.
   useEffect(() => { nomRef.current?.focus() }, [])
-  const types = SKILL_TYPES.includes(s.type) || !s.type ? SKILL_TYPES : [s.type, ...SKILL_TYPES]
+  const types = skillTypes.includes(s.type) || !s.type ? skillTypes : [s.type, ...skillTypes]
   return (
     <div className="ui-well flex flex-col gap-3 p-3">
       <div className="grid gap-3 sm:grid-cols-[1fr_10rem]">
@@ -368,7 +372,7 @@ const SkillForm: FC<{
   )
 }
 
-const SkillsSection: FC<SectionProps> = ({ draft, set }) => {
+const SkillsSection: FC<SectionProps> = ({ draft, set, system }) => {
   const t = useT()
   // L'identifiant de la compétence en cours de modification, 'new' pour un ajout.
   const [editing, setEditing] = useState<string | null>(null)
@@ -395,6 +399,7 @@ const SkillsSection: FC<SectionProps> = ({ draft, set }) => {
             {editing === c.id ? (
               <SkillForm
                 initial={{ nom: c.nom, type: c.type, effets: c.effets, degats: c.degats ?? '' }}
+                skillTypes={system.skillTypes}
                 onCancel={() => setEditing(null)}
                 onSubmit={(s) => {
                   set('competences', skills.map((x) => (x.id === c.id ? toSkill(s, c.id) : x)))
@@ -434,7 +439,8 @@ const SkillsSection: FC<SectionProps> = ({ draft, set }) => {
       <div className="mt-3">
         {editing === 'new' ? (
           <SkillForm
-            initial={emptySkill}
+            initial={emptySkill(system)}
+            skillTypes={system.skillTypes}
             onCancel={() => setEditing(null)}
             onSubmit={(s) => {
               set('competences', [...skills, toSkill(s, crypto.randomUUID())])

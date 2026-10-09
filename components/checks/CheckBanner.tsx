@@ -57,7 +57,7 @@ export default function CheckBanner({ isGM }: { isGM: boolean }) {
     const stat = t(checkStatLabel(c.stat))
     line = withStat(t(c.success ? 'checkSuccessLine' : 'checkFailureLine').replace('{n}', player), stat)
     detail = String(c.total)
-    if (c.showDc || isGM) detail += ` ${t('checkVs')} ${c.dc}`
+    if (c.showDc || isGM) detail += c.under ? ` ${t('checkUnder')} ${c.dc} %` : ` ${t('checkVs')} ${c.dc}`
     if (c.reason) detail += ` · ${c.reason}`
   } else {
     return null

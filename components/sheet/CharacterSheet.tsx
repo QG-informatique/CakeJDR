@@ -12,6 +12,7 @@ import LevelUpPanel from '../character/LevelUpPanel'
 import { useT } from '@/lib/useT'
 import { libraryItemOf, libraryUrl, matchingPion } from '@/lib/library'
 import { useIsDesktop } from '@/lib/useIsDesktop'
+import { useGameSystem } from '@/lib/roomSettings'
 import {
   type Character,
   defaultCharacter,
@@ -58,6 +59,7 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, readOnly = false, notice, 
   )
   const t = useT()
   const isDesktop = useIsDesktop()
+  const system = useGameSystem()
   const TABS = [
     { key: 'main', label: t('statsTab') },
     { key: 'equip', label: t('equipment') },
@@ -155,6 +157,7 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, readOnly = false, notice, 
       <CharacterEditor
         open={editorOpen && !readOnly}
         character={cFiche}
+        system={system}
         onSave={saveFromEditor}
         onClose={() => setEditorOpen(false)}
       />
@@ -173,7 +176,10 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, readOnly = false, notice, 
         <StatsTab
           perso={localPerso}
           compact={density === 'compact'}
-          levelUp={canLevelUp && !readOnly ? <LevelUpPanel target={levelUpTarget} onByHand={levelUpByHand} /> : null}
+          system={system}
+          levelUp={canLevelUp && !readOnly && system.levelUp.length > 0
+            ? <LevelUpPanel target={levelUpTarget} onByHand={levelUpByHand} system={system} />
+            : null}
         />
       )}
       {tab === 'equip' && <EquipPanel perso={localPerso} compact={density === 'compact'} />}

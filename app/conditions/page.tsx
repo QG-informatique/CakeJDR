@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import LegalPage from '@/components/legal/LegalPage'
+import { GAME_SYSTEMS, GAME_SYSTEM_IDS } from '@/lib/gameSystems'
 
 export const metadata: Metadata = { title: "Conditions d'utilisation – CakeJDR" }
 
@@ -8,7 +9,7 @@ const CONTACT = 'qg.informatique.pro@gmail.com'
 
 export default function ConditionsPage() {
   return (
-    <LegalPage title="Conditions d'utilisation" updated="4 octobre 2026">
+    <LegalPage title="Conditions d'utilisation" updated="9 octobre 2026">
       <p>
         En utilisant CakeJDR, tu acceptes ces conditions. Elles sont courtes : merci de les lire.
       </p>
@@ -59,6 +60,19 @@ export default function ConditionsPage() {
         Ces conditions peuvent évoluer ; la date en haut de page indique la dernière version.
         Elles sont soumises au droit français.
       </p>
+
+      <h2 id="systemes">Systèmes de jeu</h2>
+      <p>
+        Le système « Narratif CakeJDR » est propre à CakeJDR. Les deux autres reprennent des
+        règles publiées sous licence ouverte ; voici les mentions que ces licences demandent.
+      </p>
+      {GAME_SYSTEM_IDS.map((id) => GAME_SYSTEMS[id]).filter((g) => g.license).map((g) => (
+        <div key={g.id}>
+          <h3>{g.name}</h3>
+          {g.license!.lines.map((line) => <p key={line}>{line}</p>)}
+          <p><a href={g.license!.url} target="_blank" rel="noopener">{g.license!.url}</a></p>
+        </div>
+      ))}
 
       <h2>Mentions légales</h2>
       <p>

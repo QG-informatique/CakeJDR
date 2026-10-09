@@ -99,7 +99,7 @@ export async function roomAuthHeaders(
   }
 }
 
-export async function createRoom(payload: { name: string }) {
+export async function createRoom(payload: { name: string; system?: string }) {
   const res = await fetch('/api/rooms', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
