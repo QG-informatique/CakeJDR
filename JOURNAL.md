@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-09 — Campagne automatique complète : « La Flamme sous la montagne »
+- Campagne de 122 scènes en trois actes et un final : trois routes au choix à l'acte III, cinq fins, indices qui ouvrent des options plus tard (`lib/autoGm/dragonCampaign.ts`)
+- Nouvelle étape « tirage au hasard » : la suite est tirée au clic, pondérée, selon les indices gagnés, pour que la partie ne se rejoue pas pareil (`lib/autoGm/index.ts`, `lib/autoGm/types.ts`)
+- Durée estimée et affichée au lancement : environ 1 h 15, de 50 min à 1 h 30 selon les choix (`lib/autoGm/duration.ts`, `components/autogm/AdventureDuration.tsx`) ; nom de l'acte au-dessus du titre de scène
+- Toutes les images viennent du pack n° 2 déjà en ligne : aucun envoi Cloudinary. Jets limités à Force, Dextérité, Constitution, Intelligence, Charisme (pas de Sagesse en d100)
+Reste ouvert : relecture par Quentin, partie complète à plusieurs, puis fiches toutes prêtes
+
 ## 2026-10-09 — Aventures toutes prêtes dans toutes les tables, le MJ tranche les égalités
 - Le MJ lance une aventure depuis son panneau, en mode « Je mène » ou « MJ automatique » (`components/autogm/AdventureLauncher.tsx`)
 - Mode « Je mène » : seuls les joueurs votent et lancent les jets du groupe ; à égalité, le MJ choisit. S'il part, retour au meilleur Charisme (`lib/autoGm/index.ts`, `components/autogm/AutoGmPanel.tsx`)

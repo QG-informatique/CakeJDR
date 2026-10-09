@@ -25,8 +25,11 @@ import {
   availableOptions,
   best,
   decide,
+  draw,
+  drawable,
   type Voter,
 } from '@/lib/autoGm'
+import AdventureDuration from './AdventureDuration'
 
 /** Ce qu'une scène fait à la fiche de chacun en arrivant. */
 export type AutoGmEffect = { damage?: number; heal?: boolean }
@@ -425,6 +428,7 @@ export default function AutoGmPanel({ adventureId, onEffect }: Props) {
         <div className="flex flex-col gap-3 p-3">
           <p className="text-sm text-ink/80">{t('autoGmIntro')}</p>
           <p className="text-sm italic text-ink/70">{adventure.pitch}</p>
+          <AdventureDuration adventure={adventure} />
           <button onClick={() => start(adventure.id, 'auto')} className="ui-btn ui-btn-primary">
             {t('autoGmStart')}
           </button>
@@ -483,6 +487,19 @@ export default function AutoGmPanel({ adventureId, onEffect }: Props) {
       <button onClick={() => go(step.next, gm.visit)} disabled={!ready} className="ui-btn ui-btn-primary">
         {step.label ?? t('autoGmContinue')}
       </button>
+    )
+  } else if (step.kind === 'random') {
+    // Le tirage se fait au clic : chacun lit le récit à son rythme avant.
+    body = (
+      <div className="flex flex-col gap-1.5">
+        <button onClick={() => go(draw(step, gm.flags), gm.visit)} disabled={!ready} className="ui-btn ui-btn-primary">
+          {step.label ?? t('autoGmContinue')}
+        </button>
+        <p className="text-xs text-ink/55">
+          {t('autoGmRandomHint')}
+          {gmSide && ` · ${t('autoGmLeadsTo').replace('{n}', drawable(step, gm.flags).map((o) => titleOf(o.next)).join(' / '))}`}
+        </p>
+      </div>
     )
   } else if (step.kind === 'vote') {
     body = (
@@ -604,7 +621,10 @@ export default function AutoGmPanel({ adventureId, onEffect }: Props) {
     <div className={box}>
       {header}
       <div className="flex min-h-0 flex-col gap-3 overflow-y-auto p-3">
-        <h3 className="text-base font-semibold">{scene.title}</h3>
+        <div>
+          {scene.chapter && <p className="ui-label !text-[10px] text-gm">{scene.chapter}</p>}
+          <h3 className="text-base font-semibold">{scene.title}</h3>
+        </div>
         <div className="flex flex-col gap-2 text-sm leading-relaxed text-ink/85">
           {scene.narration.map((p, i) => (
             <p key={i}>{p}</p>

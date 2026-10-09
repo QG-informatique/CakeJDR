@@ -42,9 +42,22 @@ export type SceneOption = {
   needs?: string
 }
 
+/** Une suite possible d'un tirage au hasard. */
+export type RandomOutcome = {
+  next: string
+  /** Poids dans le tirage (1 par défaut). */
+  weight?: number
+  /** Possible seulement si l'aventure a déjà gagné cet indice. */
+  needs?: string
+  /** Possible seulement si l'aventure n'a pas encore cet indice (une rencontre déjà faite ne revient pas). */
+  unless?: string
+}
+
 /** Ce que la scène attend pour avancer. */
 export type SceneStep =
   | { kind: 'continue'; next: string; label?: string }
+  /** Comme « Continuer », mais la suite est tirée au hasard : une partie ne se joue jamais deux fois pareil. */
+  | { kind: 'random'; outcomes: RandomOutcome[]; label?: string }
   | { kind: 'vote'; prompt: string; options: SceneOption[] }
   | {
       kind: 'check'
@@ -61,6 +74,8 @@ export type SceneStep =
 export type Scene = {
   id: string
   title: string
+  /** Acte ou chapitre, affiché au-dessus du titre dans les longues campagnes. */
+  chapter?: string
   /** Ce que le MJ raconte, un paragraphe par entrée. */
   narration: string[]
   /** Ce que seul le MJ sait : visible avec « Voir côté MJ ». */

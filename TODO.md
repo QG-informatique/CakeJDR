@@ -192,10 +192,10 @@
 - [ ] Tester le mode « Je mène » avec deux comptes joueurs et un MJ : égalité tranchée par le MJ, le MJ ne vote pas et ne lance pas les jets du groupe
 - [ ] MJ automatique : traduire en anglais le texte de l'aventure « La fournée maudite » (`lib/autoGm/cakeDemo.ts`)
 - [x] MJ automatique : le proposer hors de la salle de démo (bouton dans le panneau MJ, choix de l'aventure)
-- [ ] Phase H : proposer « avec MJ » ou « MJ automatique » pour les campagnes toutes prêtes, en réutilisant le moteur de la démo
-- [ ] Campagne automatique complète : écrire une campagne jouable sans MJ avec le moteur de la démo (`lib/autoGm/`), plusieurs branches et tirages au hasard pour qu'elle ne se joue jamais deux fois pareil
-- [ ] Campagne automatique complète : faire toutes ses images (cartes, PNJ, rencontres) et demander à Quentin l'accord pour les envoyer sur Cloudinary
-- [ ] Campagne automatique complète : estimer et afficher sa durée en heures (par branche et en moyenne)
+- [x] Phase H : proposer « avec MJ » ou « MJ automatique » pour les campagnes toutes prêtes, en réutilisant le moteur de la démo
+- [x] Campagne automatique complète : écrire une campagne jouable sans MJ avec le moteur de la démo (`lib/autoGm/`), plusieurs branches et tirages au hasard pour qu'elle ne se joue jamais deux fois pareil
+- [x] Campagne automatique complète : faire toutes ses images (cartes, PNJ, rencontres) et demander à Quentin l'accord pour les envoyer sur Cloudinary — sans objet : toutes déjà dans le pack n° 2 (`public/bibliotheque`), rien à envoyer
+- [x] Campagne automatique complète : estimer et afficher sa durée en heures (par branche et en moyenne)
 - [ ] Proposer au début d'une partie une petite sélection de personnages tout faits, au choix
 - [ ] Créer son personnage guidé par le MJ automatique : il pose les questions et fait tirer les dés des caractéristiques
 - [ ] Traduire en anglais toutes les aventures automatiques une fois la campagne complète écrite
@@ -208,7 +208,10 @@
 - [ ] Phase H : définir le format d'une campagne (scènes, déroulé du MJ, part des joueurs, mise en place, boutons de choix vers la scène suivante)
 - [ ] Phase H : créer le carnet de campagne du MJ (scène en cours, « Préparer la scène », choix validés, chemin parcouru, saut de scène)
 - [ ] Phase H : créer le journal des joueurs (résumé et indices révélés par le MJ)
-- [ ] Phase H : écrire la campagne du dragon du pack n° 2, avec ses pistes, et la faire relire par Quentin
+- [x] Phase H : écrire la campagne du dragon du pack n° 2, avec ses pistes — « La Flamme sous la montagne » (`lib/autoGm/dragonCampaign.ts`)
+- [ ] Faire relire par Quentin la campagne « La Flamme sous la montagne » (textes, difficulté des jets, cinq fins)
+- [ ] Jouer une partie entière de « La Flamme sous la montagne » à plusieurs et corriger l'estimation de durée (1 h 15 annoncée)
+- [ ] Vérifier qu'un jet du MJ automatique (DD de 11 à 15) reste juste en Fantasy 5E et en Enquête d100 (le DD devient-il un seuil en % ?)
 - [ ] Phase H : proposer « Partie libre » ou une campagne toute prête à la création d'une table
 - [x] Phase I : décrire la fiche de personnage comme un système (caractéristiques, ressources, compétences, dés, niveaux) et en faire le preset « Narratif CakeJDR »
 - [ ] Phase I : faire lire au système toute la fiche (ressources, montée de niveau, champs d'identité et d'histoire), pas seulement caractéristiques, attaques et types de compétences (`lib/gameSystems.ts`)

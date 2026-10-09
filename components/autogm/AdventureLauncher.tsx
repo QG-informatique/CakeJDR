@@ -6,6 +6,7 @@ import { useT } from '@/lib/useT'
 import { ADVENTURES } from '@/lib/autoGm'
 import type { AutoGmMode } from '@/lib/autoGm/types'
 import { useStartAdventure } from './useStartAdventure'
+import AdventureDuration from './AdventureDuration'
 
 /**
  * Panneau du MJ : lancer une aventure toute prête dans la table. Le MJ la
@@ -38,6 +39,12 @@ export default function AdventureLauncher() {
               <option key={id} value={id}>{ADVENTURES[id]!.title}</option>
             ))}
           </select>
+          {ADVENTURES[adventure] && (
+            <>
+              <p className="text-xs italic text-ink/65">{ADVENTURES[adventure]!.pitch}</p>
+              <AdventureDuration adventure={ADVENTURES[adventure]!} />
+            </>
+          )}
           <div className="ui-seg" role="group" aria-label={t('autoGmLaunchTitle')}>
             <button aria-pressed={mode === 'gm'} onClick={() => setMode('gm')}>{t('autoGmModeGm')}</button>
             <button aria-pressed={mode === 'auto'} onClick={() => setMode('auto')}>{t('autoGmModeAuto')}</button>
