@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-09 — Trois systèmes de jeu au choix à la création d'une table
+- Deux presets ajoutés au « Narratif CakeJDR » : « Fantasy 5E » (d20, bonus de maîtrise, dé de vie) et « Enquête d100 » (jet sous un pourcentage, sans niveaux) (`lib/gameSystems.ts`)
+- Licences vérifiées avant reprise : SRD 5.2.1 sous CC-BY-4.0, BRP UGE sous ORC ; mentions dans les conditions (`app/conditions/page.tsx`). « Comme D&D » retiré de l'interface (marque)
+- Système rangé dans les réglages Liveblocks de la salle, pas en base : rien à migrer. Choisi dans la fenêtre de création, modifiable par le MJ ; fiche, éditeur, tests (seuil d100 scellé côté serveur) et montée de niveau le suivent
+- Correctif : un D100 en 3D plantait à la fin du lancer quand la face était forcée (`components/dice/DiceBoxTable.tsx`)
+Reste ouvert : ressources propres au d100, égalités de vote tranchées par un MJ humain, puis la campagne automatique complète (branches, images, durée), persos tout faits et création guidée, traduction anglaise à la fin
+
 ## 2026-10-09 — Systèmes de jeu : le preset « Narratif CakeJDR »
 - La fiche est décrite comme un système de jeu : caractéristiques, règle des modificateurs, valeurs de base, attaques, ressources, types de compétences, dés, montée de niveau (`lib/gameSystems.ts`)
 - Tests du MJ, modificateurs, fiche et éditeur lisent ces listes au lieu de les recopier : rien ne change à l'écran, c'est la base pour ajouter d'autres systèmes

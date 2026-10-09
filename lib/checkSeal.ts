@@ -21,6 +21,10 @@ export type SealedCheck = {
   mod: number
   dc: number
   showDc: boolean
+  /** Dé du test, quand ce n'est pas le D20. */
+  dice?: number
+  /** Test sous un seuil (d100) : `dc` est le seuil. */
+  under?: boolean
   reason?: string
 }
 

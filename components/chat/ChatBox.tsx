@@ -281,9 +281,19 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
                       )}
                     </div>
                     <div className="flex items-baseline gap-1.5 pl-6 text-xs text-ink/60 tabular-nums">
-                      <span>D20 {ev.result} {signedMod(c.mod)} =</span>
-                      <span className="text-base font-bold leading-none text-ink">{c.total}</span>
-                      {showDc && <span>{t('checkVs')} {c.dc}</span>}
+                      {c.under ? (
+                        <>
+                          <span>D{ev.dice ?? 100}</span>
+                          <span className="text-base font-bold leading-none text-ink">{c.total}</span>
+                          {showDc && <span>{t('checkUnder')} {c.dc} %</span>}
+                        </>
+                      ) : (
+                        <>
+                          <span>D{ev.dice ?? 20} {ev.result} {signedMod(c.mod)} =</span>
+                          <span className="text-base font-bold leading-none text-ink">{c.total}</span>
+                          {showDc && <span>{t('checkVs')} {c.dc}</span>}
+                        </>
+                      )}
                       {c.reason && <span className="min-w-0 truncate text-ink/45">· {c.reason}</span>}
                     </div>
                   </div>

@@ -602,7 +602,7 @@ export default function HomePageInner() {
     return pending ? rollCheck(pending.id, sent) : rollDice(sent)
   }
   const pendingDice = pending
-    ? pending.type === 'rolls' ? Array.from({ length: pending.count }, () => pending.dice) : [20]
+    ? pending.type === 'rolls' ? Array.from({ length: pending.count }, () => pending.dice) : [pending.dice ?? 20]
     : null
   const levelUpWaits = pending?.type === 'rolls' && pending.levelUp && viewedConnectionId !== null
 

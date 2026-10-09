@@ -57,10 +57,10 @@ export default function CheckPrompt({ onRoll, disabled, levelUpBlocked = false }
       </div>
       {check.reason && <p className="text-sm text-ink/80">{check.reason}</p>}
       <p className="text-xs text-ink/60">
-        D20 {signedMod(check.mod)} ·{' '}
+        D{check.dice ?? 20} {check.under ? '' : `${signedMod(check.mod)} `}·{' '}
         {check.showDc && check.dc != null
-          ? t('checkPromptDc').replace('{n}', String(check.dc))
-          : t('checkPromptDcHidden')}
+          ? t(check.under ? 'checkPromptThreshold' : 'checkPromptDc').replace('{n}', String(check.dc))
+          : t(check.under ? 'checkPromptThresholdHidden' : 'checkPromptDcHidden')}
         {more}
       </p>
       <button onClick={() => onRoll(check.id)} disabled={disabled} className="ui-btn ui-btn-primary">

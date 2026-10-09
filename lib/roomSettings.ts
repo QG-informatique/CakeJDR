@@ -2,6 +2,7 @@
 
 import { useMutation, useStorage } from '@liveblocks/react'
 import { LiveObject } from '@liveblocks/client'
+import { DEFAULT_SYSTEM, gameSystem, type GameSystemId } from './gameSystems'
 
 /** Qui modifie les fiches : chaque joueur la sienne, ou le MJ seulement. */
 export type SheetEditMode = 'own' | 'gm'
@@ -15,6 +16,8 @@ export type RoomSettings = {
   drawAllowed: string[]
   /** Votes du MJ automatique : chacun voit qui a voté quoi, sauf s'ils sont anonymes. */
   anonymousVotes: boolean
+  /** Système de jeu de la table (`lib/gameSystems.ts`), choisi à sa création. */
+  system: GameSystemId
 }
 
 export const DEFAULT_ROOM_SETTINGS: RoomSettings = {
@@ -22,6 +25,7 @@ export const DEFAULT_ROOM_SETTINGS: RoomSettings = {
   draw: 'all',
   drawAllowed: [],
   anonymousVotes: false,
+  system: DEFAULT_SYSTEM,
 }
 
 /**
@@ -45,6 +49,12 @@ export function useRoomSettings() {
   }, [])
 
   return { settings, update }
+}
+
+/** Le système de jeu de la table. */
+export function useGameSystem() {
+  const id = useStorage((root) => root.settings?.system)
+  return gameSystem(id)
 }
 
 export function canDraw(settings: RoomSettings, user: { id?: string; gm: boolean }) {

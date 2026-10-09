@@ -17,13 +17,14 @@ import {
   CHECK_MOD_RANGE,
   CHECK_NAME_MAX,
   CHECK_REASON_MAX,
-  LEVEL_UP_TARGETS,
+  CHECK_THRESHOLD_MAX,
   ROLLS_MAX,
   isCheckStat,
   type CheckRequest,
   type GmRequest,
   type RollsRequest,
 } from '@/lib/checks'
+import { gameSystem, type GameSystem } from '@/lib/gameSystems'
 
 /**
  * Tests demandés par le MJ.
@@ -61,13 +62,17 @@ function checksMap(root: { get(key: string): unknown; set(key: string, value: ne
 /** Valide un test demandé par le MJ et le scelle ; renvoie l'erreur sinon. */
 function askCheck(
   roomId: string,
+  system: GameSystem,
   b: { targetId: string; targetName: string; stat: unknown; mod: unknown; dc: unknown; showDc: unknown; reason: string },
 ): CheckRequest | string {
   const { targetId, targetName, stat, mod, dc, showDc, reason } = b
-  if (!isCheckStat(stat)) return 'bad stat'
+  const under = system.rollUnder
+  if (!isCheckStat(stat, system)) return 'bad stat'
   if (!isInt(mod, -CHECK_MOD_RANGE, CHECK_MOD_RANGE)) return 'bad mod'
-  if (!isInt(dc, CHECK_DC_MIN, CHECK_DC_MAX)) return 'bad dc'
+  // Sous un seuil (d100), la « difficulté » est le seuil en %.
+  if (!isInt(dc, CHECK_DC_MIN, under ? CHECK_THRESHOLD_MAX : CHECK_DC_MAX)) return 'bad dc'
   if (typeof showDc !== 'boolean') return 'bad showDc'
+  const dice = system.checkDie
   const sealed: SealedCheck = {
     id: randomUUID(),
     targetId,
@@ -76,6 +81,8 @@ function askCheck(
     mod,
     dc,
     showDc,
+    ...(dice !== CHECK_DICE ? { dice } : {}),
+    ...(under ? { under } : {}),
     ...(reason ? { reason } : {}),
   }
   return {
@@ -86,6 +93,8 @@ function askCheck(
     mod,
     showDc,
     ...(showDc ? { dc } : {}),
+    ...(dice !== CHECK_DICE ? { dice } : {}),
+    ...(under ? { under } : {}),
     ...(reason ? { reason } : {}),
     createdAt: Date.now(),
     seal: sealCheck(roomId, sealed),
@@ -139,13 +148,16 @@ export async function POST(req: NextRequest) {
     if (typeof targetId !== 'string' || !targetId || targetId.length > 200) return fail('bad target', 400)
     if (!targetName) return fail('bad target name', 400)
 
+    // Le système vient du MJ, qui règle la table : on le scelle avec la demande.
+    const system = gameSystem(body.system)
     let request: GmRequest
     if (body.type === 'rolls') {
       const { dice, levelUp } = body
       if (typeof dice !== 'number' || !(DICE_TYPES as readonly number[]).includes(dice)) return fail('bad dice', 400)
       if (typeof levelUp !== 'boolean') return fail('bad levelUp', 400)
-      // Montée de niveau : un dé pour les PV et un par caractéristique.
-      const count = levelUp ? LEVEL_UP_TARGETS.length : body.count
+      // Montée de niveau : un dé par cible du système (PV, puis caractéristiques).
+      if (levelUp && system.levelUp.length === 0) return fail('no levels in this system', 400)
+      const count = levelUp ? system.levelUp.length : body.count
       if (!isInt(count, 1, ROLLS_MAX)) return fail('bad count', 400)
       const sealed: SealedRolls = {
         type: 'rolls',
@@ -160,7 +172,7 @@ export async function POST(req: NextRequest) {
       const rolls: RollsRequest = { ...sealed, createdAt: Date.now(), seal: sealCheck(roomId, sealed) }
       request = rolls
     } else {
-      const made = askCheck(roomId, { targetId, targetName, stat, mod, dc, showDc, reason })
+      const made = askCheck(roomId, system, { targetId, targetName, stat, mod, dc, showDc, reason })
       if (typeof made === 'string') return fail(made, 400)
       request = made
     }
@@ -190,7 +202,7 @@ export async function POST(req: NextRequest) {
     account ? check.targetId === account.id : check.targetId.startsWith('guest_')
   // Les faces posées doivent exister sur les dés demandés.
   const fits = (check: SealedRequest, results: unknown): results is number[] => {
-    const dice = check.type === 'rolls' ? check.dice : CHECK_DICE
+    const dice = check.type === 'rolls' ? check.dice : (check.dice ?? CHECK_DICE)
     const count = check.type === 'rolls' ? check.count : 1
     return (
       Array.isArray(results) &&
@@ -253,7 +265,7 @@ export async function POST(req: NextRequest) {
         const total = result + check.mod
         unsigned = {
           ...base,
-          dice: CHECK_DICE,
+          dice: check.dice ?? CHECK_DICE,
           result,
           check: {
             stat: check.stat,
@@ -261,7 +273,9 @@ export async function POST(req: NextRequest) {
             total,
             dc: check.dc,
             showDc: check.showDc,
-            success: total >= check.dc,
+            // Sous un seuil : réussi si le dé fait au plus le seuil.
+            success: check.under ? total <= check.dc : total >= check.dc,
+            ...(check.under ? { under: true } : {}),
             ...(check.reason ? { reason: check.reason } : {}),
           },
         }

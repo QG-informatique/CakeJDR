@@ -5,7 +5,7 @@ import { useRoom } from '@liveblocks/react'
 import { Dices, Pencil } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import { DICE_TYPES } from '@/lib/dicePayload'
-import { LEVEL_UP_TARGETS } from '@/lib/checks'
+import type { GameSystem } from '@/lib/gameSystems'
 import { postCheck } from '@/components/checks/postCheck'
 
 type Props = {
@@ -13,6 +13,7 @@ type Props = {
   target: { id: string; name: string } | null
   /** Le MJ monte le niveau et ouvre l'édition de la fiche. */
   onByHand: () => void
+  system: GameSystem
 }
 
 /**
@@ -20,7 +21,7 @@ type Props = {
  * dé pour les PV et un par caractéristique (tirés par le serveur, ajoutés à sa
  * fiche après la révélation), ou le MJ augmente lui-même ce qu'il veut.
  */
-export default function LevelUpPanel({ target, onByHand }: Props) {
+export default function LevelUpPanel({ target, onByHand, system }: Props) {
   const t = useT()
   const room = useRoom()
   const [dice, setDice] = useState(6)
@@ -31,7 +32,7 @@ export default function LevelUpPanel({ target, onByHand }: Props) {
     setState('sending')
     try {
       await postCheck(room.id, {
-        action: 'ask', type: 'rolls', targetId: target.id, targetName: target.name, dice, count: LEVEL_UP_TARGETS.length, levelUp: true,
+        action: 'ask', type: 'rolls', system: system.id, targetId: target.id, targetName: target.name, dice, count: system.levelUp.length, levelUp: true,
       })
       setState('sent')
     } catch {
@@ -41,7 +42,7 @@ export default function LevelUpPanel({ target, onByHand }: Props) {
 
   return (
     <section className="ui-well mt-4 flex flex-col gap-2 p-2.5 text-xs">
-      <p className="text-ink/65">{t('levelUpExplain')}</p>
+      <p className="text-ink/65">{t(system.levelUp.length === 1 ? 'levelUpExplainHitDie' : 'levelUpExplain')}</p>
       <div className="flex flex-wrap items-center gap-2">
         <select
           value={dice}

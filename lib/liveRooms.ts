@@ -1,4 +1,6 @@
 import { Liveblocks } from '@liveblocks/node'
+import { LiveObject } from '@liveblocks/client'
+import type { GameSystemId } from './gameSystems'
 import { randomBytes } from 'crypto'
 import { collectRoomImages, deleteCloudinaryImages, storageImageUrls } from './cloudinaryCleanup'
 
@@ -102,6 +104,19 @@ export async function createRoom(name: string) {
     metadata: { name },
   })
   return { id: room.id }
+}
+
+/**
+ * Range le système de jeu choisi à la création dans les réglages de la table
+ * (`lib/roomSettings.ts`). Les autres réglages prennent leur valeur par
+ * défaut, et le reste du stockage est créé à la première ouverture.
+ */
+export async function setRoomSystem(id: string, system: GameSystemId) {
+  await getClient().mutateStorage(id, ({ root }) => {
+    const settings = root.get('settings') as LiveObject<{ system: GameSystemId }> | undefined
+    if (settings && typeof settings.set === 'function') settings.set('system', system)
+    else root.set('settings', new LiveObject({ system }) as never)
+  })
 }
 
 /**

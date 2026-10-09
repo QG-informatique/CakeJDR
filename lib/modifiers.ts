@@ -10,10 +10,7 @@ import type { TranslationKey } from './translations'
 import type { CheckStat } from './checks'
 import { GAME_SYSTEMS, type GameSystemId } from './gameSystems'
 
-/**
- * Règles de jeu d'une table : celles de son système de jeu
- * (`lib/gameSystems.ts`). Un seul pour l'instant, le jeu narratif.
- */
+/** Règles de jeu d'une table : celles de son système de jeu (`lib/gameSystems.ts`). */
 export type RuleSystem = GameSystemId
 
 type Rule = {
@@ -26,6 +23,8 @@ type Rule = {
 
 export const RULES: Record<RuleSystem, Rule> = {
   narratif: GAME_SYSTEMS.narratif.modRule,
+  srd5: GAME_SYSTEMS.srd5.modRule,
+  d100: GAME_SYSTEMS.d100.modRule,
 }
 
 export type ModPart =

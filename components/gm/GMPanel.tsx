@@ -9,8 +9,7 @@ import {
   CHECK_DC_MIN,
   CHECK_MOD_RANGE,
   CHECK_REASON_MAX,
-  CHECK_STATS,
-  LEVEL_UP_TARGETS,
+  CHECK_THRESHOLD_MAX,
   ROLLS_MAX,
   checkStatLabel,
   signedMod,
@@ -20,7 +19,8 @@ import {
 import { statMod } from '@/lib/modifiers'
 import { DICE_TYPES } from '@/lib/dicePayload'
 import { postCheck } from '@/components/checks/postCheck'
-import { useRoomSettings, type DrawPermission, type SheetEditMode } from '@/lib/roomSettings'
+import { useGameSystem, useRoomSettings, type DrawPermission, type SheetEditMode } from '@/lib/roomSettings'
+import { GAME_SYSTEMS, GAME_SYSTEM_IDS, type GameSystem, type GameSystemId } from '@/lib/gameSystems'
 import { type Character, normalizeCharacter } from '@/types/character'
 
 type Props = {
@@ -200,6 +200,21 @@ export default function GMPanel({ viewingConnectionId, onOpenSheet, onBackToOwn,
       </section>
 
       <section className="flex flex-col gap-1.5">
+        <h3 className="ui-label !text-[10px]">{t('gameSystem')}</h3>
+        <select
+          value={settings.system}
+          onChange={(e) => update({ system: e.target.value as GameSystemId })}
+          className="ui-input w-full min-w-0 !min-h-8 text-sm"
+          aria-label={t('gameSystem')}
+        >
+          {GAME_SYSTEM_IDS.map((id) => (
+            <option key={id} value={id}>{GAME_SYSTEMS[id].name}</option>
+          ))}
+        </select>
+        <p className="text-xs text-ink/55">{t('gmSystemHint')}</p>
+      </section>
+
+      <section className="flex flex-col gap-1.5">
         <h3 className="ui-label !text-[10px]">{t('gmVotes')}</h3>
         <div className="ui-seg" role="group" aria-label={t('gmVotes')}>
           <button aria-pressed={!settings.anonymousVotes} onClick={() => update({ anonymousVotes: false })}>
@@ -243,11 +258,13 @@ function RequestForm(props: {
   onDone: () => void
 }) {
   const t = useT()
+  const system = useGameSystem()
   const [mode, setMode] = useState<RequestMode>('check')
+  // Un système sans niveaux (d100) n'a pas de montée de niveau.
   const MODES: Array<[RequestMode, string]> = [
     ['check', t('rollModeCheck')],
     ['dice', t('rollModeDice')],
-    ['level', t('rollModeLevel')],
+    ...(system.levelUp.length > 0 ? [['level', t('rollModeLevel')] as [RequestMode, string]] : []),
   ]
   return (
     <div className="ui-well flex flex-col gap-2 p-2.5 text-xs">
@@ -258,16 +275,19 @@ function RequestForm(props: {
           </button>
         ))}
       </div>
-      {mode === 'check' ? <CheckForm {...props} /> : <RollsForm {...props} levelUp={mode === 'level'} />}
+      {mode === 'check'
+        ? <CheckForm key={system.id} {...props} system={system} />
+        : <RollsForm {...props} system={system} levelUp={mode === 'level' && system.levelUp.length > 0} />}
     </div>
   )
 }
 
 /** Plusieurs dés lancés en une fois ; pour une montée de niveau, le nombre est fixé. */
-function RollsForm({ targetId, targetName, levelUp, onDone }: {
+function RollsForm({ targetId, targetName, levelUp, onDone, system }: {
   targetId: string
   targetName: string
   levelUp: boolean
+  system: GameSystem
   onDone: () => void
 }) {
   const t = useT()
@@ -278,7 +298,7 @@ function RollsForm({ targetId, targetName, levelUp, onDone }: {
   const [sending, setSending] = useState(false)
   const [error, setError] = useState(false)
 
-  const countNum = levelUp ? LEVEL_UP_TARGETS.length : Math.round(Number(count))
+  const countNum = levelUp ? system.levelUp.length : Math.round(Number(count))
   const valid = Number.isFinite(countNum) && countNum >= 1 && countNum <= ROLLS_MAX
 
   const send = async () => {
@@ -287,7 +307,7 @@ function RollsForm({ targetId, targetName, levelUp, onDone }: {
     setError(false)
     try {
       await postCheck(room.id, {
-        action: 'ask', type: 'rolls', targetId, targetName, dice, count: countNum, levelUp, reason: reason.trim(),
+        action: 'ask', type: 'rolls', system: system.id, targetId, targetName, dice, count: countNum, levelUp, reason: reason.trim(),
       })
       onDone()
     } catch {
@@ -345,23 +365,29 @@ function RollsForm({ targetId, targetName, levelUp, onDone }: {
   )
 }
 
-const modFromSheet = (c: Character, stat: CheckStat) => {
-  const n = statMod(c, stat).total
-  return Math.max(-CHECK_MOD_RANGE, Math.min(CHECK_MOD_RANGE, n))
+/** Ce que la fiche donne au test : le modificateur, ou le seuil en % d'un test sous un seuil. */
+const modFromSheet = (c: Character, stat: CheckStat, system: GameSystem) => {
+  const n = statMod(c, stat, system.id).total
+  return system.rollUnder
+    ? Math.max(CHECK_DC_MIN, Math.min(CHECK_THRESHOLD_MAX, n))
+    : Math.max(-CHECK_MOD_RANGE, Math.min(CHECK_MOD_RANGE, n))
 }
 
 /** Demande d'un test : caractéristique, modificateur, difficulté, et si le joueur la voit. */
-function CheckForm({ targetId, targetName, character, onDone }: {
+function CheckForm({ targetId, targetName, character, system, onDone }: {
   targetId: string
   targetName: string
   character: Character
+  system: GameSystem
   onDone: () => void
 }) {
   const t = useT()
   const room = useRoom()
+  const under = system.rollUnder
   const [stat, setStat] = useState<CheckStat>('force')
-  const [mod, setMod] = useState(() => String(modFromSheet(character, 'force')))
-  const [dc, setDc] = useState('10')
+  // Sous un seuil (d100), un seul nombre : le seuil, tiré de la fiche.
+  const [mod, setMod] = useState(() => (under ? '0' : String(modFromSheet(character, 'force', system))))
+  const [dc, setDc] = useState(() => (under ? String(modFromSheet(character, 'force', system)) : '10'))
   const [showDc, setShowDc] = useState(false)
   const [reason, setReason] = useState('')
   const [sending, setSending] = useState(false)
@@ -369,13 +395,15 @@ function CheckForm({ targetId, targetName, character, onDone }: {
 
   const modNum = Math.round(Number(mod))
   const dcNum = Math.round(Number(dc))
+  const dcMax = under ? CHECK_THRESHOLD_MAX : CHECK_DC_MAX
   const valid =
     mod.trim() !== '' && Number.isFinite(modNum) && Math.abs(modNum) <= CHECK_MOD_RANGE &&
-    Number.isFinite(dcNum) && dcNum >= CHECK_DC_MIN && dcNum <= CHECK_DC_MAX
+    Number.isFinite(dcNum) && dcNum >= CHECK_DC_MIN && dcNum <= dcMax
 
   const pickStat = (next: CheckStat) => {
     setStat(next)
-    setMod(String(modFromSheet(character, next)))
+    if (under) setDc(String(modFromSheet(character, next, system)))
+    else setMod(String(modFromSheet(character, next, system)))
   }
 
   const send = async () => {
@@ -384,7 +412,7 @@ function CheckForm({ targetId, targetName, character, onDone }: {
     setError(false)
     try {
       const data = await postCheck(room.id, {
-        action: 'ask', targetId, targetName, stat, mod: modNum, dc: dcNum, showDc, reason: reason.trim(),
+        action: 'ask', system: system.id, targetId, targetName, stat, mod: modNum, dc: dcNum, showDc, reason: reason.trim(),
       })
       if (data?.id && !showDc) writeHiddenDcs({ ...readHiddenDcs(), [data.id]: dcNum })
       onDone()
@@ -396,16 +424,16 @@ function CheckForm({ targetId, targetName, character, onDone }: {
 
   return (
     <>
-      <div className="grid grid-cols-[1fr_4.5rem_4.5rem] gap-2">
+      <div className={`grid gap-2 ${under ? 'grid-cols-[1fr_5rem]' : 'grid-cols-[1fr_4.5rem_4.5rem]'}`}>
         <label className="flex min-w-0 flex-col gap-1">
           <span className="text-ink/60">{t('checkStatLabel')}</span>
           <select value={stat} onChange={(e) => pickStat(e.target.value as CheckStat)} className="ui-input w-full min-w-0 !min-h-8">
-            {CHECK_STATS.map((s) => (
+            {system.stats.map((s) => (
               <option key={s.key} value={s.key}>{t(s.label)}</option>
             ))}
           </select>
         </label>
-        <label className="flex min-w-0 flex-col gap-1">
+        {!under && <label className="flex min-w-0 flex-col gap-1">
           <span className="text-ink/60">{t('checkModLabel')}</span>
           <input
             type="number"
@@ -416,21 +444,21 @@ function CheckForm({ targetId, targetName, character, onDone }: {
             onChange={(e) => setMod(e.target.value)}
             className="ui-input w-full min-w-0 !min-h-8"
           />
-        </label>
+        </label>}
         <label className="flex min-w-0 flex-col gap-1">
-          <span className="text-ink/60">{t('checkDcLabel')}</span>
+          <span className="text-ink/60">{t(under ? 'checkThresholdLabel' : 'checkDcLabel')}</span>
           <input
             type="number"
             inputMode="numeric"
             value={dc}
             min={CHECK_DC_MIN}
-            max={CHECK_DC_MAX}
+            max={dcMax}
             onChange={(e) => setDc(e.target.value)}
             className="ui-input w-full min-w-0 !min-h-8"
           />
         </label>
       </div>
-      <p className="text-[11px] text-ink/50">{t('checkModHint')}</p>
+      <p className="text-[11px] text-ink/50">{t(under ? 'checkThresholdHint' : 'checkModHint')}</p>
       <label className="flex flex-col gap-1">
         <span className="text-ink/60">{t('checkReasonLabel')}</span>
         <input
@@ -444,7 +472,7 @@ function CheckForm({ targetId, targetName, character, onDone }: {
       </label>
       <label className="flex items-center gap-2 text-ink/75">
         <input type="checkbox" checked={showDc} onChange={(e) => setShowDc(e.target.checked)} />
-        {t('checkShowDc')}
+        {t(under ? 'checkShowThreshold' : 'checkShowDc')}
       </label>
       {error && <p role="alert" className="text-red-400">{t('checkFailed')}</p>}
       <button onClick={send} disabled={!valid || sending} className="ui-btn ui-btn-primary !min-h-8 text-xs">

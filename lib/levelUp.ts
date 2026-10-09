@@ -4,7 +4,9 @@ import { type Character, normalizeCharacter } from '@/types/character'
 /**
  * Applique une montée de niveau tirée par le serveur : un niveau de plus, le
  * premier dé ajouté aux PV max (et aux PV, sans dépasser le max), puis un dé
- * par caractéristique, dans l'ordre de `LEVEL_UP_TARGETS`.
+ * par caractéristique, dans l'ordre de `LEVEL_UP_TARGETS`. Un système qui ne
+ * tire que les PV (`lib/gameSystems.ts`) envoie un seul dé : les
+ * caractéristiques restent telles quelles.
  */
 export function applyLevelUp(character: Character, gains: number[]): Character {
   const c = normalizeCharacter(character)

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import type { RoomInfo } from './RoomList'
 import { useT } from '@/lib/useT'
 import { createRoom as createRoomApi } from '@/lib/roomsApi'
+import { DEFAULT_SYSTEM, GAME_SYSTEMS, GAME_SYSTEM_IDS, type GameSystemId } from '@/lib/gameSystems'
 
 interface Props {
   open: boolean
@@ -13,6 +14,7 @@ interface Props {
 
 export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
   const [name, setName] = useState('')
+  const [system, setSystem] = useState<GameSystemId>(DEFAULT_SYSTEM)
   const [creating, setCreating] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const t = useT()
@@ -24,7 +26,7 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
     setCreating(true)
     setErrorMsg('')
     try {
-      const data = await createRoomApi({ name })
+      const data = await createRoomApi({ name, system })
       const room = {
         id: data.id,
         name,
@@ -54,6 +56,27 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') void createRoom() }}
         />
+        <fieldset className="mb-3 flex flex-col gap-1.5">
+          <legend className="mb-1 text-sm text-ink/70">{t('gameSystem')}</legend>
+          {GAME_SYSTEM_IDS.map((id) => (
+            <label
+              key={id}
+              className={`flex cursor-pointer items-start gap-2 rounded-md border px-2 py-1.5 text-sm ${system === id ? 'border-emerald-500/70 bg-emerald-500/10' : 'border-ink/15 hover:bg-surface-hover'}`}
+            >
+              <input
+                type="radio"
+                name="game-system"
+                className="mt-1"
+                checked={system === id}
+                onChange={() => setSystem(id)}
+              />
+              <span className="flex flex-col">
+                <span className="font-semibold">{GAME_SYSTEMS[id].name}</span>
+                <span className="text-xs text-ink/60">{t(GAME_SYSTEMS[id].pitch)}</span>
+              </span>
+            </label>
+          ))}
+        </fieldset>
         {creating ? (
           <div className="w-full h-2 bg-surface-hover rounded overflow-hidden mb-2">
             <div className="h-full bg-emerald-500 animate-pulse" style={{ width: '100%' }} />

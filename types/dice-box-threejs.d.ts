@@ -19,6 +19,9 @@ declare module '@3d-dice/dice-box-threejs' {
 
   export type DiceBoxDie = DiceBoxPose & {
     getLastValue(): { value: number | string } | undefined
+    result: unknown[]
+    resultReason?: string
+    storeRolledValue(reason?: string): void
     position: Vec & { clone(): { project(camera: unknown): Projected } }
     body: DiceBoxBody
   }
