@@ -1,5 +1,11 @@
 # Journal
 
+## 2026-10-10 — Création d'un héros guidée par le MJ automatique
+- Sous les héros tout prêts, « Ou crée le tien avec le MJ, aux dés » : nom, peuple (6), classe (9), puis chaque caractéristique tirée aux dés sur la table, portrait du pack, et la fiche est remplie (`components/autogm/GuidedHeroCreator.tsx`, `lib/heroCreation.ts`)
+- Dés selon le système : 4 D6 en gardant les 3 meilleurs (SRD 5.2.1), ou 3 D6 / 2 D6 + 6 en d100 (Basic Roleplaying) ; PV = dé de vie de la classe + modificateur de Constitution, ou (CON + COR) / 2 en d100
+- Les jets passent par les demandes signées du MJ : un joueur peut se demander à lui-même ces dés-là (quelques D6, pour lui seul), une seule demande de création en attente par joueur (`app/api/check/route.ts`)
+Reste ouvert : test complet avec un compte joueur neuf (le test local s'est arrêté après la Force, la fenêtre ne dessinait plus les dés), traduction anglaise des peuples et classes
+
 ## 2026-10-10 — Héros tout prêts au lancement d'une aventure
 - Huit héros prêts à jouer, avec portrait et pion du pack, caractéristiques sur l'échelle 3–18 des trois systèmes (`lib/premadeHeroes.ts`)
 - Le joueur sans fiche (nom vide) les voit dans le panneau du MJ automatique, avant et pendant l'aventure ; un clic remplit sa fiche, même si le MJ s'est réservé les fiches (`components/autogm/PremadeHeroPicker.tsx`, `components/app/HomePageInner.tsx`)

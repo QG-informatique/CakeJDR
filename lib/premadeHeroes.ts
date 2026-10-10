@@ -27,7 +27,9 @@ export type PremadeHero = {
   race: string
   classe: string
   sexe: string
-  age: number
+  age: number | ''
+  /** Capacité du peuple, pour un héros créé avec le MJ. */
+  capacite_raciale?: string
   /** Une ligne pour choisir, sur la carte du héros. */
   hook: string
   stats: Stats
@@ -249,6 +251,7 @@ export function heroCharacter(hero: PremadeHero, owner: { pseudo: string; id?: s
     classe: hero.classe,
     sexe: hero.sexe,
     age: hero.age,
+    capacite_raciale: hero.capacite_raciale ?? '',
     ...hero.stats,
     pv: hero.pv,
     pv_max: hero.pv,

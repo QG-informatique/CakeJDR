@@ -37,6 +37,8 @@ export type SealedRolls = {
   count: number
   levelUp: boolean
   reason?: string
+  /** Dés de création d'un personnage, demandés par le joueur lui-même. */
+  creation?: true
 }
 
 export type SealedRequest = SealedCheck | SealedRolls

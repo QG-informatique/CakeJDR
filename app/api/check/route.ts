@@ -31,7 +31,8 @@ import { gameSystem, type GameSystem } from '@/lib/gameSystems'
  *
  * - `ask` (MJ) : range la demande dans la liste partagée `checks` ; un test
  *   (`type: 'check'`, par défaut) ou plusieurs dés (`type: 'rolls'`, dont la
- *   montée de niveau) ;
+ *   montée de niveau) ; un joueur peut aussi se demander à lui-même les dés
+ *   de création de son personnage (`creation: true`) ;
  * - `cancel` (MJ) : la retire ;
  * - `roll` (le joueur visé) : ses dés ont roulé dans son navigateur, qui
  *   envoie les faces sur lesquelles ils se sont posés ; le serveur les
@@ -42,6 +43,8 @@ const LIMIT = 30
 const WINDOW_MS = 60 * 1000
 const MAX_EVENTS = 2000
 const MAX_PENDING = 50
+/** Dés d'une caractéristique à la création : 4 D6 dont on garde les 3 meilleurs, au plus. */
+const CREATION_DICE_MAX = 4
 
 function fail(msg: string, code: number) {
   return NextResponse.json({ error: msg }, { status: code })
@@ -106,6 +109,14 @@ async function savePending(liveblocks: Liveblocks, roomId: string, request: GmRe
   try {
     await liveblocks.mutateStorage(roomId, ({ root }) => {
       const map = checksMap(root)
+      // Une seule demande de création en attente par joueur : celle laissée
+      // en plan (page fermée) est remplacée par la nouvelle.
+      if (request.type === 'rolls' && request.creation) {
+        for (const [id, c] of [...map.entries()]) {
+          const old = c as unknown as Partial<RollsRequest>
+          if (old.type === 'rolls' && old.creation && old.targetId === request.targetId) map.delete(id)
+        }
+      }
       if (map.size >= MAX_PENDING) {
         full = true
         return
@@ -141,7 +152,15 @@ export async function POST(req: NextRequest) {
   const liveblocks = new Liveblocks({ secret })
 
   if (action === 'ask') {
-    if (access.role !== 'gm') return fail('gm only', 403)
+    // Création guidée d'un personnage : le joueur se demande à lui-même les
+    // dés de ses caractéristiques (quelques D6, sans montée de niveau).
+    const creation = body.type === 'rolls' && body.creation === true
+    if (access.role !== 'gm' && !creation) return fail('gm only', 403)
+    if (creation) {
+      const self = account ? body.targetId === account.id : String(body.targetId).startsWith('guest_')
+      if (!self) return fail('creation is for yourself', 403)
+      if (body.dice !== 6 || body.levelUp !== false || !isInt(body.count, 1, CREATION_DICE_MAX)) return fail('bad creation dice', 400)
+    }
     const { targetId, stat, mod, dc, showDc } = body
     const targetName = typeof body.targetName === 'string' ? body.targetName.trim().slice(0, CHECK_NAME_MAX) : ''
     const reason = typeof body.reason === 'string' ? body.reason.trim().slice(0, CHECK_REASON_MAX) : ''
@@ -168,6 +187,7 @@ export async function POST(req: NextRequest) {
         count,
         levelUp,
         ...(reason ? { reason } : {}),
+        ...(creation ? { creation: true as const } : {}),
       }
       const rolls: RollsRequest = { ...sealed, createdAt: Date.now(), seal: sealCheck(roomId, sealed) }
       request = rolls
