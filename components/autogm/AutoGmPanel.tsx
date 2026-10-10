@@ -430,11 +430,12 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
     return (
       <div className={box}>
         {header}
-        <div className="flex flex-col gap-3 p-3">
+        <div className="flex min-h-0 flex-col gap-3 overflow-y-auto p-3">
+          {/* Même place que pendant l'aventure : un héros en cours de création n'est pas perdu au lancement. */}
+          {needsHero && <PremadeHeroPicker onPick={onPickHero} />}
           <p className="text-sm text-ink/80">{t('autoGmIntro')}</p>
           <p className="text-sm italic text-ink/70">{adventure.pitch}</p>
           <AdventureDuration adventure={adventure} />
-          {needsHero && <PremadeHeroPicker onPick={onPickHero} />}
           <button onClick={() => start(adventure.id, 'auto')} className="ui-btn ui-btn-primary">
             {t('autoGmStart')}
           </button>
@@ -627,6 +628,7 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
     <div className={box}>
       {header}
       <div className="flex min-h-0 flex-col gap-3 overflow-y-auto p-3">
+        {needsHero && !iWatch && step.kind !== 'end' && <PremadeHeroPicker onPick={onPickHero} />}
         <div>
           {scene.chapter && <p className="ui-label !text-[10px] text-gm">{scene.chapter}</p>}
           <h3 className="text-base font-semibold">{scene.title}</h3>
@@ -642,7 +644,6 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
             {scene.gmNotes}
           </p>
         )}
-        {needsHero && !iWatch && step.kind !== 'end' && <PremadeHeroPicker onPick={onPickHero} />}
         {body}
         {step.kind !== 'end' && (
           <button onClick={stop} className="ui-btn ui-btn-ghost !min-h-7 self-start text-xs text-ink/55">

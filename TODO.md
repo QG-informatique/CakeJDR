@@ -199,7 +199,9 @@
 - [x] Proposer au début d'une partie une petite sélection de personnages tout faits, au choix — huit héros du pack (`lib/premadeHeroes.ts`), proposés dans le panneau du MJ automatique au joueur sans fiche
 - [ ] Tester le choix d'un héros tout prêt avec un compte joueur neuf (fiche vide) : la fiche est remplie, portrait et pion posés, enregistrée sur le compte
 - [ ] Traduire en anglais les huit héros tout prêts (`lib/premadeHeroes.ts`)
-- [ ] Créer son personnage guidé par le MJ automatique : il pose les questions et fait tirer les dés des caractéristiques
+- [x] Créer son personnage guidé par le MJ automatique : il pose les questions et fait tirer les dés des caractéristiques — bouton « Ou crée le tien avec le MJ, aux dés » sous les héros tout prêts (`components/autogm/GuidedHeroCreator.tsx`, `lib/heroCreation.ts`)
+- [ ] Tester la création guidée de bout en bout avec un compte joueur neuf : nom, peuple, classe, tous les dés lancés sur la table, portrait, fiche enregistrée avec les bons PV
+- [ ] Traduire en anglais les peuples et les classes de la création guidée (`lib/heroCreation.ts`)
 - [ ] Traduire en anglais toutes les aventures automatiques une fois la campagne complète écrite
 - [x] Effacer les trois croix dessinées pour l'ancienne carte dans la salle de démo (liste `strokes` de Liveblocks), puis refiger avec `scripts/capture-demo-snapshot.mjs`
 - [x] Phase G : ajouter des pions simples de couleur (rond avec initiale, une couleur par joueur) pour les scènes tactiques, générés par le code, en plus des pions illustrés vus de face

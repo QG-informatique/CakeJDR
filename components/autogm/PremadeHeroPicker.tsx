@@ -1,16 +1,19 @@
 'use client'
 
 import { useState } from 'react'
-import { UserRound } from 'lucide-react'
+import { Dices, UserRound } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import { libraryUrl } from '@/lib/library'
 import { PREMADE_HEROES, type PremadeHero } from '@/lib/premadeHeroes'
+import GuidedHeroCreator from './GuidedHeroCreator'
 
 /** Héros tout prêts, pour le joueur qui arrive sans fiche : un clic et il joue. */
 export default function PremadeHeroPicker({ onPick }: { onPick: (hero: PremadeHero) => void }) {
   const t = useT()
   const [later, setLater] = useState(false)
+  const [create, setCreate] = useState(false)
   if (later) return null
+  if (create) return <GuidedHeroCreator onDone={onPick} onBack={() => setCreate(false)} />
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-gm/40 p-2.5">
       <div className="flex items-center gap-2">
@@ -44,6 +47,9 @@ export default function PremadeHeroPicker({ onPick }: { onPick: (hero: PremadeHe
           </li>
         ))}
       </ul>
+      <button onClick={() => setCreate(true)} className="ui-btn">
+        <Dices size={14} aria-hidden /> {t('createOffer')}
+      </button>
     </div>
   )
 }

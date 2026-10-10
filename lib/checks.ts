@@ -94,6 +94,7 @@ export type RollsRequest = {
   count: number
   levelUp: boolean
   reason?: string
+  creation?: true
   createdAt: number
   seal: string
 }
