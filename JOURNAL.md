@@ -3,6 +3,7 @@
 ## 2026-10-10 — Mise en ligne et retours de test de Quentin
 - Mise en ligne de la campagne, des héros tout prêts, de la création guidée et de l'anglais (Vercel OK)
 - Retours de Quentin notés dans `TODO.md`, sans code : bug de la création guidée dans une salle en cours (jet échoué, plus de bouton), choix « MJ humain / MJ automatique » et menu de secours sans spoiler en phase H, « Créer mon système » et campagne perso jouée par le MJ automatique en phase J
+- Ajouté au TODO : écran de chargement à l'entrée d'une salle (plus de page de connexion qui clignote, barre de progression au lieu d'un fond vide)
 Reste ouvert : corriger le bug de la création guidée avant d'attaquer la phase H
 
 ## 2026-10-10 — Aventures, héros, peuples et classes en anglais

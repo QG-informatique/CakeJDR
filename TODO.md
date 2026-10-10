@@ -321,3 +321,7 @@
 - [x] Expliquer ou retirer le petit bouclier à côté des lancers dans le chat (il veut dire « Lancer enregistré par le serveur », mais personne ne le comprend sans survol)
 - [x] Musique : garder les liens YouTube pour l'instant ; Spotify demanderait que chaque joueur relie son compte (abonnement, autorisations), écarté pour la 1.0
 - [ ] Vérifier sur téléphone les emplacements de couleur du dessin et le nouveau Résumé (onglets, importer, exporter)
+
+## Retours de Quentin après les tests en ligne (2026-10-10) — chargement
+- [ ] Ne plus montrer la page de connexion une fraction de seconde en entrant dans une salle : afficher un écran de chargement tant que la session n'est pas vérifiée
+- [ ] Afficher un écran de chargement à l'arrivée dans une salle (fond, carte, panneaux) avec une barre simple qui monte, au lieu d'un fond vide qui se remplit petit à petit
