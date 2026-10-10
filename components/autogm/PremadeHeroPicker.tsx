@@ -3,13 +3,15 @@
 import { useState } from 'react'
 import { Dices, UserRound } from 'lucide-react'
 import { useT } from '@/lib/useT'
+import { useLanguage } from '@/components/context/LanguageContext'
 import { libraryUrl } from '@/lib/library'
-import { PREMADE_HEROES, type PremadeHero } from '@/lib/premadeHeroes'
+import { premadeHeroes, type PremadeHero } from '@/lib/premadeHeroes'
 import GuidedHeroCreator from './GuidedHeroCreator'
 
 /** Héros tout prêts, pour le joueur qui arrive sans fiche : un clic et il joue. */
 export default function PremadeHeroPicker({ onPick }: { onPick: (hero: PremadeHero) => void }) {
   const t = useT()
+  const { lang } = useLanguage()
   const [later, setLater] = useState(false)
   const [create, setCreate] = useState(false)
   if (later) return null
@@ -25,7 +27,7 @@ export default function PremadeHeroPicker({ onPick }: { onPick: (hero: PremadeHe
       </div>
       <p className="text-xs text-ink/70">{t('autoGmPickHeroHint')}</p>
       <ul className="grid grid-cols-2 gap-1.5">
-        {PREMADE_HEROES.map((hero) => (
+        {premadeHeroes(lang).map((hero) => (
           <li key={hero.image}>
             <button
               onClick={() => onPick(hero)}

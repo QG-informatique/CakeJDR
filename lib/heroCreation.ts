@@ -11,6 +11,7 @@
  */
 import type { GameSystemId } from './gameSystems'
 import type { PremadeHero } from './premadeHeroes'
+import { CLASSES_EN, PEOPLES_EN } from './en/heroes'
 
 export type People = { id: string; nom: string; capacite: string }
 
@@ -176,6 +177,28 @@ export const HERO_CLASSES: readonly HeroClass[] = [
     portraits: ['moine-homme'],
   },
 ]
+
+const ENGLISH_PEOPLES: readonly People[] = PEOPLES.map((p) => ({ ...p, ...PEOPLES_EN[p.id] }))
+
+const ENGLISH_CLASSES: readonly HeroClass[] = HERO_CLASSES.map((c) => {
+  const en = CLASSES_EN[c.id]
+  if (!en) return c
+  return {
+    ...c,
+    ...en,
+    competences: c.competences.map((s, i) => ({ ...s, ...en.competences[i] })),
+    objets: c.objets.map((o, i) => ({ ...o, nom: en.objets[i] ?? o.nom })),
+  }
+})
+
+/** Peuples et classes dans la langue de l'interface. */
+export function peoples(lang: 'en' | 'fr'): readonly People[] {
+  return lang === 'en' ? ENGLISH_PEOPLES : PEOPLES
+}
+
+export function heroClasses(lang: 'en' | 'fr'): readonly HeroClass[] {
+  return lang === 'en' ? ENGLISH_CLASSES : HERO_CLASSES
+}
 
 /** Portraits du pack qui ont aussi leur pion. */
 export const HERO_PORTRAITS = [

@@ -7,6 +7,7 @@ import { useMutation, useOthers, useSelf, useStorage } from '@liveblocks/react'
 import { LiveMap } from '@liveblocks/client'
 import { Bot, Check, ChevronUp, Eye, EyeOff, Target, X } from 'lucide-react'
 import { useT } from '@/lib/useT'
+import { useLanguage } from '@/components/context/LanguageContext'
 import { useRoomSettings } from '@/lib/roomSettings'
 import { CHECK_STATS, checkStatLabel, withStat } from '@/lib/checks'
 import { statMod } from '@/lib/modifiers'
@@ -20,6 +21,7 @@ import type { PremadeHero } from '@/lib/premadeHeroes'
 import type { Character } from '@/types/character'
 import {
   ADVENTURES,
+  adventureIn,
   CHECK_READ_MS,
   NEUTRAL,
   VOTE_SETTLE_MS,
@@ -92,6 +94,7 @@ function Bubble({ voter, size = 20 }: { voter: Voter; size?: number }) {
  */
 export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHero }: Props) {
   const t = useT()
+  const { lang } = useLanguage()
   const { id: roomId } = useParams<{ id: string }>()
   const { settings } = useRoomSettings()
   const showImage = useShowImage()
@@ -144,7 +147,8 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
   const humanGm = gmLeads ? voters.find((v) => v.gm) : undefined
   const iWatch = gmLeads && !!me?.gm
 
-  const adventure = ADVENTURES[gm?.adventure ?? adventureId]
+  const adventureKey = gm?.adventure ?? adventureId
+  const adventure = useMemo(() => adventureIn(adventureKey, lang), [adventureKey, lang])
   const scene = gm && adventure ? adventure.scenes[gm.scene] : undefined
   const step = scene?.step
   const ready = !!gm && gm.setup >= gm.visit
@@ -193,7 +197,8 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
     const state = storage.get('autoGm')
     if (!state || state.get('visit') !== expected || state.get('setup') >= expected) return null
     state.set('setup', expected)
-    const current = ADVENTURES[state.get('adventure')]?.scenes[state.get('scene')]
+    // Le récit part dans l'historique dans la langue de celui qui le pose.
+    const current = adventureIn(state.get('adventure'), lang)?.scenes[state.get('scene')]
     if (!current) return null
     const setup = current.setup
     const now = Date.now()
@@ -229,7 +234,7 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
     })
     for (let i = list.length - MAX_EVENTS; i > 0; i -= 1) list.delete(0)
     return setup?.show ?? null
-  }, [])
+  }, [lang])
 
   const vote = useMutation(({ storage, self }, option: string, expected: number) => {
     const state = storage.get('autoGm')

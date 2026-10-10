@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useStorage } from '@liveblocks/react'
 import { useT } from '@/lib/useT'
-import { ADVENTURES } from '@/lib/autoGm'
+import { useLanguage } from '@/components/context/LanguageContext'
+import { ADVENTURES, adventureIn } from '@/lib/autoGm'
 import type { AutoGmMode } from '@/lib/autoGm/types'
 import { useStartAdventure } from './useStartAdventure'
 import AdventureDuration from './AdventureDuration'
@@ -15,12 +16,14 @@ import AdventureDuration from './AdventureDuration'
  */
 export default function AdventureLauncher() {
   const t = useT()
+  const { lang } = useLanguage()
   const running = useStorage((root) => root.autoGm?.adventure ?? null)
   const start = useStartAdventure()
   const ids = Object.keys(ADVENTURES)
   const [adventure, setAdventure] = useState(ids[0] ?? '')
   const [mode, setMode] = useState<AutoGmMode>('gm')
-  const current = running ? ADVENTURES[running] : undefined
+  const current = running ? adventureIn(running, lang) : undefined
+  const chosen = adventureIn(adventure, lang)
 
   return (
     <section className="flex flex-col gap-1.5">
@@ -36,13 +39,13 @@ export default function AdventureLauncher() {
             aria-label={t('autoGmLaunchTitle')}
           >
             {ids.map((id) => (
-              <option key={id} value={id}>{ADVENTURES[id]!.title}</option>
+              <option key={id} value={id}>{adventureIn(id, lang)!.title}</option>
             ))}
           </select>
-          {ADVENTURES[adventure] && (
+          {chosen && (
             <>
-              <p className="text-xs italic text-ink/65">{ADVENTURES[adventure]!.pitch}</p>
-              <AdventureDuration adventure={ADVENTURES[adventure]!} />
+              <p className="text-xs italic text-ink/65">{chosen.pitch}</p>
+              <AdventureDuration adventure={chosen} />
             </>
           )}
           <div className="ui-seg" role="group" aria-label={t('autoGmLaunchTitle')}>
