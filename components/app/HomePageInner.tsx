@@ -33,6 +33,7 @@ import { applyLevelUp } from '@/lib/levelUp'
 import { Crown } from 'lucide-react'
 import ShownImage from '@/components/canvas/ShownImage'
 import AutoGmPanel, { type AutoGmEffect } from '@/components/autogm/AutoGmPanel'
+import { heroCharacter, type PremadeHero } from '@/lib/premadeHeroes'
 import { DEMO_ADVENTURE } from '@/lib/autoGm'
 import { useIsDemoRoom } from '@/lib/useIsDemoRoom'
 import {
@@ -480,6 +481,15 @@ export default function HomePageInner() {
     handleUpdatePerso({ ...perso, pv }, true)
   }
 
+  // Héros tout prêt choisi au lancement d'une aventure : il devient la fiche
+  // du joueur, même quand le MJ s'est réservé les fiches.
+  const handlePickHero = (hero: PremadeHero) => {
+    if (viewedConnectionId !== null) return
+    const char = heroCharacter(hero, { pseudo: profile?.pseudo ?? '', id: profile?.id })
+    // La fiche vide déjà ouverte est remplacée, pas doublée.
+    handleUpdatePerso({ ...char, id: perso.id || char.id }, true)
+  }
+
   // En quittant la table, une modification encore en attente est envoyee
   // tout de suite plutot que perdue.
   useEffect(() => () => {
@@ -710,7 +720,14 @@ export default function HomePageInner() {
                 ) : null}
               />
             </ErrorBoundary>
-            {autoGmEnabled && <AutoGmPanel adventureId={DEMO_ADVENTURE} onEffect={handleAutoGmEffect} />}
+            {autoGmEnabled && (
+              <AutoGmPanel
+                adventureId={DEMO_ADVENTURE}
+                onEffect={handleAutoGmEffect}
+                needsHero={viewedConnectionId === null && !perso.nom?.trim()}
+                onPickHero={handlePickHero}
+              />
+            )}
             {/* Bandeau de la salle de démo, en bas du plateau : il ne cache pas les outils. */}
             <DemoBanner />
             <ErrorBoundary fallback={<div className="p-4 text-red-500">Dice display error</div>}>

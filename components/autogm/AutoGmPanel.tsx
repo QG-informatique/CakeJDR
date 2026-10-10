@@ -15,6 +15,8 @@ import { useShowImage } from '@/components/canvas/ShownImage'
 import { postCheck } from '@/components/checks/postCheck'
 import { getTextColor } from '@/components/chat/LiveAvatarStack'
 import { useStartAdventure } from './useStartAdventure'
+import PremadeHeroPicker from './PremadeHeroPicker'
+import type { PremadeHero } from '@/lib/premadeHeroes'
 import type { Character } from '@/types/character'
 import {
   ADVENTURES,
@@ -38,6 +40,9 @@ type Props = {
   adventureId: string
   /** Appliqué par chaque joueur à sa propre fiche. */
   onEffect: (effect: AutoGmEffect) => void
+  /** Le joueur n'a pas encore de fiche : on lui propose un héros tout prêt. */
+  needsHero: boolean
+  onPickHero: (hero: PremadeHero) => void
 }
 
 const MAX_EVENTS = 2000
@@ -85,7 +90,7 @@ function Bubble({ voter, size = 20 }: { voter: Voter; size?: number }) {
  * connecté s'il n'y a pas de MJ. S'il part, le suivant prend le relais là où
  * en était la partie, puisque tout est rangé dans le stockage partagé.
  */
-export default function AutoGmPanel({ adventureId, onEffect }: Props) {
+export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHero }: Props) {
   const t = useT()
   const { id: roomId } = useParams<{ id: string }>()
   const { settings } = useRoomSettings()
@@ -429,6 +434,7 @@ export default function AutoGmPanel({ adventureId, onEffect }: Props) {
           <p className="text-sm text-ink/80">{t('autoGmIntro')}</p>
           <p className="text-sm italic text-ink/70">{adventure.pitch}</p>
           <AdventureDuration adventure={adventure} />
+          {needsHero && <PremadeHeroPicker onPick={onPickHero} />}
           <button onClick={() => start(adventure.id, 'auto')} className="ui-btn ui-btn-primary">
             {t('autoGmStart')}
           </button>
@@ -636,6 +642,7 @@ export default function AutoGmPanel({ adventureId, onEffect }: Props) {
             {scene.gmNotes}
           </p>
         )}
+        {needsHero && !iWatch && step.kind !== 'end' && <PremadeHeroPicker onPick={onPickHero} />}
         {body}
         {step.kind !== 'end' && (
           <button onClick={stop} className="ui-btn ui-btn-ghost !min-h-7 self-start text-xs text-ink/55">

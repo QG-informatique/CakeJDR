@@ -1,5 +1,11 @@
 # Journal
 
+## 2026-10-10 — Héros tout prêts au lancement d'une aventure
+- Huit héros prêts à jouer, avec portrait et pion du pack, caractéristiques sur l'échelle 3–18 des trois systèmes (`lib/premadeHeroes.ts`)
+- Le joueur sans fiche (nom vide) les voit dans le panneau du MJ automatique, avant et pendant l'aventure ; un clic remplit sa fiche, même si le MJ s'est réservé les fiches (`components/autogm/PremadeHeroPicker.tsx`, `components/app/HomePageInner.tsx`)
+- La fiche vide est remplacée (même identifiant) plutôt que doublée. Pas proposé au MJ qui mène en mode « Je mène »
+Reste ouvert : test avec un compte joueur neuf, traduction anglaise des héros, puis création guidée par le MJ
+
 ## 2026-10-09 — Campagne automatique complète : « La Flamme sous la montagne »
 - Campagne de 122 scènes en trois actes et un final : trois routes au choix à l'acte III, cinq fins, indices qui ouvrent des options plus tard (`lib/autoGm/dragonCampaign.ts`)
 - Nouvelle étape « tirage au hasard » : la suite est tirée au clic, pondérée, selon les indices gagnés, pour que la partie ne se rejoue pas pareil (`lib/autoGm/index.ts`, `lib/autoGm/types.ts`)

@@ -196,7 +196,9 @@
 - [x] Campagne automatique complète : écrire une campagne jouable sans MJ avec le moteur de la démo (`lib/autoGm/`), plusieurs branches et tirages au hasard pour qu'elle ne se joue jamais deux fois pareil
 - [x] Campagne automatique complète : faire toutes ses images (cartes, PNJ, rencontres) et demander à Quentin l'accord pour les envoyer sur Cloudinary — sans objet : toutes déjà dans le pack n° 2 (`public/bibliotheque`), rien à envoyer
 - [x] Campagne automatique complète : estimer et afficher sa durée en heures (par branche et en moyenne)
-- [ ] Proposer au début d'une partie une petite sélection de personnages tout faits, au choix
+- [x] Proposer au début d'une partie une petite sélection de personnages tout faits, au choix — huit héros du pack (`lib/premadeHeroes.ts`), proposés dans le panneau du MJ automatique au joueur sans fiche
+- [ ] Tester le choix d'un héros tout prêt avec un compte joueur neuf (fiche vide) : la fiche est remplie, portrait et pion posés, enregistrée sur le compte
+- [ ] Traduire en anglais les huit héros tout prêts (`lib/premadeHeroes.ts`)
 - [ ] Créer son personnage guidé par le MJ automatique : il pose les questions et fait tirer les dés des caractéristiques
 - [ ] Traduire en anglais toutes les aventures automatiques une fois la campagne complète écrite
 - [x] Effacer les trois croix dessinées pour l'ancienne carte dans la salle de démo (liste `strokes` de Liveblocks), puis refiger avec `scripts/capture-demo-snapshot.mjs`
