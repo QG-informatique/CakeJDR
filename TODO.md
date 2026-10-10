@@ -190,7 +190,7 @@
 - [ ] Faire tester par Quentin le MJ automatique dans la salle de démo en ligne (vote à plusieurs, égalité tranchée au Charisme, jets, dégâts, les quatre fins)
 - [x] MJ automatique : laisser le MJ humain trancher les égalités de vote dans les tables normales — mode « Je mène » lancé depuis le panneau du MJ
 - [ ] Tester le mode « Je mène » avec deux comptes joueurs et un MJ : égalité tranchée par le MJ, le MJ ne vote pas et ne lance pas les jets du groupe
-- [ ] MJ automatique : traduire en anglais le texte de l'aventure « La fournée maudite » (`lib/autoGm/cakeDemo.ts`)
+- [x] MJ automatique : traduire en anglais le texte de l'aventure « La fournée maudite » (`lib/autoGm/cakeDemo.ts`)
 - [x] MJ automatique : le proposer hors de la salle de démo (bouton dans le panneau MJ, choix de l'aventure)
 - [x] Phase H : proposer « avec MJ » ou « MJ automatique » pour les campagnes toutes prêtes, en réutilisant le moteur de la démo
 - [x] Campagne automatique complète : écrire une campagne jouable sans MJ avec le moteur de la démo (`lib/autoGm/`), plusieurs branches et tirages au hasard pour qu'elle ne se joue jamais deux fois pareil
@@ -198,11 +198,13 @@
 - [x] Campagne automatique complète : estimer et afficher sa durée en heures (par branche et en moyenne)
 - [x] Proposer au début d'une partie une petite sélection de personnages tout faits, au choix — huit héros du pack (`lib/premadeHeroes.ts`), proposés dans le panneau du MJ automatique au joueur sans fiche
 - [ ] Tester le choix d'un héros tout prêt avec un compte joueur neuf (fiche vide) : la fiche est remplie, portrait et pion posés, enregistrée sur le compte
-- [ ] Traduire en anglais les huit héros tout prêts (`lib/premadeHeroes.ts`)
+- [x] Traduire en anglais les huit héros tout prêts (`lib/premadeHeroes.ts`)
 - [x] Créer son personnage guidé par le MJ automatique : il pose les questions et fait tirer les dés des caractéristiques — bouton « Ou crée le tien avec le MJ, aux dés » sous les héros tout prêts (`components/autogm/GuidedHeroCreator.tsx`, `lib/heroCreation.ts`)
 - [ ] Tester la création guidée de bout en bout avec un compte joueur neuf : nom, peuple, classe, tous les dés lancés sur la table, portrait, fiche enregistrée avec les bons PV
-- [ ] Traduire en anglais les peuples et les classes de la création guidée (`lib/heroCreation.ts`)
-- [ ] Traduire en anglais toutes les aventures automatiques une fois la campagne complète écrite
+- [x] Traduire en anglais les peuples et les classes de la création guidée (`lib/heroCreation.ts`)
+- [x] Traduire en anglais toutes les aventures automatiques une fois la campagne complète écrite
+- [ ] Faire relire par un anglophone la traduction de « La Flamme sous la montagne » et de « La fournée maudite » (`lib/autoGm/en/`)
+- [ ] Écrire la version anglaise de chaque nouvelle aventure dans `lib/autoGm/en/` (sinon elle reste en français pour les tables anglaises)
 - [x] Effacer les trois croix dessinées pour l'ancienne carte dans la salle de démo (liste `strokes` de Liveblocks), puis refiger avec `scripts/capture-demo-snapshot.mjs`
 - [x] Phase G : ajouter des pions simples de couleur (rond avec initiale, une couleur par joueur) pour les scènes tactiques, générés par le code, en plus des pions illustrés vus de face
 - [x] Phase G : réserver la bibliothèque au MJ (le joueur ne pose que le pion de son personnage, choisi dans sa fiche)

@@ -8,6 +8,7 @@
  */
 import { libraryUrl } from './library'
 import { defaultCharacter, type Character } from '@/types/character'
+import { HEROES_EN } from './en/heroes'
 
 type Stats = {
   force: number
@@ -237,6 +238,22 @@ export const PREMADE_HEROES: readonly PremadeHero[] = [
     background: 'Gardienne d\'une forêt que la brume ronge, elle sent que le mal vient de la montagne.',
   },
 ]
+
+const ENGLISH_HEROES: readonly PremadeHero[] = PREMADE_HEROES.map((hero) => {
+  const en = HEROES_EN[hero.image]
+  if (!en) return hero
+  return {
+    ...hero,
+    ...en,
+    competences: hero.competences.map((c, i) => ({ ...c, ...en.competences[i] })),
+    objets: hero.objets.map((o, i) => ({ ...o, nom: en.objets[i] ?? o.nom })),
+  }
+})
+
+/** Les héros tout prêts dans la langue de l'interface. */
+export function premadeHeroes(lang: 'en' | 'fr'): readonly PremadeHero[] {
+  return lang === 'en' ? ENGLISH_HEROES : PREMADE_HEROES
+}
 
 /** Fiche complète, neuve, du héros choisi, au nom de ce joueur. */
 export function heroCharacter(hero: PremadeHero, owner: { pseudo: string; id?: string }): Character {

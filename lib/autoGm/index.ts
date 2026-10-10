@@ -7,14 +7,67 @@
  */
 import { CAKE_DEMO } from './cakeDemo'
 import { DRAGON_CAMPAIGN } from './dragonCampaign'
-import type { Adventure, RandomOutcome, Scene, SceneOption, SceneStep } from './types'
+import { CAKE_DEMO_EN } from './en/cakeDemo'
+import { DRAGON_CAMPAIGN_EN } from './en/dragonCampaign'
+import type { Adventure, AdventureText, RandomOutcome, Scene, SceneOption, SceneStep } from './types'
 
-export type { Adventure, Scene, SceneOption } from './types'
+export type { Adventure, AdventureText, Scene, SceneOption } from './types'
 export { estimateDuration, formatMinutes } from './duration'
 
 export const ADVENTURES: Record<string, Adventure> = {
   [CAKE_DEMO.id]: CAKE_DEMO,
   [DRAGON_CAMPAIGN.id]: DRAGON_CAMPAIGN,
+}
+
+/** Textes anglais de chaque aventure ; une scène sans traduction reste en français. */
+const ENGLISH: Record<string, AdventureText> = {
+  [CAKE_DEMO.id]: CAKE_DEMO_EN,
+  [DRAGON_CAMPAIGN.id]: DRAGON_CAMPAIGN_EN,
+}
+
+/** L'aventure avec les textes d'une autre langue posés sur ses scènes. */
+export function withText(adventure: Adventure, text: AdventureText): Adventure {
+  const scenes: Record<string, Scene> = {}
+  for (const [id, scene] of Object.entries(adventure.scenes)) {
+    const tx = text.scenes[id]
+    if (!tx) {
+      scenes[id] = scene
+      continue
+    }
+    const step = scene.step
+    let translated: SceneStep = step
+    if (step.kind === 'continue' || step.kind === 'random') translated = { ...step, label: tx.label ?? step.label }
+    else if (step.kind === 'vote')
+      translated = { ...step, prompt: tx.prompt ?? step.prompt, options: step.options.map((o) => ({ ...o, label: tx.options?.[o.id] ?? o.label })) }
+    else if (step.kind === 'check') translated = { ...step, prompt: tx.prompt ?? step.prompt, reason: tx.reason ?? step.reason }
+    else translated = { ...step, title: tx.end ?? step.title }
+    const show = scene.setup?.show
+    scenes[id] = {
+      ...scene,
+      title: tx.title,
+      chapter: tx.chapter ?? scene.chapter,
+      narration: tx.narration,
+      gmNotes: tx.gmNotes ?? scene.gmNotes,
+      ...(show && scene.setup ? { setup: { ...scene.setup, show: { ...show, label: tx.show ?? show.label } } } : {}),
+      step: translated,
+    }
+  }
+  return { ...adventure, title: text.title, pitch: text.pitch, scenes }
+}
+
+const inEnglish = new Map<string, Adventure>()
+
+/** L'aventure dans la langue de l'interface. */
+export function adventureIn(id: string, lang: 'en' | 'fr'): Adventure | undefined {
+  const adventure = ADVENTURES[id]
+  const text = ENGLISH[id]
+  if (!adventure || lang === 'fr' || !text) return adventure
+  let done = inEnglish.get(id)
+  if (!done) {
+    done = withText(adventure, text)
+    inEnglish.set(id, done)
+  }
+  return done
 }
 
 /** Aventure lancée dans la salle de démonstration. */

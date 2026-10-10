@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-10 — Aventures, héros, peuples et classes en anglais
+- Les deux aventures ont leur texte anglais, scène par scène (`lib/autoGm/en/`) ; le panneau et le lanceur les montrent selon la langue de l'interface (`lib/autoGm/index.ts`, `adventureIn`)
+- Une scène sans traduction reste en français : une nouvelle aventure marche tout de suite, en français, avant sa version anglaise
+- Le récit posté dans l'historique part dans la langue de celui qui l'affiche (un seul texte pour toute la table)
+- Les huit héros, les six peuples et les neuf classes en anglais (`lib/en/heroes.ts`)
+Reste ouvert : relecture de l'anglais par Quentin ou un anglophone
+
 ## 2026-10-10 — Création d'un héros guidée par le MJ automatique
 - Sous les héros tout prêts, « Ou crée le tien avec le MJ, aux dés » : nom, peuple (6), classe (9), puis chaque caractéristique tirée aux dés sur la table, portrait du pack, et la fiche est remplie (`components/autogm/GuidedHeroCreator.tsx`, `lib/heroCreation.ts`)
 - Dés selon le système : 4 D6 en gardant les 3 meilleurs (SRD 5.2.1), ou 3 D6 / 2 D6 + 6 en d100 (Basic Roleplaying) ; PV = dé de vie de la classe + modificateur de Constitution, ou (CON + COR) / 2 en d100

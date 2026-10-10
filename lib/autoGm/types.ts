@@ -99,6 +99,27 @@ export type Adventure = {
   scenes: Record<string, Scene>
 }
 
+/** Les textes d'une scène dans une autre langue ; le reste (plateau, suites) ne change pas. */
+export type SceneText = {
+  title: string
+  chapter?: string
+  narration: string[]
+  gmNotes?: string
+  /** Légende de la rencontre montrée en grand. */
+  show?: string
+  /** Bouton « Continuer » ou du tirage. */
+  label?: string
+  /** Question du vote ou du jet. */
+  prompt?: string
+  reason?: string
+  /** Réponses du vote, par identifiant. */
+  options?: Record<string, string>
+  /** Titre de la fin. */
+  end?: string
+}
+
+export type AdventureText = { title: string; pitch: string; scenes: Record<string, SceneText> }
+
 /**
  * Qui mène l'aventure : le MJ automatique seul, ou le MJ de la table, qui
  * laisse les joueurs voter et tranche lui-même les égalités.

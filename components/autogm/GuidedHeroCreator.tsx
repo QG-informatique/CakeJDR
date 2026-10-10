@@ -5,14 +5,15 @@ import { useParams } from 'next/navigation'
 import { useSelf, useStorage } from '@liveblocks/react'
 import { ArrowLeft, Dices } from 'lucide-react'
 import { useT } from '@/lib/useT'
+import { useLanguage } from '@/components/context/LanguageContext'
 import { libraryUrl } from '@/lib/library'
 import { useGameSystem } from '@/lib/roomSettings'
 import { postCheck } from '@/components/checks/postCheck'
 import {
-  HERO_CLASSES,
   HERO_PORTRAITS,
-  PEOPLES,
   createdHero,
+  heroClasses,
+  peoples,
   startingHp,
   statDice,
   statValue,
@@ -30,6 +31,7 @@ type Step = 'name' | 'people' | 'class' | 'stats' | 'portrait' | 'ready'
  */
 export default function GuidedHeroCreator({ onDone, onBack }: { onDone: (hero: PremadeHero) => void; onBack: () => void }) {
   const t = useT()
+  const { lang } = useLanguage()
   const system = useGameSystem()
   const { id: roomId } = useParams<{ id: string }>()
   const selfId = useSelf((me) => me.id)
@@ -152,7 +154,7 @@ export default function GuidedHeroCreator({ onDone, onBack }: { onDone: (hero: P
       <div className="flex flex-col gap-2">
         {mjLine('createAskPeople')}
         <ul className="flex flex-col gap-1">
-          {PEOPLES.map((p) => (
+          {peoples(lang).map((p) => (
             <li key={p.id}>
               <button
                 onClick={() => {
@@ -174,7 +176,7 @@ export default function GuidedHeroCreator({ onDone, onBack }: { onDone: (hero: P
       <div className="flex flex-col gap-2">
         {mjLine('createAskClass')}
         <ul className="flex flex-col gap-1">
-          {HERO_CLASSES.map((c) => (
+          {heroClasses(lang).map((c) => (
             <li key={c.id}>
               <button
                 onClick={() => {
