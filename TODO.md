@@ -201,6 +201,9 @@
 - [x] Traduire en anglais les huit héros tout prêts (`lib/premadeHeroes.ts`)
 - [x] Créer son personnage guidé par le MJ automatique : il pose les questions et fait tirer les dés des caractéristiques — bouton « Ou crée le tien avec le MJ, aux dés » sous les héros tout prêts (`components/autogm/GuidedHeroCreator.tsx`, `lib/heroCreation.ts`)
 - [ ] Tester la création guidée de bout en bout avec un compte joueur neuf : nom, peuple, classe, tous les dés lancés sur la table, portrait, fiche enregistrée avec les bons PV
+- [ ] Corriger la création guidée dans une salle déjà en cours (retour de Quentin, 2026-10-10) : la demande de jet a échoué (« réessayer »), puis plus de bouton pour lancer, et un dé lancé à la main (d20 ou d6) n'a rien fait
+- [ ] Afficher en permanence dans la création guidée quels dés lancer (nombre et type), avec un bouton pour les lancer, même après un échec de la demande
+- [ ] Vérifier ce qui s'affiche quand on revient dans une salle où une aventure automatique est en cours (panneau du MJ automatique, héros tout prêts) et le rendre clair pour le joueur
 - [x] Traduire en anglais les peuples et les classes de la création guidée (`lib/heroCreation.ts`)
 - [x] Traduire en anglais toutes les aventures automatiques une fois la campagne complète écrite
 - [ ] Faire relire par un anglophone la traduction de « La Flamme sous la montagne » et de « La fournée maudite » (`lib/autoGm/en/`)
@@ -219,6 +222,10 @@
 - [ ] Jouer une partie entière de « La Flamme sous la montagne » à plusieurs et corriger l'estimation de durée (1 h 15 annoncée)
 - [ ] Vérifier qu'un jet du MJ automatique (DD de 11 à 15) reste juste en Fantasy 5E et en Enquête d100 (le DD devient-il un seuil en % ?)
 - [ ] Phase H : proposer « Partie libre » ou une campagne toute prête à la création d'une table
+- [ ] Phase H : à la création d'une table, choisir « MJ humain » ou « MJ automatique »
+- [ ] Phase H : en MJ automatique, cacher au créateur de la table tout le côté MJ (notes secrètes, scènes à venir, fins) : il joue comme les autres joueurs
+- [ ] Phase H : donner au créateur d'une table en MJ automatique un menu de secours qui ne révèle pas l'histoire (relancer la scène, annuler un jet bloqué, passer à la suite, reprendre la main en MJ humain)
+- [ ] Phase H : vérifier qu'une campagne entière se joue en MJ automatique sans aucun MJ humain dans la salle (votes, égalités, jets, dégâts, création des héros)
 - [x] Phase I : décrire la fiche de personnage comme un système (caractéristiques, ressources, compétences, dés, niveaux) et en faire le preset « Narratif CakeJDR »
 - [ ] Phase I : faire lire au système toute la fiche (ressources, montée de niveau, champs d'identité et d'histoire), pas seulement caractéristiques, attaques et types de compétences (`lib/gameSystems.ts`)
 - [x] Phase I : choisir deux ou trois autres presets, en vérifiant la licence de toute règle reprise — « Fantasy 5E » (SRD 5.2.1, CC-BY-4.0) et « Enquête d100 » (BRP UGE, ORC), mentions dans `app/conditions/page.tsx`
@@ -227,7 +234,10 @@
 - [ ] Phase I : afficher « — » plutôt que « 0 % » pour Corpulence et Pouvoir tant que la fiche d100 ne les a pas remplis
 - [ ] Tester les trois systèmes avec un second compte joueur : fiche, test du MJ (seuil d100 caché), montée de niveau Fantasy 5E (un seul dé de vie)
 - [ ] Phase J : créer l'éditeur de système (partir d'un preset, aperçu de la fiche en direct)
+- [ ] Phase J : à la création d'une table, ajouter « Créer mon système » à côté des systèmes proposés (bouton visible, marqué « bientôt » tant que l'éditeur n'existe pas)
+- [ ] Phase J : ajouter une entrée « Systèmes de jeu » dans le menu principal, à côté des salles et des personnages
 - [ ] Phase J : créer l'éditeur de campagne (scènes reliées, images, boutons de choix), rangé dans le compte du MJ (tables en base, avec accord)
+- [ ] Phase J : à la création d'une table en MJ automatique, choisir une campagne toute prête ou une campagne créée dans l'éditeur, jouée par le MJ automatique
 - [ ] Phase J : exporter et importer une campagne en fichier, puis permettre le partage entre MJ
 
 ## Retours de Quentin sur la version en ligne (2026-10-05) — tests, niveaux, dés

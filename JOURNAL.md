@@ -1,5 +1,10 @@
 # Journal
 
+## 2026-10-10 — Mise en ligne et retours de test de Quentin
+- Mise en ligne de la campagne, des héros tout prêts, de la création guidée et de l'anglais (Vercel OK)
+- Retours de Quentin notés dans `TODO.md`, sans code : bug de la création guidée dans une salle en cours (jet échoué, plus de bouton), choix « MJ humain / MJ automatique » et menu de secours sans spoiler en phase H, « Créer mon système » et campagne perso jouée par le MJ automatique en phase J
+Reste ouvert : corriger le bug de la création guidée avant d'attaquer la phase H
+
 ## 2026-10-10 — Aventures, héros, peuples et classes en anglais
 - Les deux aventures ont leur texte anglais, scène par scène (`lib/autoGm/en/`) ; le panneau et le lanceur les montrent selon la langue de l'interface (`lib/autoGm/index.ts`, `adventureIn`)
 - Une scène sans traduction reste en français : une nouvelle aventure marche tout de suite, en français, avant sa version anglaise
