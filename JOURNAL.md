@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-12 — Écran de création de salle simplifié, mise en ligne
+- Création de salle réordonnée : nom, puis « Qui mène la partie ? » en deux cartes (MJ humain / MJ automatique), la campagne en cartes si MJ automatique (`components/rooms/RoomCreateModal.tsx`)
+- Système de jeu et « Nouveau héros pour cette aventure » repliés sous « Options », avec leur valeur résumée sur la ligne : on les garde presque toujours tels quels
+- Bouton « Créer et lancer l'aventure » en MJ automatique, nouveaux textes (`lib/translations.ts`)
+- Mis en ligne pour que Quentin teste le début de campagne et la création de héros
+Reste ouvert : retours de Quentin sur ce test en ligne
+
 ## 2026-10-12 — Phase H : création de salle avec MJ automatique, héros par aventure
 - Création d'une salle : MJ humain ou MJ automatique avec choix de la campagne, et « Nouveau héros pour cette aventure » coché d'office ; le créateur entre directement (`components/rooms/RoomCreateModal.tsx`, `app/api/rooms/route.ts`, `lib/liveRooms.ts`)
 - Nouveau réglage `newHeroes` et champ `heroFor` sur la fiche : une salle « Nouveau héros » n'ouvre que les héros créés pour elle, sinon fiche vierge et choix du héros ; décochable dans le panneau MJ (`lib/roomSettings.ts`, `components/app/HomePageInner.tsx`, `components/gm/GMPanel.tsx`)

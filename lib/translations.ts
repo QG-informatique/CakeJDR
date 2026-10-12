@@ -520,6 +520,10 @@ export const translations = {
     gmHeroesNew: 'New for this adventure',
     gmHeroesOwn: 'Own sheets allowed',
     autoGmGroupChoice: 'Group choice: {n}',
+    roomNameLabel: 'Room name',
+    roomNamePlaceholder: 'e.g. Thursday night',
+    roomOptions: 'Options',
+    roomCreateAndPlay: 'Create and start the adventure',
   },
   fr: {
     addSkill: 'Ajouter une compétence',
@@ -1042,6 +1046,10 @@ export const translations = {
     gmHeroesNew: 'Nouveaux pour cette aventure',
     gmHeroesOwn: 'Fiches existantes acceptées',
     autoGmGroupChoice: 'Choix du groupe : {n}',
+    roomNameLabel: 'Nom de la salle',
+    roomNamePlaceholder: 'Par ex. Soirée du jeudi',
+    roomOptions: 'Options',
+    roomCreateAndPlay: "Créer et lancer l'aventure",
   },
 } as const
 
