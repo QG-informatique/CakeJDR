@@ -5,6 +5,7 @@
 - Panneau du MJ automatique replié : caché mais gardé en place, la création en cours n'est plus perdue (`components/autogm/AutoGmPanel.tsx`)
 - Cause probable du bug : le MJ automatique demandait un test D20 au joueur sans héros, qui passait avant ses dés de création ; il ne vise plus que les joueurs qui ont un héros
 - Écran de chargement avec barre (`components/rooms/RoomLoading.tsx`) : remplace « Loading... », la page de connexion qui clignotait et le décor qui se remplissait
+- CI bloquée par deux nouvelles failles (sharp, source-map-js) : `npm audit fix`, seul `package-lock.json` change
 Reste ouvert : retester en ligne la création guidée en rejoignant une aventure en cours
 
 ## 2026-10-10 — Mise en ligne et retours de test de Quentin
