@@ -29,7 +29,16 @@ type Step = 'name' | 'people' | 'class' | 'stats' | 'portrait' | 'ready'
  * fait lancer sur la table les dés de chaque caractéristique, un jet signé
  * comme ceux qu'il demande en jeu (`app/api/check`).
  */
-export default function GuidedHeroCreator({ onDone, onBack }: { onDone: (hero: PremadeHero) => void; onBack: () => void }) {
+export default function GuidedHeroCreator({
+  onDone,
+  onBack,
+  onRoll,
+}: {
+  onDone: (hero: PremadeHero) => void
+  onBack: () => void
+  /** Lance les dés de la table, verrouillés sur la demande qui m'attend. */
+  onRoll: () => void
+}) {
   const t = useT()
   const { lang } = useLanguage()
   const system = useGameSystem()
@@ -49,6 +58,14 @@ export default function GuidedHeroCreator({ onDone, onBack }: { onDone: (hero: P
   const [askFailed, setAskFailed] = useState(false)
 
   const current = step === 'stats' ? system.stats.find((s) => !faces[s.key]) : undefined
+  // La demande est arrivée dans la liste partagée, et c'est la première qui
+  // m'attend : les dés de la table sont alors les siens.
+  const listed = !!asking && !!pending?.has(asking.id)
+  const mine = pending && selfId
+    ? Array.from(pending.values()).filter((c) => c.targetId === selfId).sort((a, b) => a.createdAt - b.createdAt)
+    : []
+  const myTurn = listed && mine[0]?.id === asking?.id
+  const rolling = !!asking && !!events?.some((e) => e.kind === 'rolls' && e.requestId === asking.id)
   const stats = Object.fromEntries(
     Object.entries(faces).map(([key, f]) => [key, statValue(statDice(system.id, key), f)]),
   )
@@ -199,24 +216,38 @@ export default function GuidedHeroCreator({ onDone, onBack }: { onDone: (hero: P
         {mjLine('createAskStats')}
         {statList}
         {current ? (
-          <p className="flex items-center gap-1.5 text-xs text-ink/70">
-            <Dices size={13} className="shrink-0 text-gm" aria-hidden />
-            <span>
-              <b>{t(current.label)}</b> · {diceRule(current.key)} · {t('createRollNow')}
-            </span>
-          </p>
+          <>
+            <p className="flex items-center gap-1.5 text-xs text-ink/70">
+              <Dices size={13} className="shrink-0 text-gm" aria-hidden />
+              <span>
+                <b>{t(current.label)}</b> · {diceRule(current.key)}
+              </span>
+            </p>
+            {/* Toujours un bouton ou une consigne : on sait quels dés lancer, même après un raté. */}
+            {askFailed ? (
+              <>
+                <p className="text-xs text-amber-300">{t('createAskFailed')}</p>
+                <button onClick={() => setAskFailed(false)} className="ui-btn ui-btn-primary">
+                  {t('createRetry')}
+                </button>
+              </>
+            ) : myTurn ? (
+              <button onClick={onRoll} className="ui-btn ui-btn-primary">
+                <Dices size={15} aria-hidden />
+                {t('createRollButton').replace('{dice}', `${statDice(system.id, current.key).count} D6`)}
+              </button>
+            ) : listed ? (
+              <p className="text-xs text-amber-300">{t('createOtherRollFirst')}</p>
+            ) : (
+              <button disabled className="ui-btn ui-btn-primary">
+                {t(rolling ? 'createRolling' : 'createPreparing')}
+              </button>
+            )}
+          </>
         ) : (
           <button onClick={() => setStep('portrait')} className="ui-btn ui-btn-primary">
             {t('createNext')}
           </button>
-        )}
-        {askFailed && (
-          <p className="flex items-center gap-2 text-xs text-amber-300">
-            {t('createAskFailed')}
-            <button onClick={() => setAskFailed(false)} className="ui-btn ui-btn-ghost !min-h-6 !px-1.5 text-xs">
-              {t('createRetry')}
-            </button>
-          </p>
         )}
       </div>
     )

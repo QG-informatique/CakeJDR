@@ -45,6 +45,8 @@ type Props = {
   /** Le joueur n'a pas encore de fiche : on lui propose un héros tout prêt. */
   needsHero: boolean
   onPickHero: (hero: PremadeHero) => void
+  /** Lance les dés de la table pour la demande qui m'attend (création guidée). */
+  onRoll: () => void
 }
 
 const MAX_EVENTS = 2000
@@ -64,6 +66,7 @@ function toVoter(p: Presence): Voter {
     gm: p.gm,
     mods,
     charisma: c ? Number(c.charisme) || 0 : 0,
+    hero: !!(c?.nom && String(c.nom).trim()),
   }
 }
 
@@ -92,7 +95,7 @@ function Bubble({ voter, size = 20 }: { voter: Voter; size?: number }) {
  * connecté s'il n'y a pas de MJ. S'il part, le suivant prend le relais là où
  * en était la partie, puisque tout est rangé dans le stockage partagé.
  */
-export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHero }: Props) {
+export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHero, onRoll }: Props) {
   const t = useT()
   const { lang } = useLanguage()
   const { id: roomId } = useParams<{ id: string }>()
@@ -331,7 +334,8 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
     }
     const visitId = `${gm.run}:${gm.visit}`
     if (asked.current === visitId || askFailed) return
-    const roller = best(players, step.stat)
+    // Un joueur encore en train de créer son héros n'est pas appelé à lancer.
+    const roller = best(players.filter((v) => v.hero), step.stat)
     if (!roller) return
     asked.current = visitId
     const expected = gm.visit
@@ -395,18 +399,23 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
   const box =
     'ui-panel ui-pop pointer-events-auto absolute left-3 top-14 z-30 flex max-h-[calc(100%-8rem)] w-[min(24rem,calc(100%-1.5rem))] flex-col shadow-lg'
 
-  if (!open) {
-    return (
-      <button
-        onClick={() => setOpen(true)}
-        className="ui-btn pointer-events-auto absolute left-3 top-14 z-30 !bg-[var(--c-panel-head)] shadow-lg"
-      >
-        <Bot size={15} className="text-gm" aria-hidden />
-        {title}
-        {scene && <span className="max-w-[10rem] truncate text-ink/60">· {scene.title}</span>}
-      </button>
-    )
-  }
+  // Replié, le panneau reste monté mais caché : un héros en cours de
+  // création garde ses réponses et ses dés déjà lancés.
+  const panel = (children: ReactNode) => (
+    <>
+      {!open && (
+        <button
+          onClick={() => setOpen(true)}
+          className="ui-btn pointer-events-auto absolute left-3 top-14 z-30 !bg-[var(--c-panel-head)] shadow-lg"
+        >
+          <Bot size={15} className="text-gm" aria-hidden />
+          {title}
+          {scene && <span className="max-w-[10rem] truncate text-ink/60">· {scene.title}</span>}
+        </button>
+      )}
+      <div className={open ? box : 'hidden'}>{children}</div>
+    </>
+  )
 
   const header = (
     <div className="flex items-center gap-2 border-b border-[var(--c-panel-line)] px-3 py-2">
@@ -432,12 +441,12 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
   )
 
   if (!gm || !scene || !step) {
-    return (
-      <div className={box}>
+    return panel(
+      <>
         {header}
         <div className="flex min-h-0 flex-col gap-3 overflow-y-auto p-3">
           {/* Même place que pendant l'aventure : un héros en cours de création n'est pas perdu au lancement. */}
-          {needsHero && <PremadeHeroPicker onPick={onPickHero} />}
+          {needsHero && <PremadeHeroPicker onPick={onPickHero} onRoll={onRoll} />}
           <p className="text-sm text-ink/80">{t('autoGmIntro')}</p>
           <p className="text-sm italic text-ink/70">{adventure.pitch}</p>
           <AdventureDuration adventure={adventure} />
@@ -445,7 +454,7 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
             {t('autoGmStart')}
           </button>
         </div>
-      </div>
+      </>,
     )
   }
 
@@ -629,11 +638,11 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
     )
   }
 
-  return (
-    <div className={box}>
+  return panel(
+    <>
       {header}
       <div className="flex min-h-0 flex-col gap-3 overflow-y-auto p-3">
-        {needsHero && !iWatch && step.kind !== 'end' && <PremadeHeroPicker onPick={onPickHero} />}
+        {needsHero && !iWatch && step.kind !== 'end' && <PremadeHeroPicker onPick={onPickHero} onRoll={onRoll} />}
         <div>
           {scene.chapter && <p className="ui-label !text-[10px] text-gm">{scene.chapter}</p>}
           <h3 className="text-base font-semibold">{scene.title}</h3>
@@ -656,6 +665,6 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
           </button>
         )}
       </div>
-    </div>
+    </>,
   )
 }

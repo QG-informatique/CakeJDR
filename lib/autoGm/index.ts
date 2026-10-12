@@ -97,6 +97,8 @@ export type Voter = {
   mods: Record<string, number>
   /** Valeur brute du Charisme, pour départager deux modificateurs égaux. */
   charisma: number
+  /** A une fiche nommée : un joueur encore en création n'est pas appelé à lancer. */
+  hero?: boolean
 }
 
 /** Options proposées dans la scène : celles qui demandent un indice pas encore trouvé sont cachées. */

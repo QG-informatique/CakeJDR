@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-12 — Création guidée réparée, écrans de chargement de la salle
+- Création guidée : un bouton « Lancer 4 D6 » (ou « Réessayer ») toujours visible (`components/autogm/GuidedHeroCreator.tsx`)
+- Panneau du MJ automatique replié : caché mais gardé en place, la création en cours n'est plus perdue (`components/autogm/AutoGmPanel.tsx`)
+- Cause probable du bug : le MJ automatique demandait un test D20 au joueur sans héros, qui passait avant ses dés de création ; il ne vise plus que les joueurs qui ont un héros
+- Écran de chargement avec barre (`components/rooms/RoomLoading.tsx`) : remplace « Loading... », la page de connexion qui clignotait et le décor qui se remplissait
+Reste ouvert : retester en ligne la création guidée en rejoignant une aventure en cours
+
 ## 2026-10-10 — Mise en ligne et retours de test de Quentin
 - Mise en ligne de la campagne, des héros tout prêts, de la création guidée et de l'anglais (Vercel OK)
 - Retours de Quentin notés dans `TODO.md`, sans code : bug de la création guidée dans une salle en cours (jet échoué, plus de bouton), choix « MJ humain / MJ automatique » et menu de secours sans spoiler en phase H, « Créer mon système » et campagne perso jouée par le MJ automatique en phase J
