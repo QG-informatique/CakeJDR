@@ -11,6 +11,8 @@ import {
 } from '@/lib/roomsApi'
 import { fetchAdminStatus } from '@/lib/adminApi'
 import { roomDeletionDate } from '@/lib/roomLifecycle'
+import { useConfirm } from '@/lib/useConfirm'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
 
 export type RoomInfo = {
   id: string
@@ -57,6 +59,7 @@ export default function RoomList({
   const [inviteCode, setInviteCode] = useState('')
   const [joining, setJoining] = useState(false)
   const t = useT()
+  const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm()
 
   useEffect(() => {
     const update = () => {
@@ -100,7 +103,13 @@ export default function RoomList({
   }
 
   const deleteRoom = async (room: RoomInfo) => {
-    if (!window.confirm(t('deleteRoomConfirm'))) return
+    const ok = await confirm(t('deleteRoomConfirmBody'), {
+      title: t('deleteRoomConfirm').replace('{name}', room.name),
+      danger: true,
+      confirmLabel: t('confirmYesDelete'),
+      cancelLabel: t('confirmNo'),
+    })
+    if (!ok) return
     try {
       await deleteRoomById(room.id)
     } catch (e) {
@@ -148,6 +157,16 @@ export default function RoomList({
 
   return (
     <section className="ui-panel flex flex-col gap-3 p-4">
+      <ConfirmDialog
+        open={!!confirmState}
+        message={confirmState?.message ?? ''}
+        title={confirmState?.title}
+        danger={confirmState?.danger}
+        confirmLabel={confirmState?.confirmLabel}
+        cancelLabel={confirmState?.cancelLabel}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+      />
       <div className="flex items-center gap-2">
         <h2 className="flex items-center gap-2 text-base font-semibold">
           <DoorOpen size={16} className="text-accent" />

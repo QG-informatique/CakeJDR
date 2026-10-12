@@ -7,6 +7,7 @@
  * (`lib/gameSystems.ts`) ; Corpulence et Pouvoir ne servent qu'en d100.
  */
 import { libraryUrl } from './library'
+import { isImported, portraitSrc } from './heroCreation'
 import { defaultCharacter, type Character } from '@/types/character'
 import { HEROES_EN } from './en/heroes'
 
@@ -22,7 +23,7 @@ type Stats = {
 }
 
 export type PremadeHero = {
-  /** Image du portrait et du pion dans la bibliothèque. */
+  /** Image du portrait et du pion dans la bibliothèque, ou adresse d'une image importée. */
   image: string
   nom: string
   race: string
@@ -42,6 +43,9 @@ export type PremadeHero = {
   objets: { nom: string; quantite: number }[]
   traits: string
   background: string
+  /** Historique (`lib/backgrounds.ts`), pour un héros créé avec le MJ. */
+  historique?: string
+  avantages?: string
 }
 
 export const PREMADE_HEROES: readonly PremadeHero[] = [
@@ -279,8 +283,11 @@ export function heroCharacter(hero: PremadeHero, owner: { pseudo: string; id?: s
     objets: hero.objets.map((o) => ({ ...o, id: id() })),
     traits: hero.traits,
     background: hero.background,
+    historique: hero.historique,
+    avantages: hero.avantages ?? '',
     bourse: 10,
-    portrait: libraryUrl('portraits', hero.image),
-    pion: libraryUrl('pions', hero.image),
+    // Une image importée n'a pas de pion : le pion reste de la couleur du joueur.
+    portrait: portraitSrc(hero.image),
+    pion: isImported(hero.image) ? '' : libraryUrl('pions', hero.image),
   }
 }

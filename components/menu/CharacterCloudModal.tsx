@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { X, Cloud, Download, Upload, Trash2, RefreshCw } from 'lucide-react'
 import { useT } from '@/lib/useT'
+import { useConfirm } from '@/lib/useConfirm'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import {
   type Character as CloudCharacter,
   buildCharacterKey,
@@ -39,6 +41,7 @@ export default function CharacterCloudModal({
   onImported,
 }: Props) {
   const t = useT()
+  const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [entries, setEntries] = useState<CloudCharacter[]>([])
@@ -102,7 +105,12 @@ export default function CharacterCloudModal({
   }
 
   async function handleDelete(char: CloudCharacter) {
-    if (!confirm(t('cloudDeleteConfirm'))) return
+    const ok = await confirm(t('cloudDeleteConfirm'), {
+      danger: true,
+      confirmLabel: t('confirmYesDelete'),
+      cancelLabel: t('confirmNo'),
+    })
+    if (!ok) return
     try {
       setBusyAction(`delete:${char.id}`)
       await deleteAccountCharacter(String(char.id))
@@ -118,7 +126,18 @@ export default function CharacterCloudModal({
 
   return (
     <AnimatePresence>
+      <ConfirmDialog
+        key="confirm"
+        open={!!confirmState}
+        message={confirmState?.message ?? ''}
+        danger={confirmState?.danger}
+        confirmLabel={confirmState?.confirmLabel}
+        cancelLabel={confirmState?.cancelLabel}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+      />
       <motion.div
+        key="modal"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}

@@ -96,6 +96,8 @@ export type Character = {
    * héros pour cette aventure » n'accepte que les siens (`lib/roomSettings.ts`).
    */
   heroFor?: string
+  /** Historique choisi à la création (`lib/backgrounds.ts`) : bonus aux actions de son domaine. */
+  historique?: string
 }
 
 export type CharacterLike = Partial<Character> & {

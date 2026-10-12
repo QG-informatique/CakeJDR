@@ -1,5 +1,14 @@
 # Journal
 
+## 2026-10-12 — Suppression confirmée, récit sur l'image, création de héros revue
+- Suppression d'une salle : fenêtre Oui/Non à nous, armée après 400 ms, un double-clic ne supprime plus rien (`components/ui/ConfirmDialog.tsx`, `components/rooms/RoomList.tsx`) ; le bouton « Entrer dans » disparaît avec la salle (`components/menu/MenuAccueil.tsx`)
+- Image de scène du MJ automatique : chapitre, titre et narration lisibles en bas de l'image (`components/canvas/ShownImage.tsx`)
+- Création de héros : genre et historique ajoutés ; six jets de 4 D6 placés par le MJ selon la classe (moine : DEX, CON, FOR), deux caractéristiques échangeables, dés écartés barrés (`lib/heroCreation.ts`, `components/autogm/GuidedHeroCreator.tsx`)
+- Le « jet pas compté » venait d'un second clic pendant le lancer : le bouton est bloqué jusqu'au résultat
+- Historiques : +2 aux actions de leur domaine, pas aux caractéristiques ; chaque jet des aventures dit son genre d'action (`lib/backgrounds.ts`, `lib/autoGm/*`)
+- Portraits triés par classe, genre et peuple, avec import d'une image perso
+Reste ouvert : portraits pour chaque peuple × classe × genre, import non testé, barre d'XP et montée de niveau
+
 ## 2026-10-12 — Écran de création de salle simplifié, mise en ligne
 - Création de salle réordonnée : nom, puis « Qui mène la partie ? » en deux cartes (MJ humain / MJ automatique), la campagne en cartes si MJ automatique (`components/rooms/RoomCreateModal.tsx`)
 - Système de jeu et « Nouveau héros pour cette aventure » repliés sous « Options », avec leur valeur résumée sur la ligne : on les garde presque toujours tels quels
