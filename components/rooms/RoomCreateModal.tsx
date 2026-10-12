@@ -5,6 +5,9 @@ import type { RoomInfo } from './RoomList'
 import { useT } from '@/lib/useT'
 import { createRoom as createRoomApi } from '@/lib/roomsApi'
 import { DEFAULT_SYSTEM, GAME_SYSTEMS, GAME_SYSTEM_IDS, type GameSystemId } from '@/lib/gameSystems'
+import { ADVENTURES, adventureIn } from '@/lib/autoGm'
+import { useLanguage } from '@/components/context/LanguageContext'
+import AdventureDuration from '@/components/autogm/AdventureDuration'
 
 interface Props {
   open: boolean
@@ -15,6 +18,14 @@ interface Props {
 export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
   const [name, setName] = useState('')
   const [system, setSystem] = useState<GameSystemId>(DEFAULT_SYSTEM)
+  // Qui mène : un humain (le créateur, MJ de la table) ou le MJ automatique,
+  // qui démarre la campagne choisie dès l'ouverture de la salle.
+  const [gm, setGm] = useState<'human' | 'auto'>('human')
+  const adventureIds = Object.keys(ADVENTURES)
+  const [adventure, setAdventure] = useState(adventureIds[0] ?? '')
+  const [newHeroes, setNewHeroes] = useState(true)
+  const { lang } = useLanguage()
+  const chosen = adventureIn(adventure, lang)
   const [creating, setCreating] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const t = useT()
@@ -26,7 +37,7 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
     setCreating(true)
     setErrorMsg('')
     try {
-      const data = await createRoomApi({ name, system })
+      const data = await createRoomApi({ name, system, gm, adventure: gm === 'auto' ? adventure : undefined, newHeroes })
       const room = {
         id: data.id,
         name,
@@ -47,7 +58,7 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose} style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(2px)' }}>
-      <div onClick={(e) => e.stopPropagation()} className="bg-shade/80 text-ink rounded-2xl border border-ink/10 shadow-2xl backdrop-blur-md p-5 w-80">
+      <div onClick={(e) => e.stopPropagation()} className="bg-shade/80 text-ink rounded-2xl border border-ink/10 shadow-2xl backdrop-blur-md p-5 w-full max-w-sm max-h-[90vh] overflow-y-auto">
         <h2 className="text-lg font-semibold mb-2">{t('createRoom')}</h2>
         <input
           className="w-full mb-2 px-2 py-1 rounded bg-surface text-ink placeholder-ink border border-ink/20 focus:outline-none focus:ring-2 focus:ring-gm/30"
@@ -77,6 +88,41 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
             </label>
           ))}
         </fieldset>
+        <fieldset className="mb-3 flex flex-col gap-1.5">
+          <legend className="mb-1 text-sm text-ink/70">{t('roomGmLabel')}</legend>
+          <div className="ui-seg" role="group" aria-label={t('roomGmLabel')}>
+            <button type="button" aria-pressed={gm === 'human'} onClick={() => setGm('human')}>{t('roomGmHuman')}</button>
+            <button type="button" aria-pressed={gm === 'auto'} onClick={() => setGm('auto')}>{t('autoGmModeAuto')}</button>
+          </div>
+          <p className="text-xs text-ink/60">{t(gm === 'auto' ? 'roomGmAutoHint' : 'roomGmHumanHint')}</p>
+          {gm === 'auto' && (
+            <>
+              <select
+                value={adventure}
+                onChange={(e) => setAdventure(e.target.value)}
+                className="ui-input w-full min-w-0 !min-h-8 text-sm"
+                aria-label={t('roomCampaign')}
+              >
+                {adventureIds.map((id) => (
+                  <option key={id} value={id}>{adventureIn(id, lang)!.title}</option>
+                ))}
+              </select>
+              {chosen && (
+                <>
+                  <p className="text-xs italic text-ink/65">{chosen.pitch}</p>
+                  <AdventureDuration adventure={chosen} />
+                </>
+              )}
+            </>
+          )}
+        </fieldset>
+        <label className="mb-3 flex cursor-pointer items-start gap-2 text-sm">
+          <input type="checkbox" className="mt-1" checked={newHeroes} onChange={(e) => setNewHeroes(e.target.checked)} />
+          <span className="flex flex-col">
+            <span className="font-semibold">{t('newHeroesLabel')}</span>
+            <span className="text-xs text-ink/60">{t(newHeroes ? 'newHeroesHint' : 'newHeroesOffHint')}</span>
+          </span>
+        </label>
         {creating ? (
           <div className="w-full h-2 bg-surface-hover rounded overflow-hidden mb-2">
             <div className="h-full bg-emerald-500 animate-pulse" style={{ width: '100%' }} />

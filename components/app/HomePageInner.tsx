@@ -73,6 +73,9 @@ export default function HomePageInner() {
   // en développement), ailleurs dès que le MJ en lance une depuis son panneau.
   const isDemoRoom = useIsDemoRoom()
   const adventureRunning = useStorage((root) => !!root.autoGm)
+  // `null` tant que le stockage de la table n'est pas arrivé : les réglages
+  // ne sont alors que ceux par défaut.
+  const storageLoaded = adventureRunning !== null
   const autoGmEnabled = isDemoRoom || adventureRunning || process.env.NODE_ENV === 'development'
   const [gmPanelOpen, setGmPanelOpen] = useState(false)
   const [perso, setPerso] = useState<Character>(() =>
@@ -211,7 +214,12 @@ export default function HomePageInner() {
         profile?.pseudo ?? null,
       )
       const owner = incomingChar.owner || profile?.pseudo || ''
-      const finalChar: Character = { ...incomingChar, owner }
+      // Fiche imposée par le MJ : elle vaut héros de cette aventure.
+      const finalChar: Character = {
+        ...incomingChar,
+        owner,
+        ...(settings.newHeroes ? { heroFor: roomId } : {}),
+      }
 
       setPerso(finalChar)
       updateMyPresence({
@@ -261,6 +269,9 @@ export default function HomePageInner() {
   useEffect(() => {
     // Une fiche du serveur a deja ete choisie : ne pas la remplacer.
     if (remoteCharacterAppliedRef.current) return
+    // Attendre les réglages : une table « Nouveau héros pour cette aventure »
+    // n'ouvre pas une fiche faite ailleurs.
+    if (!storageLoaded) return
 
     const savedChars = localStorage.getItem('jdr_characters')
     let chars: Character[] = []
@@ -285,7 +296,8 @@ export default function HomePageInner() {
       id && chars.length
         ? chars.find(
             (c) =>
-              c.id?.toString() === id && (!owner || c.owner === owner),
+              c.id?.toString() === id && (!owner || c.owner === owner) &&
+              (!settings.newHeroes || c.heroFor === roomId),
           )
         : null
 
@@ -307,11 +319,11 @@ export default function HomePageInner() {
     if (!found && typeof window !== 'undefined') {
       localStorage.removeItem(SELECTED_CHARACTER_KEY)
     }
-  }, [profile?.pseudo, myConnectionId, updateMyPresence])
+  }, [profile?.pseudo, myConnectionId, updateMyPresence, storageLoaded, settings.newHeroes, roomId])
 
   // Chargement automatique des fiches stockées côté serveur (Liveblocks storage)
   useEffect(() => {
-    if (!roomId || remoteLoadedRef.current) return
+    if (!roomId || !storageLoaded || remoteLoadedRef.current) return
     // Guard posé AVANT le fetch pour éviter les doubles appels si l'effet re-fire
     remoteLoadedRef.current = true
     const loadRemote = async () => {
@@ -351,10 +363,16 @@ export default function HomePageInner() {
           }
           return merged
         })
+        // Table « Nouveau héros pour cette aventure » : seulement un héros
+        // créé ici, et jamais celui d'un autre faute de mieux.
         const preferred = (!perso?.id || characters.length === 0)
-          ? normalizedValues.find((c) =>
-              isOwnedBy(c, { id: profile?.id, pseudo: profile?.pseudo ?? '' }),
-            ) ?? normalizedValues[0]
+          ? settings.newHeroes
+            ? normalizedValues.find((c) =>
+                c.heroFor === roomId && isOwnedBy(c, { id: profile?.id, pseudo: profile?.pseudo ?? '' }),
+              ) ?? null
+            : normalizedValues.find((c) =>
+                isOwnedBy(c, { id: profile?.id, pseudo: profile?.pseudo ?? '' }),
+              ) ?? normalizedValues[0]
           : null
         // On applique meme si l'effet a ete relance entre-temps : le profil
         // arrive apres le montage, ce qui suffisait a annuler le chargement et
@@ -395,7 +413,7 @@ export default function HomePageInner() {
   // `perso?.id` et `characters.length` sont exclus pour la meme raison : ils
   // changent a chaque modification de fiche.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomId, profile?.pseudo, profile?.id])
+  }, [roomId, storageLoaded, profile?.pseudo, profile?.id])
 
   // Sauvegarde initiale silencieuse dans le cloud pour éviter la perte de fiche
   useEffect(() => {
@@ -417,11 +435,15 @@ export default function HomePageInner() {
     }
     // Le MJ s'est réservé les fiches : le joueur ne modifie plus la sienne.
     if (!sheetEditable && !gmApproved) return
+    // Fiche vierge remplie à la main dans une table « Nouveau héros pour
+    // cette aventure » : elle devient le héros de cette table.
+    const madeHere = settings.newHeroes && !incoming.heroFor && !perso.nom?.trim() && incoming.id === perso.id
     const updatedPerso = normalizeCharacter(
       {
         ...incoming,
         owner: incoming.owner || profile?.pseudo || '',
         updatedAt: Date.now(),
+        ...(madeHere ? { heroFor: roomId } : {}),
       },
       profile?.pseudo ?? null,
     )
@@ -486,8 +508,10 @@ export default function HomePageInner() {
   const handlePickHero = (hero: PremadeHero) => {
     if (viewedConnectionId !== null) return
     const char = heroCharacter(hero, { pseudo: profile?.pseudo ?? '', id: profile?.id })
-    // La fiche vide déjà ouverte est remplacée, pas doublée.
-    handleUpdatePerso({ ...char, id: perso.id || char.id }, true)
+    // La fiche vide déjà ouverte est remplacée, pas doublée ; une fiche déjà
+    // remplie, faite ailleurs, est gardée à côté.
+    const id = perso.nom?.trim() ? char.id : perso.id || char.id
+    handleUpdatePerso({ ...char, id, heroFor: roomId }, true)
   }
 
   // En quittant la table, une modification encore en attente est envoyee
@@ -721,7 +745,7 @@ export default function HomePageInner() {
               <AutoGmPanel
                 adventureId={DEMO_ADVENTURE}
                 onEffect={handleAutoGmEffect}
-                needsHero={viewedConnectionId === null && !perso.nom?.trim()}
+                needsHero={viewedConnectionId === null && (!perso.nom?.trim() || (settings.newHeroes && perso.heroFor !== roomId))}
                 onPickHero={handlePickHero}
                 onRoll={() => tableDiceRef.current?.throwNow()}
               />

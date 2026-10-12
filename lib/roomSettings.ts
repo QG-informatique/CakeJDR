@@ -18,6 +18,13 @@ export type RoomSettings = {
   anonymousVotes: boolean
   /** Système de jeu de la table (`lib/gameSystems.ts`), choisi à sa création. */
   system: GameSystemId
+  /**
+   * « Nouveau héros pour cette aventure » : les fiches faites ailleurs sont
+   * refusées, chacun crée un héros ou en prend un tout prêt en arrivant
+   * (`Character.heroFor`). Coché d'office à la création d'une salle ; absent
+   * des salles plus anciennes, qui gardent la fiche choisie.
+   */
+  newHeroes: boolean
 }
 
 export const DEFAULT_ROOM_SETTINGS: RoomSettings = {
@@ -26,6 +33,7 @@ export const DEFAULT_ROOM_SETTINGS: RoomSettings = {
   drawAllowed: [],
   anonymousVotes: false,
   system: DEFAULT_SYSTEM,
+  newHeroes: false,
 }
 
 /**

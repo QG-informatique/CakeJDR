@@ -221,13 +221,13 @@
 - [ ] Faire relire par Quentin la campagne « La Flamme sous la montagne » (textes, difficulté des jets, cinq fins)
 - [ ] Jouer une partie entière de « La Flamme sous la montagne » à plusieurs et corriger l'estimation de durée (1 h 15 annoncée)
 - [ ] Vérifier qu'un jet du MJ automatique (DD de 11 à 15) reste juste en Fantasy 5E et en Enquête d100 (le DD devient-il un seuil en % ?)
-- [ ] Phase H : proposer « Partie libre » ou une campagne toute prête à la création d'une table
-- [ ] Phase H : à la création d'une table, choisir « MJ humain » ou « MJ automatique »
-- [ ] Phase H : à la création d'une table en MJ automatique, choisir la campagne (la démo ou « La Flamme sous la montagne ») et arriver directement au début de l'aventure
+- [x] Phase H : proposer « Partie libre » ou une campagne toute prête à la création d'une table
+- [x] Phase H : à la création d'une table, choisir « MJ humain » ou « MJ automatique »
+- [x] Phase H : à la création d'une table en MJ automatique, choisir la campagne (la démo ou « La Flamme sous la montagne ») et arriver directement au début de l'aventure
 - [ ] Phase H : dans une salle déjà créée, activer ou couper le MJ automatique depuis un interrupteur visible (aujourd'hui : panneau MJ, section Aventure)
 - [ ] Phase H : en arrivant dans une aventure avec une fiche faite ailleurs, proposer « Créer un héros pour cette histoire » ou « Choisir un de mes personnages » au lieu de garder d'office la fiche sélectionnée
 - [ ] Permettre de désélectionner son personnage (fiches) pour entrer dans une salle sans personnage
-- [ ] Phase H : en MJ automatique, cacher au créateur de la table tout le côté MJ (notes secrètes, scènes à venir, fins) : il joue comme les autres joueurs
+- [x] Phase H : en MJ automatique, cacher au créateur de la table tout le côté MJ (notes secrètes, scènes à venir, fins) : il joue comme les autres joueurs — bouton « Côté MJ » réservé au MJ humain
 - [ ] Phase H : donner au créateur d'une table en MJ automatique un menu de secours qui ne révèle pas l'histoire (relancer la scène, annuler un jet bloqué, passer à la suite, reprendre la main en MJ humain)
 - [ ] Phase H : vérifier qu'une campagne entière se joue en MJ automatique sans aucun MJ humain dans la salle (votes, égalités, jets, dégâts, création des héros)
 - [x] Phase I : décrire la fiche de personnage comme un système (caractéristiques, ressources, compétences, dés, niveaux) et en faire le preset « Narratif CakeJDR »
@@ -331,10 +331,14 @@
 - [x] Afficher un écran de chargement à l'arrivée dans une salle (fond, carte, panneaux) avec une barre simple qui monte, au lieu d'un fond vide qui se remplit petit à petit
 
 ## Retours de Quentin (2026-10-12) — choix du héros et ambiance (décisions du 2026-10-12)
-- [ ] Phase H : à la création d'une salle, choisir MJ humain ou MJ automatique, et réglage « Nouveau héros pour cette aventure » coché d'office (les fiches déjà faites sont refusées, pour éviter un niveau 5 dans une campagne niveau 1) ; décochable dans les options de la salle
+- [x] Phase H : à la création d'une salle, choisir MJ humain ou MJ automatique, et réglage « Nouveau héros pour cette aventure » coché d'office (les fiches déjà faites sont refusées, pour éviter un niveau 5 dans une campagne niveau 1) ; décochable dans les options de la salle
 - [ ] Phase H : à l'arrivée dans une aventure, proposer « Créer mon héros avec le MJ » (aux dés) et « Prendre un héros tout prêt » ; « Une de mes fiches » seulement si la salle l'autorise
 - [ ] Phase H : quand la salle autorise les fiches déjà faites, faire valider chaque fiche par le MJ, ou par le créateur de la salle en MJ automatique (niveau de départ, caractéristiques pas trop hautes)
-- [ ] Phase H : arrêter de recopier toute la narration du MJ automatique dans le chat (elle est déjà dans le panneau de gauche) : n'y mettre que les choses importantes, indices et petits détails
+- [x] Phase H : arrêter de recopier toute la narration du MJ automatique dans le chat (elle est déjà dans le panneau de gauche) : n'y mettre que les choses importantes, indices et petits détails — titre de la scène et choix du groupe seulement
+- [ ] Phase H : dans une salle « Nouveau héros » en MJ humain sans aventure lancée, proposer aussi le choix du héros (aujourd'hui : fiche vierge seulement)
+- [ ] Phase H : marquer « Choix du groupe » avec un indice ou un petit détail de la scène quand l'aventure en prévoit (champ à ajouter aux scènes)
+- [ ] Accueil : faire disparaître le bouton « Entrer dans <salle> » quand on supprime la salle choisie (il reste jusqu'au rechargement)
+- [ ] Tester en ligne la création d'une salle en MJ automatique (campagne, arrivée directe, fiche vierge, choix du héros)
 - [ ] Phase Ambiance : trouver des sons d'interface libres de droits (licence CC0 de préférence) et les ajouter discrètement, ambiance JDR (clic, panneau, demande de jet, réussite, échec), avec un réglage pour les couper
 - [ ] Phase Ambiance : trouver des musiques libres de droits, une par type d'ambiance (taverne, voyage, forêt, donjon, combat, mystère, victoire…), licence vérifiée et notée pour chacune ; le MJ automatique change de musique quand le lieu ou l'humeur change
 - [ ] Phase Ambiance : voix de narrateur grave qui lit la narration des scènes, uniquement si une solution 100 % gratuite et libre suffit (voix du navigateur, ou voix libre type Piper pré-enregistrée, licence de la voix à vérifier) ; sinon abandonner — bouton pour l'activer ou la couper, texte qui défile sous l'image agrandie, voix coupée à la fermeture de l'image, bouton « Réécouter », seule la musique reste après
