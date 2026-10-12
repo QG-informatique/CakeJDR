@@ -358,5 +358,5 @@
 - [x] Ajouter une barre d'XP (MJ humain et automatique) : XP pour les jets réussis et les situations réglées, plus pour quêtes et monstres
 - [x] Sortir la montée de niveau de la fiche du joueur vers le MJ : édition à la main ou fenêtre qui fait lancer les dés au joueur ; automatique avec le MJ automatique quand la barre est pleine, hors combat
 - [ ] Tester l'XP avec un second compte joueur : XP donnée par le MJ, XP d'un test, « Niveau prêt » puis montée par dés et à la main, montée automatique avec le MJ automatique
-- [ ] Tester la montée de niveau automatique quand le meneur du MJ automatique n'est pas MJ de la table (le serveur réserve les demandes de jets au MJ)
+- [ ] (Important, demandé par Quentin) Tester la montée de niveau automatique quand le meneur du MJ automatique n'est pas MJ de la table (le serveur réserve les demandes de jets au MJ)
 - [ ] Régler les montants d'XP (`lib/xp.ts`) après une vraie partie : viser environ un niveau par aventure courte
