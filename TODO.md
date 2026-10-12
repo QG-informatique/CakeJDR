@@ -329,3 +329,10 @@
 ## Retours de Quentin après les tests en ligne (2026-10-10) — chargement
 - [x] Ne plus montrer la page de connexion une fraction de seconde en entrant dans une salle : afficher un écran de chargement tant que la session n'est pas vérifiée
 - [x] Afficher un écran de chargement à l'arrivée dans une salle (fond, carte, panneaux) avec une barre simple qui monte, au lieu d'un fond vide qui se remplit petit à petit
+
+## Retours de Quentin (2026-10-12) — ambiance du MJ automatique et choix du héros
+- [ ] Phase H : à la création d'une salle, réglage « Nouveau héros pour cette aventure » (coché d'office en MJ automatique, avec le niveau de départ) ; à l'arrivée, chaque joueur choisit « Créer mon héros avec le MJ », « Prendre un héros tout prêt » ou « Une de mes fiches » (si la salle l'autorise)
+- [ ] Arrêter de recopier toute la narration du MJ automatique dans le chat (elle est déjà dans le panneau de gauche) : n'y mettre que les choses importantes, indices et petits détails
+- [ ] Ajouter des petits sons d'interface discrets, ambiance JDR (clic, ouverture de panneau, demande de jet, réussite, échec), avec un réglage pour les couper — sons libres de droits uniquement
+- [ ] Donner au MJ automatique une musique par type d'ambiance (taverne, voyage, forêt, donjon, combat, mystère, victoire…) qui change quand le lieu ou l'humeur change — morceaux libres de droits, licence vérifiée
+- [ ] Voix de narrateur (voix grave) qui lit la narration des scènes : bouton pour l'activer ou la couper, texte qui défile sous l'image agrandie pendant la lecture, voix coupée à la fermeture de l'image, bouton « Réécouter » dans le panneau, seule la musique reste après — choisir le service de voix avec Quentin (coût, qualité)
