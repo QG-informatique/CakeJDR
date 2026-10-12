@@ -201,8 +201,8 @@
 - [x] Traduire en anglais les huit héros tout prêts (`lib/premadeHeroes.ts`)
 - [x] Créer son personnage guidé par le MJ automatique : il pose les questions et fait tirer les dés des caractéristiques — bouton « Ou crée le tien avec le MJ, aux dés » sous les héros tout prêts (`components/autogm/GuidedHeroCreator.tsx`, `lib/heroCreation.ts`)
 - [ ] Tester la création guidée de bout en bout avec un compte joueur neuf : nom, peuple, classe, tous les dés lancés sur la table, portrait, fiche enregistrée avec les bons PV
-- [ ] Corriger la création guidée dans une salle déjà en cours (retour de Quentin, 2026-10-10) : la demande de jet a échoué (« réessayer »), puis plus de bouton pour lancer, et un dé lancé à la main (d20 ou d6) n'a rien fait
-- [ ] Afficher en permanence dans la création guidée quels dés lancer (nombre et type), avec un bouton pour les lancer, même après un échec de la demande
+- [x] Corriger la création guidée dans une salle déjà en cours (retour de Quentin, 2026-10-10) : la demande de jet a échoué (« réessayer »), puis plus de bouton pour lancer, et un dé lancé à la main (d20 ou d6) n'a rien fait
+- [x] Afficher en permanence dans la création guidée quels dés lancer (nombre et type), avec un bouton pour les lancer, même après un échec de la demande
 - [ ] Vérifier ce qui s'affiche quand on revient dans une salle où une aventure automatique est en cours (panneau du MJ automatique, héros tout prêts) et le rendre clair pour le joueur
 - [x] Traduire en anglais les peuples et les classes de la création guidée (`lib/heroCreation.ts`)
 - [x] Traduire en anglais toutes les aventures automatiques une fois la campagne complète écrite
@@ -323,5 +323,5 @@
 - [ ] Vérifier sur téléphone les emplacements de couleur du dessin et le nouveau Résumé (onglets, importer, exporter)
 
 ## Retours de Quentin après les tests en ligne (2026-10-10) — chargement
-- [ ] Ne plus montrer la page de connexion une fraction de seconde en entrant dans une salle : afficher un écran de chargement tant que la session n'est pas vérifiée
-- [ ] Afficher un écran de chargement à l'arrivée dans une salle (fond, carte, panneaux) avec une barre simple qui monte, au lieu d'un fond vide qui se remplit petit à petit
+- [x] Ne plus montrer la page de connexion une fraction de seconde en entrant dans une salle : afficher un écran de chargement tant que la session n'est pas vérifiée
+- [x] Afficher un écran de chargement à l'arrivée dans une salle (fond, carte, panneaux) avec une barre simple qui monte, au lieu d'un fond vide qui se remplit petit à petit

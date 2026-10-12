@@ -2,6 +2,7 @@
 import { ReactNode, useCallback, useState } from "react";
 import RoomAccessDenied, { type DeniedReason } from "@/components/rooms/RoomAccessDenied";
 import ConnectionBanner from "@/components/rooms/ConnectionBanner";
+import RoomLoading from "@/components/rooms/RoomLoading";
 import { LiveblocksProvider, RoomProvider, ClientSideSuspense } from "@liveblocks/react/suspense";
 import { LiveMap, LiveObject, LiveList } from '@liveblocks/client'
 
@@ -67,7 +68,7 @@ export function Room({
           rooms:     new LiveList([]),
         }}
       >
-        <ClientSideSuspense fallback={<div>Loading...</div>}>
+        <ClientSideSuspense fallback={<RoomLoading step="connect" />}>
           <ConnectionBanner />
           {children}
         </ClientSideSuspense>

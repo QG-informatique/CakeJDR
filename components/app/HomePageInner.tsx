@@ -15,7 +15,7 @@ import InteractiveCanvas from '@/components/canvas/InteractiveCanvas'
 import DemoBanner from '@/components/rooms/DemoBanner'
 import MusicPlayer from '@/components/music/MusicPlayer'
 import LiveAvatarStack from '@/components/chat/LiveAvatarStack'
-import SignedOutPanel from '@/components/auth/SignedOutPanel'
+import RoomLoading, { RoomCurtain } from '@/components/rooms/RoomLoading'
 import GMPanel from '@/components/gm/GMPanel'
 import useProfile from './hooks/useProfile'
 import ErrorBoundary from '@/components/misc/ErrorBoundary'
@@ -543,11 +543,8 @@ export default function HomePageInner() {
   if (!user) {
     // Profil pas encore resolu : useProfile renvoie un profil « Visiteur »
     // des qu'il a tranche, donc cet ecran ne s'affiche qu'a l'initialisation.
-    return (
-      <div className="flex h-dvh w-screen items-center justify-center p-6">
-        <SignedOutPanel />
-      </div>
-    )
+    // Un ecran de chargement, et non la page de connexion qui clignotait.
+    return <RoomLoading step="session" />
   }
 
   // Les dés roulent ici et la physique décide ; le serveur inscrit le lancer
@@ -726,6 +723,7 @@ export default function HomePageInner() {
                 onEffect={handleAutoGmEffect}
                 needsHero={viewedConnectionId === null && !perso.nom?.trim()}
                 onPickHero={handlePickHero}
+                onRoll={() => tableDiceRef.current?.throwNow()}
               />
             )}
             {/* Bandeau de la salle de démo, en bas du plateau : il ne cache pas les outils. */}
@@ -783,6 +781,7 @@ export default function HomePageInner() {
         <MobileTabBar active={mobileTab} onSelect={showMobileTab} chatUnread={chatUnread} />
       </div>
       <ShownImage />
+      <RoomCurtain />
     </div>
   )
 }

@@ -104,6 +104,14 @@ body {
 .animate-slideUp     { animation: slideUp     0.3s  ease both; }
 .animate-pulseGlow   { animation: pulseGlow   2s ease-in-out infinite; }
 
+/* Barre de chargement de la salle (components/rooms/RoomLoading.tsx) :
+   monte vite puis ralentit, sans jamais atteindre le bout de son étape. */
+@keyframes roomLoadingCreep {
+  from { width: var(--from); }
+  to   { width: var(--to); }
+}
+.room-loading-bar { animation: roomLoadingCreep 6s cubic-bezier(.15,.75,.3,1) forwards; }
+
 /* ─── Liveblocks toolbar toggle ─────────────────────────────────────────── */
 .lb-lexical-toolbar [data-state='on'] {
   background-color: rgba(250, 204, 21, 0.2);

@@ -9,13 +9,13 @@ import { premadeHeroes, type PremadeHero } from '@/lib/premadeHeroes'
 import GuidedHeroCreator from './GuidedHeroCreator'
 
 /** Héros tout prêts, pour le joueur qui arrive sans fiche : un clic et il joue. */
-export default function PremadeHeroPicker({ onPick }: { onPick: (hero: PremadeHero) => void }) {
+export default function PremadeHeroPicker({ onPick, onRoll }: { onPick: (hero: PremadeHero) => void; onRoll: () => void }) {
   const t = useT()
   const { lang } = useLanguage()
   const [later, setLater] = useState(false)
   const [create, setCreate] = useState(false)
   if (later) return null
-  if (create) return <GuidedHeroCreator onDone={onPick} onBack={() => setCreate(false)} />
+  if (create) return <GuidedHeroCreator onDone={onPick} onBack={() => setCreate(false)} onRoll={onRoll} />
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-gm/40 p-2.5">
       <div className="flex items-center gap-2">
