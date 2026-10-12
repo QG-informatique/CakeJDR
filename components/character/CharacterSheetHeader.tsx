@@ -4,6 +4,7 @@ import { useT } from '@/lib/useT'
 import Link from 'next/link'
 import ThemeSwitcher from '../ui/ThemeSwitcher'
 import type { Character } from '@/types/character'
+import { XP_PER_LEVEL, levelReady, xpOf } from '@/lib/xp'
 
 type Tab = { key: string, label: string }
 
@@ -24,6 +25,8 @@ type Props = {
   onCollapse?: () => void
   /** Fiche verrouillée : ni portrait ni « Modifier ». */
   readOnly?: boolean
+  /** Barre d'XP, pour un système qui a des niveaux. */
+  showXp?: boolean
 }
 
 const getPvColor = (pv: number, pvMax: number) => {
@@ -50,12 +53,15 @@ const CharacterSheetHeader: FC<Props> = ({
   setDensity,
   onCollapse,
   readOnly = false,
+  showXp = false,
 }) => {
   const t = useT()
   const pv = Number(perso.pv) || 0
   const pvMax = Number(perso.pv_max ?? perso.pvMax ?? perso.pv) || pv
   const pvRatio = pvMax ? Math.max(0, Math.min(1, pv / pvMax)) : 0
   const subtitle = [perso.classe, perso.race].filter(Boolean).join(' · ')
+  const xp = xpOf(perso)
+  const ready = levelReady(perso)
 
   return (
     <>
@@ -139,6 +145,31 @@ const CharacterSheetHeader: FC<Props> = ({
           />
         </div>
       </div>
+
+      {/* Expérience : pleine, le MJ fait monter de niveau */}
+      {showXp && (
+        <div className="mt-2">
+          <div className="flex items-baseline justify-between text-xs">
+            <span className="ui-label !text-[10px]">{t('xp')}</span>
+            <span className={`tabular-nums ${ready ? 'font-semibold text-accent' : 'text-ink/60'}`}>
+              {ready ? t('xpReady') : `${xp} / ${XP_PER_LEVEL}`}
+            </span>
+          </div>
+          <div
+            className="mt-1 h-1.5 overflow-hidden rounded-full bg-ink/10"
+            role="progressbar"
+            aria-label={t('xp')}
+            aria-valuemin={0}
+            aria-valuemax={XP_PER_LEVEL}
+            aria-valuenow={Math.min(xp, XP_PER_LEVEL)}
+          >
+            <div
+              className={`h-full rounded-full bg-accent transition-[width] duration-500 ${ready ? 'animate-pulse' : ''}`}
+              style={{ width: `${Math.min(1, xp / XP_PER_LEVEL) * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Onglets et affichage, collés en haut quand la fiche défile */}
       <div

@@ -8,7 +8,6 @@ import EquipPanel from '../character/EquipPanel'
 import DescriptionPanel from '../character/DescriptionPanel'
 import CharacterSheetHeader, { type SheetDensity } from '../character/CharacterSheetHeader'
 import CharacterEditor from '../character/CharacterEditor'
-import LevelUpPanel from '../character/LevelUpPanel'
 import { useT } from '@/lib/useT'
 import { libraryItemOf, libraryUrl, matchingPion } from '@/lib/library'
 import { useIsDesktop } from '@/lib/useIsDesktop'
@@ -26,17 +25,15 @@ type Props = {
   readOnly?: boolean
   /** Bandeau au-dessus de la fiche (fiche d'un joueur ouverte par le MJ, fiche verrouillée). */
   notice?: React.ReactNode
-  /** Montée de niveau : le MJ la fait faire, le joueur ne la lance plus lui-même. */
-  canLevelUp?: boolean
-  /** Joueur à qui demander les dés de la montée de niveau (le MJ lui-même sur sa fiche). */
-  levelUpTarget?: { id: string; name: string } | null
+  /** Change quand le MJ monte un niveau à la main : l'édition s'ouvre. */
+  editSignal?: number
 }
 
 const DENSITY_KEY = 'sheetDensity'
 
 export const defaultPerso: Character = { ...defaultCharacter }
 
-const CharacterSheet: FC<Props> = ({ perso, onUpdate, readOnly = false, notice, canLevelUp = false, levelUpTarget = null }) => {
+const CharacterSheet: FC<Props> = ({ perso, onUpdate, readOnly = false, notice, editSignal = 0 }) => {
   // La fiche se modifie dans l'écran d'édition (CharacterEditor) ; ici elle
   // ne fait que s'afficher.
   const [editorOpen, setEditorOpen] = useState(false)
@@ -87,11 +84,12 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, readOnly = false, notice, 
 
   const cFiche: Character = Object.keys(perso || {}).length ? perso : defaultPerso
 
-  // Le MJ augmente lui-même les caractéristiques : un niveau de plus, puis l'édition.
-  const levelUpByHand = () => {
-    onUpdate({ ...cFiche, niveau: Number(cFiche.niveau) + 1 })
-    setEditorOpen(true)
-  }
+  // Le MJ monte un niveau à la main depuis son panneau : il augmente ensuite
+  // lui-même ce qu'il veut.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- ouverture demandée par le panneau du MJ
+    if (editSignal > 0) setEditorOpen(true)
+  }, [editSignal])
 
   const saveFromEditor = (edited: Character) => {
     setEditorOpen(false)
@@ -152,6 +150,7 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, readOnly = false, notice, 
         setDensity={chooseDensity}
         onCollapse={isDesktop ? () => setCollapsed(true) : undefined}
         readOnly={readOnly}
+        showXp={system.levelUp.length > 0}
       />
 
       <CharacterEditor
@@ -177,9 +176,6 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, readOnly = false, notice, 
           perso={localPerso}
           compact={density === 'compact'}
           system={system}
-          levelUp={canLevelUp && !readOnly && system.levelUp.length > 0
-            ? <LevelUpPanel target={levelUpTarget} onByHand={levelUpByHand} system={system} />
-            : null}
         />
       )}
       {tab === 'equip' && <EquipPanel perso={localPerso} compact={density === 'compact'} />}

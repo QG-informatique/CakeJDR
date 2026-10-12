@@ -1,5 +1,13 @@
 # Journal
 
+## 2026-10-13 — Barre d'XP, montée de niveau passée au MJ
+- Barre d'XP sur la fiche, 100 XP par niveau, le surplus est gardé (`lib/xp.ts`, `components/character/CharacterSheetHeader.tsx`)
+- XP gagnée : chaque test demandé (10 réussi, 3 raté), chaque scène du MJ automatique (4), +25 après un combat gagné, +50 par étape de quête ou fin d'aventure ; le MJ humain en donne d'un clic (`components/gm/GMPanel.tsx`, `components/app/HomePageInner.tsx`)
+- Montée de niveau retirée de la fiche : le MJ voit « Niveau prêt » et choisit les dés du joueur ou la fiche modifiée à la main (niveau +1 tout de suite, éditeur ouvert)
+- Avec le MJ automatique, montée automatique par défaut à un moment calme (ni jet ni scène qui blesse), réglable « Choisie par le MJ » (`lib/roomSettings.ts`, `components/autogm/AutoGmPanel.tsx`)
+- Choix : XP stockée dans la fiche (jsonb), donc pas de migration ; XP donnée par le MJ appliquée par le joueur, comme les dégâts des scènes
+Reste ouvert : test à deux comptes, réglage des montants après une vraie partie
+
 ## 2026-10-12 — Suppression confirmée, récit sur l'image, création de héros revue
 - Suppression d'une salle : fenêtre Oui/Non à nous, armée après 400 ms, un double-clic ne supprime plus rien (`components/ui/ConfirmDialog.tsx`, `components/rooms/RoomList.tsx`) ; le bouton « Entrer dans » disparaît avec la salle (`components/menu/MenuAccueil.tsx`)
 - Image de scène du MJ automatique : chapitre, titre et narration lisibles en bas de l'image (`components/canvas/ShownImage.tsx`)

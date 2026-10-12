@@ -30,6 +30,7 @@ import type { RollsOutcome } from '@/lib/checks'
 import { DICE_MAX_ROLL_MS, DICE_REVEAL_DELAY_MS } from '@/lib/dicePayload'
 import { isDiceType, POOL_MAX, poolLabel, sortDice } from '@/lib/dicePool'
 import { applyLevelUp } from '@/lib/levelUp'
+import { XP_GAINS, addXp, spendLevel } from '@/lib/xp'
 import { Crown } from 'lucide-react'
 import ShownImage from '@/components/canvas/ShownImage'
 import AutoGmPanel, { type AutoGmEffect } from '@/components/autogm/AutoGmPanel'
@@ -56,6 +57,9 @@ function loadDicePool(): number[] {
   } catch {}
   return [20]
 }
+
+/** Mon lancer sur la table et ce qu'il rapporte quand ses dés sont révélés. */
+type MyThrow = { id: string; levelUp?: number[]; xp?: number }
 
 export default function HomePageInner() {
   const router = useRouter()
@@ -96,10 +100,6 @@ export default function HomePageInner() {
         : others.find((o) => o.connectionId === viewedConnectionId)?.presence?.character ?? null,
     (a, b) => a?.id === b?.id && a?.updatedAt === b?.updatedAt,
   )
-  // Compte Liveblocks du joueur consulté : c'est lui que vise une montée de niveau.
-  const viewedUserId = useOthers((others) =>
-    viewedConnectionId === null ? null : others.find((o) => o.connectionId === viewedConnectionId)?.id ?? null,
-  )
 
   // Dés choisis dans le menu, gardés d'une visite à l'autre.
   const [dicePool, setDicePool] = useState<number[]>(loadDicePool)
@@ -111,11 +111,15 @@ export default function HomePageInner() {
   }
   const [diceDisabled, setDiceDisabled] = useState(false)
   // Mon lancer en cours sur la table, jusqu'à ce que ses dés disparaissent ;
-  // `levelUp` : gains d'une montée de niveau, ajoutés à la fiche à ce moment-là.
-  const [myThrow, setMyThrow] = useState<{ id: string; levelUp?: number[] } | null>(null)
-  const myThrowRef = useRef<{ id: string; levelUp?: number[] } | null>(null)
-  // Gains d'une montée de niveau arrivés pendant que le MJ regardait une autre fiche.
+  // `levelUp` : gains d'une montée de niveau, `xp` : expérience d'un jet
+  // demandé, ajoutés à la fiche à ce moment-là.
+  const [myThrow, setMyThrow] = useState<MyThrow | null>(null)
+  const myThrowRef = useRef<MyThrow | null>(null)
+  // Gains d'une montée de niveau et XP arrivés pendant que le MJ regardait une autre fiche.
   const [levelUpLater, setLevelUpLater] = useState<number[] | null>(null)
+  const [xpLater, setXpLater] = useState(0)
+  // Montée de niveau à la main : ouvre l'éditeur de la fiche du joueur.
+  const [editSignal, setEditSignal] = useState(0)
   const tableDiceRef = useRef<DiceBoxHandle>(null)
   // Première demande du MJ qui m'attend : les dés lancés sont alors les siens.
   const checks = useStorage((root) => root.checks)
@@ -194,6 +198,15 @@ export default function HomePageInner() {
     // serveur les inscrit lui-même (`/api/dice`).
     if (event.type === 'dice-roll') {
       debug('dice-roll received', event)
+      return
+    }
+
+    // XP donnée par le MJ depuis son panneau.
+    if (event.type === 'xp') {
+      if (payload.user?.info?.role !== 'gm' || !self?.id || event.targetId !== self.id) return
+      const amount = Math.round(Number(event.amount))
+      // Ajoutée à la fiche par l'effet du retour sur sa fiche, tout de suite si c'est déjà la sienne.
+      if (amount >= 1 && amount <= 500) setXpLater((x) => x + amount)
       return
     }
 
@@ -495,12 +508,18 @@ export default function HomePageInner() {
 
   // Dégâts ou soins d'une scène du MJ automatique, sur sa propre fiche. Pas
   // pendant que le MJ regarde la fiche d'un joueur : elle n'est pas la sienne.
+  // L'XP de la scène, elle, attend le retour du MJ sur sa fiche.
   const handleAutoGmEffect = (effect: AutoGmEffect) => {
-    if (viewedConnectionId !== null) return
+    if (viewedConnectionId !== null) {
+      if (effect.xp) setXpLater((x) => x + (effect.xp ?? 0))
+      return
+    }
     const max = Number(perso.pv_max) || 0
     const pv = effect.heal ? max : Math.max(0, (Number(perso.pv) || 0) - (effect.damage ?? 0))
-    if (pv === Number(perso.pv)) return
-    handleUpdatePerso({ ...perso, pv }, true)
+    let next = perso
+    if (pv !== Number(perso.pv)) next = { ...next, pv }
+    if (effect.xp) next = addXp(next, effect.xp)
+    if (next !== perso) handleUpdatePerso(next, true)
   }
 
   // Héros tout prêt choisi au lancement d'une aventure : il devient la fiche
@@ -534,6 +553,16 @@ export default function HomePageInner() {
     updateMyPresence({ gmView: { id: next.id, name: next.nom || next.name } })
   }
 
+  // Le MJ monte un niveau sans dés : le niveau passe tout de suite (l'XP est
+  // dépensée), puis la fiche du joueur s'ouvre pour qu'il ajuste PV et stats.
+  const handleLevelByHand = (char: Character) => {
+    if (typeof char.ownerConnectionId !== 'number') return
+    handleGMSelect(char)
+    const next = normalizeCharacter({ ...spendLevel(normalizeCharacter(char)), updatedAt: Date.now() })
+    broadcast({ type: 'gm-select', character: next, targetConnectionId: char.ownerConnectionId })
+    setEditSignal((n) => n + 1)
+  }
+
   const handleGMBackToOwn = useCallback(() => {
     setViewedConnectionId(null)
     if (gmOwnPersoRef.current) setPerso(gmOwnPersoRef.current)
@@ -555,14 +584,18 @@ export default function HomePageInner() {
     }
   }, [viewedConnectionId, viewedStillHere, viewedCharacter, handleGMBackToOwn])
 
-  // Retour du MJ sur sa fiche : `perso` est de nouveau la sienne.
+  // Gains mis de côté (XP donnée par le MJ, ou arrivée pendant qu'une autre
+  // fiche était ouverte) : appliqués dès que `perso` est la sienne.
   useEffect(() => {
-    if (!levelUpLater || viewedConnectionId !== null) return
+    if ((!levelUpLater && !xpLater) || viewedConnectionId !== null) return
     // eslint-disable-next-line react-hooks/set-state-in-effect -- gains mis de côté pendant qu'une autre fiche était ouverte
     setLevelUpLater(null)
-    handleUpdatePerso(applyLevelUp(perso, levelUpLater), true)
+    setXpLater(0)
+    let next = xpLater ? addXp(perso, xpLater) : perso
+    if (levelUpLater) next = applyLevelUp(next, levelUpLater)
+    handleUpdatePerso(next, true)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- seulement au retour sur sa fiche
-  }, [levelUpLater, viewedConnectionId])
+  }, [levelUpLater, xpLater, viewedConnectionId])
 
   if (!user) {
     // Profil pas encore resolu : useProfile renvoie un profil « Visiteur »
@@ -612,12 +645,18 @@ export default function HomePageInner() {
         body: JSON.stringify({ roomId, action: 'roll', id, results: sent.results, throw: sent.throw, ms: sent.ms }),
       })
       const data = (await res.json().catch(() => null)) as
-        | { roll?: { id: string; rolls?: RollsOutcome } }
+        | { roll?: { id: string; rolls?: RollsOutcome; check?: { success?: boolean } } }
         | null
       if (!res.ok || !data?.roll) throw new Error(`check ${res.status}`)
       debug('check-roll', data.roll)
       const rolls = data.roll.rolls
-      startThrow({ id: data.roll.id, ...(rolls?.levelUp ? { levelUp: rolls.results } : {}) })
+      // Un test demandé rapporte de l'XP, un peu même raté.
+      const check = data.roll.check
+      startThrow({
+        id: data.roll.id,
+        ...(rolls?.levelUp ? { levelUp: rolls.results } : {}),
+        ...(check ? { xp: check.success ? XP_GAINS.checkSuccess : XP_GAINS.checkFail } : {}),
+      })
       return { id: data.roll.id, levelUp: rolls?.levelUp }
     } catch (e) {
       debug('check-roll failed', e)
@@ -644,7 +683,7 @@ export default function HomePageInner() {
   // (`levelUpBlocked`) : la fiche affichée est donc bien la sienne. S'il en
   // ouvre une pendant que ses dés roulent, les gains attendent son retour.
   // Si mes dés n'apparaissent jamais sur la table, le bouton revient quand même.
-  const startThrow = (roll: { id: string; levelUp?: number[] }) => {
+  const startThrow = (roll: MyThrow) => {
     myThrowRef.current = roll
     setMyThrow(roll)
     window.setTimeout(() => handleThrowDone(roll.id), DICE_MAX_ROLL_MS + THROW_HOLD_MS + THROW_FADE_MS + 4000)
@@ -655,9 +694,13 @@ export default function HomePageInner() {
     if (mine?.id !== id) return
     myThrowRef.current = null
     setMyThrow(null)
-    if (mine.levelUp) {
-      if (viewedConnectionId === null) handleUpdatePerso(applyLevelUp(perso, mine.levelUp), true)
-      else setLevelUpLater(mine.levelUp)
+    if (viewedConnectionId !== null) {
+      if (mine.levelUp) setLevelUpLater(mine.levelUp)
+      if (mine.xp) setXpLater((x) => x + (mine.xp ?? 0))
+    } else if (mine.levelUp || mine.xp) {
+      let next = mine.xp ? addXp(perso, mine.xp) : perso
+      if (mine.levelUp) next = applyLevelUp(next, mine.levelUp)
+      handleUpdatePerso(next, true)
     }
     setCooldown(false)
     setDiceDisabled(false)
@@ -673,12 +716,7 @@ export default function HomePageInner() {
             perso={perso}
             onUpdate={handleUpdatePerso}
             readOnly={!sheetEditable}
-            canLevelUp={isGM}
-            levelUpTarget={
-              viewedConnectionId === null
-                ? self ? { id: self.id, name: perso.nom || profile?.pseudo || '?' } : null
-                : viewedUserId ? { id: viewedUserId, name: perso.nom || '?' } : null
-            }
+            editSignal={editSignal}
             notice={viewedConnectionId !== null ? (
               <div className="-mx-3 mb-1 flex items-center gap-2 border-b border-gm/30 bg-gm/10 px-3 py-2 text-xs">
                 <Crown size={13} className="shrink-0 text-gm" aria-hidden />
@@ -735,6 +773,7 @@ export default function HomePageInner() {
                       viewingConnectionId={viewedConnectionId}
                       onOpenSheet={handleGMSelect}
                       onBackToOwn={handleGMBackToOwn}
+                      onLevelByHand={handleLevelByHand}
                       onClose={() => setGmPanelOpen(false)}
                     />
                   </div>

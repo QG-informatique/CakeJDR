@@ -31,6 +31,8 @@ export type Character = {
   poids: string
   capacite_raciale: string
   niveau: number | string
+  /** Expérience vers le niveau suivant (`lib/xp.ts`). */
+  xp?: number
   defense?: number | string
   chance?: number | string
   initiative?: number | string
@@ -256,6 +258,7 @@ export const normalizeCharacter = (
     pv_max: coerceNumber(pvMax, base.pv_max),
     pv: coerceNumber(raw?.pv, base.pv),
     niveau: coerceNumber(raw?.niveau, base.niveau),
+    xp: Math.max(0, Number(raw?.xp) || 0),
     bourse: coerceNumber(raw?.bourse, base.bourse),
     modif_armure: coerceNumber(raw?.modif_armure, base.modif_armure),
     force: coerceNumber(raw?.force, base.force),

@@ -8,7 +8,8 @@ import { LiveMap } from '@liveblocks/client'
 import { Bot, Check, ChevronUp, Eye, EyeOff, Target, X } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import { useLanguage } from '@/components/context/LanguageContext'
-import { useRoomSettings } from '@/lib/roomSettings'
+import { useGameSystem, useRoomSettings } from '@/lib/roomSettings'
+import { XP_PER_LEVEL, sceneXp, xpOf } from '@/lib/xp'
 import { CHECK_STATS, checkStatLabel, withStat } from '@/lib/checks'
 import { statMod } from '@/lib/modifiers'
 import { libraryUrl } from '@/lib/library'
@@ -38,7 +39,7 @@ import {
 import AdventureDuration from './AdventureDuration'
 
 /** Ce qu'une scène fait à la fiche de chacun en arrivant. */
-export type AutoGmEffect = { damage?: number; heal?: boolean }
+export type AutoGmEffect = { damage?: number; heal?: boolean; xp?: number }
 
 type Props = {
   adventureId: string
@@ -70,6 +71,8 @@ function toVoter(p: Presence): Voter {
     charisma: c ? Number(c.charisme) || 0 : 0,
     hero: !!(c?.nom && String(c.nom).trim()),
     historique: c?.historique,
+    xp: xpOf(c),
+    level: Number(c?.niveau) || 1,
   }
 }
 
@@ -103,6 +106,7 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
   const { lang } = useLanguage()
   const { id: roomId } = useParams<{ id: string }>()
   const { settings } = useRoomSettings()
+  const system = useGameSystem()
   const showImage = useShowImage()
   const gm = useStorage((root) => root.autoGm)
   const events = useStorage((root) => root.events)
@@ -403,8 +407,40 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
     seen.current = visitKey
     // Le MJ qui mène ne joue pas de personnage dans l'aventure.
     if (iWatch) return
-    if (scene && (scene.damage || scene.heal)) onEffect({ damage: scene.damage, heal: scene.heal })
-  }, [visitKey, scene, onEffect, iWatch])
+    // Chaque scène traversée rapporte de l'XP, plus après un combat gagné ou
+    // une étape de la quête : parler ou ruser fait aussi avancer.
+    const xp = me?.hero && adventure && gm ? sceneXp(adventure, gm.scene, gm.path[gm.path.length - 2]) : 0
+    if (scene && (scene.damage || scene.heal || xp)) onEffect({ damage: scene.damage, heal: scene.heal, ...(xp ? { xp } : {}) })
+  }, [visitKey, scene, onEffect, iWatch, me?.hero, adventure, gm])
+
+  // ── Montée de niveau automatique ────────────────────────────────────────
+
+  // Barre d'XP pleine : le meneur demande les dés de niveau au héros, à un
+  // moment calme seulement (ni jet en cours, ni scène qui fait mal). Une
+  // seule demande par niveau ; si elle échoue, le MJ humain prend le relais.
+  const leveled = useRef(new Set<string>())
+  const calm = ready && step?.kind !== 'check' && !gm?.check && !scene?.damage
+  useEffect(() => {
+    if (!isLeader || !calm || !settings.autoLevelUp || system.levelUp.length === 0) return
+    const busy = new Set(pending ? Array.from(pending.values(), (r) => r.targetId) : [])
+    const hero = players.find(
+      (v) => v.hero && (v.xp ?? 0) >= XP_PER_LEVEL && !busy.has(v.id) && !leveled.current.has(`${v.id}:${v.level}`),
+    )
+    if (!hero) return
+    leveled.current.add(`${hero.id}:${hero.level}`)
+    const level = (hero.level ?? 1) + 1
+    void postCheck(roomId, {
+      action: 'ask',
+      type: 'rolls',
+      system: system.id,
+      targetId: hero.id,
+      targetName: hero.name,
+      dice: 6,
+      count: system.levelUp.length,
+      levelUp: true,
+      reason: t('xpAutoReason').replace('{n}', String(level)),
+    }).catch(() => {})
+  }, [isLeader, calm, settings.autoLevelUp, system, players, pending, roomId, t])
 
   // Horloge du compte à rebours et de l'apparition du résultat.
   const ticking = (step?.kind === 'vote' && !!gm?.voteStart) || (!!result && !revealed)
