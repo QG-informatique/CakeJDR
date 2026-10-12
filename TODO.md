@@ -223,6 +223,10 @@
 - [ ] Vérifier qu'un jet du MJ automatique (DD de 11 à 15) reste juste en Fantasy 5E et en Enquête d100 (le DD devient-il un seuil en % ?)
 - [ ] Phase H : proposer « Partie libre » ou une campagne toute prête à la création d'une table
 - [ ] Phase H : à la création d'une table, choisir « MJ humain » ou « MJ automatique »
+- [ ] Phase H : à la création d'une table en MJ automatique, choisir la campagne (la démo ou « La Flamme sous la montagne ») et arriver directement au début de l'aventure
+- [ ] Phase H : dans une salle déjà créée, activer ou couper le MJ automatique depuis un interrupteur visible (aujourd'hui : panneau MJ, section Aventure)
+- [ ] Phase H : en arrivant dans une aventure avec une fiche faite ailleurs, proposer « Créer un héros pour cette histoire » ou « Choisir un de mes personnages » au lieu de garder d'office la fiche sélectionnée
+- [ ] Permettre de désélectionner son personnage (fiches) pour entrer dans une salle sans personnage
 - [ ] Phase H : en MJ automatique, cacher au créateur de la table tout le côté MJ (notes secrètes, scènes à venir, fins) : il joue comme les autres joueurs
 - [ ] Phase H : donner au créateur d'une table en MJ automatique un menu de secours qui ne révèle pas l'histoire (relancer la scène, annuler un jet bloqué, passer à la suite, reprendre la main en MJ humain)
 - [ ] Phase H : vérifier qu'une campagne entière se joue en MJ automatique sans aucun MJ humain dans la salle (votes, égalités, jets, dégâts, création des héros)
