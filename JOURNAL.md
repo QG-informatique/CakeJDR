@@ -1,5 +1,13 @@
 # Journal
 
+## 2026-10-12 — Phase H : création de salle avec MJ automatique, héros par aventure
+- Création d'une salle : MJ humain ou MJ automatique avec choix de la campagne, et « Nouveau héros pour cette aventure » coché d'office ; le créateur entre directement (`components/rooms/RoomCreateModal.tsx`, `app/api/rooms/route.ts`, `lib/liveRooms.ts`)
+- Nouveau réglage `newHeroes` et champ `heroFor` sur la fiche : une salle « Nouveau héros » n'ouvre que les héros créés pour elle, sinon fiche vierge et choix du héros ; décochable dans le panneau MJ (`lib/roomSettings.ts`, `components/app/HomePageInner.tsx`, `components/gm/GMPanel.tsx`)
+- Un héros tout pris à côté d'une fiche déjà remplie ne l'écrase plus : il prend un nouvel identifiant
+- Chat du MJ automatique : le titre de la scène et « Choix du groupe » au lieu de toute la narration ; « Côté MJ » réservé au MJ humain, « Arrêter » au MJ de la salle (`components/autogm/AutoGmPanel.tsx`)
+- Vérifié en local : salle de test créée en MJ automatique (aventure lancée, fiche vierge, choix du héros), puis supprimée
+Reste ouvert : validation des fiches existantes, « Une de mes fiches », menu de secours, test d'une campagne entière
+
 ## 2026-10-12 — Création guidée réparée, écrans de chargement de la salle
 - Création guidée : un bouton « Lancer 4 D6 » (ou « Réessayer ») toujours visible (`components/autogm/GuidedHeroCreator.tsx`)
 - Panneau du MJ automatique replié : caché mais gardé en place, la création en cours n'est plus perdue (`components/autogm/AutoGmPanel.tsx`)

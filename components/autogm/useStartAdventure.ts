@@ -2,7 +2,7 @@
 
 import { useMutation } from '@liveblocks/react'
 import { LiveMap, LiveObject } from '@liveblocks/client'
-import { ADVENTURES } from '@/lib/autoGm'
+import { ADVENTURES, startState } from '@/lib/autoGm'
 import type { AutoGmMode } from '@/lib/autoGm/types'
 
 /**
@@ -18,17 +18,7 @@ export function useStartAdventure() {
     if (previous) storage.get('checks')?.delete(previous.id)
     storage.set(
       'autoGm',
-      new LiveObject({
-        run: crypto.randomUUID(),
-        adventure: adv.id,
-        mode,
-        scene: adv.start,
-        visit: 1,
-        setup: 0,
-        path: [adv.start],
-        flags: [...(adv.scenes[adv.start]?.gains ?? [])],
-        votes: new LiveMap<string, string>(),
-      }),
+      new LiveObject({ ...startState(adv, mode), votes: new LiveMap<string, string>() }),
     )
   }, [])
 }

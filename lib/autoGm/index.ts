@@ -9,7 +9,7 @@ import { CAKE_DEMO } from './cakeDemo'
 import { DRAGON_CAMPAIGN } from './dragonCampaign'
 import { CAKE_DEMO_EN } from './en/cakeDemo'
 import { DRAGON_CAMPAIGN_EN } from './en/dragonCampaign'
-import type { Adventure, AdventureText, RandomOutcome, Scene, SceneOption, SceneStep } from './types'
+import type { Adventure, AdventureText, AutoGmMode, RandomOutcome, Scene, SceneOption, SceneStep } from './types'
 
 export type { Adventure, AdventureText, Scene, SceneOption } from './types'
 export { estimateDuration, formatMinutes } from './duration'
@@ -68,6 +68,23 @@ export function adventureIn(id: string, lang: 'en' | 'fr'): Adventure | undefine
     inEnglish.set(id, done)
   }
   return done
+}
+
+/**
+ * Début d'une partie : première scène, rien encore mis en place. Les votes,
+ * une `LiveMap`, sont ajoutés par l'appelant (navigateur ou serveur).
+ */
+export function startState(adventure: Adventure, mode: AutoGmMode) {
+  return {
+    run: crypto.randomUUID(),
+    adventure: adventure.id,
+    mode,
+    scene: adventure.start,
+    visit: 1,
+    setup: 0,
+    path: [adventure.start],
+    flags: [...(adventure.scenes[adventure.start]?.gains ?? [])],
+  }
 }
 
 /** Aventure lancée dans la salle de démonstration. */

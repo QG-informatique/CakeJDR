@@ -215,6 +215,19 @@ export default function GMPanel({ viewingConnectionId, onOpenSheet, onBackToOwn,
         <p className="text-xs text-ink/55">{t('gmSystemHint')}</p>
       </section>
 
+      <section className="flex flex-col gap-1.5">
+        <h3 className="ui-label !text-[10px]">{t('gmHeroesTitle')}</h3>
+        <div className="ui-seg" role="group" aria-label={t('gmHeroesTitle')}>
+          <button aria-pressed={settings.newHeroes} onClick={() => update({ newHeroes: true })}>
+            {t('gmHeroesNew')}
+          </button>
+          <button aria-pressed={!settings.newHeroes} onClick={() => update({ newHeroes: false })}>
+            {t('gmHeroesOwn')}
+          </button>
+        </div>
+        <p className="text-xs text-ink/55">{t(settings.newHeroes ? 'newHeroesHint' : 'newHeroesOffHint')}</p>
+      </section>
+
       <AdventureLauncher />
 
       <section className="flex flex-col gap-1.5">

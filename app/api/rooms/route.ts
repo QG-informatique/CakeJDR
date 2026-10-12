@@ -1,6 +1,7 @@
 export const runtime = 'nodejs'
 import { NextRequest } from 'next/server'
-import { createRoom, deleteRoom, renameRoom, setRoomSystem } from '@/lib/liveRooms'
+import { createRoom, deleteRoom, initRoom, renameRoom } from '@/lib/liveRooms'
+import { ADVENTURES } from '@/lib/autoGm'
 import { DEFAULT_SYSTEM, isGameSystemId } from '@/lib/gameSystems'
 import { isAdminRequest } from '@/lib/adminAuth'
 import { countOwnedRooms, forgetRoom, isRoomOwner, recordRoom, renameRoomRecord } from '@/lib/db/rooms'
@@ -46,11 +47,15 @@ export async function POST(req: NextRequest) {
       return fail('room limit reached', 403)
     }
     const system = isGameSystemId(body?.system) ? body.system : DEFAULT_SYSTEM
+    // « Nouveau héros pour cette aventure » est coché sauf refus explicite.
+    const newHeroes = body?.newHeroes !== false
+    // Avec le MJ automatique, la campagne choisie démarre dès l'ouverture.
+    const adventure =
+      body?.gm === 'auto' && typeof body?.adventure === 'string' && Object.hasOwn(ADVENTURES, body.adventure)
+        ? body.adventure
+        : undefined
     const { id } = await createRoom(name)
-    // Une table sans réglage joue au narratif : inutile de l'écrire.
-    if (system !== DEFAULT_SYSTEM) {
-      await setRoomSystem(id, system).catch((e) => console.error('setRoomSystem', e))
-    }
+    await initRoom(id, { system, newHeroes, adventure }).catch((e) => console.error('initRoom', e))
     await recordRoom({ id, name, ownerId: account.id }).catch((e) =>
       console.error('recordRoom', e),
     )

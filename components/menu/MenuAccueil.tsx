@@ -690,7 +690,9 @@ export default function MenuAccueil({ page }: { page: 'landing' | 'salles' }) {
             <RoomCreateModal
               open={createRoomOpen}
               onClose={() => setCreateRoomOpen(false)}
-              onCreated={handleRoomSelect}
+              // Le créateur entre tout de suite : la partie (ou l'aventure du
+              // MJ automatique) commence à l'arrivée.
+              onCreated={handleEnterRoom}
             />
 
             <div className="mt-4 flex justify-end">

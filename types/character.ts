@@ -91,6 +91,11 @@ export type Character = {
   portrait?: string
   /** Image du pion sur le plateau ; absente, c'est un pion de couleur avec l'initiale. */
   pion?: string
+  /**
+   * Salle pour laquelle ce héros a été créé. Une salle réglée sur « Nouveau
+   * héros pour cette aventure » n'accepte que les siens (`lib/roomSettings.ts`).
+   */
+  heroFor?: string
 }
 
 export type CharacterLike = Partial<Character> & {

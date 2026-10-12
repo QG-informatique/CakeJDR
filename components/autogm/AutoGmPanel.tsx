@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useMutation, useOthers, useSelf, useStorage } from '@liveblocks/react'
@@ -164,6 +164,16 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
       : undefined
   const revealed = !!result && now >= result.ts
 
+  // Ligne d'historique pour le choix retenu après un vote ou une égalité.
+  const gmMode = gm?.mode
+  const groupChoice = useCallback(
+    (label: string) => ({
+      author: t(gmMode === 'gm' ? 'autoGmTitleGm' : 'autoGmTitle'),
+      text: t('autoGmGroupChoice').replace('{n}', label),
+    }),
+    [t, gmMode],
+  )
+
   // ── Mutations ──────────────────────────────────────────────────────────
 
   const start = useStartAdventure()
@@ -176,7 +186,8 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
 
   // Passer à la scène suivante. `expected` évite de sauter deux scènes quand
   // deux joueurs cliquent ensemble : le second clic ne trouve plus la même visite.
-  const go = useMutation(({ storage }, next: string, expected: number) => {
+  // `said` : une ligne pour l'historique, le choix retenu après un vote.
+  const go = useMutation(({ storage }, next: string, expected: number, said?: { author: string; text: string }) => {
     const state = storage.get('autoGm')
     if (!state || state.get('visit') !== expected) return
     const nextScene = ADVENTURES[state.get('adventure')]?.scenes[next]
@@ -192,10 +203,16 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
     state.delete('voteStart')
     state.delete('tiebreak')
     state.delete('check')
+    if (said) {
+      const list = storage.get('events')
+      list.push({ id: crypto.randomUUID(), kind: 'chat', author: said.author, text: said.text, ts: Date.now(), isMJ: true })
+      for (let i = list.length - MAX_EVENTS; i > 0; i -= 1) list.delete(0)
+    }
   }, [])
 
-  // Met en place la scène : plateau, puis récit dans l'historique. Une seule
-  // fois par visite, même si le meneur change en route.
+  // Met en place la scène : plateau, puis son titre dans l'historique (le
+  // récit reste dans le panneau, pour ne pas noyer le chat). Une seule fois
+  // par visite, même si le meneur change en route.
   const setUp = useMutation(({ storage }, expected: number, author: string) => {
     const state = storage.get('autoGm')
     if (!state || state.get('visit') !== expected || state.get('setup') >= expected) return null
@@ -232,9 +249,8 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
       })
     }
     const list = storage.get('events')
-    current.narration.forEach((text, i) => {
-      list.push({ id: crypto.randomUUID(), kind: 'chat', author, text, ts: now + i, isMJ: true })
-    })
+    const text = [current.chapter, current.title].filter(Boolean).join(' · ')
+    list.push({ id: crypto.randomUUID(), kind: 'chat', author, text, ts: now, isMJ: true })
     for (let i = list.length - MAX_EVENTS; i > 0; i -= 1) list.delete(0)
     return setup?.show ?? null
   }, [lang])
@@ -298,7 +314,7 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
     const timer = setTimeout(() => {
       const outcome = decide(options, votes, players, humanGm)
       if (!outcome) return
-      if (outcome.kind === 'winner') go(outcome.option.next, expected)
+      if (outcome.kind === 'winner') go(outcome.option.next, expected, groupChoice(outcome.option.label))
       else
         setTiebreak(expected, {
           userId: outcome.decider.id,
@@ -307,7 +323,7 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
         })
     }, wait)
     return () => clearTimeout(timer)
-  }, [isLeader, gm, ready, step, votes, voters, players, humanGm, options, go, markVoteStart, setTiebreak])
+  }, [isLeader, gm, ready, step, votes, voters, players, humanGm, options, go, markVoteStart, setTiebreak, groupChoice])
 
   // Jet : demandé au meilleur du groupe dans la caractéristique, puis suivi
   // jusqu'au résultat. Si le lanceur part, on redemande à quelqu'un d'autre.
@@ -423,7 +439,7 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
       <span className="min-w-0 flex-1 truncate text-sm font-semibold">
         {title} <span className="font-normal text-ink/60">· {adventure.title}</span>
       </span>
-      {gm && (
+      {gm?.mode === 'gm' && me?.gm && (
         <button
           onClick={() => setGmSide((v) => !v)}
           aria-pressed={gmSide}
@@ -537,7 +553,7 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
               .filter((o) => tie.options.includes(o.id))
               .map((o) =>
                 iDecide ? (
-                  <button key={o.id} onClick={() => go(o.next, gm.visit)} className="ui-btn ui-btn-primary justify-start">
+                  <button key={o.id} onClick={() => go(o.next, gm.visit, groupChoice(o.label))} className="ui-btn ui-btn-primary justify-start">
                     {o.label}
                   </button>
                 ) : (
@@ -659,7 +675,7 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
           </p>
         )}
         {body}
-        {step.kind !== 'end' && (
+        {step.kind !== 'end' && me?.gm && (
           <button onClick={stop} className="ui-btn ui-btn-ghost !min-h-7 self-start text-xs text-ink/55">
             <X size={12} /> {t('autoGmStop')}
           </button>
