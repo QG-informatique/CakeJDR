@@ -330,9 +330,12 @@
 - [x] Ne plus montrer la page de connexion une fraction de seconde en entrant dans une salle : afficher un écran de chargement tant que la session n'est pas vérifiée
 - [x] Afficher un écran de chargement à l'arrivée dans une salle (fond, carte, panneaux) avec une barre simple qui monte, au lieu d'un fond vide qui se remplit petit à petit
 
-## Retours de Quentin (2026-10-12) — ambiance du MJ automatique et choix du héros
-- [ ] Phase H : à la création d'une salle, réglage « Nouveau héros pour cette aventure » (coché d'office en MJ automatique, avec le niveau de départ) ; à l'arrivée, chaque joueur choisit « Créer mon héros avec le MJ », « Prendre un héros tout prêt » ou « Une de mes fiches » (si la salle l'autorise)
-- [ ] Arrêter de recopier toute la narration du MJ automatique dans le chat (elle est déjà dans le panneau de gauche) : n'y mettre que les choses importantes, indices et petits détails
-- [ ] Ajouter des petits sons d'interface discrets, ambiance JDR (clic, ouverture de panneau, demande de jet, réussite, échec), avec un réglage pour les couper — sons libres de droits uniquement
-- [ ] Donner au MJ automatique une musique par type d'ambiance (taverne, voyage, forêt, donjon, combat, mystère, victoire…) qui change quand le lieu ou l'humeur change — morceaux libres de droits, licence vérifiée
-- [ ] Voix de narrateur (voix grave) qui lit la narration des scènes : bouton pour l'activer ou la couper, texte qui défile sous l'image agrandie pendant la lecture, voix coupée à la fermeture de l'image, bouton « Réécouter » dans le panneau, seule la musique reste après — choisir le service de voix avec Quentin (coût, qualité)
+## Retours de Quentin (2026-10-12) — choix du héros et ambiance (décisions du 2026-10-12)
+- [ ] Phase H : à la création d'une salle, choisir MJ humain ou MJ automatique, et réglage « Nouveau héros pour cette aventure » coché d'office (les fiches déjà faites sont refusées, pour éviter un niveau 5 dans une campagne niveau 1) ; décochable dans les options de la salle
+- [ ] Phase H : à l'arrivée dans une aventure, proposer « Créer mon héros avec le MJ » (aux dés) et « Prendre un héros tout prêt » ; « Une de mes fiches » seulement si la salle l'autorise
+- [ ] Phase H : quand la salle autorise les fiches déjà faites, faire valider chaque fiche par le MJ, ou par le créateur de la salle en MJ automatique (niveau de départ, caractéristiques pas trop hautes)
+- [ ] Phase H : arrêter de recopier toute la narration du MJ automatique dans le chat (elle est déjà dans le panneau de gauche) : n'y mettre que les choses importantes, indices et petits détails
+- [ ] Phase Ambiance : trouver des sons d'interface libres de droits (licence CC0 de préférence) et les ajouter discrètement, ambiance JDR (clic, panneau, demande de jet, réussite, échec), avec un réglage pour les couper
+- [ ] Phase Ambiance : trouver des musiques libres de droits, une par type d'ambiance (taverne, voyage, forêt, donjon, combat, mystère, victoire…), licence vérifiée et notée pour chacune ; le MJ automatique change de musique quand le lieu ou l'humeur change
+- [ ] Phase Ambiance : voix de narrateur grave qui lit la narration des scènes, uniquement si une solution 100 % gratuite et libre suffit (voix du navigateur, ou voix libre type Piper pré-enregistrée, licence de la voix à vérifier) ; sinon abandonner — bouton pour l'activer ou la couper, texte qui défile sous l'image agrandie, voix coupée à la fermeture de l'image, bouton « Réécouter », seule la musique reste après
+- [ ] Mettre à jour le README du dépôt public GitHub (inchangé depuis août 2025) : ce que fait CakeJDR, comment l'installer, services gratuits utilisés
