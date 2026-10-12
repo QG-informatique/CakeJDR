@@ -1,6 +1,6 @@
 'use client'
 
-import { FC } from 'react'
+import { FC, useEffect, useState } from 'react'
 import Portal from '@/components/Portal'
 import { useT } from '@/lib/useT'
 
@@ -16,12 +16,17 @@ interface Props {
   onCancel: () => void
 }
 
+/** Un clic arrivé avant ce délai vient du double-clic qui a ouvert la fenêtre : il ne confirme rien. */
+const ARM_DELAY_MS = 400
+
 /**
  * Modal de confirmation glass-morphism — remplace window.confirm().
  * Rendu via Portal pour éviter tout problème de z-index/overflow.
+ * Échap ou un clic à côté annulent.
  */
-const ConfirmDialog: FC<Props> = ({
-  open,
+const ConfirmDialog: FC<Props> = ({ open, ...props }) => (open ? <Dialog {...props} /> : null)
+
+const Dialog: FC<Omit<Props, 'open'>> = ({
   title,
   message,
   confirmLabel,
@@ -31,7 +36,13 @@ const ConfirmDialog: FC<Props> = ({
   onCancel,
 }) => {
   const t = useT()
-  if (!open) return null
+  const [openedAt] = useState(() => Date.now())
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onCancel])
 
   return (
     <Portal>
@@ -42,6 +53,9 @@ const ConfirmDialog: FC<Props> = ({
       >
         {/* Card */}
         <div
+          role="alertdialog"
+          aria-modal="true"
+          aria-label={title ?? message}
           className="w-full max-w-sm mx-4 rounded-2xl border border-ink/12 bg-shade/60 backdrop-blur-[16px] shadow-2xl p-6 text-ink animate-fadeInScale"
           style={{ boxShadow: '0 8px 40px -8px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.08)' }}
         >
@@ -60,7 +74,7 @@ const ConfirmDialog: FC<Props> = ({
             </button>
             <button
               type="button"
-              onClick={onConfirm}
+              onClick={() => { if (Date.now() - openedAt >= ARM_DELAY_MS) onConfirm() }}
               className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all active:scale-95 border ${
                 danger
                   ? 'bg-red-600/80 border-red-500/40 text-ink hover:bg-red-500/90 shadow-[0_0_12px_rgba(239,68,68,0.3)]'

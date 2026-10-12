@@ -12,6 +12,7 @@ import { useRoomSettings } from '@/lib/roomSettings'
 import { CHECK_STATS, checkStatLabel, withStat } from '@/lib/checks'
 import { statMod } from '@/lib/modifiers'
 import { libraryUrl } from '@/lib/library'
+import { actionBonus, backgroundOf } from '@/lib/backgrounds'
 import { useShowImage } from '@/components/canvas/ShownImage'
 import { postCheck } from '@/components/checks/postCheck'
 import { getTextColor } from '@/components/chat/LiveAvatarStack'
@@ -28,6 +29,7 @@ import {
   VOTE_WINDOW_MS,
   availableOptions,
   best,
+  checkMod,
   decide,
   draw,
   drawable,
@@ -67,6 +69,7 @@ function toVoter(p: Presence): Voter {
     mods,
     charisma: c ? Number(c.charisme) || 0 : 0,
     hero: !!(c?.nom && String(c.nom).trim()),
+    historique: c?.historique,
   }
 }
 
@@ -292,7 +295,7 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
   useEffect(() => {
     if (!isLeader || !gm || gm.setup >= gm.visit) return
     const shown = setUp(gm.visit, t(gm.mode === 'gm' ? 'autoGmTitleGm' : 'autoGmTitle'))
-    if (shown) showImage(libraryUrl(shown.category, shown.item), shown.label)
+    if (shown) showImage(libraryUrl(shown.category, shown.item), shown.label, { adventure: gm.adventure, scene: gm.scene })
   }, [isLeader, gm, setUp, showImage, t])
 
   // Vote : dépouillé quand tout le monde a choisi, ou à la fin du délai.
@@ -351,7 +354,7 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
     const visitId = `${gm.run}:${gm.visit}`
     if (asked.current === visitId || askFailed) return
     // Un joueur encore en train de créer son héros n'est pas appelé à lancer.
-    const roller = best(players.filter((v) => v.hero), step.stat)
+    const roller = best(players.filter((v) => v.hero), step.stat, step.action)
     if (!roller) return
     asked.current = visitId
     const expected = gm.visit
@@ -360,10 +363,13 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
       targetId: roller.id,
       targetName: roller.name,
       stat: step.stat,
-      mod: Math.max(-30, Math.min(30, roller.mods[step.stat] ?? 0)),
+      mod: Math.max(-30, Math.min(30, checkMod(roller, step.stat, step.action))),
       dc: step.dc,
       showDc: true,
-      reason: step.reason,
+      // Le bonus d'historique est dit dans la raison : on voit d'où vient le +2.
+      reason: actionBonus(roller.historique, step.action)
+        ? `${step.reason} · ${backgroundOf(roller.historique, lang)?.nom} +${actionBonus(roller.historique, step.action)}`
+        : step.reason,
     })
       .then((d) => {
         if (d?.id) setCheck({ id: d.id, userId: roller.id, name: roller.name, visit: expected })
@@ -372,7 +378,7 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
         asked.current = ''
         setAskFailed(true)
       })
-  }, [isLeader, gm, ready, step, voters, players, result, pending, roomId, askFailed, dropCheck, setCheck])
+  }, [isLeader, gm, ready, step, voters, players, result, pending, roomId, askFailed, dropCheck, setCheck, lang])
 
   useEffect(() => {
     if (!isLeader || !gm || !result || step?.kind !== 'check' || !result.check) return

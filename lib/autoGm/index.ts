@@ -9,6 +9,7 @@ import { CAKE_DEMO } from './cakeDemo'
 import { DRAGON_CAMPAIGN } from './dragonCampaign'
 import { CAKE_DEMO_EN } from './en/cakeDemo'
 import { DRAGON_CAMPAIGN_EN } from './en/dragonCampaign'
+import { actionBonus, type ActionKind } from '@/lib/backgrounds'
 import type { Adventure, AdventureText, AutoGmMode, RandomOutcome, Scene, SceneOption, SceneStep } from './types'
 
 export type { Adventure, AdventureText, Scene, SceneOption } from './types'
@@ -116,6 +117,8 @@ export type Voter = {
   charisma: number
   /** A une fiche nommée : un joueur encore en création n'est pas appelé à lancer. */
   hero?: boolean
+  /** Historique du héros (`lib/backgrounds.ts`). */
+  historique?: string
 }
 
 /** Options proposées dans la scène : celles qui demandent un indice pas encore trouvé sont cachées. */
@@ -145,10 +148,15 @@ export function draw(step: RandomStep, flags: readonly string[], roll: number = 
 }
 
 /** Celui qui a le meilleur score dans une caractéristique ; à égalité, le premier arrivé. */
-export function best(voters: readonly Voter[], stat: string): Voter | undefined {
+/** Modificateur d'un joueur pour ce jet : sa caractéristique, plus le bonus de son historique. */
+export function checkMod(voter: Voter, stat: string, action?: ActionKind): number {
+  return (voter.mods[stat] ?? 0) + actionBonus(voter.historique, action)
+}
+
+export function best(voters: readonly Voter[], stat: string, action?: ActionKind): Voter | undefined {
   return [...voters].sort(
     (a, b) =>
-      (b.mods[stat] ?? 0) - (a.mods[stat] ?? 0) ||
+      checkMod(b, stat, action) - checkMod(a, stat, action) ||
       (stat === 'charisme' ? b.charisma - a.charisma : 0) ||
       a.connectionId - b.connectionId,
   )[0]

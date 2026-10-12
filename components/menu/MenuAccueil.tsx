@@ -139,7 +139,14 @@ export default function MenuAccueil({ page }: { page: 'landing' | 'salles' }) {
 
   // La table selectionnee est memorisee dans le navigateur. Si elle a ete
   // supprimee entre-temps, le menu continuait d'afficher « Entrer <nom> »
-  // pour une table fantome. On verifie qu'elle existe encore.
+  // pour une table fantome. On verifie qu'elle existe encore, et de nouveau
+  // quand la liste des tables change (une table supprimee depuis ce menu).
+  const [roomsVersion, setRoomsVersion] = useState(0)
+  useEffect(() => {
+    const onChange = () => setRoomsVersion((v) => v + 1)
+    window.addEventListener('jdr_rooms_change', onChange)
+    return () => window.removeEventListener('jdr_rooms_change', onChange)
+  }, [])
   useEffect(() => {
     if (!selectedRoom) return
     let cancelled = false
@@ -160,7 +167,7 @@ export default function MenuAccueil({ page }: { page: 'landing' | 'salles' }) {
     return () => {
       cancelled = true
     }
-  }, [selectedRoom])
+  }, [selectedRoom, roomsVersion])
 
   useEffect(() => {
     if (!statusMessage) return

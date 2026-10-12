@@ -8,6 +8,7 @@
  * campagnes toutes prêtes (phase H de `PLAN-CAMPAGNES.md`).
  */
 import type { CheckStat } from '@/lib/checks'
+import type { ActionKind } from '@/lib/backgrounds'
 
 /** Image de la bibliothèque posée sur le plateau, en fraction du plateau. */
 export type ScenePiece = {
@@ -64,6 +65,8 @@ export type SceneStep =
       prompt: string
       stat: CheckStat
       dc: number
+      /** Genre d'action : le héros dont l'historique y correspond a un bonus (`lib/backgrounds.ts`). */
+      action?: ActionKind
       /** Phrase courte, rappelée sur la carte du jet (« Convaincre Mila »). */
       reason: string
       success: string

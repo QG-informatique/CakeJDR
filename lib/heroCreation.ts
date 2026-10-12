@@ -1,17 +1,22 @@
 /**
  * Création d'un personnage guidée par le MJ automatique : un nom, un peuple,
- * une classe, puis les dés de chaque caractéristique, lancés sur la table.
+ * un genre, une classe, un historique, puis les dés, lancés sur la table.
  *
  * Les dés suivent le système de la table (`lib/gameSystems.ts`) :
- * - narratif et Fantasy 5E : 4 D6, on garde les 3 meilleurs (SRD 5.2.1) ;
+ * - narratif et Fantasy 5E : six jets de 4 D6, on garde les 3 meilleurs
+ *   (SRD 5.2.1). Le MJ place les meilleurs jets sur les caractéristiques
+ *   dont la classe a besoin (`priorites`) ; le joueur peut en échanger deux ;
  * - Enquête d100 : 3 D6, ou 2 D6 + 6 pour la Corpulence et l'Intelligence
- *   (Basic Roleplaying). Les PV y valent (Constitution + Corpulence) / 2.
+ *   (Basic Roleplaying), un jet par caractéristique.
+ *   Les PV y valent (Constitution + Corpulence) / 2.
  * Ailleurs, les PV de départ sont le dé de vie de la classe plus le
  * modificateur de Constitution.
  */
 import type { GameSystemId } from './gameSystems'
+import { libraryUrl } from './library'
 import type { PremadeHero } from './premadeHeroes'
 import { CLASSES_EN, PEOPLES_EN } from './en/heroes'
+import { BACKGROUND_BONUS, type Background } from './backgrounds'
 
 export type People = { id: string; nom: string; capacite: string }
 
@@ -38,6 +43,8 @@ export type HeroClass = {
   objets: PremadeHero['objets']
   /** Portraits du pack proposés en premier pour cette classe. */
   portraits: readonly string[]
+  /** Caractéristiques de la classe, de la plus utile à la moins utile. */
+  priorites: readonly string[]
 }
 
 export const HERO_CLASSES: readonly HeroClass[] = [
@@ -55,6 +62,7 @@ export const HERO_CLASSES: readonly HeroClass[] = [
     ],
     objets: [{ nom: 'Rations', quantite: 3 }, { nom: 'Corde (15 m)', quantite: 1 }],
     portraits: ['guerrier-homme', 'guerriere-femme', 'nain-guerrier'],
+    priorites: ['force', 'constitution', 'dexterite', 'sagesse', 'charisme', 'intelligence'],
   },
   {
     id: 'mage',
@@ -70,6 +78,7 @@ export const HERO_CLASSES: readonly HeroClass[] = [
     ],
     objets: [{ nom: 'Grimoire', quantite: 1 }, { nom: 'Plume et encre', quantite: 1 }],
     portraits: ['mage-homme', 'mage-femme', 'cake-patissier'],
+    priorites: ['intelligence', 'dexterite', 'constitution', 'sagesse', 'charisme', 'force'],
   },
   {
     id: 'rodeur',
@@ -85,6 +94,7 @@ export const HERO_CLASSES: readonly HeroClass[] = [
     ],
     objets: [{ nom: 'Flèches', quantite: 20 }, { nom: 'Herbes médicinales', quantite: 2 }],
     portraits: ['rodeur-homme', 'rodeuse-femme'],
+    priorites: ['dexterite', 'sagesse', 'constitution', 'force', 'intelligence', 'charisme'],
   },
   {
     id: 'roublard',
@@ -100,6 +110,7 @@ export const HERO_CLASSES: readonly HeroClass[] = [
     ],
     objets: [{ nom: 'Outils de crocheteur', quantite: 1 }, { nom: 'Cape sombre', quantite: 1 }],
     portraits: ['roublard-homme', 'roublarde-femme'],
+    priorites: ['dexterite', 'charisme', 'intelligence', 'constitution', 'sagesse', 'force'],
   },
   {
     id: 'paladin',
@@ -115,6 +126,7 @@ export const HERO_CLASSES: readonly HeroClass[] = [
     ],
     objets: [{ nom: 'Symbole sacré', quantite: 1 }, { nom: 'Eau bénite', quantite: 1 }],
     portraits: ['paladine-femme', 'guerrier-homme'],
+    priorites: ['force', 'charisme', 'constitution', 'sagesse', 'dexterite', 'intelligence'],
   },
   {
     id: 'barde',
@@ -130,6 +142,7 @@ export const HERO_CLASSES: readonly HeroClass[] = [
     ],
     objets: [{ nom: 'Luth', quantite: 1 }, { nom: 'Habits de fête', quantite: 1 }],
     portraits: ['barde-homme'],
+    priorites: ['charisme', 'dexterite', 'constitution', 'intelligence', 'sagesse', 'force'],
   },
   {
     id: 'druide',
@@ -145,6 +158,7 @@ export const HERO_CLASSES: readonly HeroClass[] = [
     ],
     objets: [{ nom: 'Baies nourrissantes', quantite: 4 }, { nom: 'Bourse de graines', quantite: 1 }],
     portraits: ['druidesse-femme'],
+    priorites: ['sagesse', 'constitution', 'dexterite', 'intelligence', 'charisme', 'force'],
   },
   {
     id: 'clerc',
@@ -160,6 +174,7 @@ export const HERO_CLASSES: readonly HeroClass[] = [
     ],
     objets: [{ nom: 'Symbole sacré', quantite: 1 }, { nom: 'Bandages', quantite: 3 }],
     portraits: ['clerc-femme'],
+    priorites: ['sagesse', 'constitution', 'force', 'charisme', 'intelligence', 'dexterite'],
   },
   {
     id: 'moine',
@@ -175,6 +190,7 @@ export const HERO_CLASSES: readonly HeroClass[] = [
     ],
     objets: [{ nom: 'Rations', quantite: 3 }, { nom: 'Chapelet', quantite: 1 }],
     portraits: ['moine-homme'],
+    priorites: ['dexterite', 'constitution', 'force', 'sagesse', 'intelligence', 'charisme'],
   },
 ]
 
@@ -207,6 +223,53 @@ export const HERO_PORTRAITS = [
   'druidesse-femme', 'moine-homme', 'clerc-femme',
 ] as const
 
+export type Gender = 'homme' | 'femme'
+
+/** Ce que montre chaque portrait. Le peuple n'est connu que pour le nain. */
+const PORTRAIT_TAGS: Record<string, { classe: string; genre: Gender; peuple?: string }> = {
+  'guerrier-homme': { classe: 'guerrier', genre: 'homme' },
+  'guerriere-femme': { classe: 'guerrier', genre: 'femme' },
+  'mage-homme': { classe: 'mage', genre: 'homme' },
+  'mage-femme': { classe: 'mage', genre: 'femme' },
+  'rodeur-homme': { classe: 'rodeur', genre: 'homme' },
+  'rodeuse-femme': { classe: 'rodeur', genre: 'femme' },
+  'roublard-homme': { classe: 'roublard', genre: 'homme' },
+  'roublarde-femme': { classe: 'roublard', genre: 'femme' },
+  'cake-patissier': { classe: 'mage', genre: 'homme' },
+  'nain-guerrier': { classe: 'guerrier', genre: 'homme', peuple: 'nain' },
+  'paladine-femme': { classe: 'paladin', genre: 'femme' },
+  'barde-homme': { classe: 'barde', genre: 'homme' },
+  'druidesse-femme': { classe: 'druide', genre: 'femme' },
+  'moine-homme': { classe: 'moine', genre: 'homme' },
+  'clerc-femme': { classe: 'clerc', genre: 'femme' },
+}
+
+/**
+ * Portraits proposés au héros : ceux de son genre, ceux de sa classe en
+ * premier, puis ceux de son peuple. `all` ajoute ceux de l'autre genre.
+ */
+export function portraitsFor(classe: string, genre: Gender | null, peuple: string, all = false): string[] {
+  const score = (id: string) => {
+    const tag = PORTRAIT_TAGS[id]
+    if (!tag) return 0
+    return (tag.classe === classe ? 4 : 0) + (tag.genre === genre ? 2 : 0) + (tag.peuple === peuple ? 1 : 0)
+  }
+  return HERO_PORTRAITS.filter((id) => all || !genre || PORTRAIT_TAGS[id]?.genre === genre)
+    .map((id, i) => ({ id, i, s: score(id) }))
+    .sort((a, b) => b.s - a.s || a.i - b.i)
+    .map((p) => p.id)
+}
+
+/** Une image importée plutôt qu'un portrait du pack. */
+export function isImported(image: string): boolean {
+  return /^https?:/.test(image)
+}
+
+/** Adresse d'un portrait : une image importée, ou un portrait du pack. */
+export function portraitSrc(image: string, thumb = false): string {
+  return isImported(image) ? image : libraryUrl('portraits', image, thumb)
+}
+
 /** Dés d'une caractéristique : `count` D6, on garde les `keep` meilleurs, plus `bonus`. */
 export type StatDice = { count: number; keep: number; bonus: number }
 
@@ -222,6 +285,25 @@ export function statValue(dice: StatDice, faces: readonly number[]): number {
   return kept.reduce((a, b) => a + b, 0) + dice.bonus
 }
 
+/**
+ * Six jets mis en commun puis placés par le MJ (narratif et Fantasy 5E). En
+ * d100, chaque caractéristique a ses propres dés : un jet par caractéristique.
+ */
+export function pooledStats(system: GameSystemId): boolean {
+  return system !== 'd100'
+}
+
+/**
+ * Le MJ place les jets : le meilleur sur la caractéristique la plus utile à
+ * la classe, et ainsi de suite. Renvoie la caractéristique de chaque jet.
+ */
+export function assignRolls(values: readonly number[], priorites: readonly string[]): string[] {
+  const byValue = values.map((v, i) => ({ v, i })).sort((a, b) => b.v - a.v || a.i - b.i)
+  const order: string[] = new Array(values.length)
+  byValue.forEach(({ i }, rank) => { order[i] = priorites[rank] ?? '' })
+  return order
+}
+
 /** PV de départ, selon le système. */
 export function startingHp(system: GameSystemId, heroClass: HeroClass, stats: Record<string, number>): number {
   const con = stats.constitution ?? 10
@@ -232,16 +314,25 @@ export function startingHp(system: GameSystemId, heroClass: HeroClass, stats: Re
 /** Le héros créé, au format des héros tout prêts. */
 export function createdHero(
   system: GameSystemId,
-  draft: { nom: string; people: People; heroClass: HeroClass; image: string; stats: Record<string, number> },
+  draft: {
+    nom: string
+    people: People
+    heroClass: HeroClass
+    /** Écrit sur la fiche, dans la langue de l'interface. */
+    sexe: string
+    historique?: Background
+    image: string
+    stats: Record<string, number>
+  },
 ): PremadeHero {
-  const { nom, people, heroClass, image, stats } = draft
+  const { nom, people, heroClass, sexe, historique, image, stats } = draft
   const get = (k: string) => stats[k] ?? 10
   return {
     image,
     nom,
     race: people.nom,
     classe: heroClass.nom,
-    sexe: '',
+    sexe,
     age: '',
     hook: '',
     stats: {
@@ -261,7 +352,9 @@ export function createdHero(
     competences: heroClass.competences,
     objets: heroClass.objets,
     traits: '',
-    background: '',
+    background: historique ? `${historique.nom}. ${historique.passe}` : '',
+    historique: historique?.id,
+    avantages: historique ? `${historique.nom} : +${BACKGROUND_BONUS} (${historique.domaine})` : '',
     capacite_raciale: people.capacite,
   }
 }

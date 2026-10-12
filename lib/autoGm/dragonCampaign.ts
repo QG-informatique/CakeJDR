@@ -1,5 +1,6 @@
 import type { Adventure, Scene, SceneOption, ScenePiece, SceneStep } from './types'
 import type { CheckStat } from '@/lib/checks'
+import type { ActionKind } from '@/lib/backgrounds'
 
 /**
  * « La Flamme sous la montagne », la campagne du pack n° 2.
@@ -32,11 +33,20 @@ const scenery = (item: string, label: string) => show(item, label, 'cartes')
 const next = (to: string, label?: string): SceneStep => ({ kind: 'continue', next: to, label })
 const vote = (prompt: string, options: SceneOption[]): SceneStep => ({ kind: 'vote', prompt, options })
 const opt = (id: string, label: string, to: string, needs?: string): SceneOption => ({ id, label, next: to, needs })
-const check = (prompt: string, stat: CheckStat, dc: number, reason: string, success: string, failure: string): SceneStep => ({
+const check = (
+  prompt: string,
+  stat: CheckStat,
+  dc: number,
+  reason: string,
+  success: string,
+  failure: string,
+  action?: ActionKind,
+): SceneStep => ({
   kind: 'check',
   prompt,
   stat,
   dc,
+  action,
   reason,
   success,
   failure,
@@ -144,14 +154,14 @@ const scenes: Scene[] = [
     chapter: ACT1,
     title: 'Bataille sur la route',
     narration: ['Le colosse au gourdin charge le premier, l\'arbalétrière épaule. Il faut frapper vite et fort.'],
-    step: check('Mettez les bandits en déroute.', 'force', 12, 'Mettre les bandits en déroute', 'bandits_vaincus', 'bandits_blesses'),
+    step: check('Mettez les bandits en déroute.', 'force', 12, 'Mettre les bandits en déroute', 'bandits_vaincus', 'bandits_blesses', 'combat'),
   },
   {
     id: 'bandits_parler',
     chapter: ACT1,
     title: 'Négocier avec la cheffe',
     narration: ["Vous baissez vos armes. La cheffe hausse un sourcil : elle n'avait pas prévu qu'on lui pose des questions."],
-    step: check('Faites-la parler.', 'charisme', 12, 'Faire parler la cheffe des bandits', 'bandits_parle', 'bandits_blesses'),
+    step: check('Faites-la parler.', 'charisme', 12, 'Faire parler la cheffe des bandits', 'bandits_parle', 'bandits_blesses', 'parole'),
   },
   {
     id: 'bandits_vaincus',
@@ -201,7 +211,7 @@ const scenes: Scene[] = [
       "Ce ne sont pas des bandits : trois grands loups noirs dévorent les provisions de la charrette renversée. Ils portent des harnais de cuir. Des montures de gobelins.",
       'Le plus gros relève la tête et grogne.',
     ],
-    step: check('Faites fuir les loups avant qu\'ils ne chargent.', 'dexterite', 11, 'Repousser les loups sombres', 'loups_fuient', 'loups_mordent'),
+    step: check('Faites fuir les loups avant qu\'ils ne chargent.', 'dexterite', 11, 'Repousser les loups sombres', 'loups_fuient', 'loups_mordent', 'nature'),
   },
   {
     id: 'loups_fuient',
@@ -260,7 +270,7 @@ const scenes: Scene[] = [
     title: 'La toile',
     setup: { map: 'foret-clairiere', pieces: [piece('araignee', 'araignee-geante', 0.55, 0.2, 0.2)] },
     narration: ["Une toile énorme barre le sentier, et sa propriétaire descend lentement d'une branche : une araignée grosse comme un poney."],
-    step: check('Passez sans finir emballés.', 'dexterite', 12, "Échapper à l'araignée géante", 'araignee_ok', 'araignee_ko'),
+    step: check('Passez sans finir emballés.', 'dexterite', 12, "Échapper à l'araignée géante", 'araignee_ok', 'araignee_ko', 'discretion'),
   },
   {
     id: 'araignee_ok',
@@ -308,14 +318,14 @@ const scenes: Scene[] = [
     chapter: ACT1,
     title: "À l'assaut !",
     narration: ['Vous enfoncez la porte de la palissade. Les gobelins attrapent leurs lances en piaillant.'],
-    step: check('Balayez les gobelins.', 'force', 12, "Prendre le camp d'assaut", 'camp_libere', 'camp_fumee'),
+    step: check('Balayez les gobelins.', 'force', 12, "Prendre le camp d'assaut", 'camp_libere', 'camp_fumee', 'combat'),
   },
   {
     id: 'camp_nuit',
     chapter: ACT1,
     title: 'À pas de loup',
     narration: ['La nuit tombe. Les feux baissent, les ronflements montent. Vous longez la palissade jusqu\'à la cage.'],
-    step: check('Approchez sans un bruit.', 'dexterite', 12, 'Se glisser dans le camp endormi', 'camp_libere', 'camp_fumee'),
+    step: check('Approchez sans un bruit.', 'dexterite', 12, 'Se glisser dans le camp endormi', 'camp_libere', 'camp_fumee', 'discretion'),
   },
   {
     id: 'camp_fumee',
@@ -369,21 +379,21 @@ const scenes: Scene[] = [
     chapter: ACT1,
     title: 'Duel au pied du trône',
     narration: ['Le roi gobelin descend de son trône en faisant tournoyer une masse hérissée de clous.'],
-    step: check('Abattez le roi gobelin.', 'force', 13, 'Vaincre le roi gobelin', 'acte1_fin', 'grotte_dur'),
+    step: check('Abattez le roi gobelin.', 'force', 13, 'Vaincre le roi gobelin', 'acte1_fin', 'grotte_dur', 'combat'),
   },
   {
     id: 'grotte_cultiste',
     chapter: ACT1,
     title: 'Rattraper le cultiste',
     narration: ['Le cultiste recule vers une faille du rocher. Le roi gobelin, lui, hésite.'],
-    step: check('Attrapez-le avant la faille.', 'dexterite', 12, 'Attraper le cultiste', 'acte1_fin', 'grotte_dur'),
+    step: check('Attrapez-le avant la faille.', 'dexterite', 12, 'Attraper le cultiste', 'acte1_fin', 'grotte_dur', 'effort'),
   },
   {
     id: 'grotte_trahi',
     chapter: ACT1,
     title: 'Le roi trahi',
     narration: ["Le roi gobelin plisse les yeux, regarde le cultiste… et éclate d'un rire mauvais."],
-    step: check('Convainquez-le pour de bon.', 'charisme', 11, 'Retourner le roi gobelin contre le culte', 'acte1_allie', 'grotte_dur'),
+    step: check('Convainquez-le pour de bon.', 'charisme', 11, 'Retourner le roi gobelin contre le culte', 'acte1_allie', 'grotte_dur', 'parole'),
   },
   {
     id: 'grotte_dur',
@@ -518,7 +528,7 @@ const scenes: Scene[] = [
     title: 'Les masques',
     setup: { map: 'rues-ville', pieces: [piece('fanatique-1', 'fanatique', 0.25, 0.3), piece('fanatique-2', 'fanatique', 0.75, 0.35)] },
     narration: ["Une ruelle trop calme. Deux silhouettes masquées, dagues courbes à la main, vous tombent dessus depuis les toits. Quelqu'un sait que vous êtes là."],
-    step: check('Retournez l\'embuscade.', 'dexterite', 12, "Déjouer l'embuscade des fanatiques", 'embuscade_ok', 'embuscade_ko'),
+    step: check('Retournez l\'embuscade.', 'dexterite', 12, "Déjouer l'embuscade des fanatiques", 'embuscade_ok', 'embuscade_ko', 'combat'),
   },
   {
     id: 'embuscade_ok',
@@ -565,7 +575,7 @@ const scenes: Scene[] = [
       "Au port, une capitaine en tricorne vous fait signe. « Mara. La Vipère, là, c'est mon ancien navire. Volé par des robes pourpres. Ils déchargent ce soir. »",
       'Des cultistes font rouler des tonneaux vers un entrepôt. Une trappe y mène sous terre.',
     ],
-    step: check('Glissez-vous dans l\'entrepôt.', 'dexterite', 12, "Entrer dans l'entrepôt sans être vus", 'port_ok', 'port_ko'),
+    step: check('Glissez-vous dans l\'entrepôt.', 'dexterite', 12, "Entrer dans l'entrepôt sans être vus", 'port_ok', 'port_ko', 'discretion'),
   },
   {
     id: 'port_ok',
@@ -597,7 +607,7 @@ const scenes: Scene[] = [
     narration: [
       "L'eau sale clapote sous les voûtes. L'odeur de soufre devient insupportable. Des rires aigus résonnent : de petits démons ailés jouent avec des rats.",
     ],
-    step: check('Trouvez le bon tunnel sans réveiller toute la nichée.', 'intelligence', 11, 'Suivre la piste du soufre', 'egouts_ok', 'egouts_ko'),
+    step: check('Trouvez le bon tunnel sans réveiller toute la nichée.', 'intelligence', 11, 'Suivre la piste du soufre', 'egouts_ok', 'egouts_ko', 'nature'),
   },
   {
     id: 'egouts_gardes',
@@ -656,14 +666,14 @@ const scenes: Scene[] = [
     chapter: ACT2,
     title: 'Le cercle pourpre',
     narration: ['Vous vous jetez sur les runes du cercle. Elles brûlent sous vos doigts.'],
-    step: check('Effacez les bonnes runes.', 'intelligence', 13, "Briser le cercle d'invocation", 'rituel_brise', 'demon'),
+    step: check('Effacez les bonnes runes.', 'intelligence', 13, "Briser le cercle d'invocation", 'rituel_brise', 'demon', 'savoir'),
   },
   {
     id: 'pretre',
     chapter: ACT2,
     title: 'Le masque doré',
     narration: ['Le grand prêtre vous voit venir et lève les mains. Il lui manque quelques mots pour finir.'],
-    step: check('Frappez avant la dernière syllabe.', 'force', 13, 'Interrompre le grand prêtre', 'rituel_brise', 'demon'),
+    step: check('Frappez avant la dernière syllabe.', 'force', 13, 'Interrompre le grand prêtre', 'rituel_brise', 'demon', 'combat'),
   },
   {
     id: 'demon',
@@ -749,7 +759,7 @@ const scenes: Scene[] = [
     chapter: ACT3,
     title: "L'avalanche",
     narration: ['Un grondement sourd, au-dessus. La pente entière se met à glisser vers vous.'],
-    step: check("Tenez bon sous la neige.", 'constitution', 12, "Survivre à l'avalanche", 'camp_orc', 'col_ensevelis'),
+    step: check("Tenez bon sous la neige.", 'constitution', 12, "Survivre à l'avalanche", 'camp_orc', 'col_ensevelis', 'effort'),
   },
   {
     id: 'col_ensevelis',
@@ -765,7 +775,7 @@ const scenes: Scene[] = [
     title: 'La patrouille',
     setup: { map: 'col-montagne', pieces: [piece('orc-1', 'orc-guerrier', 0.3, 0.25), piece('orc-2', 'orc-archer', 0.7, 0.2), piece('ogre', 'ogre', 0.5, 0.12, 0.2)] },
     narration: ['Des silhouettes dans la tempête : deux orcs peints de rouge et un ogre qui traîne un tronc d\'arbre comme gourdin.'],
-    step: check('Tenez tête à la patrouille.', 'force', 12, 'Repousser la patrouille orc', 'camp_orc', 'col_ogre'),
+    step: check('Tenez tête à la patrouille.', 'force', 12, 'Repousser la patrouille orc', 'camp_orc', 'col_ogre', 'combat'),
   },
   {
     id: 'col_ogre',
@@ -799,14 +809,14 @@ const scenes: Scene[] = [
     chapter: ACT3,
     title: "Duel d'honneur",
     narration: ["Les orcs forment un cercle et frappent sur leurs boucliers. Grokh fait tourner sa hache en riant."],
-    step: check('Tenez face à Grokh.', 'force', 14, 'Duel contre Grokh', 'orc_allies', 'orc_defaite'),
+    step: check('Tenez face à Grokh.', 'force', 14, 'Duel contre Grokh', 'orc_allies', 'orc_defaite', 'combat'),
   },
   {
     id: 'orc_parler',
     chapter: ACT3,
     title: 'Parler aux orcs',
     narration: ["Vous parlez du dragon, des flammes, des villages qui brûleront, ceux des orcs comme les autres. Le chaman écoute, les yeux mi-clos."],
-    step: check('Trouvez les mots qui portent.', 'charisme', 13, 'Convaincre Grokh', 'orc_allies', 'orc_defaite'),
+    step: check('Trouvez les mots qui portent.', 'charisme', 13, 'Convaincre Grokh', 'orc_allies', 'orc_defaite', 'parole'),
   },
   {
     id: 'orc_allies',
@@ -843,14 +853,14 @@ const scenes: Scene[] = [
     chapter: ACT3,
     title: 'Corps à corps',
     narration: ['Vous chargez tous ensemble. Le troll écarte les bras et sourit de toutes ses dents moussues.'],
-    step: check('Poussez !', 'force', 13, 'Pousser le troll dans le torrent', 'pont_passe', 'pont_coups'),
+    step: check('Poussez !', 'force', 13, 'Pousser le troll dans le torrent', 'pont_passe', 'pont_coups', 'effort'),
   },
   {
     id: 'pont_ruse',
     chapter: ACT3,
     title: "L'énigme",
     narration: ['« Une énigme ? » Le troll se gratte la tête. « D\'accord. Mais si je trouve, je mange. »'],
-    step: check("Posez une énigme qu'il ne résoudra pas.", 'intelligence', 12, 'Embrouiller le troll', 'pont_passe', 'pont_coups'),
+    step: check("Posez une énigme qu'il ne résoudra pas.", 'intelligence', 12, 'Embrouiller le troll', 'pont_passe', 'pont_coups', 'ruse'),
   },
   {
     id: 'pont_passe',
@@ -893,14 +903,14 @@ const scenes: Scene[] = [
     chapter: ACT3,
     title: 'Combat sur les pontons',
     narration: ['Les pontons tanguent sous vos pieds. Les lances visent vos jambes.'],
-    step: check('Gardez l\'équilibre et frappez.', 'dexterite', 12, 'Repousser les hommes-lézards', 'cabane', 'marais_morsures'),
+    step: check('Gardez l\'équilibre et frappez.', 'dexterite', 12, 'Repousser les hommes-lézards', 'cabane', 'marais_morsures', 'combat'),
   },
   {
     id: 'lezards_parler',
     chapter: ACT3,
     title: 'Paroles de paix',
     narration: ['Vous rangez vos armes et levez les mains. Les hommes-lézards se regardent.'],
-    step: check('Gagnez leur confiance.', 'charisme', 11, 'Parlementer avec les hommes-lézards', 'marais_guides', 'marais_morsures'),
+    step: check('Gagnez leur confiance.', 'charisme', 11, 'Parlementer avec les hommes-lézards', 'marais_guides', 'marais_morsures', 'parole'),
   },
   {
     id: 'marais_guides',
@@ -915,7 +925,7 @@ const scenes: Scene[] = [
     title: 'Les toiles du marais',
     setup: { map: 'marais', pieces: [piece('araignee-1', 'araignee-geante', 0.25, 0.2, 0.18), piece('araignee-2', 'araignee-geante', 0.72, 0.3, 0.18)] },
     narration: ['Entre les arbres, des toiles épaisses comme des voiles de bateau. Deux araignées géantes vous observent de leurs huit yeux.'],
-    step: check('Traversez sans vous faire prendre.', 'dexterite', 12, 'Traverser le bois des araignées', 'cabane', 'marais_morsures'),
+    step: check('Traversez sans vous faire prendre.', 'dexterite', 12, 'Traverser le bois des araignées', 'cabane', 'marais_morsures', 'discretion'),
   },
   {
     id: 'marais_morsures',
@@ -958,7 +968,7 @@ const scenes: Scene[] = [
     chapter: ACT3,
     title: 'La fausse promesse',
     narration: ['« Quand le vampire sera mort, son château sera à vous », promettez-vous. Mère Vase plisse les yeux.'],
-    step: check('Gardez votre sérieux.', 'charisme', 13, 'Duper Mère Vase', 'sorciere_dupee', 'sorciere_malediction'),
+    step: check('Gardez votre sérieux.', 'charisme', 13, 'Duper Mère Vase', 'sorciere_dupee', 'sorciere_malediction', 'ruse'),
   },
   {
     id: 'sorciere_force',
@@ -966,7 +976,7 @@ const scenes: Scene[] = [
     title: 'Le pieu ou la vie',
     setup: { map: 'marais', pieces: [piece('sorciere', 'sorciere-marais', 0.5, 0.2, 0.17), piece('troll', 'troll', 0.25, 0.3, 0.2)] },
     narration: ['Vous tirez vos armes. Mère Vase siffle entre ses dents, et un troll couvert de mousse sort de sous la cabane.'],
-    step: check('Passez le troll et attrapez le pieu.', 'force', 13, 'Prendre le pieu de force', 'sorciere_dupee', 'sorciere_malediction'),
+    step: check('Passez le troll et attrapez le pieu.', 'force', 13, 'Prendre le pieu de force', 'sorciere_dupee', 'sorciere_malediction', 'effort'),
   },
   {
     id: 'sorciere_dupee',
@@ -1004,7 +1014,7 @@ const scenes: Scene[] = [
     chapter: ACT3,
     title: 'Os et poussière',
     narration: ['Les squelettes avancent en rangs serrés, épées rouillées levées.'],
-    step: check('Brisez leurs rangs.', 'force', 12, 'Passer les squelettes', 'crypte_salles', 'crypte_griffes'),
+    step: check('Brisez leurs rangs.', 'force', 12, 'Passer les squelettes', 'crypte_salles', 'crypte_griffes', 'combat'),
   },
   {
     id: 'crypte_lumiere',
@@ -1031,7 +1041,7 @@ const scenes: Scene[] = [
       "Plus bas, devant une herse, un chevalier translucide vous barre le passage. « Je suis Galvan, dernier gardien du sceau de Cendrecime. Un nécromancien m'a lié à ces salles. Libérez-moi, ou affrontez-moi. »",
     ],
     gmNotes: "Galvan a scellé Pyraxis il y a mille ans. Libéré, il peut refaire le sceau dans le repaire du dragon (indice « galvan »).",
-    step: check('Rompez le lien du nécromancien par la parole.', 'charisme', 12, 'Libérer Sire Galvan', 'galvan_libre', 'galvan_combat'),
+    step: check('Rompez le lien du nécromancien par la parole.', 'charisme', 12, 'Libérer Sire Galvan', 'galvan_libre', 'galvan_combat', 'foi'),
   },
   {
     id: 'galvan_libre',
@@ -1055,7 +1065,7 @@ const scenes: Scene[] = [
     title: 'Le nécromancien',
     setup: { map: 'tour-mage', pieces: [piece('necromancien', 'necromancien', 0.48, 0.2, 0.17)], show: show('necromancien', 'Le nécromancien') },
     narration: ["Derrière la herse, un escalier monte jusqu'à une salle ronde pleine de livres. Un homme en robe noire lève un crâne lumineux. « Le culte m'avait promis que personne ne viendrait. »"],
-    step: check('Arrachez-lui son crâne lumineux.', 'dexterite', 12, 'Désarmer le nécromancien', 'crypte_sortie', 'crypte_maudits'),
+    step: check('Arrachez-lui son crâne lumineux.', 'dexterite', 12, 'Désarmer le nécromancien', 'crypte_sortie', 'crypte_maudits', 'combat'),
   },
   {
     id: 'liche',
@@ -1066,7 +1076,7 @@ const scenes: Scene[] = [
       "Ce n'est pas un nécromancien qui vous attend, mais son maître : une liche couronnée, aux yeux de flamme bleue. Elle n'a pas parlé depuis cent ans, et sa voix fait geler l'air.",
       '« Vous êtes venus mourir. Bien. »',
     ],
-    step: check('Brisez son phylactère, la gemme de son sceptre.', 'intelligence', 14, 'Briser le phylactère de la liche', 'crypte_sortie', 'crypte_maudits'),
+    step: check('Brisez son phylactère, la gemme de son sceptre.', 'intelligence', 14, 'Briser le phylactère de la liche', 'crypte_sortie', 'crypte_maudits', 'savoir'),
   },
   {
     id: 'crypte_maudits',
@@ -1101,7 +1111,7 @@ const scenes: Scene[] = [
     title: 'Les ailes noires',
     setup: { map: 'chateau-vampire', pieces: [piece('chauve-souris-1', 'chauve-souris-geante', 0.3, 0.2), piece('chauve-souris-2', 'chauve-souris-geante', 0.7, 0.24)] },
     narration: ['Un nuage noir tombe des tours : des chauves-souris géantes, par dizaines, qui visent vos gorges.'],
-    step: check('Protégez-vous jusqu\'à la porte.', 'constitution', 12, 'Traverser la nuée de chauves-souris', 'grande_salle', 'nuee'),
+    step: check('Protégez-vous jusqu\'à la porte.', 'constitution', 12, 'Traverser la nuée de chauves-souris', 'grande_salle', 'nuee', 'effort'),
   },
   {
     id: 'nuee',
@@ -1117,7 +1127,7 @@ const scenes: Scene[] = [
     title: 'Le gardien de la porte',
     setup: { map: 'chateau-vampire', pieces: [piece('loup-garou', 'loup-garou', 0.48, 0.24, 0.2)], show: show('loup-garou', 'Le loup-garou') },
     narration: ['Devant la porte, une silhouette se tord sous la lune et devient une bête énorme, toute en crocs et en fourrure. Le loup-garou du vampire hurle à la mort.'],
-    step: check('Abattez le loup-garou.', 'force', 13, 'Vaincre le loup-garou', 'grande_salle', 'loup_garou_ko'),
+    step: check('Abattez le loup-garou.', 'force', 13, 'Vaincre le loup-garou', 'grande_salle', 'loup_garou_ko', 'combat'),
   },
   {
     id: 'loup_garou_ko',
@@ -1160,14 +1170,14 @@ const scenes: Scene[] = [
     chapter: FINAL,
     title: 'Danse avec le vampire',
     narration: ['Le vampire pose sa coupe et disparaît dans un nuage de brume, pour réapparaître derrière vous.'],
-    step: check('Touchez-le avant qu\'il ne vous vide de votre sang.', 'force', 14, 'Vaincre le seigneur vampire', 'vampire_vaincu', 'vampire_morsure'),
+    step: check('Touchez-le avant qu\'il ne vous vide de votre sang.', 'force', 14, 'Vaincre le seigneur vampire', 'vampire_vaincu', 'vampire_morsure', 'combat'),
   },
   {
     id: 'vampire_lumiere',
     chapter: FINAL,
     title: 'La lumière du temple',
     narration: ['Le symbole de la prêtresse s\'embrase sur votre front. Le vampire recule en sifflant, les mains devant les yeux.'],
-    step: check('Repoussez-le jusqu\'à la fenêtre, vers l\'aube.', 'charisme', 11, 'Repousser le vampire avec la bénédiction', 'vampire_vaincu', 'vampire_morsure'),
+    step: check('Repoussez-le jusqu\'à la fenêtre, vers l\'aube.', 'charisme', 11, 'Repousser le vampire avec la bénédiction', 'vampire_vaincu', 'vampire_morsure', 'foi'),
   },
   {
     id: 'vampire_horde',
@@ -1244,14 +1254,14 @@ const scenes: Scene[] = [
     chapter: FINAL,
     title: 'Les mots interdits',
     narration: ['Vous vous jetez entre les cultistes et le dragon, en couvrant leurs voix des vôtres.'],
-    step: check('Brisez la litanie.', 'intelligence', 14, 'Interrompre le rituel du réveil', 'fin_sommeil', 'eveil'),
+    step: check('Brisez la litanie.', 'intelligence', 14, 'Interrompre le rituel du réveil', 'fin_sommeil', 'eveil', 'savoir'),
   },
   {
     id: 'repaire_pretre',
     chapter: FINAL,
     title: 'Le masque tombe',
     narration: ["Vous foncez sur le grand prêtre. Les kobolds s'interposent, les drakéides lèvent leurs lances."],
-    step: check('Atteignez le grand prêtre.', 'force', 13, 'Abattre le grand prêtre', 'pretre_tombe', 'eveil'),
+    step: check('Atteignez le grand prêtre.', 'force', 13, 'Abattre le grand prêtre', 'pretre_tombe', 'eveil', 'combat'),
   },
   {
     id: 'pretre_tombe',
@@ -1274,7 +1284,7 @@ const scenes: Scene[] = [
     narration: [
       "Brunhild vous avait donné ses meilleures pièces, trempées dans le sang de dragon qu'elle gardait depuis l'enfance. Le métal chante au contact de la chaleur.",
     ],
-    step: check('Frappez au défaut des écailles.', 'force', 12, "Frapper le dragon avec l'acier de Brunhild", 'fin_victoire', 'eveil'),
+    step: check('Frappez au défaut des écailles.', 'force', 12, "Frapper le dragon avec l'acier de Brunhild", 'fin_victoire', 'eveil', 'combat'),
   },
   {
     id: 'eveil',
@@ -1297,14 +1307,14 @@ const scenes: Scene[] = [
     chapter: FINAL,
     title: 'Parler au dragon',
     narration: ["Vous baissez vos armes. Le dragon penche sa tête immense vers vous. Son souffle sent le soufre et la braise."],
-    step: check('Convainquez Pyraxis.', 'charisme', 15, 'Négocier avec Pyraxis', 'fin_pacte', 'dragon_combat'),
+    step: check('Convainquez Pyraxis.', 'charisme', 15, 'Négocier avec Pyraxis', 'fin_pacte', 'dragon_combat', 'parole'),
   },
   {
     id: 'dragon_combat',
     chapter: FINAL,
     title: 'Contre le dragon',
     narration: ['Pyraxis déploie ses ailes. La caverne entière devient un champ de bataille de lave et d\'or.'],
-    step: check('Le coup qui décidera de tout.', 'force', 15, 'Vaincre Pyraxis', 'fin_victoire', 'fin_retraite'),
+    step: check('Le coup qui décidera de tout.', 'force', 15, 'Vaincre Pyraxis', 'fin_victoire', 'fin_retraite', 'combat'),
   },
 
   // Les fins.

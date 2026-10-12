@@ -337,9 +337,23 @@
 - [x] Phase H : arrêter de recopier toute la narration du MJ automatique dans le chat (elle est déjà dans le panneau de gauche) : n'y mettre que les choses importantes, indices et petits détails — titre de la scène et choix du groupe seulement
 - [ ] Phase H : dans une salle « Nouveau héros » en MJ humain sans aventure lancée, proposer aussi le choix du héros (aujourd'hui : fiche vierge seulement)
 - [ ] Phase H : marquer « Choix du groupe » avec un indice ou un petit détail de la scène quand l'aventure en prévoit (champ à ajouter aux scènes)
-- [ ] Accueil : faire disparaître le bouton « Entrer dans <salle> » quand on supprime la salle choisie (il reste jusqu'au rechargement)
+- [x] Accueil : faire disparaître le bouton « Entrer dans <salle> » quand on supprime la salle choisie (il reste jusqu'au rechargement)
 - [ ] Tester en ligne la création d'une salle en MJ automatique (campagne, arrivée directe, fiche vierge, choix du héros)
 - [ ] Phase Ambiance : trouver des sons d'interface libres de droits (licence CC0 de préférence) et les ajouter discrètement, ambiance JDR (clic, panneau, demande de jet, réussite, échec), avec un réglage pour les couper
 - [ ] Phase Ambiance : trouver des musiques libres de droits, une par type d'ambiance (taverne, voyage, forêt, donjon, combat, mystère, victoire…), licence vérifiée et notée pour chacune ; le MJ automatique change de musique quand le lieu ou l'humeur change
 - [ ] Phase Ambiance : voix de narrateur grave qui lit la narration des scènes, uniquement si une solution 100 % gratuite et libre suffit (voix du navigateur, ou voix libre type Piper pré-enregistrée, licence de la voix à vérifier) ; sinon abandonner — bouton pour l'activer ou la couper, texte qui défile sous l'image agrandie, voix coupée à la fermeture de l'image, bouton « Réécouter », seule la musique reste après
 - [ ] Mettre à jour le README du dépôt public GitHub (inchangé depuis août 2025) : ce que fait CakeJDR, comment l'installer, services gratuits utilisés
+
+## Retours de Quentin (2026-10-12) — suppression, image de scène, création de héros
+- [x] Confirmer la suppression d'une salle par une fenêtre Oui/Non, sans suppression sur double-clic
+- [x] Afficher le texte de la scène (chapitre, titre, narration) lisiblement sur l'image agrandie du MJ automatique
+- [x] Création de héros : six jets placés par le MJ selon les caractéristiques de la classe, échange possible, dés écartés barrés
+- [x] Bloquer le bouton de lancer pendant le jet pour qu'un double clic ne fasse pas un jet perdu
+- [x] Ajouter le genre et l'historique (bonus +2 aux actions de son domaine) à la création de héros
+- [x] Trier les portraits par classe, genre et peuple, et permettre d'importer son image
+- [ ] Produire des portraits et pions libres de droits pour chaque peuple × classe × genre (aujourd'hui 15 portraits, surtout humains)
+- [ ] Donner un historique aux héros tout prêts (`lib/premadeHeroes.ts`)
+- [ ] Tester l'import d'une image perso dans la création de héros (envoi Cloudinary, portrait sur la fiche, pion de couleur)
+- [ ] Remplacer le `window.confirm` de la page admin par la fenêtre de confirmation de l'app (`app/admin/page.tsx`)
+- [ ] Ajouter une barre d'XP (MJ humain et automatique) : XP pour les jets réussis et les situations réglées, plus pour quêtes et monstres
+- [ ] Sortir la montée de niveau de la fiche du joueur vers le MJ : édition à la main ou fenêtre qui fait lancer les dés au joueur ; automatique avec le MJ automatique quand la barre est pleine, hors combat

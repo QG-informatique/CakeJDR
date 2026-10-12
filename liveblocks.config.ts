@@ -180,7 +180,8 @@ declare global {
       | { type: 'dice-drop' }
       | { type: 'gm-select'; character: CharacterData; targetConnectionId?: number | null }
       // Rencontre montrée en grand par le MJ à toute la table (`components/canvas/ShownImage.tsx`).
-      | { type: 'show-image'; url: string; label: string }
+      // `story` : la scène du MJ automatique, dont le récit s'affiche sur l'image, dans la langue de chacun.
+      | { type: 'show-image'; url: string; label: string; story?: { adventure: string; scene: string } }
       | { type: 'show-close' }
 
     // Custom metadata set on threads, for useThreads, useCreateThread, etc.
