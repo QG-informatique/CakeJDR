@@ -119,6 +119,9 @@ export type Voter = {
   hero?: boolean
   /** Historique du héros (`lib/backgrounds.ts`). */
   historique?: string
+  /** Expérience et niveau, pour la montée de niveau automatique (`lib/xp.ts`). */
+  xp?: number
+  level?: number
 }
 
 /** Options proposées dans la scène : celles qui demandent un indice pas encore trouvé sont cachées. */

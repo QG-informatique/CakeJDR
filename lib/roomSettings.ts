@@ -25,6 +25,12 @@ export type RoomSettings = {
    * des salles plus anciennes, qui gardent la fiche choisie.
    */
   newHeroes: boolean
+  /**
+   * Avec le MJ automatique, un héros dont la barre d'XP est pleine monte de
+   * niveau tout seul, à un moment calme (jamais pendant un jet ni une scène
+   * qui fait mal). Décoché, c'est le MJ qui choisit qui monte, et comment.
+   */
+  autoLevelUp: boolean
 }
 
 export const DEFAULT_ROOM_SETTINGS: RoomSettings = {
@@ -34,6 +40,7 @@ export const DEFAULT_ROOM_SETTINGS: RoomSettings = {
   anonymousVotes: false,
   system: DEFAULT_SYSTEM,
   newHeroes: false,
+  autoLevelUp: true,
 }
 
 /**

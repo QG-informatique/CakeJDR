@@ -183,6 +183,8 @@ declare global {
       // `story` : la scène du MJ automatique, dont le récit s'affiche sur l'image, dans la langue de chacun.
       | { type: 'show-image'; url: string; label: string; story?: { adventure: string; scene: string } }
       | { type: 'show-close' }
+      // XP donnée par le MJ à un joueur, qui l'ajoute à sa fiche (`lib/xp.ts`).
+      | { type: 'xp'; targetId: string; amount: number }
 
     // Custom metadata set on threads, for useThreads, useCreateThread, etc.
     ThreadMetadata: Record<string, never>

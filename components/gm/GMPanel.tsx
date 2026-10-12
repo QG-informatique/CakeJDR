@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { useOthers, useRoom, useStorage } from '@liveblocks/react'
-import { Crown, Dices, FileText, Target, X } from 'lucide-react'
+import { useBroadcastEvent, useOthers, useRoom, useStorage } from '@liveblocks/react'
+import { Crown, Dices, FileText, Pencil, Sparkles, Star, Target, X } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import {
   CHECK_DC_MAX,
@@ -23,12 +23,15 @@ import AdventureLauncher from '@/components/autogm/AdventureLauncher'
 import { useGameSystem, useRoomSettings, type DrawPermission, type SheetEditMode } from '@/lib/roomSettings'
 import { GAME_SYSTEMS, GAME_SYSTEM_IDS, type GameSystem, type GameSystemId } from '@/lib/gameSystems'
 import { type Character, normalizeCharacter } from '@/types/character'
+import { XP_GIFTS, XP_PER_LEVEL, levelReady, xpOf } from '@/lib/xp'
 
 type Props = {
   /** Joueur dont la fiche est ouverte, ou null sur sa propre fiche. */
   viewingConnectionId: number | null
   onOpenSheet: (char: Character) => void
   onBackToOwn: () => void
+  /** Le MJ monte un niveau à la main : fiche du joueur ouverte en édition. */
+  onLevelByHand: (char: Character) => void
   onClose: () => void
 }
 
@@ -36,11 +39,16 @@ type Props = {
  * Panneau du MJ : les joueurs connectés et leur fiche, et les réglages de la
  * table. Visible seulement pour le MJ.
  */
-export default function GMPanel({ viewingConnectionId, onOpenSheet, onBackToOwn, onClose }: Props) {
+export default function GMPanel({ viewingConnectionId, onOpenSheet, onBackToOwn, onLevelByHand, onClose }: Props) {
   const t = useT()
   const { settings, update } = useRoomSettings()
+  const system = useGameSystem()
   const others = useOthers()
-  const [checkFor, setCheckFor] = useState<number | null>(null)
+  const [checkFor, setCheckFor] = useState<{ connectionId: number; mode: RequestMode } | null>(null)
+  // Avec le MJ automatique et la montée automatique, le MJ n'a pas à choisir.
+  const autoGmOn = useStorage((root) => !!root.autoGm)
+  const levels = system.levelUp.length > 0
+  const autoLevels = levels && autoGmOn && settings.autoLevelUp
 
   const players = others.map((o) => {
     const raw = o.presence?.character as Character | undefined
@@ -126,14 +134,32 @@ export default function GMPanel({ viewingConnectionId, onOpenSheet, onBackToOwn,
                         {p.name}
                         {p.gm && ` · ${t('gmLabel')}`}
                         {c && ` · ${t('level')} ${c.niveau || 1} · ${t('hp')} ${Number(c.pv) || 0}/${pvMax}`}
+                        {c && levels && ` · ${t('xp')} ${xpOf(c)}/${XP_PER_LEVEL}`}
                       </span>
                     </div>
+                    {c && p.id && levels && levelReady(c) && (
+                      autoLevels ? (
+                        <span className="flex shrink-0 items-center gap-1 text-[11px] text-accent" title={t('xpAutoSoon')}>
+                          <Sparkles size={12} aria-hidden />
+                          {t('xpReadyShort')}
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => setCheckFor({ connectionId: p.connectionId, mode: 'level' })}
+                          title={t('xpReadyTitle').replace('{n}', c.nom || p.name)}
+                          className="ui-btn ui-btn-primary shrink-0 !min-h-8 !px-2.5 text-xs"
+                        >
+                          <Sparkles size={13} />
+                          {t('xpReadyShort')}
+                        </button>
+                      )
+                    )}
                     <button
-                      onClick={() => setCheckFor(checkFor === p.connectionId ? null : p.connectionId)}
+                      onClick={() => setCheckFor(checkFor?.connectionId === p.connectionId ? null : { connectionId: p.connectionId, mode: 'check' })}
                       disabled={!c || !p.id}
-                      aria-expanded={checkFor === p.connectionId}
+                      aria-expanded={checkFor?.connectionId === p.connectionId}
                       title={t('gmCheckTitle').replace('{n}', c?.nom || p.name)}
-                      className={`ui-btn shrink-0 !min-h-8 !px-2.5 text-xs ${checkFor === p.connectionId ? 'ui-btn-primary' : ''}`}
+                      className={`ui-btn shrink-0 !min-h-8 !px-2.5 text-xs ${checkFor?.connectionId === p.connectionId ? 'ui-btn-primary' : ''}`}
                     >
                       <Dices size={13} />
                       {t('gmCheck')}
@@ -147,11 +173,14 @@ export default function GMPanel({ viewingConnectionId, onOpenSheet, onBackToOwn,
                       {viewing ? t('gmSheetOpen') : t('gmOpenSheet')}
                     </button>
                   </div>
-                  {checkFor === p.connectionId && c && p.id && (
+                  {checkFor?.connectionId === p.connectionId && c && p.id && (
                     <RequestForm
+                      key={checkFor.mode}
+                      initialMode={checkFor.mode}
                       targetId={p.id}
                       targetName={c.nom || p.name}
                       character={c}
+                      onLevelByHand={() => { setCheckFor(null); onLevelByHand(c) }}
                       onDone={() => setCheckFor(null)}
                     />
                   )}
@@ -228,6 +257,21 @@ export default function GMPanel({ viewingConnectionId, onOpenSheet, onBackToOwn,
         <p className="text-xs text-ink/55">{t(settings.newHeroes ? 'newHeroesHint' : 'newHeroesOffHint')}</p>
       </section>
 
+      {levels && (
+        <section className="flex flex-col gap-1.5">
+          <h3 className="ui-label !text-[10px]">{t('xpLevelUpTitle')}</h3>
+          <div className="ui-seg" role="group" aria-label={t('xpLevelUpTitle')}>
+            <button aria-pressed={settings.autoLevelUp} onClick={() => update({ autoLevelUp: true })}>
+              {t('xpLevelUpAuto')}
+            </button>
+            <button aria-pressed={!settings.autoLevelUp} onClick={() => update({ autoLevelUp: false })}>
+              {t('xpLevelUpGm')}
+            </button>
+          </div>
+          <p className="text-xs text-ink/55">{t(settings.autoLevelUp ? 'xpLevelUpAutoHint' : 'xpLevelUpGmHint')}</p>
+        </section>
+      )}
+
       <AdventureLauncher />
 
       <section className="flex flex-col gap-1.5">
@@ -264,23 +308,26 @@ function writeHiddenDcs(dcs: Record<string, number>) {
   } catch { /* stockage indisponible */ }
 }
 
-type RequestMode = 'check' | 'dice' | 'level'
+type RequestMode = 'check' | 'dice' | 'level' | 'xp'
 
-/** Ce que le MJ demande à un joueur : un test, des dés, ou une montée de niveau. */
-function RequestForm(props: {
+/** Ce que le MJ demande à un joueur : un test, des dés, une montée de niveau, ou de l'XP. */
+function RequestForm({ initialMode, onLevelByHand, ...props }: {
+  initialMode: RequestMode
   targetId: string
   targetName: string
   character: Character
+  onLevelByHand: () => void
   onDone: () => void
 }) {
   const t = useT()
   const system = useGameSystem()
-  const [mode, setMode] = useState<RequestMode>('check')
-  // Un système sans niveaux (d100) n'a pas de montée de niveau.
+  const [mode, setMode] = useState<RequestMode>(initialMode)
+  // Un système sans niveaux (d100) n'a ni montée de niveau ni XP.
+  const levels = system.levelUp.length > 0
   const MODES: Array<[RequestMode, string]> = [
     ['check', t('rollModeCheck')],
     ['dice', t('rollModeDice')],
-    ...(system.levelUp.length > 0 ? [['level', t('rollModeLevel')] as [RequestMode, string]] : []),
+    ...(levels ? [['xp', t('xp')], ['level', t('rollModeLevel')]] as Array<[RequestMode, string]> : []),
   ]
   return (
     <div className="ui-well flex flex-col gap-2 p-2.5 text-xs">
@@ -291,20 +338,79 @@ function RequestForm(props: {
           </button>
         ))}
       </div>
-      {mode === 'check'
-        ? <CheckForm key={system.id} {...props} system={system} />
-        : <RollsForm {...props} system={system} levelUp={mode === 'level' && system.levelUp.length > 0} />}
+      {mode === 'check' ? (
+        <CheckForm key={system.id} {...props} system={system} />
+      ) : mode === 'xp' && levels ? (
+        <XpForm {...props} />
+      ) : (
+        <RollsForm {...props} system={system} levelUp={mode === 'level' && levels} onLevelByHand={onLevelByHand} />
+      )}
     </div>
   )
 }
 
+/** XP donnée d'un clic : le joueur l'ajoute à sa fiche. */
+function XpForm({ targetId, targetName, character, onDone }: {
+  targetId: string
+  targetName: string
+  character: Character
+  onDone: () => void
+}) {
+  const t = useT()
+  const broadcast = useBroadcastEvent()
+  const [custom, setCustom] = useState('')
+  const customNum = Math.round(Number(custom))
+  const give = (amount: number) => {
+    if (!Number.isFinite(amount) || amount < 1 || amount > 500) return
+    broadcast({ type: 'xp', targetId, amount })
+    onDone()
+  }
+  return (
+    <>
+      <p className="text-ink/60">
+        {t('xpGiveHint').replace('{n}', targetName).replace('{xp}', `${xpOf(character)}/${XP_PER_LEVEL}`)}
+      </p>
+      <div className="flex flex-wrap gap-1.5">
+        {XP_GIFTS.map((g) => (
+          <button key={g.amount} onClick={() => give(g.amount)} className="ui-btn !min-h-8 text-xs">
+            <Star size={12} />
+            +{g.amount} · {t(g.label)}
+          </button>
+        ))}
+      </div>
+      <div className="flex gap-1.5">
+        <input
+          type="number"
+          inputMode="numeric"
+          min={1}
+          max={500}
+          value={custom}
+          onChange={(e) => setCustom(e.target.value)}
+          placeholder={t('xpCustom')}
+          aria-label={t('xpCustom')}
+          className="ui-input w-24 min-w-0 !min-h-8"
+        />
+        <button
+          onClick={() => give(customNum)}
+          disabled={!(customNum >= 1 && customNum <= 500)}
+          className="ui-btn ui-btn-primary !min-h-8 text-xs"
+        >
+          {t('xpGive')}
+        </button>
+      </div>
+    </>
+  )
+}
+
 /** Plusieurs dés lancés en une fois ; pour une montée de niveau, le nombre est fixé. */
-function RollsForm({ targetId, targetName, levelUp, onDone, system }: {
+function RollsForm({ targetId, targetName, levelUp, onDone, onLevelByHand, system }: {
   targetId: string
   targetName: string
   levelUp: boolean
   system: GameSystem
   onDone: () => void
+  /** Montée de niveau sans dés : le MJ modifie la fiche lui-même. */
+  onLevelByHand: () => void
 }) {
   const t = useT()
   const room = useRoom()
@@ -359,7 +465,9 @@ function RollsForm({ targetId, targetName, levelUp, onDone, system }: {
         </label>
       </div>
       {levelUp ? (
-        <p className="text-[11px] text-ink/50">{t('levelUpHint')}</p>
+        <p className="text-[11px] text-ink/50">
+          {t(system.levelUp.length === 1 ? 'levelUpExplainHitDie' : 'levelUpExplain')}
+        </p>
       ) : (
         <label className="flex flex-col gap-1">
           <span className="text-ink/60">{t('checkReasonLabel')}</span>
@@ -375,8 +483,14 @@ function RollsForm({ targetId, targetName, levelUp, onDone, system }: {
       {error && <p role="alert" className="text-red-400">{t('checkFailed')}</p>}
       <button onClick={send} disabled={!valid || sending} className="ui-btn ui-btn-primary !min-h-8 text-xs">
         <Dices size={13} />
-        {t(levelUp ? 'levelUpSend' : 'rollsSend')}
+        {t(levelUp ? 'levelUpByDice' : 'rollsSend')}
       </button>
+      {levelUp && (
+        <button onClick={onLevelByHand} className="ui-btn !min-h-8 text-xs">
+          <Pencil size={13} />
+          {t('levelUpByHand')}
+        </button>
+      )}
     </>
   )
 }
