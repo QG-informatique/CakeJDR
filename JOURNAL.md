@@ -1,5 +1,10 @@
 # Journal
 
+## 2026-10-13 — Prompt ChatGPT du pack d'images n° 3
+- Prompt unique à coller dans ChatGPT : 94 héros peuple × classe × genre (portrait + pion), pions des PNJ, rencontres des ennemis courants, 8 cartes (`PROMPT-PACK-IMAGES-3.md`)
+- Noms en `peuple-classe-genre` pour que la création de héros propose le portrait de son peuple
+Reste ouvert : intégrer les images reçues (webp, miniatures, `lib/library.ts`, `PORTRAIT_TAGS`)
+
 ## 2026-10-13 — Barre d'XP, montée de niveau passée au MJ
 - Barre d'XP sur la fiche, 100 XP par niveau, le surplus est gardé (`lib/xp.ts`, `components/character/CharacterSheetHeader.tsx`)
 - XP gagnée : chaque test demandé (10 réussi, 3 raté), chaque scène du MJ automatique (4), +25 après un combat gagné, +50 par étape de quête ou fin d'aventure ; le MJ humain en donne d'un clic (`components/gm/GMPanel.tsx`, `components/app/HomePageInner.tsx`)
