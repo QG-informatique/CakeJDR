@@ -1,5 +1,10 @@
 # Journal
 
+## 2026-10-14 — Héros de campagne : enregistrement et reprise vérifiés
+- Vérifié : le héros créé avec le MJ automatique est gardé dans le navigateur, dans la salle et sur le compte (« testperso » du 12/10 bien en base, avec sa salle), et il apparaît dans « Fiches de personnage »
+- Reprise renforcée : en revenant dans la salle, le héros créé pour cette aventure est repris même si une autre fiche a été choisie entre-temps (`components/app/HomePageInner.tsx`)
+Reste ouvert : reprise jamais testée de bout en bout avec un vrai héros (pas de création sur le compte admin)
+
 ## 2026-10-14 — Campagne automatique vérifiée avant le test solo
 - Création de héros : les portraits proposés sont seulement ceux du peuple choisi (classe et genre en premier), repli sur le genre si le peuple n'en a pas (`lib/heroCreation.ts`)
 - Héros tout prêts Kael, Sila et Lucien : portraits de leur vrai peuple (`lib/premadeHeroes.ts`, `lib/en/heroes.ts`)

@@ -305,7 +305,7 @@ export default function HomePageInner() {
       localStorage.getItem(SELECTED_CHARACTER_KEY),
     )
 
-    const found =
+    const selected =
       id && chars.length
         ? chars.find(
             (c) =>
@@ -313,6 +313,15 @@ export default function HomePageInner() {
               (!settings.newHeroes || c.heroFor === roomId),
           )
         : null
+    // Une autre fiche a été choisie depuis : on reprend quand même le héros
+    // créé pour cette aventure, le plus récent.
+    const found =
+      selected ??
+      (settings.newHeroes && profile?.pseudo
+        ? chars
+            .filter((c) => c.heroFor === roomId && isOwnedBy(c, { id: profile?.id, pseudo: profile?.pseudo ?? '' }))
+            .sort((a, b) => Number(b.updatedAt ?? 0) - Number(a.updatedAt ?? 0))[0] ?? null
+        : null)
 
     const nextChar = found
       ? found
@@ -329,10 +338,11 @@ export default function HomePageInner() {
       },
     })
 
-    if (!found && typeof window !== 'undefined') {
-      localStorage.removeItem(SELECTED_CHARACTER_KEY)
+    if (typeof window !== 'undefined') {
+      if (!found) localStorage.removeItem(SELECTED_CHARACTER_KEY)
+      else if (!selected) localStorage.setItem(SELECTED_CHARACTER_KEY, buildSelectionKey(found.id, found.owner ?? null))
     }
-  }, [profile?.pseudo, myConnectionId, updateMyPresence, storageLoaded, settings.newHeroes, roomId])
+  }, [profile?.pseudo, profile?.id, myConnectionId, updateMyPresence, storageLoaded, settings.newHeroes, roomId])
 
   // Chargement automatique des fiches stockées côté serveur (Liveblocks storage)
   useEffect(() => {

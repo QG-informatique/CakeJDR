@@ -363,4 +363,6 @@
 - [ ] (Important, demandé par Quentin) Tester la montée de niveau automatique quand le meneur du MJ automatique n'est pas MJ de la table (le serveur réserve les demandes de jets au MJ)
 - [ ] Régler les montants d'XP (`lib/xp.ts`) après une vraie partie : viser environ un niveau par aventure courte
 - [ ] Jouer seul le début de « La Flamme sous la montagne » en ligne et noter ce qui va et ce qui ne va pas (création, votes, tests, rythme)
+- [ ] Vérifier la reprise d'une campagne : quitter la salle après la création du héros, choisir une autre fiche dans le menu, revenir et retrouver le même héros au même endroit de l'aventure
+- [ ] Accepter tous les pseudos dans l'enregistrement des fiches d'une salle : un pseudo avec un symbole ou un emoji est refusé sans message par `/api/roomstorage` (`SAFE_ID`), la fiche n'est alors gardée que dans le navigateur et sur le compte
 - [ ] Laisser voter sans fermer l'image montée par une scène : aujourd'hui l'image affichée cache les choix du vote tant qu'on n'a pas cliqué « Fermer »
