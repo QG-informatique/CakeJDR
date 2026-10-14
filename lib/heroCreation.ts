@@ -247,7 +247,7 @@ const PORTRAIT_TAGS: Record<string, { classe: string; genre: Gender; peuple: str
 }
 
 /**
- * Portraits proposés au héros : ceux de sa classe et de son genre, son peuple
+ * Portraits proposés au héros : ceux de son peuple et de son genre, sa classe
  * en premier. `all` les montre tous, sa classe puis son genre en premier.
  */
 export function portraitsFor(classe: string, genre: Gender | null, peuple: string, all = false): string[] {
@@ -257,9 +257,9 @@ export function portraitsFor(classe: string, genre: Gender | null, peuple: strin
     return (tag.classe === classe ? 4 : 0) + (tag.genre === genre ? 2 : 0) + (tag.peuple === peuple ? 1 : 0)
   }
   const ofGenre = HERO_PORTRAITS.filter((id) => !genre || PORTRAIT_TAGS[id]?.genre === genre)
-  // Chaque classe a un portrait par peuple : on ne montre que la sienne.
-  const ofClass = ofGenre.filter((id) => PORTRAIT_TAGS[id]?.classe === classe)
-  return (all ? HERO_PORTRAITS : ofClass.length ? ofClass : ofGenre)
+  // Chaque peuple a un portrait par classe et par genre : on ne montre que le sien.
+  const ofPeople = ofGenre.filter((id) => PORTRAIT_TAGS[id]?.peuple === peuple)
+  return (all ? HERO_PORTRAITS : ofPeople.length ? ofPeople : ofGenre)
     .map((id, i) => ({ id, i, s: score(id) }))
     .sort((a, b) => b.s - a.s || a.i - b.i)
     .map((p) => p.id)

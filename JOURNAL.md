@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-14 — Campagne automatique vérifiée avant le test solo
+- Création de héros : les portraits proposés sont seulement ceux du peuple choisi (classe et genre en premier), repli sur le genre si le peuple n'en a pas (`lib/heroCreation.ts`)
+- Héros tout prêts Kael, Sila et Lucien : portraits de leur vrai peuple (`lib/premadeHeroes.ts`, `lib/en/heroes.ts`)
+- Vote du MJ automatique bloqué sur « 1/1 ont voté » : la traduction changeait à chaque rendu et relançait sans fin le délai de 1,5 s ; `useT` garde la même fonction (`lib/useT.ts`)
+- Vérifié en local sur « La Flamme sous la montagne » : portraits nain homme, 6 jets de création, scène suivante, hasard, vote, puis test de Force demandé
+Reste ouvert : jet d'un test avec un héros terminé, à voir pendant le test solo de Quentin
+
 ## 2026-10-14 — Pack d'images n° 3 intégré
 - 218 images converties en webp + miniatures (`public/bibliotheque/`) : 94 héros peuple × classe × genre (portrait + pion), 12 pions de PNJ, 10 rencontres d'ennemis, 6 cartes et 2 ambiances
 - Entrées générées dans `lib/library.ts` (`PACK3_HEROES`), tags faction/acte des nouvelles cartes ; les pions des PNJ restent rôle PNJ

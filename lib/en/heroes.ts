@@ -63,7 +63,7 @@ export const HEROES_EN: Record<string, HeroText> = {
     traits: 'Curious, absent-minded, a little vain.',
     background: 'Expelled from the academy for reading the forbidden books, he wants to prove he was right.',
   },
-  'rodeur-homme': {
+  'demi-elfe-rodeur-homme': {
     nom: 'Kael of the Mists',
     race: 'Half-elf',
     classe: 'Ranger',
@@ -76,7 +76,7 @@ export const HEROES_EN: Record<string, HeroText> = {
     traits: 'Quiet, patient, wary of cities.',
     background: 'A guide in the northern forests, he has seen winged shadows pass above the treetops and wants to know why.',
   },
-  'roublarde-femme': {
+  'halfelin-roublard-femme': {
     nom: 'Sila Quickhand',
     race: 'Halfling',
     classe: 'Rogue',
@@ -118,7 +118,7 @@ export const HEROES_EN: Record<string, HeroText> = {
     traits: 'Upright, generous, sometimes rigid.',
     background: 'A knight of an order that has all but vanished, she swore to rekindle the flame of her temple.',
   },
-  'barde-homme': {
+  'elfe-barde-homme': {
     nom: 'Lucien Thousand-Songs',
     race: 'Elf',
     classe: 'Bard',
