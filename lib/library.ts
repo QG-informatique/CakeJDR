@@ -3,6 +3,7 @@
 // chacun avec une miniature « -mini.webp » pour la grille.
 // Images faites par Quentin (QG Informatique) : on en a les droits.
 // Le pack n° 2 (octobre 2026) suit le monde de la campagne du royaume d'Aurélion.
+// Le pack n° 3 ajoute un héros par peuple, classe et genre, et ce qui manquait.
 
 export type LibraryLabel = { fr: string; en: string }
 
@@ -23,6 +24,57 @@ export type LibraryCategory = {
   map?: boolean
   items: LibraryItem[]
 }
+
+// ── Pack n° 3 : un héros par peuple, classe et genre (PROMPT-PACK-IMAGES-3.md) ──
+// Chaque héros a un portrait et un pion au même nom : « peuple-classe-genre ».
+
+type HeroWords = { id: string; homme: string; femme: string; en: string }
+
+const PACK3_PEOPLES: HeroWords[] = [
+  { id: 'humain', homme: 'humain', femme: 'humaine', en: 'Human' },
+  { id: 'elfe', homme: 'elfe', femme: 'elfe', en: 'Elf' },
+  { id: 'nain', homme: 'nain', femme: 'naine', en: 'Dwarf' },
+  { id: 'halfelin', homme: 'halfelin', femme: 'halfeline', en: 'Halfling' },
+  { id: 'demi-elfe', homme: 'demi-elfe', femme: 'demi-elfe', en: 'Half-elf' },
+  { id: 'gnome', homme: 'gnome', femme: 'gnome', en: 'Gnome' },
+]
+
+const PACK3_CLASSES: HeroWords[] = [
+  { id: 'guerrier', homme: 'Guerrier', femme: 'Guerrière', en: 'warrior' },
+  { id: 'mage', homme: 'Mage', femme: 'Mage', en: 'mage' },
+  { id: 'rodeur', homme: 'Rôdeur', femme: 'Rôdeuse', en: 'ranger' },
+  { id: 'roublard', homme: 'Roublard', femme: 'Roublarde', en: 'rogue' },
+  { id: 'paladin', homme: 'Paladin', femme: 'Paladine', en: 'paladin' },
+  { id: 'barde', homme: 'Barde', femme: 'Barde', en: 'bard' },
+  { id: 'druide', homme: 'Druide', femme: 'Druidesse', en: 'druid' },
+  { id: 'clerc', homme: 'Clerc', femme: 'Clerc', en: 'cleric' },
+  { id: 'moine', homme: 'Moine', femme: 'Moine', en: 'monk' },
+]
+
+/** Héros déjà faits dans les packs 1 et 2, sous un autre nom. */
+const PACK3_DONE = new Set([
+  'humain-guerrier-homme', 'humain-guerrier-femme', 'humain-mage-homme', 'humain-mage-femme',
+  'humain-rodeur-homme', 'humain-rodeur-femme', 'humain-roublard-homme', 'humain-roublard-femme',
+  'humain-paladin-femme', 'humain-barde-homme', 'humain-clerc-femme', 'humain-moine-homme',
+  'elfe-druide-femme', 'nain-guerrier-homme',
+])
+
+export type PackHero = { id: string; peuple: string; classe: string; genre: 'homme' | 'femme'; label: LibraryLabel }
+
+export const PACK3_HEROES: PackHero[] = PACK3_PEOPLES.flatMap((p) =>
+  PACK3_CLASSES.flatMap((c) =>
+    (['homme', 'femme'] as const).map((genre) => {
+      // « Mage elfe » ne dit pas le genre : on le précise.
+      const same = c.homme === c.femme && p.homme === p.femme
+      const fr = `${c[genre]} ${p[genre]}${same ? ` (${genre})` : ''}`
+      const en = `${p.en} ${c.en} (${genre === 'homme' ? 'man' : 'woman'})`
+      return { id: `${p.id}-${c.id}-${genre}`, peuple: p.id, classe: c.id, genre, label: { fr, en } }
+    }),
+  ),
+).filter((h) => !PACK3_DONE.has(h.id))
+
+const pack3Items = (width: number, height: number): LibraryItem[] =>
+  PACK3_HEROES.map((h) => ({ id: h.id, label: h.label, width, height }))
 
 export const LIBRARY: LibraryCategory[] = [
   {
@@ -58,11 +110,19 @@ export const LIBRARY: LibraryCategory[] = [
       { id: 'sanctuaire-culte', label: { fr: 'Sanctuaire du culte', en: 'Cult sanctuary' }, width: 1536, height: 1024 },
       { id: 'chateau-vampire', label: { fr: 'Château du vampire', en: 'Vampire castle' }, width: 1536, height: 1024 },
       { id: 'repaire-dragon', label: { fr: 'Repaire du dragon', en: 'Dragon lair' }, width: 1536, height: 1024 },
+      { id: 'cimetiere', label: { fr: 'Cimetière', en: 'Graveyard' }, width: 1536, height: 1024 },
+      { id: 'ferme', label: { fr: 'Ferme', en: 'Farm' }, width: 1536, height: 1024 },
+      { id: 'gue-riviere', label: { fr: 'Gué de la rivière', en: 'River ford' }, width: 1536, height: 1024 },
+      { id: 'pont-navire', label: { fr: 'Pont du navire', en: 'Ship deck' }, width: 1536, height: 1024 },
+      { id: 'ruines-elfiques', label: { fr: 'Ruines elfiques', en: 'Elven ruins' }, width: 1536, height: 1024 },
+      { id: 'bibliotheque', label: { fr: 'Bibliothèque', en: 'Library' }, width: 1536, height: 1024 },
       { id: 'ambiance-royaume', label: { fr: 'Ambiance : le royaume', en: 'Mood: the kingdom' }, width: 1600, height: 900 },
       { id: 'ambiance-ville-royale', label: { fr: 'Ambiance : ville royale', en: 'Mood: royal city' }, width: 1600, height: 900 },
       { id: 'ambiance-foret-brume', label: { fr: 'Ambiance : forêt de brume', en: 'Mood: misty forest' }, width: 1600, height: 900 },
       { id: 'ambiance-chateau-vampire', label: { fr: 'Ambiance : château du vampire', en: 'Mood: vampire castle' }, width: 1600, height: 900 },
       { id: 'ambiance-montagne-dragon', label: { fr: 'Ambiance : montagne du dragon', en: 'Mood: dragon mountain' }, width: 1600, height: 900 },
+      { id: 'ambiance-port', label: { fr: 'Ambiance : le port', en: 'Mood: the harbour' }, width: 1600, height: 900 },
+      { id: 'ambiance-marais', label: { fr: 'Ambiance : le marais', en: 'Mood: the swamp' }, width: 1600, height: 900 },
     ],
   },
   {
@@ -85,6 +145,7 @@ export const LIBRARY: LibraryCategory[] = [
       { id: 'druidesse-femme', label: { fr: 'Druidesse', en: 'Druid (woman)' }, width: 427, height: 640 },
       { id: 'moine-homme', label: { fr: 'Moine', en: 'Monk (man)' }, width: 427, height: 640 },
       { id: 'clerc-femme', label: { fr: 'Clerc (femme)', en: 'Cleric (woman)' }, width: 427, height: 640 },
+      ...pack3Items(427, 640),
       { id: 'roi', label: { fr: 'Le roi', en: 'The king' }, width: 427, height: 640 },
       { id: 'capitaine-garde', label: { fr: 'Capitaine de la garde', en: 'Guard captain' }, width: 427, height: 640 },
       { id: 'garde-ville', label: { fr: 'Garde de la ville', en: 'City guard' }, width: 427, height: 640 },
@@ -94,6 +155,18 @@ export const LIBRARY: LibraryCategory[] = [
       { id: 'guide-elfe', label: { fr: 'Guide elfe', en: 'Elf guide' }, width: 427, height: 640 },
       { id: 'capitaine-port', label: { fr: 'Capitaine de navire', en: 'Ship captain' }, width: 427, height: 640 },
       { id: 'milicien-village', label: { fr: 'Milicien', en: 'Village militia' }, width: 427, height: 640 },
+      { id: 'princesse-heritiere', label: { fr: 'Princesse héritière (PNJ)', en: 'Crown princess (NPC)' }, width: 427, height: 640 },
+      { id: 'apprentie-patissiere', label: { fr: 'Mila, l\'apprentie (PNJ)', en: 'Mila the apprentice (NPC)' }, width: 427, height: 640 },
+      { id: 'bourgmestre', label: { fr: 'Bourgmestre (PNJ)', en: 'Mayor (NPC)' }, width: 427, height: 640 },
+      { id: 'forgeronne-naine', label: { fr: 'Forgeronne naine (PNJ)', en: 'Dwarf smith (NPC)' }, width: 427, height: 640 },
+      { id: 'marchand-ambulant', label: { fr: 'Marchand ambulant (PNJ)', en: 'Peddler (NPC)' }, width: 427, height: 640 },
+      { id: 'herboriste', label: { fr: 'Herboriste (PNJ)', en: 'Herbalist (NPC)' }, width: 427, height: 640 },
+      { id: 'alchimiste', label: { fr: 'Alchimiste (PNJ)', en: 'Alchemist (NPC)' }, width: 427, height: 640 },
+      { id: 'informateur-voleur', label: { fr: 'Informateur (PNJ)', en: 'Thief informant (NPC)' }, width: 427, height: 640 },
+      { id: 'ermite-sage', label: { fr: 'Ermite (PNJ)', en: 'Hermit sage (NPC)' }, width: 427, height: 640 },
+      { id: 'noble-intrigante', label: { fr: 'Noble intrigante (PNJ)', en: 'Scheming noble (NPC)' }, width: 427, height: 640 },
+      { id: 'paysanne', label: { fr: 'Paysanne (PNJ)', en: 'Farmer (NPC)' }, width: 427, height: 640 },
+      { id: 'diseuse-aventure', label: { fr: 'Diseuse de bonne aventure (PNJ)', en: 'Fortune teller (NPC)' }, width: 427, height: 640 },
     ],
   },
   {
@@ -164,6 +237,7 @@ export const LIBRARY: LibraryCategory[] = [
       { id: 'druidesse-femme', label: { fr: 'Druidesse', en: 'Druid (woman)' }, width: 768, height: 768 },
       { id: 'moine-homme', label: { fr: 'Moine', en: 'Monk (man)' }, width: 768, height: 768 },
       { id: 'clerc-femme', label: { fr: 'Clerc (femme)', en: 'Cleric (woman)' }, width: 768, height: 768 },
+      ...pack3Items(768, 768),
     ],
   },
   {
@@ -211,6 +285,16 @@ export const LIBRARY: LibraryCategory[] = [
       { id: 'loup-garou', label: { fr: 'Loup-garou (élite)', en: 'Werewolf (elite)' }, width: 1024, height: 1024 },
       { id: 'seigneur-vampire', label: { fr: 'Seigneur vampire (boss)', en: 'Vampire lord (boss)' }, width: 1024, height: 1024 },
       { id: 'dragon-rouge', label: { fr: 'Dragon rouge (boss)', en: 'Red dragon (boss)' }, width: 1024, height: 1024 },
+      { id: 'bandit', label: { fr: 'Bandit', en: 'Bandit' }, width: 1024, height: 1024 },
+      { id: 'cultiste', label: { fr: 'Cultiste', en: 'Cultist' }, width: 1024, height: 1024 },
+      { id: 'gobelin-chaman', label: { fr: 'Gobelin chaman', en: 'Goblin shaman' }, width: 1024, height: 1024 },
+      { id: 'orc-guerrier', label: { fr: 'Orc guerrier', en: 'Orc warrior' }, width: 1024, height: 1024 },
+      { id: 'ogre', label: { fr: 'Ogre', en: 'Ogre' }, width: 1024, height: 1024 },
+      { id: 'homme-lezard', label: { fr: 'Homme-lézard', en: 'Lizardfolk' }, width: 1024, height: 1024 },
+      { id: 'araignee-geante', label: { fr: 'Araignée géante', en: 'Giant spider' }, width: 1024, height: 1024 },
+      { id: 'squelette-soldat', label: { fr: 'Squelette soldat', en: 'Skeleton soldier' }, width: 1024, height: 1024 },
+      { id: 'zombie', label: { fr: 'Zombie', en: 'Zombie' }, width: 1024, height: 1024 },
+      { id: 'kobold', label: { fr: 'Kobold', en: 'Kobold' }, width: 1024, height: 1024 },
     ],
   },
 ]
@@ -302,7 +386,7 @@ tagFaction('gobelins', 'gobelin-guerrier gobelin-archer gobelin-chaman loup-somb
 tagFaction('bandits', 'bandit arbaletriere-bandit brute-bandit cheffe-bandits route-embuscade')
 tagFaction('culte', 'cultiste fanatique diablotin demon-cornu grand-pretre noble-intrigante sanctuaire-culte')
 tagFaction('orcs', 'orc-guerrier orc-archer ogre orc-chaman chef-orc camp-orc col-montagne')
-tagFaction('marais', 'homme-lezard araignee-geante troll sorciere-marais marais')
+tagFaction('marais', 'homme-lezard araignee-geante troll sorciere-marais marais ambiance-marais')
 tagFaction('morts-vivants', 'squelette-soldat squelette-archer zombie goule spectre necromancien liche crypte')
 tagFaction('vampires', 'rejeton-vampire chauve-souris-geante loup-garou seigneur-vampire chateau-vampire ambiance-chateau-vampire')
 tagFaction('dragon', 'kobold drakeide-garde dragon-rouge repaire-dragon ambiance-montagne-dragon')
@@ -311,12 +395,15 @@ tagFaction('royaume', 'roi capitaine-garde garde-ville chevaliere-heroine mage-c
 /** Lieux sans faction, rangés par acte. */
 const ACT_OF: Record<string, LibraryAct> = {}
 const tagAct = (act: LibraryAct, ids: string) => ids.split(' ').forEach((id) => { ACT_OF[id] = act })
-tagAct('1', 'place-village taverne-interieur foret-clairiere ambiance-foret-brume bourgmestre paysanne')
-tagAct('2', 'rues-ville port-quais egouts temple informateur-voleur')
-tagAct('3', 'mine-abandonnee pont-gorge donjon-salles tour-mage ermite-sage')
+tagAct('1', 'place-village taverne-interieur foret-clairiere ambiance-foret-brume bourgmestre paysanne ferme gue-riviere cimetiere')
+tagAct('2', 'rues-ville port-quais egouts temple informateur-voleur pont-navire ambiance-port bibliotheque')
+tagAct('3', 'mine-abandonnee pont-gorge donjon-salles tour-mage ermite-sage ruines-elfiques')
 
 const ENEMY_IDS = new Set(LIBRARY.find((c) => c.id === 'ennemis')?.items.map((i) => i.id) ?? [])
-const ALLY_IDS = new Set(LIBRARY.find((c) => c.id === 'pions')?.items.map((i) => i.id) ?? [])
+// Les pions des PNJ sont rangés avec les alliés mais restent des PNJ.
+const ALLY_IDS = new Set(
+  LIBRARY.find((c) => c.id === 'pions')?.items.filter((i) => !i.label.fr.includes('(PNJ)')).map((i) => i.id) ?? [],
+)
 
 export type LibraryTags = { role?: LibraryRole; faction?: string; act?: LibraryAct }
 
