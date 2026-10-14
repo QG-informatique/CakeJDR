@@ -13,7 +13,7 @@
  * modificateur de Constitution.
  */
 import type { GameSystemId } from './gameSystems'
-import { libraryUrl } from './library'
+import { libraryUrl, PACK3_HEROES } from './library'
 import type { PremadeHero } from './premadeHeroes'
 import { CLASSES_EN, PEOPLES_EN } from './en/heroes'
 import { BACKGROUND_BONUS, type Background } from './backgrounds'
@@ -217,36 +217,38 @@ export function heroClasses(lang: 'en' | 'fr'): readonly HeroClass[] {
 }
 
 /** Portraits du pack qui ont aussi leur pion. */
-export const HERO_PORTRAITS = [
+export const HERO_PORTRAITS: readonly string[] = [
   'guerrier-homme', 'guerriere-femme', 'mage-homme', 'mage-femme', 'rodeur-homme', 'rodeuse-femme',
   'roublard-homme', 'roublarde-femme', 'cake-patissier', 'nain-guerrier', 'paladine-femme', 'barde-homme',
   'druidesse-femme', 'moine-homme', 'clerc-femme',
-] as const
+  ...PACK3_HEROES.map((h) => h.id),
+]
 
 export type Gender = 'homme' | 'femme'
 
-/** Ce que montre chaque portrait. Le peuple n'est connu que pour le nain. */
-const PORTRAIT_TAGS: Record<string, { classe: string; genre: Gender; peuple?: string }> = {
-  'guerrier-homme': { classe: 'guerrier', genre: 'homme' },
-  'guerriere-femme': { classe: 'guerrier', genre: 'femme' },
-  'mage-homme': { classe: 'mage', genre: 'homme' },
-  'mage-femme': { classe: 'mage', genre: 'femme' },
-  'rodeur-homme': { classe: 'rodeur', genre: 'homme' },
-  'rodeuse-femme': { classe: 'rodeur', genre: 'femme' },
-  'roublard-homme': { classe: 'roublard', genre: 'homme' },
-  'roublarde-femme': { classe: 'roublard', genre: 'femme' },
-  'cake-patissier': { classe: 'mage', genre: 'homme' },
+/** Ce que montre chaque portrait. */
+const PORTRAIT_TAGS: Record<string, { classe: string; genre: Gender; peuple: string }> = {
+  'guerrier-homme': { classe: 'guerrier', genre: 'homme', peuple: 'humain' },
+  'guerriere-femme': { classe: 'guerrier', genre: 'femme', peuple: 'humain' },
+  'mage-homme': { classe: 'mage', genre: 'homme', peuple: 'humain' },
+  'mage-femme': { classe: 'mage', genre: 'femme', peuple: 'humain' },
+  'rodeur-homme': { classe: 'rodeur', genre: 'homme', peuple: 'humain' },
+  'rodeuse-femme': { classe: 'rodeur', genre: 'femme', peuple: 'humain' },
+  'roublard-homme': { classe: 'roublard', genre: 'homme', peuple: 'humain' },
+  'roublarde-femme': { classe: 'roublard', genre: 'femme', peuple: 'humain' },
+  'cake-patissier': { classe: 'mage', genre: 'homme', peuple: 'halfelin' },
   'nain-guerrier': { classe: 'guerrier', genre: 'homme', peuple: 'nain' },
-  'paladine-femme': { classe: 'paladin', genre: 'femme' },
-  'barde-homme': { classe: 'barde', genre: 'homme' },
-  'druidesse-femme': { classe: 'druide', genre: 'femme' },
-  'moine-homme': { classe: 'moine', genre: 'homme' },
-  'clerc-femme': { classe: 'clerc', genre: 'femme' },
+  'paladine-femme': { classe: 'paladin', genre: 'femme', peuple: 'humain' },
+  'barde-homme': { classe: 'barde', genre: 'homme', peuple: 'humain' },
+  'druidesse-femme': { classe: 'druide', genre: 'femme', peuple: 'elfe' },
+  'moine-homme': { classe: 'moine', genre: 'homme', peuple: 'humain' },
+  'clerc-femme': { classe: 'clerc', genre: 'femme', peuple: 'humain' },
+  ...Object.fromEntries(PACK3_HEROES.map((h) => [h.id, { classe: h.classe, genre: h.genre, peuple: h.peuple }])),
 }
 
 /**
- * Portraits proposés au héros : ceux de son genre, ceux de sa classe en
- * premier, puis ceux de son peuple. `all` ajoute ceux de l'autre genre.
+ * Portraits proposés au héros : ceux de sa classe et de son genre, son peuple
+ * en premier. `all` les montre tous, sa classe puis son genre en premier.
  */
 export function portraitsFor(classe: string, genre: Gender | null, peuple: string, all = false): string[] {
   const score = (id: string) => {
@@ -254,7 +256,10 @@ export function portraitsFor(classe: string, genre: Gender | null, peuple: strin
     if (!tag) return 0
     return (tag.classe === classe ? 4 : 0) + (tag.genre === genre ? 2 : 0) + (tag.peuple === peuple ? 1 : 0)
   }
-  return HERO_PORTRAITS.filter((id) => all || !genre || PORTRAIT_TAGS[id]?.genre === genre)
+  const ofGenre = HERO_PORTRAITS.filter((id) => !genre || PORTRAIT_TAGS[id]?.genre === genre)
+  // Chaque classe a un portrait par peuple : on ne montre que la sienne.
+  const ofClass = ofGenre.filter((id) => PORTRAIT_TAGS[id]?.classe === classe)
+  return (all ? HERO_PORTRAITS : ofClass.length ? ofClass : ofGenre)
     .map((id, i) => ({ id, i, s: score(id) }))
     .sort((a, b) => b.s - a.s || a.i - b.i)
     .map((p) => p.id)

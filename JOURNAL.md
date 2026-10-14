@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-14 — Pack d'images n° 3 intégré
+- 218 images converties en webp + miniatures (`public/bibliotheque/`) : 94 héros peuple × classe × genre (portrait + pion), 12 pions de PNJ, 10 rencontres d'ennemis, 6 cartes et 2 ambiances
+- Entrées générées dans `lib/library.ts` (`PACK3_HEROES`), tags faction/acte des nouvelles cartes ; les pions des PNJ restent rôle PNJ
+- Création de héros (`lib/heroCreation.ts`) : chaque portrait a un peuple, l'écran ne montre plus que la classe et le genre choisis, son peuple en premier ; « Voir tous les portraits » garde tout
+- Vérifié en local : elfe mage femme → 6 portraits de mages femmes, elfe en tête
+Reste ouvert : mise en ligne
+
 ## 2026-10-13 — Prompt ChatGPT du pack d'images n° 3
 - Prompt unique à coller dans ChatGPT : 94 héros peuple × classe × genre (portrait + pion), pions des PNJ, rencontres des ennemis courants, 8 cartes (`PROMPT-PACK-IMAGES-3.md`)
 - Noms en `peuple-classe-genre` pour que la création de héros propose le portrait de son peuple

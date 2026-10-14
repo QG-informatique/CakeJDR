@@ -351,8 +351,9 @@
 - [x] Bloquer le bouton de lancer pendant le jet pour qu'un double clic ne fasse pas un jet perdu
 - [x] Ajouter le genre et l'historique (bonus +2 aux actions de son domaine) à la création de héros
 - [x] Trier les portraits par classe, genre et peuple, et permettre d'importer son image
-- [ ] Produire des portraits et pions libres de droits pour chaque peuple × classe × genre (aujourd'hui 15 portraits, surtout humains) : prompt prêt dans `PROMPT-PACK-IMAGES-3.md`, à passer dans ChatGPT
-- [ ] Intégrer le pack d'images n° 3 reçu de ChatGPT : conversion webp + miniatures, entrées dans `lib/library.ts`, tags peuple/classe/genre dans `PORTRAIT_TAGS` (`lib/heroCreation.ts`)
+- [x] Produire des portraits et pions libres de droits pour chaque peuple × classe × genre (aujourd'hui 15 portraits, surtout humains) : prompt prêt dans `PROMPT-PACK-IMAGES-3.md`, à passer dans ChatGPT
+- [x] Intégrer le pack d'images n° 3 reçu de ChatGPT : conversion webp + miniatures, entrées dans `lib/library.ts`, tags peuple/classe/genre dans `PORTRAIT_TAGS` (`lib/heroCreation.ts`)
+- [ ] Ajouter des filtres peuple et classe dans la bibliothèque si la grille des pions (130) devient trop longue à parcourir
 - [ ] Donner un historique aux héros tout prêts (`lib/premadeHeroes.ts`)
 - [ ] Tester l'import d'une image perso dans la création de héros (envoi Cloudinary, portrait sur la fiche, pion de couleur)
 - [ ] Remplacer le `window.confirm` de la page admin par la fenêtre de confirmation de l'app (`app/admin/page.tsx`)
