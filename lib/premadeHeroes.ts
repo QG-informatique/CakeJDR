@@ -98,7 +98,7 @@ export const PREMADE_HEROES: readonly PremadeHero[] = [
     background: 'Renvoyé de l\'académie pour avoir lu les livres interdits, il cherche à prouver qu\'il avait raison.',
   },
   {
-    image: 'rodeur-homme',
+    image: 'demi-elfe-rodeur-homme',
     nom: 'Kael des Brumes',
     race: 'Demi-elfe',
     classe: 'Rôdeur',
@@ -122,7 +122,7 @@ export const PREMADE_HEROES: readonly PremadeHero[] = [
     background: 'Guide des forêts du nord, il a vu des ombres ailées passer au-dessus des cimes et veut savoir pourquoi.',
   },
   {
-    image: 'roublarde-femme',
+    image: 'halfelin-roublard-femme',
     nom: 'Sila Main-Leste',
     race: 'Halfeline',
     classe: 'Roublarde',
@@ -194,7 +194,7 @@ export const PREMADE_HEROES: readonly PremadeHero[] = [
     background: 'Chevalière d\'un ordre presque disparu, elle a juré de rallumer la flamme de son temple.',
   },
   {
-    image: 'barde-homme',
+    image: 'elfe-barde-homme',
     nom: 'Lucien Mille-Chansons',
     race: 'Elfe',
     classe: 'Barde',

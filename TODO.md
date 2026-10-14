@@ -362,3 +362,5 @@
 - [ ] Tester l'XP avec un second compte joueur : XP donnée par le MJ, XP d'un test, « Niveau prêt » puis montée par dés et à la main, montée automatique avec le MJ automatique
 - [ ] (Important, demandé par Quentin) Tester la montée de niveau automatique quand le meneur du MJ automatique n'est pas MJ de la table (le serveur réserve les demandes de jets au MJ)
 - [ ] Régler les montants d'XP (`lib/xp.ts`) après une vraie partie : viser environ un niveau par aventure courte
+- [ ] Jouer seul le début de « La Flamme sous la montagne » en ligne et noter ce qui va et ce qui ne va pas (création, votes, tests, rythme)
+- [ ] Laisser voter sans fermer l'image montée par une scène : aujourd'hui l'image affichée cache les choix du vote tant qu'on n'a pas cliqué « Fermer »
