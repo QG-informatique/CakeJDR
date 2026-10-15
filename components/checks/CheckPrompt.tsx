@@ -3,7 +3,7 @@
 import { useSelf, useStorage } from '@liveblocks/react'
 import { Dices, Target } from 'lucide-react'
 import { useT } from '@/lib/useT'
-import { checkStatLabel, signedMod, withStat } from '@/lib/checks'
+import { checkStatLabel, levelUpLabel, signedMod, withStat } from '@/lib/checks'
 
 type Props = {
   onRoll: (id: string) => void
@@ -37,7 +37,11 @@ export default function CheckPrompt({ onRoll, disabled, levelUpBlocked = false }
         </div>
         {check.reason && <p className="text-sm text-ink/80">{check.reason}</p>}
         <p className="text-xs text-ink/60">
-          {check.levelUp ? t('levelUpPromptHint').replace('{dice}', dice) : dice}
+          {check.levelUp
+            ? t('levelUpPromptHint')
+                .replace('{dice}', dice)
+                .replace('{targets}', Array.from({ length: check.count }, (_, i) => t(levelUpLabel(i, check.targets))).join(', '))
+            : dice}
           {more}
         </p>
         {blocked && <p className="text-xs text-amber-300">{t('levelUpBlocked')}</p>}

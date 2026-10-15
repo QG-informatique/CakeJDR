@@ -59,9 +59,18 @@ export type CheckRequest = {
   /** Test sous un seuil (d100) : `dc` est le seuil, en %. */
   under?: boolean
   reason?: string
+  /** Demandé par le MJ automatique : un jet de scène ou une attaque en combat. */
+  auto?: AutoAsk
   createdAt: number
   seal: string
 }
+
+/**
+ * Demande faite par le MJ automatique, acceptée du joueur qui mène la partie
+ * même s'il n'est pas le MJ de la table : le serveur vérifie qu'elle
+ * correspond à la scène en cours (`app/api/check/route.ts`).
+ */
+export type AutoAsk = 'scene' | 'combat' | 'level'
 
 /** Résultat d'un test, joint au lancer inscrit dans l'historique. */
 export type CheckOutcome = {
@@ -93,8 +102,12 @@ export type RollsRequest = {
   dice: number
   count: number
   levelUp: boolean
+  /** Montée de niveau : ce que chaque dé fait monter (« pv », puis les caractéristiques). */
+  targets?: string[]
   reason?: string
   creation?: true
+  /** Demandé par le MJ automatique (`/api/check`, `auto`) : le jet ne rapporte pas d'XP à lui seul. */
+  auto?: AutoAsk
   createdAt: number
   seal: string
 }
@@ -106,12 +119,16 @@ export type GmRequest = CheckRequest | RollsRequest
 export type RollsOutcome = {
   results: number[]
   levelUp: boolean
+  /** Ce que chaque dé fait monter ; sans liste, `LEVEL_UP_TARGETS` (anciens jets). */
+  targets?: string[]
   reason?: string
 }
 
 /** Intitulé d'un dé de montée de niveau dans `lib/translations.ts`. */
-export const levelUpLabel = (i: number) =>
-  i === 0 ? 'hp' : checkStatLabel(LEVEL_UP_TARGETS[i] ?? '')
+export const levelUpLabel = (i: number, targets: readonly string[] = LEVEL_UP_TARGETS) => {
+  const key = targets[i] ?? ''
+  return key === 'pv' ? 'hp' : checkStatLabel(key)
+}
 
 export const signedMod = (n: number) => `${n >= 0 ? '+' : '−'}${Math.abs(n)}`
 

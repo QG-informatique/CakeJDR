@@ -216,6 +216,21 @@ export function heroClasses(lang: 'en' | 'fr'): readonly HeroClass[] {
   return lang === 'en' ? ENGLISH_CLASSES : HERO_CLASSES
 }
 
+const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
+
+/**
+ * Classe d'une fiche, d'après le nom écrit dessus (« Guerrière », « Rogue ») :
+ * les quatre premières lettres suffisent, au féminin comme en anglais. Une
+ * classe inventée par le joueur n'en a pas.
+ */
+export function classOf(classe: string | undefined): HeroClass | undefined {
+  const name = fold(classe ?? '')
+  if (name.length < 4) return undefined
+  const head = name.slice(0, 4)
+  return HERO_CLASSES.find((c, i) => [c.id, fold(c.nom), fold(ENGLISH_CLASSES[i]!.nom)].some((n) => n.slice(0, 4) === head))
+    ?? (head === 'magi' ? HERO_CLASSES.find((c) => c.id === 'mage') : undefined)
+}
+
 /** Portraits du pack qui ont aussi leur pion. */
 export const HERO_PORTRAITS: readonly string[] = [
   'guerrier-homme', 'guerriere-femme', 'mage-homme', 'mage-femme', 'rodeur-homme', 'rodeuse-femme',

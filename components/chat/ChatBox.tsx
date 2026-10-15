@@ -253,7 +253,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
                     <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 pl-6 text-xs text-ink/60 tabular-nums">
                       {r.results.map((n, i) => (
                         <span key={i}>
-                          {r.levelUp && `${t(levelUpLabel(i))} `}
+                          {r.levelUp && `${t(levelUpLabel(i, r.targets))} `}
                           <span className="font-bold text-ink">{r.levelUp ? `+${n}` : n}</span>
                         </span>
                       ))}

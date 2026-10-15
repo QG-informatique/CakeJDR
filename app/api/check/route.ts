@@ -20,11 +20,13 @@ import {
   CHECK_THRESHOLD_MAX,
   ROLLS_MAX,
   isCheckStat,
+  type AutoAsk,
   type CheckRequest,
   type GmRequest,
   type RollsRequest,
 } from '@/lib/checks'
-import { gameSystem, type GameSystem } from '@/lib/gameSystems'
+import { gameSystem, levelUpDice, type GameSystem } from '@/lib/gameSystems'
+import { ADVENTURES } from '@/lib/autoGm'
 
 /**
  * Tests demandés par le MJ.
@@ -33,7 +35,10 @@ import { gameSystem, type GameSystem } from '@/lib/gameSystems'
  *   (`type: 'check'`, par défaut) ou plusieurs dés (`type: 'rolls'`, dont la
  *   montée de niveau) ; un joueur peut aussi se demander à lui-même les dés
  *   de création de son personnage (`creation: true`) ;
- * - `cancel` (MJ) : la retire ;
+ * - le MJ automatique, mené par le navigateur d'un joueur quand la table n'a
+ *   pas de MJ, demande aussi (`auto`) : le serveur vérifie que la partie en
+ *   cours attend bien ce jet-là ;
+ * - `cancel` (MJ, ou le MJ automatique pour son propre jet) : la retire ;
  * - `roll` (le joueur visé) : ses dés ont roulé dans son navigateur, qui
  *   envoie les faces sur lesquelles ils se sont posés ; le serveur les
  *   vérifie, calcule la réussite d'un test, et inscrit le résultat signé
@@ -104,6 +109,45 @@ function askCheck(
   }
 }
 
+/**
+ * Cibles d'une montée de niveau choisies par le navigateur : les PV d'abord,
+ * puis des caractéristiques distinctes du système, autant qu'il en monte.
+ */
+function levelTargets(system: GameSystem, sent: unknown): string[] | false {
+  if (!Array.isArray(sent) || sent.length !== levelUpDice(system) || sent[0] !== 'pv') return false
+  const stats = sent.slice(1)
+  const ok = stats.every((k) => typeof k === 'string' && k !== 'pv' && system.levelUp.includes(k))
+  return ok && new Set(stats).size === stats.length ? (sent as string[]) : false
+}
+
+const AUTO_ASKS: readonly AutoAsk[] = ['scene', 'combat', 'level']
+
+type AutoState = {
+  adventure?: string
+  scene?: string
+  check?: { id?: string }
+}
+
+/** La partie du MJ automatique telle qu'elle est rangée dans la salle, ou rien. */
+async function autoState(liveblocks: Liveblocks, roomId: string): Promise<AutoState | null> {
+  const doc = (await liveblocks.getStorageDocument(roomId, 'json').catch(() => null)) as { autoGm?: AutoState } | null
+  return doc?.autoGm && typeof doc.autoGm === 'object' ? doc.autoGm : null
+}
+
+/**
+ * Jet demandé par le MJ automatique sans être MJ : permis seulement si la
+ * partie en cours l'attend (le test de la scène, avec sa caractéristique et
+ * sa difficulté ; ou une montée de niveau pendant une partie).
+ */
+function autoAskFits(auto: AutoAsk, state: AutoState, body: Record<string, unknown>): boolean {
+  if (auto === 'level') return body.type === 'rolls' && body.levelUp === true
+  if (body.type === 'rolls') return false
+  const step = state.adventure && state.scene ? ADVENTURES[state.adventure]?.scenes[state.scene]?.step : undefined
+  if (!step) return false
+  if (auto === 'scene') return step.kind === 'check' && body.stat === step.stat && body.dc === step.dc
+  return false
+}
+
 async function savePending(liveblocks: Liveblocks, roomId: string, request: GmRequest) {
   let full = false as boolean
   try {
@@ -155,7 +199,11 @@ export async function POST(req: NextRequest) {
     // Création guidée d'un personnage : le joueur se demande à lui-même les
     // dés de ses caractéristiques (quelques D6, sans montée de niveau).
     const creation = body.type === 'rolls' && body.creation === true
-    if (access.role !== 'gm' && !creation) return fail('gm only', 403)
+    const auto = AUTO_ASKS.find((a) => a === body.auto)
+    if (access.role !== 'gm' && !creation) {
+      const state = auto ? await autoState(liveblocks, roomId) : null
+      if (!auto || !state || !autoAskFits(auto, state, body)) return fail('gm only', 403)
+    }
     if (creation) {
       const self = account ? body.targetId === account.id : String(body.targetId).startsWith('guest_')
       if (!self) return fail('creation is for yourself', 403)
@@ -176,7 +224,9 @@ export async function POST(req: NextRequest) {
       if (typeof levelUp !== 'boolean') return fail('bad levelUp', 400)
       // Montée de niveau : un dé par cible du système (PV, puis caractéristiques).
       if (levelUp && system.levelUp.length === 0) return fail('no levels in this system', 400)
-      const count = levelUp ? system.levelUp.length : body.count
+      const targets = levelUp && system.levelUpStats ? levelTargets(system, body.targets) : null
+      if (targets === false) return fail('bad targets', 400)
+      const count = levelUp ? levelUpDice(system) : body.count
       if (!isInt(count, 1, ROLLS_MAX)) return fail('bad count', 400)
       const sealed: SealedRolls = {
         type: 'rolls',
@@ -186,15 +236,16 @@ export async function POST(req: NextRequest) {
         dice,
         count,
         levelUp,
+        ...(targets ? { targets } : {}),
         ...(reason ? { reason } : {}),
         ...(creation ? { creation: true as const } : {}),
       }
-      const rolls: RollsRequest = { ...sealed, createdAt: Date.now(), seal: sealCheck(roomId, sealed) }
+      const rolls: RollsRequest = { ...sealed, ...(auto ? { auto } : {}), createdAt: Date.now(), seal: sealCheck(roomId, sealed) }
       request = rolls
     } else {
       const made = askCheck(roomId, system, { targetId, targetName, stat, mod, dc, showDc, reason })
       if (typeof made === 'string') return fail(made, 400)
-      request = made
+      request = auto ? { ...made, auto } : made
     }
     return savePending(liveblocks, roomId, request)
   }
@@ -203,7 +254,8 @@ export async function POST(req: NextRequest) {
   if (typeof id !== 'string' || !id) return fail('missing id', 400)
 
   if (action === 'cancel') {
-    if (access.role !== 'gm') return fail('gm only', 403)
+    // Sans MJ, le meneur du MJ automatique peut retirer le jet de la scène.
+    if (access.role !== 'gm' && (await autoState(liveblocks, roomId))?.check?.id !== id) return fail('gm only', 403)
     try {
       await liveblocks.mutateStorage(roomId, ({ root }) => {
         checksMap(root).delete(id)
@@ -263,8 +315,6 @@ export async function POST(req: NextRequest) {
         error = ['bad results', 400]
         return
       }
-      map.delete(id)
-
       // Le résultat paraît quand les dés se posent chez le lanceur.
       const base = { id: randomUUID(), player: check.targetName, ts: revealAt(body.ms) }
       let unsigned: Omit<SignedDiceRoll, 'sig'>
@@ -277,6 +327,7 @@ export async function POST(req: NextRequest) {
           rolls: {
             results,
             levelUp: check.levelUp,
+            ...(check.targets ? { targets: check.targets } : {}),
             ...(check.reason ? { reason: check.reason } : {}),
           },
         }
@@ -310,6 +361,9 @@ export async function POST(req: NextRequest) {
       // `requestId` relie le jet à sa demande : le MJ automatique attend celui-là.
       list.push({ kind: roll.rolls ? 'rolls' : 'check', ...roll, requestId: id } as Lson)
       for (let i = list.length - MAX_EVENTS; i > 0; i -= 1) list.delete(0)
+      // Retirée après le résultat : un navigateur qui recevrait les deux
+      // changements séparément ne croit jamais la demande annulée.
+      map.delete(id)
     })
   } catch (e) {
     console.error('check: jet non enregistré', roomId, e)

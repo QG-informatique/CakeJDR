@@ -5,7 +5,7 @@ import { useRoom, useStorage } from '@liveblocks/react'
 import type DiceBox from '@3d-dice/dice-box-threejs'
 import type { DiceBoxCollide, DiceBoxDie, DiceBoxPose } from '@3d-dice/dice-box-threejs'
 import { useT } from '@/lib/useT'
-import { levelUpLabel } from '@/lib/checks'
+import { LEVEL_UP_TARGETS, levelUpLabel } from '@/lib/checks'
 import { boxRoll } from '@/lib/dicePool'
 import { DICE_MAX_ROLL_MS, type DiceThrow } from '@/lib/dicePayload'
 import { verifyDiceEvent } from '@/components/chat/useDiceVerification'
@@ -26,7 +26,8 @@ export type DiceBoxHandle = {
 
 /** Lancer envoyé au serveur : les dés, les faces sur lesquelles ils se sont posés, le départ et la durée. */
 export type ThrowSent = { dice: number[]; results: number[]; throw: DiceThrow; ms: number }
-export type ThrowResult = { id: string; levelUp?: boolean }
+/** `levelUp` : ce que montent les dés d'une montée de niveau, écrit sous chacun. */
+export type ThrowResult = { id: string; levelUp?: readonly string[] }
 
 type Props = {
   ref?: Ref<DiceBoxHandle>
@@ -49,7 +50,8 @@ type Job = {
   /** Heure d'affichage du résultat, pour un lancer rejoué. */
   ts?: number
   id: string | null
-  levelUp: boolean
+  /** Montée de niveau : ce que monte chaque dé. */
+  levelUp: readonly string[] | null
   settled: boolean
   /** Mes dés sont posés depuis assez longtemps pour relancer. */
   relaunch?: boolean
@@ -325,7 +327,7 @@ export default function DiceBoxTable({ ref, dice, disabled, onThrow, onDone }: P
   const settle = (job: Job, owners: number[]) => {
     if (current.current !== job) return
     job.settled = true
-    if (job.levelUp) showLevelUp(owners)
+    if (job.levelUp) showLevelUp(owners, job.levelUp)
     if (job.own) {
       later(() => {
         job.relaunch = true
@@ -351,7 +353,7 @@ export default function DiceBoxTable({ ref, dice, disabled, onThrow, onDone }: P
   }
 
   // Montée de niveau : sous chaque dé, ce qu'il fait gagner.
-  const showLevelUp = (owners: number[]) => {
+  const showLevelUp = (owners: number[], targets: readonly string[]) => {
     const box = boxRef.current
     const host = hostRef.current
     if (!box || !host) return
@@ -361,7 +363,7 @@ export default function DiceBoxTable({ ref, dice, disabled, onThrow, onDone }: P
     box.diceList.forEach((d, k) => {
       const i = owners[k] ?? k
       const p = d.position.clone().project(box.camera)
-      placed.set(i, { x: ((p.x + 1) / 2) * w, y: ((1 - p.y) / 2) * h, text: t(levelUpLabel(i)) })
+      placed.set(i, { x: ((p.x + 1) / 2) * w, y: ((1 - p.y) / 2) * h, text: t(levelUpLabel(i, targets)) })
     })
     setLabels(Array.from(placed.values()))
   }
@@ -384,14 +386,14 @@ export default function DiceBoxTable({ ref, dice, disabled, onThrow, onDone }: P
       if (ev.kind === 'chat' || seen.current.has(ev.id)) continue
       seen.current.add(ev.id)
       if (typeof ev.dice !== 'number' || typeof ev.result !== 'number') continue
-      const levelUp = Boolean(ev.rolls?.levelUp)
+      const levelUp = ev.rolls?.levelUp ? (ev.rolls.targets ?? LEVEL_UP_TARGETS) : null
       const seed = ev.throw?.seed
       // Mon propre lancer : il roule déjà.
       if (seed !== undefined && ownSeeds.current.has(seed)) {
         const job = current.current
         if (job?.own && job.seed === seed) {
           job.id ??= ev.id
-          job.levelUp ||= levelUp
+          job.levelUp ??= levelUp
         }
         continue
       }
@@ -423,7 +425,7 @@ export default function DiceBoxTable({ ref, dice, disabled, onThrow, onDone }: P
       const box = boxRef.current
       const host = hostRef.current
       const seed = randomSeed()
-      const job: Job = { key: `own-${seed}`, own: true, dice, seed, id: null, levelUp: false, settled: false }
+      const job: Job = { key: `own-${seed}`, own: true, dice, seed, id: null, levelUp: null, settled: false }
       let sent: { results: number[]; ms: number } | null = null
       if (box && host && status === 'ready') {
         // Mon lancer passe devant ceux des autres.
@@ -451,8 +453,8 @@ export default function DiceBoxTable({ ref, dice, disabled, onThrow, onDone }: P
           return
         }
         job.id ??= r.id
-        job.levelUp ||= Boolean(r.levelUp)
-        if (job.settled && job.levelUp && current.current === job) showLevelUp(boxRoll(job.dice).owners)
+        job.levelUp ??= r.levelUp ?? null
+        if (job.settled && job.levelUp && current.current === job) showLevelUp(boxRoll(job.dice).owners, job.levelUp)
         // Dés déjà posés avant la réponse : le lancer est terminé.
         if (status === 'failed') callbacks.current.onDone?.(r.id)
         else if (job.relaunch) release(job)

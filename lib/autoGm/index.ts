@@ -97,6 +97,8 @@ export const VOTE_WINDOW_MS = 45_000
 export const VOTE_SETTLE_MS = 1_500
 /** Après un jet, le temps de lire le résultat avant la scène suivante. */
 export const CHECK_READ_MS = 2_000
+/** Demande de jet disparue sans résultat : annulée seulement après ce délai (le résultat peut la suivre de près). */
+export const CANCEL_GRACE_MS = 4_000
 
 /** Vote « sans avis » : compté comme présent, mais pour aucune option. */
 export const NEUTRAL = 'neutral'
@@ -119,6 +121,8 @@ export type Voter = {
   hero?: boolean
   /** Historique du héros (`lib/backgrounds.ts`). */
   historique?: string
+  /** Classe du héros : ses dés de niveau et ses actions en combat. */
+  classe?: string
   /** Expérience et niveau, pour la montée de niveau automatique (`lib/xp.ts`). */
   xp?: number
   level?: number
