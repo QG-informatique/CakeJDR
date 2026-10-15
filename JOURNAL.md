@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-16 — Dé de l'accueil : vraie physique avec le moteur des dés 3D
+- Le roulement libre remis le matin même glissait au lieu de rouler : le dé est maintenant simulé par cannon-es, le moteur des dés 3D de la table (`components/ui/HeroDie.tsx`)
+- L'écran sert de table vue de dessus, avec ses quatre bords ; lancé, le dé retombe sur ses coins, bascule, rebondit et se pose sur une face. Le dessin en CSS et la taille ne changent pas
+- Le petit tour au repos garde l'animation sur place du premier dé : un vrai roulement le déplacerait d'une largeur à chaque face
+- `cannon-es` déclaré en dépendance directe (MIT, déjà installé avec les dés 3D), chargé seulement après l'affichage de la page
+Reste ouvert : à juger à l'œil par Quentin, et lancer au doigt sur téléphone
+
 ## 2026-10-16 — Dé de l'accueil : retour à son roulement d'origine
 - Le dé de la page de connexion retrouve la physique libre de ses débuts : lancé, il tourne dans tous les sens, rebondit sur les bords et se pose sur une face, puis rentre et refait un tour toutes les quelques secondes (`components/ui/HeroDie.tsx`)
 - Abandon de la bascule arête par arête (60572cd), qui tournait mal ; l'apparence du dé ne change pas

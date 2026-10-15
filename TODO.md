@@ -58,6 +58,8 @@
 - [x] Vérifier à l'œil que le dé revient bien à sa place après un lancer
 - [x] Valider à l'œil les coins roses du dé et sa nouvelle prise en main (soulevé, sans rouler)
 - [x] Rendre au dé de l'accueil son roulement libre d'origine (il tourne dans tous les sens au lieu de basculer d'arête en arête)
+- [x] Donner au dé de l'accueil une vraie physique (cannon-es, comme les dés 3D de la table) avec son dessin d'origine
+- [ ] Faire juger à Quentin le lancer du dé de l'accueil (rebonds, temps avant de se poser, hauteur des sauts)
 - [ ] Essayer sur téléphone le lancer au doigt du dé de l'accueil (il doit rouler, rebondir puis rentrer à sa place)
 
 ## Phase 2 — room de démonstration
