@@ -57,6 +57,8 @@
 - [x] Remettre le dé en page d'accueil : lancer automatique, attrapable et lançable sur tout l'écran
 - [x] Vérifier à l'œil que le dé revient bien à sa place après un lancer
 - [x] Valider à l'œil les coins roses du dé et sa nouvelle prise en main (soulevé, sans rouler)
+- [x] Rendre au dé de l'accueil son roulement libre d'origine (il tourne dans tous les sens au lieu de basculer d'arête en arête)
+- [ ] Essayer sur téléphone le lancer au doigt du dé de l'accueil (il doit rouler, rebondir puis rentrer à sa place)
 
 ## Phase 2 — room de démonstration
 - [x] Creer la room de demonstration pre-remplie avec une fiche complete
