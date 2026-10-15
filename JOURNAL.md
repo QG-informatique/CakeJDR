@@ -1,5 +1,11 @@
 # Journal
 
+## 2026-10-16 — Dé de l'accueil : retour à son roulement d'origine
+- Le dé de la page de connexion retrouve la physique libre de ses débuts : lancé, il tourne dans tous les sens, rebondit sur les bords et se pose sur une face, puis rentre et refait un tour toutes les quelques secondes (`components/ui/HeroDie.tsx`)
+- Abandon de la bascule arête par arête (60572cd), qui tournait mal ; l'apparence du dé ne change pas
+- `lib/cubeMath.ts` supprimé : il ne servait qu'à cette bascule
+Reste ouvert : lancer au doigt sur téléphone pas encore essayé
+
 ## 2026-10-14 — Héros de campagne : enregistrement et reprise vérifiés
 - Vérifié : le héros créé avec le MJ automatique est gardé dans le navigateur, dans la salle et sur le compte (« testperso » du 12/10 bien en base, avec sa salle), et il apparaît dans « Fiches de personnage »
 - Reprise renforcée : en revenant dans la salle, le héros créé pour cette aventure est repris même si une autre fiche a été choisie entre-temps (`components/app/HomePageInner.tsx`)

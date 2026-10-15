@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { type Axis, FACES, IDENTITY, type Mat, mul, PIPS, rotation, snap, tipFromVelocity, toCss } from '@/lib/cubeMath'
 
 /**
  * Dé de la page d'accueil.
@@ -11,18 +10,11 @@ import { type Axis, FACES, IDENTITY, type Mat, mul, PIPS, rotation, snap, tipFro
  * l'écran et le lancer. Aucun geste n'est nécessaire pour entrer dans
  * l'application : c'est un clin d'œil, pas une porte.
  *
- * Le roulement imite un vrai dé. Un cube posé ne tourne pas en continu : il
- * bascule par-dessus une de ses arêtes, un quart de tour à la fois. Chaque
- * bascule est donc une rotation de 90° autour d'un axe de la table, dans le
- * sens du déplacement, et le dé est toujours à plat entre deux bascules.
- * Quand l'élan manque au milieu d'une bascule, il retombe sur la face d'où il
- * venait s'il n'avait pas franchi l'arête, sinon il passe de l'autre côté ;
- * puis il oscille un instant avant de s'immobiliser.
- *
- * L'orientation est tenue sous forme de matrice, et chaque bascule s'applique
- * dans le repère de la table. Des angles d'Euler cumulés tournaient dans le
- * repère du dé : une fois celui-ci couché sur le côté, ses axes ne suivaient
- * plus le sens du lancer, d'où un roulement de travers.
+ * Le dé tourne librement sur lui-même, comme le tout premier dé de
+ * CakeJDR : lancé, il roule dans le sens où il glisse, rebondit sur les
+ * bords, puis se pose sur la face la plus proche. Une version qui basculait
+ * arête par arête l'a remplacé un temps ; elle tournait mal, et ce dé-là
+ * garde volontairement son roulement d'origine.
  *
  * Toute l'animation passe par des refs et `requestAnimationFrame`, en écrivant
  * directement les transformations dans le DOM : un état React mis à jour à
@@ -37,6 +29,26 @@ const BORDER = 3
 /** Inclinaison du regard sur la table : un dé vu parfaitement de face n'est qu'un carré. */
 const TILT_X = -18
 const TILT_Y = 24
+
+/** Faces opposées dont la somme fait 7, comme sur un vrai dé. */
+const FACES = [
+  { value: 1, rx: 0, ry: 0 },
+  { value: 6, rx: 0, ry: 180 },
+  { value: 3, rx: 0, ry: 90 },
+  { value: 4, rx: 0, ry: -90 },
+  { value: 2, rx: 90, ry: 0 },
+  { value: 5, rx: -90, ry: 0 },
+] as const
+
+/** Position des points sur une grille 3×3, en [ligne, colonne]. */
+const PIPS: Record<number, ReadonlyArray<readonly [number, number]>> = {
+  1: [[1, 1]],
+  2: [[0, 0], [2, 2]],
+  3: [[0, 0], [1, 1], [2, 2]],
+  4: [[0, 0], [0, 2], [2, 0], [2, 2]],
+  5: [[0, 0], [0, 2], [1, 1], [2, 0], [2, 2]],
+  6: [[0, 0], [1, 0], [2, 0], [0, 2], [1, 2], [2, 2]],
+}
 
 function Pips({ value }: { value: number }) {
   const inner = SIZE - BORDER * 2
@@ -63,23 +75,10 @@ function Pips({ value }: { value: number }) {
   )
 }
 
-/* ------------------------------------------------------------------ */
-/* Rotations                                                           */
-/* ------------------------------------------------------------------ */
-
-/**
- * Élévation du centre du dé pendant une bascule : il pivote sur une arête, et
- * son centre décrit un arc qui culmine à 45°. Réduite de moitié à l'écran,
- * sinon le dé semble sautiller à chaque quart de tour.
- */
-const tipLift = (p: number) => {
-  const a = (Math.min(Math.abs(p), 1) * Math.PI) / 2
-  return 0.5 * HALF * (Math.cos(a) + Math.sin(a) - 1)
-}
-
 type Vec = { x: number; y: number }
-type Mode = 'rest' | 'roll' | 'drag' | 'thrown' | 'fall' | 'rock' | 'wait' | 'home'
+type Mode = 'rest' | 'roll' | 'drag' | 'thrown' | 'settle' | 'wait' | 'home'
 
+const easeOut = (t: number) => 1 - Math.pow(1 - t, 3)
 const easeInOut = (t: number) =>
   t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
 const randInt = (min: number, max: number) =>
@@ -111,27 +110,14 @@ export default function HeroDie({ dockId }: { dockId: string }) {
       mode: 'rest' as Mode,
       pos: { x: 0, y: 0 } as Vec,
       vel: { x: 0, y: 0 } as Vec,
-      /** Orientation du dé à plat, entre deux bascules. */
-      base: IDENTITY as Mat,
-      /** Bascule en cours : axe, sens, et avancement de 0 (à plat) à 1 (quart de tour fait). */
-      tipAxis: 'y' as Axis,
-      tipSign: 1,
-      tipP: 0,
-      /** Petite oscillation à l'arrivée, en degrés autour de l'axe de la dernière bascule. */
-      rockDeg: 0,
-      rockAmp: 0,
-      /** Rebonds verticaux, en pixels. */
+      rot: { x: 0, y: 0 } as Vec,
       hop: 0,
-      bouncePhase: 0,
       t0: 0,
       dur: 0,
-      until: 0,
-      fallFrom: 0,
-      fallTo: 0,
-      afterRock: 'rest' as 'rest' | 'wait',
-      queue: [] as Array<{ axis: Axis; sign: number; dur: number }>,
-      seqStart: 0,
+      from: { x: 0, y: 0 } as Vec,
+      to: { x: 0, y: 0 } as Vec,
       posFrom: { x: 0, y: 0 } as Vec,
+      until: 0,
       grab: { x: 0, y: 0 } as Vec,
       samples: [] as Array<{ x: number; y: number; t: number }>,
       pointerId: -1,
@@ -141,15 +127,10 @@ export default function HeroDie({ dockId }: { dockId: string }) {
     }
 
     const render = () => {
-      const angle = s.tipSign * s.tipP * 90 + s.rockDeg
-      const orientation = angle === 0 ? s.base : mul(rotation(s.tipAxis, angle), s.base)
-      cube.style.transform =
-        `rotateX(${TILT_X}deg) rotateY(${TILT_Y}deg) ` +
-        `rotateX(${s.lean.x}deg) rotateY(${s.lean.y}deg) ${toCss(orientation)}`
-      const lift = s.hop + tipLift(s.tipP)
-      die.style.transform = `translate3d(${s.pos.x - HALF}px, ${s.pos.y - HALF - lift}px, 0)`
+      die.style.transform = `translate3d(${s.pos.x - HALF}px, ${s.pos.y - HALF - s.hop}px, 0)`
+      cube.style.transform = `rotateX(${s.rot.x + TILT_X + s.lean.x}deg) rotateY(${s.rot.y + TILT_Y + s.lean.y}deg)`
       // L'ombre reste au sol et s'estompe quand le dé s'élève.
-      const k = 1 - Math.min(lift, 40) / 80
+      const k = 1 - Math.min(s.hop, 40) / 80
       shadow.style.transform = `translate3d(${s.pos.x - HALF}px, ${s.pos.y + HALF * 0.62}px, 0) scale(${k})`
       shadow.style.opacity = String(0.55 * k)
     }
@@ -176,52 +157,21 @@ export default function HeroDie({ dockId }: { dockId: string }) {
       }
     }
 
-    /** Termine la bascule en cours : le dé est de nouveau à plat, sur une autre face. */
-    const commitTip = () => {
-      s.base = snap(mul(rotation(s.tipAxis, s.tipSign * 90), s.base))
-      s.tipP = 0
-    }
-
-    /** Arrivée au sol : une petite oscillation dans le sens de la chute, puis l'arrêt. */
-    const land = (now: number, overshoot: number, then: 'rest' | 'wait') => {
-      s.tipP = 0
-      s.mode = 'rock'
-      s.t0 = now
-      s.rockAmp = overshoot
-      s.afterRock = then
-    }
-
-    const nextQueuedTip = (now: number) => {
-      const next = s.queue.shift()
-      if (!next) {
-        land(now, 4, 'rest')
-        return
-      }
-      s.tipAxis = next.axis
-      s.tipSign = next.sign
-      s.tipP = 0
-      s.t0 = now
-      s.dur = next.dur
-    }
-
-    /** Lancer sur place : quelques bascules de plus en plus lentes, et des rebonds qui s'éteignent. */
+    /** Lance le dé sur place : plusieurs quarts de tour, deux rebonds. */
     const startRoll = (now: number) => {
+      // Ramener l'angle dans [0, 360[ : l'apparence est identique, et les
+      // nombres ne grossissent pas indéfiniment.
+      s.rot = { x: s.rot.x % 360, y: s.rot.y % 360 }
       s.mode = 'roll'
-      let axis: Axis = Math.random() < 0.5 ? 'x' : 'y'
-      let sign = Math.random() < 0.5 ? -1 : 1
-      let dur = 120
-      s.queue = []
-      for (let i = randInt(3, 5); i > 0; i -= 1) {
-        s.queue.push({ axis, sign, dur })
-        dur *= 1.32
-        // De temps en temps le dé repart sur une autre arête, comme un vrai lancer.
-        if (Math.random() < 0.3) {
-          axis = axis === 'x' ? 'y' : 'x'
-          sign = Math.random() < 0.5 ? -1 : 1
-        }
+      s.t0 = now
+      s.dur = 1200
+      s.from = { ...s.rot }
+      const dirX = Math.random() < 0.5 ? -1 : 1
+      const dirY = Math.random() < 0.5 ? -1 : 1
+      s.to = {
+        x: (Math.round(s.rot.x / 90) + dirX * randInt(2, 5)) * 90,
+        y: (Math.round(s.rot.y / 90) + dirY * randInt(2, 5)) * 90,
       }
-      s.seqStart = now
-      nextQueuedTip(now)
     }
 
     s.until = performance.now() + 700
@@ -240,12 +190,14 @@ export default function HeroDie({ dockId }: { dockId: string }) {
 
         case 'roll': {
           const t = Math.min((now - s.t0) / s.dur, 1)
-          s.tipP = t
-          const since = (now - s.seqStart) / 1000
-          s.hop = 16 * Math.exp(-since * 4) * Math.abs(Math.sin((since * Math.PI) / 0.22))
+          const e = easeOut(t)
+          s.rot.x = s.from.x + (s.to.x - s.from.x) * e
+          s.rot.y = s.from.y + (s.to.y - s.from.y) * e
+          s.hop = Math.abs(Math.sin(t * Math.PI * 2)) * 26 * (1 - t)
           if (t >= 1) {
-            commitTip()
-            nextQueuedTip(now)
+            s.hop = 0
+            s.mode = 'rest'
+            s.until = now + 1800
           }
           break
         }
@@ -273,63 +225,35 @@ export default function HeroDie({ dockId }: { dockId: string }) {
             s.pos.y = maxY
             s.vel.y = -Math.abs(s.vel.y) * 0.62
           }
-          const friction = Math.exp(-1.8 * dt)
+          const friction = Math.exp(-1.6 * dt)
           s.vel.x *= friction
           s.vel.y *= friction
+          // Un dé qui glisse roule dans le sens de son déplacement.
+          s.rot.x += -s.vel.y * 0.55 * dt
+          s.rot.y += s.vel.x * 0.55 * dt
           const speed = Math.hypot(s.vel.x, s.vel.y)
-
-          // Tant qu'il va vite, le dé passe une partie du temps en l'air.
-          s.bouncePhase += dt
-          s.hop = Math.min(speed / 90, 20) * Math.abs(Math.sin((s.bouncePhase * Math.PI) / 0.2))
-
-          // Il roule sans glisser : un quart de tour par longueur de côté parcourue.
-          const along = s.tipAxis === 'y' ? s.vel.x * s.tipSign : -s.vel.y * s.tipSign
-          s.tipP += (along * dt) / SIZE
-          if (s.tipP >= 1 || s.tipP < 0) {
-            // À plat : on repart sur l'arête qui fait face au mouvement.
-            // (Progression négative : un rebond sur un bord a inversé le sens.)
-            if (s.tipP >= 1) commitTip()
-            const next = tipFromVelocity(s.vel.x, s.vel.y)
-            s.tipAxis = next.axis
-            s.tipSign = next.sign
-            s.tipP = 0
-          }
-
-          if (speed < 70) {
-            // Plus d'élan : il retombe du côté où il penchait.
-            s.vel = { x: 0, y: 0 }
-            s.mode = 'fall'
+          s.hop = Math.min(speed / 60, 14) * Math.abs(Math.sin(now / 90))
+          if (speed < 40) {
+            // Il se pose sur la face la plus proche.
+            s.mode = 'settle'
             s.t0 = now
-            s.fallFrom = s.tipP
-            s.fallTo = s.tipP >= 0.5 ? 1 : 0
-            s.dur = 120 + Math.abs(s.fallTo - s.fallFrom) * 360
+            s.dur = 380
+            s.from = { ...s.rot }
+            s.to = { x: Math.round(s.rot.x / 90) * 90, y: Math.round(s.rot.y / 90) * 90 }
           }
           break
         }
 
-        case 'fall': {
+        case 'settle': {
           const t = Math.min((now - s.t0) / s.dur, 1)
-          // La chute accélère, comme sous l'effet de la pesanteur.
-          s.tipP = s.fallFrom + (s.fallTo - s.fallFrom) * t * t
-          s.hop *= Math.exp(-14 * dt)
+          const e = easeOut(t)
+          s.rot.x = s.from.x + (s.to.x - s.from.x) * e
+          s.rot.y = s.from.y + (s.to.y - s.from.y) * e
+          s.hop *= Math.exp(-12 * dt)
           if (t >= 1) {
-            const forward = s.fallTo === 1
-            if (forward) commitTip()
             s.hop = 0
-            land(now, forward ? 5 : -5, 'wait')
-          }
-          break
-        }
-
-        case 'rock': {
-          const t = (now - s.t0) / 1000
-          s.rockDeg = s.tipSign * s.rockAmp * Math.exp(-t * 9) * Math.sin(t * 38)
-          s.hop *= Math.exp(-14 * dt)
-          if (t > 0.45) {
-            s.rockDeg = 0
-            s.hop = 0
-            s.mode = s.afterRock
-            s.until = now + (s.afterRock === 'rest' ? 1800 : 2400)
+            s.mode = 'wait'
+            s.until = now + 2600
           }
           break
         }
@@ -360,23 +284,21 @@ export default function HeroDie({ dockId }: { dockId: string }) {
         }
       }
 
-      // Inclinaison du dé tenu : elle suit le mouvement, puis se redresse.
+      // À sa place, le dé suit son emplacement : défilement, redimensionnement,
+      // ou panneau qui se réagence au chargement des polices.
+      if (s.mode === 'rest' || s.mode === 'roll') {
+        measureHome()
+        s.pos.x = home.x
+        s.pos.y = home.y
+      }
+
+      // L'inclinaison suit le mouvement de la main puis se redresse d'elle-même.
       const follow = 1 - Math.exp(-12 * dt)
       s.lean.x += (s.leanTarget.x - s.lean.x) * follow
       s.lean.y += (s.leanTarget.y - s.lean.y) * follow
       const relax = Math.exp(-8 * dt)
       s.leanTarget.x *= relax
       s.leanTarget.y *= relax
-
-      // À sa place, le dé suit son emplacement : défilement, redimensionnement,
-      // ou panneau qui se réagence au chargement des polices.
-      const atHome =
-        s.mode === 'rest' || s.mode === 'roll' || (s.mode === 'rock' && s.afterRock === 'rest')
-      if (atHome) {
-        measureHome()
-        s.pos.x = home.x
-        s.pos.y = home.y
-      }
 
       render()
       raf = requestAnimationFrame(frame)
@@ -395,8 +317,6 @@ export default function HeroDie({ dockId }: { dockId: string }) {
       }
       s.pointerId = e.pointerId
       s.mode = 'drag'
-      s.queue = []
-      s.rockDeg = 0
       // Soulevé : il s'élève et son ombre rétrécit.
       s.hop = 18
       s.grab = { x: e.clientX - s.pos.x, y: e.clientY - s.pos.y }
@@ -446,16 +366,11 @@ export default function HeroDie({ dockId }: { dockId: string }) {
         vy *= MAX_SPEED / speed
       }
       s.vel = { x: vx, y: vy }
-      s.bouncePhase = 0
-      // La bascule en cours se poursuit ; à défaut, on part sur l'arête du lancer.
-      if (s.tipP === 0) {
-        const next = tipFromVelocity(vx, vy)
-        s.tipAxis = next.axis
-        s.tipSign = next.sign
-      }
       s.mode = 'thrown'
     }
 
+    // Seul l'appui se fait sur le dé ; mouvement et relâchement sont écoutés
+    // sur la fenêtre, pour ne pas perdre un lancer rapide qui quitte le dé.
     die.addEventListener('pointerdown', onDown)
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
