@@ -61,7 +61,8 @@ export function diceSignedPayload(roomId: string, roll: Omit<SignedDiceRoll, 'si
   if (roll.pool) return JSON.stringify([...base, 'pool', roll.pool.dice, roll.pool.results])
   if (roll.rolls) {
     const r = roll.rolls
-    return JSON.stringify([...base, 'rolls', r.results, r.levelUp, r.reason ?? ''])
+    // Les cibles de la montée de niveau s'ajoutent seulement quand il y en a : les anciens jets restent valables.
+    return JSON.stringify([...base, 'rolls', r.results, r.levelUp, r.reason ?? '', ...(r.targets ? [r.targets] : [])])
   }
   if (!roll.check) return JSON.stringify(base)
   const c = roll.check

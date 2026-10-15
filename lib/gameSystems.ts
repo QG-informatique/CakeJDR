@@ -58,6 +58,12 @@ export type GameSystem = {
    * caractéristique, sur sa valeur. Vide : le système n'a pas de niveaux.
    */
   levelUp: readonly string[]
+  /**
+   * Caractéristiques qui montent à chaque niveau, en plus des PV : un dé
+   * chacune, choisies à tour de rôle (`levelUpTargets` de `lib/levelUp.ts`).
+   * Sans valeur, chaque cible de `levelUp` reçoit son dé.
+   */
+  levelUpStats?: number
   /** Bonus qui grandit avec le niveau, montré sur la fiche (bonus de maîtrise). */
   levelBonus?: { label: TranslationKey; value: (level: number) => number }
   /** Mention exigée par la licence des règles reprises, en anglais comme l'original. */
@@ -100,6 +106,7 @@ export const NARRATIF = {
   checkDie: 20,
   rollUnder: false,
   levelUp: ['pv', ...SIX_STATS.map((s) => s.key)],
+  levelUpStats: 2,
 } as const satisfies GameSystem
 
 /**
@@ -201,3 +208,8 @@ export function gameSystem(id: unknown): GameSystem {
 export const ALL_STATS: readonly SheetField[] = [
   ...new Map(Object.values(GAME_SYSTEMS).flatMap((s) => s.stats.map((f) => [f.key, f] as const))).values(),
 ]
+
+/** Dés d'une montée de niveau : un pour les PV, plus un par caractéristique qui monte. */
+export function levelUpDice(system: GameSystem): number {
+  return system.levelUpStats ? 1 + system.levelUpStats : system.levelUp.length
+}

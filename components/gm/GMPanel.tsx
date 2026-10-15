@@ -21,7 +21,8 @@ import { DICE_TYPES } from '@/lib/dicePayload'
 import { postCheck } from '@/components/checks/postCheck'
 import AdventureLauncher from '@/components/autogm/AdventureLauncher'
 import { useGameSystem, useRoomSettings, type DrawPermission, type SheetEditMode } from '@/lib/roomSettings'
-import { GAME_SYSTEMS, GAME_SYSTEM_IDS, type GameSystem, type GameSystemId } from '@/lib/gameSystems'
+import { GAME_SYSTEMS, GAME_SYSTEM_IDS, levelUpDice, type GameSystem, type GameSystemId } from '@/lib/gameSystems'
+import { levelUpTargets } from '@/lib/levelUp'
 import { type Character, normalizeCharacter } from '@/types/character'
 import { XP_GIFTS, XP_PER_LEVEL, levelReady, xpOf } from '@/lib/xp'
 
@@ -403,9 +404,10 @@ function XpForm({ targetId, targetName, character, onDone }: {
 }
 
 /** Plusieurs dés lancés en une fois ; pour une montée de niveau, le nombre est fixé. */
-function RollsForm({ targetId, targetName, levelUp, onDone, onLevelByHand, system }: {
+function RollsForm({ targetId, targetName, character, levelUp, onDone, onLevelByHand, system }: {
   targetId: string
   targetName: string
+  character: Character
   levelUp: boolean
   system: GameSystem
   onDone: () => void
@@ -420,7 +422,9 @@ function RollsForm({ targetId, targetName, levelUp, onDone, onLevelByHand, syste
   const [sending, setSending] = useState(false)
   const [error, setError] = useState(false)
 
-  const countNum = levelUp ? system.levelUp.length : Math.round(Number(count))
+  // Montée de niveau : les PV, puis les caractéristiques de la classe à ce niveau.
+  const targets = levelUpTargets(system, character)
+  const countNum = levelUp ? levelUpDice(system) : Math.round(Number(count))
   const valid = Number.isFinite(countNum) && countNum >= 1 && countNum <= ROLLS_MAX
 
   const send = async () => {
@@ -430,6 +434,7 @@ function RollsForm({ targetId, targetName, levelUp, onDone, onLevelByHand, syste
     try {
       await postCheck(room.id, {
         action: 'ask', type: 'rolls', system: system.id, targetId, targetName, dice, count: countNum, levelUp, reason: reason.trim(),
+        ...(levelUp && system.levelUpStats ? { targets } : {}),
       })
       onDone()
     } catch {
@@ -466,7 +471,9 @@ function RollsForm({ targetId, targetName, levelUp, onDone, onLevelByHand, syste
       </div>
       {levelUp ? (
         <p className="text-[11px] text-ink/50">
-          {t(system.levelUp.length === 1 ? 'levelUpExplainHitDie' : 'levelUpExplain')}
+          {system.levelUp.length === 1
+            ? t('levelUpExplainHitDie')
+            : t('levelUpExplain').replace('{stats}', targets.slice(1).map((k) => t(checkStatLabel(k))).join(', '))}
         </p>
       ) : (
         <label className="flex flex-col gap-1">

@@ -26,7 +26,7 @@ import { saveAccountCharacter } from '@/lib/charactersApi'
 import { useTheme } from '@/components/context/ThemeContext'
 import { useT } from '@/lib/useT'
 import { canEditSheet, useRoomSettings } from '@/lib/roomSettings'
-import type { RollsOutcome } from '@/lib/checks'
+import { LEVEL_UP_TARGETS, type RollsOutcome } from '@/lib/checks'
 import { DICE_MAX_ROLL_MS, DICE_REVEAL_DELAY_MS } from '@/lib/dicePayload'
 import { isDiceType, POOL_MAX, poolLabel, sortDice } from '@/lib/dicePool'
 import { applyLevelUp } from '@/lib/levelUp'
@@ -59,7 +59,8 @@ function loadDicePool(): number[] {
 }
 
 /** Mon lancer sur la table et ce qu'il rapporte quand ses dés sont révélés. */
-type MyThrow = { id: string; levelUp?: number[]; xp?: number }
+type LevelGains = { gains: number[]; targets?: string[] }
+type MyThrow = { id: string; levelUp?: LevelGains; xp?: number }
 
 export default function HomePageInner() {
   const router = useRouter()
@@ -116,7 +117,7 @@ export default function HomePageInner() {
   const [myThrow, setMyThrow] = useState<MyThrow | null>(null)
   const myThrowRef = useRef<MyThrow | null>(null)
   // Gains d'une montée de niveau et XP arrivés pendant que le MJ regardait une autre fiche.
-  const [levelUpLater, setLevelUpLater] = useState<number[] | null>(null)
+  const [levelUpLater, setLevelUpLater] = useState<LevelGains | null>(null)
   const [xpLater, setXpLater] = useState(0)
   // Montée de niveau à la main : ouvre l'éditeur de la fiche du joueur.
   const [editSignal, setEditSignal] = useState(0)
@@ -602,7 +603,7 @@ export default function HomePageInner() {
     setLevelUpLater(null)
     setXpLater(0)
     let next = xpLater ? addXp(perso, xpLater) : perso
-    if (levelUpLater) next = applyLevelUp(next, levelUpLater)
+    if (levelUpLater) next = applyLevelUp(next, levelUpLater.gains, levelUpLater.targets)
     handleUpdatePerso(next, true)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- seulement au retour sur sa fiche
   }, [levelUpLater, xpLater, viewedConnectionId])
@@ -643,7 +644,7 @@ export default function HomePageInner() {
   }
 
   // Demande du MJ : le serveur vérifie les dés et calcule la réussite d'un test.
-  const rollCheck = async (id: string, sent: ThrowSent): Promise<ThrowResult | null> => {
+  const rollCheck = async (id: string, sent: ThrowSent, auto?: boolean): Promise<ThrowResult | null> => {
     if (diceDisabled) return null
     setDiceDisabled(true)
     setCooldown(true)
@@ -660,14 +661,15 @@ export default function HomePageInner() {
       if (!res.ok || !data?.roll) throw new Error(`check ${res.status}`)
       debug('check-roll', data.roll)
       const rolls = data.roll.rolls
-      // Un test demandé rapporte de l'XP, un peu même raté.
-      const check = data.roll.check
+      // Un test demandé par le MJ rapporte de l'XP, un peu même raté. Ceux du
+      // MJ automatique non : ses scènes et ses combats paient déjà (`sceneXp`).
+      const check = auto ? undefined : data.roll.check
       startThrow({
         id: data.roll.id,
-        ...(rolls?.levelUp ? { levelUp: rolls.results } : {}),
+        ...(rolls?.levelUp ? { levelUp: { gains: rolls.results, ...(rolls.targets ? { targets: rolls.targets } : {}) } } : {}),
         ...(check ? { xp: check.success ? XP_GAINS.checkSuccess : XP_GAINS.checkFail } : {}),
       })
-      return { id: data.roll.id, levelUp: rolls?.levelUp }
+      return { id: data.roll.id, ...(rolls?.levelUp ? { levelUp: rolls.targets ?? LEVEL_UP_TARGETS } : {}) }
     } catch (e) {
       debug('check-roll failed', e)
       setDiceError(true)
@@ -681,7 +683,7 @@ export default function HomePageInner() {
   // Les dés lancés partent pour la demande du MJ s'il y en a une.
   const throwDice = (sent: ThrowSent) => {
     if (!diceDisabled) setRollMs(sent.ms + RELAUNCH_MS)
-    return pending ? rollCheck(pending.id, sent) : rollDice(sent)
+    return pending ? rollCheck(pending.id, sent, Boolean(pending.auto)) : rollDice(sent)
   }
   const pendingDice = pending
     ? pending.type === 'rolls' ? Array.from({ length: pending.count }, () => pending.dice) : [pending.dice ?? 20]
@@ -709,7 +711,7 @@ export default function HomePageInner() {
       if (mine.xp) setXpLater((x) => x + (mine.xp ?? 0))
     } else if (mine.levelUp || mine.xp) {
       let next = mine.xp ? addXp(perso, mine.xp) : perso
-      if (mine.levelUp) next = applyLevelUp(next, mine.levelUp)
+      if (mine.levelUp) next = applyLevelUp(next, mine.levelUp.gains, mine.levelUp.targets)
       handleUpdatePerso(next, true)
     }
     setCooldown(false)

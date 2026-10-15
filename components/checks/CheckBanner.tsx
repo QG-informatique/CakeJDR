@@ -48,7 +48,7 @@ export default function CheckBanner({ isGM }: { isGM: boolean }) {
       ? t('levelUpLine').replace('{n}', player)
       : t('rollsLine').replace('{n}', player).replace('{dice}', `${r.results.length} D${last.dice}`)
     detail = r.levelUp
-      ? r.results.map((n, i) => `${t(levelUpLabel(i))} +${n}`).join(' · ')
+      ? r.results.map((n, i) => `${t(levelUpLabel(i, r.targets))} +${n}`).join(' · ')
       : r.results.join(' · ') + (r.results.length > 1 ? ` = ${last.result}` : '')
     if (r.reason) detail += ` · ${r.reason}`
   } else if (last.check) {

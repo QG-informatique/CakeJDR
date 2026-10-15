@@ -9,6 +9,8 @@ import { Bot, Check, ChevronUp, Eye, EyeOff, Target, X } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import { useLanguage } from '@/components/context/LanguageContext'
 import { useGameSystem, useRoomSettings } from '@/lib/roomSettings'
+import { levelUpDice } from '@/lib/gameSystems'
+import { levelUpTargets } from '@/lib/levelUp'
 import { XP_PER_LEVEL, sceneXp, xpOf } from '@/lib/xp'
 import { CHECK_STATS, checkStatLabel, withStat } from '@/lib/checks'
 import { statMod } from '@/lib/modifiers'
@@ -24,6 +26,7 @@ import type { Character } from '@/types/character'
 import {
   ADVENTURES,
   adventureIn,
+  CANCEL_GRACE_MS,
   CHECK_READ_MS,
   NEUTRAL,
   VOTE_SETTLE_MS,
@@ -71,6 +74,7 @@ function toVoter(p: Presence): Voter {
     charisma: c ? Number(c.charisme) || 0 : 0,
     hero: !!(c?.nom && String(c.nom).trim()),
     historique: c?.historique,
+    classe: c?.classe ? String(c.classe) : undefined,
     xp: xpOf(c),
     level: Number(c?.niveau) || 1,
   }
@@ -340,6 +344,10 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
   // le MJ l'a annulée. Avant de l'y avoir vue, elle peut simplement ne pas
   // être encore arrivée.
   const listed = useRef<string | null>(null)
+  // Demande disparue de la liste : son résultat peut arriver juste après. On
+  // la croit annulée seulement si rien n'est venu au bout de quelques secondes.
+  const missing = useRef<{ id: string; at: number } | null>(null)
+  const [graceTick, setGraceTick] = useState(0)
   useEffect(() => {
     if (!isLeader || !gm || !ready || step?.kind !== 'check') return
     const current = gm.check
@@ -348,6 +356,15 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
       if (pending?.has(current.id)) listed.current = current.id
       const gone = !voters.some((v) => v.id === current.userId)
       const cancelled = listed.current === current.id && !pending?.has(current.id)
+      if (cancelled && !gone) {
+        const at = Date.now()
+        if (missing.current?.id !== current.id) missing.current = { id: current.id, at }
+        const left = missing.current.at + CANCEL_GRACE_MS - at
+        if (left > 0) {
+          const timer = setTimeout(() => setGraceTick((n) => n + 1), left)
+          return () => clearTimeout(timer)
+        }
+      }
       if (gone || cancelled) {
         if (gone) void postCheck(roomId, { action: 'cancel', id: current.id }).catch(() => {})
         asked.current = ''
@@ -370,6 +387,7 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
       mod: Math.max(-30, Math.min(30, checkMod(roller, step.stat, step.action))),
       dc: step.dc,
       showDc: true,
+      auto: 'scene',
       // Le bonus d'historique est dit dans la raison : on voit d'où vient le +2.
       reason: actionBonus(roller.historique, step.action)
         ? `${step.reason} · ${backgroundOf(roller.historique, lang)?.nom} +${actionBonus(roller.historique, step.action)}`
@@ -382,7 +400,7 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
         asked.current = ''
         setAskFailed(true)
       })
-  }, [isLeader, gm, ready, step, voters, players, result, pending, roomId, askFailed, dropCheck, setCheck, lang])
+  }, [isLeader, gm, ready, step, voters, players, result, pending, roomId, askFailed, dropCheck, setCheck, lang, graceTick])
 
   useEffect(() => {
     if (!isLeader || !gm || !result || step?.kind !== 'check' || !result.check) return
@@ -436,8 +454,10 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
       targetId: hero.id,
       targetName: hero.name,
       dice: 6,
-      count: system.levelUp.length,
+      count: levelUpDice(system),
       levelUp: true,
+      ...(system.levelUpStats ? { targets: levelUpTargets(system, { classe: hero.classe ?? '', niveau: hero.level ?? 1 }) } : {}),
+      auto: 'level',
       reason: t('xpAutoReason').replace('{n}', String(level)),
     }).catch(() => {})
   }, [isLeader, calm, settings.autoLevelUp, system, players, pending, roomId, t])

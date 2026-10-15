@@ -36,6 +36,7 @@ export type SealedRolls = {
   dice: number
   count: number
   levelUp: boolean
+  targets?: string[]
   reason?: string
   /** Dés de création d'un personnage, demandés par le joueur lui-même. */
   creation?: true
