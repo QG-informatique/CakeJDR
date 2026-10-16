@@ -125,7 +125,9 @@ const AUTO_ASKS: readonly AutoAsk[] = ['scene', 'combat', 'level']
 type AutoState = {
   adventure?: string
   scene?: string
+  visit?: number
   check?: { id?: string }
+  combat?: { visit?: number; heroes?: { id?: string }[]; attacks?: { id?: string }[] }
 }
 
 /** La partie du MJ automatique telle qu'elle est rangée dans la salle, ou rien. */
@@ -136,16 +138,30 @@ async function autoState(liveblocks: Liveblocks, roomId: string): Promise<AutoSt
 
 /**
  * Jet demandé par le MJ automatique sans être MJ : permis seulement si la
- * partie en cours l'attend (le test de la scène, avec sa caractéristique et
- * sa difficulté ; ou une montée de niveau pendant une partie).
+ * partie en cours l'attend (le test ou l'épreuve de la scène, avec sa
+ * caractéristique et sa difficulté ; une attaque du combat en cours ; ou une
+ * montée de niveau pendant une partie).
  */
 function autoAskFits(auto: AutoAsk, state: AutoState, body: Record<string, unknown>): boolean {
   if (auto === 'level') return body.type === 'rolls' && body.levelUp === true
   if (body.type === 'rolls') return false
   const step = state.adventure && state.scene ? ADVENTURES[state.adventure]?.scenes[state.scene]?.step : undefined
   if (!step) return false
-  if (auto === 'scene') return step.kind === 'check' && body.stat === step.stat && body.dc === step.dc
-  return false
+  if (auto === 'scene') return (step.kind === 'check' || step.kind === 'trial') && body.stat === step.stat && body.dc === step.dc
+  // Combat : le héros visé se bat dans le combat de cette scène, contre la
+  // défense d'un de ses ennemis, ou pour fuir quand la scène le permet.
+  const combat = state.combat
+  if (step.kind !== 'combat' || !combat || combat.visit !== state.visit) return false
+  if (!Array.isArray(combat.heroes) || !combat.heroes.some((h) => h?.id === body.targetId)) return false
+  if (step.foes.some((f) => f.defense === body.dc)) return true
+  return !!step.flee && body.stat === step.flee.stat && body.dc === step.flee.dc
+}
+
+/** Sans MJ, le meneur du MJ automatique peut retirer le jet de la scène ou une attaque du combat. */
+function autoOwns(state: AutoState | null, id: string): boolean {
+  if (!state) return false
+  if (state.check?.id === id) return true
+  return Array.isArray(state.combat?.attacks) && state.combat.attacks.some((a) => a?.id === id)
 }
 
 async function savePending(liveblocks: Liveblocks, roomId: string, request: GmRequest) {
@@ -254,8 +270,7 @@ export async function POST(req: NextRequest) {
   if (typeof id !== 'string' || !id) return fail('missing id', 400)
 
   if (action === 'cancel') {
-    // Sans MJ, le meneur du MJ automatique peut retirer le jet de la scène.
-    if (access.role !== 'gm' && (await autoState(liveblocks, roomId))?.check?.id !== id) return fail('gm only', 403)
+    if (access.role !== 'gm' && !autoOwns(await autoState(liveblocks, roomId), id)) return fail('gm only', 403)
     try {
       await liveblocks.mutateStorage(roomId, ({ root }) => {
         checksMap(root).delete(id)

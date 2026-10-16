@@ -40,7 +40,9 @@ export function withText(adventure: Adventure, text: AdventureText): Adventure {
     if (step.kind === 'continue' || step.kind === 'random') translated = { ...step, label: tx.label ?? step.label }
     else if (step.kind === 'vote')
       translated = { ...step, prompt: tx.prompt ?? step.prompt, options: step.options.map((o) => ({ ...o, label: tx.options?.[o.id] ?? o.label })) }
-    else if (step.kind === 'check') translated = { ...step, prompt: tx.prompt ?? step.prompt, reason: tx.reason ?? step.reason }
+    else if (step.kind === 'check' || step.kind === 'trial') translated = { ...step, prompt: tx.prompt ?? step.prompt, reason: tx.reason ?? step.reason }
+    else if (step.kind === 'combat')
+      translated = { ...step, prompt: tx.prompt ?? step.prompt, foes: step.foes.map((f) => ({ ...f, name: tx.foes?.[f.id] ?? f.name })) }
     else translated = { ...step, title: tx.end ?? step.title }
     const show = scene.setup?.show
     scenes[id] = {
@@ -126,12 +128,37 @@ export type Voter = {
   /** Expérience et niveau, pour la montée de niveau automatique (`lib/xp.ts`). */
   xp?: number
   level?: number
+  /** PV, défense et dégâts d'arme de la fiche, pour le combat (`lib/autoGm/combat.ts`). */
+  hp?: number
+  maxHp?: number
+  defense?: number
+  weapon?: string
 }
 
-/** Options proposées dans la scène : celles qui demandent un indice pas encore trouvé sont cachées. */
+/**
+ * Options proposées dans la scène : celles qui demandent un indice pas encore
+ * trouvé sont cachées, comme celles qu'un indice déjà gagné a fermées.
+ */
 export function availableOptions(scene: Scene, flags: readonly string[]): SceneOption[] {
   if (scene.step.kind !== 'vote') return []
-  return scene.step.options.filter((o) => !o.needs || flags.includes(o.needs))
+  return scene.step.options.filter((o) => (!o.needs || flags.includes(o.needs)) && (!o.unless || !flags.includes(o.unless)))
+}
+
+type TrialStep = Extract<SceneStep, { kind: 'trial' }>
+
+/**
+ * Suite d'une épreuve après `ok` réussites et `ko` échecs, ou rien tant qu'il
+ * faut encore lancer. On s'arrête dès que la meilleure issue est gagnée ou
+ * perdue, sauf si l'issue moyenne reste à jouer.
+ */
+export function trialNext(step: TrialStep, ok: number, ko: number): string | null {
+  if (ok >= step.need) return step.best
+  const left = Math.max(0, step.tries - ok - ko)
+  if (ok + left >= step.need) return null
+  if (!step.middle) return step.fail
+  const at = step.middleAt ?? 1
+  if (ok >= at) return step.middle
+  return ok + left >= at ? null : step.fail
 }
 
 type RandomStep = Extract<SceneStep, { kind: 'random' }>

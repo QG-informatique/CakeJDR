@@ -14,6 +14,12 @@ function sceneMinutes(scene: Scene): number {
       return reading + 1.5
     case 'check':
       return reading + 1
+    // Une minute par jet, en moyenne la moitié des essais en plus du minimum.
+    case 'trial':
+      return reading + (scene.step.need + scene.step.tries) / 2
+    // Un tour : choisir, lancer, lire ce que font les ennemis.
+    case 'combat':
+      return reading + 1.5 * combatRounds(scene.step.foes)
     case 'end':
       return reading + 0.5
     default:
@@ -21,7 +27,12 @@ function sceneMinutes(scene: Scene): number {
   }
 }
 
-export type Duration = { min: number; max: number; average: number }
+/** Tours d'un combat, d'après les simulations (`lib/autoGm/combat.ts`) : environ un tour pour 6 PV d'ennemis. */
+function combatRounds(foes: readonly { hp: number }[]): number {
+  return Math.max(2, foes.reduce((sum, f) => sum + f.hp, 0) / 6)
+}
+
+export type Duration ={ min: number; max: number; average: number }
 
 /**
  * Chemin le plus court, le plus long, et la moyenne en jouant au hasard :
@@ -45,6 +56,9 @@ export function estimateDuration(adventure: Adventure): Duration {
     if (step.kind === 'continue') branches = [{ next: step.next, weight: 1 }]
     else if (step.kind === 'vote') branches = step.options.map((o) => ({ next: o.next, weight: 1 }))
     else if (step.kind === 'check') branches = [{ next: step.success, weight: 1 }, { next: step.failure, weight: 1 }]
+    else if (step.kind === 'combat') branches = [{ next: step.victory, weight: 3 }, { next: step.defeat, weight: 1 }]
+    else if (step.kind === 'trial')
+      branches = [step.best, step.middle, step.fail].filter((n): n is string => !!n).map((next) => ({ next, weight: 1 }))
     else if (step.kind === 'random') branches = step.outcomes.map((o) => ({ next: o.next, weight: o.weight ?? 1 }))
     else branches = []
     const after = branches.map((b) => ({ ...walk(b.next), weight: b.weight }))
