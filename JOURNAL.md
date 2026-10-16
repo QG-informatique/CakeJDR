@@ -1,5 +1,13 @@
 # Journal
 
+## 2026-10-16 — MJ automatique : combats au tour par tour, campagne rallongée
+- Combats au tour par tour : chaque héros choisit une action de sa classe, PV des monstres selon le nombre de joueurs, pas de mort en un seul coup, défaite = groupe assommé ; épreuves en plusieurs jets avec une issue moyenne (79f1640, `lib/autoGm/combat.ts`, `components/autogm/`)
+- Montée de niveau sans MJ : PV + 2 caractéristiques, choix de Quentin (85b6fcb)
+- « La Flamme sous la montagne » : 32 scènes de plus (ferme, gué, ruines de l'ermite, bibliothèque, mine, cimetière…), 26 combats sur carte avec leurs pions, 21 épreuves ; les défaites mènent ailleurs, les haltes soignent un peu (`lib/autoGm/dragonCampaign.ts`, anglais dans `lib/autoGm/en/dragonCampaign.ts`)
+- XP du MJ automatique à part et plus basse (`AUTO_XP`, `lib/xp.ts`) : un niveau par acte, niveau 4 ou 5 à la fin, comme demandé
+- Équilibre réglé en simulant 1 500 campagnes par groupe : combats courants gagnés 55 à 95 %, vampire et dragon environ une fois sur deux
+Reste ouvert : durée estimée 1 h 45 en moyenne (1 h à 3 h selon les branches), à mesurer en vraie partie à plusieurs
+
 ## 2026-10-16 — Dé de l'accueil : vue en perspective et rebonds de la table
 - Les sauts bizarres venaient de l'affichage : la hauteur était dessinée comme un glissement vers le haut de l'écran, avec une inclinaison fixe. Le dé est maintenant posé sur une vraie table vue en perspective : il grossit en montant, son ombre reste au sol (`components/ui/HeroDie.tsx`)
 - Tenu en main, il roule dans le sens du geste comme le tout premier dé ; lâché, il part de travers et retombe sur ses coins, dans toutes les directions

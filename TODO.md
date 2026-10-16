@@ -366,6 +366,8 @@
 - [ ] Tester l'XP avec un second compte joueur : XP donnée par le MJ, XP d'un test, « Niveau prêt » puis montée par dés et à la main, montée automatique avec le MJ automatique
 - [ ] (Important, demandé par Quentin) Tester la montée de niveau automatique quand le meneur du MJ automatique n'est pas MJ de la table (le serveur réserve les demandes de jets au MJ)
 - [ ] Régler les montants d'XP (`lib/xp.ts`) après une vraie partie : viser environ un niveau par aventure courte
+- [x] Rallonger « La Flamme sous la montagne » (2 à 3 h en séances) : combats au tour par tour, voyages, décisions en plusieurs jets, niveau 4 ou 5 à la fin
+- [ ] Jouer une séance de « La Flamme sous la montagne » à plusieurs : noter la durée réelle et les combats trop durs ou trop faciles (simulation : vampire et dragon gagnés une fois sur deux)
 - [ ] Jouer seul le début de « La Flamme sous la montagne » en ligne et noter ce qui va et ce qui ne va pas (création, votes, tests, rythme)
 - [ ] Vérifier la reprise d'une campagne : quitter la salle après la création du héros, choisir une autre fiche dans le menu, revenir et retrouver le même héros au même endroit de l'aventure
 - [ ] Accepter tous les pseudos dans l'enregistrement des fiches d'une salle : un pseudo avec un symbole ou un emoji est refusé sans message par `/api/roomstorage` (`SAFE_ID`), la fiche n'est alors gardée que dans le navigateur et sur le compte
