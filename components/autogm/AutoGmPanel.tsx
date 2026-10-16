@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useMutation, useOthers, useSelf, useStorage } from '@liveblocks/react'
 import { LiveMap } from '@liveblocks/client'
-import { Bot, Check, ChevronUp, Eye, EyeOff, Target, X } from 'lucide-react'
+import { Bot, Check, ChevronUp, Dices, Eye, EyeOff, Target, X } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import { useLanguage } from '@/components/context/LanguageContext'
 import { useGameSystem, useRoomSettings } from '@/lib/roomSettings'
@@ -37,12 +37,18 @@ import {
   decide,
   draw,
   drawable,
+  trialNext,
   type Voter,
 } from '@/lib/autoGm'
+import type { CombatState } from '@/lib/autoGm/combat'
+import type { Foe } from '@/lib/autoGm/types'
 import AdventureDuration from './AdventureDuration'
+import CombatView from './CombatView'
+import { combatLineText } from './combatText'
+import { combatChoice, useAutoCombat } from './useAutoCombat'
 
 /** Ce qu'une scène fait à la fiche de chacun en arrivant. */
-export type AutoGmEffect = { damage?: number; heal?: boolean; xp?: number }
+export type AutoGmEffect = { damage?: number; heal?: boolean | number; xp?: number; hp?: number }
 
 type Props = {
   adventureId: string
@@ -77,6 +83,20 @@ function toVoter(p: Presence): Voter {
     classe: c?.classe ? String(c.classe) : undefined,
     xp: xpOf(c),
     level: Number(c?.niveau) || 1,
+    ...(c ? combatSheet(c) : {}),
+  }
+}
+
+/** PV, défense et arme de la fiche, pour le combat. */
+function combatSheet(c: Character): Pick<Voter, 'hp' | 'maxHp' | 'defense' | 'weapon'> {
+  const maxHp = Number(c.pv_max ?? c.pvMax) || 0
+  const pv = Number(c.pv)
+  const defense = Number(c.defense)
+  return {
+    ...(maxHp > 0 ? { maxHp } : {}),
+    ...(c.pv !== undefined && c.pv !== '' && Number.isFinite(pv) ? { hp: pv } : maxHp > 0 ? { hp: maxHp } : {}),
+    ...(defense > 0 ? { defense } : {}),
+    ...(c.degats_armes ? { weapon: String(c.degats_armes) } : {}),
   }
 }
 
@@ -190,8 +210,10 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
   const start = useStartAdventure()
 
   const stop = useMutation(({ storage }) => {
-    const previous = storage.get('autoGm')?.get('check')
+    const state = storage.get('autoGm')
+    const previous = state?.get('check')
     if (previous) storage.get('checks')?.delete(previous.id)
+    for (const atk of state?.get('combat')?.attacks ?? []) storage.get('checks')?.delete(atk.id)
     storage.delete('autoGm')
   }, [])
 
@@ -214,6 +236,8 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
     state.delete('voteStart')
     state.delete('tiebreak')
     state.delete('check')
+    state.delete('combat')
+    state.delete('trial')
     if (said) {
       const list = storage.get('events')
       list.push({ id: crypto.randomUUID(), kind: 'chat', author: said.author, text: said.text, ts: Date.now(), isMJ: true })
@@ -298,6 +322,19 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
     if (state && state.get('visit') === expected) state.delete('check')
   }, [])
 
+  // Épreuve : compte le jet, puis libère la place pour le suivant. Renvoie
+  // les réussites et échecs après ce jet (une seule fois par jet).
+  const recordTrial = useMutation(({ storage }, expected: number, checkId: string, success: boolean) => {
+    const state = storage.get('autoGm')
+    if (!state || state.get('visit') !== expected || state.get('check')?.id !== checkId) return null
+    const before = state.get('trial')
+    const trial = before && before.visit === expected ? before : { visit: expected, ok: 0, ko: 0 }
+    const after = { visit: expected, ok: trial.ok + (success ? 1 : 0), ko: trial.ko + (success ? 0 : 1) }
+    state.set('trial', after)
+    state.delete('check')
+    return after
+  }, [])
+
   // ── Le meneur fait avancer la partie ────────────────────────────────────
 
   useEffect(() => {
@@ -348,8 +385,11 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
   // la croit annulée seulement si rien n'est venu au bout de quelques secondes.
   const missing = useRef<{ id: string; at: number } | null>(null)
   const [graceTick, setGraceTick] = useState(0)
+  // Épreuve en cours : réussites et échecs de cette visite.
+  const trial = gm?.trial && gm.trial.visit === gm.visit ? gm.trial : { visit: gm?.visit ?? 0, ok: 0, ko: 0 }
+  const rolls = step?.kind === 'trial' ? trial.ok + trial.ko : 0
   useEffect(() => {
-    if (!isLeader || !gm || !ready || step?.kind !== 'check') return
+    if (!isLeader || !gm || !ready || (step?.kind !== 'check' && step?.kind !== 'trial')) return
     const current = gm.check
     if (current) {
       if (result) return
@@ -372,10 +412,19 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
       }
       return
     }
-    const visitId = `${gm.run}:${gm.visit}`
+    // Une épreuve demande un jet par essai, jusqu'à ce que l'issue soit jouée.
+    const visitId = `${gm.run}:${gm.visit}:${rolls}`
     if (asked.current === visitId || askFailed) return
+    if (step.kind === 'trial' && trialNext(step, trial.ok, trial.ko)) return
     // Un joueur encore en train de créer son héros n'est pas appelé à lancer.
-    const roller = best(players.filter((v) => v.hero), step.stat, step.action)
+    // Pour une épreuve, chacun lance à son tour, le meilleur d'abord.
+    const heroes = players.filter((v) => v.hero)
+    const roller =
+      step.kind === 'trial'
+        ? [...heroes].sort(
+            (a, b) => checkMod(b, step.stat, step.action) - checkMod(a, step.stat, step.action) || a.connectionId - b.connectionId,
+          )[rolls % Math.max(1, heroes.length)]
+        : best(heroes, step.stat, step.action)
     if (!roller) return
     asked.current = visitId
     const expected = gm.visit
@@ -400,15 +449,27 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
         asked.current = ''
         setAskFailed(true)
       })
-  }, [isLeader, gm, ready, step, voters, players, result, pending, roomId, askFailed, dropCheck, setCheck, lang, graceTick])
+    // `trial` change à chaque rendu : le nombre de jets suffit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLeader, gm, ready, step, voters, players, result, pending, roomId, askFailed, dropCheck, setCheck, lang, graceTick, rolls])
 
   useEffect(() => {
-    if (!isLeader || !gm || !result || step?.kind !== 'check' || !result.check) return
-    const next = result.check.success ? step.success : step.failure
+    if (!isLeader || !gm || !result || !result.check || !gm.check) return
+    if (step?.kind !== 'check' && step?.kind !== 'trial') return
     const expected = gm.visit
-    const timer = setTimeout(() => go(next, expected), Math.max(0, result.ts + CHECK_READ_MS - Date.now()))
+    const checkId = gm.check.id
+    const success = result.check.success
+    const timer = setTimeout(
+      () => {
+        if (step.kind === 'check') return go(success ? step.success : step.failure, expected)
+        const after = recordTrial(expected, checkId, success)
+        const next = after && trialNext(step, after.ok, after.ko)
+        if (next) go(next, expected)
+      },
+      Math.max(0, result.ts + CHECK_READ_MS - Date.now()),
+    )
     return () => clearTimeout(timer)
-  }, [isLeader, gm, result, step, go])
+  }, [isLeader, gm, result, step, go, recordTrial])
 
   // ── Chacun applique à sa fiche ce que la scène lui fait ─────────────────
 
@@ -437,7 +498,7 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
   // moment calme seulement (ni jet en cours, ni scène qui fait mal). Une
   // seule demande par niveau ; si elle échoue, le MJ humain prend le relais.
   const leveled = useRef(new Set<string>())
-  const calm = ready && step?.kind !== 'check' && !gm?.check && !scene?.damage
+  const calm = ready && step?.kind !== 'check' && step?.kind !== 'trial' && step?.kind !== 'combat' && !gm?.check && !scene?.damage
   useEffect(() => {
     if (!isLeader || !calm || !settings.autoLevelUp || system.levelUp.length === 0) return
     const busy = new Set(pending ? Array.from(pending.values(), (r) => r.targetId) : [])
@@ -462,8 +523,51 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
     }).catch(() => {})
   }, [isLeader, calm, settings.autoLevelUp, system, players, pending, roomId, t])
 
+  // ── Combat ──────────────────────────────────────────────────────────────
+
+  const combat = gm?.combat && gm.combat.visit === gm.visit ? (gm.combat as CombatState) : undefined
+  const author = t(gm?.mode === 'gm' ? 'autoGmTitleGm' : 'autoGmTitle')
+  // Le récit d'un tour part dans l'historique, dans la langue du meneur.
+  const recap = useCallback(
+    (lines: CombatState['lines'], round: number, foes: readonly Foe[], end?: CombatState['end']) => {
+      const told = lines.map((line) => combatLineText(line, t, foes, lang)).join(' ')
+      const endKey = end === 'victory' ? 'combatVictory' : end === 'fled' ? 'combatFled' : end ? 'combatDefeat' : null
+      const parts = [told && `${t('combatRound').replace('{n}', String(round))} · ${told}`, endKey && t(endKey)].filter(Boolean)
+      return parts.length > 0 ? parts.join(' ') : null
+    },
+    [t, lang],
+  )
+  useAutoCombat({
+    roomId,
+    isLeader,
+    run: gm?.run,
+    visit: gm?.visit,
+    step,
+    ready,
+    combat,
+    players,
+    votes,
+    events,
+    pending,
+    go,
+    author,
+    recap,
+    lang,
+  })
+
+  // Mes PV suivent le combat sur ma fiche, tour après tour.
+  const myCombatHp = me ? combat?.heroes.find((h) => h.id === me.id)?.hp : undefined
+  const synced = useRef('')
+  useEffect(() => {
+    if (iWatch || myCombatHp === undefined || !gm) return
+    const key = `${gm.run}:${gm.visit}:${myCombatHp}`
+    if (synced.current === key) return
+    synced.current = key
+    if (myCombatHp !== me?.hp) onEffect({ hp: myCombatHp })
+  }, [iWatch, myCombatHp, gm, me?.hp, onEffect])
+
   // Horloge du compte à rebours et de l'apparition du résultat.
-  const ticking = (step?.kind === 'vote' && !!gm?.voteStart) || (!!result && !revealed)
+  const ticking = (step?.kind === 'vote' && !!gm?.voteStart) || (!!result && !revealed) || (!!combat && !combat.end)
   useEffect(() => {
     if (!ticking) return
     const timer = setInterval(() => setNow(Date.now()), 250)
@@ -653,19 +757,45 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
         )}
       </div>
     )
-  } else if (step.kind === 'check') {
+  } else if (step.kind === 'combat') {
+    body = (
+      <CombatView
+        combat={combat}
+        step={step}
+        me={me}
+        players={players}
+        iWatch={iWatch}
+        myChoice={me ? votes?.get(me.id) : undefined}
+        onChoose={(action, foe) => combat && vote(combatChoice(combat.round, action, foe), gm.visit)}
+        now={now}
+        lang={lang}
+      />
+    )
+  } else if (step.kind === 'check' || step.kind === 'trial') {
     const stat = t(checkStatLabel(step.stat))
     const roller = gm.check ? byId.get(gm.check.userId) : undefined
     const outcome = revealed ? result?.check : undefined
     body = (
       <div className="flex flex-col gap-2">
         <p className="flex items-center gap-2 text-sm font-semibold">
-          <Target size={14} className="shrink-0 text-gm" aria-hidden />
+          {step.kind === 'trial' ? (
+            <Dices size={14} className="shrink-0 text-gm" aria-hidden />
+          ) : (
+            <Target size={14} className="shrink-0 text-gm" aria-hidden />
+          )}
           {step.prompt}
         </p>
         <p className="text-xs text-ink/60">
           {withStat(t('checkOf'), stat)} · {t('checkPromptDc').replace('{n}', String(step.dc))}
         </p>
+        {step.kind === 'trial' && (
+          <p className="text-xs font-semibold text-gm">
+            {t('trialProgress')
+              .replace('{ok}', String(trial.ok))
+              .replace('{need}', String(step.need))
+              .replace('{left}', String(Math.max(0, step.tries - trial.ok - trial.ko)))}
+          </p>
+        )}
         {outcome ? (
           <p className={`text-sm font-semibold ${outcome.success ? 'text-emerald-400' : 'text-red-400'}`}>
             {outcome.success ? t('checkPassed') : t('checkMissed')} · {outcome.total} {t('checkVs')} {outcome.dc}
@@ -689,7 +819,7 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
         )}
       </div>
     )
-  } else {
+  } else if (step.kind === 'end') {
     body = (
       <div className="flex flex-col gap-2">
         <p className="text-base font-semibold text-gm">{step.title}</p>

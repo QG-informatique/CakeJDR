@@ -53,8 +53,8 @@ export function spendLevel(c: Character): Character {
 
 /**
  * XP gagnée par chaque héros en arrivant dans une scène du MJ automatique :
- * un peu pour chaque scène, plus après un combat gagné (la scène qui suit la
- * réussite d'un jet de combat) et à chaque étape de la quête (un nouveau
+ * un peu pour chaque scène, plus après un combat gagné (au tour par tour, ou
+ * la scène qui suit la réussite d'un jet de combat) et à chaque étape de la quête (un nouveau
  * chapitre, ou la fin de l'aventure).
  */
 export function sceneXp(adventure: Adventure, sceneId: string, fromId?: string): number {
@@ -63,6 +63,7 @@ export function sceneXp(adventure: Adventure, sceneId: string, fromId?: string):
   let xp = XP_GAINS.scene
   const from = fromId ? adventure.scenes[fromId] : undefined
   if (from?.step.kind === 'check' && from.step.action === 'combat' && from.step.success === sceneId) xp += XP_GAINS.monster
+  if (from?.step.kind === 'combat' && from.step.victory === sceneId) xp += XP_GAINS.monster
   if (scene.step.kind === 'end' || (from && scene.chapter && from.chapter && scene.chapter !== from.chapter)) xp += XP_GAINS.quest
   return xp
 }

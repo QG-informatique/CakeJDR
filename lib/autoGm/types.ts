@@ -41,6 +41,26 @@ export type SceneOption = {
   next: string
   /** Proposée seulement si l'aventure a déjà gagné cet indice. */
   needs?: string
+  /** Cachée si l'aventure a déjà cet indice (une porte déjà fermée, une piste déjà suivie). */
+  unless?: string
+}
+
+/** Un ennemi d'un combat au tour par tour (`lib/autoGm/combat.ts`). */
+export type Foe = {
+  id: string
+  name: string
+  /** PV pour un seul héros ; augmentés selon la taille du groupe. */
+  hp: number
+  /** Ce que le héros doit atteindre (d20 + modificateur) pour le toucher. */
+  defense: number
+  /** Bonus de l'ennemi à son jet d'attaque contre la défense d'un héros. */
+  attack: number
+  /** Dés de dégâts (« 1d6+1 »). */
+  damage: string
+  /** Attaques par tour (1 par défaut) : les chefs frappent plusieurs fois. */
+  attacks?: number
+  /** Pion de la scène qui le représente, retiré du plateau quand il tombe. */
+  piece?: string
 }
 
 /** Une suite possible d'un tirage au hasard. */
@@ -72,6 +92,38 @@ export type SceneStep =
       success: string
       failure: string
     }
+  /**
+   * Combat au tour par tour : chaque héros choisit une action de sa classe
+   * (`lib/autoGm/combatActions.ts`), puis les ennemis frappent.
+   */
+  | {
+      kind: 'combat'
+      prompt: string
+      foes: Foe[]
+      victory: string
+      defeat: string
+      /** Fuite possible : un jet réussi mène à cette scène. */
+      flee?: { next: string; stat: CheckStat; dc: number }
+    }
+  /**
+   * Épreuve en plusieurs jets, lancés à tour de rôle : `need` réussites en
+   * `tries` essais au plus mènent à `best`. Sinon, `middleAt` réussites ou
+   * plus mènent à `middle` (une issue moins bonne), et moins à `fail`.
+   */
+  | {
+      kind: 'trial'
+      prompt: string
+      stat: CheckStat
+      dc: number
+      action?: ActionKind
+      reason: string
+      need: number
+      tries: number
+      best: string
+      middle?: string
+      middleAt?: number
+      fail: string
+    }
   | { kind: 'end'; title: string }
 
 export type Scene = {
@@ -88,8 +140,8 @@ export type Scene = {
   gains?: string[]
   /** PV perdus par chaque joueur présent à l'arrivée dans la scène. */
   damage?: number
-  /** Remet les PV de chacun au maximum (début d'aventure). */
-  heal?: boolean
+  /** Remet les PV de chacun au maximum (`true`), ou en rend autant (un nombre). */
+  heal?: boolean | number
   step: SceneStep
 }
 
@@ -119,6 +171,8 @@ export type SceneText = {
   options?: Record<string, string>
   /** Titre de la fin. */
   end?: string
+  /** Noms des ennemis d'un combat, par identifiant. */
+  foes?: Record<string, string>
 }
 
 export type AdventureText = { title: string; pitch: string; scenes: Record<string, SceneText> }
@@ -134,3 +188,6 @@ export type AutoGmTiebreak = { userId: string; name: string; options: string[] }
 
 /** Jet demandé par le MJ automatique pour la scène en cours (`/api/check`). */
 export type AutoGmCheck = { id: string; userId: string; name: string; visit: number }
+
+/** Épreuve en cours : réussites et échecs déjà lancés. */
+export type AutoGmTrial = { visit: number; ok: number; ko: number }

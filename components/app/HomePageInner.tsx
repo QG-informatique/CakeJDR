@@ -526,7 +526,14 @@ export default function HomePageInner() {
       return
     }
     const max = Number(perso.pv_max) || 0
-    const pv = effect.heal ? max : Math.max(0, (Number(perso.pv) || 0) - (effect.damage ?? 0))
+    const now = Number(perso.pv) || 0
+    // Un combat fixe les PV ; un soin chiffré en rend autant ; les dégâts
+    // d'une scène laissent au moins 1 PV (seul un combat peut mettre à terre).
+    let pv = now
+    if (effect.hp !== undefined) pv = Math.max(0, max > 0 ? Math.min(max, effect.hp) : effect.hp)
+    else if (effect.heal === true) pv = max
+    else if (typeof effect.heal === 'number') pv = Math.min(max, now + effect.heal)
+    else if (effect.damage) pv = now > 0 ? Math.max(1, now - effect.damage) : 0
     let next = perso
     if (pv !== Number(perso.pv)) next = { ...next, pv }
     if (effect.xp) next = addXp(next, effect.xp)

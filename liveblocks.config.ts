@@ -4,7 +4,8 @@ import type { RoomSettings } from './lib/roomSettings'
 import type { LiveMap, LiveObject, LiveList } from '@liveblocks/client'
 import type { Character } from '@/types/character'
 import type { CheckOutcome, GmRequest, RollsOutcome } from '@/lib/checks'
-import type { AutoGmCheck, AutoGmMode, AutoGmTiebreak } from '@/lib/autoGm/types'
+import type { AutoGmCheck, AutoGmMode, AutoGmTiebreak, AutoGmTrial } from '@/lib/autoGm/types'
+import type { CombatState } from '@/lib/autoGm/combat'
 
 // Canvas images stored in Liveblocks. Keep in sync with components/canvas/ImageItem.tsx
 // but defined here to satisfy Liveblocks Lson constraints.
@@ -139,6 +140,10 @@ declare global {
         voteStart?: number
         tiebreak?: AutoGmTiebreak
         check?: AutoGmCheck
+        /** Combat au tour par tour de la scène (`lib/autoGm/combat.ts`). */
+        combat?: CombatState
+        /** Épreuve en plusieurs jets de la scène. */
+        trial?: AutoGmTrial
       }>
     }
 
