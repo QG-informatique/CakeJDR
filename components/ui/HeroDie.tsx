@@ -11,10 +11,10 @@ import { useEffect, useRef } from 'react'
  * l'application : c'est un clin d'œil, pas une porte.
  *
  * Il roule avec une vraie physique : cannon-es, le moteur des dés 3D de la
- * table. Lancé, il part en l'air, retombe sur ses coins, bascule et rebondit
- * sur les bords de l'écran, puis se pose sur une face. L'écran est la table
- * vue de dessus ; seul l'affichage reste en CSS, pour garder le dé tel qu'il
- * a toujours été dessiné.
+ * table, avec leurs réglages. Lancé, il retombe sur ses coins, bascule,
+ * rebondit sur les bords de l'écran, puis se pose sur une face. L'écran est
+ * une table vue en perspective, un peu en biais ; l'affichage reste en CSS,
+ * pour garder le dé tel qu'il a toujours été dessiné.
  *
  * Toute l'animation passe par des refs et `requestAnimationFrame`, en écrivant
  * directement les transformations dans le DOM : un état React mis à jour à
@@ -26,9 +26,6 @@ import { useEffect, useRef } from 'react'
 const SIZE = 104
 const HALF = SIZE / 2
 const BORDER = 3
-/** Inclinaison du regard sur la table : un dé vu parfaitement de face n'est qu'un carré. */
-const TILT_X = -18
-const TILT_Y = 24
 
 /** Faces opposées dont la somme fait 7, comme sur un vrai dé. */
 const FACES = [
@@ -75,12 +72,19 @@ function Pips({ value }: { value: number }) {
   )
 }
 
-/** Un côté du dé (demi-arête) vaut une unité de la physique. */
+/** Une demi-arête du dé vaut une unité de la physique. */
 const UNIT = HALF
-/** Hauteur à l'écran : le dé qui s'élève monte un peu, sans sauter d'un bout à l'autre. */
-const LIFT = 0.6
-/** Soulevé à la main, il flotte à cette hauteur (en pixels à l'écran). */
-const HELD = 18
+/**
+ * La table est vue d'un peu en biais, avec une vraie perspective : le dé qui
+ * s'élève grossit et son ombre s'éloigne, au lieu de glisser vers le haut de
+ * l'écran.
+ */
+const PERSPECTIVE = 1800
+const PITCH = 22
+/** Au repos, le dé est tourné de biais sur la table : on voit trois faces. */
+const YAW = 26
+/** Hauteur du centre du dé tenu en main (en pixels au-dessus de la table). */
+const HELD = HALF + 34
 
 type Vec = { x: number; y: number }
 type Quat = { x: number; y: number; z: number; w: number }
@@ -103,11 +107,17 @@ function qMul(a: Quat, b: Quat): Quat {
   }
 }
 
-/** Rotation d'un angle (en degrés) autour d'un axe de l'écran. */
-function qAxis(axis: 'x' | 'y', deg: number): Quat {
+/** Rotation d'un angle (en degrés) autour d'un axe de la table (vecteur unitaire). */
+function qAround(ax: number, ay: number, az: number, deg: number): Quat {
   const h = (deg * Math.PI) / 360
-  return axis === 'x' ? { x: Math.sin(h), y: 0, z: 0, w: Math.cos(h) } : { x: 0, y: Math.sin(h), z: 0, w: Math.cos(h) }
+  const s = Math.sin(h)
+  return { x: ax * s, y: ay * s, z: az * s, w: Math.cos(h) }
 }
+
+const qInv = (q: Quat): Quat => ({ x: -q.x, y: -q.y, z: -q.z, w: q.w })
+
+/** Le biais du dé au repos, autour de la verticale. */
+const Q_YAW = qAround(0, 0, 1, YAW)
 
 /** Rotation au format CSS (`matrix3d` se lit colonne par colonne). */
 function quatToCss({ x, y, z, w }: Quat) {
@@ -121,7 +131,7 @@ function quatToCss({ x, y, z, w }: Quat) {
 
 /**
  * L'orientation « bien rangée » la plus proche : chaque axe du dé sur un axe de
- * l'écran. Le dé rentre à sa place une face vers le haut et bien droit.
+ * la table, une face vers le haut.
  */
 function squared(q: Quat): Quat {
   const { x, y, z, w } = q
@@ -182,6 +192,14 @@ function squared(q: Quat): Quat {
   return out
 }
 
+/** Posé bien droit sur une face, avec le biais du repos. */
+const restPose = (q: Quat): Quat => {
+  const out = qMul(Q_YAW, squared(qMul(qInv(Q_YAW), q)))
+  return out.x * q.x + out.y * q.y + out.z * q.z + out.w * q.w < 0
+    ? { x: -out.x, y: -out.y, z: -out.z, w: -out.w }
+    : out
+}
+
 function slerp(a: Quat, b: Quat, t: number): Quat {
   let cos = a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w
   let bb = b
@@ -208,58 +226,85 @@ function slerp(a: Quat, b: Quat, t: number): Quat {
 }
 
 export default function HeroDie({ dockId }: { dockId: string }) {
+  const sceneRef = useRef<HTMLDivElement>(null)
   const dieRef = useRef<HTMLDivElement>(null)
   const cubeRef = useRef<HTMLDivElement>(null)
   const shadowRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    const scene = sceneRef.current
     const die = dieRef.current
     const cube = cubeRef.current
     const shadow = shadowRef.current
-    if (!die || !cube || !shadow) return
+    if (!scene || !die || !cube || !shadow) return
 
-    // Point de repos : le centre de l'emplacement réservé dans le panneau.
-    const home: Vec = { x: window.innerWidth / 2, y: window.innerHeight * 0.2 }
-    const measureHome = () => {
-      const dock = document.getElementById(dockId)
-      if (!dock) return
-      const r = dock.getBoundingClientRect()
-      home.x = r.left + r.width / 2
-      // Légèrement sous le centre, pour laisser la place aux rebonds.
-      home.y = r.top + r.height / 2 + 8
+    // Repère de la table : origine au centre de l'écran, x vers la droite,
+    // y vers le bas de l'écran, z vers le haut (vers nous). En pixels.
+    const screen = { w: 0, h: 0 }
+    const measureScreen = () => {
+      screen.w = scene.clientWidth
+      screen.h = scene.clientHeight
+    }
+    const sin = Math.sin((PITCH * Math.PI) / 180)
+    const cos = Math.cos((PITCH * Math.PI) / 180)
+    /** Point de l'écran → point de la table à la hauteur `z`. */
+    const toTable = (sx: number, sy: number, z: number): Vec => {
+      const a = sx - screen.w / 2
+      const b = sy - screen.h / 2
+      const P = PERSPECTIVE
+      const y = (b * P - b * z * cos + P * z * sin) / (P * cos + b * sin)
+      const k = P / (P - y * sin - z * cos)
+      return { x: a / k, y }
+    }
+    /** Point de la table → point de l'écran. */
+    const toScreen = (x: number, y: number, z: number): Vec => {
+      const k = PERSPECTIVE / (PERSPECTIVE - y * sin - z * cos)
+      return { x: screen.w / 2 + x * k, y: screen.h / 2 + (y * cos - z * sin) * k }
     }
 
-    /** Pose affichée : position à l'écran, hauteur au-dessus du sol, orientation. */
+    // Point de repos : le centre de l'emplacement réservé dans le panneau.
+    const home: Vec = { x: 0, y: 0 }
+    const measureHome = () => {
+      const dock = document.getElementById(dockId)
+      const r = dock?.getBoundingClientRect()
+      const p = r
+        ? toTable(r.left + r.width / 2, r.top + r.height / 2 + 8, HALF)
+        : toTable(screen.w / 2, screen.h * 0.2, HALF)
+      home.x = p.x
+      home.y = p.y
+    }
+
+    /** Pose affichée : position sur la table, hauteur du centre, orientation. */
     const view = {
       pos: { x: 0, y: 0 } as Vec,
-      lift: 0,
-      quat: { x: 0, y: 0, z: 0, w: 1 } as Quat,
-      lean: { x: 0, y: 0 } as Vec,
-      leanTarget: { x: 0, y: 0 } as Vec,
+      z: HALF,
+      quat: Q_YAW,
     }
 
     const render = () => {
-      const { pos, lift, quat, lean } = view
-      die.style.transform = `translate3d(${pos.x - HALF}px, ${pos.y - HALF - lift}px, 0)`
-      cube.style.transform =
-        `rotateX(${TILT_X}deg) rotateY(${TILT_Y}deg) ` +
-        `rotateX(${lean.x}deg) rotateY(${lean.y}deg) ${quatToCss(quat)}`
-      // L'ombre reste au sol et s'estompe quand le dé s'élève.
-      const k = 1 - Math.min(lift, 40) / 80
-      shadow.style.transform = `translate3d(${pos.x - HALF}px, ${pos.y + HALF * 0.62}px, 0) scale(${k})`
-      shadow.style.opacity = String(0.55 * k)
+      const { pos, z, quat } = view
+      const left = screen.w / 2 + pos.x - HALF
+      const top = screen.h / 2 + pos.y - HALF
+      die.style.transform = `translate3d(${left}px, ${top}px, ${z}px)`
+      cube.style.transform = quatToCss(quat)
+      // L'ombre reste sur la table, s'élargit et pâlit quand le dé s'élève.
+      const up = Math.min(Math.max(z - HALF, 0), SIZE * 3) / SIZE
+      shadow.style.transform = `translate3d(${left + 6 + up * 10}px, ${top + 6 + up * 10}px, 0.5px) scale(${1.1 + up * 0.3})`
+      shadow.style.opacity = String(0.65 / (1 + up * 1.5))
     }
 
+    measureScreen()
     measureHome()
     view.pos = { ...home }
     render()
-    die.style.opacity = '1'
+    scene.style.opacity = '1'
 
     // Animations réduites : un dé posé, immobile, qui suit simplement sa place.
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       die.style.pointerEvents = 'none'
       die.style.cursor = 'default'
       const place = () => {
+        measureScreen()
         measureHome()
         view.pos = { ...home }
         render()
@@ -279,41 +324,62 @@ export default function HeroDie({ dockId }: { dockId: string }) {
     void import('cannon-es').then((CANNON) => {
       if (stopped) return
 
-      // L'écran est la table vue de dessus : x vers la droite, y vers le bas,
-      // z vers nous. La pesanteur tire le dé vers le fond de l'écran.
-      const world = new CANNON.World({ gravity: new CANNON.Vec3(0, 0, -60) })
+      // Réglages des dés de la table (@3d-dice/dice-box-threejs), ramenés à la
+      // taille du dé. Les rebonds sont plus mous : ce dé-ci est vu de près, et
+      // un rebond qui passe inaperçu sur la table le ferait sauter ici.
+      const world = new CANNON.World({ gravity: new CANNON.Vec3(0, 0, -45) })
       world.allowSleep = false
+      ;(world.solver as InstanceType<typeof CANNON.GSSolver>).iterations = 14
       const dieMat = new CANNON.Material('de')
       const floorMat = new CANNON.Material('table')
       const wallMat = new CANNON.Material('bord')
       world.addContactMaterial(
-        new CANNON.ContactMaterial(dieMat, floorMat, { friction: 0.45, restitution: 0.42 }),
+        new CANNON.ContactMaterial(dieMat, floorMat, { friction: 0.6, restitution: 0.35 }),
       )
       world.addContactMaterial(
-        new CANNON.ContactMaterial(dieMat, wallMat, { friction: 0.1, restitution: 0.6 }),
+        new CANNON.ContactMaterial(dieMat, wallMat, { friction: 0.3, restitution: 0.5 }),
       )
 
       const floor = new CANNON.Body({ mass: 0, material: floorMat, shape: new CANNON.Plane() })
       world.addBody(floor)
-      // Les quatre bords de l'écran, comme les bords d'une piste de dés.
-      const walls = [
-        { euler: [0, Math.PI / 2, 0] }, // gauche
-        { euler: [0, -Math.PI / 2, 0] }, // droite
-        { euler: [-Math.PI / 2, 0, 0] }, // haut
-        { euler: [Math.PI / 2, 0, 0] }, // bas
-      ].map(({ euler }) => {
+      // Les bords de l'écran, comme les bords d'une piste de dés. Vus en
+      // perspective, ils dessinent sur la table un trapèze, plus large au fond.
+      const walls = [0, 1, 2, 3].map(() => {
         const b = new CANNON.Body({ mass: 0, material: wallMat, shape: new CANNON.Plane() })
-        b.quaternion.setFromEuler(euler[0]!, euler[1]!, euler[2]!)
         world.addBody(b)
         return b
       })
+      /** Chaque bord sur la table : un point et sa normale vers l'intérieur. */
+      const edges: Array<{ x: number; y: number; nx: number; ny: number }> = []
       const placeWalls = () => {
-        const w = window.innerWidth / UNIT
-        const h = window.innerHeight / UNIT
-        walls[0]!.position.set(0, 0, 0)
-        walls[1]!.position.set(w, 0, 0)
-        walls[2]!.position.set(0, 0, 0)
-        walls[3]!.position.set(0, h, 0)
+        edges.length = 0
+        // Les coins de l'écran à hauteur du dessus du dé : posé contre un bord,
+        // il reste entièrement visible.
+        const c = [
+          toTable(0, 0, SIZE),
+          toTable(screen.w, 0, SIZE),
+          toTable(screen.w, screen.h, SIZE),
+          toTable(0, screen.h, SIZE),
+        ].map((p) => ({ x: p.x / UNIT, y: p.y / UNIT }))
+        const mid = { x: 0, y: (c[0]!.y + c[2]!.y) / 2 }
+        c.forEach((a, i) => {
+          const b = c[(i + 1) % 4]!
+          // Normale dans le plan de la table, tournée vers l'intérieur.
+          let nx = b.y - a.y
+          let ny = a.x - b.x
+          if (nx * (mid.x - a.x) + ny * (mid.y - a.y) < 0) {
+            nx = -nx
+            ny = -ny
+          }
+          const n = Math.hypot(nx, ny) || 1
+          const wall = walls[i]!
+          edges.push({ x: a.x, y: a.y, nx: nx / n, ny: ny / n })
+          wall.position.set(a.x, a.y, 0)
+          wall.quaternion.setFromVectors(
+            new CANNON.Vec3(0, 0, 1),
+            new CANNON.Vec3(nx / n, ny / n, 0),
+          )
+        })
       }
       placeWalls()
 
@@ -321,39 +387,44 @@ export default function HeroDie({ dockId }: { dockId: string }) {
         mass: 1,
         material: dieMat,
         shape: new CANNON.Box(new CANNON.Vec3(1, 1, 1)),
-        linearDamping: 0.08,
-        angularDamping: 0.12,
+        linearDamping: 0.1,
+        angularDamping: 0.1,
       })
       body.position.set(home.x / UNIT, home.y / UNIT, 1)
       world.addBody(body)
+      // Jamais de bond plus haut que le dé lui-même, même lancé fort contre un bord.
+      world.addEventListener('postStep', () => {
+        if (body.velocity.z > 9) body.velocity.z = 9
+      })
 
       const s = {
         mode: 'rest' as Mode,
         t0: 0,
         dur: 0,
         until: performance.now() + 700,
-        /** Depuis quand le dé ne bouge presque plus. */
+        /** Depuis combien de temps le dé ne bouge presque plus (en secondes). */
         still: 0,
         posFrom: { x: 0, y: 0 } as Vec,
-        quatFrom: { x: 0, y: 0, z: 0, w: 1 } as Quat,
-        quatTo: { x: 0, y: 0, z: 0, w: 1 } as Quat,
-        /** Petit lancer sur place : quarts de tour autour des axes de l'écran. */
+        zFrom: HALF,
+        quatFrom: Q_YAW,
+        quatTo: Q_YAW,
+        /** Petit lancer sur place : quarts de tour autour des axes du dé au repos. */
         spin: { x: 0, y: 0 } as Vec,
         grab: { x: 0, y: 0 } as Vec,
         samples: [] as Array<{ x: number; y: number; t: number }>,
         pointerId: -1,
       }
 
-      /** Le dé lâché à sa pose actuelle : la physique reprend la main. */
-      const release = (vx: number, vy: number, vz: number, w: Vec & { z: number }) => {
-        body.position.set(view.pos.x / UNIT, view.pos.y / UNIT, 1 + view.lift / (UNIT * LIFT))
-        body.quaternion.set(view.quat.x, view.quat.y, view.quat.z, view.quat.w)
-        body.velocity.set(vx, vy, vz)
-        body.angularVelocity.set(w.x, w.y, w.z)
-        body.wakeUp()
-        s.still = 0
-        s.t0 = performance.now()
+      const resize = () => {
+        measureScreen()
+        measureHome()
+        placeWalls()
       }
+
+      // Axes du dé au repos, tournés du biais du repos.
+      const yaw = (YAW * Math.PI) / 180
+      const axisX = [Math.cos(yaw), Math.sin(yaw), 0] as const
+      const axisY = [-Math.sin(yaw), Math.cos(yaw), 0] as const
 
       /**
        * Petit lancer sur place, comme le tout premier dé : quelques quarts de
@@ -363,24 +434,24 @@ export default function HeroDie({ dockId }: { dockId: string }) {
         s.mode = 'roll'
         s.t0 = now
         s.dur = 1200
-        s.quatFrom = squared(view.quat)
+        s.quatFrom = restPose(view.quat)
         s.spin = { x: sign() * randInt(2, 5) * 90, y: sign() * randInt(2, 5) * 90 }
       }
 
-      /** Retour à l'emplacement, bien droit. */
+      /** Retour à l'emplacement, posé droit. */
       const goHome = (now: number) => {
         s.mode = 'home'
         s.t0 = now
         s.dur = 750
         s.posFrom = { ...view.pos }
+        s.zFrom = view.z
         s.quatFrom = { ...view.quat }
-        s.quatTo = squared(view.quat)
+        s.quatTo = restPose(view.quat)
       }
 
       const readBody = () => {
-        view.pos.x = body.position.x * UNIT
-        view.pos.y = body.position.y * UNIT
-        view.lift = Math.max(0, body.position.z - 1) * UNIT * LIFT
+        view.pos = { x: body.position.x * UNIT, y: body.position.y * UNIT }
+        view.z = body.position.z * UNIT
         const q = body.quaternion
         view.quat = { x: q.x, y: q.y, z: q.z, w: q.w }
       }
@@ -404,7 +475,7 @@ export default function HeroDie({ dockId }: { dockId: string }) {
           case 'rest':
             measureHome()
             view.pos = { ...home }
-            view.lift = 0
+            view.z = HALF
             if (now >= s.until) startRoll(now)
             break
 
@@ -413,11 +484,14 @@ export default function HeroDie({ dockId }: { dockId: string }) {
             view.pos = { ...home }
             const t = Math.min((now - s.t0) / s.dur, 1)
             const e = easeOut(t)
-            view.quat = qMul(qAxis('x', s.spin.x * e), qMul(qAxis('y', s.spin.y * e), s.quatFrom))
-            view.lift = Math.abs(Math.sin(t * Math.PI * 2)) * 26 * (1 - t)
+            view.quat = qMul(
+              qAround(...axisX, s.spin.x * e),
+              qMul(qAround(...axisY, s.spin.y * e), s.quatFrom),
+            )
+            view.z = HALF + Math.abs(Math.sin(t * Math.PI * 2)) * 44 * (1 - t)
             if (t >= 1) {
-              view.quat = squared(view.quat)
-              view.lift = 0
+              view.quat = restPose(view.quat)
+              view.z = HALF
               s.mode = 'rest'
               s.until = now + 1800
             }
@@ -425,7 +499,8 @@ export default function HeroDie({ dockId }: { dockId: string }) {
           }
 
           case 'drag':
-            // La position suit le pointeur ; tenu en main, le dé ne roule pas.
+            // Soulevé en douceur ; la position et la rotation suivent la main.
+            view.z += (HELD - view.z) * (1 - Math.exp(-14 * dt))
             break
 
           case 'thrown':
@@ -445,13 +520,15 @@ export default function HeroDie({ dockId }: { dockId: string }) {
             measureHome()
             const t = Math.min((now - s.t0) / s.dur, 1)
             const e = easeInOut(t)
-            view.pos.x = s.posFrom.x + (home.x - s.posFrom.x) * e
-            view.pos.y = s.posFrom.y + (home.y - s.posFrom.y) * e
-            view.lift = Math.sin(t * Math.PI) * 30
+            view.pos = {
+              x: s.posFrom.x + (home.x - s.posFrom.x) * e,
+              y: s.posFrom.y + (home.y - s.posFrom.y) * e,
+            }
+            view.z = s.zFrom + (HALF - s.zFrom) * e + Math.sin(t * Math.PI) * 60
             view.quat = slerp(s.quatFrom, s.quatTo, e)
             if (t >= 1) {
               view.pos = { ...home }
-              view.lift = 0
+              view.z = HALF
               view.quat = { ...s.quatTo }
               s.mode = 'rest'
               s.until = now + 600
@@ -459,14 +536,6 @@ export default function HeroDie({ dockId }: { dockId: string }) {
             break
           }
         }
-
-        // Inclinaison du dé tenu : elle suit le mouvement, puis se redresse.
-        const follow = 1 - Math.exp(-12 * dt)
-        view.lean.x += (view.leanTarget.x - view.lean.x) * follow
-        view.lean.y += (view.leanTarget.y - view.lean.y) * follow
-        const relax = Math.exp(-8 * dt)
-        view.leanTarget.x *= relax
-        view.leanTarget.y *= relax
 
         render()
         raf = requestAnimationFrame(frame)
@@ -485,25 +554,39 @@ export default function HeroDie({ dockId }: { dockId: string }) {
         }
         s.pointerId = e.pointerId
         s.mode = 'drag'
-        // Soulevé : il s'élève et son ombre rétrécit.
-        view.lift = HELD
-        s.grab = { x: e.clientX - view.pos.x, y: e.clientY - view.pos.y }
-        s.samples = [{ x: e.clientX, y: e.clientY, t: performance.now() }]
+        const at = toScreen(view.pos.x, view.pos.y, view.z)
+        s.grab = { x: e.clientX - at.x, y: e.clientY - at.y }
+        s.samples = [{ ...view.pos, t: performance.now() }]
         die.style.cursor = 'grabbing'
       }
 
       const onMove = (e: PointerEvent) => {
         if (s.mode !== 'drag' || e.pointerId !== s.pointerId) return
-        const nx = Math.max(HALF, Math.min(window.innerWidth - HALF, e.clientX - s.grab.x))
-        const ny = Math.max(HALF, Math.min(window.innerHeight - HALF, e.clientY - s.grab.y))
-        // Tenu en main, il ne roule pas : il penche seulement dans le sens du mouvement.
-        const clamp = (v: number) => Math.max(-14, Math.min(14, v))
-        view.leanTarget.x = clamp(-(ny - view.pos.y) * 1.6)
-        view.leanTarget.y = clamp((nx - view.pos.x) * 1.6)
-        view.pos.x = nx
-        view.pos.y = ny
-        s.samples.push({ x: e.clientX, y: e.clientY, t: performance.now() })
-        if (s.samples.length > 6) s.samples.shift()
+        const sx = Math.max(HALF, Math.min(screen.w - HALF, e.clientX - s.grab.x))
+        const sy = Math.max(HALF, Math.min(screen.h - HALF, e.clientY - s.grab.y))
+        const p = toTable(sx, sy, view.z)
+        // Tenu en main, il ne passe pas les bords : sinon le moteur, au lâcher,
+        // le recracherait d'un coup hors du mur.
+        for (const w of edges) {
+          const d = (p.x / UNIT - w.x) * w.nx + (p.y / UNIT - w.y) * w.ny
+          if (d < 1.75) {
+            p.x += (1.75 - d) * w.nx * UNIT
+            p.y += (1.75 - d) * w.ny * UNIT
+          }
+        }
+        // Comme le tout premier dé, il roule dans le sens où on le traîne : il
+        // quitte la main de travers, et retombe sur ses coins.
+        const dx = p.x - view.pos.x
+        const dy = p.y - view.pos.y
+        const d = Math.hypot(dx, dy)
+        if (d > 0.01) {
+          const q = qMul(qAround(-dy / d, dx / d, 0, ((d / HALF) * 180) / Math.PI), view.quat)
+          const n = Math.hypot(q.x, q.y, q.z, q.w) || 1
+          view.quat = { x: q.x / n, y: q.y / n, z: q.z / n, w: q.w / n }
+        }
+        view.pos = p
+        s.samples.push({ ...p, t: performance.now() })
+        if (s.samples.length > 8) s.samples.shift()
       }
 
       const onUp = (e: PointerEvent) => {
@@ -518,33 +601,36 @@ export default function HeroDie({ dockId }: { dockId: string }) {
         // Vitesse de lancer : mesurée sur les derniers mouvements seulement, pour
         // qu'un geste qui ralentit avant de lâcher ne soit pas pris pour un lancer.
         const now = performance.now()
-        const first = s.samples.find((p) => now - p.t < 120) ?? s.samples[0]
+        const first = s.samples.find((p) => now - p.t < 120) ?? s.samples[s.samples.length - 1]
         const lastSample = s.samples[s.samples.length - 1]
         let vx = 0
         let vy = 0
         if (first && lastSample && lastSample.t > first.t) {
           const span = (lastSample.t - first.t) / 1000
-          vx = (lastSample.x - first.x) / span
-          vy = (lastSample.y - first.y) / span
+          vx = (lastSample.x - first.x) / span / UNIT
+          vy = (lastSample.y - first.y) / span / UNIT
         }
         const speed = Math.hypot(vx, vy)
-        const MAX_SPEED = 2600
+        const MAX_SPEED = 40
         if (speed > MAX_SPEED) {
           vx *= MAX_SPEED / speed
           vy *= MAX_SPEED / speed
         }
-        // En unités de la physique.
-        vx /= UNIT
-        vy /= UNIT
-        const v = Math.hypot(vx, vy)
-        // Lancé, il part en l'air en tournant dans le sens du lancer, avec un
-        // peu de désordre : c'est la table qui décide de la suite.
-        const spin = 0.7
-        release(vx, vy, 3 + v * 0.12, {
-          x: -vy * spin + rand(-1, 1) * (2 + v * 0.2),
-          y: vx * spin + rand(-1, 1) * (2 + v * 0.2),
-          z: rand(-1, 1) * (1 + v * 0.15),
-        })
+        const v = Math.min(speed, MAX_SPEED)
+        // Lâché de la main : il roule dans le sens du lancer, avec du désordre
+        // sur tous les axes, comme les dés de la table.
+        const mess = 2 + v * 0.1
+        body.position.set(view.pos.x / UNIT, view.pos.y / UNIT, view.z / UNIT)
+        body.quaternion.set(view.quat.x, view.quat.y, view.quat.z, view.quat.w)
+        body.velocity.set(vx, vy, -1)
+        body.angularVelocity.set(
+          -vy * 0.8 + rand(-1, 1) * mess,
+          vx * 0.8 + rand(-1, 1) * mess,
+          rand(-1, 1) * mess,
+        )
+        body.wakeUp()
+        s.still = 0
+        s.t0 = now
         s.mode = 'thrown'
       }
 
@@ -552,7 +638,7 @@ export default function HeroDie({ dockId }: { dockId: string }) {
       window.addEventListener('pointermove', onMove)
       window.addEventListener('pointerup', onUp)
       window.addEventListener('pointercancel', onUp)
-      window.addEventListener('resize', placeWalls)
+      window.addEventListener('resize', resize)
 
       cleanup = () => {
         cancelAnimationFrame(raf)
@@ -560,7 +646,7 @@ export default function HeroDie({ dockId }: { dockId: string }) {
         window.removeEventListener('pointermove', onMove)
         window.removeEventListener('pointerup', onUp)
         window.removeEventListener('pointercancel', onUp)
-        window.removeEventListener('resize', placeWalls)
+        window.removeEventListener('resize', resize)
       }
     })
 
@@ -571,58 +657,66 @@ export default function HeroDie({ dockId }: { dockId: string }) {
   }, [dockId])
 
   return (
-    <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-20 overflow-hidden">
+    <div
+      ref={sceneRef}
+      aria-hidden="true"
+      className="pointer-events-none fixed inset-0 z-20 overflow-hidden"
+      style={{ perspective: PERSPECTIVE, opacity: 0, transition: 'opacity 0.5s ease' }}
+    >
+      {/* La table, inclinée : tout ce qu'elle porte est vu en perspective. */}
       <div
-        ref={shadowRef}
-        className="absolute left-0 top-0"
-        style={{
-          width: SIZE,
-          height: SIZE * 0.28,
-          borderRadius: '50%',
-          background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.6), transparent 70%)',
-          opacity: 0,
-          willChange: 'transform',
-        }}
-      />
-      <div
-        ref={dieRef}
-        className="pointer-events-auto absolute left-0 top-0 touch-none select-none"
-        style={{
-          width: SIZE,
-          height: SIZE,
-          perspective: 520,
-          cursor: 'grab',
-          opacity: 0,
-          transition: 'opacity 0.5s ease',
-          willChange: 'transform',
-        }}
+        className="absolute inset-0"
+        style={{ transformStyle: 'preserve-3d', transform: `rotateX(${PITCH}deg)` }}
       >
         <div
-          ref={cubeRef}
+          ref={shadowRef}
+          className="absolute left-0 top-0"
           style={{
-            position: 'relative',
             width: SIZE,
             height: SIZE,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle at center, rgba(0,0,0,0.7), transparent 68%)',
+            willChange: 'transform',
+          }}
+        />
+        <div
+          ref={dieRef}
+          className="pointer-events-auto absolute left-0 top-0 touch-none select-none"
+          style={{
+            width: SIZE,
+            height: SIZE,
+            cursor: 'grab',
             transformStyle: 'preserve-3d',
+            willChange: 'transform',
           }}
         >
-          {FACES.map((f) => (
-            <div
-              key={f.value}
-              style={{
-                position: 'absolute',
-                inset: 0,
-                background: 'linear-gradient(145deg,#181818,#0f0f0f)',
-                border: `${BORDER}px solid var(--c-brand)`,
-                borderRadius: 14,
-                boxShadow: '0 4px 10px rgba(0,0,0,0.6), inset 0 0 12px color-mix(in srgb, var(--c-brand) 15%, transparent)',
-                transform: `rotateX(${f.rx}deg) rotateY(${f.ry}deg) translateZ(${HALF}px)`,
-                backfaceVisibility: 'hidden',
-              }}
-            >
-              <Pips value={f.value} />
-            </div>
-          ))}
+          <div
+            ref={cubeRef}
+            style={{
+              position: 'relative',
+              width: SIZE,
+              height: SIZE,
+              transformStyle: 'preserve-3d',
+            }}
+          >
+            {FACES.map((f) => (
+              <div
+                key={f.value}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'linear-gradient(145deg,#181818,#0f0f0f)',
+                  border: `${BORDER}px solid var(--c-brand)`,
+                  borderRadius: 14,
+                  boxShadow: '0 4px 10px rgba(0,0,0,0.6), inset 0 0 12px color-mix(in srgb, var(--c-brand) 15%, transparent)',
+                  transform: `rotateX(${f.rx}deg) rotateY(${f.ry}deg) translateZ(${HALF}px)`,
+                  backfaceVisibility: 'hidden',
+                }}
+              >
+                <Pips value={f.value} />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

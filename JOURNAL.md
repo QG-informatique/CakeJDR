@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-16 — Dé de l'accueil : vue en perspective et rebonds de la table
+- Les sauts bizarres venaient de l'affichage : la hauteur était dessinée comme un glissement vers le haut de l'écran, avec une inclinaison fixe. Le dé est maintenant posé sur une vraie table vue en perspective : il grossit en montant, son ombre reste au sol (`components/ui/HeroDie.tsx`)
+- Tenu en main, il roule dans le sens du geste comme le tout premier dé ; lâché, il part de travers et retombe sur ses coins, dans toutes les directions
+- Réglages des dés de la table, rebonds adoucis (jamais plus haut que le dé) ; il ne traverse plus les bords quand on le tient
+- Vérifié sur quatorze lancers simulés et sept gestes dans le navigateur (doux, forts, vers chaque bord, simple lâcher) : posé à plat en 1 à 2 s, puis retour
+Reste ouvert : à juger à l'œil par Quentin, et lancer au doigt sur téléphone
+
 ## 2026-10-16 — Dé de l'accueil : vraie physique avec le moteur des dés 3D
 - Le roulement libre remis le matin même glissait au lieu de rouler : le dé est maintenant simulé par cannon-es, le moteur des dés 3D de la table (`components/ui/HeroDie.tsx`)
 - L'écran sert de table vue de dessus, avec ses quatre bords ; lancé, le dé retombe sur ses coins, bascule, rebondit et se pose sur une face. Le dessin en CSS et la taille ne changent pas
