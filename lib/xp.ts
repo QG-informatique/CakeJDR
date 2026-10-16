@@ -33,6 +33,16 @@ export const XP_GIFTS = [
   { amount: XP_GAINS.quest, label: 'xpGiftQuest' },
 ] as const
 
+/**
+ * Ce que paie le MJ automatique, plus bas que les dons du MJ humain : une
+ * longue campagne donne environ un niveau par acte (niveau 4 ou 5 à la fin).
+ */
+export const AUTO_XP = {
+  scene: 3,
+  monster: 20,
+  quest: 45,
+} as const
+
 export function xpOf(c: Pick<Character, 'xp'> | null | undefined): number {
   return Math.max(0, Number(c?.xp) || 0)
 }
@@ -60,10 +70,10 @@ export function spendLevel(c: Character): Character {
 export function sceneXp(adventure: Adventure, sceneId: string, fromId?: string): number {
   const scene = adventure.scenes[sceneId]
   if (!scene) return 0
-  let xp = XP_GAINS.scene
+  let xp = AUTO_XP.scene
   const from = fromId ? adventure.scenes[fromId] : undefined
-  if (from?.step.kind === 'check' && from.step.action === 'combat' && from.step.success === sceneId) xp += XP_GAINS.monster
-  if (from?.step.kind === 'combat' && from.step.victory === sceneId) xp += XP_GAINS.monster
-  if (scene.step.kind === 'end' || (from && scene.chapter && from.chapter && scene.chapter !== from.chapter)) xp += XP_GAINS.quest
+  if (from?.step.kind === 'check' && from.step.action === 'combat' && from.step.success === sceneId) xp += AUTO_XP.monster
+  if (from?.step.kind === 'combat' && from.step.victory === sceneId) xp += AUTO_XP.monster
+  if (scene.step.kind === 'end' || (from && scene.chapter && from.chapter && scene.chapter !== from.chapter)) xp += AUTO_XP.quest
   return xp
 }
