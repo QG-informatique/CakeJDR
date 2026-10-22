@@ -1,5 +1,11 @@
 # Journal
 
+## 2026-10-22 — Atelier des voix pour enregistrer Quentin
+- Page locale « Atelier des voix » (Gradio) : Quentin enregistre au micro trois tons (calme, tendu, épique), puis essaie des réglages Chatterbox sur des répliques toutes prêtes (`C:\DEV\_outils\chatterbox\scripts\atelier.py`, lancée par `Atelier des voix.bat`)
+- Chaque essai est gardé avec ses réglages et sa graine (`essais/atelier/journal.csv`) ; « J'aime ce rendu » note les rendus retenus (`retenus.csv`) pour les reprendre ensuite
+- Décision : Quentin sera le narrateur masculin ; ses vrais textes seront lus une fois les réglages trouvés
+Reste ouvert : enregistrements de Quentin, choix des réglages, voix des PNJ, pré-génération et lecture dans le jeu.
+
 ## 2026-10-22 — Essai de Chatterbox pour les voix
 - Voix Piper jugées trop robotiques par Quentin : Chatterbox (Resemble AI, MIT) installé dans `C:\DEV\_outils\chatterbox`, sur le processeur (carte AMD non prise en charge), environ 40 s par réplique
 - Pas de voix françaises fournies : il copie un enregistrement de 10 s ; essai avec des voix Piper copiées, mêmes textes que l'essai Piper (`essais/`)

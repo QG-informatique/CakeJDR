@@ -376,7 +376,12 @@
 - [ ] (Retour de Quentin, 2026-10-22) Affaiblir la boule de feu du mage : en solo, elle tue tous les ennemis d'un coup (2d6 à tous, une fois par combat)
 - [x] (Retour de Quentin, 2026-10-22) Musiques d'ambiance du MJ automatique (Kevin MacLeod, CC BY 4.0, crédit visible obligatoire) : passe-partout, taverne, forêt, combat, donjon, boss, victoire
 - [x] (Retour de Quentin, 2026-10-22) Tester une voix par PNJ avec une synthèse vocale gratuite et libre (Piper, sur le PC)
-- [ ] Choisir avec Quentin les voix (narratrice, PNJ) après écoute des essais Chatterbox de `C:\DEV\_outils\chatterbox\essais` (Piper jugé trop robotique), puis décider si on pré-enregistre la narration des campagnes
+- [x] (2026-10-22) Écouter les essais Chatterbox de `C:\DEV\_outils\chatterbox\essais` (Piper jugé trop robotique) : moins robotique, manque d'intonation, Quentin enregistrera sa voix pour le narrateur
+- [ ] Enregistrer la voix de Quentin dans l'Atelier des voix (`C:\DEV\_outils\chatterbox\Atelier des voix.bat`) : calme, tendu, épique
+- [ ] Choisir les réglages Chatterbox du narrateur d'après `C:\DEV\_outils\chatterbox\essais\atelier\retenus.csv`, puis faire lire à Quentin les vrais textes et réécouter
+- [ ] Trouver des voix libres de droits (ou de personnes d'accord) pour les PNJ, dont au moins une voix féminine
+- [ ] Pré-générer la narration et les répliques des PNJ des campagnes, et les héberger gratuitement
+- [ ] Lire la voix dans le jeu : bouton pour l'activer ou la couper, « Réécouter », voix coupée à la fermeture de l'image
 - [ ] Tester à deux navigateurs le salon d'attente du MJ automatique : chacun « Prêt », départ quand tous le sont, départ si celui qui n'était pas prêt s'en va
 - [ ] Ajouter des sons par type d'action en combat (attaque au corps à corps, sort, défense), en plus des sons des boutons
 - [ ] Passer en 1.0 une fois tout cela fini et testé, puis réécrire le README du GitHub pour qu'il corresponde à l'état réel du projet
