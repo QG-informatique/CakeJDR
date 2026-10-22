@@ -343,8 +343,8 @@
 - [ ] Phase H : marquer « Choix du groupe » avec un indice ou un petit détail de la scène quand l'aventure en prévoit (champ à ajouter aux scènes)
 - [x] Accueil : faire disparaître le bouton « Entrer dans <salle> » quand on supprime la salle choisie (il reste jusqu'au rechargement)
 - [ ] Tester en ligne la création d'une salle en MJ automatique (campagne, arrivée directe, fiche vierge, choix du héros)
-- [ ] Phase Ambiance : trouver des sons d'interface libres de droits (licence CC0 de préférence) et les ajouter discrètement, ambiance JDR (clic, panneau, demande de jet, réussite, échec), avec un réglage pour les couper
-- [ ] Phase Ambiance : trouver des musiques libres de droits, une par type d'ambiance (taverne, voyage, forêt, donjon, combat, mystère, victoire…), licence vérifiée et notée pour chacune ; le MJ automatique change de musique quand le lieu ou l'humeur change
+- [x] Phase Ambiance : trouver des sons d'interface libres de droits (licence CC0 de préférence) et les ajouter discrètement, ambiance JDR (clic, panneau, demande de jet, réussite, échec), avec un réglage pour les couper
+- [x] Phase Ambiance : trouver des musiques libres de droits, une par type d'ambiance (taverne, voyage, forêt, donjon, combat, mystère, victoire…), licence vérifiée et notée pour chacune ; le MJ automatique change de musique quand le lieu ou l'humeur change
 - [ ] Phase Ambiance : voix de narrateur grave qui lit la narration des scènes, uniquement si une solution 100 % gratuite et libre suffit (voix du navigateur, ou voix libre type Piper pré-enregistrée, licence de la voix à vérifier) ; sinon abandonner — bouton pour l'activer ou la couper, texte qui défile sous l'image agrandie, voix coupée à la fermeture de l'image, bouton « Réécouter », seule la musique reste après
 - [ ] Mettre à jour le README du dépôt public GitHub (inchangé depuis août 2025) : ce que fait CakeJDR, comment l'installer, services gratuits utilisés
 
