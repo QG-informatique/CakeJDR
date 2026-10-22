@@ -1,5 +1,9 @@
 # Journal
 
+## 2026-10-22 — Next.js 16.4.2 (faille critique)
+- La vérification GitHub a bloqué la mise en ligne : faille critique publiée sur Next.js 16.0 à 16.4.0 (GHSA-2464-fhr4-w9xw, GHSA-p3m5-59mp-jv5r). Passage à `next` et `eslint-config-next` 16.4.2 (`package.json`)
+- Vérifications, typage et build de production passent
+
 ## 2026-10-22 — Salon au milieu du plateau, musique après « Prêt », barre du bas protégée
 - En ligne, après « Prêt », la barre du bas affichait « Dice roller error » et la musique s'arrêtait ; cause pas reproduite en local. Musique, dés et joueurs ont chacun leur garde, avec le message d'erreur et « Réessayer » (`components/app/HomePageInner.tsx`)
 - Le salon « Avant de commencer » s'affiche en grand au milieu du plateau, sur le fond du thème, pour tous ; les réglages de la table y sont visibles, modifiables seulement par le MJ (`components/gm/TableSettings.tsx`, partagé avec le panneau du MJ)
