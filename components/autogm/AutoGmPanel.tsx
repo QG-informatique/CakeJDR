@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useMutation, useOthers, useSelf, useStorage } from '@liveblocks/react'
-import { LiveMap } from '@liveblocks/client'
+import { LiveMap, LiveObject } from '@liveblocks/client'
 import {
   BookOpen,
   Bot,
@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleHelp,
+  Crown,
   Dices,
   Eye,
   EyeOff,
@@ -21,6 +22,7 @@ import {
   Swords,
   Target,
   UserRound,
+  Volume2,
   X,
 } from 'lucide-react'
 import { useT } from '@/lib/useT'
@@ -38,6 +40,8 @@ import { actionBonus, backgroundOf } from '@/lib/backgrounds'
 import { useShowImage } from '@/components/canvas/ShownImage'
 import { postCheck } from '@/components/checks/postCheck'
 import { getTextColor } from '@/components/chat/LiveAvatarStack'
+import { MUSIC_JOIN_EVENT, playUiSound, useSoundVolume } from '@/lib/sound'
+import { LOBBY_TRACK, sceneMood, trackFor } from '@/lib/autoGm/music'
 import { useStartAdventure } from './useStartAdventure'
 import PremadeHeroPicker from './PremadeHeroPicker'
 import type { PremadeHero } from '@/lib/premadeHeroes'
@@ -92,6 +96,8 @@ type Props = {
   onRoll: () => void
   /** Le chat de la table, rangé dans le dernier onglet du panneau. */
   chat: ReactNode
+  /** Ouvre le panneau du MJ (seulement pour le MJ), proposé dans le salon d'attente. */
+  onOpenGmMenu?: () => void
 }
 
 type Tab = 'story' | 'combat' | 'hero' | 'chat'
@@ -144,6 +150,23 @@ function combatSheet(c: Character): Pick<Voter, 'hp' | 'maxHp' | 'defense' | 'we
   }
 }
 
+/**
+ * Lance un morceau d'ambiance pour toute la table, repris en boucle. Celui
+ * qui tourne déjà n'est pas relancé (ni remis en route s'il a été coupé).
+ */
+function playAmbiance(storage: LiveObject<Liveblocks['Storage']>, id: string) {
+  const music = storage.get('music') as Liveblocks['Storage']['music'] | undefined
+  if (music instanceof LiveObject && music.get('id') === id) return
+  const fields = { id, playing: true, pos: 0, at: Date.now(), loop: true }
+  if (music instanceof LiveObject) music.update(fields)
+  else storage.set('music', new LiveObject(fields))
+}
+
+/** La table laisse le MJ automatique choisir la musique (réglage du MJ). */
+function autoMusicOn(storage: LiveObject<Liveblocks['Storage']>) {
+  return storage.get('settings')?.get('autoMusic') !== false
+}
+
 function Bubble({ voter, size = 20 }: { voter: Voter; size?: number }) {
   return (
     <span
@@ -169,7 +192,7 @@ function Bubble({ voter, size = 20 }: { voter: Voter; size?: number }) {
  * connecté s'il n'y a pas de MJ. S'il part, le suivant prend le relais là où
  * en était la partie, puisque tout est rangé dans le stockage partagé.
  */
-export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHero, onRoll, chat }: Props) {
+export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHero, onRoll, chat, onOpenGmMenu }: Props) {
   const t = useT()
   const { lang } = useLanguage()
   const { id: roomId } = useParams<{ id: string }>()
@@ -341,12 +364,50 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
         })
       })
     }
+    const base = ADVENTURES[state.get('adventure')]
+    if (base && autoMusicOn(storage)) {
+      const music = storage.get('music') as Liveblocks['Storage']['music'] | undefined
+      const playing = music instanceof LiveObject ? music.get('id') : undefined
+      playAmbiance(storage, trackFor(sceneMood(base, state.get('path')), playing, `${state.get('run')}:${expected}`))
+    }
     const list = storage.get('events')
     const text = [current.chapter, current.title].filter(Boolean).join(' · ')
     list.push({ id: crypto.randomUUID(), kind: 'chat', author, text, ts: now, isMJ: true })
     for (let i = list.length - MAX_EVENTS; i > 0; i -= 1) list.delete(0)
     return setup?.show ?? null
   }, [lang])
+
+  // Salon d'attente : « Prêt » (ou plus prêt). Quand tous les présents le
+  // sont, la partie commence : le meneur met alors la première scène en place.
+  const toggleReady = useMutation(({ storage, self }, present: string[]) => {
+    const state = storage.get('autoGm')
+    if (!state?.get('lobby')) return
+    const before = state.get('ready') ?? []
+    const ready = before.includes(self.id) ? before.filter((id) => id !== self.id) : [...before, self.id]
+    if (present.every((id) => ready.includes(id))) {
+      state.delete('lobby')
+      state.delete('ready')
+      state.delete('lobbyMusic')
+    } else state.set('ready', ready)
+  }, [])
+
+  // Quelqu'un est parti sans être prêt : ceux qui restent l'étaient peut-être tous.
+  const leaveLobby = useMutation(({ storage }, present: string[]) => {
+    const state = storage.get('autoGm')
+    if (!state?.get('lobby') || present.length === 0) return
+    const ready = state.get('ready') ?? []
+    if (!present.every((id) => ready.includes(id))) return
+    state.delete('lobby')
+    state.delete('ready')
+    state.delete('lobbyMusic')
+  }, [])
+
+  const lobbyMusic = useMutation(({ storage }) => {
+    const state = storage.get('autoGm')
+    if (!state?.get('lobby') || state.get('lobbyMusic')) return
+    state.set('lobbyMusic', true)
+    if (autoMusicOn(storage)) playAmbiance(storage, LOBBY_TRACK)
+  }, [])
 
   const vote = useMutation(({ storage, self }, option: string, expected: number) => {
     const state = storage.get('autoGm')
@@ -396,10 +457,31 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
   // ── Le meneur fait avancer la partie ────────────────────────────────────
 
   useEffect(() => {
-    if (!isLeader || !gm || gm.setup >= gm.visit) return
+    if (!isLeader || !gm || gm.lobby || gm.setup >= gm.visit) return
     const shown = setUp(gm.visit, t(gm.mode === 'gm' ? 'autoGmTitleGm' : 'autoGmTitle'))
     if (shown) showImage(libraryUrl(shown.category, shown.item), shown.label, { adventure: gm.adventure, scene: gm.scene })
   }, [isLeader, gm, setUp, showImage, t])
+
+  // Salon d'attente : la musique du salon, et le départ si ceux qui restent
+  // sont tous prêts.
+  const presentIds = useMemo(() => [...new Set(voters.map((v) => v.id))], [voters])
+  useEffect(() => {
+    if (!isLeader || !gm?.lobby) return
+    if (!gm.lobbyMusic) lobbyMusic()
+    leaveLobby(presentIds)
+  }, [isLeader, gm, presentIds, lobbyMusic, leaveLobby])
+
+  // Le MJ arrive dans le salon : son panneau s'ouvre à côté, pour régler la
+  // table avant de commencer (une fois par partie).
+  const gmMenuShown = useRef<string | null>(null)
+  useEffect(() => {
+    if (!gm?.lobby || !me?.gm || !onOpenGmMenu || gmMenuShown.current === gm.run) return
+    gmMenuShown.current = gm.run
+    onOpenGmMenu()
+  }, [gm?.lobby, gm?.run, me?.gm, onOpenGmMenu])
+
+  const [musicVolume, setMusicVolume] = useSoundVolume('music')
+  const [uiVolume, setUiVolume] = useSoundVolume('ui')
 
   // Vote : dépouillé quand tout le monde a choisi, ou à la fin du délai.
   useEffect(() => {
@@ -792,6 +874,93 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
     )
   }
 
+  if (gm.lobby) {
+    const readyIds = gm.ready ?? []
+    const iAmReady = !!me && readyIds.includes(me.id)
+    // Un clic de l'utilisateur : le navigateur laisse alors partir le son.
+    const joinMusic = () => window.dispatchEvent(new Event(MUSIC_JOIN_EVENT))
+    const slider = (label: string, value: number, onChange: (v: number) => void) => (
+      <label className="flex items-center gap-2 text-xs text-ink/70">
+        <span className="w-28 shrink-0">{label}</span>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="min-w-0 flex-1"
+        />
+        <span className="w-7 shrink-0 text-right tabular-nums text-ink/55">{value}</span>
+      </label>
+    )
+    return frame(
+      <>
+        {header}
+        <div>
+          <p className="ui-label !text-[10px] text-gm">{t('lobbyTitle')}</p>
+          <h3 className="text-base font-semibold">{adventure.title}</h3>
+        </div>
+        <p className="text-sm italic text-ink/70">{adventure.pitch}</p>
+        <AdventureDuration adventure={adventure} />
+        <section className="flex flex-col gap-2 rounded-lg border border-[var(--c-panel-line)] p-3">
+          <h4 className="ui-label !text-[10px]">{t('lobbySound')}</h4>
+          {slider(t('lobbyMusicVolume'), musicVolume, setMusicVolume)}
+          {slider(t('uiSoundVolume'), uiVolume, setUiVolume)}
+          <button
+            data-no-ui-sound
+            onClick={() => {
+              playUiSound('test')
+              joinMusic()
+            }}
+            className="ui-btn !min-h-8 self-start text-sm"
+          >
+            <Volume2 size={14} aria-hidden /> {t('lobbyTestSound')}
+          </button>
+          <p className="text-xs text-ink/55">{t('lobbySoundHint')}</p>
+        </section>
+        {me?.gm && onOpenGmMenu && (
+          <button onClick={onOpenGmMenu} className="ui-btn !min-h-8 self-start text-sm">
+            <Crown size={14} className="text-gm" aria-hidden /> {t('lobbyGmMenu')}
+          </button>
+        )}
+        {showHero && (
+          <p className="text-xs text-amber-300">
+            {t('lobbyPickHero')}{' '}
+            <button onClick={() => setTab('hero')} className="font-semibold underline">
+              {t('autoGmTabHero')}
+            </button>
+          </p>
+        )}
+        <ul className="flex flex-col gap-1">
+          {voters.map((v) => (
+            <li key={v.connectionId} className="flex items-center gap-2 text-sm">
+              <Bubble voter={v} />
+              <span className="min-w-0 flex-1 truncate">{v.name}</span>
+              {readyIds.includes(v.id) ? (
+                <span className="flex items-center gap-1 text-xs font-semibold text-emerald-400">
+                  <Check size={12} aria-hidden /> {t('lobbyIsReady')}
+                </span>
+              ) : (
+                <span className="text-xs text-ink/50">{t('lobbyWaiting')}</span>
+              )}
+            </li>
+          ))}
+        </ul>
+        <button
+          onClick={() => {
+            joinMusic()
+            toggleReady(presentIds)
+          }}
+          aria-pressed={iAmReady}
+          className={`ui-btn ${iAmReady ? '' : 'ui-btn-primary'}`}
+        >
+          {iAmReady ? t('lobbyNotReady') : t('lobbyReady')}
+        </button>
+        <p className="text-xs text-ink/55">{t(voters.length > 1 ? 'lobbyReadyHint' : 'lobbySoloHint')}</p>
+      </>,
+    )
+  }
+
   const byId = new Map(voters.map((v) => [v.id, v]))
   const votersFor = (option: string) => players.filter((v) => votes?.get(v.id) === option)
   const myVote = me ? votes?.get(me.id) : undefined
@@ -994,7 +1163,7 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
             les choix et les tirages au hasard mènent ailleurs. */}
         <p className="text-xs text-ink/60">{t('autoGmReplayHint')}</p>
         <div className="flex flex-wrap gap-2">
-          <button onClick={() => start(gm.adventure, gm.mode)} className="ui-btn ui-btn-primary">
+          <button onClick={() => start(gm.adventure, gm.mode, false)} className="ui-btn ui-btn-primary">
             {t('autoGmReplay')}
           </button>
           <Link href="/salles" className="ui-btn">

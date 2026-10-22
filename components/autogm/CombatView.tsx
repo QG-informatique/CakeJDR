@@ -5,8 +5,8 @@ import { Backpack, Heart, Shield, Swords } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import { checkStatLabel, withStat } from '@/lib/checks'
 import type { Voter } from '@/lib/autoGm'
-import { ROUND_MS, canTarget, usesLeft, waitingFor, type CombatState, type CombatStep } from '@/lib/autoGm/combat'
-import { actionsFor, needsFoe, type CombatAction } from '@/lib/autoGm/combatActions'
+import { ROUND_MS, canTarget, isDice, usesLeft, waitingFor, type CombatState, type CombatStep } from '@/lib/autoGm/combat'
+import { actionsFor, needsFoe, weaponStat, type CombatAction } from '@/lib/autoGm/combatActions'
 import { combatLineText } from './combatText'
 
 type Props = {
@@ -75,7 +75,12 @@ export default function CombatView({ combat, step, me, players, iWatch, myChoice
     const hint =
       action.effect === 'flee' && step.flee
         ? withStat(t('combatFleeHint'), t(checkStatLabel(step.flee.stat))).replace('{n}', String(step.flee.dc))
-        : lang === 'fr'
+        : action.dice === 'arme'
+          ? withStat(t('combatWeaponHint'), t(checkStatLabel(weaponStat(me?.classe, me?.mods ?? {})))).replace(
+              '{dice}',
+              isDice(me?.weapon) ? me!.weapon! : '1d6',
+            )
+          : lang === 'fr'
           ? action.hintFr
           : action.hintEn
     const count = action.item ? 'combatItemsLeft' : 'combatUsesLeft'
@@ -111,7 +116,20 @@ export default function CombatView({ combat, step, me, players, iWatch, myChoice
 
       <div className="flex items-center justify-between text-xs text-ink/60">
         <span className="font-semibold text-gm">{t('combatRound').replace('{n}', String(combat.round))}</span>
-        {!combat.end && <span>{t('combatSecondsLeft').replace('{n}', String(secondsLeft))}</span>}
+        {/* Vert, puis orange sous 30 s et rouge sous 10 s : le tour se joue sans le joueur une fois le temps écoulé. */}
+        {!combat.end && (
+          <span
+            className={`rounded-full px-2 py-0.5 font-semibold tabular-nums ${
+              secondsLeft <= 10
+                ? 'animate-pulse bg-red-500/20 text-red-300'
+                : secondsLeft <= 30
+                  ? 'bg-amber-400/20 text-amber-300'
+                  : 'bg-emerald-500/15 text-emerald-300'
+            }`}
+          >
+            {t('combatSecondsLeft').replace('{n}', String(secondsLeft))}
+          </span>
+        )}
       </div>
 
       {/* Les ennemis : un clic choisit la cible. */}

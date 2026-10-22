@@ -894,6 +894,7 @@ export default function HomePageInner() {
                 onPickHero={handlePickHero}
                 onRoll={() => tableDiceRef.current?.throwNow()}
                 chat={<ChatBox chatBoxRef={chatBoxRef} author={chatAuthor} embedded />}
+                onOpenGmMenu={isGM ? () => setGmPanelOpen(true) : undefined}
               />
             ) : (
               <ChatBox chatBoxRef={chatBoxRef} author={chatAuthor} />

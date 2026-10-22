@@ -8,16 +8,14 @@ import type { YouTubePlayer } from 'youtube-player/dist/types'
 import { MoreHorizontal, Music2, Pause, Play, Plus, SkipForward, Volume2, VolumeX, X } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import type { TranslationKey } from '@/lib/translations'
+import { MUSIC_JOIN_EVENT, useSoundVolume } from '@/lib/sound'
 
 type QueueItem = { id: string }
-type MusicState = { id: string; playing: boolean; pos?: number; at?: number }
+type MusicState = { id: string; playing: boolean; pos?: number; at?: number; loop?: boolean }
 type PlayerVideoData = { title?: string }
 type PlayerWithData = YouTubePlayer & {
   getVideoData?: () => PlayerVideoData | Promise<PlayerVideoData>
 }
-
-const VOLUME_STORAGE_KEY = 'jdr_music_volume'
-const DEFAULT_VOLUME = 5
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max)
@@ -102,24 +100,9 @@ export default function MusicPlayer() {
     }
   }, [optionsOpen])
 
-  const [volume, setVolume] = useState<number>(() => {
-    if (typeof window === 'undefined') return DEFAULT_VOLUME
-    try {
-      const raw = localStorage.getItem(VOLUME_STORAGE_KEY)
-      const parsed = raw ? Number(raw) : Number.NaN
-      if (!Number.isFinite(parsed)) return DEFAULT_VOLUME
-      return clamp(parsed, 0, 100)
-    } catch {
-      return DEFAULT_VOLUME
-    }
-  })
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    try {
-      localStorage.setItem(VOLUME_STORAGE_KEY, String(volume))
-    } catch {}
-  }, [volume])
+  // Partagé avec le salon d'attente du MJ automatique (`lib/sound.ts`).
+  const [volume, setVolume] = useSoundVolume('music')
+  const [uiVolume, setUiVolume] = useSoundVolume('ui')
 
   const musicReady = !!musicObj
   const musicId =
@@ -208,6 +191,12 @@ export default function MusicPlayer() {
       ;(obj as LiveObject<MusicState>).set('playing', true)
       ;(obj as LiveObject<MusicState>).set('pos', 0)
       ;(obj as LiveObject<MusicState>).set('at', Date.now())
+      ;(obj as LiveObject<MusicState>).set('loop', false)
+    } else if ((obj as LiveObject<MusicState>).get('loop')) {
+      // Musique d'ambiance du MJ automatique : elle repart du début.
+      ;(obj as LiveObject<MusicState>).set('pos', 0)
+      ;(obj as LiveObject<MusicState>).set('at', Date.now())
+      return (obj as LiveObject<MusicState>).get('id')
     } else {
       ;(obj as LiveObject<{ id: string; playing: boolean }>).set('playing', false)
     }
@@ -228,6 +217,18 @@ export default function MusicPlayer() {
     }
   }, [musicReady, musicId, musicPlaying])
 
+  // « Prêt » ou « Tester le son » dans le salon du MJ automatique : un clic
+  // de l'utilisateur, qui permet au navigateur de lancer le son. On rejoint
+  // la musique de la table, et on suivra la suivante.
+  useEffect(() => {
+    const onJoin = () => {
+      hasSyncedRef.current = true
+      if (sharedRef.current.playing) setIsPlaying(true)
+    }
+    window.addEventListener(MUSIC_JOIN_EVENT, onJoin)
+    return () => window.removeEventListener(MUSIC_JOIN_EVENT, onJoin)
+  }, [])
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- remise à zéro au changement de morceau
     setCurrentTitle('')
@@ -247,9 +248,12 @@ export default function MusicPlayer() {
     else p.pauseVideo()
   }, [isPlaying, currentId])
 
-  // Quelqu'un a déplacé le curseur ou relancé le morceau : on le suit.
+  // Quelqu'un a déplacé le curseur ou relancé le morceau : on le suit (et
+  // on repart si le morceau venait de finir ici).
   useEffect(() => {
-    if (isPlaying) alignToTable()
+    if (!isPlaying) return
+    alignToTable()
+    playerRef.current?.playVideo()
     // eslint-disable-next-line react-hooks/exhaustive-deps -- seulement quand la position de la table change
   }, [musicPos, musicAt])
 
@@ -300,7 +304,7 @@ export default function MusicPlayer() {
     hasSyncedRef.current = true
     setInput('')
     setIsPlaying(true)
-    updateMusic({ id, playing: true, pos: 0, at: Date.now() })
+    updateMusic({ id, playing: true, pos: 0, at: Date.now(), loop: false })
   }
 
   const handleAddToQueue = () => {
@@ -310,7 +314,7 @@ export default function MusicPlayer() {
     setInput('')
     if (!currentId) {
       setIsPlaying(true)
-      updateMusic({ id, playing: true, pos: 0, at: Date.now() })
+      updateMusic({ id, playing: true, pos: 0, at: Date.now(), loop: false })
       return
     }
     enqueueTrack(id)
@@ -457,6 +461,18 @@ export default function MusicPlayer() {
           </div>
 
           {volumeControl('flex @2xl:hidden', 'flex-1')}
+
+          <label className="flex items-center gap-2 text-xs text-ink/60">
+            <span className="shrink-0">{t('uiSoundVolume')}</span>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={uiVolume}
+              onChange={(e) => setUiVolume(Number(e.target.value))}
+              className="flex-1"
+            />
+          </label>
 
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">

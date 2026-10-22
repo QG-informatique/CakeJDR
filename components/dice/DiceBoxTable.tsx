@@ -59,6 +59,10 @@ type Job = {
   released?: boolean
 }
 
+/** Force d'un lancer, en part de la diagonale de la table (voir `startClickThrow`). */
+const THROW_MIN = 0.55
+const THROW_MAX = 1
+
 type Label = { x: number; y: number; text: string }
 
 const randomSeed = () => crypto.getRandomValues(new Uint32Array(1))[0] ?? 1
@@ -253,6 +257,20 @@ export default function DiceBoxTable({ ref, dice, disabled, onThrow, onDone }: P
           return
         }
         box.renderer.domElement.style.pointerEvents = 'none'
+        // Force du lancer bornée : la table vise un point au hasard et lance
+        // d'autant plus fort qu'il est loin du centre ; tout près, le dé se
+        // posait à peine, tout au bout il partait dans tous les sens.
+        box.startClickThrow = function (notation) {
+          const { currentWidth: w, currentHeight: h } = this.display
+          const aim = { x: (Math.random() * 2 - 0.5) * w, y: -(Math.random() * 2 - 0.5) * h }
+          const reach = Math.hypot(w, h)
+          const len = Math.hypot(aim.x, aim.y) || 1
+          const k = Math.min(Math.max(len, reach * THROW_MIN), reach * THROW_MAX) / len
+          aim.x *= k
+          aim.y *= k
+          const dist = len * k + 100
+          return this.getNotationVectors(notation, aim, (Math.random() + 3) * dist * this.strength, dist)
+        }
         boxRef.current = box
         setStatus('ready')
         // Les sons se chargent à part : sur certains téléphones, ils n'arrivent jamais.

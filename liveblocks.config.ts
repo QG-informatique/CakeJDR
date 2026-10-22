@@ -105,7 +105,8 @@ declare global {
       strokes: LiveList<StrokeSegment>
       // `pos` (secondes) relevée à `at` (horloge en ms) : d'où on en est dans
       // le morceau, pour qu'un joueur qui arrive ou reprend tombe au même endroit.
-      music: LiveObject<{ id: string; playing: boolean; volume?: number; pos?: number; at?: number }>
+      // `loop` : morceau d'ambiance du MJ automatique, repris au début quand il finit.
+      music: LiveObject<{ id: string; playing: boolean; volume?: number; pos?: number; at?: number; loop?: boolean }>
       musicQueue: LiveList<{ id: string }>
       summary: LiveObject<{
         acts: LiveList<{ id: string; title: string }>
@@ -144,6 +145,16 @@ declare global {
         combat?: CombatState
         /** Épreuve en plusieurs jets de la scène. */
         trial?: AutoGmTrial
+        /**
+         * Salon d'attente avant la première scène : réglages du son, puis
+         * « Prêt ». La partie commence quand tous les présents le sont.
+         * Absent : partie déjà commencée (ou lancée avant le salon).
+         */
+        lobby?: boolean
+        /** Comptes prêts dans le salon. */
+        ready?: string[]
+        /** La musique du salon a été lancée. */
+        lobbyMusic?: boolean
       }>
     }
 

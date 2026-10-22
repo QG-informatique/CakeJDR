@@ -31,6 +31,8 @@ export type RoomSettings = {
    * qui fait mal). Décoché, c'est le MJ qui choisit qui monte, et comment.
    */
   autoLevelUp: boolean
+  /** Le MJ automatique change la musique selon la scène (`lib/autoGm/music.ts`). */
+  autoMusic: boolean
 }
 
 export const DEFAULT_ROOM_SETTINGS: RoomSettings = {
@@ -41,6 +43,7 @@ export const DEFAULT_ROOM_SETTINGS: RoomSettings = {
   system: DEFAULT_SYSTEM,
   newHeroes: false,
   autoLevelUp: true,
+  autoMusic: true,
 }
 
 /**

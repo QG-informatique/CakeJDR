@@ -7,6 +7,7 @@ import { LanguageProvider } from '@/components/context/LanguageContext'
 import { ThemeProvider } from '@/components/context/ThemeContext'
 import HtmlLangSync from '@/components/ui/HtmlLangSync'
 import CreditQG from '@/components/ui/CreditQG'
+import UiSounds from '@/components/ui/UiSounds'
 
 // Charge le fond uniquement côté client pour éviter les plantages SSR/hydration
 const BackgroundWrapper = dynamic(() => import('@/components/ui/BackgroundWrapper'), {
@@ -55,6 +56,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       </BackgroundErrorBoundary>
       <main className="relative z-10">{children}</main>
       <CreditQG />
+      <UiSounds />
     </ThemeProvider>
     </LanguageProvider>
     </SessionProvider>

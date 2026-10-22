@@ -9,6 +9,7 @@
  */
 import type { CheckStat } from '@/lib/checks'
 import type { ActionKind } from '@/lib/backgrounds'
+import type { MusicMood } from './music'
 
 /** Image de la bibliothèque posée sur le plateau, en fraction du plateau. */
 export type ScenePiece = {
@@ -30,8 +31,8 @@ export type SceneSetup = {
   pieces?: ScenePiece[]
   /** Rencontre montrée en grand à toute la table à l'arrivée dans la scène. */
   show?: { category: string; item: string; label: string }
-  /** Morceau YouTube lancé pour toute la table. */
-  music?: string
+  /** Ambiance musicale imposée ; sinon déduite de la carte ou du combat (`lib/autoGm/music.ts`). */
+  music?: MusicMood
 }
 
 /** Une réponse proposée au vote du groupe. */

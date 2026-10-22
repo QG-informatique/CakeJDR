@@ -287,6 +287,19 @@ export default function GMPanel({ viewingConnectionId, onOpenSheet, onBackToOwn,
         </div>
       </section>
 
+      <section className="flex flex-col gap-1.5">
+        <h3 className="ui-label !text-[10px]">{t('autoMusic')}</h3>
+        <div className="ui-seg" role="group" aria-label={t('autoMusic')}>
+          <button aria-pressed={settings.autoMusic} onClick={() => update({ autoMusic: true })}>
+            {t('autoMusicOn')}
+          </button>
+          <button aria-pressed={!settings.autoMusic} onClick={() => update({ autoMusic: false })}>
+            {t('autoMusicOff')}
+          </button>
+        </div>
+        <p className="text-xs text-ink/55">{t(settings.autoMusic ? 'autoMusicHint' : 'autoMusicOffHint')}</p>
+      </section>
+
       <p className="text-[11px] leading-snug text-ink/50">{t('gmSettingsLimit')}</p>
     </div>
   )

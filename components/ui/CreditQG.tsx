@@ -32,6 +32,10 @@ export default function CreditQG() {
       <a href="/conditions" className="pointer-events-auto text-inherit no-underline hover:underline">
         Conditions
       </a>
+      <span aria-hidden="true"> · </span>
+      <a href="/credits" className="pointer-events-auto text-inherit no-underline hover:underline">
+        Crédits
+      </a>
     </p>
   )
 }

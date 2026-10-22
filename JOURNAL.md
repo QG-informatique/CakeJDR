@@ -1,5 +1,13 @@
 # Journal
 
+## 2026-10-22 — Salon d'attente, musique d'ambiance, sons de l'interface, page Crédits
+- Avant l'aventure, un salon « Avant de commencer » : volumes musique et boutons, test du son, menu du MJ ouvert d'office ; l'aventure part quand tous les présents ont cliqué « Prêt » (`components/autogm/AutoGmPanel.tsx`, `lib/sound.ts`)
+- 19 morceaux de Kevin MacLeod (CC BY 4.0) choisis selon la carte, le combat ou le boss, en boucle ; réglage « Musique du MJ automatique » dans le panneau du MJ ; crédits sur la nouvelle page `/credits`, liée en pied de page (`lib/autoGm/music.ts`, `app/credits/page.tsx`)
+- Sons des boutons fabriqués par le navigateur (Web Audio) : aucun fichier sous licence (`components/ui/UiSounds.tsx`)
+- Dés : force du lancer bornée (ni posé au bord, ni projeté) ; combat : dégâts de l'arme affichés, minuteur vert puis orange puis rouge (`components/dice/DiceBoxTable.tsx`, `components/autogm/CombatView.tsx`)
+- Piper installé dans `C:\DEV\_outils\piper` avec 4 voix françaises libres ; essai sur le bourgmestre, hors du site pour l'instant
+Reste ouvert : combat (minuteur, dégâts de l'arme) et salon à plusieurs joueurs pas encore testés en vrai.
+
 ## 2026-10-22 — Fin de campagne : boutons Rejouer et Quitter
 - À la fin d'une aventure, « Rejouer » la relance du début avec les mêmes héros, « Quitter » ramène à la liste des salles (`components/autogm/AutoGmPanel.tsx`)
 - Les héros gardent leur niveau en rejouant : plus simple, la reprise des fiches de la salle n'est pas touchée

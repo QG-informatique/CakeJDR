@@ -61,6 +61,11 @@ declare module '@3d-dice/dice-box-threejs' {
     animateThrow(run: number, done?: (this: DiceBox, v: unknown) => void): void
     animateAfterThrow(run: number): void
     throwFinished(): boolean
+    /** Départ d'un lancer : point visé au hasard, dont la distance fait la force. */
+    startClickThrow(notation: string): unknown
+    getNotationVectors(notation: string, vector: { x: number; y: number }, boost: number, dist: number): unknown
+    display: { currentWidth: number; currentHeight: number }
+    strength: number
     /** Joue le son d'un choc (seuls ces champs sont lus). */
     eventCollide(e: {
       body: { mass: number; diceShape?: string; velocity: { length(): number }; world: { stepnumber: number } }

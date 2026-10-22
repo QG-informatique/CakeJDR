@@ -74,8 +74,8 @@ const DEFEND: CombatAction = {
   id: 'defendre',
   fr: 'Se défendre',
   en: 'Defend',
-  hintFr: 'Dégâts reçus divisés par deux ce tour.',
-  hintEn: 'Damage taken halved this round.',
+  hintFr: 'Sans jet : dégâts reçus divisés par deux ce tour.',
+  hintEn: 'No roll: damage taken halved this round.',
   effect: 'guard',
 }
 export const FLEE: CombatAction = {

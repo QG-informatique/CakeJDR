@@ -2806,7 +2806,7 @@ const scenes: Scene[] = [
     id: 'fin_retraite',
     chapter: FINAL,
     title: 'Le ciel rouge',
-    setup: { map: 'ambiance-montagne-dragon' },
+    setup: { map: 'ambiance-montagne-dragon', music: 'triste' },
     narration: [
       "Vaincus ou en fuite, vous quittez la caverne par les galeries, la chaleur dans le dos. Derrière vous, Pyraxis s'envole au-dessus de Cendrecime, et le ciel devient rouge.",
       "Vous avez survécu. Le royaume est prévenu, les armées se rassemblent sous le lion d'or. La guerre contre le dragon ne fait que commencer… À suivre !",
