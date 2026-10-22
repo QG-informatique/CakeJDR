@@ -3,7 +3,7 @@
 import { type Ref, useEffect, useId, useImperativeHandle, useRef, useState } from 'react'
 import { useRoom, useStorage } from '@liveblocks/react'
 import type DiceBox from '@3d-dice/dice-box-threejs'
-import type { DiceBoxCollide, DiceBoxDie, DiceBoxPose } from '@3d-dice/dice-box-threejs'
+import type { DiceBoxCollide, DiceBoxDie, DiceBoxPose, DiceBoxVector } from '@3d-dice/dice-box-threejs'
 import { useT } from '@/lib/useT'
 import { LEVEL_UP_TARGETS, levelUpLabel } from '@/lib/checks'
 import { boxRoll } from '@/lib/dicePool'
@@ -65,6 +65,36 @@ const THROW_MAX = 1.15
 /** De temps en temps, un lancer qui part très fort et rebondit partout. */
 const WILD_CHANCE = 1 / 6
 const WILD_BOOST = 1.7
+/** Écart entre les départs des dés d'un même lancer, en unités de la table (un dé en fait une centaine). */
+const SPAWN_GAP = 160
+
+/**
+ * La table fait partir les dés d'un lancer du même bord, souvent du même
+ * point : collés, ils se gênent et partent mous. On les place côte à côte, en
+ * travers du lancer, et en rangées vers le centre s'ils ne tiennent pas.
+ */
+function spreadSpawns(vectors: DiceBoxVector[], bound: { x: number; y: number }) {
+  const first = vectors[0]
+  if (!first || vectors.length < 2) return
+  const speed = Math.hypot(first.velocity.x, first.velocity.y) || 1
+  const along = { x: first.velocity.x / speed, y: first.velocity.y / speed }
+  const across = { x: -along.y, y: along.x }
+  let i = 0
+  for (let row = 0; i < vectors.length && row < 20; row++) {
+    const baseX = first.pos.x + along.x * row * SPAWN_GAP
+    const baseY = first.pos.y + along.y * row * SPAWN_GAP
+    // Places de la rangée : au milieu, puis de part et d'autre.
+    for (let step = 0; i < vectors.length && step < 40; step++) {
+      const k = step % 2 ? (step + 1) / 2 : -step / 2
+      const x = baseX + across.x * k * SPAWN_GAP
+      const y = baseY + across.y * k * SPAWN_GAP
+      if (Math.abs(x) > bound.x || Math.abs(y) > bound.y) continue
+      vectors[i]!.pos.x = x
+      vectors[i]!.pos.y = y
+      i++
+    }
+  }
+}
 
 type Label = { x: number; y: number; text: string }
 
@@ -274,7 +304,10 @@ export default function DiceBoxTable({ ref, dice, disabled, onThrow, onDone }: P
           aim.y *= k
           const dist = len * k + 100
           const boost = Math.random() < WILD_CHANCE ? WILD_BOOST : 1
-          return this.getNotationVectors(notation, aim, (Math.random() + 3) * dist * this.strength * boost, dist)
+          const set = this.getNotationVectors(notation, aim, (Math.random() + 3) * dist * this.strength * boost, dist)
+          // La table place le premier dé à 0,9 de son bord : les autres restent en deçà.
+          spreadSpawns(set.vectors, { x: this.display.containerWidth * 0.9 + 1, y: this.display.containerHeight * 0.9 + 1 })
+          return set
         }
         boxRef.current = box
         setStatus('ready')

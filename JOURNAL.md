@@ -1,5 +1,10 @@
 # Journal
 
+## 2026-10-22 — Dés qui ne partent plus collés
+- Les dés d'un même lancer partaient souvent du même point, se gênaient et roulaient mous (vu en 2D20). Ils partent maintenant côte à côte, en travers du lancer, en rangées vers le centre s'il y en a beaucoup (`spreadSpawns` dans `components/dice/DiceBoxTable.tsx`, types dans `types/dice-box-threejs.d.ts`)
+- Écart fixe (`SPAWN_GAP`), sans tirage au hasard : le lancer reste identique chez tous les joueurs
+Reste ouvert : avis de Quentin en partie.
+
 ## 2026-10-22 — Dés plus nerveux, et parfois très forts
 - Les dés étaient parfois mous : force minimale d'un lancer relevée (0,55 → 0,75 de la diagonale), maximale aussi (1 → 1,15) (`components/dice/DiceBoxTable.tsx`)
 - Une fois sur six, le lancer part 1,7 fois plus fort et rebondit partout, pour le plaisir ; tiré avec la graine du lancer, donc pareil chez tout le monde

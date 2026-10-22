@@ -26,6 +26,9 @@ declare module '@3d-dice/dice-box-threejs' {
     body: DiceBoxBody
   }
 
+  /** Départ d'un dé : position et vitesse (seuls ces champs sont lus). */
+  export type DiceBoxVector = { pos: { x: number; y: number; z: number }; velocity: { x: number; y: number; z: number } }
+
   export type DiceBoxColorset = {
     name: string
     foreground: string
@@ -63,8 +66,8 @@ declare module '@3d-dice/dice-box-threejs' {
     throwFinished(): boolean
     /** Départ d'un lancer : point visé au hasard, dont la distance fait la force. */
     startClickThrow(notation: string): unknown
-    getNotationVectors(notation: string, vector: { x: number; y: number }, boost: number, dist: number): unknown
-    display: { currentWidth: number; currentHeight: number }
+    getNotationVectors(notation: string, vector: { x: number; y: number }, boost: number, dist: number): { vectors: DiceBoxVector[] }
+    display: { currentWidth: number; currentHeight: number; containerWidth: number; containerHeight: number }
     strength: number
     /** Joue le son d'un choc (seuls ces champs sont lus). */
     eventCollide(e: {
