@@ -392,3 +392,4 @@
 - [ ] Laisser voter sans fermer l'image montée par une scène : aujourd'hui l'image affichée cache les choix du vote tant qu'on n'a pas cliqué « Fermer »
 - [ ] Si la barre du bas affiche encore une erreur en ligne, relever le message affiché (capture) et corriger la cause
 - [ ] Tester à deux navigateurs le nouveau salon : réglages en lecture seule pour le joueur, « Tester le son » de chaque côté, musique lancée chez tous après le dernier « Prêt »
+- [ ] Ajuster la force des dés selon l'avis des joueurs (`THROW_MIN`, `THROW_MAX`, `WILD_CHANCE`, `WILD_BOOST` dans `components/dice/DiceBoxTable.tsx`)

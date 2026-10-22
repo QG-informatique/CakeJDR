@@ -60,8 +60,11 @@ type Job = {
 }
 
 /** Force d'un lancer, en part de la diagonale de la table (voir `startClickThrow`). */
-const THROW_MIN = 0.55
-const THROW_MAX = 1
+const THROW_MIN = 0.75
+const THROW_MAX = 1.15
+/** De temps en temps, un lancer qui part très fort et rebondit partout. */
+const WILD_CHANCE = 1 / 6
+const WILD_BOOST = 1.7
 
 type Label = { x: number; y: number; text: string }
 
@@ -259,7 +262,8 @@ export default function DiceBoxTable({ ref, dice, disabled, onThrow, onDone }: P
         box.renderer.domElement.style.pointerEvents = 'none'
         // Force du lancer bornée : la table vise un point au hasard et lance
         // d'autant plus fort qu'il est loin du centre ; tout près, le dé se
-        // posait à peine, tout au bout il partait dans tous les sens.
+        // posait à peine, tout au bout il partait dans tous les sens. Une fois
+        // sur six, le lancer part bien plus fort, pour le plaisir.
         box.startClickThrow = function (notation) {
           const { currentWidth: w, currentHeight: h } = this.display
           const aim = { x: (Math.random() * 2 - 0.5) * w, y: -(Math.random() * 2 - 0.5) * h }
@@ -269,7 +273,8 @@ export default function DiceBoxTable({ ref, dice, disabled, onThrow, onDone }: P
           aim.x *= k
           aim.y *= k
           const dist = len * k + 100
-          return this.getNotationVectors(notation, aim, (Math.random() + 3) * dist * this.strength, dist)
+          const boost = Math.random() < WILD_CHANCE ? WILD_BOOST : 1
+          return this.getNotationVectors(notation, aim, (Math.random() + 3) * dist * this.strength * boost, dist)
         }
         boxRef.current = box
         setStatus('ready')

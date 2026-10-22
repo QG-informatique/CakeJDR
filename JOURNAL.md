@@ -1,5 +1,10 @@
 # Journal
 
+## 2026-10-22 — Dés plus nerveux, et parfois très forts
+- Les dés étaient parfois mous : force minimale d'un lancer relevée (0,55 → 0,75 de la diagonale), maximale aussi (1 → 1,15) (`components/dice/DiceBoxTable.tsx`)
+- Une fois sur six, le lancer part 1,7 fois plus fort et rebondit partout, pour le plaisir ; tiré avec la graine du lancer, donc pareil chez tout le monde
+Reste ouvert : avis de Quentin sur le dosage après quelques parties.
+
 ## 2026-10-22 — Next.js 16.4.2 (faille critique)
 - La vérification GitHub a bloqué la mise en ligne : faille critique publiée sur Next.js 16.0 à 16.4.0 (GHSA-2464-fhr4-w9xw, GHSA-p3m5-59mp-jv5r). Passage à `next` et `eslint-config-next` 16.4.2 (`package.json`)
 - Vérifications, typage et build de production passent
