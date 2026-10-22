@@ -69,6 +69,7 @@ export const PREMADE_HEROES: readonly PremadeHero[] = [
     objets: [
       { nom: 'Rations', quantite: 3 },
       { nom: 'Corde (15 m)', quantite: 1 },
+      { nom: 'Potion de soin', quantite: 2 },
     ],
     traits: 'Loyale, têtue, rit fort.',
     background: 'Ancienne sergente de la garde royale, elle a quitté l\'armée pour protéger ceux que le roi oublie.',
@@ -93,6 +94,7 @@ export const PREMADE_HEROES: readonly PremadeHero[] = [
     objets: [
       { nom: 'Grimoire', quantite: 1 },
       { nom: 'Plume et encre', quantite: 1 },
+      { nom: 'Potion de soin', quantite: 2 },
     ],
     traits: 'Curieux, distrait, un brin vaniteux.',
     background: 'Renvoyé de l\'académie pour avoir lu les livres interdits, il cherche à prouver qu\'il avait raison.',
@@ -117,6 +119,7 @@ export const PREMADE_HEROES: readonly PremadeHero[] = [
     objets: [
       { nom: 'Flèches', quantite: 20 },
       { nom: 'Herbes médicinales', quantite: 2 },
+      { nom: 'Potion de soin', quantite: 2 },
     ],
     traits: 'Silencieux, patient, méfiant envers les villes.',
     background: 'Guide des forêts du nord, il a vu des ombres ailées passer au-dessus des cimes et veut savoir pourquoi.',
@@ -141,6 +144,7 @@ export const PREMADE_HEROES: readonly PremadeHero[] = [
     objets: [
       { nom: 'Outils de crocheteuse', quantite: 1 },
       { nom: 'Cape sombre', quantite: 1 },
+      { nom: 'Potion de soin', quantite: 2 },
     ],
     traits: 'Rieuse, gourmande, ne tient pas en place.',
     background: 'Enfant des ruelles de la ville royale, elle vole aux riches et doit une faveur à la guilde.',
@@ -165,6 +169,7 @@ export const PREMADE_HEROES: readonly PremadeHero[] = [
     objets: [
       { nom: 'Gourde de bière', quantite: 1 },
       { nom: 'Pioche', quantite: 1 },
+      { nom: 'Potion de soin', quantite: 2 },
     ],
     traits: 'Grognon, fidèle, rancunier.',
     background: 'Sa forge familiale a fondu sous le souffle d\'un dragon il y a cent ans. Il n\'a pas oublié.',
@@ -189,6 +194,7 @@ export const PREMADE_HEROES: readonly PremadeHero[] = [
     objets: [
       { nom: 'Symbole sacré', quantite: 1 },
       { nom: 'Eau bénite', quantite: 1 },
+      { nom: 'Potion de soin', quantite: 2 },
     ],
     traits: 'Droite, généreuse, parfois rigide.',
     background: 'Chevalière d\'un ordre presque disparu, elle a juré de rallumer la flamme de son temple.',
@@ -213,6 +219,7 @@ export const PREMADE_HEROES: readonly PremadeHero[] = [
     objets: [
       { nom: 'Luth', quantite: 1 },
       { nom: 'Habits de fête', quantite: 1 },
+      { nom: 'Potion de soin', quantite: 2 },
     ],
     traits: 'Charmeur, vantard, sincère quand ça compte.',
     background: 'Il cherche l\'histoire qui fera de lui une légende. Un dragon ferait parfaitement l\'affaire.',
@@ -237,6 +244,7 @@ export const PREMADE_HEROES: readonly PremadeHero[] = [
     objets: [
       { nom: 'Baies nourrissantes', quantite: 4 },
       { nom: 'Bourse de graines', quantite: 1 },
+      { nom: 'Potion de soin', quantite: 2 },
     ],
     traits: 'Calme, observatrice, peu patiente avec les citadins.',
     background: 'Gardienne d\'une forêt que la brume ronge, elle sent que le mal vient de la montagne.',

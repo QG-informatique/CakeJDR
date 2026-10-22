@@ -133,6 +133,8 @@ export type Voter = {
   maxHp?: number
   defense?: number
   weapon?: string
+  /** Objets du sac utilisables en combat (`itemCounts`). */
+  items?: Record<string, number>
 }
 
 /**
@@ -142,6 +144,33 @@ export type Voter = {
 export function availableOptions(scene: Scene, flags: readonly string[]): SceneOption[] {
   if (scene.step.kind !== 'vote') return []
   return scene.step.options.filter((o) => (!o.needs || flags.includes(o.needs)) && (!o.unless || !flags.includes(o.unless)))
+}
+
+/** Ce qu'un choix annonce aux joueurs : le genre d'épreuve qui les attend. */
+export type OptionHint =
+  | { kind: 'check'; stat: string }
+  | { kind: 'combat' }
+  | { kind: 'random' }
+  | { kind: 'choice' }
+  | { kind: 'unknown' }
+
+/**
+ * Genre de la prochaine épreuve après un choix : on suit les scènes de simple
+ * récit (quelques-unes au plus) jusqu'au premier jet, combat, tirage ou vote.
+ */
+export function optionHint(adventure: Adventure, next: string): OptionHint {
+  let id = next
+  for (let hop = 0; hop < 5; hop += 1) {
+    const step = adventure.scenes[id]?.step
+    if (!step) break
+    if (step.kind === 'check' || step.kind === 'trial') return { kind: 'check', stat: step.stat }
+    if (step.kind === 'combat') return { kind: 'combat' }
+    if (step.kind === 'random') return { kind: 'random' }
+    if (step.kind === 'vote') return { kind: 'choice' }
+    if (step.kind !== 'continue') break
+    id = step.next
+  }
+  return { kind: 'unknown' }
 }
 
 type TrialStep = Extract<SceneStep, { kind: 'trial' }>

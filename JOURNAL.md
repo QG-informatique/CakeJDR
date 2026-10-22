@@ -1,5 +1,13 @@
 # Journal
 
+## 2026-10-22 — MJ automatique : objets en combat, panneau latéral, campagne plus longue
+- Combat : section « Ton sac » pour boire une potion ou lancer un objet à son tour ; potions de départ et butin dans les scènes (`lib/autoGm/combatActions.ts`, `components/autogm/CombatView.tsx`)
+- Le récit, la création du héros et le combat passent dans le panneau de droite (onglets Récit / Héros / Chat) au lieu du milieu de l'écran (`components/autogm/AutoGmPanel.tsx`, `components/app/HomePageInner.tsx`)
+- Sous chaque choix, le type de jet est annoncé (« Test de Force », « Au hasard », « Inconnu »…)
+- « La Flamme sous la montagne » : 198 scènes, 51 combats ; au moins 3 combats avant le roi gobelin, 8 au minimum sur toute la campagne ; texte anglais complet (`lib/autoGm/dragonCampaign.ts`, `lib/autoGm/en/dragonCampaign.ts`)
+- Monstres réglés par simulation : combats normaux gagnés seul 80 à 95 % du temps, boss environ 80 à 88 %, un peu plus avec les objets
+Reste ouvert : jouer une vraie partie pour juger la durée et la difficulté ; les chemins « punition » (charger l'avant-poste) restent durs en solo.
+
 ## 2026-10-16 — MJ automatique : combats au tour par tour, campagne rallongée
 - Combats au tour par tour : chaque héros choisit une action de sa classe, PV des monstres selon le nombre de joueurs, pas de mort en un seul coup, défaite = groupe assommé ; épreuves en plusieurs jets avec une issue moyenne (79f1640, `lib/autoGm/combat.ts`, `components/autogm/`)
 - Montée de niveau sans MJ : PV + 2 caractéristiques, choix de Quentin (85b6fcb)

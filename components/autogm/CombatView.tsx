@@ -1,12 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { Heart, Shield, Swords } from 'lucide-react'
+import { Backpack, Heart, Shield, Swords } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import { checkStatLabel, withStat } from '@/lib/checks'
 import type { Voter } from '@/lib/autoGm'
 import { ROUND_MS, canTarget, usesLeft, waitingFor, type CombatState, type CombatStep } from '@/lib/autoGm/combat'
-import { actionsFor, needsFoe } from '@/lib/autoGm/combatActions'
+import { actionsFor, needsFoe, type CombatAction } from '@/lib/autoGm/combatActions'
 import { combatLineText } from './combatText'
 
 type Props = {
@@ -65,8 +65,36 @@ export default function CombatView({ combat, step, me, players, iWatch, myChoice
   const acted = !!me && combat.acted.includes(me.id)
   const canAct = !!mine && mine.hp > 0 && !acted && !myAttack && !choseThisRound && !combat.end && !iWatch
   const secondsLeft = Math.max(0, Math.ceil((combat.roundStart + ROUND_MS - now) / 1000))
-  const actions = actionsFor(me?.classe, !!step.flee)
+  const all = actionsFor(me?.classe, !!step.flee, me?.items)
+  const actions = all.filter((a) => !a.item)
+  const items = all.filter((a) => a.item)
   const endText = combat.end === 'victory' ? 'combatVictory' : combat.end === 'fled' ? 'combatFled' : combat.end ? 'combatDefeat' : null
+  const actionButton = (action: CombatAction) => {
+    const left = mine ? usesLeft(combat, mine.id, action) : 0
+    const usable = left > 0 && canTarget(combat, action, chosen?.id)
+    const hint =
+      action.effect === 'flee' && step.flee
+        ? withStat(t('combatFleeHint'), t(checkStatLabel(step.flee.stat))).replace('{n}', String(step.flee.dc))
+        : lang === 'fr'
+          ? action.hintFr
+          : action.hintEn
+    const count = action.item ? 'combatItemsLeft' : 'combatUsesLeft'
+    return (
+      <button
+        key={action.id}
+        onClick={() => onChoose(action.id, needsFoe(action) ? chosen?.id : undefined)}
+        disabled={!usable}
+        title={hint}
+        className="flex flex-col items-start gap-0.5 rounded-lg border border-[var(--c-panel-line)] px-2 py-1.5 text-left text-xs transition hover:border-gm/60 disabled:opacity-40"
+      >
+        <span className="flex w-full items-center gap-1 text-sm font-semibold">
+          <span className="flex-1">{action[lang]}</span>
+          {Number.isFinite(left) && <span className="text-[10px] font-normal text-ink/55">{t(count).replace('{n}', String(left))}</span>}
+        </span>
+        <span className="text-[11px] leading-snug text-ink/60">{hint}</span>
+      </button>
+    )
+  }
   const lineList = (list: CombatState['lines']) =>
     list.map((line, i) => (
       <li key={i} className={line.k.startsWith('foe') || line.k === 'heroDown' ? 'text-red-300/90' : ''}>
@@ -147,33 +175,16 @@ export default function CombatView({ combat, step, me, players, iWatch, myChoice
       ) : (
         <div className="flex flex-col gap-1.5">
           <p className="ui-label !text-[10px]">{t('combatYourTurn')}</p>
-          <div className="grid grid-cols-2 gap-1.5">
-            {actions.map((action) => {
-              const left = usesLeft(combat, mine.id, action)
-              const usable = left > 0 && canTarget(combat, action, chosen?.id)
-              const hint =
-                action.effect === 'flee' && step.flee
-                  ? withStat(t('combatFleeHint'), t(checkStatLabel(step.flee.stat))).replace('{n}', String(step.flee.dc))
-                  : lang === 'fr'
-                    ? action.hintFr
-                    : action.hintEn
-              return (
-                <button
-                  key={action.id}
-                  onClick={() => onChoose(action.id, needsFoe(action) ? chosen?.id : undefined)}
-                  disabled={!usable}
-                  title={hint}
-                  className="flex flex-col items-start gap-0.5 rounded-lg border border-[var(--c-panel-line)] px-2 py-1.5 text-left text-xs transition hover:border-gm/60 disabled:opacity-40"
-                >
-                  <span className="flex w-full items-center gap-1 text-sm font-semibold">
-                    <span className="flex-1">{action[lang]}</span>
-                    {Number.isFinite(left) && <span className="text-[10px] font-normal text-ink/55">{t('combatUsesLeft').replace('{n}', String(left))}</span>}
-                  </span>
-                  <span className="text-[11px] leading-snug text-ink/60">{hint}</span>
-                </button>
-              )
-            })}
-          </div>
+          <div className="grid grid-cols-2 gap-1.5">{actions.map(actionButton)}</div>
+          <p className="ui-label mt-1 flex items-center gap-1 !text-[10px]">
+            <Backpack size={11} aria-hidden />
+            {t('combatItems')}
+          </p>
+          {items.length > 0 ? (
+            <div className="grid grid-cols-2 gap-1.5">{items.map(actionButton)}</div>
+          ) : (
+            <p className="text-[11px] text-ink/55">{t('combatNoItems')}</p>
+          )}
           {chosen && (
             <p className="text-[11px] text-ink/55">
               {t('combatTarget')} : {nameOf(chosen.id)}

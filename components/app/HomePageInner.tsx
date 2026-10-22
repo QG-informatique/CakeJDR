@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useBroadcastEvent, useEventListener, useMyPresence, useOthers, useSelf, useStorage } from '@liveblocks/react'
+import { useIsDesktop } from '@/lib/useIsDesktop'
 import { useRouter, useParams } from 'next/navigation'
 import CharacterSheet, { defaultPerso } from '@/components/sheet/CharacterSheet'
 import DiceRoller from '@/components/dice/DiceRoller'
@@ -36,6 +37,7 @@ import ShownImage from '@/components/canvas/ShownImage'
 import AutoGmPanel, { type AutoGmEffect } from '@/components/autogm/AutoGmPanel'
 import { heroCharacter, type PremadeHero } from '@/lib/premadeHeroes'
 import { DEMO_ADVENTURE } from '@/lib/autoGm'
+import { bagAfter } from '@/lib/autoGm/combatActions'
 import { useIsDemoRoom } from '@/lib/useIsDemoRoom'
 import {
   type Character,
@@ -142,6 +144,43 @@ export default function HomePageInner() {
     if (tab === 'chat') setChatUnread(false)
   }
   const mobilePanel = (tab: MobileTab) => (mobileTab === tab ? 'flex' : 'hidden')
+  const isDesktop = useIsDesktop()
+  // Aventure en cours sur téléphone : on arrive sur son onglet, où l'on lit le
+  // récit ; une nouvelle scène l'allume quand on est ailleurs.
+  const autoGmVisit = useStorage((root) => root.autoGm?.visit ?? null)
+  const [openedAdventure, setOpenedAdventure] = useState(false)
+  if (autoGmEnabled && !openedAdventure) {
+    setOpenedAdventure(true)
+    setMobileTab('chat')
+  }
+  const [seenVisit, setSeenVisit] = useState(autoGmVisit)
+  if (autoGmVisit !== seenVisit) {
+    setSeenVisit(autoGmVisit)
+    if (autoGmVisit !== null && mobileTab !== 'chat') setChatUnread(true)
+  }
+  // Un jet m'attend : sur téléphone, on passe sur la table, où sont les dés,
+  // puis on revient à l'onglet d'avant une fois le lancer fini.
+  const pendingId = pending?.id
+  const throwing = !!myThrow
+  const backTab = useRef<MobileTab | null>(null)
+  useEffect(() => {
+    if (isDesktop) return
+    if (pendingId) {
+      setMobileTab((tab) => {
+        if (tab === 'table') return tab
+        backTab.current = tab
+        return 'table'
+      })
+      return
+    }
+    const back = backTab.current
+    if (!back || throwing) return
+    const timer = window.setTimeout(() => {
+      backTab.current = null
+      setMobileTab((tab) => (tab === 'table' ? back : tab))
+    }, 1500)
+    return () => window.clearTimeout(timer)
+  }, [pendingId, throwing, isDesktop])
   const [cooldown, setCooldown] = useState(false)
   const remoteLoadedRef = useRef(false)
   // Vrai des qu'une fiche venue du serveur a ete appliquee. Empeche l'effet de
@@ -537,6 +576,7 @@ export default function HomePageInner() {
     let next = perso
     if (pv !== Number(perso.pv)) next = { ...next, pv }
     if (effect.xp) next = addXp(next, effect.xp)
+    if (effect.consume || effect.loot) next = { ...next, objets: bagAfter(next.objets ?? [], effect.consume, effect.loot) }
     if (next !== perso) handleUpdatePerso(next, true)
   }
 
@@ -725,6 +765,8 @@ export default function HomePageInner() {
     setDiceDisabled(false)
   }
 
+  const chatAuthor = isGM ? (profile?.pseudo ?? 'MJ') : perso.nom || profile?.pseudo || 'Anonymous'
+
   return (
     <div className="relative w-screen h-dvh font-sans overflow-hidden bg-transparent">
       <div className={`relative z-10 flex flex-col w-full h-full lg:gap-3 lg:p-3 lg:pb-6 ${theme.layout.sheetSide === 'right' ? 'lg:flex-row-reverse' : 'lg:flex-row'}`}>
@@ -799,15 +841,6 @@ export default function HomePageInner() {
                 ) : null}
               />
             </ErrorBoundary>
-            {autoGmEnabled && (
-              <AutoGmPanel
-                adventureId={DEMO_ADVENTURE}
-                onEffect={handleAutoGmEffect}
-                needsHero={viewedConnectionId === null && (!perso.nom?.trim() || (settings.newHeroes && perso.heroFor !== roomId))}
-                onPickHero={handlePickHero}
-                onRoll={() => tableDiceRef.current?.throwNow()}
-              />
-            )}
             {/* Bandeau de la salle de démo, en bas du plateau : il ne cache pas les outils. */}
             <DemoBanner />
             <ErrorBoundary fallback={<div className="p-4 text-red-500">Dice display error</div>}>
@@ -851,16 +884,29 @@ export default function HomePageInner() {
 
         <div className={`${mobilePanel('chat')} flex-1 min-h-0 flex-col p-2 lg:contents`}>
           <ErrorBoundary fallback={<div className="p-4 text-red-500">Chat error</div>}>
-            <ChatBox
-              chatBoxRef={chatBoxRef}
-              author={isGM
-                ? (profile?.pseudo ?? 'MJ')
-                : perso.nom || profile?.pseudo || 'Anonymous'}
-            />
+            {/* Aventure en cours : le récit, le combat et le héros prennent la
+                place du chat, rangé dans le dernier onglet. */}
+            {autoGmEnabled ? (
+              <AutoGmPanel
+                adventureId={DEMO_ADVENTURE}
+                onEffect={handleAutoGmEffect}
+                needsHero={viewedConnectionId === null && (!perso.nom?.trim() || (settings.newHeroes && perso.heroFor !== roomId))}
+                onPickHero={handlePickHero}
+                onRoll={() => tableDiceRef.current?.throwNow()}
+                chat={<ChatBox chatBoxRef={chatBoxRef} author={chatAuthor} embedded />}
+              />
+            ) : (
+              <ChatBox chatBoxRef={chatBoxRef} author={chatAuthor} />
+            )}
           </ErrorBoundary>
         </div>
 
-        <MobileTabBar active={mobileTab} onSelect={showMobileTab} chatUnread={chatUnread} />
+        <MobileTabBar
+          active={mobileTab}
+          onSelect={showMobileTab}
+          chatUnread={chatUnread}
+          chatLabel={autoGmEnabled ? t('autoGmTitleGm') : undefined}
+        />
       </div>
       <ShownImage />
       <RoomCurtain />

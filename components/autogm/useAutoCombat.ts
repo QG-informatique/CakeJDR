@@ -40,6 +40,7 @@ export const fighterOf = (v: Voter): Fighter => ({
   defense: v.defense,
   weapon: v.weapon,
   mods: v.mods,
+  items: v.items,
 })
 
 /** Choix d'un joueur pour ce tour, rangé dans les votes de la scène. */
@@ -150,7 +151,7 @@ export function useAutoCombat(a: Args) {
       if (!hero || hero.hp <= 0 || combat.acted.includes(v.id) || combat.attacks.some((x) => x.userId === v.id)) continue
       const key = `${run}:${visit}:${round}:${v.id}`
       if (asked.current.has(key)) continue
-      const action = actionById(v.classe, actionId)
+      const action = actionById(v.classe, actionId, v.items)
       if (!action || usesLeft(combat, v.id, action) <= 0 || (action.effect === 'flee' && !fight.flee)) continue
       if (!canTarget(combat, action, foeWanted || undefined)) continue
       asked.current.add(key)

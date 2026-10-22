@@ -74,8 +74,12 @@ export const DRAGON_CAMPAIGN_EN: AdventureText = {
       narration: [
         'The faint tracks belong to the goblin scouts: they lead to a gap in the rocks, behind their camp. No one guards it, since no one knows about it.',
         'Jeanne gives you bread and cheese for the road. "Bring my cow back, if she\'s still alive."',
+        'At the end of the path, a goblin scout is rummaging through a sack of apples, his back turned. You saw him before he saw you.',
       ],
-      label: 'Enter the forest',
+      prompt: 'Surprise the scout before he raises the alarm.',
+      foes: {
+        'eclaireur-1': 'The apple-thief scout',
+      },
     },
     ferme_eclaireurs: {
       title: 'The scouts',
@@ -154,9 +158,15 @@ export const DRAGON_CAMPAIGN_EN: AdventureText = {
       chapter: ACT1,
       narration: [
         'The leader spits on the ground. "Purple robes, who pay in fresh gold from the royal city. They pay the goblins too. I don\'t like their eyes."',
-        'She tosses you their letter of orders, sealed with an eye in a flame, and vanishes with her gang. The road is clear.',
+        'She tosses you their letter of orders, sealed with an eye in a flame, and whistles the retreat.',
+        'The brute with the club doesn\'t move. "Me, I got paid in advance." He swings his club, a bandit at his heels. The leader shrugs and walks away.',
       ],
-      label: 'March toward the goblin camp',
+      show: 'The bandit leader',
+      prompt: 'Calm down the brute and his sidekick.',
+      foes: {
+        brute: 'The brute with the club',
+        'bandit-1': 'The bandit in the scarf',
+      },
     },
     bandits_blesses: {
       title: 'Bolts and clubs',
@@ -187,10 +197,16 @@ export const DRAGON_CAMPAIGN_EN: AdventureText = {
       reason: 'Drive off the dark wolves',
     },
     loups_fuient: {
-      title: 'The wolves bolt',
+      title: 'The pack leader',
       chapter: ACT1,
-      narration: ['A waved torch, a shout, a well-thrown stone: the wolves run off toward the forest. All you have to do is follow them.'],
-      label: 'Follow the wolves into the forest',
+      narration: [
+        'A waved torch, a shout, a well-thrown stone: two wolves run off toward the forest.',
+        "The biggest one doesn't back away. He lowers his head, lips curled: he is the pack leader, and he won't run from you.",
+      ],
+      prompt: 'Bring down the pack leader.',
+      foes: {
+        'loup-1': 'The pack leader',
+      },
     },
     loups_combat: {
       title: 'The pack charges',
@@ -220,7 +236,7 @@ export const DRAGON_CAMPAIGN_EN: AdventureText = {
       chapter: ACT1,
       narration: [
         'The tracks lead to a river swollen by the rains. The ford vanishes beneath brown water full of branches. On the far bank, smoke from the goblin camp rises between the trees.',
-        'The peddler turns back: "I\'ll wait for you in the village. If you come back."',
+        'The peddler turns back and slips you a red vial: "For your trouble. I\'ll wait for you in the village. If you come back."',
       ],
       prompt: 'Cross holding on to one another: you need two successes.',
       reason: 'Cross the flooded ford',
@@ -229,9 +245,9 @@ export const DRAGON_CAMPAIGN_EN: AdventureText = {
       title: 'The current',
       chapter: ACT1,
       narration: [
-        'A foot slips, and the current rolls you over the stones. Everyone loses 2 HP before reaching the far bank, soaked to the bone, at the foot of the goblin palisade.',
+        'A foot slips, and the current rolls you over the stones. Everyone loses 2 HP before reaching the far bank, soaked to the bone.',
       ],
-      label: 'Approach the camp',
+      label: 'Follow the smoke',
     },
     foret: {
       title: 'The misty forest',
@@ -258,6 +274,7 @@ export const DRAGON_CAMPAIGN_EN: AdventureText = {
       narration: [
         "An old woman is gathering herbs by the water. She doesn't seem surprised to see you.",
         '"Going to the goblin camp? Drink this first." Her bitter brew restores all your strength. "And beware the shaman: his smoke puts you to sleep."',
+        'She stuffs a handful of dried herbs into your hands: "Chew these when it bleeds."',
       ],
       show: 'The old herbalist',
       label: 'Keep going toward the camp',
@@ -339,6 +356,108 @@ export const DRAGON_CAMPAIGN_EN: AdventureText = {
         'In the confusion, you still manage to break the cage. The dwarf grabs your arm: "This way, to their king\'s cave!"',
       ],
       label: 'Run to the cave',
+    },
+    avant_poste: {
+      title: 'The ruined outpost',
+      chapter: ACT1,
+      narration: [
+        'Before the camp, the path crosses the ruins of an old watchtower. The goblins have turned it into an outpost: a fire, sacks of loot, a wolf chained to a pillar.',
+        "On the wall, a goblin holds a great ram's horn. If he blows it, the whole camp will know you are coming.",
+      ],
+      gmNotes: 'Mandatory fight. The vote only decides how hard it is: silencing the horn blower first removes two enemies.',
+      show: 'The goblin with the horn',
+      prompt: 'How do you take the outpost?',
+      options: {
+        charge: 'Charge right away, before the horn sounds',
+        discret: 'Climb the wall silently to silence the horn blower',
+        ruse: 'Throw stones further off to lure the guards away',
+      },
+    },
+    avant_poste_mur: {
+      title: 'The tower wall',
+      chapter: ACT1,
+      narration: [
+        'The tower stones are loose and covered in moss. The horn blower has his back to you, the horn on his hip.',
+      ],
+      prompt: 'Climb without dislodging a single stone.',
+      reason: 'Climb the wall in silence',
+    },
+    avant_poste_ruse: {
+      title: 'Stones in the night',
+      chapter: ACT1,
+      narration: [
+        "A pebble in the bushes, then another, a little further. You must aim well so they think it's an animal, not intruders.",
+      ],
+      prompt: 'Fool the guards.',
+      reason: 'Lure the guards away',
+    },
+    avant_poste_surprise: {
+      title: 'The horn falls silent',
+      chapter: ACT1,
+      narration: [
+        'The horn blower collapses without a cry, his horn rolling into the grass. The archer, who went to see what was moving, gets lost in the dark.',
+        'Only the spear guard and his wolf are left, facing you with a growl.',
+      ],
+      prompt: 'Finish off the outpost guards.',
+      foes: {
+        'gob-lance': 'The goblin with the spear',
+        loup: 'The chained wolf',
+      },
+    },
+    avant_poste_combat: {
+      title: "The ram's horn",
+      chapter: ACT1,
+      narration: [
+        'The horn bellows across the valley. The goblins grab their weapons, and someone unchains the wolf.',
+      ],
+      prompt: 'Take the outpost.',
+      foes: {
+        'gob-cor': 'The horn blower',
+        'gob-lance': 'The goblin with the spear',
+        'gob-archer': 'The goblin archer',
+        loup: 'The chained wolf',
+      },
+    },
+    avant_poste_butin: {
+      title: "The goblins' loot",
+      chapter: ACT1,
+      narration: [
+        "In the outpost's sacks: chickens, a cowbell, saucepans… and a red vial sealed with wax, stolen from a traveller.",
+        'You catch your breath by the fire. Further on, smoke from the goblin camp rises between the trees.',
+      ],
+      label: 'Approach the camp',
+    },
+    avant_poste_ko: {
+      title: 'The horn has sounded',
+      chapter: ACT1,
+      narration: [
+        'The goblins leave you for dead and run to warn the camp, blowing their horn. You come to at nightfall, in the grass of the ruins.',
+        'A little rest, a little bread: you set off again, more carefully.',
+      ],
+      label: 'Approach the camp',
+    },
+    grotte_gardes: {
+      title: 'The cave mouth',
+      chapter: ACT1,
+      narration: [
+        "The path climbs to a black opening in the cliff, lit by torches. In front of it, the king's personal guard: a goblin in saucepan armour, a shaman covered in bones, and the king's wolf, huge, with yellow eyes.",
+        '"No one gets through!" yelps the guard. "Except the dead. And you\'re not dead yet."',
+      ],
+      prompt: 'Force your way through.',
+      foes: {
+        'garde-1': "The king's guard",
+        'garde-chaman': 'The bone shaman',
+        'loup-roi': "The king's wolf",
+      },
+    },
+    grotte_gardes_ko: {
+      title: 'Dragged before the king',
+      chapter: ACT1,
+      narration: [
+        'The guards tie you up and drag you into the cave, before the throne. The king wants to see with his own eyes these heroes everyone is talking about.',
+        'While he gloats, you gnaw at your bonds. Time to catch your breath, and you are free, facing him.',
+      ],
+      label: 'Get back up',
     },
     camp_libere: {
       title: 'The blacksmith freed',
@@ -422,9 +541,10 @@ export const DRAGON_CAMPAIGN_EN: AdventureText = {
       chapter: ACT1,
       narration: [
         'On the cultist, a gold medallion: an eye in a flame. Engraved on the back: "For the Lady, at the port of Aurelia, when the Viper docks."',
-        'Mistvale celebrates you all night long. The mayor entrusts you with a letter for the king, and at last everyone gets a real night\'s sleep: you are back on your feet.',
+        "Mistvale celebrates you all night long at the Golden Boar. The innkeeper fills your packs, a red vial in each; the mayor entrusts you with a letter for the king, and at last everyone gets a real night's sleep: you are back on your feet.",
         'In the morning, the road to the royal city awaits.',
       ],
+      show: 'The innkeeper of the Golden Boar',
       label: 'Set off for the royal city',
     },
     ruines: {
@@ -484,8 +604,117 @@ export const DRAGON_CAMPAIGN_EN: AdventureText = {
         cour: 'Show it to the king, in front of the whole court',
         capitaine: 'Show it secretly to the captain of the guard',
         mage: 'Ask the court mage to study the medallion',
+        aveline: 'Take up the challenge of Dame Aveline, the knight who doubts you',
         rien: 'Say nothing and investigate the city on your own',
       },
+    },
+    aveline_duel: {
+      title: "Dame Aveline's challenge",
+      chapter: ACT2,
+      narration: [
+        'A knight in bright armour steps forward at the foot of the throne. "Dame Aveline, of the royal guard. Peasants who defeated a goblin king? Allow me to doubt it."',
+        'In the palace courtyard, she hands you blunted swords. "First to put the other on the ground. If you win, my sword is yours."',
+      ],
+      gmNotes: 'Aveline is loyal and honest. Winning the duel brings her to the sanctuary antechamber.',
+      show: 'Dame Aveline',
+      prompt: 'Beat Dame Aveline in a duel.',
+      foes: {
+        aveline: 'Dame Aveline',
+      },
+    },
+    aveline_allie: {
+      title: "Aveline's sword",
+      chapter: ACT2,
+      narration: [
+        'Aveline gets up laughing and clasps your forearm. "I was wrong. When you find these cultists, send word: I\'ll be there."',
+        "She slips you a red vial from the guard's stores.",
+      ],
+      label: 'Go down into the city',
+    },
+    aveline_respect: {
+      title: 'Biting the dust',
+      chapter: ACT2,
+      narration: [
+        'Aveline\'s pommel sends you into the sand. She holds out her hand to help you up. "Not bad. But the cult won\'t be using blunted swords."',
+      ],
+      label: 'Go down into the city',
+    },
+    auberge: {
+      title: 'The Blue Lantern',
+      chapter: ACT2,
+      narration: [
+        'Night falls on Aurelia. You take rooms at the Blue Lantern, a noisy inn near the market. The innkeeper looks at you a little too long as he hands over the keys.',
+        'Around midnight, the music stops. In the corridor, a floorboard creaks.',
+      ],
+      gmNotes: 'Cult assassins come to finish the job: the fight is mandatory, preparation makes it easier.',
+      show: 'The innkeeper of the Blue Lantern',
+      prompt: 'What do you do tonight?',
+      options: {
+        veiller: 'Keep watch in turns, ear against the door',
+        piege: 'String a wire and empty tankards in front of the door',
+        dormir: "Sleep, it's been a long day",
+      },
+    },
+    auberge_veille: {
+      title: 'A shadow under the door',
+      chapter: ACT2,
+      narration: [
+        'The hours pass. A shadow slides under the door, then a second one.',
+      ],
+      prompt: "Don't fall asleep: Wisdom roll.",
+      reason: 'Hear the assassins coming',
+    },
+    auberge_piege: {
+      title: 'The wire and the tankards',
+      chapter: ACT2,
+      narration: [
+        'A wire at ankle height, tankards stacked behind it: at the slightest step, the whole floor will hear it.',
+      ],
+      prompt: 'Set the trap without it being seen: Intelligence roll.',
+      reason: 'Set a hidden trap',
+    },
+    auberge_guet: {
+      title: 'The assassins trapped',
+      chapter: ACT2,
+      narration: [
+        "The tankards tumble down, the door opens on two masked figures who didn't expect to find you standing, weapons in hand.",
+      ],
+      prompt: 'The assassins are caught off guard: strike first.',
+      foes: {
+        'fanatique-1': 'The masked assassin',
+        'cultiste-1': 'The cultist with the knife',
+      },
+    },
+    auberge_nuit: {
+      title: 'Knives in the dark',
+      chapter: ACT2,
+      narration: [
+        'You wake up with a blade at your throat. Three masked figures in the room, and the smell of sulphur.',
+      ],
+      prompt: 'Defend yourselves in the dark.',
+      foes: {
+        'fanatique-1': 'The masked assassin',
+        'cultiste-1': 'The cultist with the knife',
+        'cultiste-2': 'The cultist with the rope',
+      },
+    },
+    auberge_indice: {
+      title: 'The tattooed eye',
+      chapter: ACT2,
+      narration: [
+        "On the assassin's wrist, an eye in a flame, tattooed in black ink. The innkeeper, pale as a sheet, admits he was paid to leave the door open.",
+        'To make amends, he gives you clean bandages and breakfast. "They were asking about you at the market. Be careful."',
+      ],
+      show: 'The innkeeper of the Blue Lantern',
+      label: 'Go and investigate',
+    },
+    auberge_ko: {
+      title: 'Left for dead',
+      chapter: ACT2,
+      narration: [
+        'The assassins leave you for dead and escape through the window. In the morning, a maid finds you and runs for a healer.',
+      ],
+      label: 'Go and investigate, still dazed',
     },
     audience_cour: {
       title: 'The fan snaps shut',
@@ -548,9 +777,79 @@ export const DRAGON_CAMPAIGN_EN: AdventureText = {
       narration: [
         'In a shop that smokes from every corner, a bespectacled alchemist greets you. "Ember incense? Someone bought three barrels of it from me. Nobody buys that! It\'s used to… wake up big sleeping beasts."',
         'He slips you a blue vial: "Frost powder. Thrown into a brazier, it smothers the incense."',
+        'For two coins, he adds flasks of alchemist\'s fire: "These you throw. Then you step back."',
       ],
       show: 'The alchemist',
       label: 'Think about what comes next',
+    },
+    antichambre: {
+      title: 'The antechamber',
+      chapter: ACT2,
+      narration: [
+        'A corridor of black stone, green torches, and a heavy door carved with an eye. In front of it, two fanatics in red robes and a little devil cackling on a brazier.',
+      ],
+      gmNotes: 'The sanctuary guardians: the fight is mandatory. Aveline (won in the duel) holds some of them back.',
+      prompt: 'How do you get past the guardians?',
+      options: {
+        force: 'Charge before they raise the alarm',
+        ombre: 'Slip through the shadows to take them from behind',
+        aveline: 'Signal Dame Aveline, who followed you',
+      },
+    },
+    antichambre_ombre: {
+      title: 'In the shadows',
+      chapter: ACT2,
+      narration: [
+        'The torches make the shadows dance. You must hug the wall without a single link of mail jingling.',
+      ],
+      prompt: 'Get close without being seen: you need two successes.',
+      reason: 'Slip behind the guardians',
+    },
+    antichambre_combat: {
+      title: 'The sanctuary guardians',
+      chapter: ACT2,
+      narration: [
+        '"Intruders!" The fanatics draw their curved daggers, and the imp leaps from the brazier, spitting sparks.',
+      ],
+      prompt: 'Cut down the guardians.',
+      foes: {
+        'fanatique-1': 'The fanatic in red',
+        'fanatique-2': 'The fanatic with daggers',
+        diablotin: 'The brazier imp',
+      },
+    },
+    antichambre_surprise: {
+      title: 'Taken from behind',
+      chapter: ACT2,
+      narration: [
+        'The first fanatic collapses without a sound. The second turns around too late, and the imp squeals with rage.',
+      ],
+      prompt: 'Finish it before the alarm sounds.',
+      foes: {
+        'fanatique-2': 'The fanatic with daggers',
+        diablotin: 'The brazier imp',
+      },
+    },
+    antichambre_aveline: {
+      title: 'Aveline to the rescue',
+      chapter: ACT2,
+      narration: [
+        'Aveline bursts from the staircase, shield first, and slams the first fanatic into the wall. "The other two are yours!"',
+      ],
+      show: 'Dame Aveline',
+      prompt: 'Aveline holds the first one: deal with the others.',
+      foes: {
+        'fanatique-2': 'The fanatic with daggers',
+        diablotin: 'The brazier imp',
+      },
+    },
+    antichambre_ko: {
+      title: 'Dragged to the door',
+      chapter: ACT2,
+      narration: [
+        'The guardians disarm you and drag you to the carved door. "The high priest will want to see them." A mistake: you still have your fists.',
+      ],
+      label: 'Break free and go in',
     },
     rues_embuscade: {
       title: 'The masks',
@@ -805,7 +1104,7 @@ export const DRAGON_CAMPAIGN_EN: AdventureText = {
       title: 'Buried',
       chapter: ACT3,
       narration: [
-        'The snow rolls you, crushes you, chills you to the bone. Everyone loses 4 HP before digging toward the light… right in front of the stakes of an orc camp.',
+        'The snow rolls you, crushes you, chills you to the bone. Everyone loses 4 HP before digging toward the light… under the arrows of an orc patrol.',
       ],
       label: 'Get back up',
     },
@@ -821,12 +1120,25 @@ export const DRAGON_CAMPAIGN_EN: AdventureText = {
       },
     },
     col_ogre: {
-      title: "The ogre's trunk",
+      title: 'Tied up',
       chapter: ACT3,
       narration: [
-        "The ogre's trunk sweeps away everything in its path. When you open your eyes again, the orcs have tied you up and are dragging you to their chief.",
+        'The orcs throw you to the ground. When you open your eyes again, they have tied you up and are dragging you to their chief.',
       ],
       label: 'Let them take you',
+    },
+    col_archers: {
+      title: 'The pass archers',
+      chapter: ACT3,
+      narration: [
+        'On the ridge, two orc archers nock their arrows. Between them, a shaman covered in bones shakes a crackling staff.',
+      ],
+      prompt: 'Climb up to them under the arrows.',
+      foes: {
+        'archer-1': 'The orc archer',
+        'archer-2': 'The orc bowwoman',
+        chaman: 'The bone shaman',
+      },
     },
     camp_orc: {
       title: 'The war camp',
@@ -848,10 +1160,12 @@ export const DRAGON_CAMPAIGN_EN: AdventureText = {
       chapter: ACT3,
       narration: [
         'The orcs form a circle and beat on their shields. Grokh twirls his axe, laughing.',
-        '"Three bouts. If you\'re still standing at the end, we\'ll talk."',
+        '"First to fall. If it\'s me, we\'ll talk."',
       ],
-      prompt: 'Hold your ground against Grokh: three bouts to win.',
-      reason: 'Duel against Grokh',
+      prompt: 'Put Grokh on the ground.',
+      foes: {
+        'chef-orc': 'Grokh, the warchief',
+      },
     },
     orc_parler: {
       title: 'Talking to the orcs',
@@ -938,7 +1252,69 @@ export const DRAGON_CAMPAIGN_EN: AdventureText = {
       title: 'The other side',
       chapter: ACT3,
       narration: [
-        "The troll ends up in the torrent, or sitting there scratching his head: no matter, the bridge is yours. Beyond, on a peak, the vampire's castle stands out against the storm.",
+        'The troll ends up in the torrent, or sitting there scratching his head: no matter, the bridge is yours. Beyond, the road climbs toward an old dwarven gate carved into the cliff.',
+      ],
+      label: 'Climb to the gate',
+    },
+    porte_naine: {
+      title: 'The dwarven gate',
+      chapter: ACT3,
+      narration: [
+        'A gate as tall as three men, covered in dwarven runes. In front of it, a stone statue holds an axe. As you approach, its eyes light up with an orange glow.',
+        '"None shall pass without the word of the elders."',
+      ],
+      gmNotes: 'The stone guardian wakes up no matter what. Reading the runes weakens it before the fight.',
+      show: 'The stone guardian',
+      prompt: 'What do you do?',
+      options: {
+        combat: "Strike it before it's fully awake",
+        runes: 'Decipher the runes to find the word of the elders',
+      },
+    },
+    porte_naine_runes: {
+      title: 'The runes',
+      chapter: ACT3,
+      narration: [
+        'The runes are worn by the wind. Some speak of forges, others of oaths.',
+      ],
+      prompt: 'Find the word of the elders: Intelligence roll.',
+      reason: 'Decipher the dwarven runes',
+    },
+    porte_naine_fissure: {
+      title: 'The crack',
+      chapter: ACT3,
+      narration: [
+        'You speak the word. The guardian stops dead, and a crack runs across its chest. It still raises its axe, but more slowly.',
+      ],
+      prompt: 'Shatter the cracked guardian.',
+      foes: {
+        gardien: 'The cracked guardian',
+      },
+    },
+    porte_naine_combat: {
+      title: 'The stone guardian',
+      chapter: ACT3,
+      narration: [
+        'The statue steps down from its plinth in a crash of rocks. Every step shakes the cliff.',
+      ],
+      prompt: 'Bring down the stone guardian.',
+      foes: {
+        gardien: 'The stone guardian',
+      },
+    },
+    porte_naine_ok: {
+      title: 'The dwarven halls',
+      chapter: ACT3,
+      narration: [
+        "The guardian collapses into a pile of pebbles. The gate opens onto empty halls, where the dwarves left a red vial on an altar. At the end, a staircase comes out under the storm, facing the vampire's castle.",
+      ],
+      label: 'March toward the castle',
+    },
+    porte_naine_ko: {
+      title: 'Under the rocks',
+      chapter: ACT3,
+      narration: [
+        "The stone axe sends you rolling down the slope. The guardian returns to its plinth, satisfied. It takes you an hour to find a path around the gate, up to the vampire's castle.",
       ],
       label: 'March toward the castle',
     },
@@ -948,7 +1324,7 @@ export const DRAGON_CAMPAIGN_EN: AdventureText = {
       narration: [
         "The troll's club shakes the bridge and sends you rolling across the stones. Pleased with himself, the troll sits back down to count his teeth, and you crawl past behind his back.",
       ],
-      label: 'March toward the castle',
+      label: 'Climb to the gate',
     },
     marais: {
       title: 'The marsh',
@@ -983,9 +1359,9 @@ export const DRAGON_CAMPAIGN_EN: AdventureText = {
       title: 'In the mud',
       chapter: ACT3,
       narration: [
-        "You fall into the mud, exhausted. When you drag yourselves out, your foes are gone, and green smoke rises between the trees: the witch's hut, very close.",
+        'You fall into the mud, exhausted. When you drag yourselves out, your foes are gone, and green smoke rises between the trees, behind a moss-covered mound.',
       ],
-      label: 'Knock on the door',
+      label: 'Follow the smoke',
     },
     lezards_parler: {
       title: 'Words of peace',
@@ -997,8 +1373,31 @@ export const DRAGON_CAMPAIGN_EN: AdventureText = {
     marais_guides: {
       title: 'A safe path',
       chapter: ACT3,
-      narration: ['"The old woman… she scares us too," hisses the tallest. They lead you along a dry path to the hut on stilts.'],
-      label: 'Knock on the door',
+      narration: [
+        '"The old woman… she scares us too," hisses the tallest. They lead you along a dry path, but stop dead in front of a moss-covered mound. "We go no further."',
+      ],
+      label: 'Go on alone',
+    },
+    tertre: {
+      title: 'The ghoul mound',
+      chapter: ACT3,
+      narration: [
+        'The mound is an old, half-drowned tomb. The earth moves. Two ghouls crawl out, grey-skinned, claws black with mud, and sniff the air in your direction.',
+      ],
+      gmNotes: "The guardians of the witch's path: the fight is mandatory.",
+      prompt: 'Drive back the ghouls before they paralyse you.',
+      foes: {
+        'goule-1': 'The black-clawed ghoul',
+        'goule-2': 'The starving ghoul',
+      },
+    },
+    tertre_ko: {
+      title: 'Paralysed',
+      chapter: ACT3,
+      narration: [
+        "The ghouls' claws freeze your limbs. They drag you to a hut on stilts… and flee when the door opens.",
+      ],
+      label: 'Get back up',
     },
     marais_araignees: {
       title: 'The marsh webs',
@@ -1016,12 +1415,6 @@ export const DRAGON_CAMPAIGN_EN: AdventureText = {
         'araignee-1': 'The great spider',
         'araignee-2': 'The hairy spider',
       },
-    },
-    marais_morsures: {
-      title: 'Bites and venom',
-      chapter: ACT3,
-      narration: ["Bites, venom, stagnant water: everyone loses 4 HP before arriving, soaked, at the witch's hut."],
-      label: 'Knock on the door',
     },
     cabane: {
       title: 'The hut on stilts',
@@ -1059,9 +1452,34 @@ export const DRAGON_CAMPAIGN_EN: AdventureText = {
     sorciere_force: {
       title: 'The stake or your life',
       chapter: ACT3,
-      narration: ['You draw your weapons. Mother Mire whistles through her teeth, and a moss-covered troll crawls out from under the hut.'],
+      narration: [
+        'You draw your weapons. Mother Mire whistles through her teeth, and a moss-covered troll crawls out from under the hut.',
+      ],
       prompt: 'Get past the troll and grab the stake.',
-      reason: 'Take the stake by force',
+      foes: {
+        troll: 'The mossy troll',
+        sorciere: 'Mother Mire',
+      },
+    },
+    marais_noyes: {
+      title: 'The drowned',
+      chapter: ACT3,
+      narration: [
+        "At the end of the path, the black water starts to bubble. Two drowned dead rise from it, covered in weed: Mother Mire's former visitors, who didn't pay.",
+      ],
+      prompt: 'Send the drowned back to the bottom of the marsh.',
+      foes: {
+        'noye-1': 'The weed-covered drowned man',
+        'noye-2': 'The drowned woman with the necklace',
+      },
+    },
+    marais_noyes_ko: {
+      title: 'The black water',
+      chapter: ACT3,
+      narration: [
+        "The drowned pull you under the water. You tear yourselves free just in time, spitting mud, and they sink back to the bottom. The vampire's castle is not far now.",
+      ],
+      label: 'March toward the castle',
     },
     sorciere_dupee: {
       title: 'The ash stake',
@@ -1233,9 +1651,32 @@ export const DRAGON_CAMPAIGN_EN: AdventureText = {
       title: 'Under the mountain',
       chapter: ACT3,
       narration: [
-        "Behind the tower, a long tunnel climbs northward. When you come out, night is falling, and the vampire's castle rises on its peak, right in front of you.",
+        "Behind the tower, on a table, a red vial no one will drink anymore. A long tunnel climbs northward. When you come out, night is falling, and the vampire's castle rises on its peak, right in front of you.",
       ],
       label: 'March toward the castle',
+    },
+    crypte_porte: {
+      title: 'The archers at the door',
+      chapter: ACT3,
+      narration: [
+        "The dead didn't smell a thing. But in front of the crypt door, two skeleton archers slowly turn their skulls toward you, and draw their bows.",
+      ],
+      prompt: 'Bring down the archers before the next volley.',
+      foes: {
+        'archer-1': 'The skeleton archer',
+        'archer-2': 'The skeleton archer',
+      },
+    },
+    liche_affaiblie: {
+      title: 'The cracked gem',
+      chapter: ACT3,
+      narration: [
+        "The sceptre's gem cracks under your blows. The lich screams: its magic escapes through the crack, but its claws are still there.",
+      ],
+      prompt: 'Finish off the weakened lich.',
+      foes: {
+        liche: 'The lich with the cracked gem',
+      },
     },
     approche: {
       title: 'The castle in the storm',
@@ -1256,7 +1697,21 @@ export const DRAGON_CAMPAIGN_EN: AdventureText = {
     nuee: {
       title: 'The swarm',
       chapter: FINAL,
-      narration: ['Wings, fangs, claws: everyone loses 3 HP before slamming the great door behind you.'],
+      narration: [
+        'The swarm scatters, but two giant bats, as big as horses, dive at you screeching.',
+      ],
+      prompt: 'Bring down the two giants.',
+      foes: {
+        'chauve-souris-1': 'The giant bat',
+        'chauve-souris-2': 'The red-eyed bat',
+      },
+    },
+    nuee_ko: {
+      title: 'Wings and fangs',
+      chapter: FINAL,
+      narration: [
+        'Wings, fangs, claws: you crawl to the great door and slam it behind you.',
+      ],
       label: 'Enter the great hall',
     },
     loup_garou: {
@@ -1282,8 +1737,21 @@ export const DRAGON_CAMPAIGN_EN: AdventureText = {
       chapter: FINAL,
       narration: [
         'The great door is open. No guards, no beasts. Just a red carpet, lit candles… and a soft voice: "Do come in. We were expecting you."',
+        'In the hall, two vampire spawn smile at you with all their teeth. "The master wants to see you. He didn\'t say in one piece."',
       ],
-      label: 'Go in',
+      prompt: 'Get past the welcoming committee.',
+      foes: {
+        'rejeton-1': 'The smiling spawn',
+        'rejeton-2': 'The clawed spawn',
+      },
+    },
+    porte_ouverte_ko: {
+      title: 'Dragged across the carpet',
+      chapter: FINAL,
+      narration: [
+        'The spawn force you to your knees and drag you by the collar to the great hall, like presents. "Master, they are here."',
+      ],
+      label: 'Raise your head',
     },
     grande_salle: {
       title: 'The vampire lord',
@@ -1343,15 +1811,69 @@ export const DRAGON_CAMPAIGN_EN: AdventureText = {
       chapter: FINAL,
       narration: [
         'The master of the castle is no more. Lady Isolde, for her part, has fled down a staircase that sinks into the rock, toward the heart of the mountain.',
-        'You find an empty bedroom, beds, supplies. An hour of rest before the final descent.',
+        'You follow her down the stairs. Below, galleries dug into the rock, and the sound of claws drawing closer.',
       ],
-      label: 'Rest',
+      label: 'Go down',
+    },
+    tunnels: {
+      title: 'The kobold tunnels',
+      chapter: FINAL,
+      narration: [
+        "Kobolds guard the galleries, led by a red-scaled dragonborn guard. They haven't seen your torch yet.",
+      ],
+      gmNotes: "The lair's guards: the fight is mandatory, stealth makes it shorter.",
+      prompt: 'How do you get through?',
+      options: {
+        force: 'Charge into the gallery',
+        ombre: 'Put out the torch and slip around them in the dark',
+      },
+    },
+    tunnels_ombre: {
+      title: 'In the dark',
+      chapter: FINAL,
+      narration: [
+        'No more torch. Just the glow of lava in the distance, and the sound of your hearts.',
+      ],
+      prompt: 'Move silently through the galleries: you need two successes.',
+      reason: 'Slip past the guards in the dark',
+    },
+    tunnels_combat: {
+      title: "The lair's guard",
+      chapter: FINAL,
+      narration: [
+        '"For the Great Red!" The kobolds yelp, and the dragonborn lowers his spear.',
+      ],
+      prompt: "Break the lair's guard.",
+      foes: {
+        'kobold-1': 'A kobold with a sling',
+        'kobold-2': 'A kobold with a pickaxe',
+        drakeide: 'The dragonborn guard',
+      },
+    },
+    tunnels_surprise: {
+      title: 'Behind his back',
+      chapter: FINAL,
+      narration: [
+        'The kobolds are snoring in their corner. Only the dragonborn stands guard, and he has his back to you.',
+      ],
+      prompt: 'Bring down the dragonborn before he wakes the others.',
+      foes: {
+        drakeide: 'The dragonborn guard',
+      },
+    },
+    tunnels_ko: {
+      title: 'Thrown into the gallery',
+      chapter: FINAL,
+      narration: [
+        "The guards leave you for dead at the bottom of a gallery. They're wrong: at the end, an abandoned guardroom awaits you, right above the lair.",
+      ],
+      label: 'Crawl to the room',
     },
     veillee: {
       title: 'The last vigil',
       chapter: FINAL,
       narration: [
-        'An hour of silence. You dress your wounds, sharpen your weapons, think of Mistvale, of Aurelia. You are back on your feet.',
+        'An old dwarven guardroom, forgotten above the lair. On a shelf, a red vial still sealed. An hour of silence. You dress your wounds, sharpen your weapons, think of Mistvale, of Aurelia. You are back on your feet.',
         'Beneath your feet, the mountain rumbles. Something immense is breathing.',
       ],
       label: 'Descend toward the dragon',

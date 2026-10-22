@@ -8,6 +8,7 @@
  */
 import type { CheckStat } from '@/lib/checks'
 import { classOf } from '@/lib/heroCreation'
+import type { Objet } from '@/types/character'
 
 export type ActionEffect =
   /** Jet d'attaque (d20 + caractéristique) contre la défense d'un ennemi ; dégâts s'il touche. */
@@ -55,6 +56,8 @@ export type CombatAction = {
   weaken?: boolean
   /** `inspire` : le héros en profite aussi. */
   self?: boolean
+  /** Objet du sac : `uses` est le nombre qu'en porte le héros, un de moins par usage. */
+  item?: boolean
 }
 
 const ATTACK: CombatAction = {
@@ -153,14 +156,105 @@ export function armorOf(classe: string | undefined): number {
   return hero ? (ARMOR[hero.id] ?? 0) : 1
 }
 
-/** Les actions d'un héros : attaquer, celles de sa classe, se défendre, et fuir quand la scène le permet. */
-export function actionsFor(classe: string | undefined, canFlee: boolean): CombatAction[] {
-  const hero = classOf(classe)
-  return [ATTACK, ...(hero ? (CLASS_ACTIONS[hero.id] ?? []) : []), DEFEND, ...(canFlee ? [FLEE] : [])]
+/**
+ * Objets du sac utilisables en combat, reconnus à leur nom (français ou
+ * anglais, accents ignorés). Chacun sert une fois.
+ */
+const ITEMS: { match: RegExp; action: CombatAction }[] = [
+  {
+    match: /potion/,
+    action: { id: 'objet-potion', fr: 'Potion de soin', en: 'Healing potion', hintFr: 'Regagne 2d4+2 PV.', hintEn: 'Regain 2d4+2 HP.', effect: 'selfHeal', dice: '2d4+2', item: true },
+  },
+  {
+    match: /herbe|herb/,
+    action: { id: 'objet-herbes', fr: 'Herbes médicinales', en: 'Healing herbs', hintFr: 'Regagne 1d4+2 PV.', hintEn: 'Regain 1d4+2 HP.', effect: 'selfHeal', dice: '1d4+2', item: true },
+  },
+  {
+    match: /bandage/,
+    action: { id: 'objet-bandages', fr: 'Bandages', en: 'Bandages', hintFr: 'Soigne l\'allié le plus blessé : 1d4+2.', hintEn: 'Heal the most hurt ally: 1d4+2.', effect: 'heal', dice: '1d4+2', item: true },
+  },
+  {
+    match: /baie|berr/,
+    action: { id: 'objet-baies', fr: 'Baies', en: 'Berries', hintFr: 'Regagne 1d4+1 PV.', hintEn: 'Regain 1d4+1 HP.', effect: 'selfHeal', dice: '1d4+1', item: true },
+  },
+  {
+    match: /eau benite|holy water/,
+    action: { id: 'objet-eau-benite', fr: 'Eau bénite', en: 'Holy water', hintFr: 'Lancée sur un ennemi : 2d6, sans jet.', hintEn: 'Thrown at an enemy: 2d6, no roll.', effect: 'auto', dice: '2d6', item: true },
+  },
+  {
+    match: /bombe|bomb|feu gregeois|fiole de feu|fire flask|alchemist/,
+    action: { id: 'objet-bombe', fr: 'Fiole de feu', en: 'Fire flask', hintFr: '1d6+1 à tous les ennemis.', hintEn: '1d6+1 to every enemy.', effect: 'area', dice: '1d6+1', item: true },
+  },
+]
+
+const plain = (text: string) => text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+
+/** L'action d'un objet du sac, d'après son nom. */
+export function itemAction(nom: string | undefined): CombatAction | undefined {
+  if (!nom) return undefined
+  const name = plain(nom)
+  return ITEMS.find((i) => i.match.test(name))?.action
 }
 
-export function actionById(classe: string | undefined, id: string): CombatAction | undefined {
-  return actionsFor(classe, true).find((a) => a.id === id)
+/** Objets utilisables en combat dans un sac : identifiant de l'action → nombre. */
+export function itemCounts(objets: readonly { nom?: string; quantite?: number | string }[] | undefined): Record<string, number> {
+  const counts: Record<string, number> = {}
+  for (const o of objets ?? []) {
+    const action = itemAction(o.nom)
+    const n = Math.max(0, Math.floor(Number(o.quantite ?? 1) || 0))
+    if (action && n > 0) counts[action.id] = (counts[action.id] ?? 0) + n
+  }
+  return counts
+}
+
+/**
+ * Les actions d'un héros : attaquer, celles de sa classe, se défendre, fuir
+ * quand la scène le permet, puis les objets de son sac.
+ */
+export function actionsFor(classe: string | undefined, canFlee: boolean, items?: Record<string, number>): CombatAction[] {
+  const hero = classOf(classe)
+  const bag = ITEMS.filter((i) => (items?.[i.action.id] ?? 0) > 0).map((i) => ({ ...i.action, uses: items![i.action.id] }))
+  return [ATTACK, ...(hero ? (CLASS_ACTIONS[hero.id] ?? []) : []), DEFEND, ...(canFlee ? [FLEE] : []), ...bag]
+}
+
+export function actionById(classe: string | undefined, id: string, items?: Record<string, number>): CombatAction | undefined {
+  return actionsFor(classe, true, items).find((a) => a.id === id)
+}
+
+/**
+ * Le sac après un combat et une scène : les objets utilisés en moins (une
+ * ligne vide disparaît), ceux trouvés en plus (ajoutés à une ligne du même nom).
+ */
+export function bagAfter(
+  objets: readonly Objet[],
+  consume?: Record<string, number>,
+  loot?: readonly { nom: string; n: number }[],
+): Objet[] {
+  const left = { ...consume }
+  const bag = objets.flatMap((o) => {
+    const id = itemAction(o.nom)?.id
+    const take = id ? Math.min(left[id] ?? 0, Number(o.quantite) || 0) : 0
+    if (!take || !id) return [o]
+    left[id] = (left[id] ?? 0) - take
+    const quantite = (Number(o.quantite) || 0) - take
+    return quantite > 0 ? [{ ...o, quantite }] : []
+  })
+  for (const { nom, n } of loot ?? []) {
+    const same = bag.findIndex((o) => plain(o.nom) === plain(nom))
+    if (same >= 0) bag[same] = { ...bag[same]!, quantite: (Number(bag[same]!.quantite) || 0) + n }
+    else bag.push({ id: crypto.randomUUID(), nom, quantite: n })
+  }
+  return bag
+}
+
+/** Objets utilisés par un héros pendant un combat : identifiant de l'action → nombre. */
+export function itemsUsed(used: readonly string[], heroId: string): Record<string, number> {
+  const out: Record<string, number> = {}
+  for (const u of used) {
+    const [who, id = ''] = u.split(':')
+    if (who === heroId && ITEMS.some((i) => i.action.id === id)) out[id] = (out[id] ?? 0) + 1
+  }
+  return out
 }
 
 /** Demande un jet de dé au joueur. */
@@ -171,7 +265,7 @@ export const needsFoe = (a: CombatAction) => a.effect === 'hit' || a.effect === 
 
 /** Nom d'une action, quelle que soit la classe, pour le récit du combat. */
 export function actionName(id: string | undefined, lang: 'fr' | 'en'): string {
-  const all = [ATTACK, DEFEND, FLEE, ...Object.values(CLASS_ACTIONS).flat()]
+  const all = [ATTACK, DEFEND, FLEE, ...Object.values(CLASS_ACTIONS).flat(), ...ITEMS.map((i) => i.action)]
   const action = all.find((a) => a.id === id)
   return action ? action[lang] : (id ?? '')
 }

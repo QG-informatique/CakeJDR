@@ -20,9 +20,11 @@ const MAX_MESSAGE_LENGTH = 1000
 interface Props {
   chatBoxRef: RefObject<HTMLDivElement | null>
   author: string
+  /** Rangé dans un onglet d'un autre panneau : ni cadre ni bouton pour le replier. */
+  embedded?: boolean
 }
 
-const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
+const ChatBox: FC<Props> = ({ chatBoxRef, author, embedded = false }) => {
   const room = useRoom()
   const { events, addEvent } = useEventLog(room.id)
   const sortedEvents = useMemo(() => {
@@ -118,7 +120,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
   }, [events])
 
   // When collapsed, only show a floating button so the panel frees all space
-  if (collapsed && isDesktop) {
+  if (collapsed && isDesktop && !embedded) {
     return (
       <button
         onClick={() => setCollapsed(false)}
@@ -131,10 +133,11 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author }) => {
     )
   }
 
-  const panelClass =
-    'ui-panel w-full flex-1 min-h-0 lg:flex-none lg:w-[340px] flex flex-col relative flex-shrink-0 overflow-hidden'
+  const panelClass = embedded
+    ? 'flex flex-1 min-h-0 flex-col relative overflow-hidden'
+    : 'ui-panel w-full flex-1 min-h-0 lg:flex-none lg:w-[340px] flex flex-col relative flex-shrink-0 overflow-hidden'
 
-  const collapseButton = (
+  const collapseButton = embedded ? null : (
     <button
       onClick={() => setCollapsed(true)}
       aria-label={t('collapsePanel')}

@@ -142,6 +142,8 @@ export type Scene = {
   damage?: number
   /** Remet les PV de chacun au maximum (`true`), ou en rend autant (un nombre). */
   heal?: boolean | number
+  /** Objets trouvés par chaque joueur présent à l'arrivée (nom dans les deux langues). */
+  loot?: { fr: string; en: string; n?: number }[]
   step: SceneStep
 }
 

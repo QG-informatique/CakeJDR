@@ -16,16 +16,19 @@ export default function MobileTabBar({
   active,
   onSelect,
   chatUnread,
+  chatLabel,
 }: {
   active: MobileTab
   onSelect: (tab: MobileTab) => void
   chatUnread: boolean
+  /** Aventure en cours : l'onglet du chat porte aussi son récit. */
+  chatLabel?: string
 }) {
   const t = useT()
   const tabs: { key: MobileTab; label: string; Icon: typeof Dices }[] = [
     { key: 'sheet', label: t('tabSheet'), Icon: ScrollText },
     { key: 'table', label: t('tabTable'), Icon: Dices },
-    { key: 'chat', label: t('chat'), Icon: MessageCircle },
+    { key: 'chat', label: chatLabel ?? t('chat'), Icon: MessageCircle },
   ]
 
   return (

@@ -191,13 +191,14 @@ const scenes: Scene[] = [
     chapter: ACT1,
     title: 'Le chemin des éclaireurs',
     heal: 2,
-    setup: { map: 'ferme', pieces: [ally('paysanne', 'paysanne', 0.4, 0.55)] },
+    setup: { map: 'ferme', pieces: [piece('eclaireur-1', 'gobelin-guerrier', 0.62, 0.22), ally('paysanne', 'paysanne', 0.4, 0.55)] },
     gains: ['rochers'],
     narration: [
       "Les traces discrètes sont celles des éclaireurs gobelins : elles mènent à une brèche dans les rochers, derrière leur camp. Personne ne la garde, puisque personne ne la connaît.",
       "Jeanne vous donne du pain et du fromage pour la route. « Ramenez-moi ma vache, si elle est encore en vie. »",
+      "Au bout de la piste, un éclaireur gobelin fouille un sac de pommes, le dos tourné. Vous l'avez vu avant qu'il ne vous voie.",
     ],
-    step: next('foret', 'Entrer dans la forêt'),
+    step: fight('Surprenez l\'éclaireur avant qu\'il ne donne l\'alerte.', [foe('eclaireur-1', "L'éclaireur aux pommes", 8, 11, 3, '1d6')], 'foret', 'ferme_ko'),
   },
   {
     id: 'ferme_eclaireurs',
@@ -210,7 +211,7 @@ const scenes: Scene[] = [
     narration: ["Pendant que vous tournez en rond dans la boue, deux gobelins sortent de la grange en ruine, les bras chargés de poules. Ils lâchent tout et tirent leurs lames."],
     step: fight(
       'Chassez les éclaireurs de la ferme.',
-      [foe('eclaireur-1', 'Le gobelin aux poules', 4, 11, 2, '1d6'), foe('eclaireur-2', "L'archer gobelin", 3, 12, 3, '1d4+1')],
+      [foe('eclaireur-1', 'Le gobelin aux poules', 6, 11, 2, '1d6'), foe('eclaireur-2', "L'archer gobelin", 5, 12, 3, '1d4+1')],
       'foret',
       'ferme_ko',
     ),
@@ -232,7 +233,7 @@ const scenes: Scene[] = [
     id: 'route',
     chapter: ACT1,
     title: 'La route du sud',
-    setup: { map: 'route-embuscade', pieces: [ally('marchand', 'milicien-village', 0.5, 0.5, 0.13)] },
+    setup: { map: 'route-embuscade', pieces: [ally('marchand', 'marchand-ambulant', 0.5, 0.5, 0.13)] },
     narration: [
       'Un marchand ambulant, jovial et bavard, vous accompagne avec sa charrette pleine de babioles. La route serpente entre les collines.',
       "Au détour d'un virage, une charrette renversée barre le chemin. Le marchand se tait d'un coup.",
@@ -269,15 +270,15 @@ const scenes: Scene[] = [
         piece('bandit-1', 'bandit', 0.25, 0.25),
         piece('brute', 'brute-bandit', 0.72, 0.28, 0.16),
         piece('arbaletriere', 'arbaletriere-bandit', 0.82, 0.62),
-        ally('marchand', 'milicien-village', 0.5, 0.5, 0.13),
+        ally('marchand', 'marchand-ambulant', 0.5, 0.5, 0.13),
       ],
     },
     step: fight(
       'Mettez les bandits en déroute.',
       [
-        foe('bandit-1', 'Le bandit au foulard', 5, 11, 3, '1d6'),
-        foe('brute', 'La brute au gourdin', 8, 11, 3, '1d8'),
-        foe('arbaletriere', "L'arbalétrière", 4, 12, 3, '1d6'),
+        foe('bandit-1', 'Le bandit au foulard', 4, 11, 3, '1d6'),
+        foe('brute', 'La brute au gourdin', 6, 11, 3, '1d8'),
+        foe('arbaletriere', "L'arbalétrière", 3, 12, 3, '1d6'),
       ],
       'bandits_vaincus',
       'bandits_defaite',
@@ -289,13 +290,13 @@ const scenes: Scene[] = [
     chapter: ACT1,
     title: 'Négocier avec la cheffe',
     narration: ["Vous baissez vos armes. La cheffe hausse un sourcil : elle n'avait pas prévu qu'on lui pose des questions."],
-    step: check('Faites-la parler.', 'charisme', 12, 'Faire parler la cheffe des bandits', 'bandits_parle', 'bandits_blesses', 'parole'),
+    step: check('Faites-la parler.', 'charisme', 12, 'Faire parler la cheffe des bandits', 'bandits_parle', 'bandits_combat', 'parole'),
   },
   {
     id: 'bandits_vaincus',
     chapter: ACT1,
     title: 'Les foulards rouges en fuite',
-    setup: { map: 'route-embuscade', pieces: [ally('marchand', 'milicien-village', 0.5, 0.5, 0.13)] },
+    setup: { map: 'route-embuscade', pieces: [ally('marchand', 'marchand-ambulant', 0.5, 0.5, 0.13)] },
     gains: ['lettre'],
     narration: [
       'Les bandits détalent dans les collines. Dans la sacoche abandonnée de la cheffe, une lettre cachetée de cire pourpre : un œil dans une flamme.',
@@ -307,20 +308,30 @@ const scenes: Scene[] = [
     id: 'bandits_parle',
     chapter: ACT1,
     title: 'Ce que dit la cheffe',
-    setup: { map: 'route-embuscade', pieces: [ally('marchand', 'milicien-village', 0.5, 0.5, 0.13)] },
+    setup: {
+      map: 'route-embuscade',
+      pieces: [piece('brute', 'brute-bandit', 0.72, 0.28, 0.16), piece('bandit-1', 'bandit', 0.25, 0.25), ally('marchand', 'marchand-ambulant', 0.5, 0.5, 0.13)],
+      show: show('cheffe-bandits', 'La cheffe des bandits'),
+    },
     gains: ['lettre'],
     narration: [
       "La cheffe crache par terre. « Des robes pourpres, qui paient en or neuf de la ville royale. Ils paient aussi les gobelins. Je n'aime pas leurs yeux. »",
-      'Elle vous jette leur lettre de commande, cachetée d\'un œil dans une flamme, et disparaît avec sa bande. La route est libre.',
+      'Elle vous jette leur lettre de commande, cachetée d\'un œil dans une flamme, et siffle la retraite.',
+      "La brute au gourdin ne bouge pas. « Moi, on m'a payé d'avance. » Il fait tourner son gourdin, un bandit sur les talons. La cheffe hausse les épaules et s'éloigne.",
     ],
-    step: next('gue', 'Marcher vers le camp des gobelins'),
+    step: fight(
+      'Calmez la brute et son acolyte.',
+      [foe('brute', 'La brute au gourdin', 9, 11, 3, '1d8'), foe('bandit-1', 'Le bandit au foulard', 5, 11, 3, '1d6')],
+      'gue',
+      'bandits_defaite',
+    ),
   },
   {
     id: 'bandits_blesses',
     chapter: ACT1,
     title: 'Carreaux et gourdins',
     damage: 3,
-    setup: { map: 'route-embuscade', pieces: [ally('marchand', 'milicien-village', 0.5, 0.5, 0.13)] },
+    setup: { map: 'route-embuscade', pieces: [ally('marchand', 'marchand-ambulant', 0.5, 0.5, 0.13)] },
     narration: [
       'Un carreau d\'arbalète vous frôle, un coup de gourdin ne vous rate pas : chacun perd 3 PV dans la retraite.',
       'Les bandits finissent par filer avec deux sacs de babioles. Le marchand, lui, vous montre des traces de gobelins qui partent vers les bois.',
@@ -331,7 +342,7 @@ const scenes: Scene[] = [
     id: 'bandits_defaite',
     chapter: ACT1,
     title: 'Mordre la poussière',
-    setup: { map: 'route-embuscade', pieces: [ally('marchand', 'milicien-village', 0.5, 0.5, 0.13)] },
+    setup: { map: 'route-embuscade', pieces: [ally('marchand', 'marchand-ambulant', 0.5, 0.5, 0.13)] },
     narration: [
       "Le dernier d'entre vous tombe dans la poussière. La cheffe rengaine ses lames en riant : « Pas aujourd'hui, les héros. » Les bandits repartent avec la charrette entière.",
       "Le marchand vous relève un par un, la mine défaite. Il ne reste qu'une chose à suivre : des traces de gobelins qui partent vers la rivière.",
@@ -364,9 +375,13 @@ const scenes: Scene[] = [
   {
     id: 'loups_fuient',
     chapter: ACT1,
-    title: 'Les loups détalent',
-    narration: ['Une torche agitée, un cri, une pierre bien lancée : les loups filent vers la forêt. Il suffit de les suivre.'],
-    step: next('foret', 'Suivre les loups dans la forêt'),
+    title: 'Le chef de meute',
+    setup: { map: 'route-embuscade', pieces: [piece('loup-1', 'loup-sombre', 0.5, 0.3, 0.17)] },
+    narration: [
+      'Une torche agitée, un cri, une pierre bien lancée : deux loups filent vers la forêt.',
+      "Le plus gros, lui, ne recule pas. Il baisse la tête, babines retroussées : c'est le chef de meute, et il ne fuira pas devant vous.",
+    ],
+    step: fight('Abattez le chef de meute.', [foe('loup-1', 'Le chef de meute', 12, 11, 4, '1d6')], 'loups_vaincus', 'loups_mordent'),
   },
   {
     id: 'loups_combat',
@@ -380,9 +395,9 @@ const scenes: Scene[] = [
     step: fight(
       'Tenez la meute en respect.',
       [
-        foe('loup-1', 'Le grand loup', 6, 11, 3, '1d6'),
-        foe('loup-2', 'Un loup sombre', 4, 11, 3, '1d4+1'),
-        foe('loup-3', 'Un loup sombre', 4, 11, 3, '1d4+1'),
+        foe('loup-1', 'Le grand loup', 5, 11, 3, '1d6'),
+        foe('loup-2', 'Un loup sombre', 3, 11, 3, '1d4+1'),
+        foe('loup-3', 'Un loup sombre', 3, 11, 3, '1d4+1'),
       ],
       'loups_vaincus',
       'loups_mordent',
@@ -409,18 +424,19 @@ const scenes: Scene[] = [
     id: 'gue',
     chapter: ACT1,
     title: 'Le gué en crue',
-    setup: { map: 'gue-riviere', pieces: [ally('marchand', 'milicien-village', 0.3, 0.7, 0.13)] },
+    setup: { map: 'gue-riviere', pieces: [ally('marchand', 'marchand-ambulant', 0.3, 0.7, 0.13)] },
     narration: [
       "Les traces mènent à une rivière gonflée par les pluies. Le gué disparaît sous une eau brune qui charrie des branches. Sur l'autre rive, la fumée du camp gobelin monte entre les arbres.",
-      'Le marchand rebrousse chemin : « Je vous attends au village. Si vous revenez. »',
+      'Le marchand rebrousse chemin et vous glisse une fiole rouge : « Pour la peine. Je vous attends au village. Si vous revenez. »',
     ],
+    loot: [{ fr: 'Potion de soin', en: 'Healing potion' }],
     step: trial(
       'Traversez en vous tenant les uns aux autres : il faut deux réussites.',
       'constitution',
       11,
       'Traverser le gué en crue',
       [2, 3],
-      'camp',
+      'avant_poste',
       'gue_courant',
       'effort',
     ),
@@ -430,8 +446,8 @@ const scenes: Scene[] = [
     chapter: ACT1,
     title: 'Le courant',
     damage: 2,
-    narration: ["Un pied glisse, et le courant vous roule sur les pierres. Chacun perd 2 PV avant d'atteindre l'autre rive, trempé jusqu'aux os, au pied de la palissade gobeline."],
-    step: next('camp', 'Approcher du camp'),
+    narration: ["Un pied glisse, et le courant vous roule sur les pierres. Chacun perd 2 PV avant d'atteindre l'autre rive, trempé jusqu'aux os."],
+    step: next('avant_poste', 'Suivre la fumée'),
   },
 
   // La forêt : une rencontre au hasard.
@@ -455,7 +471,7 @@ const scenes: Scene[] = [
     narration: [
       "Un elfe à l'arc long sort de la brume. « Sylvaën. Je suis ces gobelins depuis trois jours. Ils ont capturé une forgeronne naine, et je connais un sentier qui passe derrière leur palissade. »",
     ],
-    step: next('camp', 'Suivre Sylvaën'),
+    step: next('avant_poste', 'Suivre Sylvaën'),
   },
   {
     id: 'foret_herboriste',
@@ -466,8 +482,10 @@ const scenes: Scene[] = [
     narration: [
       "Une vieille femme ramasse des herbes au bord de l'eau. Elle ne semble pas surprise de vous voir.",
       '« Vous allez au camp des gobelins ? Buvez ça d\'abord. » Son infusion amère vous rend toutes vos forces. « Et méfiez-vous du chaman : sa fumée endort. »',
+      "Elle vous fourre dans les mains une poignée d'herbes séchées : « Mâchez ça quand ça saigne. »",
     ],
-    step: next('camp', 'Continuer vers le camp'),
+    loot: [{ fr: 'Herbes médicinales', en: 'Healing herbs', n: 2 }],
+    step: next('avant_poste', 'Continuer vers le camp'),
   },
   {
     id: 'foret_araignee',
@@ -482,7 +500,7 @@ const scenes: Scene[] = [
     chapter: ACT1,
     title: 'Au large de la toile',
     narration: ["Un bond de côté, une roulade sous une racine : l'araignée ne mord que la brume. Le camp n'est plus très loin."],
-    step: next('camp', 'Continuer vers le camp'),
+    step: next('avant_poste', 'Continuer vers le camp'),
   },
   {
     id: 'araignee_ko',
@@ -490,7 +508,118 @@ const scenes: Scene[] = [
     title: 'Pris dans la toile',
     damage: 2,
     narration: ["La toile vous colle aux bras et la morsure brûle : chacun perd 2 PV avant de se dégager à coups de lame."],
-    step: next('camp', 'Continuer vers le camp'),
+    step: next('avant_poste', 'Continuer vers le camp'),
+  },
+
+  // L'avant-poste des ruines : un combat à chaque fois, plus ou moins rude.
+  {
+    id: 'avant_poste',
+    chapter: ACT1,
+    title: "L'avant-poste des ruines",
+    setup: {
+      map: 'carte-ruines',
+      pieces: [
+        piece('gob-cor', 'gobelin-guerrier', 0.5, 0.18),
+        piece('gob-lance', 'gobelin-guerrier', 0.3, 0.3),
+        piece('gob-archer', 'gobelin-archer', 0.75, 0.25),
+        piece('loup', 'loup-sombre', 0.62, 0.42),
+      ],
+      show: show('creature-gobelin', "Le gobelin au cor"),
+    },
+    narration: [
+      "Avant le camp, la piste traverse les ruines d'une vieille tour de guet. Les gobelins en ont fait un avant-poste : un feu, des sacs de butin, un loup attaché à une colonne.",
+      "Sur le mur, un gobelin tient un grand cor de bélier. S'il souffle dedans, tout le camp saura que vous arrivez.",
+    ],
+    gmNotes: "Combat obligatoire. Le vote ne décide que de sa difficulté : faire taire le sonneur de cor d'abord retire deux ennemis.",
+    step: vote("Comment prenez-vous l'avant-poste ?", [
+      opt('charge', 'Charger tout de suite, avant que le cor ne sonne', 'avant_poste_combat'),
+      opt('discret', 'Grimper au mur sans bruit pour faire taire le sonneur', 'avant_poste_mur'),
+      opt('ruse', "Jeter des pierres plus loin pour attirer les gardes ailleurs", 'avant_poste_ruse'),
+    ]),
+  },
+  {
+    id: 'avant_poste_mur',
+    chapter: ACT1,
+    title: 'Le mur de la tour',
+    setup: { map: 'carte-ruines', pieces: [piece('gob-cor', 'gobelin-guerrier', 0.5, 0.18)] },
+    narration: ['Les pierres de la tour sont branlantes, couvertes de mousse. Le sonneur vous tourne le dos, le cor sur la hanche.'],
+    step: check('Grimpez sans faire tomber une pierre.', 'dexterite', 12, 'Escalader le mur en silence', 'avant_poste_surprise', 'avant_poste_combat', 'discretion'),
+  },
+  {
+    id: 'avant_poste_ruse',
+    chapter: ACT1,
+    title: 'Des pierres dans la nuit',
+    setup: { map: 'carte-ruines', pieces: [piece('gob-lance', 'gobelin-guerrier', 0.3, 0.3), piece('loup', 'loup-sombre', 0.62, 0.42)] },
+    narration: ["Un caillou dans les fourrés, puis un autre, un peu plus loin. Il faut viser juste pour qu'ils croient à un animal, pas à des intrus."],
+    step: check('Trompez les gardes.', 'intelligence', 12, 'Attirer les gardes ailleurs', 'avant_poste_surprise', 'avant_poste_combat', 'ruse'),
+  },
+  {
+    id: 'avant_poste_surprise',
+    chapter: ACT1,
+    title: 'Le cor se tait',
+    setup: { map: 'carte-ruines', pieces: [piece('gob-lance', 'gobelin-guerrier', 0.3, 0.3), piece('loup', 'loup-sombre', 0.62, 0.42)] },
+    narration: [
+      "Le sonneur s'effondre sans un cri, son cor roule dans l'herbe. L'archer, parti voir ce qui bougeait, se perd dans le noir.",
+      'Il ne reste que le garde à la lance et son loup, qui vous font face en grondant.',
+    ],
+    step: fight(
+      "Finissez-en avec les gardes de l'avant-poste.",
+      [foe('gob-lance', 'Le gobelin à la lance', 7, 12, 3, '1d6'), foe('loup', 'Le loup enchaîné', 6, 11, 3, '1d4+1')],
+      'avant_poste_butin',
+      'avant_poste_ko',
+    ),
+  },
+  {
+    id: 'avant_poste_combat',
+    chapter: ACT1,
+    title: 'Le cor de bélier',
+    setup: {
+      map: 'carte-ruines',
+      pieces: [
+        piece('gob-cor', 'gobelin-guerrier', 0.5, 0.18),
+        piece('gob-lance', 'gobelin-guerrier', 0.3, 0.3),
+        piece('gob-archer', 'gobelin-archer', 0.75, 0.25),
+        piece('loup', 'loup-sombre', 0.62, 0.42),
+      ],
+    },
+    narration: ['Le cor mugit dans la vallée. Les gobelins attrapent leurs armes, et quelqu\'un détache le loup.'],
+    step: fight(
+      "Prenez l'avant-poste.",
+      [
+        foe('gob-cor', 'Le sonneur de cor', 2, 11, 2, '1d6'),
+        foe('gob-lance', 'Le gobelin à la lance', 4, 12, 2, '1d6'),
+        foe('gob-archer', "L'archer gobelin", 3, 12, 3, '1d6'),
+        foe('loup', 'Le loup enchaîné', 4, 11, 2, '1d4+1'),
+      ],
+      'avant_poste_butin',
+      'avant_poste_ko',
+      { next: 'avant_poste_ko', stat: 'dexterite', dc: 12 },
+    ),
+  },
+  {
+    id: 'avant_poste_butin',
+    chapter: ACT1,
+    title: 'Le butin des gobelins',
+    heal: 3,
+    setup: { map: 'carte-ruines' },
+    loot: [{ fr: 'Potion de soin', en: 'Healing potion' }],
+    narration: [
+      "Dans les sacs de l'avant-poste : des poules, une cloche de vache, des casseroles… et une fiole rouge bouchée à la cire, volée à un voyageur.",
+      'Vous soufflez un moment près du feu. Plus loin, la fumée du camp gobelin monte entre les arbres.',
+    ],
+    step: next('camp', 'Approcher du camp'),
+  },
+  {
+    id: 'avant_poste_ko',
+    chapter: ACT1,
+    title: 'Le cor a sonné',
+    heal: 3,
+    setup: { map: 'carte-ruines' },
+    narration: [
+      "Les gobelins vous laissent pour morts et courent prévenir le camp en soufflant dans leur cor. Vous reprenez vos esprits à la nuit, dans les herbes des ruines.",
+      'Un peu de repos, un peu de pain : vous repartez, plus prudents.',
+    ],
+    step: next('camp', 'Approcher du camp'),
   },
 
   // Le camp des gobelins.
@@ -534,9 +663,9 @@ const scenes: Scene[] = [
     step: fight(
       'Balayez les gobelins.',
       [
-        foe('gob-1', 'Le gobelin à la lance', 5, 12, 3, '1d6'),
+        foe('gob-1', 'Le gobelin à la lance', 4, 12, 3, '1d6'),
         foe('gob-archer', "L'archer gobelin", 3, 12, 3, '1d6'),
-        foe('gob-chaman', 'Le chaman', 6, 11, 2, '1d4+1'),
+        foe('gob-chaman', 'Le chaman', 5, 11, 2, '1d4+1'),
       ],
       'camp_libere',
       'camp_fumee',
@@ -588,7 +717,7 @@ const scenes: Scene[] = [
       "Dans la confusion, vous brisez quand même la cage. La naine vous attrape par le bras : « Par ici, la grotte de leur roi ! »",
     ],
     gains: ['forge'],
-    step: next('grotte', 'Courir vers la grotte'),
+    step: next('grotte_gardes', 'Courir vers la grotte'),
   },
   {
     id: 'camp_libere',
@@ -601,7 +730,47 @@ const scenes: Scene[] = [
       "La cage s'ouvre. La naine se frotte les poignets : « Brunhild, forgeronne de Brumeval. Merci. Ces avortons m'ont prise pour que je leur forge des chaînes. Des chaînes énormes, pour une bête énorme. »",
       '« Leur roi est dans la grotte, là-haut. Et il n\'est pas seul : un type en robe pourpre lui parle tous les soirs. »',
     ],
-    step: next('grotte', 'Monter à la grotte'),
+    step: next('grotte_gardes', 'Monter à la grotte'),
+  },
+
+  // Les gardes de la grotte : un combat obligatoire avant le roi.
+  {
+    id: 'grotte_gardes',
+    chapter: ACT1,
+    title: "L'entrée de la grotte",
+    setup: {
+      map: 'grotte-gobelins',
+      pieces: [
+        piece('garde-1', 'gobelin-guerrier', 0.35, 0.3),
+        piece('garde-chaman', 'gobelin-chaman', 0.6, 0.22),
+        piece('loup-roi', 'loup-sombre', 0.5, 0.42, 0.17),
+      ],
+    },
+    narration: [
+      "Le sentier grimpe jusqu'à une bouche noire dans la falaise, éclairée de torches. Devant, la garde personnelle du roi : un gobelin en armure de casseroles, un chaman couvert d'os, et le loup du roi, énorme, aux yeux jaunes.",
+      '« Personne ne passe ! » glapit le garde. « Sauf les morts. Et vous n\'êtes pas encore morts. »',
+    ],
+    step: fight(
+      'Forcez le passage.',
+      [
+        foe('garde-1', 'Le garde du roi', 5, 12, 3, '1d6'),
+        foe('garde-chaman', "Le chaman d'os", 5, 11, 2, '1d4+1'),
+        foe('loup-roi', 'Le loup du roi', 6, 11, 2, '1d6'),
+      ],
+      'grotte',
+      'grotte_gardes_ko',
+    ),
+  },
+  {
+    id: 'grotte_gardes_ko',
+    chapter: ACT1,
+    title: 'Traînés devant le roi',
+    heal: 4,
+    narration: [
+      "Les gardes vous ligotent et vous traînent dans la grotte, devant le trône. Le roi veut voir de ses yeux ces héros qui ont tant fait parler d'eux.",
+      "Pendant qu'il se gausse, vous rongez vos liens. Le temps de reprendre votre souffle, et vous voilà libres, face à lui.",
+    ],
+    step: next('grotte', 'Se relever'),
   },
 
   // La grotte du roi gobelin.
@@ -609,6 +778,7 @@ const scenes: Scene[] = [
     id: 'grotte',
     chapter: ACT1,
     title: 'Le trône d\'os',
+    heal: 3,
     setup: {
       map: 'grotte-gobelins',
       pieces: [piece('roi-gobelin', 'roi-gobelin', 0.42, 0.12, 0.2), piece('cultiste', 'cultiste', 0.62, 0.18)],
@@ -693,11 +863,16 @@ const scenes: Scene[] = [
     chapter: ACT1,
     title: 'Le médaillon',
     gains: ['medaillon'],
-    setup: { map: 'place-village', pieces: [ally('milicien', 'milicien-village', 0.7, 0.3)] },
+    setup: {
+      map: 'place-village',
+      pieces: [ally('milicien', 'milicien-village', 0.7, 0.3)],
+      show: show('pnj-aubergiste', "L'aubergiste du Sanglier Doré"),
+    },
     heal: true,
+    loot: [{ fr: 'Potion de soin', en: 'Healing potion' }],
     narration: [
       "Sur le cultiste, un médaillon d'or : un œil dans une flamme. Au dos, gravé : « Pour la Dame, au port d'Aurélia, quand la Vipère accostera. »",
-      "Brumeval vous fête toute la nuit. Le bourgmestre vous confie une lettre pour le roi, et chacun dort enfin d'un vrai sommeil : vous voilà remis sur pied.",
+      "Brumeval vous fête toute la nuit au Sanglier Doré. L'aubergiste remplit vos besaces, une fiole rouge dans chacune ; le bourgmestre vous confie une lettre pour le roi, et chacun dort enfin d'un vrai sommeil : vous voilà remis sur pied.",
       'Au matin, la route de la ville royale vous attend.',
     ],
     step: next('ruines', 'Partir pour la ville royale'),
@@ -782,7 +957,8 @@ const scenes: Scene[] = [
       opt('cour', 'Le montrer au roi, devant toute la cour', 'audience_cour'),
       opt('capitaine', 'Le montrer en secret à la capitaine de la garde', 'audience_capitaine'),
       opt('mage', "Demander au mage de la cour d'étudier le médaillon", 'bibliotheque'),
-      opt('rien', 'Ne rien dire et enquêter seuls en ville', 'rues'),
+      opt('aveline', "Relever le défi de la chevalière Aveline, qui doute de vous", 'aveline_duel'),
+      opt('rien', 'Ne rien dire et enquêter seuls en ville', 'auberge'),
     ]),
   },
   {
@@ -795,7 +971,7 @@ const scenes: Scene[] = [
       "Le médaillon brille dans votre main. La salle murmure. Le roi fronce les sourcils… et l'éventail de la dame se ferme d'un coup sec.",
       "« Dame Isolde », souffle la capitaine à votre oreille. « Elle vient de pâlir. » Quand vous relevez les yeux, Isolde a déjà quitté la salle.",
     ],
-    step: next('rues', 'Descendre en ville'),
+    step: next('auberge', 'Descendre en ville'),
   },
   {
     id: 'audience_capitaine',
@@ -806,7 +982,7 @@ const scenes: Scene[] = [
     narration: [
       "Dans un couloir du palais, la capitaine examine le médaillon. « J'ai vu ce symbole sur des caisses au port. Je ne peux pas agir sans preuve… mais je peux vous envoyer mes gardes quand vous en aurez besoin. »",
     ],
-    step: next('rues', 'Descendre en ville'),
+    step: next('auberge', 'Descendre en ville'),
   },
 
   {
@@ -825,7 +1001,7 @@ const scenes: Scene[] = [
       'Retrouver le symbole dans les grimoires',
       [2, 3],
       'bibliotheque_ok',
-      'rues',
+      'auberge',
       'savoir',
     ),
   },
@@ -840,7 +1016,145 @@ const scenes: Scene[] = [
       "Dans un grimoire relié de cuir rouge, le symbole de l'œil dans la flamme, et le dessin d'un cercle d'invocation. Trois runes y sont entourées : celles qui le défont.",
       '« Gardez ça en tête », dit le mage en refermant le livre. « Et ne dites à personne ce que vous cherchez. »',
     ],
-    step: next('rues', 'Descendre en ville'),
+    step: next('auberge', 'Descendre en ville'),
+  },
+
+  // Le duel de Dame Aveline, chevalière de la garde.
+  {
+    id: 'aveline_duel',
+    chapter: ACT2,
+    title: 'Le défi de Dame Aveline',
+    setup: {
+      map: 'ambiance-ville-royale',
+      pieces: [piece('aveline', 'chevaliere-heroine', 0.5, 0.3, 0.17, 'pions')],
+      show: show('chevaliere-heroine', 'Dame Aveline'),
+    },
+    narration: [
+      "Une chevalière en armure claire s'avance au pied du trône. « Dame Aveline, de la garde royale. Des paysans qui ont vaincu un roi gobelin ? Permettez-moi d'en douter. »",
+      "Dans la cour du palais, elle vous tend des épées émoussées. « Au premier qui met l'autre à terre. Si vous gagnez, mon épée est à vous. »",
+    ],
+    gmNotes: "Aveline est loyale et honnête. Gagner le duel la fait venir à l'antichambre du sanctuaire.",
+    step: fight('Battez Dame Aveline en duel.', [foe('aveline', 'Dame Aveline', 22, 13, 5, '1d6+1')], 'aveline_allie', 'aveline_respect'),
+  },
+  {
+    id: 'aveline_allie',
+    chapter: ACT2,
+    title: "L'épée d'Aveline",
+    heal: 3,
+    setup: { map: 'ambiance-ville-royale', pieces: [ally('aveline', 'chevaliere-heroine', 0.5, 0.3, 0.17)] },
+    gains: ['aveline'],
+    loot: [{ fr: 'Potion de soin', en: 'Healing potion' }],
+    narration: [
+      "Aveline se relève en riant et vous serre l'avant-bras. « J'avais tort. Quand vous trouverez ces cultistes, faites-moi prévenir : je serai là. »",
+      'Elle vous glisse une fiole rouge de la réserve de la garde.',
+    ],
+    step: next('auberge', 'Descendre en ville'),
+  },
+  {
+    id: 'aveline_respect',
+    chapter: ACT2,
+    title: 'Mordre la poussière',
+    heal: 4,
+    setup: { map: 'ambiance-ville-royale', pieces: [ally('aveline', 'chevaliere-heroine', 0.5, 0.3, 0.17)] },
+    narration: [
+      "Le pommeau d'Aveline vous envoie dans le sable. Elle vous tend la main pour vous relever. « Pas mal. Mais le culte, lui, n'utilisera pas d'épées émoussées. »",
+    ],
+    step: next('auberge', 'Descendre en ville'),
+  },
+
+  // L'auberge : une attaque de nuit, obligatoire.
+  {
+    id: 'auberge',
+    chapter: ACT2,
+    title: 'La Lanterne bleue',
+    setup: { map: 'ambiance-taverne', show: show('pnj-aubergiste', "L'aubergiste de la Lanterne bleue") },
+    narration: [
+      "La nuit tombe sur Aurélia. Vous prenez des chambres à la Lanterne bleue, une auberge bruyante près du marché. L'aubergiste vous regarde un peu trop longtemps en vous donnant les clés.",
+      "Vers minuit, la musique s'arrête. Dans le couloir, un plancher craque.",
+    ],
+    gmNotes: 'Des tueurs du culte viennent finir le travail : le combat est obligatoire, la préparation le rend plus facile.',
+    step: vote('Que faites-vous cette nuit ?', [
+      opt('veiller', "Veiller à tour de rôle, l'oreille contre la porte", 'auberge_veille'),
+      opt('piege', 'Tendre un fil et des chopes vides devant la porte', 'auberge_piege'),
+      opt('dormir', 'Dormir, la journée a été longue', 'auberge_nuit'),
+    ]),
+  },
+  {
+    id: 'auberge_veille',
+    chapter: ACT2,
+    title: 'Une ombre sous la porte',
+    setup: { map: 'ambiance-taverne' },
+    narration: ['Les heures passent. Une ombre glisse sous la porte, puis une deuxième.'],
+    step: check('Ne vous endormez pas : jet de Sagesse.', 'sagesse', 12, 'Entendre les tueurs approcher', 'auberge_guet', 'auberge_nuit', 'nature'),
+  },
+  {
+    id: 'auberge_piege',
+    chapter: ACT2,
+    title: 'Le fil et les chopes',
+    setup: { map: 'ambiance-taverne' },
+    narration: ["Un fil tendu à hauteur de cheville, des chopes empilées derrière : au moindre pas, tout l'étage l'entendra."],
+    step: check("Tendez le piège sans qu'il se voie : jet d'Intelligence.", 'intelligence', 12, 'Monter un piège discret', 'auberge_guet', 'auberge_nuit', 'ruse'),
+  },
+  {
+    id: 'auberge_guet',
+    chapter: ACT2,
+    title: 'Les tueurs pris au piège',
+    setup: {
+      map: 'ambiance-taverne',
+      pieces: [piece('fanatique-1', 'fanatique', 0.3, 0.3), piece('cultiste-1', 'cultiste', 0.7, 0.35)],
+    },
+    narration: ["Les chopes dégringolent, la porte s'ouvre sur deux silhouettes masquées qui ne s'attendaient pas à vous trouver debout, l'arme à la main."],
+    step: fight(
+      'Les tueurs sont surpris : frappez les premiers.',
+      [foe('fanatique-1', 'Le tueur masqué', 11, 12, 4, '1d6+1'), foe('cultiste-1', 'Le cultiste au couteau', 8, 11, 3, '1d6')],
+      'auberge_indice',
+      'auberge_ko',
+    ),
+  },
+  {
+    id: 'auberge_nuit',
+    chapter: ACT2,
+    title: 'Des couteaux dans le noir',
+    setup: {
+      map: 'ambiance-taverne',
+      pieces: [piece('fanatique-1', 'fanatique', 0.25, 0.3), piece('cultiste-1', 'cultiste', 0.55, 0.25), piece('cultiste-2', 'cultiste', 0.78, 0.35)],
+    },
+    damage: 2,
+    narration: ["Vous vous réveillez avec une lame sur la gorge. Trois silhouettes masquées dans la chambre, et l'odeur du soufre."],
+    step: fight(
+      'Défendez-vous dans le noir.',
+      [
+        foe('fanatique-1', 'Le tueur masqué', 8, 12, 4, '1d6+1'),
+        foe('cultiste-1', 'Le cultiste au couteau', 6, 11, 3, '1d6'),
+        foe('cultiste-2', 'Le cultiste à la corde', 6, 11, 3, '1d6'),
+      ],
+      'auberge_indice',
+      'auberge_ko',
+    ),
+  },
+  {
+    id: 'auberge_indice',
+    chapter: ACT2,
+    title: "L'œil tatoué",
+    heal: 3,
+    setup: { map: 'ambiance-taverne', show: show('pnj-aubergiste', "L'aubergiste de la Lanterne bleue") },
+    loot: [{ fr: 'Bandages', en: 'Bandages', n: 2 }],
+    narration: [
+      "Sur le poignet du tueur, un œil dans une flamme, tatoué à l'encre noire. L'aubergiste, livide, avoue qu'on l'a payé pour laisser la porte ouverte.",
+      'Pour se faire pardonner, il vous donne des bandages propres et le petit-déjeuner. « Ils posaient des questions sur vous au marché. Méfiez-vous. »',
+    ],
+    step: next('rues', 'Partir enquêter'),
+  },
+  {
+    id: 'auberge_ko',
+    chapter: ACT2,
+    title: 'Laissés pour morts',
+    heal: 3,
+    setup: { map: 'ambiance-taverne' },
+    narration: [
+      "Les tueurs vous laissent pour morts et s'enfuient par la fenêtre. Au matin, une servante vous trouve et court chercher un guérisseur.",
+    ],
+    step: next('rues', 'Partir enquêter, encore sonnés'),
   },
 
   // Les rues : une rencontre au hasard.
@@ -876,7 +1190,9 @@ const scenes: Scene[] = [
     narration: [
       "Dans une boutique qui fume de partout, un alchimiste à lunettes vous reçoit. « De l'encens de braise ? On m'en a acheté trois tonneaux. Personne n'en achète ! Ça sert à… réveiller les grosses bêtes qui dorment. »",
       "Il vous glisse une fiole bleue : « De la poudre de givre. Jetée dans un brasero, elle étouffe l'encens. »",
+      "Pour deux pièces, il ajoute des fioles de feu grégeois : « Ça, on le lance. Et on recule. »",
     ],
+    loot: [{ fr: 'Fiole de feu', en: 'Fire flask', n: 2 }],
     step: next('choix_ville', 'Réfléchir à la suite'),
   },
   {
@@ -887,7 +1203,7 @@ const scenes: Scene[] = [
     narration: ["Une ruelle trop calme. Deux silhouettes masquées, dagues courbes à la main, vous tombent dessus depuis les toits. Quelqu'un sait que vous êtes là."],
     step: fight(
       "Retournez l'embuscade.",
-      [foe('fanatique-1', 'Le petit fanatique', 7, 12, 4, '1d6+1'), foe('fanatique-2', 'Le fanatique masqué', 8, 12, 4, '1d6+1')],
+      [foe('fanatique-1', 'Le petit fanatique', 10, 12, 4, '1d6+1'), foe('fanatique-2', 'Le fanatique masqué', 10, 12, 4, '1d6+1')],
       'embuscade_ok',
       'embuscade_ko',
     ),
@@ -957,7 +1273,7 @@ const scenes: Scene[] = [
       "Entre deux tonneaux, vous filez jusqu'à la trappe. Mara vous suit : « Ces tonneaux sont pleins d'encens de braise. Si on en vide un dans le port, ce sera toujours ça de moins. »",
       'Sous la trappe, un escalier de pierre descend, chaud comme un four.',
     ],
-    step: next('sanctuaire', 'Descendre'),
+    step: next('antichambre', 'Descendre'),
   },
   {
     id: 'port_ko',
@@ -972,8 +1288,8 @@ const scenes: Scene[] = [
     ],
     step: fight(
       'Dégagez le pont de la Vipère.',
-      [foe('cultiste-1', 'Un cultiste au couteau', 7, 11, 4, '1d6'), foe('cultiste-2', 'Un cultiste au couteau', 7, 11, 4, '1d6')],
-      'sanctuaire',
+      [foe('cultiste-1', 'Un cultiste au couteau', 10, 11, 4, '1d6'), foe('cultiste-2', 'Un cultiste au couteau', 10, 11, 4, '1d6')],
+      'antichambre',
       'port_sauves',
     ),
   },
@@ -987,7 +1303,7 @@ const scenes: Scene[] = [
       "Un coup de rame, un plongeon, et l'eau froide du port. Mara et ses marins vous repêchent un à un pendant que les cultistes rient sur le pont.",
       "« Ils ont laissé la trappe ouverte », souffle Mara. « Ils ne croient pas que vous reviendrez. Prouvez-leur le contraire. »",
     ],
-    step: next('sanctuaire', 'Descendre'),
+    step: next('antichambre', 'Descendre'),
   },
   {
     id: 'egouts',
@@ -1017,7 +1333,7 @@ const scenes: Scene[] = [
       "La capitaine tient parole : six gardes en cape bleue vous ouvrent la grande porte des égouts. Les diablotins fuient devant les hallebardes.",
       'Vous avancez vite, et sans une égratignure.',
     ],
-    step: next('sanctuaire', 'Avancer jusqu\'au sanctuaire'),
+    step: next('antichambre', 'Avancer jusqu\'au sanctuaire'),
   },
   {
     id: 'egouts_ok',
@@ -1025,7 +1341,7 @@ const scenes: Scene[] = [
     title: 'Le bon tunnel',
     heal: 3,
     narration: ['Les traces de soufre, les marques de chariot, une porte trop neuve pour des égouts : vous y êtes, sans un bruit.'],
-    step: next('sanctuaire', 'Pousser la porte'),
+    step: next('antichambre', 'Pousser la porte'),
   },
   {
     id: 'egouts_ko',
@@ -1035,8 +1351,8 @@ const scenes: Scene[] = [
     narration: ["Un faux pas dans l'eau, et la nichée de diablotins vous tombe dessus en riant, toutes griffes dehors."],
     step: fight(
       'Chassez les diablotins.',
-      [foe('diablotin-1', 'Un diablotin rieur', 4, 12, 3, '1d4+1'), foe('diablotin-2', 'Un diablotin rieur', 4, 12, 3, '1d4+1')],
-      'sanctuaire',
+      [foe('diablotin-1', 'Un diablotin rieur', 9, 12, 4, '1d4+1'), foe('diablotin-2', 'Un diablotin rieur', 9, 12, 4, '1d4+1')],
+      'antichambre',
       'egouts_morsures',
     ),
   },
@@ -1046,7 +1362,103 @@ const scenes: Scene[] = [
     title: 'Griffés et mordus',
     setup: { map: 'egouts' },
     narration: ["Les diablotins vous laissent dans l'eau sale, couverts de griffures, et s'envolent en ricanant. Ils ne se sont pas méfiés : la porte du sanctuaire est juste là, entrouverte."],
-    step: next('sanctuaire', 'Pousser la porte'),
+    step: next('antichambre', 'Pousser la porte'),
+  },
+
+  // L'antichambre : les gardiens du sanctuaire, obligatoires.
+  {
+    id: 'antichambre',
+    chapter: ACT2,
+    title: "L'antichambre",
+    setup: {
+      map: 'donjon-salles',
+      pieces: [piece('fanatique-1', 'fanatique', 0.3, 0.3), piece('fanatique-2', 'fanatique', 0.7, 0.3), piece('diablotin', 'diablotin', 0.5, 0.18, 0.12)],
+    },
+    narration: [
+      "Un couloir de pierre noire, des torches vertes, et une lourde porte gravée d'un œil. Devant elle, deux fanatiques en robe rouge et un petit diable qui ricane sur un brasero.",
+    ],
+    gmNotes: 'Les gardiens du sanctuaire : le combat est obligatoire. Aveline (gagnée au duel) en retient une partie.',
+    step: vote('Comment passez-vous les gardiens ?', [
+      opt('force', "Charger avant qu'ils ne donnent l'alarme", 'antichambre_combat'),
+      opt('ombre', 'Se glisser dans les ombres pour les prendre à revers', 'antichambre_ombre'),
+      opt('aveline', 'Faire signe à Dame Aveline, qui vous a suivis', 'antichambre_aveline', 'aveline'),
+    ]),
+  },
+  {
+    id: 'antichambre_ombre',
+    chapter: ACT2,
+    title: 'Dans les ombres',
+    setup: { map: 'donjon-salles', pieces: [piece('fanatique-1', 'fanatique', 0.3, 0.3), piece('fanatique-2', 'fanatique', 0.7, 0.3)] },
+    narration: ['Les torches font danser les ombres. Il faut longer le mur sans faire tinter une seule maille.'],
+    step: trial(
+      'Approchez sans être vus : il faut deux réussites.',
+      'dexterite',
+      12,
+      'Se glisser derrière les gardiens',
+      [2, 3],
+      'antichambre_surprise',
+      'antichambre_combat',
+      'discretion',
+    ),
+  },
+  {
+    id: 'antichambre_combat',
+    chapter: ACT2,
+    title: 'Les gardiens du sanctuaire',
+    setup: {
+      map: 'donjon-salles',
+      pieces: [piece('fanatique-1', 'fanatique', 0.3, 0.3), piece('fanatique-2', 'fanatique', 0.7, 0.3), piece('diablotin', 'diablotin', 0.5, 0.18, 0.12)],
+    },
+    narration: ['« Des intrus ! » Les fanatiques tirent leurs dagues courbes, et le diablotin bondit du brasero en crachant des étincelles.'],
+    step: fight(
+      'Abattez les gardiens.',
+      [
+        foe('fanatique-1', 'Le fanatique en rouge', 8, 12, 4, '1d6+1'),
+        foe('fanatique-2', 'La fanatique aux dagues', 8, 12, 4, '1d6+1'),
+        foe('diablotin', 'Le diablotin du brasero', 4, 13, 4, '1d4+1'),
+      ],
+      'sanctuaire',
+      'antichambre_ko',
+    ),
+  },
+  {
+    id: 'antichambre_surprise',
+    chapter: ACT2,
+    title: 'Pris à revers',
+    setup: { map: 'donjon-salles', pieces: [piece('fanatique-2', 'fanatique', 0.7, 0.3), piece('diablotin', 'diablotin', 0.5, 0.18, 0.12)] },
+    narration: ["Le premier fanatique s'effondre sans un bruit. Le second se retourne trop tard, et le diablotin piaille de rage."],
+    step: fight(
+      "Finissez-en avant que l'alarme ne sonne.",
+      [foe('fanatique-2', 'La fanatique aux dagues', 11, 12, 4, '1d6+1'), foe('diablotin', 'Le diablotin du brasero', 6, 13, 4, '1d4+1')],
+      'sanctuaire',
+      'antichambre_ko',
+    ),
+  },
+  {
+    id: 'antichambre_aveline',
+    chapter: ACT2,
+    title: 'Aveline en renfort',
+    setup: {
+      map: 'donjon-salles',
+      pieces: [ally('aveline', 'chevaliere-heroine', 0.3, 0.45, 0.17), piece('fanatique-2', 'fanatique', 0.7, 0.3), piece('diablotin', 'diablotin', 0.5, 0.18, 0.12)],
+      show: show('chevaliere-heroine', 'Dame Aveline'),
+    },
+    narration: ["Aveline surgit de l'escalier, bouclier en avant, et renverse le premier fanatique contre le mur. « Les deux autres sont à vous ! »"],
+    step: fight(
+      'Aveline tient le premier : occupez-vous des autres.',
+      [foe('fanatique-2', 'La fanatique aux dagues', 11, 12, 4, '1d6+1'), foe('diablotin', 'Le diablotin du brasero', 6, 13, 4, '1d4+1')],
+      'sanctuaire',
+      'antichambre_ko',
+    ),
+  },
+  {
+    id: 'antichambre_ko',
+    chapter: ACT2,
+    title: 'Traînés devant la porte',
+    heal: 3,
+    setup: { map: 'donjon-salles' },
+    narration: ["Les gardiens vous désarment et vous traînent jusqu'à la porte gravée. « Le grand prêtre voudra les voir. » Une erreur : vous avez encore vos poings."],
+    step: next('sanctuaire', 'Se dégager et entrer'),
   },
 
   // Le sanctuaire du culte.
@@ -1107,7 +1519,7 @@ const scenes: Scene[] = [
     step: fight(
       'Abattez le grand prêtre avant la dernière syllabe.',
       [
-        foe('grand-pretre', 'Le grand prêtre', 10, 12, 3, '1d8'),
+        foe('grand-pretre', 'Le grand prêtre', 13, 12, 3, '1d8'),
         foe('cultiste-1', 'Un cultiste', 5, 11, 3, '1d6'),
         foe('cultiste-2', 'Un cultiste', 5, 11, 3, '1d6'),
       ],
@@ -1129,7 +1541,7 @@ const scenes: Scene[] = [
     ],
     step: fight(
       'Renvoyez le démon dans les flammes.',
-      [foe('demon', 'Le démon cornu', 16, 13, 4, '1d8', 1.5)],
+      [foe('demon', 'Le démon cornu', 24, 13, 4, '1d8', 1.5)],
       'demon_vaincu',
       'demon_defaite',
     ),
@@ -1193,6 +1605,10 @@ const scenes: Scene[] = [
     heal: true,
     setup: { map: 'temple', pieces: [ally('pretresse', 'pretresse-temple', 0.48, 0.16)], show: show('pretresse-temple', 'La grande prêtresse') },
     gains: ['benediction'],
+    loot: [
+      { fr: 'Eau bénite', en: 'Holy water' },
+      { fr: 'Potion de soin', en: 'Healing potion' },
+    ],
     narration: [
       "Le roi vous reçoit en héros et vous envoie au temple de la lumière. Sous les vitraux, la grande prêtresse soigne vos blessures : vous voilà remis sur pied.",
       "Elle trace un symbole de lumière sur votre front. « Contre les morts et les buveurs de sang, cette bénédiction vous protégera. Une fois. »",
@@ -1239,7 +1655,7 @@ const scenes: Scene[] = [
       12,
       "Survivre à l'avalanche",
       [2, 3],
-      'camp_orc',
+      'col_archers',
       'col_ensevelis',
       'effort',
     ),
@@ -1249,8 +1665,28 @@ const scenes: Scene[] = [
     chapter: ACT3,
     title: 'Ensevelis',
     damage: 4,
-    narration: ['La neige vous roule, vous écrase, vous glace jusqu\'aux os. Chacun perd 4 PV avant de creuser vers la lumière… juste devant les pieux d\'un camp orc.'],
-    step: next('camp_orc', 'Se relever'),
+    narration: ['La neige vous roule, vous écrase, vous glace jusqu\'aux os. Chacun perd 4 PV avant de creuser vers la lumière… sous les flèches d\'une patrouille orc.'],
+    step: next('col_archers', 'Se relever'),
+  },
+  {
+    id: 'col_archers',
+    chapter: ACT3,
+    title: 'Les archers du col',
+    setup: {
+      map: 'col-montagne',
+      pieces: [piece('archer-1', 'orc-archer', 0.28, 0.2), piece('archer-2', 'orc-archer', 0.72, 0.22), piece('chaman', 'orc-chaman', 0.5, 0.12)],
+    },
+    narration: ["Sur la crête, deux archers orcs encochent leurs flèches. Entre eux, un chaman couvert d'os agite un bâton qui crépite."],
+    step: fight(
+      'Grimpez jusqu\'à eux sous les flèches.',
+      [
+        foe('archer-1', "L'archer orc", 7, 12, 4, '1d6+1'),
+        foe('archer-2', "L'archère orc", 7, 12, 4, '1d6+1'),
+        foe('chaman', 'Le chaman aux os', 9, 12, 4, '1d6+1'),
+      ],
+      'camp_orc',
+      'col_ogre',
+    ),
   },
   {
     id: 'col_patrouille',
@@ -1261,9 +1697,9 @@ const scenes: Scene[] = [
     step: fight(
       'Tenez tête à la patrouille.',
       [
-        foe('orc-1', "L'orc à la hache", 8, 12, 4, '1d8'),
-        foe('orc-2', "L'archer orc", 6, 12, 4, '1d6'),
-        foe('ogre', "L'ogre", 14, 11, 4, '1d10'),
+        foe('orc-1', "L'orc à la hache", 7, 12, 4, '1d8'),
+        foe('orc-2', "L'archer orc", 5, 12, 4, '1d6'),
+        foe('ogre', "L'ogre", 12, 11, 4, '1d10'),
       ],
       'camp_orc',
       'col_ogre',
@@ -1272,8 +1708,8 @@ const scenes: Scene[] = [
   {
     id: 'col_ogre',
     chapter: ACT3,
-    title: "Le tronc de l'ogre",
-    narration: ["Le tronc de l'ogre balaie tout sur son passage. Quand vous rouvrez les yeux, les orcs vous ont ligotés et vous traînent jusqu'à leur chef."],
+    title: 'Ligotés',
+    narration: ["Les orcs vous jettent à terre. Quand vous rouvrez les yeux, ils vous ont ligotés et vous traînent jusqu'à leur chef."],
     step: next('camp_orc', 'Se laisser emmener'),
   },
   {
@@ -1301,18 +1737,10 @@ const scenes: Scene[] = [
     title: "Duel d'honneur",
     narration: [
       'Les orcs forment un cercle et frappent sur leurs boucliers. Grokh fait tourner sa hache en riant.',
-      "« Trois passes d'armes. Si vous tenez debout à la fin, on parlera. »",
+      "« Au premier qui tombe. Si c'est moi, on parlera. »",
     ],
-    step: trial(
-      "Tenez face à Grokh : trois passes d'armes à remporter.",
-      'force',
-      13,
-      'Duel contre Grokh',
-      [3, 5],
-      'orc_allies',
-      'orc_defaite',
-      'combat',
-    ),
+    setup: { map: 'camp-orc', pieces: [piece('chef-orc', 'chef-orc', 0.48, 0.2, 0.2)] },
+    step: fight('Mettez Grokh à terre.', [foe('chef-orc', 'Grokh, chef de guerre', 28, 13, 5, '1d8+1')], 'orc_allies', 'orc_defaite'),
   },
   {
     id: 'orc_parler',
@@ -1365,9 +1793,9 @@ const scenes: Scene[] = [
     step: fight(
       'Traversez la galerie des kobolds.',
       [
-        foe('kobold-1', 'Un kobold à la pioche', 4, 11, 3, '1d4+1'),
-        foe('kobold-2', 'Un kobold à la pioche', 4, 11, 3, '1d4+1'),
-        foe('kobold-3', 'Un kobold à la fronde', 4, 11, 3, '1d4+1'),
+        foe('kobold-1', 'Un kobold à la pioche', 7, 11, 4, '1d4+1'),
+        foe('kobold-2', 'Un kobold à la pioche', 7, 11, 4, '1d4+1'),
+        foe('kobold-3', 'Un kobold à la fronde', 7, 11, 4, '1d4+1'),
       ],
       'pont',
       'mine_ko',
@@ -1415,7 +1843,7 @@ const scenes: Scene[] = [
     title: 'Le troll se fâche',
     setup: { map: 'pont-gorge', pieces: [piece('troll', 'troll', 0.48, 0.3, 0.22)] },
     narration: ['Le troll ne bouge pas d\'un pouce. Il arrache une pierre du parapet et la soupèse. « Mon tour. »'],
-    step: fight("Abattez le troll avant qu'il ne casse le pont.", [foe('troll', 'Le troll du pont', 18, 12, 5, '1d10')], 'pont_passe', 'pont_coups'),
+    step: fight("Abattez le troll avant qu'il ne casse le pont.", [foe('troll', 'Le troll du pont', 26, 12, 5, '1d10')], 'pont_passe', 'pont_coups'),
   },
   {
     id: 'pont_ruse',
@@ -1429,14 +1857,80 @@ const scenes: Scene[] = [
     chapter: ACT3,
     title: 'De l\'autre côté',
     heal: 3,
-    narration: ["Le troll finit dans le torrent, ou assis à se gratter la tête : peu importe, le pont est à vous. Au-delà, sur un pic, le château du vampire se découpe sous l'orage."],
-    step: next('approche', 'Marcher vers le château'),
+    narration: ["Le troll finit dans le torrent, ou assis à se gratter la tête : peu importe, le pont est à vous. Au-delà, la route monte vers une vieille porte naine taillée dans la falaise."],
+    step: next('porte_naine', 'Monter vers la porte'),
   },
   {
     id: 'pont_coups',
     chapter: ACT3,
     title: 'La massue du troll',
     narration: ["La massue du troll fait trembler le pont et vous envoie rouler sur les pierres. Le troll, content de lui, se rassoit pour compter ses dents, et vous passez en rampant derrière son dos."],
+    step: next('porte_naine', 'Monter vers la porte'),
+  },
+  {
+    id: 'porte_naine',
+    chapter: ACT3,
+    title: 'La porte naine',
+    setup: {
+      map: 'ruines-elfiques',
+      pieces: [piece('gardien', 'boss-gardien', 0.5, 0.18, 0.24, 'rencontres')],
+      show: show('boss-gardien', 'Le gardien de pierre'),
+    },
+    narration: [
+      "Une porte haute comme trois hommes, couverte de runes naines. Devant elle, une statue de pierre tient une hache. Quand vous approchez, ses yeux s'allument d'une lueur orange.",
+      '« Nul ne passe sans le mot des anciens. »',
+    ],
+    gmNotes: "Le gardien de pierre se réveille dans tous les cas. Lire les runes l'affaiblit avant le combat.",
+    step: vote('Que faites-vous ?', [
+      opt('combat', 'Le frapper avant qu\'il ne soit tout à fait réveillé', 'porte_naine_combat'),
+      opt('runes', 'Déchiffrer les runes pour trouver le mot des anciens', 'porte_naine_runes'),
+    ]),
+  },
+  {
+    id: 'porte_naine_runes',
+    chapter: ACT3,
+    title: 'Les runes',
+    setup: { map: 'ruines-elfiques', pieces: [piece('gardien', 'boss-gardien', 0.5, 0.18, 0.24, 'rencontres')] },
+    narration: ['Les runes sont usées par le vent. Certaines parlent de forge, d\'autres de serment.'],
+    step: check('Trouvez le mot des anciens : jet d\'Intelligence.', 'intelligence', 13, 'Déchiffrer les runes naines', 'porte_naine_fissure', 'porte_naine_combat', 'savoir'),
+  },
+  {
+    id: 'porte_naine_fissure',
+    chapter: ACT3,
+    title: 'La fissure',
+    setup: { map: 'ruines-elfiques', pieces: [piece('gardien', 'boss-gardien', 0.5, 0.18, 0.24, 'rencontres')] },
+    narration: ["Vous prononcez le mot. Le gardien s'arrête net, et une fissure court sur sa poitrine. Il lève quand même sa hache, mais plus lentement."],
+    step: fight('Brisez le gardien fissuré.', [foe('gardien', 'Le gardien fissuré', 21, 12, 5, '1d8')], 'porte_naine_ok', 'porte_naine_ko'),
+  },
+  {
+    id: 'porte_naine_combat',
+    chapter: ACT3,
+    title: 'Le gardien de pierre',
+    setup: { map: 'ruines-elfiques', pieces: [piece('gardien', 'boss-gardien', 0.5, 0.18, 0.24, 'rencontres')] },
+    narration: ['La statue descend de son socle dans un fracas de rochers. Chaque pas fait trembler la falaise.'],
+    step: fight('Abattez le gardien de pierre.', [foe('gardien', 'Le gardien de pierre', 26, 13, 5, '1d8+1')], 'porte_naine_ok', 'porte_naine_ko'),
+  },
+  {
+    id: 'porte_naine_ok',
+    chapter: ACT3,
+    title: 'Les salles des nains',
+    heal: 3,
+    setup: { map: 'ruines-elfiques' },
+    loot: [{ fr: 'Potion de soin', en: 'Healing potion' }],
+    narration: [
+      "Le gardien s'effondre en tas de cailloux. La porte s'ouvre sur des salles vides, où les nains ont laissé une fiole rouge sur un autel. Au bout, un escalier débouche sous l'orage, face au château du vampire.",
+    ],
+    step: next('approche', 'Marcher vers le château'),
+  },
+  {
+    id: 'porte_naine_ko',
+    chapter: ACT3,
+    title: 'Sous les rochers',
+    heal: 3,
+    setup: { map: 'ruines-elfiques' },
+    narration: [
+      "La hache de pierre vous envoie rouler dans la pente. Le gardien retourne sur son socle, satisfait. Il vous faut une heure pour trouver un sentier qui contourne la porte, jusqu'au château du vampire.",
+    ],
     step: next('approche', 'Marcher vers le château'),
   },
 
@@ -1468,8 +1962,8 @@ const scenes: Scene[] = [
     narration: ['Les pontons tanguent sous vos pieds. Les lances visent vos jambes.'],
     step: fight(
       'Repoussez les hommes-lézards.',
-      [foe('lezard-1', "L'homme-lézard à la lance", 9, 12, 4, '1d6+1'), foe('lezard-2', "L'homme-lézard au bouclier", 9, 13, 4, '1d6+1')],
-      'cabane',
+      [foe('lezard-1', "L'homme-lézard à la lance", 12, 12, 4, '1d6+1'), foe('lezard-2', "L'homme-lézard au bouclier", 12, 13, 4, '1d6+1')],
+      'tertre',
       'marais_defaite',
     ),
   },
@@ -1478,23 +1972,23 @@ const scenes: Scene[] = [
     chapter: ACT3,
     title: 'Dans la vase',
     setup: { map: 'marais' },
-    narration: ["Vous tombez dans la vase, à bout de forces. Quand vous vous en extirpez, vos adversaires ont disparu, et une fumée verte monte entre les arbres : la cabane de la sorcière, toute proche."],
-    step: next('cabane', 'Frapper à la porte'),
+    narration: ["Vous tombez dans la vase, à bout de forces. Quand vous vous en extirpez, vos adversaires ont disparu, et une fumée verte monte entre les arbres, derrière un tertre couvert de mousse."],
+    step: next('tertre', 'Suivre la fumée'),
   },
   {
     id: 'lezards_parler',
     chapter: ACT3,
     title: 'Paroles de paix',
     narration: ['Vous rangez vos armes et levez les mains. Les hommes-lézards se regardent.'],
-    step: check('Gagnez leur confiance.', 'charisme', 11, 'Parlementer avec les hommes-lézards', 'marais_guides', 'marais_morsures', 'parole'),
+    step: check('Gagnez leur confiance.', 'charisme', 11, 'Parlementer avec les hommes-lézards', 'marais_guides', 'lezards_combat', 'parole'),
   },
   {
     id: 'marais_guides',
     chapter: ACT3,
     title: 'Un chemin sûr',
     heal: 4,
-    narration: ["« La vieille… elle nous fait peur aussi », siffle le plus grand. Ils vous guident par un chemin sec jusqu'à la cabane sur pilotis."],
-    step: next('cabane', 'Frapper à la porte'),
+    narration: ["« La vieille… elle nous fait peur aussi », siffle le plus grand. Ils vous guident par un chemin sec, mais s'arrêtent net devant un tertre couvert de mousse. « Plus loin, on ne va pas. »"],
+    step: next('tertre', 'Avancer seuls'),
   },
   {
     id: 'marais_araignees',
@@ -1508,7 +2002,7 @@ const scenes: Scene[] = [
       12,
       'Traverser le bois des araignées',
       [2, 3],
-      'cabane',
+      'tertre',
       'araignees_combat',
       'discretion',
     ),
@@ -1521,18 +2015,34 @@ const scenes: Scene[] = [
     narration: ['Un fil collant vous attrape la cheville. Les deux araignées descendent de leurs toiles, sans se presser.'],
     step: fight(
       'Coupez les toiles et repoussez les araignées.',
-      [foe('araignee-1', 'La grande araignée', 9, 12, 4, '1d6+1'), foe('araignee-2', "L'araignée velue", 9, 12, 4, '1d6+1')],
-      'cabane',
+      [foe('araignee-1', 'La grande araignée', 11, 12, 4, '1d6+1'), foe('araignee-2', "L'araignée velue", 11, 12, 4, '1d6+1')],
+      'tertre',
       'marais_defaite',
     ),
   },
   {
-    id: 'marais_morsures',
+    id: 'tertre',
     chapter: ACT3,
-    title: 'Morsures et venin',
-    damage: 4,
-    narration: ['Morsures, venin, eau croupie : chacun perd 4 PV avant d\'arriver, trempé, devant la cabane de la sorcière.'],
-    step: next('cabane', 'Frapper à la porte'),
+    title: 'Le tertre des goules',
+    setup: { map: 'marais', pieces: [piece('goule-1', 'goule', 0.3, 0.26), piece('goule-2', 'goule', 0.7, 0.3)] },
+    narration: [
+      "Le tertre est un vieux tombeau à moitié noyé. La terre bouge. Deux goules en sortent, la peau grise, les griffes noires de vase, et reniflent l'air dans votre direction.",
+    ],
+    gmNotes: 'Les gardiennes du chemin de la sorcière : le combat est obligatoire.',
+    step: fight(
+      'Repoussez les goules avant qu\'elles ne vous paralysent.',
+      [foe('goule-1', 'La goule aux griffes noires', 12, 12, 4, '1d6+1'), foe('goule-2', 'La goule affamée', 12, 12, 4, '1d6+1')],
+      'cabane',
+      'tertre_ko',
+    ),
+  },
+  {
+    id: 'tertre_ko',
+    chapter: ACT3,
+    title: 'Paralysés',
+    setup: { map: 'marais' },
+    narration: ["Les griffes des goules vous glacent les membres. Elles vous traînent jusqu'à une cabane sur pilotis… et s'enfuient quand la porte s'ouvre."],
+    step: next('cabane', 'Se relever'),
   },
   {
     id: 'cabane',
@@ -1561,7 +2071,7 @@ const scenes: Scene[] = [
       "Mère Vase vous touche le front un par un. Un froid vous traverse : chacun perd 3 PV, et elle rajeunit d'un an. « Marché conclu. »",
       'Elle vous tend un pieu de frêne gravé de runes, et vous montre un sentier vers le château du vampire.',
     ],
-    step: next('approche', 'Prendre le sentier'),
+    step: next('marais_noyes', 'Prendre le sentier'),
   },
   {
     id: 'sorciere_ruse',
@@ -1576,7 +2086,12 @@ const scenes: Scene[] = [
     title: 'Le pieu ou la vie',
     setup: { map: 'marais', pieces: [piece('sorciere', 'sorciere-marais', 0.5, 0.2, 0.17), piece('troll', 'troll', 0.25, 0.3, 0.2)] },
     narration: ['Vous tirez vos armes. Mère Vase siffle entre ses dents, et un troll couvert de mousse sort de sous la cabane.'],
-    step: check('Passez le troll et attrapez le pieu.', 'force', 13, 'Prendre le pieu de force', 'sorciere_dupee', 'sorciere_malediction', 'effort'),
+    step: fight(
+      'Passez le troll et attrapez le pieu.',
+      [foe('troll', 'Le troll moussu', 18, 12, 5, '1d10'), foe('sorciere', 'Mère Vase', 10, 12, 4, '1d6+1')],
+      'sorciere_dupee',
+      'sorciere_malediction',
+    ),
   },
   {
     id: 'sorciere_dupee',
@@ -1584,7 +2099,7 @@ const scenes: Scene[] = [
     title: 'Le pieu de frêne',
     gains: ['pieu'],
     narration: ["Le pieu de frêne est à vous. Mère Vase grommelle des injures en vieux patois pendant que vous filez vers le nord. Le château du vampire n'est plus loin."],
-    step: next('approche', 'Filer vers le château'),
+    step: next('marais_noyes', 'Filer vers le château'),
   },
   {
     id: 'sorciere_malediction',
@@ -1592,7 +2107,29 @@ const scenes: Scene[] = [
     title: 'La malédiction',
     damage: 5,
     narration: ["Mère Vase éclate de rire et vous jette une poignée de vase maudite : chacun perd 5 PV. « Partez, et que le vampire vous croque ! » Sans pieu, vous reprenez la route du château."],
-    step: next('approche', 'Reprendre la route'),
+    step: next('marais_noyes', 'Reprendre la route'),
+  },
+  {
+    id: 'marais_noyes',
+    chapter: ACT3,
+    title: 'Les noyés',
+    setup: { map: 'marais', pieces: [piece('noye-1', 'zombie', 0.3, 0.28), piece('noye-2', 'zombie', 0.7, 0.3)] },
+    narration: ["Au bout du sentier, l'eau noire se met à bouillonner. Deux noyés en sortent, couverts d'algues : les anciens visiteurs de Mère Vase, qui n'ont pas payé."],
+    step: fight(
+      'Renvoyez les noyés au fond du marais.',
+      [foe('noye-1', "Le noyé aux algues", 14, 10, 4, '1d6+1'), foe('noye-2', 'La noyée au collier', 14, 10, 4, '1d6+1')],
+      'approche',
+      'marais_noyes_ko',
+    ),
+  },
+  {
+    id: 'marais_noyes_ko',
+    chapter: ACT3,
+    title: "L'eau noire",
+    heal: 3,
+    setup: { map: 'marais' },
+    narration: ["Les noyés vous entraînent sous l'eau. Vous vous en arrachez de justesse, crachant la vase, et ils retournent au fond. Le château du vampire n'est plus loin."],
+    step: next('approche', 'Marcher vers le château'),
   },
 
   // La crypte des anciens rois, sous le cimetière.
@@ -1611,7 +2148,7 @@ const scenes: Scene[] = [
       12,
       'Traverser le cimetière',
       [2, 3],
-      'crypte',
+      'crypte_porte',
       'cimetiere_combat',
       'discretion',
     ),
@@ -1624,7 +2161,20 @@ const scenes: Scene[] = [
     narration: ['Une branche craque. Les deux morts tournent la tête vers vous en même temps, et se mettent à courir.'],
     step: fight(
       'Renvoyez les morts dans leurs tombes.',
-      [foe('zombie-1', 'Un mort affamé', 10, 10, 4, '1d6+1'), foe('zombie-2', 'Un mort affamé', 10, 10, 4, '1d6+1')],
+      [foe('zombie-1', 'Un mort affamé', 14, 10, 4, '1d6+1'), foe('zombie-2', 'Un mort affamé', 14, 10, 4, '1d6+1')],
+      'crypte',
+      'cimetiere_ko',
+    ),
+  },
+  {
+    id: 'crypte_porte',
+    chapter: ACT3,
+    title: 'Les archers de la porte',
+    setup: { map: 'cimetiere', pieces: [piece('archer-1', 'squelette-archer', 0.35, 0.2), piece('archer-2', 'squelette-archer', 0.65, 0.2)] },
+    narration: ["Les morts n'ont rien senti. Mais devant la porte de la crypte, deux squelettes archers tournent lentement leurs crânes vers vous, et bandent leurs arcs."],
+    step: fight(
+      'Abattez les archers avant la volée suivante.',
+      [foe('archer-1', 'Le squelette archer', 11, 12, 4, '1d6+1'), foe('archer-2', 'Le squelette archer', 11, 12, 4, '1d6+1')],
       'crypte',
       'cimetiere_ko',
     ),
@@ -1659,8 +2209,8 @@ const scenes: Scene[] = [
     step: fight(
       'Brisez leurs rangs.',
       [
-        foe('squelette-1', 'Le squelette soldat', 6, 12, 3, '1d6'),
-        foe('squelette-2', 'Le squelette archer', 5, 12, 4, '1d6'),
+        foe('squelette-1', 'Le squelette soldat', 8, 12, 3, '1d6'),
+        foe('squelette-2', 'Le squelette archer', 8, 12, 4, '1d6'),
         foe('zombie', 'Le mort à la chaîne', 10, 9, 3, '1d6+1'),
       ],
       'crypte_salles',
@@ -1717,7 +2267,7 @@ const scenes: Scene[] = [
     title: 'Le spectre attaque',
     setup: { map: 'donjon-salles', pieces: [piece('spectre', 'spectre', 0.48, 0.22, 0.18)] },
     narration: ["Le lien est trop fort. Les yeux de Galvan s'allument de vert, et son épée spectrale se lève contre vous."],
-    step: fight('Tenez face au chevalier spectre.', [foe('spectre', 'Sire Galvan, le spectre', 16, 13, 4, '1d8')], 'galvan_repos', 'galvan_fuite'),
+    step: fight('Tenez face au chevalier spectre.', [foe('spectre', 'Sire Galvan, le spectre', 27, 13, 4, '1d8')], 'galvan_repos', 'galvan_fuite'),
   },
   {
     id: 'galvan_repos',
@@ -1748,7 +2298,7 @@ const scenes: Scene[] = [
     narration: ["Derrière la herse, un escalier monte jusqu'à une salle ronde pleine de livres. Un homme en robe noire lève un crâne lumineux, et un mort se lève à ses pieds. « Le culte m'avait promis que personne ne viendrait. »"],
     step: fight(
       'Abattez le nécromancien.',
-      [foe('necromancien', 'Le nécromancien', 12, 12, 4, '1d8'), foe('zombie', 'Le mort du nécromancien', 8, 9, 3, '1d6')],
+      [foe('necromancien', 'Le nécromancien', 19, 12, 4, '1d8'), foe('zombie', 'Le mort du nécromancien', 11, 9, 3, '1d6')],
       'crypte_sortie',
       'crypte_maudits',
     ),
@@ -1768,7 +2318,7 @@ const scenes: Scene[] = [
       13,
       'Percer le secret du phylactère',
       [2, 4],
-      'crypte_sortie',
+      'liche_affaiblie',
       'liche_combat',
       'savoir',
     ),
@@ -1782,6 +2332,14 @@ const scenes: Scene[] = [
     step: fight('Brisez la liche.', [foe('liche', 'La liche couronnée', 20, 13, 5, '1d8+1', 1.5)], 'crypte_sortie', 'crypte_maudits'),
   },
   {
+    id: 'liche_affaiblie',
+    chapter: ACT3,
+    title: 'La gemme fêlée',
+    setup: { map: 'tour-mage', pieces: [piece('liche', 'liche', 0.48, 0.18, 0.2)] },
+    narration: ["La gemme du sceptre se fêle sous vos coups. La liche hurle : sa magie la quitte par la fissure, mais ses griffes, elles, sont toujours là."],
+    step: fight('Achevez la liche affaiblie.', [foe('liche', 'La liche à la gemme fêlée', 23, 12, 5, '1d8')], 'crypte_sortie', 'crypte_maudits'),
+  },
+  {
     id: 'crypte_maudits',
     chapter: ACT3,
     title: 'La magie des morts',
@@ -1793,7 +2351,8 @@ const scenes: Scene[] = [
     chapter: ACT3,
     title: 'Sous la montagne',
     heal: 5,
-    narration: ["Derrière la tour, un long tunnel remonte vers le nord. Quand vous en sortez, la nuit tombe, et le château du vampire se dresse sur son pic, juste devant vous."],
+    loot: [{ fr: 'Potion de soin', en: 'Healing potion' }],
+    narration: ["Derrière la tour, sur une table, une fiole rouge que personne ne boira plus. Un long tunnel remonte vers le nord. Quand vous en sortez, la nuit tombe, et le château du vampire se dresse sur son pic, juste devant vous."],
     step: next('approche', 'Marcher vers le château'),
   },
 
@@ -1829,8 +2388,21 @@ const scenes: Scene[] = [
     id: 'nuee',
     chapter: FINAL,
     title: 'La nuée',
-    damage: 3,
-    narration: ['Ailes, crocs, griffes : chacun perd 3 PV avant de claquer la grande porte derrière vous.'],
+    setup: { map: 'chateau-vampire', pieces: [piece('chauve-souris-1', 'chauve-souris-geante', 0.3, 0.2, 0.17), piece('chauve-souris-2', 'chauve-souris-geante', 0.7, 0.24, 0.17)] },
+    narration: ['La nuée se disperse, mais deux chauves-souris géantes, grandes comme des chevaux, plongent sur vous en hurlant.'],
+    step: fight(
+      'Abattez les deux géantes.',
+      [foe('chauve-souris-1', 'La chauve-souris géante', 15, 13, 5, '1d6+1'), foe('chauve-souris-2', 'La chauve-souris aux yeux rouges', 15, 13, 5, '1d6+1')],
+      'grande_salle',
+      'nuee_ko',
+    ),
+  },
+  {
+    id: 'nuee_ko',
+    chapter: FINAL,
+    title: 'Ailes et crocs',
+    damage: 2,
+    narration: ['Ailes, crocs, griffes : vous rampez jusqu\'à la grande porte et la claquez derrière vous.'],
     step: next('grande_salle', 'Entrer dans la grande salle'),
   },
   {
@@ -1839,7 +2411,7 @@ const scenes: Scene[] = [
     title: 'Le gardien de la porte',
     setup: { map: 'chateau-vampire', pieces: [piece('loup-garou', 'loup-garou', 0.48, 0.24, 0.2)], show: show('loup-garou', 'Le loup-garou') },
     narration: ['Devant la porte, une silhouette se tord sous la lune et devient une bête énorme, toute en crocs et en fourrure. Le loup-garou du vampire hurle à la mort.'],
-    step: fight('Abattez le loup-garou.', [foe('loup-garou', 'Le loup-garou', 18, 13, 5, '1d8+1', 1.5)], 'grande_salle', 'loup_garou_ko'),
+    step: fight('Abattez le loup-garou.', [foe('loup-garou', 'Le loup-garou', 26, 13, 5, '1d8+1', 1.5)], 'grande_salle', 'loup_garou_ko'),
   },
   {
     id: 'loup_garou_ko',
@@ -1852,8 +2424,24 @@ const scenes: Scene[] = [
     id: 'porte_ouverte',
     chapter: FINAL,
     title: 'On vous attend',
-    narration: ["La grande porte est ouverte. Aucun garde, aucune bête. Juste un tapis rouge, des bougies allumées… et une voix douce : « Entrez donc. On vous attendait. »"],
-    step: next('grande_salle', 'Entrer'),
+    setup: { map: 'chateau-vampire', pieces: [piece('rejeton-1', 'rejeton-vampire', 0.3, 0.24), piece('rejeton-2', 'rejeton-vampire', 0.7, 0.24)] },
+    narration: [
+      "La grande porte est ouverte. Aucun garde, aucune bête. Juste un tapis rouge, des bougies allumées… et une voix douce : « Entrez donc. On vous attendait. »",
+      'Dans le hall, deux rejetons vampires vous sourient de toutes leurs dents. « Le maître veut vous voir. Il n\'a pas dit entiers. »',
+    ],
+    step: fight(
+      'Passez le comité d\'accueil.',
+      [foe('rejeton-1', 'Le rejeton au sourire', 15, 12, 5, '1d6+1'), foe('rejeton-2', 'La rejetonne aux griffes', 15, 12, 5, '1d6+1')],
+      'grande_salle',
+      'porte_ouverte_ko',
+    ),
+  },
+  {
+    id: 'porte_ouverte_ko',
+    chapter: FINAL,
+    title: 'Traînés sur le tapis',
+    narration: ["Les rejetons vous mettent à genoux et vous traînent par le col jusqu'à la grande salle, comme des cadeaux. « Maître, ils sont là. »"],
+    step: next('grande_salle', 'Relever la tête'),
   },
   {
     id: 'grande_salle',
@@ -1888,9 +2476,9 @@ const scenes: Scene[] = [
     step: fight(
       "Abattez le seigneur vampire avant qu'il ne vous vide de votre sang.",
       [
-        foe('vampire', 'Le seigneur vampire', 16, 13, 4, '1d8', 1.25),
-        foe('rejeton-1', 'Un rejeton vampire', 5, 12, 3, '1d6'),
-        foe('rejeton-2', 'Un rejeton vampire', 5, 12, 3, '1d6'),
+        foe('vampire', 'Le seigneur vampire', 30, 13, 4, '1d8', 1.25),
+        foe('rejeton-1', 'Un rejeton vampire', 8, 12, 3, '1d6'),
+        foe('rejeton-2', 'Un rejeton vampire', 8, 12, 3, '1d6'),
       ],
       'vampire_vaincu',
       'vampire_morsure',
@@ -1939,17 +2527,88 @@ const scenes: Scene[] = [
     setup: { map: 'chateau-vampire' },
     narration: [
       "Le maître du château n'est plus. Dame Isolde, elle, a fui par un escalier qui s'enfonce dans la roche, vers le cœur de la montagne.",
-      'Vous trouvez une chambre vide, des lits, des provisions. Une heure de repos avant la dernière descente.',
+      "Vous la suivez dans l'escalier. En bas, des galeries creusées dans la roche, et des bruits de griffes qui approchent.",
     ],
-    step: next('veillee', 'Se reposer'),
+    step: next('tunnels', 'Descendre'),
+  },
+  {
+    id: 'tunnels',
+    chapter: FINAL,
+    title: 'Les tunnels des kobolds',
+    setup: {
+      map: 'mine-abandonnee',
+      pieces: [piece('kobold-1', 'kobold', 0.28, 0.3, 0.11), piece('kobold-2', 'kobold', 0.72, 0.32, 0.11), piece('drakeide', 'drakeide-garde', 0.5, 0.16)],
+    },
+    narration: [
+      "Des kobolds gardent les galeries, menés par un garde drakéide aux écailles rouges. Ils n'ont pas encore vu votre torche.",
+    ],
+    gmNotes: 'Les gardes du repaire : le combat est obligatoire, la discrétion le rend plus court.',
+    step: vote('Comment passez-vous ?', [
+      opt('force', 'Charger dans la galerie', 'tunnels_combat'),
+      opt('ombre', 'Éteindre la torche et les contourner dans le noir', 'tunnels_ombre'),
+    ]),
+  },
+  {
+    id: 'tunnels_ombre',
+    chapter: FINAL,
+    title: 'Dans le noir',
+    setup: { map: 'mine-abandonnee', pieces: [piece('drakeide', 'drakeide-garde', 0.5, 0.16)] },
+    narration: ['Plus de torche. Juste la lueur de la lave au loin, et le bruit de vos cœurs.'],
+    step: trial(
+      'Avancez sans bruit dans les galeries : il faut deux réussites.',
+      'dexterite',
+      13,
+      'Contourner les gardes dans le noir',
+      [2, 3],
+      'tunnels_surprise',
+      'tunnels_combat',
+      'discretion',
+    ),
+  },
+  {
+    id: 'tunnels_combat',
+    chapter: FINAL,
+    title: 'La garde du repaire',
+    setup: {
+      map: 'mine-abandonnee',
+      pieces: [piece('kobold-1', 'kobold', 0.28, 0.3, 0.11), piece('kobold-2', 'kobold', 0.72, 0.32, 0.11), piece('drakeide', 'drakeide-garde', 0.5, 0.16)],
+    },
+    narration: ['« Pour le Grand Rouge ! » Les kobolds glapissent, et le drakéide abaisse sa lance.'],
+    step: fight(
+      'Brisez la garde du repaire.',
+      [
+        foe('kobold-1', 'Un kobold à la fronde', 8, 12, 4, '1d4+1'),
+        foe('kobold-2', 'Un kobold à la pioche', 8, 12, 4, '1d4+1'),
+        foe('drakeide', 'Le garde drakéide', 15, 14, 5, '1d8'),
+      ],
+      'veillee',
+      'tunnels_ko',
+    ),
+  },
+  {
+    id: 'tunnels_surprise',
+    chapter: FINAL,
+    title: 'Dans son dos',
+    setup: { map: 'mine-abandonnee', pieces: [piece('drakeide', 'drakeide-garde', 0.5, 0.16)] },
+    narration: ['Les kobolds ronflent dans leur coin. Seul le drakéide monte la garde, et il vous tourne le dos.'],
+    step: fight('Abattez le drakéide avant qu\'il ne réveille les autres.', [foe('drakeide', 'Le garde drakéide', 26, 14, 5, '1d8')], 'veillee', 'tunnels_ko'),
+  },
+  {
+    id: 'tunnels_ko',
+    chapter: FINAL,
+    title: 'Jetés dans la galerie',
+    setup: { map: 'mine-abandonnee' },
+    narration: ["Les gardes vous laissent pour morts au fond d'une galerie. Ils ont tort : au bout, une salle de garde abandonnée vous attend, juste au-dessus du repaire."],
+    step: next('veillee', 'Ramper jusqu\'à la salle'),
   },
   {
     id: 'veillee',
     chapter: FINAL,
     title: 'La dernière veillée',
     heal: true,
+    loot: [{ fr: 'Potion de soin', en: 'Healing potion' }],
     narration: [
-      "Une heure de silence. On panse ses plaies, on aiguise ses armes, on pense à Brumeval, à Aurélia. Vous voilà remis sur pied.",
+      "Une vieille salle de garde naine, oubliée au-dessus du repaire. Sur une étagère, une fiole rouge encore scellée. Une heure de silence. On panse ses plaies, on aiguise ses armes, on pense à Brumeval, à Aurélia. Vous voilà remis sur pied.",
       "Sous vos pieds, la montagne gronde. Quelque chose d'immense respire.",
     ],
     step: next('repaire', 'Descendre vers le dragon'),
@@ -2014,9 +2673,9 @@ const scenes: Scene[] = [
     step: fight(
       'Abattez le grand prêtre avant la fin du rituel.',
       [
-        foe('grand-pretre', 'Le grand prêtre', 14, 13, 4, '1d8'),
+        foe('grand-pretre', 'Le grand prêtre', 18, 13, 4, '1d8'),
         foe('kobold-1', 'Un kobold', 4, 11, 3, '1d4+1'),
-        foe('drakeide', 'Le garde drakéide', 10, 13, 4, '1d8'),
+        foe('drakeide', 'Le garde drakéide', 13, 13, 4, '1d8'),
       ],
       'pretre_tombe',
       'eveil',
@@ -2047,7 +2706,7 @@ const scenes: Scene[] = [
     ],
     step: fight(
       'Frappez au défaut des écailles.',
-      [foe('dragon', 'Pyraxis, à demi éveillé', 22, 13, 5, '1d10', 1.5)],
+      [foe('dragon', 'Pyraxis, à demi éveillé', 30, 13, 5, '1d10', 1.5)],
       'fin_victoire',
       'fin_retraite',
     ),
@@ -2091,7 +2750,7 @@ const scenes: Scene[] = [
     narration: ['Pyraxis déploie ses ailes. La caverne entière devient un champ de bataille de lave et d\'or.'],
     step: fight(
       'Abattez Pyraxis.',
-      [foe('dragon', 'Pyraxis, le dragon rouge', 30, 14, 5, '1d10', 1.5)],
+      [foe('dragon', 'Pyraxis, le dragon rouge', 34, 14, 5, '1d10', 1.5)],
       'fin_victoire',
       'fin_retraite',
       { next: 'fin_retraite', stat: 'dexterite', dc: 14 },

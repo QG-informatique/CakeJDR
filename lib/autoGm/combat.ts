@@ -28,7 +28,7 @@ export const MAX_HIT = 0.4
 /** Chaque héros en plus ajoute cette part de PV aux ennemis… */
 export const HP_PER_HERO = 1
 /** … et cette part d'attaques (la fraction, une attaque en plus de temps en temps). */
-export const ATTACKS_PER_HERO = 0.75
+export const ATTACKS_PER_HERO = 1
 
 export type CombatHero = { id: string; name: string; hp: number; max: number; defense: number }
 /** `rate` : attaques par tour, selon la taille du groupe. */
@@ -95,6 +95,8 @@ export type Fighter = {
   defense?: number
   weapon?: string
   mods: Record<string, number>
+  /** Objets du sac utilisables en combat : identifiant de l'action → nombre. */
+  items?: Record<string, number>
 }
 
 // ── Dés ─────────────────────────────────────────────────────────────────
@@ -223,7 +225,7 @@ export function resolveAction(
 ): CombatState {
   const state = clone(prev)
   const lines: CombatLine[] = []
-  const action = actionById(f.classe, actionId)
+  const action = actionById(f.classe, actionId, f.items)
   const me = state.heroes.find((h) => h.id === f.id)
   if (!state.acted.includes(f.id)) state.acted.push(f.id)
   state.attacks = state.attacks.filter((a) => a.userId !== f.id)

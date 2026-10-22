@@ -5,8 +5,27 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useMutation, useOthers, useSelf, useStorage } from '@liveblocks/react'
 import { LiveMap } from '@liveblocks/client'
-import { Bot, Check, ChevronUp, Dices, Eye, EyeOff, Target, X } from 'lucide-react'
+import {
+  BookOpen,
+  Bot,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  CircleHelp,
+  Dices,
+  Eye,
+  EyeOff,
+  MessageSquare,
+  Shuffle,
+  Signpost,
+  Swords,
+  Target,
+  UserRound,
+  X,
+} from 'lucide-react'
 import { useT } from '@/lib/useT'
+import { translations } from '@/lib/translations'
+import { useIsDesktop } from '@/lib/useIsDesktop'
 import { useLanguage } from '@/components/context/LanguageContext'
 import { useGameSystem, useRoomSettings } from '@/lib/roomSettings'
 import { levelUpDice } from '@/lib/gameSystems'
@@ -37,10 +56,12 @@ import {
   decide,
   draw,
   drawable,
+  optionHint,
   trialNext,
   type Voter,
 } from '@/lib/autoGm'
 import type { CombatState } from '@/lib/autoGm/combat'
+import { itemCounts, itemsUsed } from '@/lib/autoGm/combatActions'
 import type { Foe } from '@/lib/autoGm/types'
 import AdventureDuration from './AdventureDuration'
 import CombatView from './CombatView'
@@ -48,7 +69,16 @@ import { combatLineText } from './combatText'
 import { combatChoice, useAutoCombat } from './useAutoCombat'
 
 /** Ce qu'une scène fait à la fiche de chacun en arrivant. */
-export type AutoGmEffect = { damage?: number; heal?: boolean | number; xp?: number; hp?: number }
+export type AutoGmEffect = {
+  damage?: number
+  heal?: boolean | number
+  xp?: number
+  hp?: number
+  /** Objets bus ou lancés pendant un combat : identifiant de l'action → nombre. */
+  consume?: Record<string, number>
+  /** Objets trouvés dans la scène, nommés dans la langue du joueur. */
+  loot?: { nom: string; n: number }[]
+}
 
 type Props = {
   adventureId: string
@@ -59,7 +89,19 @@ type Props = {
   onPickHero: (hero: PremadeHero) => void
   /** Lance les dés de la table pour la demande qui m'attend (création guidée). */
   onRoll: () => void
+  /** Le chat de la table, rangé dans le dernier onglet du panneau. */
+  chat: ReactNode
 }
+
+type Tab = 'story' | 'combat' | 'hero' | 'chat'
+
+/** Lignes que le MJ automatique écrit lui-même : elles n'allument pas l'onglet du chat. */
+const AUTO_AUTHORS = new Set<string | undefined>([
+  translations.fr.autoGmTitle,
+  translations.fr.autoGmTitleGm,
+  translations.en.autoGmTitle,
+  translations.en.autoGmTitleGm,
+])
 
 const MAX_EVENTS = 2000
 
@@ -84,6 +126,7 @@ function toVoter(p: Presence): Voter {
     xp: xpOf(c),
     level: Number(c?.niveau) || 1,
     ...(c ? combatSheet(c) : {}),
+    items: itemCounts(c?.objets),
   }
 }
 
@@ -125,7 +168,7 @@ function Bubble({ voter, size = 20 }: { voter: Voter; size?: number }) {
  * connecté s'il n'y a pas de MJ. S'il part, le suivant prend le relais là où
  * en était la partie, puisque tout est rangé dans le stockage partagé.
  */
-export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHero, onRoll }: Props) {
+export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHero, onRoll, chat }: Props) {
   const t = useT()
   const { lang } = useLanguage()
   const { id: roomId } = useParams<{ id: string }>()
@@ -135,7 +178,21 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
   const gm = useStorage((root) => root.autoGm)
   const events = useStorage((root) => root.events)
   const pending = useStorage((root) => root.checks)
-  const [open, setOpen] = useState(true)
+  const [tab, setTab] = useState<Tab>('story')
+  const [heroLater, setHeroLater] = useState(false)
+  const [combatSeen, setCombatSeen] = useState<string | null>(null)
+  const [heroSeen, setHeroSeen] = useState(false)
+  const [chatSeen, setChatSeen] = useState<string | null | undefined>(undefined)
+  // Replié sur grand écran, comme l'était le chat : la même préférence.
+  const isDesktop = useIsDesktop()
+  const [collapsed, setCollapsed] = useState(
+    () => typeof window !== 'undefined' && localStorage.getItem('chatPanelCollapsed') === '1',
+  )
+  useEffect(() => {
+    try {
+      localStorage.setItem('chatPanelCollapsed', collapsed ? '1' : '0')
+    } catch {}
+  }, [collapsed])
   const [gmSide, setGmSide] = useState(false)
   const [askFailed, setAskFailed] = useState(false)
   const [now, setNow] = useState(() => Date.now())
@@ -489,8 +546,10 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
     // Chaque scène traversée rapporte de l'XP, plus après un combat gagné ou
     // une étape de la quête : parler ou ruser fait aussi avancer.
     const xp = me?.hero && adventure && gm ? sceneXp(adventure, gm.scene, gm.path[gm.path.length - 2]) : 0
-    if (scene && (scene.damage || scene.heal || xp)) onEffect({ damage: scene.damage, heal: scene.heal, ...(xp ? { xp } : {}) })
-  }, [visitKey, scene, onEffect, iWatch, me?.hero, adventure, gm])
+    const loot = me?.hero && scene?.loot?.length ? scene.loot.map((l) => ({ nom: l[lang], n: l.n ?? 1 })) : undefined
+    if (scene && (scene.damage || scene.heal || xp || loot))
+      onEffect({ damage: scene.damage, heal: scene.heal, ...(xp ? { xp } : {}), ...(loot ? { loot } : {}) })
+  }, [visitKey, scene, onEffect, iWatch, me?.hero, adventure, gm, lang])
 
   // ── Montée de niveau automatique ────────────────────────────────────────
 
@@ -555,16 +614,24 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
     lang,
   })
 
-  // Mes PV suivent le combat sur ma fiche, tour après tour.
+  // Mes PV suivent le combat sur ma fiche, tour après tour ; les objets
+  // utilisés quittent le sac une fois le combat fini (un seul appel, la fiche
+  // ne se met pas à jour deux fois dans le même instant).
   const myCombatHp = me ? combat?.heroes.find((h) => h.id === me.id)?.hp : undefined
+  const myUsed = me && combat?.end ? JSON.stringify(itemsUsed(combat.used, me.id)) : ''
   const synced = useRef('')
+  const consumed = useRef('')
   useEffect(() => {
     if (iWatch || myCombatHp === undefined || !gm) return
-    const key = `${gm.run}:${gm.visit}:${myCombatHp}`
+    const fight = `${gm.run}:${gm.visit}`
+    const key = `${fight}:${myCombatHp}:${myUsed}`
     if (synced.current === key) return
     synced.current = key
-    if (myCombatHp !== me?.hp) onEffect({ hp: myCombatHp })
-  }, [iWatch, myCombatHp, gm, me?.hp, onEffect])
+    const used: Record<string, number> = myUsed && consumed.current !== fight ? JSON.parse(myUsed) : {}
+    if (myUsed) consumed.current = fight
+    const consume = Object.keys(used).length > 0 ? used : undefined
+    if (myCombatHp !== me?.hp || consume) onEffect({ hp: myCombatHp, ...(consume ? { consume } : {}) })
+  }, [iWatch, myCombatHp, myUsed, gm, me?.hp, onEffect])
 
   // Horloge du compte à rebours et de l'apparition du résultat.
   const ticking = (step?.kind === 'vote' && !!gm?.voteStart) || (!!result && !revealed) || (!!combat && !combat.end)
@@ -574,36 +641,127 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
     return () => clearInterval(timer)
   }, [ticking])
 
+  // ── Onglets ─────────────────────────────────────────────────────────────
+
+  // Combat et création du héros ont chacun leur onglet, ouvert d'office quand
+  // ils commencent ; on revient au récit quand ils n'ont plus lieu d'être.
+  const showCombat = !!adventure && step?.kind === 'combat'
+  // « Plus tard » ramène au récit, mais l'onglet du héros reste là pour y revenir.
+  const showHero = !!adventure && needsHero && !iWatch && step?.kind !== 'end'
+  const combatKey = showCombat && gm ? `${gm.run}:${gm.visit}` : null
+  if (combatKey !== combatSeen) {
+    setCombatSeen(combatKey)
+    if (combatKey) setTab('combat')
+  }
+  if (showHero !== heroSeen) {
+    setHeroSeen(showHero)
+    if (showHero && !heroLater) setTab('hero')
+  }
+  const current: Tab = !adventure
+    ? 'chat'
+    : (tab === 'combat' && !showCombat) || (tab === 'hero' && !showHero)
+      ? 'story'
+      : tab
+
+  // Point sur l'onglet du chat : un message d'un joueur pas encore vu.
+  const lastChat = useMemo(() => {
+    if (!events) return null
+    for (let i = events.length - 1; i >= 0; i -= 1) {
+      const e = events[i]
+      if (e?.kind === 'chat' && !AUTO_AUTHORS.has(e.author)) return e.id
+    }
+    return null
+  }, [events])
+  if (events && (chatSeen === undefined || (current === 'chat' && chatSeen !== lastChat))) setChatSeen(lastChat)
+  const chatUnread = current !== 'chat' && chatSeen !== undefined && chatSeen !== lastChat
+
   // ── Affichage ───────────────────────────────────────────────────────────
 
-  if (!adventure) return null
   const title = t(gm?.mode === 'gm' ? 'autoGmTitleGm' : 'autoGmTitle')
-  const box =
-    'ui-panel ui-pop pointer-events-auto absolute left-3 top-14 z-30 flex max-h-[calc(100%-8rem)] w-[min(24rem,calc(100%-1.5rem))] flex-col shadow-lg'
 
-  // Replié, le panneau reste monté mais caché : un héros en cours de
-  // création garde ses réponses et ses dés déjà lancés.
-  const panel = (children: ReactNode) => (
-    <>
-      {!open && (
-        <button
-          onClick={() => setOpen(true)}
-          className="ui-btn pointer-events-auto absolute left-3 top-14 z-30 !bg-[var(--c-panel-head)] shadow-lg"
+  // Tous les onglets restent montés, cachés : un héros en cours de création
+  // garde ses réponses et ses dés, le chat son brouillon.
+  const frame = (story: ReactNode, fight?: ReactNode) => {
+    const tabs: { key: Tab; label: string; Icon: typeof Bot; dot?: boolean }[] = [
+      ...(adventure ? [{ key: 'story' as const, label: t('autoGmTabStory'), Icon: BookOpen }] : []),
+      ...(showCombat ? [{ key: 'combat' as const, label: t('autoGmTabCombat'), Icon: Swords }] : []),
+      ...(showHero ? [{ key: 'hero' as const, label: t('autoGmTabHero'), Icon: UserRound }] : []),
+      { key: 'chat', label: t('chat'), Icon: MessageSquare, dot: chatUnread },
+    ]
+    const pane = (key: Tab) => (current === key ? 'flex' : 'hidden')
+    const folded = collapsed && isDesktop
+    return (
+      <>
+        {folded && (
+          <button
+            onClick={() => setCollapsed(false)}
+            aria-label={t('expandPanel')}
+            title={t('expandPanel')}
+            className="ui-btn ui-btn-icon absolute right-3 top-16 z-50"
+          >
+            <ChevronLeft size={18} />
+          </button>
+        )}
+        <aside
+          className={`${folded ? 'hidden' : 'flex'} ui-panel relative min-h-0 w-full flex-1 flex-shrink-0 flex-col overflow-hidden lg:w-[380px] lg:flex-none`}
         >
-          <Bot size={15} className="text-gm" aria-hidden />
-          {title}
-          {scene && <span className="max-w-[10rem] truncate text-ink/60">· {scene.title}</span>}
-        </button>
-      )}
-      <div className={open ? box : 'hidden'}>{children}</div>
-    </>
-  )
+          <div
+            role="tablist"
+            className="flex items-center gap-1 border-b border-[var(--c-panel-line)] px-2 py-1.5"
+            style={{ background: 'var(--c-panel-head)' }}
+          >
+            {tabs.map(({ key, label, Icon, dot }) => (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                aria-selected={current === key}
+                onClick={() => setTab(key)}
+                className={`relative flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg px-1.5 py-1.5 text-xs font-semibold transition ${
+                  current === key ? 'bg-accent/15 text-accent' : 'text-ink/60 hover:text-ink'
+                }`}
+              >
+                <Icon size={14} className="shrink-0" aria-hidden />
+                <span className="truncate">{label}</span>
+                {dot && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-accent" aria-hidden="true" />}
+              </button>
+            ))}
+            <button
+              onClick={() => setCollapsed(true)}
+              aria-label={t('collapsePanel')}
+              title={t('collapsePanel')}
+              className="ui-btn ui-btn-ghost ui-btn-icon max-lg:hidden"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+          {adventure && <div className={`${pane('story')} min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3`}>{story}</div>}
+          {showCombat && <div className={`${pane('combat')} min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3`}>{fight}</div>}
+          {showHero && (
+            <div className={`${pane('hero')} min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3`}>
+              <PremadeHeroPicker
+                onPick={onPickHero}
+                onRoll={onRoll}
+                onLater={() => {
+                  setHeroLater(true)
+                  setTab('story')
+                }}
+              />
+            </div>
+          )}
+          <div className={`${pane('chat')} min-h-0 flex-1 flex-col`}>{chat}</div>
+        </aside>
+      </>
+    )
+  }
+
+  if (!adventure) return frame(null)
 
   const header = (
-    <div className="flex items-center gap-2 border-b border-[var(--c-panel-line)] px-3 py-2">
+    <div className="flex items-center gap-2">
       <Bot size={16} className="shrink-0 text-gm" aria-hidden />
-      <span className="min-w-0 flex-1 truncate text-sm font-semibold">
-        {title} <span className="font-normal text-ink/60">· {adventure.title}</span>
+      <span className="min-w-0 flex-1 truncate text-xs font-semibold text-ink/70">
+        {title} <span className="font-normal text-ink/55">· {adventure.title}</span>
       </span>
       {gm?.mode === 'gm' && me?.gm && (
         <button
@@ -616,26 +774,19 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
           {t('autoGmGmSide')}
         </button>
       )}
-      <button onClick={() => setOpen(false)} className="ui-btn ui-btn-ghost !min-h-7 !px-1.5" aria-label={t('autoGmFold')}>
-        <ChevronUp size={15} />
-      </button>
     </div>
   )
 
   if (!gm || !scene || !step) {
-    return panel(
+    return frame(
       <>
         {header}
-        <div className="flex min-h-0 flex-col gap-3 overflow-y-auto p-3">
-          {/* Même place que pendant l'aventure : un héros en cours de création n'est pas perdu au lancement. */}
-          {needsHero && <PremadeHeroPicker onPick={onPickHero} onRoll={onRoll} />}
-          <p className="text-sm text-ink/80">{t('autoGmIntro')}</p>
-          <p className="text-sm italic text-ink/70">{adventure.pitch}</p>
-          <AdventureDuration adventure={adventure} />
-          <button onClick={() => start(adventure.id, 'auto')} className="ui-btn ui-btn-primary">
-            {t('autoGmStart')}
-          </button>
-        </div>
+        <p className="text-sm text-ink/80">{t('autoGmIntro')}</p>
+        <p className="text-sm italic text-ink/70">{adventure.pitch}</p>
+        <AdventureDuration adventure={adventure} />
+        <button onClick={() => start(adventure.id, 'auto')} className="ui-btn ui-btn-primary">
+          {t('autoGmStart')}
+        </button>
       </>,
     )
   }
@@ -649,6 +800,17 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
   const voteCount = players.filter((v) => votes?.has(v.id)).length
   const secondsLeft = gm.voteStart ? Math.max(0, Math.ceil((gm.voteStart + VOTE_WINDOW_MS - now) / 1000)) : null
   const titleOf = (id: string) => adventure.scenes[id]?.title ?? id
+
+  // Sous chaque choix, le genre d'épreuve qui suit : jet de quelle
+  // caractéristique, combat, hasard ou nouveau choix.
+  const hintOf = (next: string) => {
+    const hint = optionHint(adventure, next)
+    if (hint.kind === 'check') return { Icon: Target, text: withStat(t('checkOf'), t(checkStatLabel(hint.stat))) }
+    if (hint.kind === 'combat') return { Icon: Swords, text: t('autoGmHintCombat') }
+    if (hint.kind === 'random') return { Icon: Shuffle, text: t('autoGmHintRandom') }
+    if (hint.kind === 'choice') return { Icon: Signpost, text: t('autoGmHintChoice') }
+    return { Icon: CircleHelp, text: t('autoGmHintUnknown') }
+  }
 
   const voteButton = (id: string, label: string, extra?: ReactNode) => {
     const who = votersFor(id)
@@ -731,19 +893,19 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
           </>
         ) : (
           <>
-            {options.map((o) =>
-              voteButton(
+            {options.map((o) => {
+              const { Icon, text } = hintOf(o.next)
+              return voteButton(
                 o.id,
                 o.label,
-                (o.needs || gmSide) && (
-                  <span className="text-[11px] text-ink/55">
-                    {o.needs && `✦ ${t('autoGmNeedsClue')}`}
-                    {o.needs && gmSide && ' · '}
-                    {gmSide && t('autoGmLeadsTo').replace('{n}', titleOf(o.next))}
-                  </span>
-                ),
-              ),
-            )}
+                <span className="flex flex-wrap items-center gap-x-1.5 text-[11px] text-ink/55">
+                  <Icon size={11} className="shrink-0 text-gm" aria-hidden />
+                  {text}
+                  {o.needs && ` · ✦ ${t('autoGmNeedsClue')}`}
+                  {gmSide && ` · ${t('autoGmLeadsTo').replace('{n}', titleOf(o.next))}`}
+                </span>,
+              )
+            })}
             {players.length > 1 && voteButton(NEUTRAL, t('autoGmNeutral'))}
             {iWatch && <p className="text-xs text-gm">{t('autoGmGmWatch')}</p>}
             <p className="text-xs text-ink/55">
@@ -758,18 +920,11 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
       </div>
     )
   } else if (step.kind === 'combat') {
+    // Le combat a son onglet : ici, seulement de quoi y revenir.
     body = (
-      <CombatView
-        combat={combat}
-        step={step}
-        me={me}
-        players={players}
-        iWatch={iWatch}
-        myChoice={me ? votes?.get(me.id) : undefined}
-        onChoose={(action, foe) => combat && vote(combatChoice(combat.round, action, foe), gm.visit)}
-        now={now}
-        lang={lang}
-      />
+      <button onClick={() => setTab('combat')} className="ui-btn ui-btn-primary">
+        <Swords size={14} aria-hidden /> {t('autoGmSeeCombat')}
+      </button>
     )
   } else if (step.kind === 'check' || step.kind === 'trial') {
     const stat = t(checkStatLabel(step.stat))
@@ -846,33 +1001,50 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
     )
   }
 
-  return panel(
+  const sceneTitle = (
+    <div>
+      {scene.chapter && <p className="ui-label !text-[10px] text-gm">{scene.chapter}</p>}
+      <h3 className="text-base font-semibold">{scene.title}</h3>
+    </div>
+  )
+
+  return frame(
     <>
       {header}
-      <div className="flex min-h-0 flex-col gap-3 overflow-y-auto p-3">
-        {needsHero && !iWatch && step.kind !== 'end' && <PremadeHeroPicker onPick={onPickHero} onRoll={onRoll} />}
-        <div>
-          {scene.chapter && <p className="ui-label !text-[10px] text-gm">{scene.chapter}</p>}
-          <h3 className="text-base font-semibold">{scene.title}</h3>
-        </div>
-        <div className="flex flex-col gap-2 text-sm leading-relaxed text-ink/85">
-          {scene.narration.map((p, i) => (
-            <p key={i}>{p}</p>
-          ))}
-        </div>
-        {gmSide && scene.gmNotes && (
-          <p className="rounded-lg border border-gm/40 bg-[color-mix(in_srgb,var(--c-panel)_88%,var(--c-gm))] px-3 py-2 text-xs leading-snug text-ink/80">
-            <b className="text-gm">{t('autoGmGmNotes')} · </b>
-            {scene.gmNotes}
-          </p>
-        )}
-        {body}
-        {step.kind !== 'end' && me?.gm && (
-          <button onClick={stop} className="ui-btn ui-btn-ghost !min-h-7 self-start text-xs text-ink/55">
-            <X size={12} /> {t('autoGmStop')}
-          </button>
-        )}
+      {sceneTitle}
+      <div className="flex flex-col gap-2 text-sm leading-relaxed text-ink/85">
+        {scene.narration.map((p, i) => (
+          <p key={i}>{p}</p>
+        ))}
       </div>
+      {gmSide && scene.gmNotes && (
+        <p className="rounded-lg border border-gm/40 bg-[color-mix(in_srgb,var(--c-panel)_88%,var(--c-gm))] px-3 py-2 text-xs leading-snug text-ink/80">
+          <b className="text-gm">{t('autoGmGmNotes')} · </b>
+          {scene.gmNotes}
+        </p>
+      )}
+      {body}
+      {step.kind !== 'end' && me?.gm && (
+        <button onClick={stop} className="ui-btn ui-btn-ghost !min-h-7 self-start text-xs text-ink/55">
+          <X size={12} /> {t('autoGmStop')}
+        </button>
+      )}
     </>,
+    step.kind === 'combat' && (
+      <>
+        {sceneTitle}
+        <CombatView
+          combat={combat}
+          step={step}
+          me={me}
+          players={players}
+          iWatch={iWatch}
+          myChoice={me ? votes?.get(me.id) : undefined}
+          onChoose={(action, foe) => combat && vote(combatChoice(combat.round, action, foe), gm.visit)}
+          now={now}
+          lang={lang}
+        />
+      </>
+    ),
   )
 }

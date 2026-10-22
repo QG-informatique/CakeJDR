@@ -368,6 +368,9 @@
 - [ ] Régler les montants d'XP (`lib/xp.ts`) après une vraie partie : viser environ un niveau par aventure courte
 - [x] Rallonger « La Flamme sous la montagne » (2 à 3 h en séances) : combats au tour par tour, voyages, décisions en plusieurs jets, niveau 4 ou 5 à la fin
 - [ ] Jouer une séance de « La Flamme sous la montagne » à plusieurs : noter la durée réelle et les combats trop durs ou trop faciles (simulation : vampire et dragon gagnés une fois sur deux)
+- [x] Campagne : objets utilisables en combat, plus de combats (3 au moins avant le roi gobelin), chemins en plus, type de jet annoncé sous chaque choix, récit et combat dans le panneau de droite
+- [ ] Jouer « La Flamme sous la montagne » en vraie partie après le rallongement du 2026-10-22 : mesurer la durée et noter les combats trop durs ou trop faciles
+- [ ] Afficher dans le récit le butin gagné à la fin d'une scène (potions, objets ajoutés au sac)
 - [ ] Jouer seul le début de « La Flamme sous la montagne » en ligne et noter ce qui va et ce qui ne va pas (création, votes, tests, rythme)
 - [ ] Vérifier la reprise d'une campagne : quitter la salle après la création du héros, choisir une autre fiche dans le menu, revenir et retrouver le même héros au même endroit de l'aventure
 - [ ] Accepter tous les pseudos dans l'enregistrement des fiches d'une salle : un pseudo avec un symbole ou un emoji est refusé sans message par `/api/roomstorage` (`SAFE_ID`), la fiche n'est alors gardée que dans le navigateur et sur le compte
