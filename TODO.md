@@ -370,6 +370,8 @@
 - [ ] Jouer une séance de « La Flamme sous la montagne » à plusieurs : noter la durée réelle et les combats trop durs ou trop faciles (simulation : vampire et dragon gagnés une fois sur deux)
 - [x] Campagne : objets utilisables en combat, plus de combats (3 au moins avant le roi gobelin), chemins en plus, type de jet annoncé sous chaque choix, récit et combat dans le panneau de droite
 - [ ] Jouer « La Flamme sous la montagne » en vraie partie après le rallongement du 2026-10-22 : mesurer la durée et noter les combats trop durs ou trop faciles
+- [x] Ajouter en fin de campagne un bouton « Rejouer » (même aventure, mêmes héros) et un bouton « Quitter »
+- [ ] Proposer en fin de campagne de rejouer avec de nouveaux héros niveau 1 (aujourd'hui « Rejouer » garde les héros et leur niveau)
 - [ ] Afficher dans le récit le butin gagné à la fin d'une scène (potions, objets ajoutés au sac)
 - [ ] Jouer seul le début de « La Flamme sous la montagne » en ligne et noter ce qui va et ce qui ne va pas (création, votes, tests, rythme)
 - [ ] Vérifier la reprise d'une campagne : quitter la salle après la création du héros, choisir une autre fiche dans le menu, revenir et retrouver le même héros au même endroit de l'aventure

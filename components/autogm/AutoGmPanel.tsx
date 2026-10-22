@@ -47,6 +47,7 @@ import {
   adventureIn,
   CANCEL_GRACE_MS,
   CHECK_READ_MS,
+  DEMO_ADVENTURE,
   NEUTRAL,
   VOTE_SETTLE_MS,
   VOTE_WINDOW_MS,
@@ -989,12 +990,15 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
             ))}
           </ol>
         </div>
+        {/* Rejouer reprend la même aventure au début, avec les mêmes héros :
+            les choix et les tirages au hasard mènent ailleurs. */}
+        <p className="text-xs text-ink/60">{t('autoGmReplayHint')}</p>
         <div className="flex flex-wrap gap-2">
           <button onClick={() => start(gm.adventure, gm.mode)} className="ui-btn ui-btn-primary">
             {t('autoGmReplay')}
           </button>
           <Link href="/salles" className="ui-btn">
-            {t('autoGmCreateTable')}
+            {gm.adventure === DEMO_ADVENTURE ? t('autoGmCreateTable') : t('autoGmQuit')}
           </Link>
         </div>
       </div>

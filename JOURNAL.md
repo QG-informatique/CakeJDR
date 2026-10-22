@@ -1,5 +1,10 @@
 # Journal
 
+## 2026-10-22 — Fin de campagne : boutons Rejouer et Quitter
+- À la fin d'une aventure, « Rejouer » la relance du début avec les mêmes héros, « Quitter » ramène à la liste des salles (`components/autogm/AutoGmPanel.tsx`)
+- Les héros gardent leur niveau en rejouant : plus simple, la reprise des fiches de la salle n'est pas touchée
+Reste ouvert : proposer de rejouer avec de nouveaux héros niveau 1 si la deuxième partie est trop facile.
+
 ## 2026-10-22 — MJ automatique : objets en combat, panneau latéral, campagne plus longue
 - Combat : section « Ton sac » pour boire une potion ou lancer un objet à son tour ; potions de départ et butin dans les scènes (`lib/autoGm/combatActions.ts`, `components/autogm/CombatView.tsx`)
 - Le récit, la création du héros et le combat passent dans le panneau de droite (onglets Récit / Héros / Chat) au lieu du milieu de l'écran (`components/autogm/AutoGmPanel.tsx`, `components/app/HomePageInner.tsx`)
