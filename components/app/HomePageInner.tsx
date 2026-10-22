@@ -124,6 +124,7 @@ export default function HomePageInner() {
   // Montée de niveau à la main : ouvre l'éditeur de la fiche du joueur.
   const [editSignal, setEditSignal] = useState(0)
   const tableDiceRef = useRef<DiceBoxHandle>(null)
+  const [lobbySlot, setLobbySlot] = useState<HTMLDivElement | null>(null)
   // Première demande du MJ qui m'attend : les dés lancés sont alors les siens.
   const checks = useStorage((root) => root.checks)
   const pending = checks && self?.id
@@ -841,6 +842,9 @@ export default function HomePageInner() {
                 ) : null}
               />
             </ErrorBoundary>
+            {/* Place du salon d'attente du MJ automatique : au-dessus du plateau,
+                sous la barre d'outils et le panneau du MJ. */}
+            <div ref={setLobbySlot} className="pointer-events-none absolute inset-0 z-20 empty:hidden" />
             {/* Bandeau de la salle de démo, en bas du plateau : il ne cache pas les outils. */}
             <DemoBanner />
             <ErrorBoundary fallback={<div className="p-4 text-red-500">Dice display error</div>}>
@@ -866,7 +870,21 @@ export default function HomePageInner() {
               </p>
             )}
           </div>
-          <ErrorBoundary fallback={<div className="p-4 text-red-500">Dice roller error</div>}>
+          {/* Chaque morceau de la barre a sa propre garde : une erreur de la
+              musique ne fait plus disparaître les dés, et « Réessayer » la
+              remonte sans recharger la page. Le message dit ce qui a cassé. */}
+          <ErrorBoundary
+            fallbackRender={({ error, reset }) => (
+              <div role="alert" className="ui-panel flex items-center gap-3 px-3 py-2 text-sm">
+                <span className="min-w-0 truncate text-red-400" title={error.message}>
+                  {t('barCrashed')} : {error.message}
+                </span>
+                <button type="button" onClick={reset} className="ui-btn ml-auto shrink-0">
+                  {t('barRetry')}
+                </button>
+              </div>
+            )}
+          >
             <DiceRoller
               dice={dicePool}
               onChange={changeDicePool}
@@ -875,9 +893,26 @@ export default function HomePageInner() {
               disabled={diceDisabled}
               cooldown={cooldown}
               cooldownDuration={rollMs}
-              leading={<MusicPlayer />}
+              leading={
+                <ErrorBoundary
+                  fallbackRender={({ error, reset }) => (
+                    <span className="flex min-w-0 items-center gap-2 text-xs">
+                      <span className="min-w-0 truncate text-red-400" title={error.message}>
+                        ⚠ {t('musicCrashed')}
+                      </span>
+                      <button type="button" onClick={reset} className="ui-btn !min-h-8 shrink-0 text-xs">
+                        {t('barRetry')}
+                      </button>
+                    </span>
+                  )}
+                >
+                  <MusicPlayer />
+                </ErrorBoundary>
+              }
             >
-              <LiveAvatarStack />
+              <ErrorBoundary fallback={null}>
+                <LiveAvatarStack />
+              </ErrorBoundary>
             </DiceRoller>
           </ErrorBoundary>
         </main>
@@ -895,6 +930,7 @@ export default function HomePageInner() {
                 onRoll={() => tableDiceRef.current?.throwNow()}
                 chat={<ChatBox chatBoxRef={chatBoxRef} author={chatAuthor} embedded />}
                 onOpenGmMenu={isGM ? () => setGmPanelOpen(true) : undefined}
+                lobbySlot={lobbySlot}
               />
             ) : (
               <ChatBox chatBoxRef={chatBoxRef} author={chatAuthor} />

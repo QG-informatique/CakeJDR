@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
+import { createPortal } from 'react-dom'
 import { useParams } from 'next/navigation'
 import { useMutation, useOthers, useSelf, useStorage } from '@liveblocks/react'
 import { LiveMap, LiveObject } from '@liveblocks/client'
@@ -22,7 +23,6 @@ import {
   Swords,
   Target,
   UserRound,
-  Volume2,
   X,
 } from 'lucide-react'
 import { useT } from '@/lib/useT'
@@ -40,7 +40,7 @@ import { actionBonus, backgroundOf } from '@/lib/backgrounds'
 import { useShowImage } from '@/components/canvas/ShownImage'
 import { postCheck } from '@/components/checks/postCheck'
 import { getTextColor } from '@/components/chat/LiveAvatarStack'
-import { MUSIC_JOIN_EVENT, playUiSound, useSoundVolume } from '@/lib/sound'
+import { MUSIC_JOIN_EVENT, useSoundVolume } from '@/lib/sound'
 import { LOBBY_TRACK, sceneMood, trackFor } from '@/lib/autoGm/music'
 import { useStartAdventure } from './useStartAdventure'
 import PremadeHeroPicker from './PremadeHeroPicker'
@@ -69,6 +69,8 @@ import type { CombatState } from '@/lib/autoGm/combat'
 import { itemCounts, itemsUsed } from '@/lib/autoGm/combatActions'
 import type { Foe } from '@/lib/autoGm/types'
 import AdventureDuration from './AdventureDuration'
+import TableSettings from '@/components/gm/TableSettings'
+import MusicPreview from '@/components/music/MusicPreview'
 import CombatView from './CombatView'
 import { combatLineText } from './combatText'
 import { combatChoice, useAutoCombat } from './useAutoCombat'
@@ -98,6 +100,8 @@ type Props = {
   chat: ReactNode
   /** Ouvre le panneau du MJ (seulement pour le MJ), proposé dans le salon d'attente. */
   onOpenGmMenu?: () => void
+  /** Le plateau : le salon d'attente s'y affiche en grand. */
+  lobbySlot?: HTMLElement | null
 }
 
 type Tab = 'story' | 'combat' | 'hero' | 'chat'
@@ -152,11 +156,13 @@ function combatSheet(c: Character): Pick<Voter, 'hp' | 'maxHp' | 'defense' | 'we
 
 /**
  * Lance un morceau d'ambiance pour toute la table, repris en boucle. Celui
- * qui tourne déjà n'est pas relancé (ni remis en route s'il a été coupé).
+ * qui tourne déjà n'est pas relancé (ni remis en route s'il a été coupé),
+ * sauf avec `restart` : au début de l'aventure, la musique coupée pendant
+ * le salon d'attente repart.
  */
-function playAmbiance(storage: LiveObject<Liveblocks['Storage']>, id: string) {
+function playAmbiance(storage: LiveObject<Liveblocks['Storage']>, id: string, restart = false) {
   const music = storage.get('music') as Liveblocks['Storage']['music'] | undefined
-  if (music instanceof LiveObject && music.get('id') === id) return
+  if (!restart && music instanceof LiveObject && music.get('id') === id) return
   const fields = { id, playing: true, pos: 0, at: Date.now(), loop: true }
   if (music instanceof LiveObject) music.update(fields)
   else storage.set('music', new LiveObject(fields))
@@ -192,7 +198,7 @@ function Bubble({ voter, size = 20 }: { voter: Voter; size?: number }) {
  * connecté s'il n'y a pas de MJ. S'il part, le suivant prend le relais là où
  * en était la partie, puisque tout est rangé dans le stockage partagé.
  */
-export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHero, onRoll, chat, onOpenGmMenu }: Props) {
+export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHero, onRoll, chat, onOpenGmMenu, lobbySlot }: Props) {
   const t = useT()
   const { lang } = useLanguage()
   const { id: roomId } = useParams<{ id: string }>()
@@ -368,7 +374,7 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
     if (base && autoMusicOn(storage)) {
       const music = storage.get('music') as Liveblocks['Storage']['music'] | undefined
       const playing = music instanceof LiveObject ? music.get('id') : undefined
-      playAmbiance(storage, trackFor(sceneMood(base, state.get('path')), playing, `${state.get('run')}:${expected}`))
+      playAmbiance(storage, trackFor(sceneMood(base, state.get('path')), playing, `${state.get('run')}:${expected}`), expected === 1)
     }
     const list = storage.get('events')
     const text = [current.chapter, current.title].filter(Boolean).join(' · ')
@@ -387,7 +393,6 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
     if (present.every((id) => ready.includes(id))) {
       state.delete('lobby')
       state.delete('ready')
-      state.delete('lobbyMusic')
     } else state.set('ready', ready)
   }, [])
 
@@ -399,14 +404,6 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
     if (!present.every((id) => ready.includes(id))) return
     state.delete('lobby')
     state.delete('ready')
-    state.delete('lobbyMusic')
-  }, [])
-
-  const lobbyMusic = useMutation(({ storage }) => {
-    const state = storage.get('autoGm')
-    if (!state?.get('lobby') || state.get('lobbyMusic')) return
-    state.set('lobbyMusic', true)
-    if (autoMusicOn(storage)) playAmbiance(storage, LOBBY_TRACK)
   }, [])
 
   const vote = useMutation(({ storage, self }, option: string, expected: number) => {
@@ -462,23 +459,13 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
     if (shown) showImage(libraryUrl(shown.category, shown.item), shown.label, { adventure: gm.adventure, scene: gm.scene })
   }, [isLeader, gm, setUp, showImage, t])
 
-  // Salon d'attente : la musique du salon, et le départ si ceux qui restent
-  // sont tous prêts.
+  // Salon d'attente : le départ si ceux qui restent sont tous prêts. Pas de
+  // musique avant : chacun règle et essaie le son de son côté.
   const presentIds = useMemo(() => [...new Set(voters.map((v) => v.id))], [voters])
   useEffect(() => {
     if (!isLeader || !gm?.lobby) return
-    if (!gm.lobbyMusic) lobbyMusic()
     leaveLobby(presentIds)
-  }, [isLeader, gm, presentIds, lobbyMusic, leaveLobby])
-
-  // Le MJ arrive dans le salon : son panneau s'ouvre à côté, pour régler la
-  // table avant de commencer (une fois par partie).
-  const gmMenuShown = useRef<string | null>(null)
-  useEffect(() => {
-    if (!gm?.lobby || !me?.gm || !onOpenGmMenu || gmMenuShown.current === gm.run) return
-    gmMenuShown.current = gm.run
-    onOpenGmMenu()
-  }, [gm?.lobby, gm?.run, me?.gm, onOpenGmMenu])
+  }, [isLeader, gm, presentIds, leaveLobby])
 
   const [musicVolume, setMusicVolume] = useSoundVolume('music')
   const [uiVolume, setUiVolume] = useSoundVolume('ui')
@@ -877,11 +864,24 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
   if (gm.lobby) {
     const readyIds = gm.ready ?? []
     const iAmReady = !!me && readyIds.includes(me.id)
-    // Un clic de l'utilisateur : le navigateur laisse alors partir le son.
+    // Un clic de l'utilisateur : le navigateur laissera partir la musique de
+    // la table quand l'aventure commencera.
     const joinMusic = () => window.dispatchEvent(new Event(MUSIC_JOIN_EVENT))
+    const readyButton = (
+      <button
+        onClick={() => {
+          joinMusic()
+          toggleReady(presentIds)
+        }}
+        aria-pressed={iAmReady}
+        className={`ui-btn ${iAmReady ? '' : 'ui-btn-primary'}`}
+      >
+        {iAmReady ? t('lobbyNotReady') : t('lobbyReady')}
+      </button>
+    )
     const slider = (label: string, value: number, onChange: (v: number) => void) => (
-      <label className="flex items-center gap-2 text-xs text-ink/70">
-        <span className="w-28 shrink-0">{label}</span>
+      <label className="flex items-center gap-3 text-sm text-ink/75">
+        <span className="w-32 shrink-0">{label}</span>
         <input
           type="range"
           min={0}
@@ -890,74 +890,100 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
           onChange={(e) => onChange(Number(e.target.value))}
           className="min-w-0 flex-1"
         />
-        <span className="w-7 shrink-0 text-right tabular-nums text-ink/55">{value}</span>
+        <span className="w-8 shrink-0 text-right tabular-nums text-ink/55">{value}</span>
       </label>
     )
-    return frame(
-      <>
-        {header}
-        <div>
-          <p className="ui-label !text-[10px] text-gm">{t('lobbyTitle')}</p>
-          <h3 className="text-base font-semibold">{adventure.title}</h3>
-        </div>
-        <p className="text-sm italic text-ink/70">{adventure.pitch}</p>
-        <AdventureDuration adventure={adventure} />
-        <section className="flex flex-col gap-2 rounded-lg border border-[var(--c-panel-line)] p-3">
-          <h4 className="ui-label !text-[10px]">{t('lobbySound')}</h4>
-          {slider(t('lobbyMusicVolume'), musicVolume, setMusicVolume)}
-          {slider(t('uiSoundVolume'), uiVolume, setUiVolume)}
-          <button
-            data-no-ui-sound
-            onClick={() => {
-              playUiSound('test')
-              joinMusic()
-            }}
-            className="ui-btn !min-h-8 self-start text-sm"
-          >
-            <Volume2 size={14} aria-hidden /> {t('lobbyTestSound')}
-          </button>
-          <p className="text-xs text-ink/55">{t('lobbySoundHint')}</p>
-        </section>
-        {me?.gm && onOpenGmMenu && (
-          <button onClick={onOpenGmMenu} className="ui-btn !min-h-8 self-start text-sm">
-            <Crown size={14} className="text-gm" aria-hidden /> {t('lobbyGmMenu')}
-          </button>
-        )}
-        {showHero && (
-          <p className="text-xs text-amber-300">
-            {t('lobbyPickHero')}{' '}
-            <button onClick={() => setTab('hero')} className="font-semibold underline">
-              {t('autoGmTabHero')}
-            </button>
-          </p>
-        )}
-        <ul className="flex flex-col gap-1">
-          {voters.map((v) => (
-            <li key={v.connectionId} className="flex items-center gap-2 text-sm">
-              <Bubble voter={v} />
-              <span className="min-w-0 flex-1 truncate">{v.name}</span>
-              {readyIds.includes(v.id) ? (
-                <span className="flex items-center gap-1 text-xs font-semibold text-emerald-400">
-                  <Check size={12} aria-hidden /> {t('lobbyIsReady')}
-                </span>
-              ) : (
-                <span className="text-xs text-ink/50">{t('lobbyWaiting')}</span>
+    // Avant la première scène, le plateau est vide : le salon s'y affiche en
+    // grand, sur le fond du thème, pour toute la table.
+    const lobby = (
+      <div
+        className="@container pointer-events-auto absolute inset-0 flex overflow-y-auto px-4 pb-4 pt-16"
+        style={{ background: 'var(--c-page)' }}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <div className="m-auto grid w-full max-w-5xl gap-4 @xl:grid-cols-2">
+          <div className="flex min-w-0 flex-col gap-4">
+            <div>
+              <p className="ui-label !text-[11px] text-gm">{t('lobbyTitle')}</p>
+              <h2 className="text-2xl font-semibold">{adventure.title}</h2>
+              <p className="mt-1 text-sm italic text-ink/70">{adventure.pitch}</p>
+              <div className="mt-2">
+                <AdventureDuration adventure={adventure} />
+              </div>
+            </div>
+            <section className="ui-panel flex flex-col gap-3 p-4">
+              <h3 className="ui-label !text-[10px]">{t('lobbySound')}</h3>
+              <p className="text-sm text-ink/80">{t('lobbySoundIntro')}</p>
+              {slider(t('lobbyMusicVolume'), musicVolume, setMusicVolume)}
+              {slider(t('uiSoundVolume'), uiVolume, setUiVolume)}
+              <MusicPreview trackId={LOBBY_TRACK} />
+              <p className="text-xs text-ink/55">{t('lobbySoundHint')}</p>
+            </section>
+            <section className="ui-panel flex flex-col gap-3 p-4">
+              <h3 className="ui-label !text-[10px]">{t('lobbyTable')}</h3>
+              {showHero && (
+                <p className="text-sm text-amber-300">
+                  {t('lobbyPickHero')}{' '}
+                  <button
+                    onClick={() => {
+                      setCollapsed(false)
+                      setTab('hero')
+                    }}
+                    className="font-semibold underline"
+                  >
+                    {t('autoGmTabHero')}
+                  </button>
+                </p>
               )}
-            </li>
-          ))}
-        </ul>
-        <button
-          onClick={() => {
-            joinMusic()
-            toggleReady(presentIds)
-          }}
-          aria-pressed={iAmReady}
-          className={`ui-btn ${iAmReady ? '' : 'ui-btn-primary'}`}
-        >
-          {iAmReady ? t('lobbyNotReady') : t('lobbyReady')}
-        </button>
-        <p className="text-xs text-ink/55">{t(voters.length > 1 ? 'lobbyReadyHint' : 'lobbySoloHint')}</p>
-      </>,
+              <ul className="flex flex-col gap-1.5">
+                {voters.map((v) => (
+                  <li key={v.connectionId} className="flex items-center gap-2 text-sm">
+                    <Bubble voter={v} />
+                    <span className="min-w-0 flex-1 truncate">{v.name}</span>
+                    {readyIds.includes(v.id) ? (
+                      <span className="flex items-center gap-1 text-xs font-semibold text-emerald-400">
+                        <Check size={12} aria-hidden /> {t('lobbyIsReady')}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-ink/50">{t('lobbyWaiting')}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              {readyButton}
+              <p className="text-xs text-ink/55">{t(voters.length > 1 ? 'lobbyReadyHint' : 'lobbySoloHint')}</p>
+            </section>
+          </div>
+          <section className="ui-panel flex min-w-0 flex-col gap-3 p-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="ui-label !text-[10px]">{t('lobbySettings')}</h3>
+              {me?.gm && onOpenGmMenu && (
+                <button onClick={onOpenGmMenu} className="ui-btn !min-h-8 ml-auto text-xs">
+                  <Crown size={13} className="text-gm" aria-hidden /> {t('lobbyGmMenu')}
+                </button>
+              )}
+            </div>
+            <p className="text-xs text-ink/60">{t(me?.gm ? 'lobbySettingsGm' : 'lobbySettingsPlayer')}</p>
+            <TableSettings readOnly={!me?.gm} />
+          </section>
+        </div>
+      </div>
+    )
+    return (
+      <>
+        {lobbySlot && createPortal(lobby, lobbySlot)}
+        {frame(
+          <>
+            {header}
+            <div>
+              <p className="ui-label !text-[10px] text-gm">{t('lobbyTitle')}</p>
+              <h3 className="text-base font-semibold">{adventure.title}</h3>
+            </div>
+            <p className="text-sm text-ink/75">{t('lobbyOnBoard')}</p>
+            {readyButton}
+          </>,
+        )}
+      </>
     )
   }
 

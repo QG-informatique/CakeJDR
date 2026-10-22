@@ -20,8 +20,9 @@ import { statMod } from '@/lib/modifiers'
 import { DICE_TYPES } from '@/lib/dicePayload'
 import { postCheck } from '@/components/checks/postCheck'
 import AdventureLauncher from '@/components/autogm/AdventureLauncher'
-import { useGameSystem, useRoomSettings, type DrawPermission, type SheetEditMode } from '@/lib/roomSettings'
-import { GAME_SYSTEMS, GAME_SYSTEM_IDS, levelUpDice, type GameSystem, type GameSystemId } from '@/lib/gameSystems'
+import TableSettings from '@/components/gm/TableSettings'
+import { useGameSystem, useRoomSettings } from '@/lib/roomSettings'
+import { levelUpDice, type GameSystem } from '@/lib/gameSystems'
 import { levelUpTargets } from '@/lib/levelUp'
 import { type Character, normalizeCharacter } from '@/types/character'
 import { XP_GIFTS, XP_PER_LEVEL, levelReady, xpOf } from '@/lib/xp'
@@ -72,16 +73,6 @@ export default function GMPanel({ viewingConnectionId, onOpenSheet, onBackToOwn,
     const rest = settings.drawAllowed.filter((x) => x !== id)
     update({ drawAllowed: allowed ? [...rest, id] : rest })
   }
-
-  const SHEET_OPTIONS: Array<[SheetEditMode, string]> = [
-    ['own', t('gmSheetOwn')],
-    ['gm', t('gmSheetGm')],
-  ]
-  const DRAW_OPTIONS: Array<[DrawPermission, string]> = [
-    ['all', t('gmDrawAll')],
-    ['gm', t('gmDrawGm')],
-    ['some', t('gmDrawSome')],
-  ]
 
   return (
     <div
@@ -205,100 +196,12 @@ export default function GMPanel({ viewingConnectionId, onOpenSheet, onBackToOwn,
 
       <PendingChecks />
 
-      <section className="flex flex-col gap-1.5">
-        <h3 className="ui-label !text-[10px]">{t('gmWhoEditsSheets')}</h3>
-        <div className="ui-seg" role="group" aria-label={t('gmWhoEditsSheets')}>
-          {SHEET_OPTIONS.map(([value, label]) => (
-            <button key={value} aria-pressed={settings.sheetEdit === value} onClick={() => update({ sheetEdit: value })}>
-              {label}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="flex flex-col gap-1.5">
-        <h3 className="ui-label !text-[10px]">{t('gmWhoDraws')}</h3>
-        <div className="ui-seg" role="group" aria-label={t('gmWhoDraws')}>
-          {DRAW_OPTIONS.map(([value, label]) => (
-            <button key={value} aria-pressed={settings.draw === value} onClick={() => update({ draw: value })}>
-              {label}
-            </button>
-          ))}
-        </div>
-        {settings.draw === 'some' && players.length > 0 && (
+      <TableSettings
+        middle={<AdventureLauncher />}
+        drawExtra={settings.draw === 'some' && players.length > 0 && (
           <p className="text-xs text-ink/55">{t('gmDrawSomeHint')}</p>
         )}
-      </section>
-
-      <section className="flex flex-col gap-1.5">
-        <h3 className="ui-label !text-[10px]">{t('gameSystem')}</h3>
-        <select
-          value={settings.system}
-          onChange={(e) => update({ system: e.target.value as GameSystemId })}
-          className="ui-input w-full min-w-0 !min-h-8 text-sm"
-          aria-label={t('gameSystem')}
-        >
-          {GAME_SYSTEM_IDS.map((id) => (
-            <option key={id} value={id}>{GAME_SYSTEMS[id].name}</option>
-          ))}
-        </select>
-        <p className="text-xs text-ink/55">{t('gmSystemHint')}</p>
-      </section>
-
-      <section className="flex flex-col gap-1.5">
-        <h3 className="ui-label !text-[10px]">{t('gmHeroesTitle')}</h3>
-        <div className="ui-seg" role="group" aria-label={t('gmHeroesTitle')}>
-          <button aria-pressed={settings.newHeroes} onClick={() => update({ newHeroes: true })}>
-            {t('gmHeroesNew')}
-          </button>
-          <button aria-pressed={!settings.newHeroes} onClick={() => update({ newHeroes: false })}>
-            {t('gmHeroesOwn')}
-          </button>
-        </div>
-        <p className="text-xs text-ink/55">{t(settings.newHeroes ? 'newHeroesHint' : 'newHeroesOffHint')}</p>
-      </section>
-
-      {levels && (
-        <section className="flex flex-col gap-1.5">
-          <h3 className="ui-label !text-[10px]">{t('xpLevelUpTitle')}</h3>
-          <div className="ui-seg" role="group" aria-label={t('xpLevelUpTitle')}>
-            <button aria-pressed={settings.autoLevelUp} onClick={() => update({ autoLevelUp: true })}>
-              {t('xpLevelUpAuto')}
-            </button>
-            <button aria-pressed={!settings.autoLevelUp} onClick={() => update({ autoLevelUp: false })}>
-              {t('xpLevelUpGm')}
-            </button>
-          </div>
-          <p className="text-xs text-ink/55">{t(settings.autoLevelUp ? 'xpLevelUpAutoHint' : 'xpLevelUpGmHint')}</p>
-        </section>
-      )}
-
-      <AdventureLauncher />
-
-      <section className="flex flex-col gap-1.5">
-        <h3 className="ui-label !text-[10px]">{t('gmVotes')}</h3>
-        <div className="ui-seg" role="group" aria-label={t('gmVotes')}>
-          <button aria-pressed={!settings.anonymousVotes} onClick={() => update({ anonymousVotes: false })}>
-            {t('gmVotesVisible')}
-          </button>
-          <button aria-pressed={settings.anonymousVotes} onClick={() => update({ anonymousVotes: true })}>
-            {t('gmVotesAnonymous')}
-          </button>
-        </div>
-      </section>
-
-      <section className="flex flex-col gap-1.5">
-        <h3 className="ui-label !text-[10px]">{t('autoMusic')}</h3>
-        <div className="ui-seg" role="group" aria-label={t('autoMusic')}>
-          <button aria-pressed={settings.autoMusic} onClick={() => update({ autoMusic: true })}>
-            {t('autoMusicOn')}
-          </button>
-          <button aria-pressed={!settings.autoMusic} onClick={() => update({ autoMusic: false })}>
-            {t('autoMusicOff')}
-          </button>
-        </div>
-        <p className="text-xs text-ink/55">{t(settings.autoMusic ? 'autoMusicHint' : 'autoMusicOffHint')}</p>
-      </section>
+      />
 
       <p className="text-[11px] leading-snug text-ink/50">{t('gmSettingsLimit')}</p>
     </div>

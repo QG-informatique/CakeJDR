@@ -390,3 +390,5 @@
 - [ ] Vérifier la reprise d'une campagne : quitter la salle après la création du héros, choisir une autre fiche dans le menu, revenir et retrouver le même héros au même endroit de l'aventure
 - [ ] Accepter tous les pseudos dans l'enregistrement des fiches d'une salle : un pseudo avec un symbole ou un emoji est refusé sans message par `/api/roomstorage` (`SAFE_ID`), la fiche n'est alors gardée que dans le navigateur et sur le compte
 - [ ] Laisser voter sans fermer l'image montée par une scène : aujourd'hui l'image affichée cache les choix du vote tant qu'on n'a pas cliqué « Fermer »
+- [ ] Si la barre du bas affiche encore une erreur en ligne, relever le message affiché (capture) et corriger la cause
+- [ ] Tester à deux navigateurs le nouveau salon : réglages en lecture seule pour le joueur, « Tester le son » de chaque côté, musique lancée chez tous après le dernier « Prêt »

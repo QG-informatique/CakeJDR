@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-22 — Salon au milieu du plateau, musique après « Prêt », barre du bas protégée
+- En ligne, après « Prêt », la barre du bas affichait « Dice roller error » et la musique s'arrêtait ; cause pas reproduite en local. Musique, dés et joueurs ont chacun leur garde, avec le message d'erreur et « Réessayer » (`components/app/HomePageInner.tsx`)
+- Le salon « Avant de commencer » s'affiche en grand au milieu du plateau, sur le fond du thème, pour tous ; les réglages de la table y sont visibles, modifiables seulement par le MJ (`components/gm/TableSettings.tsx`, partagé avec le panneau du MJ)
+- Plus de musique de salon : la musique de la table se met en pause au lancement et repart à la première scène ; « Tester le son » joue un carillon et 20 s de musique pour soi seul (`components/music/MusicPreview.tsx`, `useStartAdventure.ts`)
+- Le menu du MJ ne s'ouvre plus d'office : les réglages sont déjà dans le salon
+Reste ouvert : savoir ce qui cassait la barre en ligne (capture du nouveau message si ça revient), test à plusieurs.
+
 ## 2026-10-22 — Atelier des voix pour enregistrer Quentin
 - Page locale « Atelier des voix » (Gradio) : Quentin enregistre au micro trois tons (calme, tendu, épique), puis essaie des réglages Chatterbox sur des répliques toutes prêtes (`C:\DEV\_outils\chatterbox\scripts\atelier.py`, lancée par `Atelier des voix.bat`)
 - Chaque essai est gardé avec ses réglages et sa graine (`essais/atelier/journal.csv`) ; « J'aime ce rendu » note les rendus retenus (`retenus.csv`) pour les reprendre ensuite
