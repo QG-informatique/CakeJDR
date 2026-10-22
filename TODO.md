@@ -376,7 +376,7 @@
 - [ ] (Retour de Quentin, 2026-10-22) Affaiblir la boule de feu du mage : en solo, elle tue tous les ennemis d'un coup (2d6 à tous, une fois par combat)
 - [x] (Retour de Quentin, 2026-10-22) Musiques d'ambiance du MJ automatique (Kevin MacLeod, CC BY 4.0, crédit visible obligatoire) : passe-partout, taverne, forêt, combat, donjon, boss, victoire
 - [x] (Retour de Quentin, 2026-10-22) Tester une voix par PNJ avec une synthèse vocale gratuite et libre (Piper, sur le PC)
-- [ ] Choisir avec Quentin les voix Piper (narratrice, PNJ) après écoute des essais de `C:\DEV\_outils\piper\essais`, puis décider si on pré-enregistre la narration des campagnes
+- [ ] Choisir avec Quentin les voix (narratrice, PNJ) après écoute des essais Chatterbox de `C:\DEV\_outils\chatterbox\essais` (Piper jugé trop robotique), puis décider si on pré-enregistre la narration des campagnes
 - [ ] Tester à deux navigateurs le salon d'attente du MJ automatique : chacun « Prêt », départ quand tous le sont, départ si celui qui n'était pas prêt s'en va
 - [ ] Ajouter des sons par type d'action en combat (attaque au corps à corps, sort, défense), en plus des sons des boutons
 - [ ] Passer en 1.0 une fois tout cela fini et testé, puis réécrire le README du GitHub pour qu'il corresponde à l'état réel du projet

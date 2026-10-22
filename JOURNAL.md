@@ -1,5 +1,10 @@
 # Journal
 
+## 2026-10-22 — Essai de Chatterbox pour les voix
+- Voix Piper jugées trop robotiques par Quentin : Chatterbox (Resemble AI, MIT) installé dans `C:\DEV\_outils\chatterbox`, sur le processeur (carte AMD non prise en charge), environ 40 s par réplique
+- Pas de voix françaises fournies : il copie un enregistrement de 10 s ; essai avec des voix Piper copiées, mêmes textes que l'essai Piper (`essais/`)
+Reste ouvert : écoute par Quentin, puis choix entre ces voix et sa propre voix enregistrée.
+
 ## 2026-10-22 — Salon d'attente, musique d'ambiance, sons de l'interface, page Crédits
 - Avant l'aventure, un salon « Avant de commencer » : volumes musique et boutons, test du son, menu du MJ ouvert d'office ; l'aventure part quand tous les présents ont cliqué « Prêt » (`components/autogm/AutoGmPanel.tsx`, `lib/sound.ts`)
 - 19 morceaux de Kevin MacLeod (CC BY 4.0) choisis selon la carte, le combat ou le boss, en boucle ; réglage « Musique du MJ automatique » dans le panneau du MJ ; crédits sur la nouvelle page `/credits`, liée en pied de page (`lib/autoGm/music.ts`, `app/credits/page.tsx`)
