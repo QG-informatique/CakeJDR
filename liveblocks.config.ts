@@ -6,6 +6,7 @@ import type { Character } from '@/types/character'
 import type { CheckOutcome, GmRequest, RollsOutcome } from '@/lib/checks'
 import type { AutoGmCheck, AutoGmMode, AutoGmTiebreak, AutoGmTrial } from '@/lib/autoGm/types'
 import type { CombatState } from '@/lib/autoGm/combat'
+import type { HeroCheck } from '@/lib/heroChecks'
 
 // Canvas images stored in Liveblocks. Keep in sync with components/canvas/ImageItem.tsx
 // but defined here to satisfy Liveblocks Lson constraints.
@@ -120,6 +121,8 @@ declare global {
       settings?: LiveObject<RoomSettings>
       /** Tests demandés par le MJ, en attente du jet du joueur (`app/api/check`). */
       checks?: LiveMap<string, GmRequest>
+      /** Fiches déjà faites en attente de l'accord du MJ (`lib/heroChecks.ts`). */
+      heroChecks?: LiveMap<string, HeroCheck>
       /**
        * Partie menée par le MJ automatique (`components/autogm/AutoGmPanel.tsx`).
        * `visit` compte les passages de scène en scène ; `setup` est le dernier

@@ -17,11 +17,14 @@ export default function PremadeHeroPicker({
   onLater,
   own = [],
   onOwn,
+  kept,
 }: {
   onPick: (hero: PremadeHero) => void
   /** Mes fiches déjà faites, quand la salle les accepte. */
   own?: Character[]
   onOwn?: (char: Character) => void
+  /** Fiche gardée que le MJ n'a pas encore acceptée, ou qu'il a refusée. */
+  kept?: { name: string; status: 'pending' | 'refused' }
   onRoll: () => void
   /** « Plus tard » : le joueur regarde d'abord, sans héros. */
   onLater: () => void
@@ -39,6 +42,11 @@ export default function PremadeHeroPicker({
           {t('autoGmPickHeroLater')}
         </button>
       </div>
+      {kept && (
+        <p role="status" className={`rounded-md border px-2 py-1.5 text-xs ${kept.status === 'refused' ? 'border-red-400/60 text-red-400' : 'border-gm/40 text-gm'}`}>
+          {t(kept.status === 'refused' ? 'heroKeptRefused' : 'heroKeptPending').replace('{name}', kept.name)}
+        </p>
+      )}
       <p className="text-xs text-ink/70">{t(own.length && onOwn ? 'autoGmPickHeroOwnHint' : 'autoGmPickHeroHint')}</p>
       <ul className="grid grid-cols-2 gap-1.5">
         {premadeHeroes(lang).map((hero) => (

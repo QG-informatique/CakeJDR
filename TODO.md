@@ -340,12 +340,14 @@
 - [x] Phase H : à la création d'une salle, choisir MJ humain ou MJ automatique, et réglage « Nouveau héros pour cette aventure » coché d'office (les fiches déjà faites sont refusées, pour éviter un niveau 5 dans une campagne niveau 1) ; décochable dans les options de la salle
 - [x] Phase H : à l'arrivée dans une aventure, proposer « Créer mon héros avec le MJ » (aux dés) et « Prendre un héros tout prêt » ; « Une de mes fiches » seulement si la salle l'autorise
 - [ ] Tester avec un compte joueur dans une salle « Fiches existantes acceptées » : arrivée dans l'aventure, « Ou garde une de tes fiches », la fiche gardée revient au rechargement
-- [ ] Phase H : quand la salle autorise les fiches déjà faites, faire valider chaque fiche par le MJ, ou par le créateur de la salle en MJ automatique (niveau de départ, caractéristiques pas trop hautes)
+- [x] Phase H : quand la salle autorise les fiches déjà faites, faire valider chaque fiche par le MJ, ou par le créateur de la salle en MJ automatique (niveau de départ, caractéristiques pas trop hautes)
 - [x] Phase H : arrêter de recopier toute la narration du MJ automatique dans le chat (elle est déjà dans le panneau de gauche) : n'y mettre que les choses importantes, indices et petits détails — titre de la scène et choix du groupe seulement
 - [x] Phase H : dans une salle « Nouveau héros » en MJ humain sans aventure lancée, proposer aussi le choix du héros (aujourd'hui : fiche vierge seulement) — en haut de la fiche vierge
 - [ ] Tester avec un compte joueur dans une salle « Nouveau héros » en MJ humain : choix du héros en haut de la fiche, création aux dés sans aventure lancée
 - [x] Phase H : marquer « Choix du groupe » avec un indice ou un petit détail de la scène quand l'aventure en prévoit (champ à ajouter aux scènes) — champ `note` des choix, traduit dans `notes`, exemples dans « La fournée maudite »
 - [ ] Ajouter des détails `note` aux choix de « La Flamme sous la montagne » (FR et EN)
+- [ ] Essayer la validation des fiches gardées avec un vrai compte joueur : attente, refus, acceptation, fiche modifiée après accord
+- [ ] Décider si la validation du MJ doit aussi s'appliquer hors aventure (table d'un MJ humain qui accepte les fiches existantes)
 - [x] Accueil : faire disparaître le bouton « Entrer dans <salle> » quand on supprime la salle choisie (il reste jusqu'au rechargement)
 - [ ] Tester en ligne la création d'une salle en MJ automatique (campagne, arrivée directe, fiche vierge, choix du héros)
 - [x] Phase Ambiance : trouver des sons d'interface libres de droits (licence CC0 de préférence) et les ajouter discrètement, ambiance JDR (clic, panneau, demande de jet, réussite, échec), avec un réglage pour les couper

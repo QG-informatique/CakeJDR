@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
-import { useBroadcastEvent, useEventListener, useMyPresence, useOthers, useSelf, useStorage } from '@liveblocks/react'
+import { useBroadcastEvent, useEventListener, useMutation, useMyPresence, useOthers, useSelf, useStorage } from '@liveblocks/react'
+import { LiveMap } from '@liveblocks/client'
 import { useIsDesktop } from '@/lib/useIsDesktop'
 import { useRouter, useParams } from 'next/navigation'
 import CharacterSheet, { defaultPerso } from '@/components/sheet/CharacterSheet'
@@ -26,7 +27,8 @@ import { roomAuthHeaders } from '@/lib/roomsApi'
 import { saveAccountCharacter } from '@/lib/charactersApi'
 import { useTheme } from '@/components/context/ThemeContext'
 import { useT } from '@/lib/useT'
-import { canEditSheet, useRoomSettings } from '@/lib/roomSettings'
+import { canEditSheet, useGameSystem, useRoomSettings } from '@/lib/roomSettings'
+import { heroCheckKey, heroCheckOf, type HeroCheck } from '@/lib/heroChecks'
 import { LEVEL_UP_TARGETS, type RollsOutcome } from '@/lib/checks'
 import { DICE_MAX_ROLL_MS, DICE_REVEAL_DELAY_MS } from '@/lib/dicePayload'
 import { isDiceType, POOL_MAX, poolLabel, sortDice } from '@/lib/dicePool'
@@ -623,9 +625,31 @@ export default function HomePageInner() {
     [settings.newHeroes, autoGmHeroRun, characters, profile?.id, profile?.pseudo],
   )
 
+  // Fiche gardée : le MJ la valide avant qu'elle joue. Le MJ qui garde la
+  // sienne, ou une salle sans MJ présent, n'attend personne.
+  const gameSystem = useGameSystem()
+  const heroChecks = useStorage((root) => root.heroChecks)
+  const gmHere = useOthers((others) => others.some((o) => o.info?.role === 'gm'))
+  const keptCheck = keptHero && self?.id ? heroChecks?.get(heroCheckKey(self.id, keptHero)) : undefined
+  const keptBlocked = !isGM && keptHero === String(perso.id) && perso.heroFor !== roomId && !!keptCheck &&
+    (keptCheck.status === 'refused' || (keptCheck.status === 'pending' && gmHere))
+  const askHeroCheck = useMutation(({ storage }, check: HeroCheck) => {
+    let map = storage.get('heroChecks')
+    if (!map) {
+      map = new LiveMap()
+      storage.set('heroChecks', map)
+    }
+    const key = heroCheckKey(check.userId, check.charId)
+    const seen = map.get(key)
+    // Déjà acceptée telle quelle : pas besoin de redemander.
+    if (seen?.status === 'ok' && seen.level === check.level && JSON.stringify(seen.stats) === JSON.stringify(check.stats)) return
+    map.set(key, check)
+  }, [])
+
   const handleKeepHero = (char: Character) => {
     if (viewedConnectionId !== null) return
     const next = normalizeCharacter(char, profile?.pseudo ?? null)
+    if (!isGM && self?.id) askHeroCheck(heroCheckOf(self.id, next, profile?.pseudo ?? '', gameSystem))
     setPerso(next)
     updateMyPresence({ character: { ...next, ownerConnectionId: myConnectionId ?? undefined } })
     setKeptHero(String(next.id))
@@ -979,10 +1003,11 @@ export default function HomePageInner() {
               <AutoGmPanel
                 adventureId={DEMO_ADVENTURE}
                 onEffect={handleAutoGmEffect}
-                needsHero={viewedConnectionId === null && (!perso.nom?.trim() || (perso.heroFor !== roomId && (settings.newHeroes || keptHero !== String(perso.id))) || (!!autoGmHeroRun && perso.heroRun !== autoGmHeroRun))}
+                needsHero={viewedConnectionId === null && (!perso.nom?.trim() || (perso.heroFor !== roomId && (settings.newHeroes || keptHero !== String(perso.id))) || (!!autoGmHeroRun && perso.heroRun !== autoGmHeroRun) || keptBlocked)}
                 onPickHero={handlePickHero}
                 myHeroes={myHeroes}
                 onKeepHero={handleKeepHero}
+                keptHero={keptBlocked ? { name: keptCheck.name, status: keptCheck.status } : undefined}
                 onRoll={() => tableDiceRef.current?.throwNow()}
                 chat={<ChatBox chatBoxRef={chatBoxRef} author={chatAuthor} embedded />}
                 onOpenGmMenu={isGM ? () => setGmPanelOpen(true) : undefined}

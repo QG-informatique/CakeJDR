@@ -1,5 +1,11 @@
 # Journal
 
+## 2026-10-23 — Le MJ valide les fiches gardées
+- Le joueur qui garde une de ses fiches pour l'aventure l'envoie au MJ ; le MJ (ou le créateur de la salle en MJ automatique) voit « Fiches à valider » en haut du panneau, avec niveau, caractéristiques et alertes (au-dessus du niveau 1, au-dessus de 18, moyenne au-dessus de 15) (`lib/heroChecks.ts`, `components/autogm/HeroApprovals.tsx`)
+- En attente ou refusée, l'onglet Héros reste ouvert avec un message ; une fiche acceptée puis modifiée repasse chez le MJ
+- Sans MJ présent, ou pour la fiche du MJ lui-même, pas d'attente : choix fait pour ne bloquer personne entre amis
+Reste ouvert : essai avec un vrai compte joueur
+
 ## 2026-10-23 — Détail de scène dans « Choix du groupe »
 - Un choix de vote peut porter un petit détail (`note`), ajouté à la ligne « Choix du groupe » du chat une fois retenu (`lib/autoGm/types.ts`, `AutoGmPanel.tsx`)
 - Version anglaise dans `notes`, vérifiée par `npm run check:en` ; trois exemples dans « La fournée maudite »

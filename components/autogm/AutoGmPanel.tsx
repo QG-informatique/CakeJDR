@@ -44,6 +44,7 @@ import { MUSIC_JOIN_EVENT, useSoundVolume } from '@/lib/sound'
 import { LOBBY_TRACK, sceneMood, trackFor } from '@/lib/autoGm/music'
 import { useStartAdventure } from './useStartAdventure'
 import PremadeHeroPicker from './PremadeHeroPicker'
+import HeroApprovals from './HeroApprovals'
 import type { PremadeHero } from '@/lib/premadeHeroes'
 import type { Character } from '@/types/character'
 import {
@@ -100,6 +101,8 @@ type Props = {
   /** Mes fiches déjà faites, quand la salle les accepte (sinon vide). */
   myHeroes?: Character[]
   onKeepHero?: (char: Character) => void
+  /** Ma fiche gardée, tant que le MJ ne l'a pas acceptée. */
+  keptHero?: { name: string; status: 'pending' | 'refused' }
   /** Lance les dés de la table pour la demande qui m'attend (création guidée). */
   onRoll: () => void
   /** Le chat de la table, rangé dans le dernier onglet du panneau. */
@@ -204,7 +207,7 @@ function Bubble({ voter, size = 20 }: { voter: Voter; size?: number }) {
  * connecté s'il n'y a pas de MJ. S'il part, le suivant prend le relais là où
  * en était la partie, puisque tout est rangé dans le stockage partagé.
  */
-export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHero, myHeroes, onKeepHero, onRoll, chat, onOpenGmMenu, lobbySlot }: Props) {
+export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHero, myHeroes, onKeepHero, keptHero, onRoll, chat, onOpenGmMenu, lobbySlot }: Props) {
   const t = useT()
   const { lang } = useLanguage()
   const { id: roomId } = useParams<{ id: string }>()
@@ -813,6 +816,7 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
               <ChevronRight size={18} />
             </button>
           </div>
+          {me?.gm && adventure && <HeroApprovals />}
           {adventure && <div className={`${pane('story')} min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3`}>{story}</div>}
           {showCombat && <div className={`${pane('combat')} min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3`}>{fight}</div>}
           {showHero && (
@@ -831,6 +835,7 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
                 onPick={onPickHero}
                 own={myHeroes}
                 onOwn={onKeepHero}
+                kept={keptHero}
                 onRoll={onRoll}
                 onLater={() => {
                   setHeroLater(true)
