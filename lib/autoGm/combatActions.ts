@@ -95,7 +95,7 @@ const CLASS_ACTIONS: Record<string, CombatAction[]> = {
   mage: [
     { id: 'trait-de-feu', fr: 'Trait de feu', en: 'Fire Bolt', hintFr: 'Jet d\'Intelligence, 1d10 dégâts.', hintEn: 'Intelligence roll, 1d10 damage.', effect: 'hit', stat: 'intelligence', dice: '1d10', mod: true },
     { id: 'projectiles', fr: 'Projectiles magiques', en: 'Magic Missiles', hintFr: 'Touche à coup sûr : 1d4+2.', hintEn: 'Never misses: 1d4+2.', effect: 'auto', dice: '1d4+2' },
-    { id: 'boule-de-feu', fr: 'Boule de feu', en: 'Fireball', hintFr: '2d6 à tous les ennemis. Une fois.', hintEn: '2d6 to every enemy. Once.', effect: 'area', dice: '2d6', uses: 1 },
+    { id: 'boule-de-feu', fr: 'Boule de feu', en: 'Fireball', hintFr: '1d6+1 à tous les ennemis. Une fois.', hintEn: '1d6+1 to every enemy. Once.', effect: 'area', dice: '1d6+1', uses: 1 },
     { id: 'bouclier', fr: 'Bouclier arcanique', en: 'Arcane Shield', hintFr: 'La prochaine attaque contre toi rate. Une fois.', hintEn: 'The next attack against you misses. Once.', effect: 'dodge', uses: 1 },
   ],
   rodeur: [

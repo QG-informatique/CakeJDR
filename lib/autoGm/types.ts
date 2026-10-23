@@ -109,7 +109,9 @@ export type SceneStep =
   /**
    * Épreuve en plusieurs jets, lancés à tour de rôle : `need` réussites en
    * `tries` essais au plus mènent à `best`. Sinon, `middleAt` réussites ou
-   * plus mènent à `middle` (une issue moins bonne), et moins à `fail`.
+   * plus mènent à `middle` (une issue moins bonne), et moins à `fail`. Sans
+   * `middle`, une réussite de moins que `need` mène à `best` de justesse :
+   * sans le butin ni les soins de la scène.
    */
   | {
       kind: 'trial'

@@ -180,17 +180,26 @@ type TrialStep = Extract<SceneStep, { kind: 'trial' }>
 /**
  * Suite d'une épreuve après `ok` réussites et `ko` échecs, ou rien tant qu'il
  * faut encore lancer. On s'arrête dès que la meilleure issue est gagnée ou
- * perdue, sauf si l'issue moyenne reste à jouer.
+ * perdue, sauf si l'issue moyenne reste à jouer. Sans issue moyenne écrite,
+ * une réussite de moins que demandé mène à la meilleure issue, de justesse
+ * (`trialPartial`).
  */
 export function trialNext(step: TrialStep, ok: number, ko: number): string | null {
   if (ok >= step.need) return step.best
   const left = Math.max(0, step.tries - ok - ko)
   if (ok + left >= step.need) return null
-  if (!step.middle) return step.fail
-  const at = step.middleAt ?? 1
-  if (ok >= at) return step.middle
+  const at = step.middle ? (step.middleAt ?? 1) : Math.max(1, step.need - 1)
+  if (ok >= at) return step.middle ?? step.best
   return ok + left >= at ? null : step.fail
 }
+
+/** Meilleure issue atteinte de justesse : sans le butin ni les soins de la scène, et un peu de casse. */
+export function trialPartial(step: TrialStep, ok: number): boolean {
+  return !step.middle && ok < step.need
+}
+
+/** PV perdus par chacun quand une réussite de justesse n'a ni butin ni soins à retirer. */
+export const PARTIAL_DAMAGE = 2
 
 type RandomStep = Extract<SceneStep, { kind: 'random' }>
 

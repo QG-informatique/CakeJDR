@@ -1,5 +1,13 @@
 # Journal
 
+## 2026-10-23 — Épreuves de justesse, boule de feu, vote dans l'image
+- Épreuve en plusieurs jets sans issue moyenne écrite : une réussite de moins que demandé mène quand même à la bonne suite, « de justesse », sans le butin ni les soins de la scène (ou 2 PV perdus) (`trialNext`, `trialPartial` dans `lib/autoGm/index.ts`, `AutoGmPanel.tsx`)
+- Boule de feu : 1d6+1 à tous au lieu de 2d6, elle ne vide plus un combat solo d'un coup (`lib/autoGm/combatActions.ts`)
+- Image d'une scène ouverte en grand : les choix (vote, « Continuer ») sont posés sous son récit, et elle se ferme quand la scène change (`components/canvas/ShownImage.tsx`)
+- Butin d'une scène écrit sous le récit ; pseudos avec symbole ou emoji acceptés pour les fiches d'une salle (`app/api/roomstorage/route.ts`)
+- Anti-triche des dés : décidé de ne rien faire, CakeJDR se joue entre amis
+Reste ouvert : essayer tout ça en vraie partie.
+
 ## 2026-10-22 — Dés qui ne partent plus collés
 - Les dés d'un même lancer partaient souvent du même point, se gênaient et roulaient mous (vu en 2D20). Ils partent maintenant côte à côte, en travers du lancer, en rangées vers le centre s'il y en a beaucoup (`spreadSpawns` dans `components/dice/DiceBoxTable.tsx`, types dans `types/dice-box-threejs.d.ts`)
 - Écart fixe (`SPAWN_GAP`), sans tirage au hasard : le lancer reste identique chez tous les joueurs

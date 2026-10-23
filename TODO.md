@@ -151,7 +151,7 @@
 - [ ] Implémenter une file d'attente par joueur (limiter à 1 lancer actif/joueur) au-delà du cooldown local
 - [x] Ajouter une version cube simulé D20/D6/D4/D100 avec orientation finale selon le résultat — sans objet : remplacé par Dice Box
 - [x] Remplacer les dés de la table par Dice Box : tous les types de dés, plusieurs et mélangés par lancer, départ d'un bord au hasard, vus par toute la table
-- [ ] Décider s'il faut un contrôle anti-triche des lancers : la face vient du navigateur du lanceur, le serveur ne fait que la vérifier et la signer
+- [x] Décider s'il faut un contrôle anti-triche des lancers : la face vient du navigateur du lanceur, le serveur ne fait que la vérifier et la signer (décidé le 2026-10-23 : rien, jeu entre amis)
 - [x] Faire passer les dés au-dessus du portrait en bas à droite du plateau (ils roulent dessous) — déjà le cas avec Dice Box : la couche des dés est au-dessus des images du plateau
 - [x] Rendre le bouton « Lancer » 0,4 s après l'arrêt de mes dés au lieu de ~4 s ; un nouveau lancer efface les dés encore posés
 - [ ] Vérifier en ligne avec un second joueur que deux lancers rapprochés du même joueur se rejouent bien chez l'autre, l'un après l'autre
@@ -372,8 +372,8 @@
 - [ ] Jouer « La Flamme sous la montagne » en vraie partie après le rallongement du 2026-10-22 : mesurer la durée et noter les combats trop durs ou trop faciles
 - [x] Ajouter en fin de campagne un bouton « Rejouer » (même aventure, mêmes héros) et un bouton « Quitter »
 - [ ] Proposer en fin de campagne de rejouer avec de nouveaux héros niveau 1 (aujourd'hui « Rejouer » garde les héros et leur niveau)
-- [ ] (Retour de Quentin, 2026-10-22) Épreuves en plusieurs jets : une réussite partielle (1 sur 2, 2 sur 3) doit donner une suite moins bonne (moins d'infos, moins de butin) au lieu d'un échec complet
-- [ ] (Retour de Quentin, 2026-10-22) Affaiblir la boule de feu du mage : en solo, elle tue tous les ennemis d'un coup (2d6 à tous, une fois par combat)
+- [x] (Retour de Quentin, 2026-10-22) Épreuves en plusieurs jets : une réussite partielle (1 sur 2, 2 sur 3) doit donner une suite moins bonne (moins d'infos, moins de butin) au lieu d'un échec complet
+- [x] (Retour de Quentin, 2026-10-22) Affaiblir la boule de feu du mage : en solo, elle tue tous les ennemis d'un coup (2d6 à tous, une fois par combat)
 - [x] (Retour de Quentin, 2026-10-22) Musiques d'ambiance du MJ automatique (Kevin MacLeod, CC BY 4.0, crédit visible obligatoire) : passe-partout, taverne, forêt, combat, donjon, boss, victoire
 - [x] (Retour de Quentin, 2026-10-22) Tester une voix par PNJ avec une synthèse vocale gratuite et libre (Piper, sur le PC)
 - [x] (2026-10-22) Écouter les essais Chatterbox de `C:\DEV\_outils\chatterbox\essais` (Piper jugé trop robotique) : moins robotique, manque d'intonation, Quentin enregistrera sa voix pour le narrateur
@@ -385,11 +385,11 @@
 - [ ] Tester à deux navigateurs le salon d'attente du MJ automatique : chacun « Prêt », départ quand tous le sont, départ si celui qui n'était pas prêt s'en va
 - [ ] Ajouter des sons par type d'action en combat (attaque au corps à corps, sort, défense), en plus des sons des boutons
 - [ ] Passer en 1.0 une fois tout cela fini et testé, puis réécrire le README du GitHub pour qu'il corresponde à l'état réel du projet
-- [ ] Afficher dans le récit le butin gagné à la fin d'une scène (potions, objets ajoutés au sac)
+- [x] Afficher dans le récit le butin gagné à la fin d'une scène (potions, objets ajoutés au sac)
 - [ ] Jouer seul le début de « La Flamme sous la montagne » en ligne et noter ce qui va et ce qui ne va pas (création, votes, tests, rythme)
 - [ ] Vérifier la reprise d'une campagne : quitter la salle après la création du héros, choisir une autre fiche dans le menu, revenir et retrouver le même héros au même endroit de l'aventure
-- [ ] Accepter tous les pseudos dans l'enregistrement des fiches d'une salle : un pseudo avec un symbole ou un emoji est refusé sans message par `/api/roomstorage` (`SAFE_ID`), la fiche n'est alors gardée que dans le navigateur et sur le compte
-- [ ] Laisser voter sans fermer l'image montée par une scène : aujourd'hui l'image affichée cache les choix du vote tant qu'on n'a pas cliqué « Fermer »
+- [x] Accepter tous les pseudos dans l'enregistrement des fiches d'une salle : un pseudo avec un symbole ou un emoji est refusé sans message par `/api/roomstorage` (`SAFE_ID`), la fiche n'est alors gardée que dans le navigateur et sur le compte
+- [x] Laisser voter sans fermer l'image montée par une scène : aujourd'hui l'image affichée cache les choix du vote tant qu'on n'a pas cliqué « Fermer »
 - [ ] Si la barre du bas affiche encore une erreur en ligne, relever le message affiché (capture) et corriger la cause
 - [ ] Tester à deux navigateurs le nouveau salon : réglages en lecture seule pour le joueur, « Tester le son » de chaque côté, musique lancée chez tous après le dernier « Prêt »
 - [ ] Ajuster la force des dés selon l'avis des joueurs (`THROW_MIN`, `THROW_MAX`, `WILD_CHANCE`, `WILD_BOOST`, écart de départ `SPAWN_GAP` dans `components/dice/DiceBoxTable.tsx`)

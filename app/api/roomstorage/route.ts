@@ -18,10 +18,11 @@ import { fail, ok } from '@/lib/api-response'
 
 /**
  * Format accepté pour owner/id. Le propriétaire est le pseudo, qui peut porter
- * des accents ou une apostrophe (« Élodie », « O'Neil ») : toute lettre ou
- * chiffre est accepté, seuls les caractères de contrôle sont refusés.
+ * des accents, une apostrophe, un symbole ou un emoji (« Élodie », « O'Neil »,
+ * « Zoé ✨ ») : tout est accepté sauf les caractères de contrôle et les sauts
+ * de ligne.
  */
-const SAFE_ID = /^[\p{L}\p{N}\p{M}_\-.@:' ]{1,120}$/u
+const SAFE_ID = /^[^\p{Cc}\p{Zl}\p{Zp}]{1,120}$/u
 
 /** Garde-fou de taille : une fiche de personnage n'a aucune raison d'être énorme. */
 const MAX_CHARACTER_BYTES = 256 * 1024

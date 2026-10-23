@@ -7,6 +7,7 @@ import { useParams } from 'next/navigation'
 import { useMutation, useOthers, useSelf, useStorage } from '@liveblocks/react'
 import { LiveMap, LiveObject } from '@liveblocks/client'
 import {
+  Backpack,
   BookOpen,
   Bot,
   Check,
@@ -37,7 +38,7 @@ import { CHECK_STATS, checkStatLabel, withStat } from '@/lib/checks'
 import { statMod } from '@/lib/modifiers'
 import { libraryUrl } from '@/lib/library'
 import { actionBonus, backgroundOf } from '@/lib/backgrounds'
-import { useShowImage } from '@/components/canvas/ShownImage'
+import { useShowImage, useStorySlot } from '@/components/canvas/ShownImage'
 import { postCheck } from '@/components/checks/postCheck'
 import { getTextColor } from '@/components/chat/LiveAvatarStack'
 import { MUSIC_JOIN_EVENT, useSoundVolume } from '@/lib/sound'
@@ -62,7 +63,9 @@ import {
   draw,
   drawable,
   optionHint,
+  PARTIAL_DAMAGE,
   trialNext,
+  trialPartial,
   type Voter,
 } from '@/lib/autoGm'
 import type { CombatState } from '@/lib/autoGm/combat'
@@ -206,6 +209,7 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
   const system = useGameSystem()
   const showImage = useShowImage()
   const gm = useStorage((root) => root.autoGm)
+  const storySlot = useStorySlot(gm?.scene)
   const events = useStorage((root) => root.events)
   const pending = useStorage((root) => root.checks)
   const [tab, setTab] = useState<Tab>('story')
@@ -307,7 +311,8 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
   // Passer à la scène suivante. `expected` évite de sauter deux scènes quand
   // deux joueurs cliquent ensemble : le second clic ne trouve plus la même visite.
   // `said` : une ligne pour l'historique, le choix retenu après un vote.
-  const go = useMutation(({ storage }, next: string, expected: number, said?: { author: string; text: string }) => {
+  // `partial` : on arrive au bout d'une épreuve de justesse.
+  const go = useMutation(({ storage }, next: string, expected: number, said?: { author: string; text: string }, partial?: boolean) => {
     const state = storage.get('autoGm')
     if (!state || state.get('visit') !== expected) return
     const nextScene = ADVENTURES[state.get('adventure')]?.scenes[next]
@@ -325,6 +330,8 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
     state.delete('check')
     state.delete('combat')
     state.delete('trial')
+    if (partial) state.set('partial', expected + 1)
+    else state.delete('partial')
     if (said) {
       const list = storage.get('events')
       list.push({ id: crypto.randomUUID(), kind: 'chat', author: said.author, text: said.text, ts: Date.now(), isMJ: true })
@@ -591,7 +598,7 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
         if (step.kind === 'check') return go(success ? step.success : step.failure, expected)
         const after = recordTrial(expected, checkId, success)
         const next = after && trialNext(step, after.ok, after.ko)
-        if (next) go(next, expected)
+        if (next) go(next, expected, undefined, next === step.best && trialPartial(step, after.ok))
       },
       Math.max(0, result.ts + CHECK_READ_MS - Date.now()),
     )
@@ -616,9 +623,13 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
     // Chaque scène traversée rapporte de l'XP, plus après un combat gagné ou
     // une étape de la quête : parler ou ruser fait aussi avancer.
     const xp = me?.hero && adventure && gm ? sceneXp(adventure, gm.scene, gm.path[gm.path.length - 2]) : 0
-    const loot = me?.hero && scene?.loot?.length ? scene.loot.map((l) => ({ nom: l[lang], n: l.n ?? 1 })) : undefined
-    if (scene && (scene.damage || scene.heal || xp || loot))
-      onEffect({ damage: scene.damage, heal: scene.heal, ...(xp ? { xp } : {}), ...(loot ? { loot } : {}) })
+    // De justesse : ni butin ni soins, ou un peu de casse si la scène n'en avait pas.
+    const partial = gm?.partial === gm?.visit
+    const loot = !partial && me?.hero && scene?.loot?.length ? scene.loot.map((l) => ({ nom: l[lang], n: l.n ?? 1 })) : undefined
+    const heal = partial ? undefined : scene?.heal
+    const damage = (scene?.damage ?? 0) + (partial && !scene?.loot?.length && !scene?.heal ? PARTIAL_DAMAGE : 0)
+    if (scene && (damage || heal || xp || loot))
+      onEffect({ damage: damage || undefined, heal, ...(xp ? { xp } : {}), ...(loot ? { loot } : {}) })
   }, [visitKey, scene, onEffect, iWatch, me?.hero, adventure, gm, lang])
 
   // ── Montée de niveau automatique ────────────────────────────────────────
@@ -1212,9 +1223,16 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
       {header}
       {sceneTitle}
       <div className="flex flex-col gap-2 text-sm leading-relaxed text-ink/85">
+        {gm.partial === gm.visit && <p className="font-semibold text-ink">{t('autoGmPartial')}</p>}
         {scene.narration.map((p, i) => (
           <p key={i}>{p}</p>
         ))}
+        {gm.partial !== gm.visit && scene.loot?.length ? (
+          <p className="flex items-start gap-1.5 font-semibold text-ink">
+            <Backpack size={14} className="mt-0.5 shrink-0 text-gm" aria-hidden />
+            {t('autoGmLoot').replace('{n}', scene.loot.map((l) => ((l.n ?? 1) > 1 ? `${l[lang]} ×${l.n}` : l[lang])).join(', '))}
+          </p>
+        ) : null}
       </div>
       {gmSide && scene.gmNotes && (
         <p className="rounded-lg border border-gm/40 bg-[color-mix(in_srgb,var(--c-panel)_88%,var(--c-gm))] px-3 py-2 text-xs leading-snug text-ink/80">
@@ -1223,6 +1241,10 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
         </p>
       )}
       {body}
+      {/* Image de la scène ouverte en grand : les choix aussi sous son récit. */}
+      {storySlot &&
+        (step.kind === 'vote' || step.kind === 'continue' || step.kind === 'random') &&
+        createPortal(<div className="ui-panel mt-3 p-3 text-left">{body}</div>, storySlot)}
       {step.kind !== 'end' && me?.gm && (
         <button onClick={stop} className="ui-btn ui-btn-ghost !min-h-7 self-start text-xs text-ink/55">
           <X size={12} /> {t('autoGmStop')}

@@ -145,6 +145,8 @@ declare global {
         combat?: CombatState
         /** Épreuve en plusieurs jets de la scène. */
         trial?: AutoGmTrial
+        /** Passage arrivé au bout d'une épreuve de justesse (`trialPartial`). */
+        partial?: number
         /**
          * Salon d'attente avant la première scène : réglages du son, puis
          * « Prêt ». La partie commence quand tous les présents le sont.

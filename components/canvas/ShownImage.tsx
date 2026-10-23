@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useBroadcastEvent, useEventListener, useSelf } from '@liveblocks/react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useBroadcastEvent, useEventListener, useSelf, useStorage } from '@liveblocks/react'
 import { X } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import { useLanguage } from '@/components/context/LanguageContext'
@@ -22,10 +22,34 @@ export function useShowImage() {
   }
 }
 
+// Sous le récit d'une scène montrée, l'emplacement où le panneau du MJ
+// automatique pose les choix de la scène : on vote sans fermer l'image.
+type Slot = { scene: string; el: HTMLElement } | null
+let storySlot: Slot = null
+const slotListeners = new Set<() => void>()
+function setStorySlot(next: Slot) {
+  if (storySlot?.el === next?.el && storySlot?.scene === next?.scene) return
+  storySlot = next
+  slotListeners.forEach((l) => l())
+}
+const subscribeSlot = (l: () => void) => {
+  slotListeners.add(l)
+  return () => {
+    slotListeners.delete(l)
+  }
+}
+
+/** L'emplacement sous le récit, s'il est ouvert sur cette scène. */
+export function useStorySlot(scene: string | undefined): HTMLElement | null {
+  const slot = useSyncExternalStore(subscribeSlot, () => storySlot, () => null)
+  return slot && scene && slot.scene === scene ? slot.el : null
+}
+
 /**
  * Image montrée par le MJ, par-dessus tout l'écran. Chacun la ferme d'un clic.
  * Celle d'une scène du MJ automatique porte son récit : on lit l'histoire sur
- * l'image, qui reste ensuite dans le panneau du MJ automatique.
+ * l'image, qui reste ensuite dans le panneau du MJ automatique. Elle se ferme
+ * d'elle-même quand l'aventure passe à la scène suivante.
  */
 export default function ShownImage() {
   const t = useT()
@@ -33,6 +57,24 @@ export default function ShownImage() {
   const broadcast = useBroadcastEvent()
   const isGM = useSelf((me) => me.info?.role === 'gm')
   const [shown, setShown] = useState<Shown | null>(null)
+  const current = useStorage((root) => root.autoGm?.scene)
+  const reached = useRef(false)
+  const storyScene = shown?.story?.scene
+  const slotRef = useCallback(
+    (el: HTMLDivElement | null) => setStorySlot(el && storyScene ? { scene: storyScene, el } : null),
+    [storyScene],
+  )
+
+  // L'image d'une scène se ferme quand la partie a quitté cette scène (pas
+  // avant d'y être arrivée : l'image peut précéder la scène de peu).
+  useEffect(() => {
+    reached.current = false
+  }, [shown])
+  useEffect(() => {
+    if (!storyScene) return
+    if (current === storyScene) reached.current = true
+    else if (reached.current) setShown(null)
+  }, [current, storyScene])
 
   useEventListener(({ event, user }) => {
     if (event.type !== 'show-image' && event.type !== 'show-close') return
@@ -76,6 +118,7 @@ export default function ShownImage() {
             {scene.narration.map((p, i) => (
               <p key={i} className="mt-1.5 text-sm leading-relaxed text-white/90 sm:text-base">{p}</p>
             ))}
+            <div ref={slotRef} />
           </div>
         </div>
       ) : (
