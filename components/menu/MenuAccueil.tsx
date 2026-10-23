@@ -6,7 +6,8 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { useConfirm } from '@/lib/useConfirm'
 import LanguageSwitcher from '../ui/LanguageSwitcher'
 import ThemeSwitcher from '../ui/ThemeSwitcher'
-import { LogIn, LogOut } from 'lucide-react'
+import { Hammer, LogIn, LogOut } from 'lucide-react'
+import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import SmallSpinner from '../ui/SmallSpinner'
 import RoomList, { RoomInfo } from '../rooms/RoomList'
@@ -666,6 +667,10 @@ export default function MenuAccueil({ page }: { page: 'landing' | 'salles' }) {
                       : t('pickARoom')}
                   </span>
                 </button>
+                <Link href="/atelier" className="ui-btn">
+                  <Hammer size={16} />
+                  {t('atelierMenuLink')}
+                </Link>
                 <button onClick={handleLogout} className="ui-btn ui-btn-ghost">
                   <LogOut size={16} />
                   {t('logout')}

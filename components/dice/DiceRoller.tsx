@@ -10,6 +10,8 @@ import { POOL_MAX, poolLabel, sortDice } from '@/lib/dicePool'
 type Props = {
   /** Dés choisis pour le prochain lancer. */
   dice: number[]
+  /** Dés proposés dans le menu (ceux du système de la table). */
+  types?: readonly number[]
   onChange: (dice: number[]) => void
   /** Dés imposés par une demande du MJ : le menu les montre et ne s'ouvre pas. */
   lockedLabel?: string
@@ -25,6 +27,7 @@ type Props = {
 
 const DiceRoller: FC<Props> = ({
   dice,
+  types = DICE_TYPES,
   onChange,
   lockedLabel,
   onRoll,
@@ -136,7 +139,7 @@ const DiceRoller: FC<Props> = ({
             >
               <p className="mb-2 text-xs opacity-75">{t('diceMenuHint')}</p>
               <div className="grid grid-cols-4 gap-2">
-                {DICE_TYPES.map((d) => {
+                {types.map((d) => {
                   const n = countOf(d)
                   return (
                     <div

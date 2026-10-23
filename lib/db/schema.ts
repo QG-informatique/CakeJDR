@@ -130,3 +130,25 @@ export const characters = pgTable(
     index('characters_room_idx').on(t.roomId),
   ],
 )
+
+/**
+ * Créations d'un MJ : systèmes de jeu, campagnes, modèles de fiche. Réutilisées
+ * d'une table à l'autre ; `shared` permet à un autre MJ d'en faire une copie à
+ * partir du lien. Table créée par `scripts/create-creations-table.mjs`.
+ */
+export const creations = pgTable(
+  'creations',
+  {
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /** `system`, `campaign` ou `sheet`. */
+    kind: text('kind').notNull(),
+    name: text('name').notNull().default(''),
+    data: jsonb('data').notNull(),
+    shared: boolean('shared').notNull().default(false),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('creations_owner_kind_idx').on(t.ownerId, t.kind)],
+)

@@ -325,7 +325,12 @@ export function uploadThumbUrl(url: string): string {
     : url
 }
 
+/**
+ * Adresse d'une image offerte. Une campagne perso peut aussi désigner une
+ * image envoyée par son MJ : son adresse complète passe telle quelle.
+ */
 export function libraryUrl(categoryId: string, itemId: string, mini = false): string {
+  if (itemId.startsWith('https://')) return mini ? uploadThumbUrl(itemId) : itemId
   return `/bibliotheque/${categoryId}/${itemId}${mini ? '-mini' : ''}.webp`
 }
 

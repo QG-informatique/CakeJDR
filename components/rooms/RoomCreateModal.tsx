@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, type ReactNode } from 'react'
-import { Bot, ChevronDown, Crown, X } from 'lucide-react'
+import Link from 'next/link'
+import { Bot, ChevronDown, Crown, Hammer, X } from 'lucide-react'
 import type { RoomInfo } from './RoomList'
 import { useT } from '@/lib/useT'
 import { createRoom as createRoomApi } from '@/lib/roomsApi'
@@ -9,6 +10,7 @@ import { DEFAULT_SYSTEM, GAME_SYSTEMS, GAME_SYSTEM_IDS, type GameSystemId } from
 import { ADVENTURES, adventureIn } from '@/lib/autoGm'
 import { useLanguage } from '@/components/context/LanguageContext'
 import AdventureDuration from '@/components/autogm/AdventureDuration'
+import { useMyCreations } from '@/lib/creationsApi'
 
 interface Props {
   open: boolean
@@ -44,6 +46,11 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
   const adventureIds = Object.keys(ADVENTURES)
   const [adventure, setAdventure] = useState(adventureIds[0] ?? '')
   const [newHeroes, setNewHeroes] = useState(true)
+  // Créations de l'atelier du MJ : elles prennent le pas sur le choix tout prêt.
+  const mySystems = useMyCreations('system', open)
+  const myCampaigns = useMyCreations('campaign', open)
+  const [customSystem, setCustomSystem] = useState<string | null>(null)
+  const [campaign, setCampaign] = useState<string | null>(null)
   const { lang } = useLanguage()
   const [creating, setCreating] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
@@ -56,7 +63,15 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
     setCreating(true)
     setErrorMsg('')
     try {
-      const data = await createRoomApi({ name, system, gm, adventure: gm === 'auto' ? adventure : undefined, newHeroes })
+      const data = await createRoomApi({
+        name,
+        system,
+        gm,
+        adventure: gm === 'auto' && !campaign ? adventure : undefined,
+        campaign: gm === 'auto' ? campaign ?? undefined : undefined,
+        customSystem: customSystem ?? undefined,
+        newHeroes,
+      })
       const room = {
         id: data.id,
         name,
@@ -75,7 +90,8 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
     }
   }
 
-  const optionsSummary = `${GAME_SYSTEMS[system].name} · ${t(newHeroes ? 'gmHeroesNew' : 'gmHeroesOwn')}`
+  const systemName = mySystems.items.find((c) => c.id === customSystem)?.name ?? GAME_SYSTEMS[system].name
+  const optionsSummary = `${systemName} · ${t(newHeroes ? 'gmHeroesNew' : 'gmHeroesOwn')}`
 
   return (
     // Un clic sur le fond ferme la fenêtre ; Échap aussi.
@@ -130,13 +146,25 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
             {adventureIds.map((id) => {
               const adv = adventureIn(id, lang)!
               return (
-                <Choice key={id} selected={adventure === id} onSelect={() => setAdventure(id)}>
+                <Choice key={id} selected={!campaign && adventure === id} onSelect={() => { setAdventure(id); setCampaign(null) }}>
                   <span className="font-semibold">{adv.title}</span>
                   <span className="text-xs italic text-ink/65">{adv.pitch}</span>
                   <AdventureDuration adventure={adv} />
                 </Choice>
               )
             })}
+            {myCampaigns.items.length > 0 && (
+              <>
+                <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-ink/55">{t('roomMyCampaigns')}</p>
+                {myCampaigns.items.map((c) => (
+                  <Choice key={c.id} selected={campaign === c.id} onSelect={() => setCampaign(c.id)}>
+                    <span className="font-semibold">{c.name}</span>
+                    {c.data.pitch && <span className="text-xs italic text-ink/65">{c.data.pitch}</span>}
+                    <AdventureDuration adventure={c.data} />
+                  </Choice>
+                ))}
+              </>
+            )}
           </fieldset>
         )}
 
@@ -165,8 +193,8 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
                     type="radio"
                     name="game-system"
                     className="mt-1"
-                    checked={system === id}
-                    onChange={() => setSystem(id)}
+                    checked={!customSystem && system === id}
+                    onChange={() => { setSystem(id); setCustomSystem(null) }}
                   />
                   <span className="flex flex-col">
                     <span className="font-semibold">{GAME_SYSTEMS[id].name}</span>
@@ -174,7 +202,32 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
                   </span>
                 </label>
               ))}
+              {mySystems.items.length > 0 && (
+                <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-ink/55">{t('roomMySystems')}</p>
+              )}
+              {mySystems.items.map((c) => (
+                <label
+                  key={c.id}
+                  className={`flex cursor-pointer items-start gap-2 rounded-md border px-2 py-1.5 text-sm ${customSystem === c.id ? 'border-emerald-500/70 bg-emerald-500/10' : 'border-ink/15 hover:bg-surface-hover'}`}
+                >
+                  <input
+                    type="radio"
+                    name="game-system"
+                    className="mt-1"
+                    checked={customSystem === c.id}
+                    onChange={() => setCustomSystem(c.id)}
+                  />
+                  <span className="flex flex-col">
+                    <span className="font-semibold">{c.name}</span>
+                    {c.data.pitch && <span className="text-xs text-ink/60">{c.data.pitch}</span>}
+                  </span>
+                </label>
+              ))}
             </fieldset>
+            <Link href="/atelier" className="flex items-center gap-1.5 self-start text-xs text-ink/70 underline underline-offset-2 hover:text-ink">
+              <Hammer size={13} aria-hidden />
+              {t('roomOpenAtelier')}
+            </Link>
           </div>
         </details>
 

@@ -106,6 +106,9 @@ export async function createRoom(payload: {
   gm?: 'human' | 'auto'
   adventure?: string
   newHeroes?: boolean
+  /** Système (`system`) ou campagne (`campaign`) rangés dans l'atelier du MJ. */
+  customSystem?: string
+  campaign?: string
 }) {
   const res = await fetch('/api/rooms', {
     method: 'POST',

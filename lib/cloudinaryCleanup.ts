@@ -1,7 +1,8 @@
 import 'server-only'
-import { eq } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import { db } from './db'
-import { rooms } from './db/schema'
+import { creations, rooms } from './db/schema'
+import { campaignImages, parseCampaign } from './autoGm/custom'
 
 /**
  * Suppression chez Cloudinary des images d'une table qu'on supprime.
@@ -14,7 +15,8 @@ import { rooms } from './db/schema'
  * Garde-fous : seules les images du dossier `cakejdr/` de notre compte
  * Cloudinary sont visées, et jamais celles qu'utilise une salle de
  * démonstration (son état de référence pourrait reprendre une image venue
- * d'une autre table).
+ * d'une autre table), ni celles d'une campagne écrite par un MJ (posées sur
+ * le plateau de chaque salle qui la joue, elles appartiennent à la campagne).
  */
 
 const FOLDER = 'cakejdr'
@@ -65,6 +67,22 @@ export function storageImageUrls(storage: { images?: unknown; library?: unknown 
   return [...imageUrls(storage?.images), ...imageUrls(storage?.library)]
 }
 
+/** Images à ne jamais supprimer : celles des salles de démonstration et des campagnes perso. */
+async function protectedPublicIds(cloudName: string): Promise<Set<string>> {
+  const ids = await demoPublicIds(cloudName)
+  const rows = await db
+    .select({ data: creations.data })
+    .from(creations)
+    .where(and(eq(creations.kind, 'campaign'), sql`${creations.data}::text like '%res.cloudinary.com%'`))
+  for (const row of rows) {
+    for (const url of campaignImages(parseCampaign(row.data))) {
+      const id = cloudinaryPublicId(url, cloudName)
+      if (id) ids.add(id)
+    }
+  }
+  return ids
+}
+
 async function demoPublicIds(cloudName: string): Promise<Set<string>> {
   const rows = await db
     .select({ snapshot: rooms.demoSnapshot })
@@ -98,21 +116,21 @@ export async function collectRoomImages(
     if (id) ids.add(id)
   }
   if (ids.size === 0) return []
-  const protectedIds = await demoPublicIds(cloudName)
+  const protectedIds = await protectedPublicIds(cloudName)
   return [...ids].filter((id) => !protectedIds.has(id))
 }
 
 /**
  * Identifiant Cloudinary d'une image qu'on vient de retirer d'une table, ou
  * `null` si elle n'est pas à nous, si Cloudinary n'est pas configuré, ou si
- * une salle de démonstration s'en sert.
+ * une salle de démonstration ou une campagne perso s'en sert.
  */
 export async function removableImageId(url: string): Promise<string | null> {
   const { cloudName, apiKey, apiSecret } = resolveConfig()
   if (!cloudName || !apiKey || !apiSecret) return null
   const id = cloudinaryPublicId(url, cloudName)
   if (!id) return null
-  return (await demoPublicIds(cloudName)).has(id) ? null : id
+  return (await protectedPublicIds(cloudName)).has(id) ? null : id
 }
 
 /** Supprime ces images chez Cloudinary, par paquets de 100 (limite de l'API). */

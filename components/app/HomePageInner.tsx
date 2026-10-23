@@ -965,6 +965,7 @@ export default function HomePageInner() {
           >
             <DiceRoller
               dice={dicePool}
+              types={gameSystem.dice}
               onChange={changeDicePool}
               lockedLabel={pendingDice ? poolLabel(pendingDice) : undefined}
               onRoll={() => tableDiceRef.current?.throwNow()}

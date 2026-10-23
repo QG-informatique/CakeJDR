@@ -2,7 +2,8 @@
 
 import { useMutation } from '@liveblocks/react'
 import { LiveMap, LiveObject } from '@liveblocks/client'
-import { ADVENTURES, startState } from '@/lib/autoGm'
+import { adventureOf, startState } from '@/lib/autoGm'
+import { parseCampaign } from '@/lib/autoGm/custom'
 import type { AutoGmMode } from '@/lib/autoGm/types'
 
 /**
@@ -15,7 +16,7 @@ import type { AutoGmMode } from '@/lib/autoGm/types'
  */
 export function useStartAdventure() {
   return useMutation(({ storage }, adventureKey: string, mode: AutoGmMode = 'auto', lobby = true, newHeroes = false) => {
-    const adv = ADVENTURES[adventureKey]
+    const adv = adventureOf(adventureKey, parseCampaign(storage.get('customAdventure')))
     if (!adv) return
     const previous = storage.get('autoGm')?.get('check')
     if (previous) storage.get('checks')?.delete(previous.id)

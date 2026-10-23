@@ -2,8 +2,14 @@
 
 import type { ReactNode } from 'react'
 import { useT } from '@/lib/useT'
-import { useGameSystem, useRoomSettings, type DrawPermission, type SheetEditMode } from '@/lib/roomSettings'
-import { GAME_SYSTEMS, GAME_SYSTEM_IDS, type GameSystemId } from '@/lib/gameSystems'
+import { useGameSystem, useRoomSettings, useSetGameSystem, type DrawPermission, type SheetEditMode } from '@/lib/roomSettings'
+import { GAME_SYSTEMS, GAME_SYSTEM_IDS, isGameSystemId } from '@/lib/gameSystems'
+import { useMyCreations } from '@/lib/creationsApi'
+import { parseCustomSystem } from '@/lib/customSystem'
+
+/** Valeurs du choix de système qui ne sont pas un preset. */
+const ROOM_CUSTOM = '__room__'
+const MINE = 'mine:'
 
 type Props = {
   /** Les joueurs voient les réglages sans pouvoir les changer. */
@@ -24,6 +30,15 @@ export default function TableSettings({ readOnly = false, middle, drawExtra }: P
   const { settings, update } = useRoomSettings()
   const system = useGameSystem()
   const levels = system.levelUp.length > 0
+  const setSystem = useSetGameSystem()
+  // Les systèmes de l'atelier du MJ, proposés à côté des presets.
+  const mySystems = useMyCreations('system', !readOnly)
+  const pickSystem = (value: string) => {
+    if (isGameSystemId(value)) return setSystem(value)
+    if (!value.startsWith(MINE)) return
+    const data = parseCustomSystem(mySystems.items.find((c) => c.id === value.slice(MINE.length))?.data)
+    if (data) setSystem(data)
+  }
 
   const SHEET_OPTIONS: Array<[SheetEditMode, string]> = [
     ['own', t('gmSheetOwn')],
@@ -63,15 +78,23 @@ export default function TableSettings({ readOnly = false, middle, drawExtra }: P
       <section className="flex flex-col gap-1.5">
         <h3 className="ui-label !text-[10px]">{t('gameSystem')}</h3>
         <select
-          value={settings.system}
+          value={settings.customSystem ? ROOM_CUSTOM : settings.system}
           disabled={readOnly}
-          onChange={(e) => update({ system: e.target.value as GameSystemId })}
+          onChange={(e) => pickSystem(e.target.value)}
           className="ui-input w-full min-w-0 !min-h-8 text-sm"
           aria-label={t('gameSystem')}
         >
           {GAME_SYSTEM_IDS.map((id) => (
             <option key={id} value={id}>{GAME_SYSTEMS[id].name}</option>
           ))}
+          {settings.customSystem && <option value={ROOM_CUSTOM}>{system.name}</option>}
+          {mySystems.items.length > 0 && (
+            <optgroup label={t('gmSystemMine')}>
+              {mySystems.items.map((c) => (
+                <option key={c.id} value={MINE + c.id}>{c.name}</option>
+              ))}
+            </optgroup>
+          )}
         </select>
         {!readOnly && <p className="text-xs text-ink/55">{t('gmSystemHint')}</p>}
       </section>

@@ -6,6 +6,7 @@ import { X } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import { useLanguage } from '@/components/context/LanguageContext'
 import { adventureIn } from '@/lib/autoGm'
+import { useRoomCampaign } from '@/components/autogm/useRoomCampaign'
 
 // Le MJ montre une rencontre en grand à toute la table. L'événement ne revient
 // pas chez celui qui l'envoie : le MJ se l'affiche par un événement de la page.
@@ -58,6 +59,7 @@ export default function ShownImage() {
   const isGM = useSelf((me) => me.info?.role === 'gm')
   const [shown, setShown] = useState<Shown | null>(null)
   const current = useStorage((root) => root.autoGm?.scene)
+  const custom = useRoomCampaign()
   const reached = useRef(false)
   const storyScene = shown?.story?.scene
   const slotRef = useCallback(
@@ -98,7 +100,7 @@ export default function ShownImage() {
   }, [shown])
 
   if (!shown) return null
-  const scene = shown.story ? adventureIn(shown.story.adventure, lang)?.scenes[shown.story.scene] : undefined
+  const scene = shown.story ? adventureIn(shown.story.adventure, lang, custom)?.scenes[shown.story.scene] : undefined
   return (
     <div
       className="fixed inset-0 z-[80] flex flex-col items-center justify-center gap-3 bg-shade/85 p-4 backdrop-blur-sm"

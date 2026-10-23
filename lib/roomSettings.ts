@@ -1,8 +1,10 @@
 'use client'
 
+import { useMemo } from 'react'
 import { useMutation, useStorage } from '@liveblocks/react'
 import { LiveObject } from '@liveblocks/client'
 import { DEFAULT_SYSTEM, gameSystem, type GameSystemId } from './gameSystems'
+import { buildSystem, parseCustomSystem, type CustomSystemData } from './customSystem'
 
 /** Qui modifie les fiches : chaque joueur la sienne, ou le MJ seulement. */
 export type SheetEditMode = 'own' | 'gm'
@@ -18,6 +20,11 @@ export type RoomSettings = {
   anonymousVotes: boolean
   /** Système de jeu de la table (`lib/gameSystems.ts`), choisi à sa création. */
   system: GameSystemId
+  /**
+   * Système créé par le MJ (`lib/customSystem.ts`), joué à la place du preset.
+   * `system` vaut alors le preset dont il garde les règles.
+   */
+  customSystem?: CustomSystemData
   /**
    * « Nouveau héros pour cette aventure » : les fiches faites ailleurs sont
    * refusées, chacun crée un héros ou en prend un tout prêt en arrivant
@@ -69,10 +76,34 @@ export function useRoomSettings() {
   return { settings, update }
 }
 
-/** Le système de jeu de la table. */
+/** Le système de jeu de la table : celui du MJ s'il en a créé un, sinon le preset. */
 export function useGameSystem() {
   const id = useStorage((root) => root.settings?.system)
-  return gameSystem(id)
+  const custom = useStorage((root) => root.settings?.customSystem)
+  return useMemo(() => {
+    const data = custom ? parseCustomSystem(custom) : null
+    return data ? buildSystem(data) : gameSystem(id)
+  }, [id, custom])
+}
+
+/**
+ * Change le système de la table : un preset (le système perso est retiré) ou
+ * un système créé par le MJ.
+ */
+export function useSetGameSystem() {
+  return useMutation(({ storage }, choice: GameSystemId | CustomSystemData) => {
+    let current = storage.get('settings')
+    if (!current) {
+      current = new LiveObject({ ...DEFAULT_ROOM_SETTINGS })
+      storage.set('settings', current)
+    }
+    if (typeof choice === 'string') {
+      current.set('system', choice)
+      current.delete('customSystem')
+    } else {
+      current.update({ system: choice.base, customSystem: choice })
+    }
+  }, [])
 }
 
 export function canDraw(settings: RoomSettings, user: { id?: string; gm: boolean }) {

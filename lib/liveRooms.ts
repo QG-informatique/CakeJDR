@@ -1,6 +1,8 @@
 import { Liveblocks } from '@liveblocks/node'
 import { LiveMap, LiveObject } from '@liveblocks/client'
 import type { GameSystemId } from './gameSystems'
+import type { CustomSystemData } from './customSystem'
+import type { Adventure } from './autoGm/types'
 import { ADVENTURES, startState } from './autoGm'
 import { randomBytes } from 'crypto'
 import { collectRoomImages, deleteCloudinaryImages, storageImageUrls } from './cloudinaryCleanup'
@@ -113,14 +115,24 @@ export async function createRoom(name: string) {
  * (`lib/roomSettings.ts`), et, avec le MJ automatique, la campagne prête à
  * commencer. Les autres réglages prennent leur valeur par défaut, et le reste
  * du stockage est créé à la première ouverture.
+ *
+ * Un système ou une campagne de l'atelier du MJ est copié dans la salle :
+ * la partie continue même s'il les change ou les supprime ensuite.
  */
 export async function initRoom(
   id: string,
-  { system, newHeroes, adventure }: { system: GameSystemId; newHeroes: boolean; adventure?: string },
+  {
+    system,
+    newHeroes,
+    adventure,
+    customSystem,
+    campaign,
+  }: { system: GameSystemId; newHeroes: boolean; adventure?: string; customSystem?: CustomSystemData; campaign?: Adventure },
 ) {
-  const adv = adventure ? ADVENTURES[adventure] : undefined
+  const adv = campaign && adventure === campaign.id ? campaign : adventure ? ADVENTURES[adventure] : undefined
   await getClient().mutateStorage(id, ({ root }) => {
-    root.set('settings', new LiveObject({ system, newHeroes }) as never)
+    root.set('settings', new LiveObject({ system, newHeroes, ...(customSystem ? { customSystem } : {}) }) as never)
+    if (campaign) root.set('customAdventure', campaign as never)
     if (adv) {
       root.set('autoGm', new LiveObject({ ...startState(adv, 'auto'), votes: new LiveMap<string, string>() }) as never)
     }

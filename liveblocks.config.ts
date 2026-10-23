@@ -4,7 +4,7 @@ import type { RoomSettings } from './lib/roomSettings'
 import type { LiveMap, LiveObject, LiveList } from '@liveblocks/client'
 import type { Character } from '@/types/character'
 import type { CheckOutcome, GmRequest, RollsOutcome } from '@/lib/checks'
-import type { AutoGmCheck, AutoGmMode, AutoGmTiebreak, AutoGmTrial } from '@/lib/autoGm/types'
+import type { Adventure, AutoGmCheck, AutoGmMode, AutoGmTiebreak, AutoGmTrial } from '@/lib/autoGm/types'
 import type { CombatState } from '@/lib/autoGm/combat'
 import type { HeroCheck } from '@/lib/heroChecks'
 
@@ -123,6 +123,8 @@ declare global {
       checks?: LiveMap<string, GmRequest>
       /** Fiches déjà faites en attente de l'accord du MJ (`lib/heroChecks.ts`). */
       heroChecks?: LiveMap<string, HeroCheck>
+      /** Campagne écrite par le MJ, jouée dans cette salle (`lib/autoGm/custom.ts`). */
+      customAdventure?: Adventure
       /**
        * Partie menée par le MJ automatique (`components/autogm/AutoGmPanel.tsx`).
        * `visit` compte les passages de scène en scène ; `setup` est le dernier

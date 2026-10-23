@@ -43,14 +43,16 @@ import { getTextColor } from '@/components/chat/LiveAvatarStack'
 import { MUSIC_JOIN_EVENT, useSoundVolume } from '@/lib/sound'
 import { LOBBY_TRACK, sceneMood, trackFor } from '@/lib/autoGm/music'
 import { useStartAdventure } from './useStartAdventure'
+import { useRoomCampaign } from './useRoomCampaign'
+import { parseCampaign } from '@/lib/autoGm/custom'
 import PremadeHeroPicker from './PremadeHeroPicker'
 import HeroApprovals from './HeroApprovals'
 import AdventureJournal from './AdventureJournal'
 import type { PremadeHero } from '@/lib/premadeHeroes'
 import type { Character } from '@/types/character'
 import {
-  ADVENTURES,
   adventureIn,
+  adventureOf,
   CANCEL_GRACE_MS,
   CHECK_READ_MS,
   DEMO_ADVENTURE,
@@ -282,7 +284,8 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
   const partyNames = players.filter((v) => v.hero && v.connectionId !== me?.connectionId).map((v) => v.name)
 
   const adventureKey = gm?.adventure ?? adventureId
-  const adventure = useMemo(() => adventureIn(adventureKey, lang), [adventureKey, lang])
+  const custom = useRoomCampaign()
+  const adventure = useMemo(() => adventureIn(adventureKey, lang, custom), [adventureKey, lang, custom])
   const scene = gm && adventure ? adventure.scenes[gm.scene] : undefined
   const step = scene?.step
   const ready = !!gm && gm.setup >= gm.visit
@@ -316,7 +319,7 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
   const go = useMutation(({ storage }, next: string, expected: number, said?: { author: string; text: string }, partial?: boolean) => {
     const state = storage.get('autoGm')
     if (!state || state.get('visit') !== expected) return
-    const nextScene = ADVENTURES[state.get('adventure')]?.scenes[next]
+    const nextScene = adventureOf(state.get('adventure'), parseCampaign(storage.get('customAdventure')))?.scenes[next]
     if (!nextScene) return
     const flags = state.get('flags')
     state.update({
@@ -348,7 +351,8 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
     if (!state || state.get('visit') !== expected || state.get('setup') >= expected) return null
     state.set('setup', expected)
     // Le récit part dans l'historique dans la langue de celui qui le pose.
-    const current = adventureIn(state.get('adventure'), lang)?.scenes[state.get('scene')]
+    const custom = parseCampaign(storage.get('customAdventure'))
+    const current = adventureIn(state.get('adventure'), lang, custom)?.scenes[state.get('scene')]
     if (!current) return null
     const setup = current.setup
     const now = Date.now()
@@ -378,7 +382,7 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
         })
       })
     }
-    const base = ADVENTURES[state.get('adventure')]
+    const base = adventureOf(state.get('adventure'), custom)
     if (base && autoMusicOn(storage)) {
       const music = storage.get('music') as Liveblocks['Storage']['music'] | undefined
       const playing = music instanceof LiveObject ? music.get('id') : undefined

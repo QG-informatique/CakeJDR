@@ -26,7 +26,9 @@ import {
   type RollsRequest,
 } from '@/lib/checks'
 import { gameSystem, levelUpDice, type GameSystem } from '@/lib/gameSystems'
-import { ADVENTURES } from '@/lib/autoGm'
+import { adventureOf } from '@/lib/autoGm'
+import { parseCampaign } from '@/lib/autoGm/custom'
+import type { Adventure } from '@/lib/autoGm/types'
 
 /**
  * Tests demandés par le MJ.
@@ -128,12 +130,14 @@ type AutoState = {
   visit?: number
   check?: { id?: string }
   combat?: { visit?: number; heroes?: { id?: string }[]; attacks?: { id?: string }[] }
+  /** Campagne écrite par le MJ, si c'est elle que la salle joue. */
+  custom?: Adventure | null
 }
 
 /** La partie du MJ automatique telle qu'elle est rangée dans la salle, ou rien. */
 async function autoState(liveblocks: Liveblocks, roomId: string): Promise<AutoState | null> {
-  const doc = (await liveblocks.getStorageDocument(roomId, 'json').catch(() => null)) as { autoGm?: AutoState } | null
-  return doc?.autoGm && typeof doc.autoGm === 'object' ? doc.autoGm : null
+  const doc = (await liveblocks.getStorageDocument(roomId, 'json').catch(() => null)) as { autoGm?: AutoState; customAdventure?: unknown } | null
+  return doc?.autoGm && typeof doc.autoGm === 'object' ? { ...doc.autoGm, custom: parseCampaign(doc.customAdventure) } : null
 }
 
 /**
@@ -145,7 +149,7 @@ async function autoState(liveblocks: Liveblocks, roomId: string): Promise<AutoSt
 function autoAskFits(auto: AutoAsk, state: AutoState, body: Record<string, unknown>): boolean {
   if (auto === 'level') return body.type === 'rolls' && body.levelUp === true
   if (body.type === 'rolls') return false
-  const step = state.adventure && state.scene ? ADVENTURES[state.adventure]?.scenes[state.scene]?.step : undefined
+  const step = state.adventure && state.scene ? adventureOf(state.adventure, state.custom)?.scenes[state.scene]?.step : undefined
   if (!step) return false
   if (auto === 'scene') return (step.kind === 'check' || step.kind === 'trial') && body.stat === step.stat && body.dc === step.dc
   // Combat : le héros visé se bat dans le combat de cette scène, contre la

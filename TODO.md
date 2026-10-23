@@ -244,12 +244,17 @@
 - [ ] Vérifier sur une table d100 neuve les barres Points de magie et Santé mentale sous les PV, et leurs valeurs de départ (Pouvoir, Pouvoir × 5)
 - [x] Phase I : afficher « — » plutôt que « 0 % » pour Corpulence et Pouvoir tant que la fiche d100 ne les a pas remplis
 - [ ] Tester les trois systèmes avec un second compte joueur : fiche, test du MJ (seuil d100 caché), montée de niveau Fantasy 5E (un seul dé de vie)
-- [ ] Phase J : créer l'éditeur de système (partir d'un preset, aperçu de la fiche en direct)
-- [ ] Phase J : à la création d'une table, ajouter « Créer mon système » à côté des systèmes proposés (bouton visible, marqué « bientôt » tant que l'éditeur n'existe pas)
-- [ ] Phase J : ajouter une entrée « Systèmes de jeu » dans le menu principal, à côté des salles et des personnages
-- [ ] Phase J : créer l'éditeur de campagne (scènes reliées, images, boutons de choix), rangé dans le compte du MJ (tables en base, avec accord)
-- [ ] Phase J : à la création d'une table en MJ automatique, choisir une campagne toute prête ou une campagne créée dans l'éditeur, jouée par le MJ automatique
-- [ ] Phase J : exporter et importer une campagne en fichier, puis permettre le partage entre MJ
+- [x] Phase J : créer l'éditeur de système (partir d'un preset, aperçu de la fiche en direct) — atelier du MJ (`/atelier`)
+- [x] Phase J : à la création d'une table, ajouter « Créer mon système » à côté des systèmes proposés — systèmes et campagnes de l'atelier listés dans la fenêtre, lien vers l'atelier
+- [x] Phase J : ajouter une entrée « Systèmes de jeu » dans le menu principal, à côté des salles et des personnages — lien « Atelier du MJ » dans la barre du profil
+- [x] Phase J : créer l'éditeur de campagne (scènes reliées, images, boutons de choix), rangé dans le compte du MJ (tables en base, avec accord)
+- [x] Phase J : à la création d'une table en MJ automatique, choisir une campagne toute prête ou une campagne créée dans l'éditeur, jouée par le MJ automatique
+- [x] Phase J : exporter et importer une campagne en fichier, puis permettre le partage entre MJ
+- [ ] Ajouter à l'éditeur de campagne les étapes combat et tirage au hasard (aujourd'hui gardées seulement si elles viennent d'un fichier importé)
+- [ ] Supprimer de Cloudinary les images d'une campagne quand le MJ la supprime ou change d'image (aujourd'hui protégées, donc jamais nettoyées)
+- [ ] Tester l'atelier avec un second compte : lien de partage, « Copier dans mon atelier », table créée avec le système et la campagne d'un autre MJ
+- [ ] Tester « Charger une de mes campagnes » dans le panneau MJ sur une table sans aventure en cours, en MJ humain puis en MJ automatique
+- [ ] Décider quoi faire d'un test d'aventure sur une caractéristique que le système perso a décochée (aujourd'hui le test reste proposé)
 
 ## Retours de Quentin sur la version en ligne (2026-10-05) — tests, niveaux, dés
 - [x] Retirer le bouton « D6 montée de niveau » de la fiche du joueur (panneau de gauche) — gardé pour le MJ seulement, en attendant mieux

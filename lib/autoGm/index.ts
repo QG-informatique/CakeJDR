@@ -61,8 +61,20 @@ export function withText(adventure: Adventure, text: AdventureText): Adventure {
 
 const inEnglish = new Map<string, Adventure>()
 
-/** L'aventure dans la langue de l'interface. */
-export function adventureIn(id: string, lang: 'en' | 'fr'): Adventure | undefined {
+/**
+ * L'aventure toute prête, ou la campagne écrite par le MJ (`./custom.ts`)
+ * quand c'est elle que la salle joue.
+ */
+export function adventureOf(id: string, custom?: Adventure | null): Adventure | undefined {
+  return custom && custom.id === id ? custom : ADVENTURES[id]
+}
+
+/**
+ * L'aventure dans la langue de l'interface. Une campagne perso reste dans la
+ * langue où son MJ l'a écrite.
+ */
+export function adventureIn(id: string, lang: 'en' | 'fr', custom?: Adventure | null): Adventure | undefined {
+  if (custom && custom.id === id) return custom
   const adventure = ADVENTURES[id]
   const text = ENGLISH[id]
   if (!adventure || lang === 'fr' || !text) return adventure

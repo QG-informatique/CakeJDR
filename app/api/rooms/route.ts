@@ -6,6 +6,9 @@ import { DEFAULT_SYSTEM, isGameSystemId } from '@/lib/gameSystems'
 import { isAdminRequest } from '@/lib/adminAuth'
 import { countOwnedRooms, forgetRoom, isRoomOwner, recordRoom, renameRoomRecord } from '@/lib/db/rooms'
 import { currentUserId, syncCurrentUser } from '@/lib/db/users'
+import { readCreation } from '@/lib/db/creations'
+import { parseCustomSystem } from '@/lib/customSystem'
+import { parseCampaign } from '@/lib/autoGm/custom'
 import { debug } from '@/lib/debug'
 import { fail, ok } from '@/lib/api-response'
 
@@ -46,16 +49,25 @@ export async function POST(req: NextRequest) {
     if (!account.isAdmin && (await countOwnedRooms(account.id)) >= MAX_ROOMS_PER_ACCOUNT) {
       return fail('room limit reached', 403)
     }
-    const system = isGameSystemId(body?.system) ? body.system : DEFAULT_SYSTEM
+    // Système et campagne de l'atelier : relus en base, à soi ou partagés.
+    const customRow = typeof body?.customSystem === 'string' ? await readCreation(body.customSystem, 'system', account.id) : null
+    const customSystem = customRow ? (parseCustomSystem(customRow.data) ?? undefined) : undefined
+    const campaignRow = typeof body?.campaign === 'string' ? await readCreation(body.campaign, 'campaign', account.id) : null
+    const campaign = campaignRow ? (parseCampaign(campaignRow.data) ?? undefined) : undefined
+    const system = customSystem ? customSystem.base : isGameSystemId(body?.system) ? body.system : DEFAULT_SYSTEM
     // « Nouveau héros pour cette aventure » est coché sauf refus explicite.
     const newHeroes = body?.newHeroes !== false
     // Avec le MJ automatique, la campagne choisie démarre dès l'ouverture.
     const adventure =
-      body?.gm === 'auto' && typeof body?.adventure === 'string' && Object.hasOwn(ADVENTURES, body.adventure)
-        ? body.adventure
-        : undefined
+      body?.gm !== 'auto'
+        ? undefined
+        : campaign
+          ? campaign.id
+          : typeof body?.adventure === 'string' && Object.hasOwn(ADVENTURES, body.adventure)
+            ? body.adventure
+            : undefined
     const { id } = await createRoom(name)
-    await initRoom(id, { system, newHeroes, adventure }).catch((e) => console.error('initRoom', e))
+    await initRoom(id, { system, newHeroes, adventure, customSystem, campaign }).catch((e) => console.error('initRoom', e))
     await recordRoom({ id, name, ownerId: account.id }).catch((e) =>
       console.error('recordRoom', e),
     )

@@ -1,5 +1,12 @@
 # Journal
 
+## 2026-10-23 — Atelier du MJ : systèmes et campagnes perso
+- Nouvelle table `creations` dans Neon (script `scripts/create-creations-table.mjs`, rien d'existant touché) et route `app/api/creations` : 30 créations par genre et par compte, partage par lien
+- Page `/atelier` (`components/atelier/`) : éditeur de système parti d'un preset avec aperçu de la fiche, éditeur de campagne scène par scène (récit, indices, carte, image, musique, bouton, vote, test, fin), export et import en fichier
+- Les créations se choisissent à la création d'une salle, dans les réglages du MJ et dans le lanceur d'aventure ; la salle en garde une copie (`customSystem`, `customAdventure`), donc supprimer une création ne casse aucune partie
+- Testé en local : enregistrement, choix dans la fenêtre de création, passage d'une salle jetable au système perso et retour ; créations de test supprimées
+Reste ouvert : test à deux comptes du partage, chargement d'une campagne depuis le panneau MJ, étapes combat et hasard dans l'éditeur
+
 ## 2026-10-23 — La fiche suit le système de jeu
 - Les ressources viennent du système (`SheetResource`, `resourceOf` dans `lib/gameSystems.ts`) : le d100 gagne Points de magie (départ : Pouvoir) et Santé mentale (départ : Pouvoir × 5), en petites barres sous les PV
 - L'éditeur de fiche lit ressources et modificateurs d'attaque du système, et les intitulés d'identité : Espèce en 5E, Origine et Profession en d100 (`identity`)
