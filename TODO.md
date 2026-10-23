@@ -37,7 +37,7 @@
 - [x] Nettoyer automatiquement les tables inactives (`/api/cron/cleanup-rooms`, chaque jour à 4 h 30), en excluant la salle de démonstration
 - [ ] Vérifier dans les logs Vercel que la tâche `cleanup-rooms` tourne chaque nuit sans erreur (`wouldDelete` visible avec `?dry=1` en admin)
 - [ ] Supprimer la colonne `rooms.password_hash`, devenue inutile (migration Neon, avec accord)
-- [ ] Transformer les modèles de fiche en bibliothèque du MJ, réutilisable d'une table à l'autre
+- [x] Transformer les modèles de fiche en bibliothèque du MJ, réutilisable d'une table à l'autre (fait par les systèmes de l'atelier, `/atelier`)
 - [x] Nettoyer les tables antérieures : cinq supprimées, `cakroom` gardée comme salle de démonstration
 
 ## Phase 3 — robustesse
@@ -186,7 +186,9 @@
 - [x] Monter Next.js en 16.3.7 ou plus (faille critique GHSA-vcvr-r3jv-pc5j dans `next/og`, que le site n'utilise pas) et `baseline-browser-mapping` : la vérification `npm audit` de la CI échoue depuis le 4 octobre
 
 ## Campagnes, bibliothèque du MJ, systèmes de jeu — détail dans `PLAN-CAMPAGNES.md`
-- [ ] Démo solo : donner à chaque visiteur sa propre partie de démo (choisir entre une salle Liveblocks par visiteur et une démo sans temps réel)
+- [x] Démo solo : donner à chaque visiteur sa propre partie de démo (une salle Liveblocks par visiteur, `lib/demoCopy.ts`)
+- [ ] Vérifier en ligne qu'un visiteur sans compte reçoit sa propre démo et la retrouve en revenant, puis, le lendemain d'une semaine sans visite, qu'elle a disparu (`demoCopiesDeleted` dans la tâche `cleanup-rooms`)
+- [ ] Surveiller dans Liveblocks le nombre de salles actives par mois (une par visiteur de la démo) par rapport au forfait gratuit
 - [x] Démo solo : écrire la petite aventure de Cake (Mila, pâtisserie, cave, levains, Golem de Mie Brûlée, fins selon les choix) avec le set « Cake »
 - [x] Démo solo : créer le MJ automatique (raconte, pose carte, pions et musique, demande des jets et lit le résultat, propose des réponses en boutons, passe à la scène suivante)
 - [x] Démo solo : ajouter le bouton « Voir côté MJ » (carnet, secrets, choix à venir, bibliothèque) et le retour au côté joueur

@@ -5,7 +5,7 @@ import { and, eq, lt } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { rooms } from '@/lib/db/schema'
 import { forgetRoom } from '@/lib/db/rooms'
-import { deleteRoom } from '@/lib/liveRooms'
+import { cleanupDemoCopies, deleteRoom } from '@/lib/liveRooms'
 import { isAdminRequest } from '@/lib/adminAuth'
 import { ROOM_INACTIVE_DAYS } from '@/lib/roomLifecycle'
 import { fail, ok } from '@/lib/api-response'
@@ -15,7 +15,8 @@ import { fail, ok } from '@/lib/api-response'
  *
  * Le MJ en est prévenu dans le menu un mois avant (`lib/roomLifecycle.ts`) ;
  * entrer dans la table suffit à la garder. Les salles de démonstration ne
- * sont jamais concernées.
+ * sont jamais concernées. Les copies de la démo des visiteurs partent, elles,
+ * après une semaine sans visite (`cleanupDemoCopies`).
  *
  * Appelée chaque jour par la tâche planifiée Vercel. Un administrateur peut
  * l'appeler avec `?dry=1` pour voir ce qui partirait, sans rien supprimer.
@@ -37,7 +38,12 @@ export async function GET(req: NextRequest) {
     .from(rooms)
     .where(and(eq(rooms.isDemo, false), lt(rooms.lastActiveAt, cutoff)))
 
-  if (dry) return ok({ dry: true, wouldDelete: stale })
+  const copies = await cleanupDemoCopies({ dry }).catch((e: unknown) => {
+    console.error('cleanup-rooms: copies de démo', e)
+    return { stale: [] as string[], deleted: [] as string[] }
+  })
+
+  if (dry) return ok({ dry: true, wouldDelete: stale, demoCopies: copies.stale })
 
   const deleted: string[] = []
   const failed: string[] = []
@@ -54,5 +60,5 @@ export async function GET(req: NextRequest) {
       failed.push(room.id)
     }
   }
-  return ok({ deleted, failed })
+  return ok({ deleted, failed, demoCopiesDeleted: copies.deleted.length })
 }

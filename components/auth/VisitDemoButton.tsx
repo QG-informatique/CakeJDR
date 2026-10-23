@@ -10,11 +10,15 @@ import { useT } from '@/lib/useT'
  *
  * Mène directement à la salle de démonstration, sans compte. Le but est qu'on
  * puisse voir à quoi ressemble une partie — la table, une fiche remplie, le
- * canvas — avant de décider de s'inscrire.
+ * canvas — avant de décider de s'inscrire. Chaque visiteur reçoit sa propre
+ * copie de la démo (`/api/demo` en POST), et la retrouve s'il revient.
  *
  * Le bouton disparaît si aucune salle de démonstration n'est configurée,
  * plutôt que de mener à une page d'erreur.
  */
+/** Copie de démo reçue la dernière fois, pour la retrouver en revenant. */
+const DEMO_KEY = 'jdr_demo_room'
+
 export default function VisitDemoButton({ className = '' }: { className?: string }) {
   const [roomId, setRoomId] = useState<string | null>(null)
   const [entering, setEntering] = useState(false)
@@ -36,7 +40,7 @@ export default function VisitDemoButton({ className = '' }: { className?: string
 
   if (!roomId) return null
 
-  const enter = () => {
+  const enter = async () => {
     if (entering) return
     setEntering(true)
     try {
@@ -44,7 +48,25 @@ export default function VisitDemoButton({ className = '' }: { className?: string
       // pour que le visiteur atterrisse bien dans la salle.
       sessionStorage.setItem('visitedMenu', 'true')
     } catch {}
-    router.push(`/room/${roomId}`)
+    let previous: string | null = null
+    try {
+      previous = localStorage.getItem(DEMO_KEY)
+    } catch {}
+    const own = await fetch('/api/demo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ previous }),
+    })
+      .then((r) => r.json())
+      .then((d) => (typeof d?.roomId === 'string' ? d.roomId : null))
+      .catch(() => null)
+    const target = own ?? roomId
+    if (target !== roomId) {
+      try {
+        localStorage.setItem(DEMO_KEY, target)
+      } catch {}
+    }
+    router.push(`/room/${target}`)
   }
 
   return (

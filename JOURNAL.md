@@ -1,5 +1,13 @@
 # Journal
 
+## 2026-10-23 — Démo : une partie par visiteur
+- Chaque visiteur reçoit sa propre copie de la salle de démo, remplie depuis l'état de référence (`lib/demoCopy.ts`, `demoRoomForVisitor` dans `lib/db/demo.ts`, `POST /api/demo`) ; son navigateur la garde et il la retrouve en revenant
+- Copies sans ligne en base, reconnues à leur identifiant signé par le serveur (impossible d'en inventer) ; 10 copies neuves par heure et par adresse, au-delà la démo partagée
+- Copies effacées par la tâche de nuit après 7 jours sans visite, avec leurs images (`cleanupDemoCopies`) ; absentes de la liste admin
+- Les « modèles de fiche » (TODO 40) sont couverts par les systèmes de l'atelier : la fiche se définit dans le système, réutilisable d'une table à l'autre
+- Testé en local : copie créée, retrouvée au second appel, identifiant inventé refusé, salle ouverte sans erreur, copie d'essai supprimée
+Reste ouvert : surveiller le nombre de salles actives par mois du forfait gratuit Liveblocks
+
 ## 2026-10-23 — Atelier du MJ : systèmes et campagnes perso
 - Nouvelle table `creations` dans Neon (script `scripts/create-creations-table.mjs`, rien d'existant touché) et route `app/api/creations` : 30 créations par genre et par compte, partage par lien
 - Page `/atelier` (`components/atelier/`) : éditeur de système parti d'un preset avec aperçu de la fiche, éditeur de campagne scène par scène (récit, indices, carte, image, musique, bouton, vote, test, fin), export et import en fichier

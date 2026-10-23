@@ -6,6 +6,7 @@ import type { Adventure } from './autoGm/types'
 import { ADVENTURES, startState } from './autoGm'
 import { randomBytes } from 'crypto'
 import { collectRoomImages, deleteCloudinaryImages, storageImageUrls } from './cloudinaryCleanup'
+import { DEMO_COPY_PREFIX, DEMO_COPY_TTL_DAYS, isDemoCopyId } from './demoCopy'
 
 function slugify(str: string) {
   return str
@@ -71,6 +72,8 @@ export async function listRooms({ withCounts = true } = {}): Promise<RoomSummary
     const { data, nextCursor } = await client.getRooms({ startingAfter: cursor, limit: 50 })
     for (const r of data) {
       if (r.id === 'rooms-index' || r.metadata?.name === 'rooms-index') continue
+      // Copies de la démo des visiteurs : nombreuses, et nettoyées seules.
+      if (r.id.startsWith(DEMO_COPY_PREFIX)) continue
       const roomName =
         typeof r.metadata?.name === 'string' && r.metadata.name
           ? r.metadata.name
@@ -156,6 +159,37 @@ export async function deleteRoom(id: string) {
   await deleteCloudinaryImages(images).catch((e: unknown) => {
     console.error('deleteRoom: suppression des images Cloudinary impossible', id, e)
   })
+}
+
+/**
+ * Supprime les copies de la démo où personne n'est revenu depuis
+ * `DEMO_COPY_TTL_DAYS` jours, avec les images que leur visiteur y a envoyées.
+ */
+export async function cleanupDemoCopies({ dry = false } = {}) {
+  const client = getClient()
+  const cutoff = Date.now() - DEMO_COPY_TTL_DAYS * 24 * 60 * 60 * 1000
+  const stale: string[] = []
+  let cursor: string | undefined
+  do {
+    const { data, nextCursor } = await client.getRooms({
+      startingAfter: cursor,
+      limit: 100,
+      query: { roomId: { startsWith: DEMO_COPY_PREFIX } },
+    })
+    for (const r of data) {
+      const last = (r.lastConnectionAt ?? r.createdAt).getTime()
+      if (isDemoCopyId(r.id) && last < cutoff) stale.push(r.id)
+    }
+    cursor = nextCursor ?? undefined
+  } while (cursor)
+  if (dry) return { stale, deleted: [] as string[] }
+  const deleted: string[] = []
+  for (const id of stale) {
+    await deleteRoom(id)
+      .then(() => deleted.push(id))
+      .catch((e: unknown) => console.error('cleanupDemoCopies', id, e))
+  }
+  return { stale, deleted }
 }
 
 /** Cette image est-elle encore sur la table ou dans sa bibliothèque ? */
