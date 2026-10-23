@@ -229,11 +229,12 @@
 - [x] Phase H : proposer « Partie libre » ou une campagne toute prête à la création d'une table
 - [x] Phase H : à la création d'une table, choisir « MJ humain » ou « MJ automatique »
 - [x] Phase H : à la création d'une table en MJ automatique, choisir la campagne (la démo ou « La Flamme sous la montagne ») et arriver directement au début de l'aventure
-- [ ] Phase H : dans une salle déjà créée, activer ou couper le MJ automatique depuis un interrupteur visible (aujourd'hui : panneau MJ, section Aventure)
+- [x] Phase H : dans une salle déjà créée, activer ou couper le MJ automatique depuis un interrupteur visible — bouton « MJ auto » dans la barre du plateau (`AutoGmSwitch.tsx`)
 - [ ] Phase H : en arrivant dans une aventure avec une fiche faite ailleurs, proposer « Créer un héros pour cette histoire » ou « Choisir un de mes personnages » au lieu de garder d'office la fiche sélectionnée
 - [x] Permettre de désélectionner son personnage (fiches) pour entrer dans une salle sans personnage
 - [x] Phase H : en MJ automatique, cacher au créateur de la table tout le côté MJ (notes secrètes, scènes à venir, fins) : il joue comme les autres joueurs — bouton « Côté MJ » réservé au MJ humain
-- [ ] Phase H : donner au créateur d'une table en MJ automatique un menu de secours qui ne révèle pas l'histoire (relancer la scène, annuler un jet bloqué, passer à la suite, reprendre la main en MJ humain)
+- [x] Phase H : donner au créateur d'une table en MJ automatique un menu de secours qui ne révèle pas l'histoire (relancer la scène, annuler un jet bloqué, passer à la suite, reprendre la main en MJ humain) — menu « Secours » sous la scène (`RescueMenu.tsx`)
+- [ ] Essayer chaque bouton du menu « Secours » pendant une vraie partie (rejouer la scène, annuler un jet, passer à la suite, reprendre la main, arrêter)
 - [ ] Phase H : vérifier qu'une campagne entière se joue en MJ automatique sans aucun MJ humain dans la salle (votes, égalités, jets, dégâts, création des héros)
 - [x] Phase I : décrire la fiche de personnage comme un système (caractéristiques, ressources, compétences, dés, niveaux) et en faire le preset « Narratif CakeJDR »
 - [ ] Phase I : faire lire au système toute la fiche (ressources, montée de niveau, champs d'identité et d'histoire), pas seulement caractéristiques, attaques et types de compétences (`lib/gameSystems.ts`)

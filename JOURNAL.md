@@ -1,5 +1,10 @@
 # Journal
 
+## 2026-10-23 — Interrupteur « MJ auto » et menu de secours
+- Barre du plateau : bouton « MJ auto » allumé quand une aventure tourne ; un clic l'arrête (avec confirmation) ou ouvre le panneau du MJ pour en choisir une (`AutoGmSwitch.tsx`)
+- Menu « Secours » sous la scène pour le créateur de la table, sans rien révéler : rejouer la scène, annuler un jet bloqué, passer à la suite (branche de réussite), reprendre la main en MJ, arrêter (`RescueMenu.tsx`, `useAdventureControls.ts`)
+Reste ouvert : essayer chaque bouton du menu pendant une vraie partie
+
 ## 2026-10-23 — Sons de combat, retour dans une aventure en cours, contrôle de l'anglais
 - Combat du MJ automatique : un son par action (arme, sort, soins, défense, coup reçu, chute), joué chez tous, fabriqué en Web Audio (`lib/sound.ts`, `CombatView.tsx`)
 - Arrivée dans une aventure déjà lancée : encadré « … est en cours : scène », héros déjà dans le groupe, au-dessus des héros tout prêts (`AutoGmPanel.tsx`)

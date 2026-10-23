@@ -24,7 +24,6 @@ import {
   Swords,
   Target,
   UserRound,
-  X,
 } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import { translations } from '@/lib/translations'
@@ -75,6 +74,7 @@ import AdventureDuration from './AdventureDuration'
 import TableSettings from '@/components/gm/TableSettings'
 import MusicPreview from '@/components/music/MusicPreview'
 import CombatView from './CombatView'
+import RescueMenu from './RescueMenu'
 import { combatLineText } from './combatText'
 import { combatChoice, useAutoCombat } from './useAutoCombat'
 
@@ -301,14 +301,6 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
   // ── Mutations ──────────────────────────────────────────────────────────
 
   const start = useStartAdventure()
-
-  const stop = useMutation(({ storage }) => {
-    const state = storage.get('autoGm')
-    const previous = state?.get('check')
-    if (previous) storage.get('checks')?.delete(previous.id)
-    for (const atk of state?.get('combat')?.attacks ?? []) storage.get('checks')?.delete(atk.id)
-    storage.delete('autoGm')
-  }, [])
 
   // Passer à la scène suivante. `expected` évite de sauter deux scènes quand
   // deux joueurs cliquent ensemble : le second clic ne trouve plus la même visite.
@@ -1262,9 +1254,14 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
         (step.kind === 'vote' || step.kind === 'continue' || step.kind === 'random') &&
         createPortal(<div className="ui-panel mt-3 p-3 text-left">{body}</div>, storySlot)}
       {step.kind !== 'end' && me?.gm && (
-        <button onClick={stop} className="ui-btn ui-btn-ghost !min-h-7 self-start text-xs text-ink/55">
-          <X size={12} /> {t('autoGmStop')}
-        </button>
+        <RescueMenu
+          visit={gm.visit}
+          step={step}
+          flags={gm.flags}
+          mode={gm.mode ?? 'auto'}
+          rollPending={!!gm.check}
+          onSkip={(next) => go(next, gm.visit, { author: title, text: t('autoGmSkipped') })}
+        />
       )}
     </>,
     step.kind === 'combat' && (

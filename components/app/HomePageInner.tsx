@@ -33,6 +33,7 @@ import { isDiceType, POOL_MAX, poolLabel, sortDice } from '@/lib/dicePool'
 import { applyLevelUp } from '@/lib/levelUp'
 import { XP_GAINS, addXp, spendLevel } from '@/lib/xp'
 import { Crown } from 'lucide-react'
+import AutoGmSwitch from '@/components/autogm/AutoGmSwitch'
 import ShownImage from '@/components/canvas/ShownImage'
 import AutoGmPanel, { type AutoGmEffect } from '@/components/autogm/AutoGmPanel'
 import { heroCharacter, type PremadeHero } from '@/lib/premadeHeroes'
@@ -819,14 +820,17 @@ export default function HomePageInner() {
             >
               <InteractiveCanvas
                 toolbarExtra={isGM ? (
-                  <button
-                    onClick={() => setGmPanelOpen((o) => !o)}
-                    aria-expanded={gmPanelOpen}
-                    className={`ui-btn shadow-lg !min-h-9 ${gmPanelOpen ? 'ui-btn-primary' : '!bg-[var(--c-panel-head)]'}`}
-                  >
-                    <Crown size={14} className={gmPanelOpen ? '' : 'text-gm'} />
-                    {t('gmLabel')}
-                  </button>
+                  <>
+                    <button
+                      onClick={() => setGmPanelOpen((o) => !o)}
+                      aria-expanded={gmPanelOpen}
+                      className={`ui-btn shadow-lg !min-h-9 ${gmPanelOpen ? 'ui-btn-primary' : '!bg-[var(--c-panel-head)]'}`}
+                    >
+                      <Crown size={14} className={gmPanelOpen ? '' : 'text-gm'} />
+                      {t('gmLabel')}
+                    </button>
+                    <AutoGmSwitch onOpenGmPanel={() => setGmPanelOpen(true)} />
+                  </>
                 ) : null}
                 overlay={isGM && gmPanelOpen ? (
                   <div
