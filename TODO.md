@@ -417,3 +417,14 @@
 - [ ] Si la barre du bas affiche encore une erreur en ligne, relever le message affiché (capture) et corriger la cause
 - [ ] Tester à deux navigateurs le nouveau salon : réglages en lecture seule pour le joueur, « Tester le son » de chaque côté, musique lancée chez tous après le dernier « Prêt »
 - [ ] Ajuster la force des dés selon l'avis des joueurs (`THROW_MIN`, `THROW_MAX`, `WILD_CHANCE`, `WILD_BOOST`, écart de départ `SPAWN_GAP` dans `components/dice/DiceBoxTable.tsx`)
+
+## Retours de Quentin (2026-10-23) — atelier, MJ automatique, thèmes (rien à coder pour l'instant)
+- [ ] Atelier, systèmes de jeu : pouvoir ajouter et enlever chaque élément (caractéristiques, ressources, compétences, attaques, et toute autre liste), y compris ceux du modèle de départ
+- [ ] Comparer l'atelier aux systèmes officiels connus (D&D 5E, Pathfinder, Call of Cthulhu, Warhammer, Vampire, Savage Worlds, Powered by the Apocalypse…) et lister ce qui manque pour qu'un MJ puisse y recréer un système officiel, connu ou inventé (types de dés et réserves de dés, jets sous / au-dessus, compétences, classes, magie, conditions, santé mentale…)
+- [ ] Atelier, campagnes : vérifier qu'avec les options actuelles le MJ automatique peut faire tourner une campagne créée par un joueur de bout en bout, et lister les options qui manquent (combats, épreuves en plusieurs jets, butin, XP, musique, images, fins)
+- [ ] Vérifier que le MJ automatique s'adapte au système choisi pour la table (Fantasy 5E, Enquête d100 ou système de l'atelier) et pas seulement au Narratif CakeJDR : jets demandés, caractéristiques, combat, montée de niveau ; noter ce qui casse
+- [ ] Mettre à jour « La fournée maudite » (campagne de test, environ 15 min) avec tout ce qui existe maintenant : combat au tour par tour, musiques d'ambiance, sons de combat, épreuves en plusieurs jets, butin, XP et montée de niveau
+- [ ] Rendre le thème « Nocturne » vraiment différent d'« Ardoise » (aujourd'hui trop proches)
+- [ ] Adoucir le thème clair « Papier & Sauge » : fond moins blanc, plus pâle et moins éblouissant sur ordinateur
+- [ ] MJ automatique : retirer les choix cliquables posés sur l'image de scène et le bouton « Fermer pour tous » ; chacun ferme l'image pour lui, les choix se font dans le récit à droite
+- [ ] Garder l'image de scène pour la future narration lue par-dessus : fermer l'image coupe la narration automatique et le joueur lit le récit lui-même

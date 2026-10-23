@@ -1,5 +1,11 @@
 # Journal
 
+## 2026-10-23 — Retours de Quentin notés (atelier, MJ automatique, thèmes)
+- Nouvelle section du TODO : atelier plus complet (ajouter et enlever chaque élément, pouvoir recréer un système officiel), campagnes de l'atelier jouables par le MJ automatique, MJ automatique adapté aux autres systèmes
+- « La fournée maudite » à remettre à niveau (combat, musique, XP), Nocturne à différencier d'Ardoise, Papier & Sauge à rendre moins blanc
+- Choix du vote retirés de l'image de scène : décision de Quentin, le vote se fait dans le récit à droite, l'image servira à la narration lue
+Reste ouvert : rien codé, à reprendre quand Quentin le dira
+
 ## 2026-10-23 — Mise en ligne de la 1.0
 - Historique purgé envoyé sur GitHub (`main` et `codex/plan-app-debug-fixes` forcés, sans `node.exe` ni `node.zip`) ; CI verte, thèmes Nocturne et Papier & Sauge visibles sur le site
 - Colonne `rooms.password_hash` supprimée dans Neon après le déploiement : aucune table n'avait de mot de passe, `/api/demo` et `/salles` répondent normalement
