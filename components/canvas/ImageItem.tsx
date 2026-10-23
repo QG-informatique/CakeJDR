@@ -107,7 +107,7 @@ const ImageItem: React.FC<Props> = ({
           <button
             onPointerDown={(e) => e.stopPropagation()}
             onClick={onRemove}
-            className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-shade/80 text-white opacity-0 shadow transition hover:bg-red-600 focus-visible:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100"
+            className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-shade/80 text-ink opacity-0 shadow transition hover:bg-red-600 hover:text-white focus-visible:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100"
             style={{ zIndex: 5 }}
             aria-label={t('removeFromBoard')}
             title={t('removeFromBoard')}

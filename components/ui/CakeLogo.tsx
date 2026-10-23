@@ -42,7 +42,7 @@ export default function CakeLogo({
       {/* On force le fond transparent de l’icône */}
       <Cake className={`${size} text-gm bg-transparent`} />
       {showText && (
-        <span className={`${titan.className} text-white drop-shadow bg-transparent ${textSize}`}>
+        <span className={`${titan.className} text-ink drop-shadow bg-transparent ${textSize}`}>
           Cake&nbsp;JDR
         </span>
       )}

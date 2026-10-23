@@ -314,7 +314,8 @@
 - [ ] Faire relire la nouvelle interface (menu connecté, table, téléphone) par Quentin, puis la mettre en ligne
 - [ ] Faire relire Ardoise par Quentin sur un vrai écran et un téléphone, ajuster les couleurs si besoin
 - [ ] Faire de la maquette V2 un second thème (phase 6)
-- [ ] Faire du pack « Papier & Sauge » (thème clair, accent vert sauge) un thème : maquettes et couleurs dans `C:\DEV\CakeJDR-themes\CakeJDR-theme-papier-sauge`
+- [x] Faire du pack « Papier & Sauge » (thème clair, accent vert sauge) un thème : maquettes et couleurs dans `C:\DEV\CakeJDR-themes\CakeJDR-theme-papier-sauge` (fait : `app/themes.css`, choix « Papier & Sauge » du sélecteur)
+- [ ] Faire relire le thème clair « Papier & Sauge » par Quentin (menu, table, téléphone)
 
 ## Bibliothèque partagée — avant le public
 - [x] Créer une bibliothèque de départ (cartes, monstres, PNJ, images) utilisable par tous les MJ, en plus de leurs propres images — uniquement des images dont on a les droits

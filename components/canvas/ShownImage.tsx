@@ -130,13 +130,13 @@ export default function ShownImage() {
           className="pointer-events-none relative max-h-[78dvh] max-w-full rounded-2xl object-contain shadow-2xl"
         />
       )}
-      <p className="pointer-events-none relative text-center text-sm text-white/85">
-        {shown.label && <b className="font-semibold text-white">{shown.label}</b>}
+      <p className="pointer-events-none relative text-center text-sm text-ink/85">
+        {shown.label && <b className="font-semibold text-ink">{shown.label}</b>}
         {shown.label && ' · '}
         {t('shownByGm')}
       </p>
       <div className="relative flex flex-wrap justify-center gap-2">
-        <button onClick={() => setShown(null)} className="ui-btn ui-btn-ghost !text-white">
+        <button onClick={() => setShown(null)} className="ui-btn ui-btn-ghost">
           <X size={14} /> {t('close')}
         </button>
         {isGM && (

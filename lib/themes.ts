@@ -20,6 +20,7 @@ export type Theme = {
 export const THEMES: Theme[] = [
   { id: 'ardoise', name: 'Ardoise', layout: { sheetSide: 'left' }, background: 'plain' },
   { id: 'classique', name: 'Classique', layout: { sheetSide: 'left' }, background: 'rpg' },
+  { id: 'papier-sauge', name: 'Papier & Sauge', layout: { sheetSide: 'left' }, background: 'plain' },
 ]
 
 export const DEFAULT_THEME_ID = 'ardoise'

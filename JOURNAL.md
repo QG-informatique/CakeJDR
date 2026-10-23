@@ -1,5 +1,11 @@
 # Journal
 
+## 2026-10-23 — Thème clair Papier & Sauge
+- Nouveau thème clair « Papier & Sauge » (papier crème, encre vert sombre, accent sauge), dans le sélecteur de thème (`app/themes.css`, `lib/themes.ts`)
+- Les couleurs d'état claires (rouge, ambre, vert…) et l'encre très transparente sont foncées pour ce thème seulement : contraste vérifié sur le menu, l'atelier et une salle
+- Logo, bouton « + » de couleur du profil et boutons d'image ne forcent plus le blanc là où le fond peut être clair
+Reste ouvert : relecture par Quentin sur un vrai écran et un téléphone
+
 ## 2026-10-23 — Démo : une partie par visiteur
 - Chaque visiteur reçoit sa propre copie de la salle de démo, remplie depuis l'état de référence (`lib/demoCopy.ts`, `demoRoomForVisitor` dans `lib/db/demo.ts`, `POST /api/demo`) ; son navigateur la garde et il la retrouve en revenant
 - Copies sans ligne en base, reconnues à leur identifiant signé par le serveur (impossible d'en inventer) ; 10 copies neuves par heure et par adresse, au-delà la démo partagée

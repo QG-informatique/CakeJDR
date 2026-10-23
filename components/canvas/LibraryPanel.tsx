@@ -362,7 +362,7 @@ export default function LibraryPanel({
                   {tile.upload && canDelete(tile.upload) && (
                     <button
                       onClick={() => onDelete(tile.upload!)}
-                      className="absolute right-1 top-1 rounded-full bg-shade/70 p-1 text-white/90 transition hover:bg-red-600 hover:text-white"
+                      className="absolute right-1 top-1 rounded-full bg-shade/70 p-1 text-ink/90 transition hover:bg-red-600 hover:text-white"
                       aria-label={t('libraryDelete')}
                       title={t('libraryDelete')}
                     >

@@ -75,3 +75,60 @@
   --c-panel-blur: 4px;
   --c-panel-head: rgb(27 31 36 / 0.85);
 }
+
+/* Papier & Sauge : thème clair, papier blanc cassé, texte ardoise, accent
+   vert sauge, bordures fines (pack de maquettes du 4 octobre 2026). */
+[data-theme="papier-sauge"] {
+  color-scheme: light;
+  --c-page: #f3f1ea;
+  --c-ink: #263630;
+  --c-shade: #fffefa;
+  --c-surface: #fffefa;
+  --c-surface-hover: #e4ede4;
+  --c-surface-deep: #ebe8df;
+  --c-line: #d8ddd4;
+  --c-line-strong: #bcc5b9;
+  --c-field: #ffffff;
+  --c-field-ink: #263630;
+  --c-field-line: #d8ddd4;
+  --c-accent: #376650;
+  --c-accent-hover: #2c5442;
+  --c-accent-soft: #3f7058;
+  --c-on-accent: #ffffff;
+  --c-gm: #a8513c;
+  --c-gm-soft: #8a3f2e;
+  --c-brand: #a8513c;
+  --c-font: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  --c-backdrop: #f3f1ea;
+  --c-panel: #fffefa;
+  --c-panel-line: #d8ddd4;
+  --c-panel-blur: 0px;
+  --c-panel-head: #fffefa;
+  /* Les couleurs d'état claires (texte rouge, ambre, vert… pensées pour un
+     fond sombre) deviennent foncées pour rester lisibles sur le papier. */
+  --color-red-200: #991b1b;
+  --color-red-300: #b91c1c;
+  --color-red-400: #b91c1c;
+  --color-rose-100: #9f1239;
+  --color-rose-200: #9f1239;
+  --color-rose-300: #be123c;
+  --color-rose-400: #be123c;
+  --color-amber-100: #78350f;
+  --color-amber-200: #92400e;
+  --color-amber-300: #92400e;
+  --color-amber-400: #b45309;
+  --color-yellow-300: #854d0e;
+  --color-emerald-100: #065f46;
+  --color-emerald-200: #065f46;
+  --color-emerald-300: #047857;
+  --color-emerald-400: #047857;
+  --color-sky-300: #0369a1;
+  --color-pink-300: #be185d;
+}
+
+/* Sur le papier clair, l’encre très transparente (textes secondaires) devient
+   illisible : on l’éclaircit moins que sur les thèmes sombres. */
+[data-theme="papier-sauge"] :is(.text-ink\/25, .text-ink\/30) { color: color-mix(in oklab, var(--color-ink) 60%, transparent); }
+[data-theme="papier-sauge"] :is(.text-ink\/40, .text-ink\/45) { color: color-mix(in oklab, var(--color-ink) 72%, transparent); }
+[data-theme="papier-sauge"] :is(.text-ink\/50, .text-ink\/55, .ui-label) { color: color-mix(in oklab, var(--color-ink) 75%, transparent); }
+[data-theme="papier-sauge"] :is(.text-ink\/60, .text-ink\/65) { color: color-mix(in oklab, var(--color-ink) 78%, transparent); }

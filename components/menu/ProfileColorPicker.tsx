@@ -70,7 +70,7 @@ const ProfileColorPicker: FC<Props> = ({ color, onChange, size = 28 }) => {
           className={`
             absolute left-1/2 top-1/2 
             -translate-x-1/2 -translate-y-1/2
-            text-[14px] leading-none font-semibold text-ink
+            text-[14px] leading-none font-semibold text-white
             opacity-80 group-hover:opacity-100
             transition select-none pointer-events-none
           `}
