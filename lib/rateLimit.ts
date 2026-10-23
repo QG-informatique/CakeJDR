@@ -2,10 +2,12 @@
  * Limiteur de débit minimaliste, en mémoire.
  *
  * Limite : en serverless (Vercel), chaque instance a son propre compteur, donc
- * le quota réel est « N tentatives par instance ». C'est suffisant pour ralentir
- * un brute force opportuniste sur le login admin, pas pour un quota strict.
- * Pour une vraie garantie, remplacer la Map par Vercel KV / Upstash Redis en
- * gardant exactement la même signature.
+ * le quota réel est « N tentatives par instance ». C'est suffisant pour freiner
+ * un abus opportuniste (codes d'invitation essayés en boucle, copies de démo,
+ * envois d'images), pas pour un quota strict. Choix d'octobre 2026 : on garde
+ * la mémoire plutôt qu'un service Redis, qui ajouterait un compte externe pour
+ * un gain faible sur un jeu entre amis. Si un quota strict devient nécessaire,
+ * remplacer la Map par une table Neon en gardant exactement la même signature.
  */
 
 type Bucket = { count: number; resetAt: number }

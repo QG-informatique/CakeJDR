@@ -56,8 +56,6 @@ export const rooms = pgTable(
     ownerId: text('owner_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    /** Hash scrypt du mot de passe de table, si elle en a un. */
-    passwordHash: text('password_hash'),
     /** Table de démonstration : ouverte à tous, réinitialisée régulièrement. */
     isDemo: boolean('is_demo').notNull().default(false),
     /**

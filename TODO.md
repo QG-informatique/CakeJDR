@@ -36,7 +36,8 @@
 - [x] Noter la dernière ouverture de chaque table (`rooms.last_active_at`, mis à jour à l'entrée)
 - [x] Nettoyer automatiquement les tables inactives (`/api/cron/cleanup-rooms`, chaque jour à 4 h 30), en excluant la salle de démonstration
 - [ ] Vérifier dans les logs Vercel que la tâche `cleanup-rooms` tourne chaque nuit sans erreur (`wouldDelete` visible avec `?dry=1` en admin)
-- [ ] Supprimer la colonne `rooms.password_hash`, devenue inutile (migration Neon, avec accord)
+- [x] Retirer `rooms.password_hash` du code (`lib/db/schema.ts`)
+- [ ] Après la prochaine mise en ligne, supprimer la colonne `rooms.password_hash` dans Neon : `node --env-file=.env.local scripts/drop-room-password-hash.mjs` (pas avant : le site en ligne la lit encore)
 - [x] Transformer les modèles de fiche en bibliothèque du MJ, réutilisable d'une table à l'autre (fait par les systèmes de l'atelier, `/atelier`)
 - [x] Nettoyer les tables antérieures : cinq supprimées, `cakroom` gardée comme salle de démonstration
 
@@ -94,13 +95,13 @@
 - [x] Après la première connexion, transférer la salle démo et le rôle admin vers le nouveau compte (`scripts/transfer-account.mjs`)
 - [x] Retirer l'intégration Clerk de Vercel, avec ses variables `CLERK_*` et `NEXT_PUBLIC_CLERK_*`
 - [ ] Traiter les variables marquées « Needs attention » dans Vercel (les passer en « Sensitive », en régénérant la valeur si Vercel le demande)
-- [ ] Après la mise en ligne, supprimer `BLOB_READ_WRITE_TOKEN` et le store Vercel Blob (plus utilisés par le code), après avoir vérifié qu'aucune ancienne fiche n'y reste à récupérer
+- [ ] Après la mise en ligne, supprimer (Quentin, dans Vercel) `BLOB_READ_WRITE_TOKEN` et le store Vercel Blob (plus utilisés par le code), après avoir vérifié qu'aucune ancienne fiche n'y reste à récupérer
 - [x] Réécrire `MANUAL_TEST_PLAN.md` pour les comptes, les invitations, les rôles, la salle de démonstration et les fiches du compte
 - [x] Publier les commits locaux : la version en ligne date du 30 août et n'a aucune des protections de la phase 0 (suppression de tables ouverte à tous, notamment)
 
 ## Sécurité — à faire avant toute mise en ligne publique
 - [x] Définir un vrai `ADMIN_PASSWORD` dans `.env.local` (encore au placeholder `REMPLACE_MOI`) et sur Vercel avant tout déploiement — sans ça `/admin` reste inutilisable en prod (remplacé : les droits admin viennent du compte, `users.is_admin`)
-- [ ] Supprimer `ADMIN_PASSWORD` et `ADMIN_SESSION_SECRET` des variables Vercel s'ils y sont
+- [ ] Supprimer `ADMIN_PASSWORD` et `ADMIN_SESSION_SECRET` des variables Vercel s'ils y sont (Quentin, dans Vercel → Settings → Environment Variables : le code ne les lit plus, vérifié le 2026-10-23 ; la CLI Vercel n'est pas connectée sur ce PC)
 - [x] Authentifier `/api/roomstorage` (GET/POST/DELETE) via un jeton d'accès à la room
 - [x] Contraindre `/api/blob` (préfixe `FichePerso/` imposé, JSON seul, 256 Ko max, débit limité) et supprimer `/api/blop/delete`
 - [x] Limiter le débit de `/api/cloudinary/signature` et `/api/cloudinary`, retirer le SVG des formats acceptés
@@ -126,7 +127,7 @@
 - [x] Retirer `tmp/` du suivi git (1963 fichiers, dont `node.exe` ~71 Mo, versionnés par erreur)
 - [ ] Purger `node.exe` et `node.zip` de l'historique git (`git filter-repo`) — retirés du contenu actuel mais toujours dans l'historique, `.git` pèse ~70 Mo ; réécrit tous les SHA, à faire à un moment calme
 - [x] Supprimer le code mort : `components/rooms/RoomJoinGuard.tsx` et `components/rooms/RoomSelector.tsx` (plus importés nulle part) — avec `MusicPanel`, `OnlineProfiles`, `useOnlineStatus`, `/api/timestamp` et 13 paquets npm inutilisés
-- [ ] Migrer le rate-limit du login admin (`lib/rateLimit.ts`, en mémoire) vers Vercel KV/Redis pour un vrai quota en serverless
+- [x] Migrer le rate-limit du login admin (`lib/rateLimit.ts`, en mémoire) vers Vercel KV/Redis pour un vrai quota en serverless — décidé : non, le login admin n'existe plus et la limite en mémoire suffit (raison dans `lib/rateLimit.ts`)
 
 ## Rooms / Auth
 - [x] Hasher le mot de passe de room côté serveur (`metadata.passwordHash`) et ne plus exposer le mot de passe en clair
