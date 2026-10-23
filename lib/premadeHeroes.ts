@@ -73,6 +73,7 @@ export const PREMADE_HEROES: readonly PremadeHero[] = [
     ],
     traits: 'Loyale, têtue, rit fort.',
     background: 'Ancienne sergente de la garde royale, elle a quitté l\'armée pour protéger ceux que le roi oublie.',
+    historique: 'soldat',
   },
   {
     image: 'mage-homme',
@@ -98,6 +99,7 @@ export const PREMADE_HEROES: readonly PremadeHero[] = [
     ],
     traits: 'Curieux, distrait, un brin vaniteux.',
     background: 'Renvoyé de l\'académie pour avoir lu les livres interdits, il cherche à prouver qu\'il avait raison.',
+    historique: 'erudit',
   },
   {
     image: 'demi-elfe-rodeur-homme',
@@ -123,6 +125,7 @@ export const PREMADE_HEROES: readonly PremadeHero[] = [
     ],
     traits: 'Silencieux, patient, méfiant envers les villes.',
     background: 'Guide des forêts du nord, il a vu des ombres ailées passer au-dessus des cimes et veut savoir pourquoi.',
+    historique: 'chasseur',
   },
   {
     image: 'halfelin-roublard-femme',
@@ -148,6 +151,7 @@ export const PREMADE_HEROES: readonly PremadeHero[] = [
     ],
     traits: 'Rieuse, gourmande, ne tient pas en place.',
     background: 'Enfant des ruelles de la ville royale, elle vole aux riches et doit une faveur à la guilde.',
+    historique: 'voleur',
   },
   {
     image: 'nain-guerrier',
@@ -173,6 +177,7 @@ export const PREMADE_HEROES: readonly PremadeHero[] = [
     ],
     traits: 'Grognon, fidèle, rancunier.',
     background: 'Sa forge familiale a fondu sous le souffle d\'un dragon il y a cent ans. Il n\'a pas oublié.',
+    historique: 'artisan',
   },
   {
     image: 'paladine-femme',
@@ -198,6 +203,7 @@ export const PREMADE_HEROES: readonly PremadeHero[] = [
     ],
     traits: 'Droite, généreuse, parfois rigide.',
     background: 'Chevalière d\'un ordre presque disparu, elle a juré de rallumer la flamme de son temple.',
+    historique: 'acolyte',
   },
   {
     image: 'elfe-barde-homme',
@@ -223,6 +229,7 @@ export const PREMADE_HEROES: readonly PremadeHero[] = [
     ],
     traits: 'Charmeur, vantard, sincère quand ça compte.',
     background: 'Il cherche l\'histoire qui fera de lui une légende. Un dragon ferait parfaitement l\'affaire.',
+    historique: 'saltimbanque',
   },
   {
     image: 'druidesse-femme',
@@ -248,6 +255,7 @@ export const PREMADE_HEROES: readonly PremadeHero[] = [
     ],
     traits: 'Calme, observatrice, peu patiente avec les citadins.',
     background: 'Gardienne d\'une forêt que la brume ronge, elle sent que le mal vient de la montagne.',
+    historique: 'chasseur',
   },
 ]
 

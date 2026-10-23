@@ -44,6 +44,8 @@ const StatsPanel: FC<Props> = ({ perso, compact = false, system = GAME_SYSTEMS.n
   const { stats: STATS, attacks: ATTACKS } = system
   const field = (key: string) => Reflect.get(perso, key) as string | number | undefined
   const statValue = (key: string) => Number(field(key) ?? 0)
+  // En d100, 0 veut dire « pas encore rempli » (les dés donnent au moins 3).
+  const shownStat = (key: string) => (system.rollUnder && !statValue(key) ? '—' : statValue(key))
   // Valeurs de base, puis le bonus qui vient du niveau (bonus de maîtrise).
   const level = Math.max(1, Math.round(Number(perso.niveau)) || 1)
   const BASICS = [
@@ -67,7 +69,7 @@ const StatsPanel: FC<Props> = ({ perso, compact = false, system = GAME_SYSTEMS.n
           <div className="ui-well grid grid-cols-2 py-1">
             {STATS.map(stat => (
               <Row key={stat.key} label={t(stat.label as TranslationKey)}>
-                <span className={getStatColor(statValue(stat.key))}>{statValue(stat.key)}</span>
+                <span className={getStatColor(statValue(stat.key))}>{shownStat(stat.key)}</span>
                 <ModBadge character={perso} stat={stat.key as CheckStat} system={system} className="ml-1 text-xs font-medium text-ink/55" />
               </Row>
             ))}
@@ -105,7 +107,7 @@ const StatsPanel: FC<Props> = ({ perso, compact = false, system = GAME_SYSTEMS.n
           {STATS.map(stat => (
             <Tile key={stat.key} label={t(stat.label as TranslationKey)}>
               <span className="flex items-baseline gap-1.5 tabular-nums">
-                <span className={`text-xl font-bold ${getStatColor(statValue(stat.key))}`}>{statValue(stat.key)}</span>
+                <span className={`text-xl font-bold ${getStatColor(statValue(stat.key))}`}>{shownStat(stat.key)}</span>
                 <ModBadge character={perso} stat={stat.key as CheckStat} system={system} className="text-xs font-semibold text-ink/55" />
               </span>
             </Tile>

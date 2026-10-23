@@ -62,7 +62,7 @@ const Dialog: FC<Omit<Props, 'open'>> = ({
           {title && (
             <h2 className="text-base font-semibold mb-2 text-ink">{title}</h2>
           )}
-          <p className="text-sm text-ink/80 mb-6 leading-relaxed">{message}</p>
+          <p className="text-sm text-ink/80 mb-6 leading-relaxed whitespace-pre-line">{message}</p>
 
           <div className="flex gap-3 justify-end">
             <button

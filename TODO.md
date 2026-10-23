@@ -230,7 +230,7 @@
 - [x] Phase H : à la création d'une table en MJ automatique, choisir la campagne (la démo ou « La Flamme sous la montagne ») et arriver directement au début de l'aventure
 - [ ] Phase H : dans une salle déjà créée, activer ou couper le MJ automatique depuis un interrupteur visible (aujourd'hui : panneau MJ, section Aventure)
 - [ ] Phase H : en arrivant dans une aventure avec une fiche faite ailleurs, proposer « Créer un héros pour cette histoire » ou « Choisir un de mes personnages » au lieu de garder d'office la fiche sélectionnée
-- [ ] Permettre de désélectionner son personnage (fiches) pour entrer dans une salle sans personnage
+- [x] Permettre de désélectionner son personnage (fiches) pour entrer dans une salle sans personnage
 - [x] Phase H : en MJ automatique, cacher au créateur de la table tout le côté MJ (notes secrètes, scènes à venir, fins) : il joue comme les autres joueurs — bouton « Côté MJ » réservé au MJ humain
 - [ ] Phase H : donner au créateur d'une table en MJ automatique un menu de secours qui ne révèle pas l'histoire (relancer la scène, annuler un jet bloqué, passer à la suite, reprendre la main en MJ humain)
 - [ ] Phase H : vérifier qu'une campagne entière se joue en MJ automatique sans aucun MJ humain dans la salle (votes, égalités, jets, dégâts, création des héros)
@@ -239,7 +239,7 @@
 - [x] Phase I : choisir deux ou trois autres presets, en vérifiant la licence de toute règle reprise — « Fantasy 5E » (SRD 5.2.1, CC-BY-4.0) et « Enquête d100 » (BRP UGE, ORC), mentions dans `app/conditions/page.tsx`
 - [x] Phase I : choisir le système à la création d'une table — rangé dans les réglages Liveblocks de la salle (`settings.system`), sans colonne en base ; le MJ peut le changer dans son panneau
 - [ ] Phase I : ajouter au système d100 ses ressources propres (points de magie, santé mentale) et les afficher sur la fiche
-- [ ] Phase I : afficher « — » plutôt que « 0 % » pour Corpulence et Pouvoir tant que la fiche d100 ne les a pas remplis
+- [x] Phase I : afficher « — » plutôt que « 0 % » pour Corpulence et Pouvoir tant que la fiche d100 ne les a pas remplis
 - [ ] Tester les trois systèmes avec un second compte joueur : fiche, test du MJ (seuil d100 caché), montée de niveau Fantasy 5E (un seul dé de vie)
 - [ ] Phase J : créer l'éditeur de système (partir d'un preset, aperçu de la fiche en direct)
 - [ ] Phase J : à la création d'une table, ajouter « Créer mon système » à côté des systèmes proposés (bouton visible, marqué « bientôt » tant que l'éditeur n'existe pas)
@@ -358,9 +358,9 @@
 - [x] Produire des portraits et pions libres de droits pour chaque peuple × classe × genre (aujourd'hui 15 portraits, surtout humains) : prompt prêt dans `PROMPT-PACK-IMAGES-3.md`, à passer dans ChatGPT
 - [x] Intégrer le pack d'images n° 3 reçu de ChatGPT : conversion webp + miniatures, entrées dans `lib/library.ts`, tags peuple/classe/genre dans `PORTRAIT_TAGS` (`lib/heroCreation.ts`)
 - [ ] Ajouter des filtres peuple et classe dans la bibliothèque si la grille des pions (130) devient trop longue à parcourir
-- [ ] Donner un historique aux héros tout prêts (`lib/premadeHeroes.ts`)
+- [x] Donner un historique aux héros tout prêts (`lib/premadeHeroes.ts`)
 - [ ] Tester l'import d'une image perso dans la création de héros (envoi Cloudinary, portrait sur la fiche, pion de couleur)
-- [ ] Remplacer le `window.confirm` de la page admin par la fenêtre de confirmation de l'app (`app/admin/page.tsx`)
+- [x] Remplacer le `window.confirm` de la page admin par la fenêtre de confirmation de l'app (`app/admin/page.tsx`)
 - [x] Ajouter une barre d'XP (MJ humain et automatique) : XP pour les jets réussis et les situations réglées, plus pour quêtes et monstres
 - [x] Sortir la montée de niveau de la fiche du joueur vers le MJ : édition à la main ou fenêtre qui fait lancer les dés au joueur ; automatique avec le MJ automatique quand la barre est pleine, hors combat
 - [ ] Tester l'XP avec un second compte joueur : XP donnée par le MJ, XP d'un test, « Niveau prêt » puis montée par dés et à la main, montée automatique avec le MJ automatique

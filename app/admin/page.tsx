@@ -18,6 +18,8 @@ import {
   fetchAdminStatus,
 } from '@/lib/adminApi'
 import type { RoomInfoResponse } from '@/types/api'
+import { useConfirm } from '@/lib/useConfirm'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
 
 type SortKey = 'createdAt' | 'lastActiveAt' | 'name' | 'usersConnected'
 
@@ -33,6 +35,7 @@ export default function AdminPage() {
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm()
 
   // L'état n'est modifié qu'à l'arrivée de la réponse, jamais pendant l'effet lui-même.
   const fetchRoomList = useCallback(
@@ -128,14 +131,16 @@ export default function AdminPage() {
     }
   }
 
-  const deleteIds = (ids: string[]) => {
+  const deleteIds = async (ids: string[]) => {
     if (!ids.length) return
     const names = ids
       .map((id) => rooms.find((r) => r.id === id)?.name || id)
-      .join('\n  - ')
-    const confirmed = window.confirm(
-      `Supprimer definitivement ${ids.length} room(s) ?\n\n  - ${names}\n\nCette action est irreversible.`,
-    )
+      .join('\n- ')
+    const confirmed = await confirm(`- ${names}\n\nCette action est irréversible.`, {
+      title: `Supprimer définitivement ${ids.length} room(s) ?`,
+      danger: true,
+      confirmLabel: 'Supprimer',
+    })
     if (!confirmed) return
     void runAction(`${ids.length} room(s) supprimee(s)`, async () => {
       const res = await adminDeleteRooms(ids)
@@ -391,6 +396,15 @@ export default function AdminPage() {
           {rooms.length} table(s) au total.
         </p>
       </div>
+      <ConfirmDialog
+        open={!!confirmState}
+        title={confirmState?.title}
+        message={confirmState?.message ?? ''}
+        danger={confirmState?.danger}
+        confirmLabel={confirmState?.confirmLabel}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+      />
     </main>
   )
 }

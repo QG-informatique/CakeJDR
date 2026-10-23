@@ -70,7 +70,8 @@ const ModBadge: FC<Props> = ({ character, stat, className = '', system = GAME_SY
         aria-describedby={at ? id : undefined}
         className={`cursor-help rounded px-0.5 tabular-nums underline decoration-dotted decoration-from-font underline-offset-2 ${className}`}
       >
-        {system.rollUnder ? `${total} %` : signedMod(total)}
+        {/* En d100, une caractéristique pas encore remplie n'a pas de pourcentage. */}
+        {system.rollUnder ? (value ? `${total} %` : '—') : signedMod(total)}
       </button>
       {at && typeof document !== 'undefined' && createPortal(
         <div

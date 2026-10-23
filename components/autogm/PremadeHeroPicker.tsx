@@ -6,6 +6,7 @@ import { useT } from '@/lib/useT'
 import { useLanguage } from '@/components/context/LanguageContext'
 import { libraryUrl } from '@/lib/library'
 import { premadeHeroes, type PremadeHero } from '@/lib/premadeHeroes'
+import { backgroundOf } from '@/lib/backgrounds'
 import GuidedHeroCreator from './GuidedHeroCreator'
 
 /** Héros tout prêts, pour le joueur qui arrive sans fiche : un clic et il joue. */
@@ -38,7 +39,7 @@ export default function PremadeHeroPicker({
           <li key={hero.image}>
             <button
               onClick={() => onPick(hero)}
-              title={hero.hook}
+              title={[hero.hook, backgroundOf(hero.historique, lang)?.nom].filter(Boolean).join(' · ')}
               className="flex w-full items-center gap-2 rounded-lg border border-[var(--c-panel-line)] p-1.5 text-left transition hover:border-gm/60"
             >
               <img

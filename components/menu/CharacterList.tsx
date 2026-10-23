@@ -1,5 +1,5 @@
 import { FC, RefObject, useMemo } from 'react'
-import { Edit2, Trash2, Plus, Upload, Download, Cloud, ScrollText } from 'lucide-react'
+import { Edit2, Trash2, Plus, Upload, Download, Cloud, ScrollText, UserX } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useT } from '@/lib/useT'
 import { type Character, buildCharacterKey } from '@/types/character'
@@ -49,7 +49,13 @@ const CharacterList: FC<Props> = ({
     <section className="ui-panel flex flex-col gap-3 p-4">
       <h2 className="flex items-center gap-2 text-base font-semibold select-none">
         <ScrollText size={16} className="text-accent" />
-        {t('characterSheets')}
+        <span className="flex-1">{t('characterSheets')}</span>
+        {/* Entrer dans une salle sans personnage : on retire la sélection. */}
+        {selectedIdx !== null && (
+          <button onClick={() => onSelect(-1)} className="ui-btn ui-btn-ghost !min-h-7 !px-2 text-xs font-normal">
+            <UserX size={13} aria-hidden /> {t('noCharacter')}
+          </button>
+        )}
       </h2>
 
       {(() => {
@@ -91,7 +97,10 @@ const CharacterList: FC<Props> = ({
                   <motion.li
                     key={buildCharacterKey(ch)}
                     onClick={async () => {
-                      if (local) {
+                      // Un second clic sur la fiche choisie la désélectionne.
+                      if (isSelected) {
+                        onSelect(-1)
+                      } else if (local) {
                         onSelect(localIdx)
                       } else {
                         const idx = await onDownload(ch)

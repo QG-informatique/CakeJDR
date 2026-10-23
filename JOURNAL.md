@@ -1,5 +1,11 @@
 # Journal
 
+## 2026-10-23 — Fiches : sans personnage, d100, héros tout prêts
+- On peut entrer dans une salle sans personnage : second clic sur la fiche choisie, ou bouton « Aucun personnage » (`components/menu/CharacterList.tsx`)
+- d100 : « — » au lieu de « 0 % » pour une caractéristique pas encore remplie (`ModBadge.tsx`, `StatsPanel.tsx`)
+- Les huit héros tout prêts ont un historique, donc le bonus aux actions de leur domaine (`lib/premadeHeroes.ts`)
+- Page admin : la suppression de salles passe par la fenêtre de confirmation de l'app (`app/admin/page.tsx`)
+
 ## 2026-10-23 — Épreuves de justesse, boule de feu, vote dans l'image
 - Épreuve en plusieurs jets sans issue moyenne écrite : une réussite de moins que demandé mène quand même à la bonne suite, « de justesse », sans le butin ni les soins de la scène (ou 2 PV perdus) (`trialNext`, `trialPartial` dans `lib/autoGm/index.ts`, `AutoGmPanel.tsx`)
 - Boule de feu : 1d6+1 à tous au lieu de 2d6, elle ne vide plus un combat solo d'un coup (`lib/autoGm/combatActions.ts`)
