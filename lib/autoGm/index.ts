@@ -39,7 +39,7 @@ export function withText(adventure: Adventure, text: AdventureText): Adventure {
     let translated: SceneStep = step
     if (step.kind === 'continue' || step.kind === 'random') translated = { ...step, label: tx.label ?? step.label }
     else if (step.kind === 'vote')
-      translated = { ...step, prompt: tx.prompt ?? step.prompt, options: step.options.map((o) => ({ ...o, label: tx.options?.[o.id] ?? o.label })) }
+      translated = { ...step, prompt: tx.prompt ?? step.prompt, options: step.options.map((o) => ({ ...o, label: tx.options?.[o.id] ?? o.label, ...(o.note ? { note: tx.notes?.[o.id] ?? o.note } : {}) })) }
     else if (step.kind === 'check' || step.kind === 'trial') translated = { ...step, prompt: tx.prompt ?? step.prompt, reason: tx.reason ?? step.reason }
     else if (step.kind === 'combat')
       translated = { ...step, prompt: tx.prompt ?? step.prompt, foes: step.foes.map((f) => ({ ...f, name: tx.foes?.[f.id] ?? f.name })) }

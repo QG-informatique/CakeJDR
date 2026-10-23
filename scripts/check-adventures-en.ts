@@ -28,6 +28,7 @@ for (const [id, adventure] of Object.entries(ADVENTURES)) {
       if (!tx.prompt) missing.push(`${where} : question (prompt)`)
     }
     if (step.kind === 'vote') for (const o of step.options) if (!tx.options?.[o.id]) missing.push(`${where} : choix « ${o.id} »`)
+    if (step.kind === 'vote') for (const o of step.options) if (o.note && !tx.notes?.[o.id]) missing.push(`${where} : détail du choix « ${o.id} » (notes)`)
     if ((step.kind === 'check' || step.kind === 'trial') && step.reason && !tx.reason) missing.push(`${where} : raison du jet (reason)`)
     if (step.kind === 'combat') for (const f of step.foes) if (!tx.foes?.[f.id]) missing.push(`${where} : ennemi « ${f.id} »`)
     if (step.kind === 'end' && !tx.end) missing.push(`${where} : titre de fin (end)`)

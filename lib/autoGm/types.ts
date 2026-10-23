@@ -44,6 +44,8 @@ export type SceneOption = {
   needs?: string
   /** Cachée si l'aventure a déjà cet indice (une porte déjà fermée, une piste déjà suivie). */
   unless?: string
+  /** Petit détail de la scène ajouté à la ligne « Choix du groupe » du chat, une fois ce choix retenu. */
+  note?: string
 }
 
 /** Un ennemi d'un combat au tour par tour (`lib/autoGm/combat.ts`). */
@@ -174,6 +176,8 @@ export type SceneText = {
   reason?: string
   /** Réponses du vote, par identifiant. */
   options?: Record<string, string>
+  /** Détails des choix (`SceneOption.note`), par identifiant. */
+  notes?: Record<string, string>
   /** Titre de la fin. */
   end?: string
   /** Noms des ennemis d'un combat, par identifiant. */

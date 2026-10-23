@@ -69,7 +69,7 @@ import {
 } from '@/lib/autoGm'
 import type { CombatState } from '@/lib/autoGm/combat'
 import { itemCounts, itemsUsed } from '@/lib/autoGm/combatActions'
-import type { Foe } from '@/lib/autoGm/types'
+import type { Foe, SceneOption } from '@/lib/autoGm/types'
 import AdventureDuration from './AdventureDuration'
 import TableSettings from '@/components/gm/TableSettings'
 import MusicPreview from '@/components/music/MusicPreview'
@@ -294,9 +294,9 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
   // Ligne d'historique pour le choix retenu après un vote ou une égalité.
   const gmMode = gm?.mode
   const groupChoice = useCallback(
-    (label: string) => ({
+    ({ label, note }: SceneOption) => ({
       author: t(gmMode === 'gm' ? 'autoGmTitleGm' : 'autoGmTitle'),
-      text: t('autoGmGroupChoice').replace('{n}', label),
+      text: t('autoGmGroupChoice').replace('{n}', label) + (note ? ` — ${note}` : ''),
     }),
     [t, gmMode],
   )
@@ -493,7 +493,7 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
     const timer = setTimeout(() => {
       const outcome = decide(options, votes, players, humanGm)
       if (!outcome) return
-      if (outcome.kind === 'winner') go(outcome.option.next, expected, groupChoice(outcome.option.label))
+      if (outcome.kind === 'winner') go(outcome.option.next, expected, groupChoice(outcome.option))
       else
         setTiebreak(expected, {
           userId: outcome.decider.id,
@@ -1097,7 +1097,7 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
               .filter((o) => tie.options.includes(o.id))
               .map((o) =>
                 iDecide ? (
-                  <button key={o.id} onClick={() => go(o.next, gm.visit, groupChoice(o.label))} className="ui-btn ui-btn-primary justify-start">
+                  <button key={o.id} onClick={() => go(o.next, gm.visit, groupChoice(o))} className="ui-btn ui-btn-primary justify-start">
                     {o.label}
                   </button>
                 ) : (

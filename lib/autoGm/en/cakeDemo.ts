@@ -18,6 +18,10 @@ export const CAKE_DEMO_EN: AdventureText = {
         cave: 'Go down to the cellar right away',
         mila: 'Get Mila to talk first',
       },
+      notes: {
+        cave: 'a smell of burnt bread rises through the trapdoor',
+        mila: 'Mila has flour all the way up in her hair',
+      },
     },
     mila: {
       title: 'Mila is hiding something',
@@ -51,6 +55,9 @@ export const CAKE_DEMO_EN: AdventureText = {
         attaque: 'Attack them with Blazing Batch',
         leurre: 'Lure them away with Tempting Scent',
         sel: "Throw Mila's blessed salt at them",
+      },
+      notes: {
+        leurre: 'the starters are already sniffing in your direction',
       },
     },
     combat_levains: {

@@ -1,5 +1,10 @@
 # Journal
 
+## 2026-10-23 — Détail de scène dans « Choix du groupe »
+- Un choix de vote peut porter un petit détail (`note`), ajouté à la ligne « Choix du groupe » du chat une fois retenu (`lib/autoGm/types.ts`, `AutoGmPanel.tsx`)
+- Version anglaise dans `notes`, vérifiée par `npm run check:en` ; trois exemples dans « La fournée maudite »
+Reste ouvert : en écrire pour « La Flamme sous la montagne »
+
 ## 2026-10-23 — Choix du héros à l'arrivée
 - Aventure dans une salle qui accepte les fiches déjà faites : la fiche sélectionnée n'est plus prise d'office, l'onglet Héros propose tout prêt, création aux dés, ou « Ou garde une de tes fiches » (choix retenu par salle dans le navigateur) (`HomePageInner.tsx`, `PremadeHeroPicker.tsx`)
 - Salle « Nouveau héros » d'un MJ humain sans aventure : le même choix en haut de la fiche vierge, sauf pour le MJ

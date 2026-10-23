@@ -40,8 +40,8 @@ export const CAKE_DEMO: Adventure = {
         kind: 'vote',
         prompt: 'Que fais-tu ?',
         options: [
-          { id: 'cave', label: 'Descendre tout de suite à la cave', next: 'cave' },
-          { id: 'mila', label: "Faire parler Mila d'abord", next: 'mila' },
+          { id: 'cave', label: 'Descendre tout de suite à la cave', next: 'cave', note: 'une odeur de pain brûlé monte par la trappe' },
+          { id: 'mila', label: "Faire parler Mila d'abord", next: 'mila', note: 'Mila a de la farine jusque dans les cheveux' },
         ],
       },
     },
@@ -101,7 +101,7 @@ export const CAKE_DEMO: Adventure = {
         prompt: 'Comment passes-tu les levains ?',
         options: [
           { id: 'attaque', label: 'Les attaquer avec Fournée ardente', next: 'combat_levains' },
-          { id: 'leurre', label: 'Les attirer ailleurs avec Odeur alléchante', next: 'leurre' },
+          { id: 'leurre', label: 'Les attirer ailleurs avec Odeur alléchante', next: 'leurre', note: 'les levains reniflent déjà dans ta direction' },
           { id: 'sel', label: 'Leur jeter le sel bénit de Mila', next: 'sel_levains', needs: 'sel' },
         ],
       },

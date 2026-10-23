@@ -344,7 +344,8 @@
 - [x] Phase H : arrêter de recopier toute la narration du MJ automatique dans le chat (elle est déjà dans le panneau de gauche) : n'y mettre que les choses importantes, indices et petits détails — titre de la scène et choix du groupe seulement
 - [x] Phase H : dans une salle « Nouveau héros » en MJ humain sans aventure lancée, proposer aussi le choix du héros (aujourd'hui : fiche vierge seulement) — en haut de la fiche vierge
 - [ ] Tester avec un compte joueur dans une salle « Nouveau héros » en MJ humain : choix du héros en haut de la fiche, création aux dés sans aventure lancée
-- [ ] Phase H : marquer « Choix du groupe » avec un indice ou un petit détail de la scène quand l'aventure en prévoit (champ à ajouter aux scènes)
+- [x] Phase H : marquer « Choix du groupe » avec un indice ou un petit détail de la scène quand l'aventure en prévoit (champ à ajouter aux scènes) — champ `note` des choix, traduit dans `notes`, exemples dans « La fournée maudite »
+- [ ] Ajouter des détails `note` aux choix de « La Flamme sous la montagne » (FR et EN)
 - [x] Accueil : faire disparaître le bouton « Entrer dans <salle> » quand on supprime la salle choisie (il reste jusqu'au rechargement)
 - [ ] Tester en ligne la création d'une salle en MJ automatique (campagne, arrivée directe, fiche vierge, choix du héros)
 - [x] Phase Ambiance : trouver des sons d'interface libres de droits (licence CC0 de préférence) et les ajouter discrètement, ambiance JDR (clic, panneau, demande de jet, réussite, échec), avec un réglage pour les couper
