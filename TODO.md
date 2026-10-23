@@ -125,7 +125,9 @@
 
 ## Nettoyage repo
 - [x] Retirer `tmp/` du suivi git (1963 fichiers, dont `node.exe` ~71 Mo, versionnés par erreur)
-- [ ] Purger `node.exe` et `node.zip` de l'historique git (`git filter-repo`) — retirés du contenu actuel mais toujours dans l'historique, `.git` pèse ~70 Mo ; réécrit tous les SHA, à faire à un moment calme
+- [x] Purger `node.exe` et `node.zip` de l'historique git local (fait le 2026-10-23 par `git filter-branch`, sauvegarde dans `C:\DEV\_sauvegardes\CakeJDR-git-avant-purge-2026-10-23`)
+- [ ] À la prochaine mise en ligne, envoyer l'historique réécrit sans fetch avant : `git push --force-with-lease=main:d59361a0d34c4a45d36845d0cff3843a36eb7e9f origin main`, puis forcer aussi la branche `codex/plan-app-debug-fixes` et le tag `avant-maj-next`
+- [ ] Supprimer l'ancien dossier de travail Codex `C:\Users\Cake\.codex\worktrees\c811` une fois la maquette V2 triée : il garde l'ancien historique (et `node.exe`) dans `.git`, ~114 Mo
 - [x] Supprimer le code mort : `components/rooms/RoomJoinGuard.tsx` et `components/rooms/RoomSelector.tsx` (plus importés nulle part) — avec `MusicPanel`, `OnlineProfiles`, `useOnlineStatus`, `/api/timestamp` et 13 paquets npm inutilisés
 - [x] Migrer le rate-limit du login admin (`lib/rateLimit.ts`, en mémoire) vers Vercel KV/Redis pour un vrai quota en serverless — décidé : non, le login admin n'existe plus et la limite en mémoire suffit (raison dans `lib/rateLimit.ts`)
 
@@ -366,7 +368,7 @@
 - [x] Phase Ambiance : trouver des sons d'interface libres de droits (licence CC0 de préférence) et les ajouter discrètement, ambiance JDR (clic, panneau, demande de jet, réussite, échec), avec un réglage pour les couper
 - [x] Phase Ambiance : trouver des musiques libres de droits, une par type d'ambiance (taverne, voyage, forêt, donjon, combat, mystère, victoire…), licence vérifiée et notée pour chacune ; le MJ automatique change de musique quand le lieu ou l'humeur change
 - [ ] Phase Ambiance : voix de narrateur grave qui lit la narration des scènes, uniquement si une solution 100 % gratuite et libre suffit (voix du navigateur, ou voix libre type Piper pré-enregistrée, licence de la voix à vérifier) ; sinon abandonner — bouton pour l'activer ou la couper, texte qui défile sous l'image agrandie, voix coupée à la fermeture de l'image, bouton « Réécouter », seule la musique reste après
-- [ ] Mettre à jour le README du dépôt public GitHub (inchangé depuis août 2025) : ce que fait CakeJDR, comment l'installer, services gratuits utilisés
+- [x] Mettre à jour le README du dépôt public GitHub (inchangé depuis août 2025) : ce que fait CakeJDR, comment l'installer, services gratuits utilisés
 
 ## Retours de Quentin (2026-10-12) — suppression, image de scène, création de héros
 - [x] Confirmer la suppression d'une salle par une fenêtre Oui/Non, sans suppression sur double-clic
@@ -405,7 +407,8 @@
 - [ ] Tester à deux navigateurs le salon d'attente du MJ automatique : chacun « Prêt », départ quand tous le sont, départ si celui qui n'était pas prêt s'en va
 - [x] Ajouter des sons par type d'action en combat (attaque au corps à corps, sort, défense), en plus des sons des boutons
 - [ ] Écouter les sons de combat pendant une vraie partie et ajuster leur volume par rapport à la musique
-- [ ] Passer en 1.0 une fois tout cela fini et testé, puis réécrire le README du GitHub pour qu'il corresponde à l'état réel du projet
+- [x] Passer en 1.0 et réécrire le README du GitHub pour qu'il corresponde à l'état réel du projet (2026-10-23)
+- [ ] Suivre `MANUAL_TEST_PLAN.md` en entier sur la 1.0 avant de l'annoncer
 - [x] Afficher dans le récit le butin gagné à la fin d'une scène (potions, objets ajoutés au sac)
 - [ ] Jouer seul le début de « La Flamme sous la montagne » en ligne et noter ce qui va et ce qui ne va pas (création, votes, tests, rythme)
 - [ ] Vérifier la reprise d'une campagne : quitter la salle après la création du héros, choisir une autre fiche dans le menu, revenir et retrouver le même héros au même endroit de l'aventure

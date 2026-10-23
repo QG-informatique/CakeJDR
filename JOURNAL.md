@@ -1,5 +1,11 @@
 # Journal
 
+## 2026-10-23 — Purge de l'historique git et README 1.0
+- `node.exe` et `node.zip` retirés de tout l'historique local (`git filter-branch`), sauvegarde complète de `.git` avant dans `C:\DEV\_sauvegardes\`
+- Envoi forcé sur GitHub gardé pour la prochaine mise en ligne : il publierait aussi les commits pas encore en ligne
+- `README.md` réécrit en français pour la 1.0 (fonctions, services gratuits, installation, organisation du code), l'ancien README anglais de 2025 retiré ; `package.json` passe en 1.0.0
+Reste ouvert : envoi forcé, suppression de la colonne `password_hash` après la mise en ligne, test manuel complet de la 1.0
+
 ## 2026-10-23 — Thème Nocturne, d'après la maquette V2
 - Nouveau thème sombre « Nocturne » : couleurs de la maquette V2 (ardoise bleutée, accent violet, aplats nets), MJ en doré pour ne pas se confondre avec l'accent (`app/themes.css`, `lib/themes.ts`)
 - Repris de la V2 : les couleurs seulement ; ses visuels étaient déjà dans la bibliothèque, son code n'est pas repris (interface autonome sans Liveblocks)
