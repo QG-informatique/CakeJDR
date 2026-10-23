@@ -1203,6 +1203,10 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
           <button onClick={() => start(gm.adventure, gm.mode, false)} className="ui-btn ui-btn-primary">
             {t('autoGmReplay')}
           </button>
+          {/* Nouveaux héros : retour au salon, chacun reprend un héros niveau 1. */}
+          <button onClick={() => start(gm.adventure, gm.mode, true, true)} className="ui-btn">
+            {t('autoGmReplayNewHeroes')}
+          </button>
           <Link href="/salles" className="ui-btn">
             {gm.adventure === DEMO_ADVENTURE ? t('autoGmCreateTable') : t('autoGmQuit')}
           </Link>

@@ -98,6 +98,8 @@ export type Character = {
    * héros pour cette aventure » n'accepte que les siens (`lib/roomSettings.ts`).
    */
   heroFor?: string
+  /** Partie (`autoGm.run`) pour laquelle ce héros a été pris, quand la table rejoue avec de nouveaux héros. */
+  heroRun?: string
   /** Historique choisi à la création (`lib/backgrounds.ts`) : bonus aux actions de son domaine. */
   historique?: string
 }

@@ -153,6 +153,11 @@ declare global {
          * Absent : partie déjà commencée (ou lancée avant le salon).
          */
         lobby?: boolean
+        /**
+         * « Rejouer avec de nouveaux héros » : chacun reprend un héros niveau 1
+         * pour cette partie (`Character.heroRun` égal à cette valeur).
+         */
+        heroRun?: string
         /** Comptes prêts dans le salon. */
         ready?: string[]
         /** La musique du salon a été lancée. */

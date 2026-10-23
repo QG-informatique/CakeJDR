@@ -78,9 +78,18 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
   const optionsSummary = `${GAME_SYSTEMS[system].name} · ${t(newHeroes ? 'gmHeroesNew' : 'gmHeroesOwn')}`
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose} style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(2px)' }}>
+    // Un clic sur le fond ferme la fenêtre ; Échap aussi.
+    <div
+      role="presentation"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+      onKeyDown={(e) => e.key === 'Escape' && onClose()}
+      style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(2px)' }}
+    >
       <div
-        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('createRoom')}
         className="flex max-h-[90vh] w-full max-w-md flex-col gap-4 overflow-y-auto rounded-2xl border border-ink/10 bg-shade/80 p-5 text-ink shadow-2xl backdrop-blur-md"
       >
         <div className="flex items-center justify-between">

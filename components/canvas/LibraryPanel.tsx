@@ -36,6 +36,9 @@ function pionEntry(categoryId: string, itemId: string): BoardEntry | undefined {
     : undefined
 }
 
+/** Image en cours d'envoi dans la bibliothèque. */
+export type PendingUpload = { id: string; category: string; preview: string; progress: number }
+
 type Tile = {
   key: string
   entry: BoardEntry
@@ -73,8 +76,8 @@ export default function LibraryPanel({
   mapUrl: string | null
   /** Images posées avant la bibliothèque, qu'on peut seulement retirer. */
   oldImages: { id: string; url: string }[]
-  /** Envois en cours, par catégorie. */
-  uploading: Record<string, number>
+  /** Envois en cours. */
+  uploading: PendingUpload[]
   canDelete: (upload: LibraryUpload) => boolean
   onToggle: (entry: BoardEntry) => void
   /** Pose un pion de couleur (rond avec une lettre). */
@@ -132,7 +135,7 @@ export default function LibraryPanel({
         upload: u,
       })),
   ]
-  const pending = uploading[category.id] ?? 0
+  const pending = uploading.filter((p) => p.category === category.id)
   const encounters = category.id === 'rencontres'
 
   return (
@@ -281,14 +284,25 @@ export default function LibraryPanel({
               <Plus size={20} />
               {t('libraryAdd')}
             </button>
-            {Array.from({ length: pending }, (_, i) => (
+            {pending.map((p) => (
               <div
-                key={`pending-${i}`}
-                className="flex aspect-square items-center justify-center rounded-xl border border-dashed border-[var(--c-panel-line)] text-ink/50"
+                key={p.id}
+                className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl border border-dashed border-[var(--c-panel-line)] text-ink"
+                role="progressbar"
                 aria-label={t('libraryUploading')}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(p.progress * 100)}
                 title={t('libraryUploading')}
               >
-                <Loader2 size={20} className="animate-spin" />
+                <img src={p.preview} alt="" className="absolute inset-0 h-full w-full object-cover opacity-40" />
+                <span className="relative flex items-center gap-1 text-xs font-semibold">
+                  <Loader2 size={14} className="animate-spin" aria-hidden />
+                  {Math.round(p.progress * 100)} %
+                </span>
+                <span className="absolute inset-x-0 bottom-0 h-1 bg-ink/15">
+                  <span className="block h-full bg-accent transition-[width]" style={{ width: `${p.progress * 100}%` }} />
+                </span>
               </div>
             ))}
             {tiles.map((tile) => {
@@ -358,7 +372,7 @@ export default function LibraryPanel({
                 </div>
               )
             })}
-            {tiles.length === 0 && pending === 0 && (
+            {tiles.length === 0 && pending.length === 0 && (
               filtering ? (
                 <div className="col-span-2 flex flex-col items-start gap-1.5 self-center text-xs text-ink/55 sm:col-span-3">
                   {t('libraryNoMatch')}

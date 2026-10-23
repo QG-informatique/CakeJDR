@@ -11,9 +11,10 @@ import type { AutoGmMode } from '@/lib/autoGm/types'
  * le panneau du MJ. Sans `lobby`, la partie repart sans salon d'attente
  * (« Rejouer » : tout le monde est déjà là et réglé). Avec le salon, la
  * musique choisie par le MJ automatique se met en pause jusqu'au départ.
+ * `newHeroes` : chacun reprend un héros niveau 1 dans le salon.
  */
 export function useStartAdventure() {
-  return useMutation(({ storage }, adventureKey: string, mode: AutoGmMode = 'auto', lobby = true) => {
+  return useMutation(({ storage }, adventureKey: string, mode: AutoGmMode = 'auto', lobby = true, newHeroes = false) => {
     const adv = ADVENTURES[adventureKey]
     if (!adv) return
     const previous = storage.get('autoGm')?.get('check')
@@ -28,7 +29,7 @@ export function useStartAdventure() {
     }
     storage.set(
       'autoGm',
-      new LiveObject({ ...startState(adv, mode, lobby), votes: new LiveMap<string, string>() }),
+      new LiveObject({ ...startState(adv, mode, lobby, newHeroes), votes: new LiveMap<string, string>() }),
     )
   }, [])
 }

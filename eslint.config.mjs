@@ -48,13 +48,12 @@ export default [
       'import/no-anonymous-default-export': 'off',
       '@next/next/no-img-element': 'off',
 
-      // Accessibilité : signalée sans bloquer. Ces règles étaient purement et
-      // simplement désactivées ; les remettre en erreur d'un coup noierait le
-      // rapport. Le passage en erreur est prévu avec la refonte de l'interface.
-      'jsx-a11y/no-static-element-interactions': 'warn',
-      'jsx-a11y/click-events-have-key-events': 'warn',
-      'jsx-a11y/no-noninteractive-tabindex': 'warn',
-      'jsx-a11y/no-autofocus': 'warn',
+      // Accessibilité : en erreur depuis le 2026-10-23, les derniers
+      // avertissements ayant été corrigés.
+      'jsx-a11y/no-static-element-interactions': 'error',
+      'jsx-a11y/click-events-have-key-events': 'error',
+      'jsx-a11y/no-noninteractive-tabindex': 'error',
+      'jsx-a11y/no-autofocus': 'error',
 
       // Beaucoup de faux positifs sur l'accès à des objets par clé calculée.
       'security/detect-object-injection': 'off',

@@ -78,10 +78,12 @@ export function adventureIn(id: string, lang: 'en' | 'fr'): Adventure | undefine
  * une `LiveMap`, sont ajoutés par l'appelant (navigateur ou serveur).
  * `lobby` : on attend d'abord que chacun ait réglé le son et soit prêt.
  */
-export function startState(adventure: Adventure, mode: AutoGmMode, lobby = true) {
+export function startState(adventure: Adventure, mode: AutoGmMode, lobby = true, newHeroes = false) {
+  const run = crypto.randomUUID()
   return {
     ...(lobby ? { lobby: true, ready: [] as string[] } : {}),
-    run: crypto.randomUUID(),
+    ...(newHeroes ? { heroRun: run } : {}),
+    run,
     adventure: adventure.id,
     mode,
     scene: adventure.start,

@@ -539,10 +539,15 @@ export default function MenuAccueil({ page }: { page: 'landing' | 'salles' }) {
       setStatusMessage(t('roomAccessDenied'))
       return
     }
-    await fetch(
+    // La fiche ne disparaît de la liste que si le serveur l'a bien effacée.
+    const res = await fetch(
       `/api/roomstorage?roomId=${encodeURIComponent(selectedRoom.id)}&owner=${encodeURIComponent(char.owner)}&id=${encodeURIComponent(String(char.id))}`,
       { method: 'DELETE', headers: auth },
-    )
+    ).catch(() => null)
+    if (!res?.ok) {
+      setStatusMessage(res?.status === 403 ? t('roomAccessDenied') : t('deleteCloudFail'))
+      return
+    }
     setRemoteChars((r) => {
       const next = { ...r }
       delete next[buildCharacterKey(char)]

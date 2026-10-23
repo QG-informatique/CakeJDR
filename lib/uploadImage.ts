@@ -318,9 +318,32 @@ const tryFetchSignature = async (): Promise<CloudinarySignature | null> => {
   }
 }
 
+/** Avancement d'un envoi, de 0 à 1. */
+export type UploadProgress = (fraction: number) => void
+
+/**
+ * `fetch` ne dit pas où en est l'envoi du fichier : avec un suivi demandé, on
+ * passe par XMLHttpRequest et on rend une `Response` comme `fetch`.
+ */
+const postForm = (url: string, form: FormData, onProgress?: UploadProgress): Promise<Response> => {
+  if (!onProgress) return fetch(url, { method: 'POST', body: form })
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', url)
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && e.total > 0) onProgress(e.loaded / e.total)
+    }
+    xhr.onload = () => resolve(new Response(xhr.responseText, { status: xhr.status }))
+    xhr.onerror = () => reject(new Error('Network error'))
+    xhr.onabort = () => reject(new Error('Upload aborted'))
+    xhr.send(form)
+  })
+}
+
 const uploadDirectToCloudinary = async (
   file: File,
   signature: CloudinarySignature,
+  onProgress?: UploadProgress,
 ): Promise<CloudinaryResult> => {
   const form = new FormData()
   form.append('file', file)
@@ -332,9 +355,10 @@ const uploadDirectToCloudinary = async (
 
   let res: Response
   try {
-    res = await fetch(
+    res = await postForm(
       `https://api.cloudinary.com/v1_1/${signature.cloudName}/image/upload`,
-      { method: 'POST', body: form },
+      form,
+      onProgress,
     )
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Network error'
@@ -389,12 +413,13 @@ const uploadViaApi = async (file: File): Promise<CloudinaryResult> => {
 
 export const uploadImageToCloudinary = async (
   file: File,
+  onProgress?: UploadProgress,
 ): Promise<CloudinaryResult> => {
   try {
     validateFile(file)
     const signature = await tryFetchSignature()
     if (signature) {
-      return await uploadDirectToCloudinary(file, signature)
+      return await uploadDirectToCloudinary(file, signature, onProgress)
     }
     return await uploadViaApi(file)
   } catch (error) {

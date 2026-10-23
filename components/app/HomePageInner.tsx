@@ -149,6 +149,7 @@ export default function HomePageInner() {
   // Aventure en cours sur téléphone : on arrive sur son onglet, où l'on lit le
   // récit ; une nouvelle scène l'allume quand on est ailleurs.
   const autoGmVisit = useStorage((root) => root.autoGm?.visit ?? null)
+  const autoGmHeroRun = useStorage((root) => root.autoGm?.heroRun)
   const [openedAdventure, setOpenedAdventure] = useState(false)
   if (autoGmEnabled && !openedAdventure) {
     setOpenedAdventure(true)
@@ -273,6 +274,7 @@ export default function HomePageInner() {
         ...incomingChar,
         owner,
         ...(settings.newHeroes ? { heroFor: roomId } : {}),
+        ...(autoGmHeroRun ? { heroRun: autoGmHeroRun } : {}),
       }
 
       setPerso(finalChar)
@@ -589,7 +591,7 @@ export default function HomePageInner() {
     // La fiche vide déjà ouverte est remplacée, pas doublée ; une fiche déjà
     // remplie, faite ailleurs, est gardée à côté.
     const id = perso.nom?.trim() ? char.id : perso.id || char.id
-    handleUpdatePerso({ ...char, id, heroFor: roomId }, true)
+    handleUpdatePerso({ ...char, id, heroFor: roomId, ...(autoGmHeroRun ? { heroRun: autoGmHeroRun } : {}) }, true)
   }
 
   // En quittant la table, une modification encore en attente est envoyee
@@ -925,7 +927,7 @@ export default function HomePageInner() {
               <AutoGmPanel
                 adventureId={DEMO_ADVENTURE}
                 onEffect={handleAutoGmEffect}
-                needsHero={viewedConnectionId === null && (!perso.nom?.trim() || (settings.newHeroes && perso.heroFor !== roomId))}
+                needsHero={viewedConnectionId === null && (!perso.nom?.trim() || (settings.newHeroes && perso.heroFor !== roomId) || (!!autoGmHeroRun && perso.heroRun !== autoGmHeroRun))}
                 onPickHero={handlePickHero}
                 onRoll={() => tableDiceRef.current?.throwNow()}
                 chat={<ChatBox chatBoxRef={chatBoxRef} author={chatAuthor} embedded />}

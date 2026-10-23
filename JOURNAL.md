@@ -1,5 +1,13 @@
 # Journal
 
+## 2026-10-23 — Rejouer avec de nouveaux héros, volume par salle, envoi d'images suivi
+- Fin d'aventure : « Rejouer avec de nouveaux héros » ramène au salon, chacun reprend un héros niveau 1 (`heroRun` dans `autoGm` et sur la fiche)
+- Volume de la musique retenu par salle (`lib/sound.ts`) ; bouton de lecture qui clignote quand la table écoute et pas moi (`MusicPlayer.tsx`)
+- Bibliothèque : l'image en cours d'envoi s'affiche avec son pourcentage (`lib/uploadImage.ts`, `LibraryPanel.tsx`)
+- Accessibilité : derniers avertissements corrigés, règles `jsx-a11y` passées en erreur (`eslint.config.mjs`)
+- Suppression d'une fiche du cloud depuis la page des salles : erreur affichée si le serveur refuse (`MenuAccueil.tsx`)
+- Sans objet, constaté dans le code : plus aucun `any`, un seul RoomProvider pour le Résumé, file des dés déjà bornée
+
 ## 2026-10-23 — Fiches : sans personnage, d100, héros tout prêts
 - On peut entrer dans une salle sans personnage : second clic sur la fiche choisie, ou bouton « Aucun personnage » (`components/menu/CharacterList.tsx`)
 - d100 : « — » au lieu de « 0 % » pour une caractéristique pas encore remplie (`ModBadge.tsx`, `StatsPanel.tsx`)

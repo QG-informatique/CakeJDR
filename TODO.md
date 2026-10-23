@@ -110,7 +110,7 @@
 ## Issu de la phase 0 — à finir plus tard
 - [x] Ajouter le crédit QG Informatique, absent du projet (règle `C:\DEV\CLAUDE.md`) — footer fixe rendu par `ClientLayout`
 - [x] Corriger les 58 avertissements `react-hooks` (`purity`, `set-state-in-effect`, `refs`) concentrés dans les fonds animés, puis repasser ces trois règles en erreur dans `eslint.config.mjs` — phase 4
-- [ ] Corriger les 16 avertissements d'accessibilité `jsx-a11y` restants (fonds de fenêtre et blocs cliquables dans `InteractiveCanvas`, `ImportExportMenu`, `RoomCreateModal`, `RoomList`), puis passer ces règles en erreur
+- [x] Corriger les 16 avertissements d'accessibilité `jsx-a11y` restants (fonds de fenêtre et blocs cliquables dans `InteractiveCanvas`, `ImportExportMenu`, `RoomCreateModal`, `RoomList`), puis passer ces règles en erreur
 - [x] Restreindre les paramètres signés de `/api/cloudinary/signature` (formats, taille) après vérification de la doc Cloudinary — formats signés et compte requis ; Cloudinary n'a pas de paramètre de taille
 - [x] Donner une propriété par utilisateur aux fiches (Blob remplacé par la base)
 - [x] Remplacer le jeton d'accès à la room par la session utilisateur une fois l'auth en place (phase 1) — le jeton reste, mais n'est remis qu'aux membres reconnus par leur session
@@ -120,7 +120,7 @@
 - [x] Mettre en place une CI GitHub Actions (typecheck, lint, audit, build)
 - [ ] Ajouter les tests e2e avec compte : rejoindre une table par code d'invitation, upload image, lancer de dé, import/export personnage (demande un compte de test et une session simulée)
 - [x] Traiter les vulnérabilités `npm audit` (0 restante, `@vercel/blob` monté en v2)
-- [ ] Nettoyer types résiduels `any` si possible sans rigidifier les structures Lson
+- [x] Nettoyer types résiduels `any` si possible sans rigidifier les structures Lson — plus aucun
 
 ## Nettoyage repo
 - [x] Retirer `tmp/` du suivi git (1963 fichiers, dont `node.exe` ~71 Mo, versionnés par erreur)
@@ -141,14 +141,14 @@
 - [x] Proposer un fond fixe (et respecter `prefers-reduced-motion`) : le fond aux dés saccade sur un navigateur sans accélération matérielle (constaté sur Firefox)
 - [ ] Vérifier sur Firefox que le fond aux dés du thème Classique ne saccade plus (`will-change` ajouté dans `components/ui/RpgBackground.tsx`)
 - [x] Throttler les segments de trait pour réduire le trafic Liveblocks lors de dessins rapides (coalescer via requestAnimationFrame)
-- [ ] Déplacer l'aperçu d'image en attente sur un calque dédié avec indicateur de progression
+- [x] Déplacer l'aperçu d'image en attente sur un calque dédié avec indicateur de progression — fait dans la bibliothèque : vignette de l'image et pourcentage
 
 ## Personnages / Cloud
-- [ ] Ajouter confirmation et gestion des erreurs détaillées pour la suppression cloud
-- [ ] Ajouter un bouton « Cloud » principal avec modal centralisée (pagination Blob si la liste dépasse 100 items)
+- [x] Ajouter confirmation et gestion des erreurs détaillées pour la suppression cloud
+- [x] Ajouter un bouton « Cloud » principal avec modal centralisée (pagination Blob si la liste dépasse 100 items) — la fenêtre existe ; fiches en base, plus de Blob à paginer
 
 ## Dés 3D
-- [ ] Implémenter une file d'attente par joueur (limiter à 1 lancer actif/joueur) au-delà du cooldown local
+- [x] Implémenter une file d'attente par joueur (limiter à 1 lancer actif/joueur) au-delà du cooldown local — déjà couvert : un lancer à la fois chez soi, limite du serveur, file bornée chez les autres
 - [x] Ajouter une version cube simulé D20/D6/D4/D100 avec orientation finale selon le résultat — sans objet : remplacé par Dice Box
 - [x] Remplacer les dés de la table par Dice Box : tous les types de dés, plusieurs et mélangés par lancer, départ d'un bord au hasard, vus par toute la table
 - [x] Décider s'il faut un contrôle anti-triche des lancers : la face vient du navigateur du lanceur, le serveur ne fait que la vérifier et la signer (décidé le 2026-10-23 : rien, jeu entre amis)
@@ -157,12 +157,12 @@
 - [ ] Vérifier en ligne avec un second joueur que deux lancers rapprochés du même joueur se rejouent bien chez l'autre, l'un après l'autre
 
 ## Musique YouTube
-- [ ] Synchroniser proprement le `playing` post-initialisation sans reprise automatique au premier chargement
-- [ ] Mémoriser une préférence de volume locale par room
+- [x] Synchroniser proprement le `playing` post-initialisation sans reprise automatique au premier chargement — pas de reprise au chargement ; le bouton signale que la table écoute
+- [x] Mémoriser une préférence de volume locale par room
 
 ## Session Summary / Lexical
-- [ ] Vérifier le provider Liveblocks/Lexical sur plusieurs rooms (éviter un second RoomProvider caché)
-- [ ] Envisager une persistance Blob debouncée (60–120s) pour les snapshots de session
+- [x] Vérifier le provider Liveblocks/Lexical sur plusieurs rooms (éviter un second RoomProvider caché) — un seul RoomProvider (`app/Room.tsx`)
+- [x] Envisager une persistance Blob debouncée (60–120s) pour les snapshots de session — sans objet : Liveblocks garde le texte, Blob abandonné
 
 ## Refonte d'octobre 2026 — détail dans `PLAN-REFONTE.md`
 - [x] Phase A : garder deux thèmes (Ardoise fixe, Classique aux dés roses), ranger les autres fonds, `/` pour la connexion et `/salles` pour les salles, retirer l'indicateur de MJ du menu
@@ -371,7 +371,7 @@
 - [x] Campagne : objets utilisables en combat, plus de combats (3 au moins avant le roi gobelin), chemins en plus, type de jet annoncé sous chaque choix, récit et combat dans le panneau de droite
 - [ ] Jouer « La Flamme sous la montagne » en vraie partie après le rallongement du 2026-10-22 : mesurer la durée et noter les combats trop durs ou trop faciles
 - [x] Ajouter en fin de campagne un bouton « Rejouer » (même aventure, mêmes héros) et un bouton « Quitter »
-- [ ] Proposer en fin de campagne de rejouer avec de nouveaux héros niveau 1 (aujourd'hui « Rejouer » garde les héros et leur niveau)
+- [x] Proposer en fin de campagne de rejouer avec de nouveaux héros niveau 1 (aujourd'hui « Rejouer » garde les héros et leur niveau)
 - [x] (Retour de Quentin, 2026-10-22) Épreuves en plusieurs jets : une réussite partielle (1 sur 2, 2 sur 3) doit donner une suite moins bonne (moins d'infos, moins de butin) au lieu d'un échec complet
 - [x] (Retour de Quentin, 2026-10-22) Affaiblir la boule de feu du mage : en solo, elle tue tous les ennemis d'un coup (2d6 à tous, une fois par combat)
 - [x] (Retour de Quentin, 2026-10-22) Musiques d'ambiance du MJ automatique (Kevin MacLeod, CC BY 4.0, crédit visible obligatoire) : passe-partout, taverne, forêt, combat, donjon, boss, victoire

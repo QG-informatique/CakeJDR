@@ -214,6 +214,9 @@ export default function RoomList({
             .sort((a, b) => Number(!!b.online) - Number(!!a.online))
           const online = r.usersConnected ?? 0
           return (
+            // Clic sur la carte : raccourci à la souris. Au clavier, ses boutons
+            // (« Entrer », réglages du MJ) donnent le même accès.
+            // eslint-disable-next-line jsx-a11y/click-events-have-key-events
             <li
               key={r.id}
               className={`ui-well relative flex cursor-pointer flex-col gap-3 p-4 transition ${selected ? '!border-accent ring-1 ring-accent' : 'hover:!border-[var(--c-line-strong)]'}`}

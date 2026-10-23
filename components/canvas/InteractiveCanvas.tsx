@@ -11,7 +11,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { useT } from '@/lib/useT'
 import { Library, Pencil, UserRound } from 'lucide-react'
 import { canDraw, useRoomSettings } from '@/lib/roomSettings'
-import LibraryPanel from './LibraryPanel'
+import LibraryPanel, { type PendingUpload } from './LibraryPanel'
 import { useShowImage } from './ShownImage'
 import {
   BOARD_LIBRARY,
@@ -178,7 +178,7 @@ export default function InteractiveCanvas({
     setToolsVisible(!toolsVisible)
   }
   const [libraryOpen, setLibraryOpen] = useState(false)
-  const [uploading, setUploading] = useState<Record<string, number>>({})
+  const [uploading, setUploading] = useState<PendingUpload[]>([])
   const [toDelete, setToDelete] = useState<LibraryUpload | null>(null)
 
   // Images helpers
@@ -664,10 +664,13 @@ export default function InteractiveCanvas({
       setUploadMessage(t('portraitUploadSignIn'))
       return
     }
-    const bump = (d: number) => setUploading((prev) => ({ ...prev, [categoryId]: Math.max(0, (prev[categoryId] ?? 0) + d) }))
-    bump(1)
+    // Vignette de l'image en cours d'envoi, avec son avancement.
+    const pending: PendingUpload = { id: newId(), category: categoryId, preview: URL.createObjectURL(file), progress: 0 }
+    setUploading((prev) => [...prev, pending])
+    const onProgress = (progress: number) =>
+      setUploading((prev) => prev.map((p) => (p.id === pending.id ? { ...p, progress } : p)))
     try {
-      const result = await uploadImageToCloudinary(file)
+      const result = await uploadImageToCloudinary(file, onProgress)
       addLibraryUpload({
         id: newId(),
         url: result.deliveryUrl ?? result.url,
@@ -681,7 +684,8 @@ export default function InteractiveCanvas({
     } catch (error) {
       handleUploadError(error)
     } finally {
-      bump(-1)
+      setUploading((prev) => prev.filter((p) => p.id !== pending.id))
+      URL.revokeObjectURL(pending.preview)
     }
   }
 
@@ -848,8 +852,8 @@ export default function InteractiveCanvas({
             )}
           </div>
         )}
-        {/* Surface */}
-        <div ref={canvasRef} onDrop={handleDrop} onDragOver={(e) => e.preventDefault()} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerLeave} className="w-full h-full relative overflow-hidden z-0 touch-none" style={{ background: 'none', border: 'none', borderRadius: 0 }}>
+        {/* Surface : on y dessine et on y déplace les images à la souris ou au doigt. */}
+        <div ref={canvasRef} role="application" aria-label={t('tabTable')} onDrop={handleDrop} onDragOver={(e) => e.preventDefault()} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerLeave} className="w-full h-full relative overflow-hidden z-0 touch-none" style={{ background: 'none', border: 'none', borderRadius: 0 }}>
           {mapImage && (
             <img
               src={mapImage.url}

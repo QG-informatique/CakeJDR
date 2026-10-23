@@ -362,6 +362,10 @@ export default function MusicPlayer() {
   }
 
   const canPlay = !!currentId || queueCount > 0
+  // J'arrive à la table pendant un morceau : le navigateur interdit de lancer
+  // le son sans clic, on le signale sur le bouton de lecture.
+  const tableListening = canPlay && !!musicPlaying && !isPlaying
+  const playLabel = !canPlay ? t('musicOptions') : isPlaying ? t('musicPause') : tableListening ? t('musicJoinTable') : t('musicPlay')
 
   const volumeControl = (className: string, rangeClass: string) => (
     <label className={`${className} items-center gap-1 text-ink/60`} title={`${t('musicVolume')} ${volume}`}>
@@ -383,9 +387,9 @@ export default function MusicPlayer() {
       <button
         type="button"
         onClick={canPlay ? handlePlayPause : () => setOptionsOpen(true)}
-        className="ui-btn ui-btn-icon shrink-0"
-        aria-label={!canPlay ? t('musicOptions') : isPlaying ? t('musicPause') : t('musicPlay')}
-        title={!canPlay ? t('musicOptions') : isPlaying ? t('musicPause') : t('musicPlay')}
+        className={`ui-btn ui-btn-icon shrink-0 ${tableListening ? 'ui-btn-primary motion-safe:animate-pulse' : ''}`}
+        aria-label={playLabel}
+        title={playLabel}
       >
         {!canPlay ? <Music2 size={16} /> : isPlaying ? <Pause size={16} /> : <Play size={16} />}
       </button>

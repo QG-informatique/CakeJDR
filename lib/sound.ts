@@ -1,11 +1,13 @@
 'use client'
 
 import { useSyncExternalStore } from 'react'
+import { useParams } from 'next/navigation'
 
 /**
  * Volumes de la musique et des sons de l'interface, gardés dans ce
  * navigateur. Le lecteur de musique, le salon d'attente du MJ automatique et
- * les sons des boutons lisent tous les mêmes valeurs.
+ * les sons des boutons lisent tous les mêmes valeurs. Le volume de la musique
+ * est retenu par salle ; une salle jamais réglée reprend le dernier volume choisi.
  *
  * Les sons de l'interface sont fabriqués à la volée (Web Audio) : rien à
  * télécharger, aucun fichier sous licence.
@@ -16,10 +18,13 @@ const KEYS: Record<SoundKind, string> = { music: 'jdr_music_volume', ui: 'jdr_ui
 const DEFAULTS: Record<SoundKind, number> = { music: 5, ui: 40 }
 const EVENT = 'jdr-sound-volume'
 
-export function soundVolume(kind: SoundKind): number {
+const roomKey = (kind: SoundKind, room?: string) => (kind === 'music' && room ? `${KEYS.music}:${room}` : null)
+
+export function soundVolume(kind: SoundKind, room?: string): number {
   if (typeof window === 'undefined') return DEFAULTS[kind]
   try {
-    const raw = localStorage.getItem(KEYS[kind])
+    const perRoom = roomKey(kind, room)
+    const raw = (perRoom && localStorage.getItem(perRoom)) ?? localStorage.getItem(KEYS[kind])
     const n = raw === null ? Number.NaN : Number(raw)
     return Number.isFinite(n) ? Math.min(Math.max(n, 0), 100) : DEFAULTS[kind]
   } catch {
@@ -27,9 +32,12 @@ export function soundVolume(kind: SoundKind): number {
   }
 }
 
-export function setSoundVolume(kind: SoundKind, value: number) {
+export function setSoundVolume(kind: SoundKind, value: number, room?: string) {
   try {
-    localStorage.setItem(KEYS[kind], String(Math.round(Math.min(Math.max(value, 0), 100))))
+    const v = String(Math.round(Math.min(Math.max(value, 0), 100)))
+    localStorage.setItem(KEYS[kind], v)
+    const perRoom = roomKey(kind, room)
+    if (perRoom) localStorage.setItem(perRoom, v)
   } catch {}
   window.dispatchEvent(new Event(EVENT))
 }
@@ -44,8 +52,9 @@ const subscribe = (onChange: () => void) => {
 }
 
 export function useSoundVolume(kind: SoundKind) {
-  const value = useSyncExternalStore(subscribe, () => soundVolume(kind), () => DEFAULTS[kind])
-  return [value, (v: number) => setSoundVolume(kind, v)] as const
+  const room = useParams<{ id?: string }>()?.id
+  const value = useSyncExternalStore(subscribe, () => soundVolume(kind, room), () => DEFAULTS[kind])
+  return [value, (v: number) => setSoundVolume(kind, v, room)] as const
 }
 
 /** Demande au lecteur de musique de rejoindre la musique de la table (clic de l'utilisateur). */
