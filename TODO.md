@@ -37,7 +37,7 @@
 - [x] Nettoyer automatiquement les tables inactives (`/api/cron/cleanup-rooms`, chaque jour à 4 h 30), en excluant la salle de démonstration
 - [ ] Vérifier dans les logs Vercel que la tâche `cleanup-rooms` tourne chaque nuit sans erreur (`wouldDelete` visible avec `?dry=1` en admin)
 - [x] Retirer `rooms.password_hash` du code (`lib/db/schema.ts`)
-- [ ] Après la prochaine mise en ligne, supprimer la colonne `rooms.password_hash` dans Neon : `node --env-file=.env.local scripts/drop-room-password-hash.mjs` (pas avant : le site en ligne la lit encore)
+- [x] Supprimer la colonne `rooms.password_hash` dans Neon (fait le 2026-10-23 après la mise en ligne, `scripts/drop-room-password-hash.mjs`, aucune table n'avait de mot de passe)
 - [x] Transformer les modèles de fiche en bibliothèque du MJ, réutilisable d'une table à l'autre (fait par les systèmes de l'atelier, `/atelier`)
 - [x] Nettoyer les tables antérieures : cinq supprimées, `cakroom` gardée comme salle de démonstration
 
@@ -126,7 +126,7 @@
 ## Nettoyage repo
 - [x] Retirer `tmp/` du suivi git (1963 fichiers, dont `node.exe` ~71 Mo, versionnés par erreur)
 - [x] Purger `node.exe` et `node.zip` de l'historique git local (fait le 2026-10-23 par `git filter-branch`, sauvegarde dans `C:\DEV\_sauvegardes\CakeJDR-git-avant-purge-2026-10-23`)
-- [ ] À la prochaine mise en ligne, envoyer l'historique réécrit sans fetch avant : `git push --force-with-lease=main:d59361a0d34c4a45d36845d0cff3843a36eb7e9f origin main`, puis forcer aussi la branche `codex/plan-app-debug-fixes` et le tag `avant-maj-next`
+- [x] Envoyer l'historique réécrit sur GitHub (fait le 2026-10-23 : `main` et `codex/plan-app-debug-fixes` forcés ; le tag `avant-maj-next` n'a jamais été sur GitHub, il reste local)
 - [ ] Supprimer l'ancien dossier de travail Codex `C:\Users\Cake\.codex\worktrees\c811` une fois la maquette V2 triée : il garde l'ancien historique (et `node.exe`) dans `.git`, ~114 Mo
 - [x] Supprimer le code mort : `components/rooms/RoomJoinGuard.tsx` et `components/rooms/RoomSelector.tsx` (plus importés nulle part) — avec `MusicPanel`, `OnlineProfiles`, `useOnlineStatus`, `/api/timestamp` et 13 paquets npm inutilisés
 - [x] Migrer le rate-limit du login admin (`lib/rateLimit.ts`, en mémoire) vers Vercel KV/Redis pour un vrai quota en serverless — décidé : non, le login admin n'existe plus et la limite en mémoire suffit (raison dans `lib/rateLimit.ts`)

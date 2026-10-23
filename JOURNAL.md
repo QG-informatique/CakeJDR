@@ -1,5 +1,10 @@
 # Journal
 
+## 2026-10-23 — Mise en ligne de la 1.0
+- Historique purgé envoyé sur GitHub (`main` et `codex/plan-app-debug-fixes` forcés, sans `node.exe` ni `node.zip`) ; CI verte, thèmes Nocturne et Papier & Sauge visibles sur le site
+- Colonne `rooms.password_hash` supprimée dans Neon après le déploiement : aucune table n'avait de mot de passe, `/api/demo` et `/salles` répondent normalement
+Reste ouvert : test manuel complet de la 1.0, variables Vercel à retirer par Quentin
+
 ## 2026-10-23 — Purge de l'historique git et README 1.0
 - `node.exe` et `node.zip` retirés de tout l'historique local (`git filter-branch`), sauvegarde complète de `.git` avant dans `C:\DEV\_sauvegardes\`
 - Envoi forcé sur GitHub gardé pour la prochaine mise en ligne : il publierait aussi les commits pas encore en ligne
