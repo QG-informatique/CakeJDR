@@ -36,6 +36,10 @@ export const CAKE_DEMO_EN: AdventureText = {
         'Mila cracks: "I opened your spellbook… I relit the old cellar oven to make the bread that rises by itself. It went wrong."',
         'She hands you a small pouch: "Blessed salt. Your grandmother used to say it calms the starters. And if we put out the oven, maybe the magic stops."',
       ],
+      clues: {
+        sel: "Grandmother's blessed salt calms the starters.",
+        four: 'Mila relit the old cellar oven: putting it out might stop the magic.',
+      },
       label: 'Go down to the cellar',
     },
     mila_muette: {
@@ -50,6 +54,7 @@ export const CAKE_DEMO_EN: AdventureText = {
         'Two hungry starters crawl toward you, snapping their dough. They are very hungry.',
       ],
       gmNotes: "The starters aren't evil, just hungry. The blessed salt puts them back to sleep without a fight.",
+      clues: { faim: 'The starters only bite because they are hungry.' },
       prompt: 'How do you get past the starters?',
       options: {
         attaque: 'Attack them with Blazing Batch',
@@ -106,6 +111,7 @@ export const CAKE_DEMO_EN: AdventureText = {
       ],
       gmNotes:
         "The Golem draws its strength from the lit oven. Putting it out undoes it without a fight. It isn't bad: it was born from a failed batch and it is scared. Talking to it kindly can make it a friend.",
+      clues: { peur: 'The Golem rumbles, but it backs away from the light: it is scared.' },
       show: 'Burnt Crumb Golem',
       prompt: 'What do you do against the Golem?',
       options: {

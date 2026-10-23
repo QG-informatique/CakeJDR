@@ -140,6 +140,11 @@ export type Scene = {
   narration: string[]
   /** Ce que seul le MJ sait : visible avec « Voir côté MJ ». */
   gmNotes?: string
+  /**
+   * Indices que les joueurs peuvent découvrir ici, notés dans leur journal :
+   * d'office avec le MJ automatique, quand le MJ les révèle s'il mène.
+   */
+  clues?: { id: string; text: string }[]
   setup?: SceneSetup
   /** Indices gagnés en arrivant dans la scène. */
   gains?: string[]
@@ -178,6 +183,8 @@ export type SceneText = {
   options?: Record<string, string>
   /** Détails des choix (`SceneOption.note`), par identifiant. */
   notes?: Record<string, string>
+  /** Indices de la scène, par identifiant. */
+  clues?: Record<string, string>
   /** Titre de la fin. */
   end?: string
   /** Noms des ennemis d'un combat, par identifiant. */

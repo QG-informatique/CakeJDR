@@ -70,6 +70,10 @@ export const CAKE_DEMO: Adventure = {
       id: 'mila_aveu',
       title: 'Les aveux de Mila',
       gains: ['sel', 'four'],
+      clues: [
+        { id: 'sel', text: 'Le sel bénit de la grand-mère calme les levains.' },
+        { id: 'four', text: "Mila a rallumé le vieux four de la cave : l'éteindre arrêterait peut-être la magie." },
+      ],
       narration: [
         "Mila craque : « J'ai ouvert ton grimoire… J'ai rallumé le vieux four de la cave pour faire le pain qui se lève tout seul. Ça a raté. »",
         "Elle te tend un petit sachet : « Du sel bénit. Ta grand-mère disait que ça calme les levains. Et si on éteint le four, la magie s'arrête peut-être. »",
@@ -96,6 +100,7 @@ export const CAKE_DEMO: Adventure = {
         'Deux levains affamés rampent vers toi en claquant de la pâte. Ils ont très faim.',
       ],
       gmNotes: 'Les levains ne sont pas méchants, juste affamés. Le sel bénit les rendort sans combat.',
+      clues: [{ id: 'faim', text: 'Les levains ne mordent que parce qu’ils ont faim.' }],
       step: {
         kind: 'vote',
         prompt: 'Comment passes-tu les levains ?',
@@ -193,6 +198,7 @@ export const CAKE_DEMO: Adventure = {
       ],
       gmNotes:
         "Le Golem tient sa force du four allumé. L'éteindre le défait sans combat. Il n'est pas mauvais : il est né d'une fournée ratée et il a peur. Bien lui parler peut en faire un ami.",
+      clues: [{ id: 'peur', text: 'Le Golem gronde, mais il recule devant la lumière : il a peur.' }],
       step: {
         kind: 'vote',
         prompt: 'Que fais-tu face au Golem ?',

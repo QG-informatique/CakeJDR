@@ -163,6 +163,8 @@ declare global {
         heroRun?: string
         /** Comptes prêts dans le salon. */
         ready?: string[]
+        /** Indices révélés par le MJ qui mène (`Scene.clues`), pour le journal des joueurs. */
+        revealed?: string[]
         /** La musique du salon a été lancée. */
         lobbyMusic?: boolean
       }>

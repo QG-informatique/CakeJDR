@@ -219,9 +219,9 @@
 - [x] Phase G : ajouter recherche et filtres à la bibliothèque (type, faction, acte, troupe/élite/boss/allié/PNJ)
 - [x] Phase G : ajouter « Poser le pion » sur les rencontres qui ont un pion assorti, et « Montrer » une rencontre en grand à tous les joueurs
 - [x] Phase G (décidé le 2026-10-08 : mis de côté, repris par la tâche « Protéger côté serveur les réglages du MJ » si une table publique en a besoin) : décider avec Quentin de la protection côté serveur — Liveblocks ne donne des droits que par salle entière : il faudrait passer les joueurs en lecture seule et faire passer toutes leurs écritures (fiche, chat, dessin, pion, résumé) par des routes API ; aujourd'hui la règle « bibliothèque au MJ, un joueur ne déplace que son pion » n'est tenue que dans l'interface
-- [ ] Phase H : définir le format d'une campagne (scènes, déroulé du MJ, part des joueurs, mise en place, boutons de choix vers la scène suivante)
-- [ ] Phase H : créer le carnet de campagne du MJ (scène en cours, « Préparer la scène », choix validés, chemin parcouru, saut de scène)
-- [ ] Phase H : créer le journal des joueurs (résumé et indices révélés par le MJ)
+- [x] Phase H : définir le format d'une campagne (scènes, déroulé du MJ, part des joueurs, mise en place, boutons de choix vers la scène suivante)
+- [x] Phase H : créer le carnet de campagne du MJ (scène en cours, « Préparer la scène », choix validés, chemin parcouru, saut de scène)
+- [x] Phase H : créer le journal des joueurs (résumé et indices révélés par le MJ)
 - [x] Phase H : écrire la campagne du dragon du pack n° 2, avec ses pistes — « La Flamme sous la montagne » (`lib/autoGm/dragonCampaign.ts`)
 - [ ] Faire relire par Quentin la campagne « La Flamme sous la montagne » (textes, difficulté des jets, cinq fins)
 - [ ] Jouer une partie entière de « La Flamme sous la montagne » à plusieurs et corriger l'estimation de durée (1 h 15 annoncée)
@@ -346,6 +346,8 @@
 - [ ] Tester avec un compte joueur dans une salle « Nouveau héros » en MJ humain : choix du héros en haut de la fiche, création aux dés sans aventure lancée
 - [x] Phase H : marquer « Choix du groupe » avec un indice ou un petit détail de la scène quand l'aventure en prévoit (champ à ajouter aux scènes) — champ `note` des choix, traduit dans `notes`, exemples dans « La fournée maudite »
 - [ ] Ajouter des détails `note` aux choix de « La Flamme sous la montagne » (FR et EN)
+- [ ] Écrire les indices (`clues`) de « La Flamme sous la montagne » (FR et EN), pour son journal des joueurs
+- [ ] Essayer en mode « Je mène » le carnet de campagne (révéler un indice, aller à une scène) et le journal côté joueur
 - [ ] Essayer la validation des fiches gardées avec un vrai compte joueur : attente, refus, acceptation, fiche modifiée après accord
 - [ ] Décider si la validation du MJ doit aussi s'appliquer hors aventure (table d'un MJ humain qui accepte les fiches existantes)
 - [x] Accueil : faire disparaître le bouton « Entrer dans <salle> » quand on supprime la salle choisie (il reste jusqu'au rechargement)

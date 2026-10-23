@@ -1,5 +1,11 @@
 # Journal
 
+## 2026-10-23 — Journal des joueurs et carnet de campagne
+- Le format des aventures (`lib/autoGm/types.ts`) sert de format de campagne : il gagne les indices de scène (`clues`, traduits et vérifiés par `check:en`) ; quatre indices dans « La fournée maudite »
+- Journal repliable sous le récit pour tous : chemin parcouru et indices, notés d'office en MJ automatique, révélés par le MJ quand il mène (`components/autogm/AdventureJournal.tsx`)
+- Carnet du MJ avec « Voir côté MJ » : « Révéler » sur chaque indice (annoncé dans le chat) et « Aller à une scène » ; la mise en place reste automatique à l'arrivée
+Reste ouvert : indices de la campagne du dragon, essai en mode « Je mène »
+
 ## 2026-10-23 — Le MJ valide les fiches gardées
 - Le joueur qui garde une de ses fiches pour l'aventure l'envoie au MJ ; le MJ (ou le créateur de la salle en MJ automatique) voit « Fiches à valider » en haut du panneau, avec niveau, caractéristiques et alertes (au-dessus du niveau 1, au-dessus de 18, moyenne au-dessus de 15) (`lib/heroChecks.ts`, `components/autogm/HeroApprovals.tsx`)
 - En attente ou refusée, l'onglet Héros reste ouvert avec un message ; une fiche acceptée puis modifiée repasse chez le MJ

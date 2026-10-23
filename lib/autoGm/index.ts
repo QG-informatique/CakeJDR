@@ -51,6 +51,7 @@ export function withText(adventure: Adventure, text: AdventureText): Adventure {
       chapter: tx.chapter ?? scene.chapter,
       narration: tx.narration,
       gmNotes: tx.gmNotes ?? scene.gmNotes,
+      ...(scene.clues ? { clues: scene.clues.map((c) => ({ ...c, text: tx.clues?.[c.id] ?? c.text })) } : {}),
       ...(show && scene.setup ? { setup: { ...scene.setup, show: { ...show, label: tx.show ?? show.label } } } : {}),
       step: translated,
     }

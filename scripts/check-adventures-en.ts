@@ -21,6 +21,7 @@ for (const [id, adventure] of Object.entries(ADVENTURES)) {
       continue
     }
     if (tx.narration.length !== scene.narration.length) missing.push(`${where} : ${scene.narration.length} paragraphes en français, ${tx.narration.length} en anglais`)
+    for (const c of scene.clues ?? []) if (!tx.clues?.[c.id]) missing.push(`${where} : indice « ${c.id} » (clues)`)
     if (scene.setup?.show && !tx.show) missing.push(`${where} : légende de l'image (show)`)
     const step = scene.step
     if ((step.kind === 'continue' || step.kind === 'random') && step.label && !tx.label) missing.push(`${where} : bouton (label)`)

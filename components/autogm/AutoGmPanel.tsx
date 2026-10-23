@@ -45,6 +45,7 @@ import { LOBBY_TRACK, sceneMood, trackFor } from '@/lib/autoGm/music'
 import { useStartAdventure } from './useStartAdventure'
 import PremadeHeroPicker from './PremadeHeroPicker'
 import HeroApprovals from './HeroApprovals'
+import AdventureJournal from './AdventureJournal'
 import type { PremadeHero } from '@/lib/premadeHeroes'
 import type { Character } from '@/types/character'
 import {
@@ -1259,6 +1260,16 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
         </p>
       )}
       {body}
+      <AdventureJournal
+        adventure={adventure}
+        path={gm.path}
+        scene={gm.scene}
+        revealed={gm.revealed}
+        auto={gm.mode !== 'gm'}
+        book={gm.mode === 'gm' && !!me?.gm && gmSide && step.kind !== 'end'}
+        author={title}
+        onJump={(next) => go(next, gm.visit, { author: title, text: t('journalJumped').replace('{n}', titleOf(next)) })}
+      />
       {/* Image de la scène ouverte en grand : les choix aussi sous son récit. */}
       {storySlot &&
         (step.kind === 'vote' || step.kind === 'continue' || step.kind === 'random') &&
