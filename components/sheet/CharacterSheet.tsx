@@ -151,6 +151,7 @@ const CharacterSheet: FC<Props> = ({ perso, onUpdate, readOnly = false, notice, 
         onCollapse={isDesktop ? () => setCollapsed(true) : undefined}
         readOnly={readOnly}
         showXp={system.levelUp.length > 0}
+        resources={system.resources.slice(1)}
       />
 
       <CharacterEditor

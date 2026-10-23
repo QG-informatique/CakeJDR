@@ -4,6 +4,7 @@ import { FC } from 'react'
 import { useT } from '@/lib/useT'
 import type { TranslationKey } from '@/lib/translations'
 import { type Character } from '@/types/character'
+import { useGameSystem } from '@/lib/roomSettings'
 
 // Bourse : affichée avec l'équipement.
 const SHORT_FIELDS: Array<[keyof Character, TranslationKey]> = [
@@ -32,7 +33,9 @@ const text = (v: unknown) => (v === undefined || v === null ? '' : String(v)).tr
  */
 const DescriptionPanel: FC<{ perso: Character; compact?: boolean }> = ({ perso, compact = false }) => {
   const t = useT()
-  const short = SHORT_FIELDS.map(([k, l]) => ({ key: k, label: t(l), value: text(perso[k]) }))
+  const { identity } = useGameSystem()
+  const label = (k: keyof Character, l: TranslationKey) => t(k === 'race' ? identity.race : k === 'classe' ? identity.classe : l)
+  const short = SHORT_FIELDS.map(([k, l]) => ({ key: k, label: label(k, l), value: text(perso[k]) }))
   const long = [
     ...LONG_FIELDS.map(([k, l]) => ({ key: String(k), label: t(l), value: text(perso[k]) })),
     ...(perso.champs_perso || []).map((f) => ({ key: f.id, label: f.label, value: text(f.value) })),

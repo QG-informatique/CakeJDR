@@ -23,6 +23,21 @@ export type GameSystemId = 'narratif' | 'srd5' | 'd100'
 /** Champ de la fiche, avec son intitulé dans `lib/translations.ts`. */
 export type SheetField = { readonly key: string; readonly label: TranslationKey }
 
+/**
+ * Ressource qui s'épuisent et remonte : la valeur courante (`key`) et le
+ * maximum (`max`), rangés sur la fiche. Sans valeur sur la fiche, elle part
+ * de `start` (calculée depuis les caractéristiques), ou de son maximum.
+ */
+export type SheetResource = {
+  readonly key: string
+  readonly max: string
+  readonly label: TranslationKey
+  readonly maxLabel: TranslationKey
+  /** Couleur de la barre sur la fiche ; sans elle, selon ce qui reste. */
+  readonly bar?: string
+  readonly start?: (sheet: Record<string, unknown>) => number
+}
+
 export type GameSystem = {
   id: GameSystemId
   /** Nom du système, montré au MJ. */
@@ -40,8 +55,10 @@ export type GameSystem = {
   basics: readonly SheetField[]
   /** Modificateurs d'attaque, tapés sur la fiche. */
   attacks: readonly SheetField[]
-  /** Ressources qui s'épuisent et remontent : valeur courante et maximum. */
-  resources: readonly { key: string; max: string; label: TranslationKey }[]
+  /** Intitulés de l'origine et du métier du personnage (champs `race` et `classe`). */
+  identity: { race: TranslationKey; classe: TranslationKey }
+  /** Ressources qui s'épuisent et remontent ; la première, les PV, reste en tête de fiche. */
+  resources: readonly SheetResource[]
   /** Types proposés pour une compétence ; le joueur peut en garder un autre. */
   skillTypes: readonly string[]
   /** Dés de la table, et celui des tests de caractéristique. */
@@ -85,12 +102,30 @@ const ATTACKS = [
   { key: 'mod_magique', label: 'magic' },
 ] as const
 
-const HP = { key: 'pv', max: 'pv_max', label: 'hp' } as const
+const HP = { key: 'pv', max: 'pv_max', label: 'hp', maxLabel: 'hpMax' } as const
+
+const num = (v: unknown) => Number(v) || 0
+/** d100 : points de magie égaux au Pouvoir, santé mentale de départ à Pouvoir × 5. */
+const MP: SheetResource = { key: 'pm', max: 'pm_max', label: 'magicPoints', maxLabel: 'magicPointsMax', bar: 'bg-sky-500', start: (s) => num(s.pouvoir) }
+const SAN: SheetResource = { key: 'san', max: 'san_max', label: 'sanity', maxLabel: 'sanityMax', bar: 'bg-violet-500', start: (s) => num(s.pouvoir) * 5 }
+
+/** Valeur courante et maximum d'une ressource sur cette fiche. */
+export function resourceOf(sheet: object, res: SheetResource): { value: number; max: number } {
+  const get = (k: string) => Reflect.get(sheet, k) as unknown
+  const filled = (v: unknown) => v !== undefined && v !== null && v !== ''
+  const start = res.start?.(sheet as Record<string, unknown>)
+  const rawMax = get(res.max)
+  const rawValue = get(res.key)
+  const max = filled(rawMax) ? num(rawMax) : filled(rawValue) ? num(rawValue) : (start ?? 0)
+  const value = filled(rawValue) ? num(rawValue) : (start ?? max)
+  return { value, max }
+}
 
 export const NARRATIF = {
   id: 'narratif',
   name: 'Narratif CakeJDR',
   pitch: 'systemNarratifPitch',
+  identity: { race: 'race', classe: 'class' },
   stats: SIX_STATS,
   // La règle de D&D : 10 donne +0, puis ±1 tous les 2 points.
   modRule: { label: 'modRulesBase', detail: 'modRulesBaseDetail', mod: (v: number) => Math.floor((v - 10) / 2) },
@@ -118,6 +153,7 @@ export const SRD5 = {
   id: 'srd5',
   name: 'Fantasy 5E (SRD 5.2)',
   pitch: 'systemSrd5Pitch',
+  identity: { race: 'species', classe: 'class' },
   stats: SIX_STATS,
   modRule: { label: 'modRulesSrd5', detail: 'modRulesBaseDetail', mod: (v: number) => Math.floor((v - 10) / 2) },
   basics: [
@@ -162,6 +198,7 @@ export const D100 = {
   id: 'd100',
   name: 'Enquête d100 (BRP)',
   pitch: 'systemD100Pitch',
+  identity: { race: 'origin', classe: 'occupation' },
   stats: D100_STATS,
   // Le jet de caractéristique : valeur × 5, en %.
   modRule: { label: 'modRulesD100', detail: 'modRulesD100Detail', mod: (v: number) => v * 5 },
@@ -171,7 +208,7 @@ export const D100 = {
     { key: 'chance', label: 'luck' },
   ],
   attacks: ATTACKS,
-  resources: [HP],
+  resources: [HP, MP, SAN],
   skillTypes: ['Combat', 'Communication', 'Connaissance', 'Perception', 'Physique', 'Technique', 'Occulte'] as readonly string[],
   dice: DICE_TYPES,
   checkDie: 100,

@@ -4,13 +4,13 @@
 // la table. Il travaille sur une copie : rien ne change tant qu'on n'a pas
 // cliqué « Enregistrer ».
 
-import { FC, useEffect, useRef, useState, type ReactNode } from 'react'
+import { FC, Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Check, Pencil, Plus, Trash2, UserRound, X } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import { useConfirm } from '@/lib/useConfirm'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
-import { GAME_SYSTEMS, type GameSystem } from '@/lib/gameSystems'
+import { GAME_SYSTEMS, resourceOf, type GameSystem } from '@/lib/gameSystems'
 import type { CheckStat } from '@/lib/checks'
 import ModBadge from './ModBadge'
 import type { TranslationKey } from '@/lib/translations'
@@ -179,10 +179,10 @@ function EditorDialog({ character, isNew = false, system = GAME_SYSTEMS.narratif
               <Field label={t('name')} className="col-span-2">
                 <input ref={nameRef} value={draft.nom} onChange={(e) => set('nom', e.target.value)} className={inputClass} placeholder={t('unnamed')} />
               </Field>
-              <Field label={t('race')}>
+              <Field label={t(system.identity.race)}>
                 <input value={str(draft.race)} onChange={(e) => set('race', e.target.value)} className={inputClass} />
               </Field>
-              <Field label={t('class')}>
+              <Field label={t(system.identity.classe)}>
                 <input value={str(draft.classe)} onChange={(e) => set('classe', e.target.value)} className={inputClass} />
               </Field>
               <Field label={t('level')}>
@@ -293,14 +293,22 @@ const CombatSection: FC<SectionProps> = ({ draft, set, system }) => {
   const t = useT()
   return (
     <>
-      <SectionTitle>{t('hp')}</SectionTitle>
+      <SectionTitle>{system.resources.map((r) => t(r.label)).join(' · ')}</SectionTitle>
       <div className="grid grid-cols-2 gap-3 sm:max-w-sm">
-        <Field label={t('hp')}>
-          <input inputMode="numeric" value={str(draft.pv)} onChange={(e) => set('pv', e.target.value)} className={inputClass} />
-        </Field>
-        <Field label={t('hpMax')}>
-          <input inputMode="numeric" value={str(draft.pv_max)} onChange={(e) => set('pv_max', e.target.value)} className={inputClass} />
-        </Field>
+        {system.resources.map((r) => {
+          // Vide sur la fiche : la valeur de départ, calculée, en indication.
+          const start = resourceOf(draft, r)
+          return (
+            <Fragment key={r.key}>
+              <Field label={t(r.label)}>
+                <input inputMode="numeric" value={str(fieldOf(draft, r.key))} onChange={(e) => setField(set, r.key, e.target.value)} className={inputClass} placeholder={String(start.value)} />
+              </Field>
+              <Field label={t(r.maxLabel)}>
+                <input inputMode="numeric" value={str(fieldOf(draft, r.max))} onChange={(e) => setField(set, r.max, e.target.value)} className={inputClass} placeholder={String(start.max)} />
+              </Field>
+            </Fragment>
+          )
+        })}
       </div>
 
       <SectionTitle>{system.basics.map((b) => t(b.label)).join(' · ')}</SectionTitle>
@@ -314,15 +322,11 @@ const CombatSection: FC<SectionProps> = ({ draft, set, system }) => {
 
       <SectionTitle>{t('attackMods')}</SectionTitle>
       <div className="grid grid-cols-3 gap-3 sm:max-w-md">
-        <Field label={t('melee')}>
-          <input inputMode="numeric" value={str(draft.mod_contact)} onChange={(e) => set('mod_contact', e.target.value)} className={inputClass} />
-        </Field>
-        <Field label={t('ranged')}>
-          <input inputMode="numeric" value={str(draft.mod_distance)} onChange={(e) => set('mod_distance', e.target.value)} className={inputClass} />
-        </Field>
-        <Field label={t('magic')}>
-          <input inputMode="numeric" value={str(draft.mod_magique)} onChange={(e) => set('mod_magique', e.target.value)} className={inputClass} />
-        </Field>
+        {system.attacks.map((a) => (
+          <Field key={a.key} label={t(a.label)}>
+            <input inputMode="numeric" value={str(fieldOf(draft, a.key))} onChange={(e) => setField(set, a.key, e.target.value)} className={inputClass} />
+          </Field>
+        ))}
       </div>
     </>
   )

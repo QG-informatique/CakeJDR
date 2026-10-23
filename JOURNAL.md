@@ -1,5 +1,11 @@
 # Journal
 
+## 2026-10-23 — La fiche suit le système de jeu
+- Les ressources viennent du système (`SheetResource`, `resourceOf` dans `lib/gameSystems.ts`) : le d100 gagne Points de magie (départ : Pouvoir) et Santé mentale (départ : Pouvoir × 5), en petites barres sous les PV
+- L'éditeur de fiche lit ressources et modificateurs d'attaque du système, et les intitulés d'identité : Espèce en 5E, Origine et Profession en d100 (`identity`)
+- Sans valeur tapée, une ressource part de sa valeur calculée : rien à migrer sur les fiches existantes
+Reste ouvert : essai sur une vraie table d100
+
 ## 2026-10-23 — Journal des joueurs et carnet de campagne
 - Le format des aventures (`lib/autoGm/types.ts`) sert de format de campagne : il gagne les indices de scène (`clues`, traduits et vérifiés par `check:en`) ; quatre indices dans « La fournée maudite »
 - Journal repliable sous le récit pour tous : chemin parcouru et indices, notés d'office en MJ automatique, révélés par le MJ quand il mène (`components/autogm/AdventureJournal.tsx`)

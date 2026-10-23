@@ -237,10 +237,11 @@
 - [ ] Essayer chaque bouton du menu « Secours » pendant une vraie partie (rejouer la scène, annuler un jet, passer à la suite, reprendre la main, arrêter)
 - [ ] Phase H : vérifier qu'une campagne entière se joue en MJ automatique sans aucun MJ humain dans la salle (votes, égalités, jets, dégâts, création des héros)
 - [x] Phase I : décrire la fiche de personnage comme un système (caractéristiques, ressources, compétences, dés, niveaux) et en faire le preset « Narratif CakeJDR »
-- [ ] Phase I : faire lire au système toute la fiche (ressources, montée de niveau, champs d'identité et d'histoire), pas seulement caractéristiques, attaques et types de compétences (`lib/gameSystems.ts`)
+- [x] Phase I : faire lire au système toute la fiche (ressources, montée de niveau, champs d'identité et d'histoire), pas seulement caractéristiques, attaques et types de compétences (`lib/gameSystems.ts`)
 - [x] Phase I : choisir deux ou trois autres presets, en vérifiant la licence de toute règle reprise — « Fantasy 5E » (SRD 5.2.1, CC-BY-4.0) et « Enquête d100 » (BRP UGE, ORC), mentions dans `app/conditions/page.tsx`
 - [x] Phase I : choisir le système à la création d'une table — rangé dans les réglages Liveblocks de la salle (`settings.system`), sans colonne en base ; le MJ peut le changer dans son panneau
-- [ ] Phase I : ajouter au système d100 ses ressources propres (points de magie, santé mentale) et les afficher sur la fiche
+- [x] Phase I : ajouter au système d100 ses ressources propres (points de magie, santé mentale) et les afficher sur la fiche
+- [ ] Vérifier sur une table d100 neuve les barres Points de magie et Santé mentale sous les PV, et leurs valeurs de départ (Pouvoir, Pouvoir × 5)
 - [x] Phase I : afficher « — » plutôt que « 0 % » pour Corpulence et Pouvoir tant que la fiche d100 ne les a pas remplis
 - [ ] Tester les trois systèmes avec un second compte joueur : fiche, test du MJ (seuil d100 caché), montée de niveau Fantasy 5E (un seul dé de vie)
 - [ ] Phase J : créer l'éditeur de système (partir d'un preset, aperçu de la fiche en direct)

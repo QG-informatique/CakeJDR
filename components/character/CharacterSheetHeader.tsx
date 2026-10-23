@@ -5,6 +5,7 @@ import Link from 'next/link'
 import ThemeSwitcher from '../ui/ThemeSwitcher'
 import type { Character } from '@/types/character'
 import { XP_PER_LEVEL, levelReady, xpOf } from '@/lib/xp'
+import { resourceOf, type SheetResource } from '@/lib/gameSystems'
 
 type Tab = { key: string, label: string }
 
@@ -27,6 +28,8 @@ type Props = {
   readOnly?: boolean
   /** Barre d'XP, pour un système qui a des niveaux. */
   showXp?: boolean
+  /** Ressources du système après les PV (points de magie, santé mentale…). */
+  resources?: readonly SheetResource[]
 }
 
 const getPvColor = (pv: number, pvMax: number) => {
@@ -54,6 +57,7 @@ const CharacterSheetHeader: FC<Props> = ({
   onCollapse,
   readOnly = false,
   showXp = false,
+  resources = [],
 }) => {
   const t = useT()
   const pv = Number(perso.pv) || 0
@@ -145,6 +149,37 @@ const CharacterSheetHeader: FC<Props> = ({
           />
         </div>
       </div>
+
+      {/* Autres ressources du système, plus discrètes que les PV */}
+      {resources.length > 0 && (
+        <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5">
+          {resources.map((r) => {
+            const { value, max } = resourceOf(perso, r)
+            const ratio = max ? Math.max(0, Math.min(1, value / max)) : 0
+            return (
+              <div key={r.key}>
+                <div className="flex items-baseline justify-between gap-1 text-xs">
+                  <span className="ui-label truncate !text-[10px]">{t(r.label)}</span>
+                  <span className="shrink-0 tabular-nums">
+                    <span className="font-semibold">{value}</span>
+                    <span className="text-ink/55"> / {max}</span>
+                  </span>
+                </div>
+                <div
+                  className="mt-1 h-1.5 overflow-hidden rounded-full bg-ink/10"
+                  role="meter"
+                  aria-label={t(r.label)}
+                  aria-valuemin={0}
+                  aria-valuemax={max}
+                  aria-valuenow={value}
+                >
+                  <div className={`h-full rounded-full transition-[width] duration-300 ${r.bar ?? getPvColor(value, max)}`} style={{ width: `${ratio * 100}%` }} />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
 
       {/* Expérience : pleine, le MJ fait monter de niveau */}
       {showXp && (

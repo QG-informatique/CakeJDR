@@ -48,6 +48,11 @@ export type Character = {
   /** Caractéristiques du système d100 (`lib/gameSystems.ts`), absentes des autres fiches. */
   corpulence?: number | string
   pouvoir?: number | string
+  /** Ressources du système d100 : points de magie et santé mentale. */
+  pm?: number | string
+  pm_max?: number | string
+  san?: number | string
+  san_max?: number | string
   /** Ancien modificateur tapé à la main, plus lu : il est calculé (`lib/modifiers.ts`). */
   force_mod?: number | string
   dexterite_mod?: number | string
