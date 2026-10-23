@@ -263,6 +263,19 @@ export const needsRoll = (a: CombatAction) => a.effect === 'hit' || a.effect ===
 /** Vise un ennemi choisi par le joueur. */
 export const needsFoe = (a: CombatAction) => a.effect === 'hit' || a.effect === 'auto'
 
+/** Le son d'une action : arme, sort, soins ou défense (`lib/sound.ts`). */
+export function actionSound(id: string | undefined): 'strike' | 'spell' | 'heal' | 'shield' {
+  const all = [ATTACK, DEFEND, FLEE, ...Object.values(CLASS_ACTIONS).flat(), ...ITEMS.map((i) => i.action)]
+  const action = all.find((a) => a.id === id)
+  if (!action) return 'strike'
+  if (action.effect === 'heal' || action.effect === 'selfHeal') return 'heal'
+  if (action.effect === 'guard' || action.effect === 'dodge') return 'shield'
+  if (action.effect === 'auto' || action.effect === 'inspire') return 'spell'
+  return action.stat === 'intelligence' || action.stat === 'sagesse' || action.stat === 'charisme' || (action.effect === 'area' && !action.stat)
+    ? 'spell'
+    : 'strike'
+}
+
 /** Nom d'une action, quelle que soit la classe, pour le récit du combat. */
 export function actionName(id: string | undefined, lang: 'fr' | 'en'): string {
   const all = [ATTACK, DEFEND, FLEE, ...Object.values(CLASS_ACTIONS).flat(), ...ITEMS.map((i) => i.action)]

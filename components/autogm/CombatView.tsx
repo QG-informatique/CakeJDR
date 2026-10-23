@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Backpack, Heart, Shield, Swords } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import { checkStatLabel, withStat } from '@/lib/checks'
 import type { Voter } from '@/lib/autoGm'
-import { ROUND_MS, canTarget, isDice, usesLeft, waitingFor, type CombatState, type CombatStep } from '@/lib/autoGm/combat'
-import { actionsFor, needsFoe, weaponStat, type CombatAction } from '@/lib/autoGm/combatActions'
+import { ROUND_MS, canTarget, isDice, usesLeft, waitingFor, type CombatLine, type CombatState, type CombatStep } from '@/lib/autoGm/combat'
+import { actionSound, actionsFor, needsFoe, weaponStat, type CombatAction } from '@/lib/autoGm/combatActions'
+import { playCombatSound, type CombatSound } from '@/lib/sound'
 import { combatLineText } from './combatText'
 
 type Props = {
@@ -33,6 +34,57 @@ function Bar({ hp, max, tone }: { hp: number; max: number; tone: 'foe' | 'hero' 
   )
 }
 
+/** Le son d'une ligne du récit ; rien pour celles qui suivent déjà un coup (étourdi, affaibli). */
+function lineSound(line: CombatLine): CombatSound | null {
+  switch (line.k) {
+    case 'hit':
+    case 'crit':
+    case 'area':
+      return actionSound(line.act)
+    case 'miss':
+    case 'fleeFail':
+    case 'fled':
+    case 'foeMiss':
+      return 'miss'
+    case 'heal':
+      return 'heal'
+    case 'guard':
+    case 'dodge':
+    case 'foeDodged':
+      return 'shield'
+    case 'inspire':
+      return 'spell'
+    case 'foeHit':
+      return 'hurt'
+    case 'foeDown':
+    case 'heroDown':
+      return 'down'
+    default:
+      return null
+  }
+}
+
+/**
+ * Joue chez chacun le son des nouvelles lignes du récit : l'action d'un héros
+ * dès qu'elle est jouée, la riposte des ennemis à la fin du tour. Rien à
+ * l'arrivée dans un combat déjà commencé.
+ */
+function useCombatSounds(combat: CombatState | undefined) {
+  const heard = useRef<{ visit: number; round: number; count: number } | null>(null)
+  useEffect(() => {
+    if (!combat) return
+    const prev = heard.current
+    heard.current = { visit: combat.visit, round: combat.round, count: combat.lines.length }
+    if (!prev || prev.visit !== combat.visit) return
+    let fresh: CombatLine[] = []
+    if (combat.round === prev.round) fresh = combat.lines.slice(prev.count)
+    else if (combat.round === prev.round + 1) fresh = combat.last.slice(prev.count)
+    const sounds = fresh.map(lineSound).filter((k): k is CombatSound => !!k).slice(0, 4)
+    // Pas d'annulation : une nouvelle ligne arrivée entre-temps ne coupe pas les sons déjà prévus.
+    sounds.forEach((k, i) => window.setTimeout(() => playCombatSound(k), i * 280))
+  }, [combat])
+}
+
 /**
  * Combat au tour par tour du MJ automatique : les ennemis et leurs PV, le
  * groupe, les actions de ma classe, et le récit du tour d'avant.
@@ -40,6 +92,7 @@ function Bar({ hp, max, tone }: { hp: number; max: number; tone: 'foe' | 'hero' 
 export default function CombatView({ combat, step, me, players, iWatch, myChoice, onChoose, now, lang }: Props) {
   const t = useT()
   const [target, setTarget] = useState<string | undefined>()
+  useCombatSounds(combat)
 
   if (!combat) {
     return (

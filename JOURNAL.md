@@ -1,5 +1,11 @@
 # Journal
 
+## 2026-10-23 — Sons de combat, retour dans une aventure en cours, contrôle de l'anglais
+- Combat du MJ automatique : un son par action (arme, sort, soins, défense, coup reçu, chute), joué chez tous, fabriqué en Web Audio (`lib/sound.ts`, `CombatView.tsx`)
+- Arrivée dans une aventure déjà lancée : encadré « … est en cours : scène », héros déjà dans le groupe, au-dessus des héros tout prêts (`AutoGmPanel.tsx`)
+- `npm test` et la CI vérifient que chaque aventure a sa version anglaise complète (`scripts/check-adventures-en.ts`, `tsx` en dépendance de dev)
+Reste ouvert : écouter les sons en vrai pendant un combat et ajuster le volume si besoin
+
 ## 2026-10-23 — Rejouer avec de nouveaux héros, volume par salle, envoi d'images suivi
 - Fin d'aventure : « Rejouer avec de nouveaux héros » ramène au salon, chacun reprend un héros niveau 1 (`heroRun` dans `autoGm` et sur la fiche)
 - Volume de la musique retenu par salle (`lib/sound.ts`) ; bouton de lecture qui clignote quand la table écoute et pas moi (`MusicPlayer.tsx`)

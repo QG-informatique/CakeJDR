@@ -271,6 +271,8 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
   const players = useMemo(() => (gmLeads ? voters.filter((v) => !v.gm) : voters), [gmLeads, voters])
   const humanGm = gmLeads ? voters.find((v) => v.gm) : undefined
   const iWatch = gmLeads && !!me?.gm
+  // Héros déjà en jeu, pour qui arrive en cours d'aventure.
+  const partyNames = players.filter((v) => v.hero && v.connectionId !== me?.connectionId).map((v) => v.name)
 
   const adventureKey = gm?.adventure ?? adventureId
   const adventure = useMemo(() => adventureIn(adventureKey, lang), [adventureKey, lang])
@@ -820,6 +822,16 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
           {showCombat && <div className={`${pane('combat')} min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3`}>{fight}</div>}
           {showHero && (
             <div className={`${pane('hero')} min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3`}>
+              {/* Arrivée dans une aventure déjà lancée : où en est le groupe, et qui y est. */}
+              {gm && scene && !gm.lobby && (
+                <div className="flex flex-col gap-1 rounded-lg border border-[var(--c-panel-line)] px-3 py-2 text-sm">
+                  <p className="font-semibold text-gm">
+                    {t('autoGmJoinRunning').replace('{adventure}', adventure!.title).replace('{scene}', scene.title)}
+                  </p>
+                  {partyNames.length > 0 && <p className="text-xs text-ink/70">{t('autoGmJoinParty').replace('{names}', partyNames.join(', '))}</p>}
+                  <p className="text-xs text-ink/70">{t('autoGmJoinHint')}</p>
+                </div>
+              )}
               <PremadeHeroPicker
                 onPick={onPickHero}
                 onRoll={onRoll}

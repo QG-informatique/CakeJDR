@@ -207,11 +207,12 @@
 - [ ] Tester la création guidée de bout en bout avec un compte joueur neuf : nom, peuple, classe, tous les dés lancés sur la table, portrait, fiche enregistrée avec les bons PV
 - [x] Corriger la création guidée dans une salle déjà en cours (retour de Quentin, 2026-10-10) : la demande de jet a échoué (« réessayer »), puis plus de bouton pour lancer, et un dé lancé à la main (d20 ou d6) n'a rien fait
 - [x] Afficher en permanence dans la création guidée quels dés lancer (nombre et type), avec un bouton pour les lancer, même après un échec de la demande
-- [ ] Vérifier ce qui s'affiche quand on revient dans une salle où une aventure automatique est en cours (panneau du MJ automatique, héros tout prêts) et le rendre clair pour le joueur
+- [x] Vérifier ce qui s'affiche quand on revient dans une salle où une aventure automatique est en cours (panneau du MJ automatique, héros tout prêts) et le rendre clair pour le joueur — encadré « en cours : scène » et groupe déjà là
+- [ ] Revenir avec un compte joueur dans une salle où une aventure tourne et vérifier que l'encadré « … est en cours » s'affiche au-dessus des héros tout prêts
 - [x] Traduire en anglais les peuples et les classes de la création guidée (`lib/heroCreation.ts`)
 - [x] Traduire en anglais toutes les aventures automatiques une fois la campagne complète écrite
 - [ ] Faire relire par un anglophone la traduction de « La Flamme sous la montagne » et de « La fournée maudite » (`lib/autoGm/en/`)
-- [ ] Écrire la version anglaise de chaque nouvelle aventure dans `lib/autoGm/en/` (sinon elle reste en français pour les tables anglaises)
+- [x] Écrire la version anglaise de chaque nouvelle aventure dans `lib/autoGm/en/` (sinon elle reste en français pour les tables anglaises) — désormais vérifié par `npm run check:en`, qui échoue s'il manque un texte
 - [x] Effacer les trois croix dessinées pour l'ancienne carte dans la salle de démo (liste `strokes` de Liveblocks), puis refiger avec `scripts/capture-demo-snapshot.mjs`
 - [x] Phase G : ajouter des pions simples de couleur (rond avec initiale, une couleur par joueur) pour les scènes tactiques, générés par le code, en plus des pions illustrés vus de face
 - [x] Phase G : réserver la bibliothèque au MJ (le joueur ne pose que le pion de son personnage, choisi dans sa fiche)
@@ -383,7 +384,8 @@
 - [ ] Pré-générer la narration et les répliques des PNJ des campagnes, et les héberger gratuitement
 - [ ] Lire la voix dans le jeu : bouton pour l'activer ou la couper, « Réécouter », voix coupée à la fermeture de l'image
 - [ ] Tester à deux navigateurs le salon d'attente du MJ automatique : chacun « Prêt », départ quand tous le sont, départ si celui qui n'était pas prêt s'en va
-- [ ] Ajouter des sons par type d'action en combat (attaque au corps à corps, sort, défense), en plus des sons des boutons
+- [x] Ajouter des sons par type d'action en combat (attaque au corps à corps, sort, défense), en plus des sons des boutons
+- [ ] Écouter les sons de combat pendant une vraie partie et ajuster leur volume par rapport à la musique
 - [ ] Passer en 1.0 une fois tout cela fini et testé, puis réécrire le README du GitHub pour qu'il corresponde à l'état réel du projet
 - [x] Afficher dans le récit le butin gagné à la fin d'une scène (potions, objets ajoutés au sac)
 - [ ] Jouer seul le début de « La Flamme sous la montagne » en ligne et noter ce qui va et ce qui ne va pas (création, votes, tests, rythme)

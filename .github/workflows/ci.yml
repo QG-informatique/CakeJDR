@@ -25,6 +25,9 @@ jobs:
       - name: Linter
         run: npm run lint
 
+      - name: Aventures traduites en anglais
+        run: npm run check:en
+
       # Échoue si une faille de sévérité haute ou critique apparaît dans les
       # dépendances de production. Les dépendances de développement ne sont pas
       # servies aux utilisateurs et bloqueraient la CI sans bénéfice.

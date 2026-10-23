@@ -21,7 +21,7 @@ export const ADVENTURES: Record<string, Adventure> = {
 }
 
 /** Textes anglais de chaque aventure ; une scène sans traduction reste en français. */
-const ENGLISH: Record<string, AdventureText> = {
+export const ENGLISH: Record<string, AdventureText> = {
   [CAKE_DEMO.id]: CAKE_DEMO_EN,
   [DRAGON_CAMPAIGN.id]: DRAGON_CAMPAIGN_EN,
 }
