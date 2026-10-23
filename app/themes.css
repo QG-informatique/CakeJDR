@@ -76,6 +76,36 @@
   --c-panel-head: rgb(27 31 36 / 0.85);
 }
 
+/* Nocturne : la maquette V2 (octobre 2026) — ardoise bleutée, accent violet,
+   MJ doré, aplats sans transparence. */
+[data-theme="nocturne"] {
+  color-scheme: dark;
+  --c-page: #171820;
+  --c-ink: #e6e7ef;
+  --c-shade: #0b0d15;
+  --c-surface: #22242f;
+  --c-surface-hover: #2d2f3e;
+  --c-surface-deep: #171820;
+  --c-line: #30323e;
+  --c-line-strong: #4a4d5e;
+  --c-field: #171820;
+  --c-field-ink: #e9e9ef;
+  --c-field-line: #343642;
+  --c-accent: #8b7cf8;
+  --c-accent-hover: #9d90fa;
+  --c-accent-soft: #c4b8fc;
+  --c-on-accent: #101118;
+  --c-gm: #d6a66d;
+  --c-gm-soft: #eee4c9;
+  --c-brand: #8b7cf8;
+  --c-font: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  --c-backdrop: #171820;
+  --c-panel: #1c1e28;
+  --c-panel-line: #323440;
+  --c-panel-blur: 0px;
+  --c-panel-head: #1c1e28;
+}
+
 /* Papier & Sauge : thème clair, papier blanc cassé, texte ardoise, accent
    vert sauge, bordures fines (pack de maquettes du 4 octobre 2026). */
 [data-theme="papier-sauge"] {

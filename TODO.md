@@ -313,7 +313,8 @@
 - [x] Retravailler l'interface du menu et de la table dans le style Ardoise (panneaux, boutons, onglets communs)
 - [ ] Faire relire la nouvelle interface (menu connecté, table, téléphone) par Quentin, puis la mettre en ligne
 - [ ] Faire relire Ardoise par Quentin sur un vrai écran et un téléphone, ajuster les couleurs si besoin
-- [ ] Faire de la maquette V2 un second thème (phase 6)
+- [x] Faire de la maquette V2 un second thème (phase 6) — thème « Nocturne », couleurs de la V2
+- [ ] Faire relire le thème « Nocturne » (couleurs de la V2) par Quentin et dire s'il remplace Classique
 - [x] Faire du pack « Papier & Sauge » (thème clair, accent vert sauge) un thème : maquettes et couleurs dans `C:\DEV\CakeJDR-themes\CakeJDR-theme-papier-sauge` (fait : `app/themes.css`, choix « Papier & Sauge » du sélecteur)
 - [ ] Faire relire le thème clair « Papier & Sauge » par Quentin (menu, table, téléphone)
 

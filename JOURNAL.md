@@ -1,5 +1,11 @@
 # Journal
 
+## 2026-10-23 — Thème Nocturne, d'après la maquette V2
+- Nouveau thème sombre « Nocturne » : couleurs de la maquette V2 (ardoise bleutée, accent violet, aplats nets), MJ en doré pour ne pas se confondre avec l'accent (`app/themes.css`, `lib/themes.ts`)
+- Repris de la V2 : les couleurs seulement ; ses visuels étaient déjà dans la bibliothèque, son code n'est pas repris (interface autonome sans Liveblocks)
+- Contraste vérifié sur le menu, l'atelier et une salle
+Reste ouvert : trier avec Quentin le reste de la V2 (pions détourés, menu en liste)
+
 ## 2026-10-23 — Thème clair Papier & Sauge
 - Nouveau thème clair « Papier & Sauge » (papier crème, encre vert sombre, accent sauge), dans le sélecteur de thème (`app/themes.css`, `lib/themes.ts`)
 - Les couleurs d'état claires (rouge, ambre, vert…) et l'encre très transparente sont foncées pour ce thème seulement : contraste vérifié sur le menu, l'atelier et une salle
