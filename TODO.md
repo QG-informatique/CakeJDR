@@ -230,7 +230,7 @@
 - [x] Phase H : à la création d'une table, choisir « MJ humain » ou « MJ automatique »
 - [x] Phase H : à la création d'une table en MJ automatique, choisir la campagne (la démo ou « La Flamme sous la montagne ») et arriver directement au début de l'aventure
 - [x] Phase H : dans une salle déjà créée, activer ou couper le MJ automatique depuis un interrupteur visible — bouton « MJ auto » dans la barre du plateau (`AutoGmSwitch.tsx`)
-- [ ] Phase H : en arrivant dans une aventure avec une fiche faite ailleurs, proposer « Créer un héros pour cette histoire » ou « Choisir un de mes personnages » au lieu de garder d'office la fiche sélectionnée
+- [x] Phase H : en arrivant dans une aventure avec une fiche faite ailleurs, proposer « Créer un héros pour cette histoire » ou « Choisir un de mes personnages » au lieu de garder d'office la fiche sélectionnée — onglet Héros avec « Ou garde une de tes fiches »
 - [x] Permettre de désélectionner son personnage (fiches) pour entrer dans une salle sans personnage
 - [x] Phase H : en MJ automatique, cacher au créateur de la table tout le côté MJ (notes secrètes, scènes à venir, fins) : il joue comme les autres joueurs — bouton « Côté MJ » réservé au MJ humain
 - [x] Phase H : donner au créateur d'une table en MJ automatique un menu de secours qui ne révèle pas l'histoire (relancer la scène, annuler un jet bloqué, passer à la suite, reprendre la main en MJ humain) — menu « Secours » sous la scène (`RescueMenu.tsx`)
@@ -338,10 +338,12 @@
 
 ## Retours de Quentin (2026-10-12) — choix du héros et ambiance (décisions du 2026-10-12)
 - [x] Phase H : à la création d'une salle, choisir MJ humain ou MJ automatique, et réglage « Nouveau héros pour cette aventure » coché d'office (les fiches déjà faites sont refusées, pour éviter un niveau 5 dans une campagne niveau 1) ; décochable dans les options de la salle
-- [ ] Phase H : à l'arrivée dans une aventure, proposer « Créer mon héros avec le MJ » (aux dés) et « Prendre un héros tout prêt » ; « Une de mes fiches » seulement si la salle l'autorise
+- [x] Phase H : à l'arrivée dans une aventure, proposer « Créer mon héros avec le MJ » (aux dés) et « Prendre un héros tout prêt » ; « Une de mes fiches » seulement si la salle l'autorise
+- [ ] Tester avec un compte joueur dans une salle « Fiches existantes acceptées » : arrivée dans l'aventure, « Ou garde une de tes fiches », la fiche gardée revient au rechargement
 - [ ] Phase H : quand la salle autorise les fiches déjà faites, faire valider chaque fiche par le MJ, ou par le créateur de la salle en MJ automatique (niveau de départ, caractéristiques pas trop hautes)
 - [x] Phase H : arrêter de recopier toute la narration du MJ automatique dans le chat (elle est déjà dans le panneau de gauche) : n'y mettre que les choses importantes, indices et petits détails — titre de la scène et choix du groupe seulement
-- [ ] Phase H : dans une salle « Nouveau héros » en MJ humain sans aventure lancée, proposer aussi le choix du héros (aujourd'hui : fiche vierge seulement)
+- [x] Phase H : dans une salle « Nouveau héros » en MJ humain sans aventure lancée, proposer aussi le choix du héros (aujourd'hui : fiche vierge seulement) — en haut de la fiche vierge
+- [ ] Tester avec un compte joueur dans une salle « Nouveau héros » en MJ humain : choix du héros en haut de la fiche, création aux dés sans aventure lancée
 - [ ] Phase H : marquer « Choix du groupe » avec un indice ou un petit détail de la scène quand l'aventure en prévoit (champ à ajouter aux scènes)
 - [x] Accueil : faire disparaître le bouton « Entrer dans <salle> » quand on supprime la salle choisie (il reste jusqu'au rechargement)
 - [ ] Tester en ligne la création d'une salle en MJ automatique (campagne, arrivée directe, fiche vierge, choix du héros)

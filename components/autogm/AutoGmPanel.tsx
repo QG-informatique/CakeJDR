@@ -97,6 +97,9 @@ type Props = {
   /** Le joueur n'a pas encore de fiche : on lui propose un héros tout prêt. */
   needsHero: boolean
   onPickHero: (hero: PremadeHero) => void
+  /** Mes fiches déjà faites, quand la salle les accepte (sinon vide). */
+  myHeroes?: Character[]
+  onKeepHero?: (char: Character) => void
   /** Lance les dés de la table pour la demande qui m'attend (création guidée). */
   onRoll: () => void
   /** Le chat de la table, rangé dans le dernier onglet du panneau. */
@@ -201,7 +204,7 @@ function Bubble({ voter, size = 20 }: { voter: Voter; size?: number }) {
  * connecté s'il n'y a pas de MJ. S'il part, le suivant prend le relais là où
  * en était la partie, puisque tout est rangé dans le stockage partagé.
  */
-export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHero, onRoll, chat, onOpenGmMenu, lobbySlot }: Props) {
+export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHero, myHeroes, onKeepHero, onRoll, chat, onOpenGmMenu, lobbySlot }: Props) {
   const t = useT()
   const { lang } = useLanguage()
   const { id: roomId } = useParams<{ id: string }>()
@@ -826,6 +829,8 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
               )}
               <PremadeHeroPicker
                 onPick={onPickHero}
+                own={myHeroes}
+                onOwn={onKeepHero}
                 onRoll={onRoll}
                 onLater={() => {
                   setHeroLater(true)

@@ -1,5 +1,10 @@
 # Journal
 
+## 2026-10-23 — Choix du héros à l'arrivée
+- Aventure dans une salle qui accepte les fiches déjà faites : la fiche sélectionnée n'est plus prise d'office, l'onglet Héros propose tout prêt, création aux dés, ou « Ou garde une de tes fiches » (choix retenu par salle dans le navigateur) (`HomePageInner.tsx`, `PremadeHeroPicker.tsx`)
+- Salle « Nouveau héros » d'un MJ humain sans aventure : le même choix en haut de la fiche vierge, sauf pour le MJ
+Reste ouvert : essayer les deux avec un vrai compte joueur
+
 ## 2026-10-23 — Interrupteur « MJ auto » et menu de secours
 - Barre du plateau : bouton « MJ auto » allumé quand une aventure tourne ; un clic l'arrête (avec confirmation) ou ouvre le panneau du MJ pour en choisir une (`AutoGmSwitch.tsx`)
 - Menu « Secours » sous la scène pour le créateur de la table, sans rien révéler : rejouer la scène, annuler un jet bloqué, passer à la suite (branche de réussite), reprendre la main en MJ, arrêter (`RescueMenu.tsx`, `useAdventureControls.ts`)

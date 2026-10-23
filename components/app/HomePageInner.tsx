@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { useBroadcastEvent, useEventListener, useMyPresence, useOthers, useSelf, useStorage } from '@liveblocks/react'
 import { useIsDesktop } from '@/lib/useIsDesktop'
 import { useRouter, useParams } from 'next/navigation'
@@ -36,6 +36,7 @@ import { Crown } from 'lucide-react'
 import AutoGmSwitch from '@/components/autogm/AutoGmSwitch'
 import ShownImage from '@/components/canvas/ShownImage'
 import AutoGmPanel, { type AutoGmEffect } from '@/components/autogm/AutoGmPanel'
+import PremadeHeroPicker from '@/components/autogm/PremadeHeroPicker'
 import { heroCharacter, type PremadeHero } from '@/lib/premadeHeroes'
 import { DEMO_ADVENTURE } from '@/lib/autoGm'
 import { bagAfter } from '@/lib/autoGm/combatActions'
@@ -151,6 +152,16 @@ export default function HomePageInner() {
   // récit ; une nouvelle scène l'allume quand on est ailleurs.
   const autoGmVisit = useStorage((root) => root.autoGm?.visit ?? null)
   const autoGmHeroRun = useStorage((root) => root.autoGm?.heroRun)
+  // Table qui accepte les fiches déjà faites : le joueur dit laquelle il garde
+  // pour l'aventure, plutôt que de prendre d'office la fiche sélectionnée.
+  const keptKey = `cakejdr_kept_hero:${roomId}`
+  const [keptHero, setKeptHero] = useState<string | null>(() => {
+    try {
+      return typeof window === 'undefined' ? null : localStorage.getItem(keptKey)
+    } catch {
+      return null
+    }
+  })
   const [openedAdventure, setOpenedAdventure] = useState(false)
   if (autoGmEnabled && !openedAdventure) {
     setOpenedAdventure(true)
@@ -595,6 +606,35 @@ export default function HomePageInner() {
     handleUpdatePerso({ ...char, id, heroFor: roomId, ...(autoGmHeroRun ? { heroRun: autoGmHeroRun } : {}) }, true)
   }
 
+  // Table « Nouveau héros » d'un MJ humain, sans aventure : le joueur arrivé
+  // avec une fiche vierge choisit un héros tout prêt ou le crée aux dés.
+  const [heroLater, setHeroLater] = useState(false)
+  const heroChoice = adventureRunning === false && settings.newHeroes && !isGM && !heroLater &&
+    viewedConnectionId === null && sheetEditable && (!perso.nom?.trim() || perso.heroFor !== roomId)
+
+  const myHeroes = useMemo(
+    () =>
+      settings.newHeroes || autoGmHeroRun
+        ? []
+        : characters
+            .filter((c) => c.nom?.trim() && isOwnedBy(c, { id: profile?.id, pseudo: profile?.pseudo ?? '' }))
+            .sort((a, b) => Number(b.updatedAt ?? 0) - Number(a.updatedAt ?? 0))
+            .slice(0, 8),
+    [settings.newHeroes, autoGmHeroRun, characters, profile?.id, profile?.pseudo],
+  )
+
+  const handleKeepHero = (char: Character) => {
+    if (viewedConnectionId !== null) return
+    const next = normalizeCharacter(char, profile?.pseudo ?? null)
+    setPerso(next)
+    updateMyPresence({ character: { ...next, ownerConnectionId: myConnectionId ?? undefined } })
+    setKeptHero(String(next.id))
+    try {
+      localStorage.setItem(SELECTED_CHARACTER_KEY, buildSelectionKey(next.id, next.owner ?? null))
+      localStorage.setItem(keptKey, String(next.id))
+    } catch {}
+  }
+
   // En quittant la table, une modification encore en attente est envoyee
   // tout de suite plutot que perdue.
   useEffect(() => () => {
@@ -795,6 +835,14 @@ export default function HomePageInner() {
                 <Crown size={13} className="shrink-0 text-gm" aria-hidden />
                 {t('sheetLockedByGm')}
               </div>
+            ) : heroChoice ? (
+              <div className="-mx-3 mb-1 border-b border-[var(--c-panel-line)] px-3 py-2">
+                <PremadeHeroPicker
+                  onPick={handlePickHero}
+                  onRoll={() => tableDiceRef.current?.throwNow()}
+                  onLater={() => setHeroLater(true)}
+                />
+              </div>
             ) : null}
           />
         </div>
@@ -931,8 +979,10 @@ export default function HomePageInner() {
               <AutoGmPanel
                 adventureId={DEMO_ADVENTURE}
                 onEffect={handleAutoGmEffect}
-                needsHero={viewedConnectionId === null && (!perso.nom?.trim() || (settings.newHeroes && perso.heroFor !== roomId) || (!!autoGmHeroRun && perso.heroRun !== autoGmHeroRun))}
+                needsHero={viewedConnectionId === null && (!perso.nom?.trim() || (perso.heroFor !== roomId && (settings.newHeroes || keptHero !== String(perso.id))) || (!!autoGmHeroRun && perso.heroRun !== autoGmHeroRun))}
                 onPickHero={handlePickHero}
+                myHeroes={myHeroes}
+                onKeepHero={handleKeepHero}
                 onRoll={() => tableDiceRef.current?.throwNow()}
                 chat={<ChatBox chatBoxRef={chatBoxRef} author={chatAuthor} embedded />}
                 onOpenGmMenu={isGM ? () => setGmPanelOpen(true) : undefined}
