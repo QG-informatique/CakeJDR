@@ -10,9 +10,10 @@ import { useT } from '@/lib/useT'
 import { useIsDesktop } from '@/lib/useIsDesktop'
 import { debug } from '@/lib/debug'
 import { useDiceVerification } from './useDiceVerification'
-import { checkStatLabel, levelUpLabel, signedMod, withStat } from '@/lib/checks'
+import { checkStatLabel, levelUpLabel, withStat } from '@/lib/checks'
 import { useGameSystem } from '@/lib/roomSettings'
 import { poolLabel } from '@/lib/dicePool'
+import { checkResultText, checkTierText } from '@/lib/checkText'
 
 // Longueur maximale d'un message : au-delà, la liste partagée de la table
 // grossit vite et un pavé sans espace déborde du panneau.
@@ -270,6 +271,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author, embedded = false }) => {
                 // Test demandé par le MJ : la difficulté cachée n'apparaît qu'au MJ.
                 const c = ev.check
                 const showDc = c.showDc || self?.info?.role === 'gm'
+                const tier = checkTierText(c, t)
                 return (
                   <div key={ev.id} className={`animate-fadeIn ui-well flex flex-col gap-0.5 px-2.5 py-1.5 border-l-2 ${c.success ? 'border-l-emerald-400' : 'border-l-red-400'} text-sm`}>
                     <div className="flex items-center gap-2">
@@ -285,20 +287,9 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author, embedded = false }) => {
                         </TriangleAlert>
                       )}
                     </div>
-                    <div className="flex items-baseline gap-1.5 pl-6 text-xs text-ink/60 tabular-nums">
-                      {c.under ? (
-                        <>
-                          <span>D{ev.dice ?? 100}</span>
-                          <span className="text-base font-bold leading-none text-ink">{c.total}</span>
-                          {showDc && <span>{t('checkUnder')} {c.dc} %</span>}
-                        </>
-                      ) : (
-                        <>
-                          <span>D{ev.dice ?? 20} {ev.result} {signedMod(c.mod)} =</span>
-                          <span className="text-base font-bold leading-none text-ink">{c.total}</span>
-                          {showDc && <span>{t('checkVs')} {c.dc}</span>}
-                        </>
-                      )}
+                    <div className="flex flex-wrap items-baseline gap-x-1.5 pl-6 text-xs text-ink/60 tabular-nums">
+                      <span>{checkResultText(c, ev.dice, ev.result ?? c.total, showDc, t)}</span>
+                      {tier && <span className={`font-semibold ${c.success ? 'text-emerald-300' : 'text-red-300'}`}>· {tier}</span>}
                       {c.reason && <span className="min-w-0 truncate text-ink/45">· {c.reason}</span>}
                     </div>
                   </div>

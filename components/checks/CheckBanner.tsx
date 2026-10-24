@@ -5,6 +5,7 @@ import { useStorage } from '@liveblocks/react'
 import { useT } from '@/lib/useT'
 import { checkStatLabel, levelUpLabel, withStat } from '@/lib/checks'
 import { useGameSystem } from '@/lib/roomSettings'
+import { checkResultText, checkTierText } from '@/lib/checkText'
 import type { SessionEvent } from '@/components/app/hooks/useEventLog'
 
 /** Le bandeau suit l'apparition du chiffre sur le dé, puis reste quelques secondes. */
@@ -58,8 +59,9 @@ export default function CheckBanner({ isGM }: { isGM: boolean }) {
     tone = c.success ? 'success' : 'failure'
     const stat = t(checkStatLabel(c.stat, system))
     line = withStat(t(c.success ? 'checkSuccessLine' : 'checkFailureLine').replace('{n}', player), stat)
-    detail = String(c.total)
-    if (c.showDc || isGM) detail += c.under ? ` ${t('checkUnder')} ${c.dc} %` : ` ${t('checkVs')} ${c.dc}`
+    detail = checkResultText(c, last.dice, last.result ?? c.total, c.showDc || isGM, t)
+    const tier = checkTierText(c, t)
+    if (tier) line += ` · ${tier}`
     if (c.reason) detail += ` · ${c.reason}`
   } else {
     return null

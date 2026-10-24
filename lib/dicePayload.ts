@@ -66,5 +66,9 @@ export function diceSignedPayload(roomId: string, roll: Omit<SignedDiceRoll, 'si
   }
   if (!roll.check) return JSON.stringify(base)
   const c = roll.check
-  return JSON.stringify([...base, c.stat, c.mod, c.total, c.dc, c.showDc, c.success, c.reason ?? ''])
+  const fields = [...base, c.stat, c.mod, c.total, c.dc, c.showDc, c.success, c.reason ?? '']
+  // Les règles d'un test à plusieurs dés s'ajoutent seulement quand il y en a : les anciens tests restent valables.
+  if (!c.roll && !c.faces && !c.extra && !c.tier) return JSON.stringify(fields)
+  const r = c.roll ?? {}
+  return JSON.stringify([...fields, 'x', c.faces ?? [], c.extra ?? [], c.tier ?? '', r.pool ?? 0, r.adv ?? 0, r.wild ?? 0, r.count ?? 1])
 }

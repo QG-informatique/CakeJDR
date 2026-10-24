@@ -5,18 +5,18 @@ import { useBroadcastEvent, useOthers, useRoom, useStorage } from '@liveblocks/r
 import { Crown, Dices, FileText, Pencil, Sparkles, Star, Target, X } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import {
-  CHECK_DC_MAX,
   CHECK_DC_MIN,
   CHECK_MOD_RANGE,
   CHECK_REASON_MAX,
-  CHECK_THRESHOLD_MAX,
   ROLLS_MAX,
   checkStatLabel,
   signedMod,
   withStat,
   type CheckStat,
 } from '@/lib/checks'
-import { statMod } from '@/lib/modifiers'
+import { testParts } from '@/lib/modifiers'
+import { POOL_DICE_MAX, checkRules, dcMax, fromD20, rollSpec } from '@/lib/checkRules'
+import { checkDiceText } from '@/lib/checkText'
 import { DICE_TYPES } from '@/lib/dicePayload'
 import { postCheck } from '@/components/checks/postCheck'
 import AdventureLauncher from '@/components/autogm/AdventureLauncher'
@@ -418,12 +418,26 @@ function RollsForm({ targetId, targetName, character, levelUp, onDone, onLevelBy
   )
 }
 
-/** Ce que la fiche donne au test : le modificateur, ou le seuil en % d'un test sous un seuil. */
-const modFromSheet = (c: Character, stat: CheckStat, system: GameSystem) => {
-  const n = statMod(c, stat, system.modRule).total
-  return system.rollUnder
-    ? Math.max(CHECK_DC_MIN, Math.min(CHECK_THRESHOLD_MAX, n))
-    : Math.max(-CHECK_MOD_RANGE, Math.min(CHECK_MOD_RANGE, n))
+/** Dés d'une caractéristique, pour un système qui en donne un à chacune. */
+const STAT_DICE = DICE_TYPES.filter((d) => d <= 12)
+
+/**
+ * Ce que la fiche donne au test : le modificateur, le seuil en % d'un test
+ * sous un seuil, ou la taille de la réserve ; avec un dé par
+ * caractéristique, ce dé et le bonus des états cochés.
+ */
+const fromSheet = (c: Character, stat: CheckStat, system: GameSystem) => {
+  const r = checkRules(system)
+  const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, Math.round(n) || 0))
+  const { base, states } = testParts(c, stat, system)
+  if (r.statDie) {
+    const die = STAT_DICE.find((d) => d >= base) ?? STAT_DICE[STAT_DICE.length - 1]!
+    return { mod: clamp(states, -CHECK_MOD_RANGE, CHECK_MOD_RANGE), die }
+  }
+  const n = base + states
+  if (r.mode === 'under') return { mod: clamp(n, CHECK_DC_MIN, dcMax(r)), die: r.die }
+  if (r.mode === 'pool') return { mod: clamp(n, 1, POOL_DICE_MAX), die: r.die }
+  return { mod: clamp(n, -CHECK_MOD_RANGE, CHECK_MOD_RANGE), die: r.die }
 }
 
 /** Demande d'un test : caractéristique, modificateur, difficulté, et si le joueur la voit. */
@@ -436,12 +450,18 @@ function CheckForm({ targetId, targetName, character, system, onDone }: {
 }) {
   const t = useT()
   const room = useRoom()
-  const under = system.rollUnder
+  const rules = checkRules(system)
+  const under = rules.mode === 'under'
+  const pool = rules.mode === 'pool'
   const first = (system.stats[0]?.key ?? 'force') as CheckStat
+  const sheet = fromSheet(character, first, system)
   const [stat, setStat] = useState<CheckStat>(first)
   // Sous un seuil (d100), un seul nombre : le seuil, tiré de la fiche.
-  const [mod, setMod] = useState(() => (under ? '0' : String(modFromSheet(character, first, system))))
-  const [dc, setDc] = useState(() => (under ? String(modFromSheet(character, first, system)) : '10'))
+  const [mod, setMod] = useState(() => (under ? '0' : String(sheet.mod)))
+  // La difficulté par défaut : un test normal (10 au d20), dans les règles de la table.
+  const [dc, setDc] = useState(() => String(under ? sheet.mod : fromD20(rules, 0, 0, 10).dc))
+  const [die, setDie] = useState(sheet.die)
+  const [adv, setAdv] = useState<0 | 1 | -1>(0)
   const [showDc, setShowDc] = useState(false)
   const [reason, setReason] = useState('')
   const [sending, setSending] = useState(false)
@@ -449,15 +469,17 @@ function CheckForm({ targetId, targetName, character, system, onDone }: {
 
   const modNum = Math.round(Number(mod))
   const dcNum = Math.round(Number(dc))
-  const dcMax = under ? CHECK_THRESHOLD_MAX : CHECK_DC_MAX
+  const [modLo, modHi] = pool ? [1, POOL_DICE_MAX] : [-CHECK_MOD_RANGE, CHECK_MOD_RANGE]
   const valid =
-    mod.trim() !== '' && Number.isFinite(modNum) && Math.abs(modNum) <= CHECK_MOD_RANGE &&
-    Number.isFinite(dcNum) && dcNum >= CHECK_DC_MIN && dcNum <= dcMax
+    mod.trim() !== '' && Number.isFinite(modNum) && modNum >= modLo && modNum <= modHi &&
+    Number.isFinite(dcNum) && dcNum >= CHECK_DC_MIN && dcNum <= dcMax(rules)
 
   const pickStat = (next: CheckStat) => {
     setStat(next)
-    if (under) setDc(String(modFromSheet(character, next, system)))
-    else setMod(String(modFromSheet(character, next, system)))
+    const got = fromSheet(character, next, system)
+    if (under) setDc(String(got.mod))
+    else setMod(String(got.mod))
+    setDie(got.die)
   }
 
   const send = async () => {
@@ -466,7 +488,9 @@ function CheckForm({ targetId, targetName, character, system, onDone }: {
     setError(false)
     try {
       const data = await postCheck(room.id, {
-        action: 'ask', system: system.id, targetId, targetName, stat, mod: modNum, dc: dcNum, showDc, reason: reason.trim(),
+        action: 'ask', system: system.id, targetId, targetName, stat, mod: under ? 0 : modNum, dc: dcNum, showDc, reason: reason.trim(),
+        ...(adv ? { adv } : {}),
+        ...(rules.statDie ? { die } : {}),
       })
       if (data?.id && !showDc) writeHiddenDcs({ ...readHiddenDcs(), [data.id]: dcNum })
       onDone()
@@ -476,43 +500,82 @@ function CheckForm({ targetId, targetName, character, system, onDone }: {
     }
   }
 
+  const skills = system.skills ?? []
+  const columns = under ? 'grid-cols-[1fr_5rem]' : rules.statDie ? 'grid-cols-[1fr_4.5rem_4.5rem_4.5rem]' : 'grid-cols-[1fr_4.5rem_4.5rem]'
   return (
     <>
-      <div className={`grid gap-2 ${under ? 'grid-cols-[1fr_5rem]' : 'grid-cols-[1fr_4.5rem_4.5rem]'}`}>
+      <div className={`grid gap-2 ${columns}`}>
         <label className="flex min-w-0 flex-col gap-1">
           <span className="text-ink/60">{t('checkStatLabel')}</span>
           <select value={stat} onChange={(e) => pickStat(e.target.value as CheckStat)} className="ui-input w-full min-w-0 !min-h-8">
-            {system.stats.map((s) => (
-              <option key={s.key} value={s.key}>{t(s.label)}</option>
-            ))}
+            {skills.length === 0 ? (
+              system.stats.map((s) => <option key={s.key} value={s.key}>{t(s.label)}</option>)
+            ) : (
+              <>
+                <optgroup label={t('checkStatsGroup')}>
+                  {system.stats.map((s) => <option key={s.key} value={s.key}>{t(s.label)}</option>)}
+                </optgroup>
+                <optgroup label={t('checkSkillsGroup')}>
+                  {skills.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
+                </optgroup>
+              </>
+            )}
           </select>
         </label>
+        {rules.statDie && <label className="flex min-w-0 flex-col gap-1">
+          <span className="truncate text-ink/60" title={t('checkStatDie')}>{t('checkStatDie')}</span>
+          <select value={die} onChange={(e) => setDie(Number(e.target.value))} className="ui-input w-full min-w-0 !min-h-8">
+            {STAT_DICE.map((d) => <option key={d} value={d}>D{d}</option>)}
+          </select>
+        </label>}
         {!under && <label className="flex min-w-0 flex-col gap-1">
-          <span className="text-ink/60">{t('checkModLabel')}</span>
+          <span className="truncate text-ink/60" title={t(pool ? 'checkPoolDice' : 'checkModLabel')}>{t(pool ? 'checkPoolDice' : 'checkModLabel')}</span>
           <input
             type="number"
             inputMode="numeric"
             value={mod}
-            min={-CHECK_MOD_RANGE}
-            max={CHECK_MOD_RANGE}
+            min={modLo}
+            max={modHi}
             onChange={(e) => setMod(e.target.value)}
             className="ui-input w-full min-w-0 !min-h-8"
           />
         </label>}
         <label className="flex min-w-0 flex-col gap-1">
-          <span className="text-ink/60">{t(under ? 'checkThresholdLabel' : 'checkDcLabel')}</span>
+          <span className="truncate text-ink/60" title={t(under ? 'checkThresholdLabel' : pool ? 'checkPoolNeeded' : 'checkDcLabel')}>
+            {t(under ? 'checkThresholdLabel' : pool ? 'checkPoolNeeded' : 'checkDcLabel')}
+          </span>
           <input
             type="number"
             inputMode="numeric"
             value={dc}
             min={CHECK_DC_MIN}
-            max={dcMax}
+            max={dcMax(rules)}
             onChange={(e) => setDc(e.target.value)}
             className="ui-input w-full min-w-0 !min-h-8"
           />
         </label>
       </div>
-      <p className="text-[11px] text-ink/50">{t(under ? 'checkThresholdHint' : 'checkModHint')}</p>
+      <p className="text-[11px] text-ink/50">
+        {checkDiceText({ dice: rules.statDie ? die : rules.die, mod: under ? 0 : modNum || 0, under, roll: rollSpec(rules, adv) }, t)}
+        {' · '}
+        {t(under ? 'checkThresholdHint' : 'checkModHint')}
+      </p>
+      {rules.advantage && (
+        <div role="radiogroup" aria-label={t('checkAdvantage')} className="grid grid-cols-3 gap-1">
+          {([[-1, 'checkDisadvantage'], [0, 'checkNormalRoll'], [1, 'checkAdvantage']] as const).map(([v, key]) => (
+            <button
+              key={v}
+              type="button"
+              role="radio"
+              aria-checked={adv === v}
+              onClick={() => setAdv(v)}
+              className={`ui-btn !min-h-7 text-[11px] ${adv === v ? 'ui-btn-primary' : ''}`}
+            >
+              {t(key)}
+            </button>
+          ))}
+        </div>
+      )}
       <label className="flex flex-col gap-1">
         <span className="text-ink/60">{t('checkReasonLabel')}</span>
         <input

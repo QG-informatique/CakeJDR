@@ -8,7 +8,7 @@
 import type { Character } from '@/types/character'
 import type { TranslationKey } from './translations'
 import type { CheckStat } from './checks'
-import { NARRATIF } from './gameSystems'
+import { NARRATIF, type GameSystem } from './gameSystems'
 
 /** Règle de la table (`modRule` de son système, `lib/gameSystems.ts`). */
 type Rule = {
@@ -39,4 +39,25 @@ export function statMod(c: Character, stat: CheckStat, rule: Rule = NARRATIF.mod
   const bonus = num(get(`${stat}_bonus`))
   if (bonus !== 0) parts.push({ kind: 'equipment', value: bonus, from: String(get(`${stat}_bonus_from`) ?? '').trim() })
   return { value, total: parts.reduce((sum, p) => sum + p.value, 0), parts }
+}
+
+/**
+ * Ce que la fiche donne à un test, en deux parts : la caractéristique, ou la
+ * compétence (sa valeur, plus le modificateur de sa caractéristique) ; puis
+ * les états cochés (blessé, effrayé…), qui changent tous les tests.
+ */
+export function testParts(c: Character, key: CheckStat, system: GameSystem): { base: number; states: number } {
+  const get = (k: string) => Reflect.get(c, k) as unknown
+  const skill = system.skills?.find((s) => s.key === key)
+  const base = skill
+    ? (skill.stat ? statMod(c, skill.stat as CheckStat, system.modRule).total : 0) + num(get(skill.key))
+    : statMod(c, key, system.modRule).total
+  const states = (system.conditions ?? []).reduce((sum, k) => sum + (get(k.key) === true ? k.mod : 0), 0)
+  return { base, states }
+}
+
+/** Ce que la fiche donne à un test, états compris. */
+export function testMod(c: Character, key: CheckStat, system: GameSystem): number {
+  const { base, states } = testParts(c, key, system)
+  return base + states
 }

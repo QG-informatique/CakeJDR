@@ -3,7 +3,8 @@
 import { useSelf, useStorage } from '@liveblocks/react'
 import { Dices, Target } from 'lucide-react'
 import { useT } from '@/lib/useT'
-import { checkStatLabel, levelUpLabel, signedMod, withStat } from '@/lib/checks'
+import { checkStatLabel, levelUpLabel, withStat } from '@/lib/checks'
+import { checkDiceText } from '@/lib/checkText'
 import { useGameSystem } from '@/lib/roomSettings'
 
 type Props = {
@@ -63,9 +64,11 @@ export default function CheckPrompt({ onRoll, disabled, levelUpBlocked = false }
       </div>
       {check.reason && <p className="text-sm text-ink/80">{check.reason}</p>}
       <p className="text-xs text-ink/60">
-        D{check.dice ?? 20} {check.under ? '' : `${signedMod(check.mod)} `}·{' '}
+        {checkDiceText(check, t)} ·{' '}
         {check.showDc && check.dc != null
-          ? t(check.under ? 'checkPromptThreshold' : 'checkPromptDc').replace('{n}', String(check.dc))
+          ? check.roll?.pool
+            ? `${t('checkPoolNeeded')} : ${check.dc}`
+            : t(check.under ? 'checkPromptThreshold' : 'checkPromptDc').replace('{n}', String(check.dc))
           : t(check.under ? 'checkPromptThresholdHidden' : 'checkPromptDcHidden')}
         {more}
       </p>

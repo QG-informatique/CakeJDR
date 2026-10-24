@@ -1,6 +1,7 @@
 import 'server-only'
 import { createCipheriv, createDecipheriv, createHmac, randomBytes } from 'node:crypto'
 import type { CheckStat } from './checks'
+import type { RollSpec } from './checkRules'
 
 /**
  * Scellé d'une demande de test.
@@ -25,6 +26,8 @@ export type SealedCheck = {
   dice?: number
   /** Test sous un seuil (d100) : `dc` est le seuil. */
   under?: boolean
+  /** Plusieurs dés, réserve, avantage, paliers. */
+  roll?: RollSpec
   reason?: string
 }
 

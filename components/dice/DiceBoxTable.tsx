@@ -8,6 +8,7 @@ import { useT } from '@/lib/useT'
 import { LEVEL_UP_TARGETS, levelUpLabel } from '@/lib/checks'
 import { useGameSystem } from '@/lib/roomSettings'
 import { boxRoll } from '@/lib/dicePool'
+import { checkDiceList } from '@/lib/checkRules'
 import { DICE_MAX_ROLL_MS, type DiceThrow } from '@/lib/dicePayload'
 import { verifyDiceEvent } from '@/components/chat/useDiceVerification'
 import type { SessionEvent } from '@/components/app/hooks/useEventLog'
@@ -456,9 +457,13 @@ export default function DiceBoxTable({ ref, dice, disabled, onThrow, onDone }: P
         continue
       }
       if (now > ev.ts + THROW_HOLD_MS || ev.ts - now > DICE_MAX_ROLL_MS + 5000) continue
+      // Un test à plusieurs dés (somme, réserve, dé joker) rejoue chacune de ses faces.
+      const faces = ev.check?.faces
       const pool = ev.pool ?? (ev.rolls
         ? { dice: ev.rolls.results.map(() => ev.dice as number), results: ev.rolls.results }
-        : { dice: [ev.dice], results: [ev.result] })
+        : faces && ev.check
+          ? { dice: checkDiceList({ dice: ev.dice, mod: ev.check.mod, roll: ev.check.roll }), results: faces }
+          : { dice: [ev.dice], results: [ev.result] })
       void verifyDiceEvent(room.id, ev).then((check) => {
         if (check === 'unverified' || !boxRef.current) return
         const job: Job = {

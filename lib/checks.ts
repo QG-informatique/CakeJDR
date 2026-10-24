@@ -1,5 +1,6 @@
 import { ALL_STATS, NARRATIF, type D100, type GameSystem } from './gameSystems'
 import type { TranslationKey } from './translations'
+import type { CheckTier, RollSpec } from './checkRules'
 
 /**
  * Tests de caractéristique demandés par le MJ.
@@ -18,16 +19,23 @@ export const CHECK_STATS = NARRATIF.stats
 
 /**
  * Une caractéristique, de n'importe quel système (`lib/gameSystems.ts`), ou
- * ajoutée à un système de l'atelier (`s_…`, `lib/customSystem.ts`).
+ * ajoutée à un système de l'atelier (`s_…`, `lib/customSystem.ts`), ou une
+ * compétence testable d'un système de l'atelier (`k_…`).
  */
-export type CheckStat = (typeof NARRATIF.stats)[number]['key'] | (typeof D100.stats)[number]['key'] | `s_${string}`
+export type CheckStat =
+  | (typeof NARRATIF.stats)[number]['key']
+  | (typeof D100.stats)[number]['key']
+  | `s_${string}`
+  | `k_${string}`
 
 /** Clé d'une caractéristique ajoutée dans l'atelier. */
 export const CUSTOM_STAT_KEY = /^s_[a-z0-9_]{1,38}$/
+/** Clé d'une compétence testable ajoutée dans l'atelier. */
+export const CUSTOM_SKILL_KEY = /^k_[a-z0-9_]{1,38}$/
 
-/** Vrai si la caractéristique existe dans ce système. */
+/** Vrai si la caractéristique, ou la compétence testable, existe dans ce système. */
 export function isCheckStat(value: unknown, system: GameSystem = NARRATIF): value is CheckStat {
-  return system.stats.some((s) => s.key === value)
+  return system.stats.some((s) => s.key === value) || !!system.skills?.some((s) => s.key === value)
 }
 
 /**
@@ -38,9 +46,12 @@ export function isCheckStat(value: unknown, system: GameSystem = NARRATIF): valu
  * `t()` rend tel quel.
  */
 export function checkStatLabel(stat: string, system?: GameSystem): TranslationKey {
-  const label = system?.stats.find((s) => s.key === stat)?.label ?? ALL_STATS.find((s) => s.key === stat)?.label
+  const label =
+    system?.stats.find((s) => s.key === stat)?.label ??
+    system?.skills?.find((s) => s.key === stat)?.label ??
+    ALL_STATS.find((s) => s.key === stat)?.label
   if (label) return label
-  return (CUSTOM_STAT_KEY.test(stat) ? stat.slice(2).replace(/_/g, ' ') : 'strength') as TranslationKey
+  return (CUSTOM_STAT_KEY.test(stat) || CUSTOM_SKILL_KEY.test(stat) ? stat.slice(2).replace(/_/g, ' ') : 'strength') as TranslationKey
 }
 
 /** Bornes acceptées par le serveur. */
@@ -74,6 +85,8 @@ export type CheckRequest = {
   dice?: number
   /** Test sous un seuil (d100) : `dc` est le seuil, en %. */
   under?: boolean
+  /** Plusieurs dés, réserve, avantage, paliers (`lib/checkRules.ts`). */
+  roll?: RollSpec
   reason?: string
   /** Demandé par le MJ automatique : un jet de scène ou une attaque en combat. */
   auto?: AutoAsk
@@ -99,6 +112,14 @@ export type CheckOutcome = {
   /** Test sous un seuil (d100) : réussi si le dé fait au plus `dc`. */
   under?: boolean
   reason?: string
+  /** Règles du test, quand ce n'est pas un dé seul (`lib/checkRules.ts`). */
+  roll?: RollSpec
+  /** Toutes les faces posées, quand il y a plus d'un dé. */
+  faces?: number[]
+  /** Dés relancés par l'explosion. */
+  extra?: number[]
+  /** Palier : réussite partielle, critique, majeure, extrême, ou échec critique. */
+  tier?: CheckTier
 }
 
 /**

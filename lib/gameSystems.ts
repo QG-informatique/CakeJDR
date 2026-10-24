@@ -17,11 +17,33 @@
  */
 import type { TranslationKey } from './translations'
 import { DICE_TYPES } from './dicePayload'
+import type { CheckExtras } from './checkRules'
+import type { StatRole } from './statRoles'
 
 export type GameSystemId = 'narratif' | 'srd5' | 'd100'
 
-/** Champ de la fiche, avec son intitulé dans `lib/translations.ts`. */
-export type SheetField = { readonly key: string; readonly label: TranslationKey }
+/**
+ * Champ de la fiche, avec son intitulé dans `lib/translations.ts`. Une
+ * caractéristique peut dire quel rôle elle tient (`lib/statRoles.ts`), sa
+ * valeur de départ et ses bornes.
+ */
+export type SheetField = {
+  readonly key: string
+  readonly label: TranslationKey
+  readonly role?: StatRole
+  readonly start?: number
+  readonly min?: number
+  readonly max?: number
+}
+
+/** Compétence qu'on peut tester : sa valeur sur la fiche, plus le modificateur de sa caractéristique. */
+export type SheetSkill = { readonly key: string; readonly label: TranslationKey; readonly stat?: string }
+
+/** État coché sur la fiche (blessé, effrayé…), qui change tous les tests. */
+export type SheetCondition = { readonly key: string; readonly label: TranslationKey; readonly mod: number }
+
+/** Tirage des caractéristiques à la création guidée (`lib/heroCreation.ts`). */
+export type CreationMethod = '4d6' | '3d6' | '2d6+6' | '3d6x5' | 'start'
 
 /**
  * Ressource qui s'épuisent et remonte : la valeur courante (`key`) et le
@@ -69,6 +91,14 @@ export type GameSystem = {
    * Sinon, réussi si le dé plus le modificateur atteint la difficulté.
    */
   rollUnder: boolean
+  /** Règles en plus : plusieurs dés, réserve, explosion, paliers, avantage (`lib/checkRules.ts`). */
+  check?: CheckExtras
+  /** Compétences testables, en plus des caractéristiques (`k_…`). */
+  skills?: readonly SheetSkill[]
+  /** États cochés sur la fiche (`c_…`). */
+  conditions?: readonly SheetCondition[]
+  /** Tirage des caractéristiques à la création ; sans valeur, selon le système de départ. */
+  creation?: CreationMethod
   /**
    * Montée de niveau : un dé par cible, dans cet ordre. Une ressource reçoit
    * le dé sur son maximum (et sur sa valeur, sans dépasser) ; une
@@ -153,6 +183,7 @@ export const NARRATIF = {
   dice: DICE_TYPES,
   checkDie: 20,
   rollUnder: false,
+  check: { advantage: true },
   levelUp: ['pv', ...SIX_STATS.map((s) => s.key)],
   levelUpStats: 2,
 } as const satisfies GameSystem
@@ -179,6 +210,7 @@ export const SRD5 = {
   dice: DICE_TYPES,
   checkDie: 20,
   rollUnder: false,
+  check: { advantage: true },
   // On monte d'un dé de vie, que le MJ choisit selon la classe (D6 à D12) ;
   // le modificateur de Constitution s'ajoute à la main.
   levelUp: ['pv'],
@@ -226,6 +258,8 @@ export const D100 = {
   dice: DICE_TYPES,
   checkDie: 100,
   rollUnder: true,
+  // Réussites critique, extrême et majeure, échec critique.
+  check: { degrees: true },
   // Pas de niveaux : on progresse compétence par compétence, à la main.
   levelUp: [],
   license: {

@@ -1,6 +1,6 @@
 export const runtime = 'nodejs'
 
-import { randomUUID } from 'node:crypto'
+import { randomInt, randomUUID } from 'node:crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { Liveblocks } from '@liveblocks/node'
 import { LiveList, LiveMap, type Lson } from '@liveblocks/client'
@@ -11,13 +11,11 @@ import { signDiceRoll } from '@/lib/diceSigning'
 import { sealCheck, unsealCheck, type SealedCheck, type SealedRequest, type SealedRolls } from '@/lib/checkSeal'
 import { DICE_TYPES, parseDiceThrow, revealAt, type SignedDiceRoll } from '@/lib/dicePayload'
 import {
-  CHECK_DC_MAX,
   CHECK_DC_MIN,
   CHECK_DICE,
   CHECK_MOD_RANGE,
   CHECK_NAME_MAX,
   CHECK_REASON_MAX,
-  CHECK_THRESHOLD_MAX,
   ROLLS_MAX,
   isCheckStat,
   type AutoAsk,
@@ -26,8 +24,10 @@ import {
   type RollsRequest,
 } from '@/lib/checks'
 import { gameSystem, levelUpDice, type GameSystem } from '@/lib/gameSystems'
+import { POOL_DICE_MAX, checkDiceList, checkRules, dcMax, evaluate, fromD20, rollSpec } from '@/lib/checkRules'
+import { tableStat } from '@/lib/statRoles'
 import { adventureOf } from '@/lib/autoGm'
-import { isCustomAdventureId, parseCampaign } from '@/lib/autoGm/custom'
+import { parseCampaign } from '@/lib/autoGm/custom'
 import { buildSystem, parseCustomSystem } from '@/lib/customSystem'
 import type { Adventure } from '@/lib/autoGm/types'
 
@@ -53,6 +53,8 @@ const MAX_EVENTS = 2000
 const MAX_PENDING = 50
 /** Dés d'une caractéristique à la création : 4 D6 dont on garde les 3 meilleurs, au plus. */
 const CREATION_DICE_MAX = 4
+/** Faces envoyées pour un jet : la plus grande réserve de dés, ou les jets demandés. */
+const SENT_MAX = Math.max(ROLLS_MAX, POOL_DICE_MAX)
 
 function fail(msg: string, code: number) {
   return NextResponse.json({ error: msg }, { status: code })
@@ -74,16 +76,26 @@ function checksMap(root: { get(key: string): unknown; set(key: string, value: ne
 function askCheck(
   roomId: string,
   system: GameSystem,
-  b: { targetId: string; targetName: string; stat: unknown; mod: unknown; dc: unknown; showDc: unknown; reason: string },
+  b: { targetId: string; targetName: string; stat: unknown; mod: unknown; dc: unknown; showDc: unknown; reason: string; adv: unknown; die: unknown },
 ): CheckRequest | string {
   const { targetId, targetName, stat, mod, dc, showDc, reason } = b
-  const under = system.rollUnder
+  const r = checkRules(system)
+  const under = r.mode === 'under'
   if (!isCheckStat(stat, system)) return 'bad stat'
-  if (!isInt(mod, -CHECK_MOD_RANGE, CHECK_MOD_RANGE)) return 'bad mod'
+  // Une réserve de dés : le « modificateur » est le nombre de dés, la difficulté le nombre de réussites.
+  if (!isInt(mod, r.mode === 'pool' ? 1 : -CHECK_MOD_RANGE, r.mode === 'pool' ? POOL_DICE_MAX : CHECK_MOD_RANGE)) return 'bad mod'
   // Sous un seuil (d100), la « difficulté » est le seuil en %.
-  if (!isInt(dc, CHECK_DC_MIN, under ? CHECK_THRESHOLD_MAX : CHECK_DC_MAX)) return 'bad dc'
+  if (!isInt(dc, CHECK_DC_MIN, dcMax(r))) return 'bad dc'
   if (typeof showDc !== 'boolean') return 'bad showDc'
-  const dice = system.checkDie
+  const adv = b.adv === 1 || b.adv === -1 ? b.adv : 0
+  if (adv && !r.advantage) return 'bad adv'
+  // Le dé de la caractéristique (D4 à D12), quand le système en a un par caractéristique.
+  let dice = r.die
+  if (r.statDie) {
+    if (typeof b.die !== 'number' || !(DICE_TYPES as readonly number[]).includes(b.die)) return 'bad die'
+    dice = b.die
+  }
+  const roll = rollSpec(r, adv)
   const sealed: SealedCheck = {
     id: randomUUID(),
     targetId,
@@ -94,6 +106,7 @@ function askCheck(
     showDc,
     ...(dice !== CHECK_DICE ? { dice } : {}),
     ...(under ? { under } : {}),
+    ...(roll ? { roll } : {}),
     ...(reason ? { reason } : {}),
   }
   return {
@@ -106,6 +119,7 @@ function askCheck(
     ...(showDc ? { dc } : {}),
     ...(dice !== CHECK_DICE ? { dice } : {}),
     ...(under ? { under } : {}),
+    ...(roll ? { roll } : {}),
     ...(reason ? { reason } : {}),
     createdAt: Date.now(),
     seal: sealCheck(roomId, sealed),
@@ -157,24 +171,38 @@ function roomSystem(doc: RoomDoc, sent: unknown): GameSystem {
 }
 
 /**
+ * Un test écrit pour le d20 (caractéristique ou rôle, difficulté), traduit
+ * dans les règles de la table par le navigateur (`fromD20`) : la demande dit
+ * d'où elle vient (`role`, `base`), et sa caractéristique comme sa difficulté
+ * doivent en découler. Sous un seuil, le seuil dépend de la fiche : on s'en
+ * tient aux bornes.
+ */
+function asksFor(system: GameSystem, body: Record<string, unknown>, role: string, base: number): boolean {
+  if (body.role !== role || body.base !== base || body.stat !== tableStat(system, role)) return false
+  const r = checkRules(system)
+  return r.mode === 'under' || body.dc === fromD20(r, 0, 0, base).dc
+}
+
+/**
  * Jet demandé par le MJ automatique sans être MJ : permis seulement si la
  * partie en cours l'attend (le test ou l'épreuve de la scène, avec sa
  * caractéristique et sa difficulté ; une attaque du combat en cours ; ou une
  * montée de niveau pendant une partie).
  */
-function autoAskFits(auto: AutoAsk, state: AutoState, body: Record<string, unknown>): boolean {
+function autoAskFits(auto: AutoAsk, state: AutoState, body: Record<string, unknown>, system: GameSystem): boolean {
   if (auto === 'level') return body.type === 'rolls' && body.levelUp === true
   if (body.type === 'rolls') return false
   const step = state.adventure && state.scene ? adventureOf(state.adventure, state.custom)?.scenes[state.scene]?.step : undefined
   if (!step) return false
-  if (auto === 'scene') return (step.kind === 'check' || step.kind === 'trial') && body.stat === step.stat && body.dc === step.dc
+  if (auto === 'scene') return (step.kind === 'check' || step.kind === 'trial') && asksFor(system, body, step.stat, step.dc)
   // Combat : le héros visé se bat dans le combat de cette scène, contre la
   // défense d'un de ses ennemis, ou pour fuir quand la scène le permet.
   const combat = state.combat
   if (step.kind !== 'combat' || !combat || combat.visit !== state.visit) return false
   if (!Array.isArray(combat.heroes) || !combat.heroes.some((h) => h?.id === body.targetId)) return false
-  if (step.foes.some((f) => f.defense === body.dc)) return true
-  return !!step.flee && body.stat === step.flee.stat && body.dc === step.flee.dc
+  const role = typeof body.role === 'string' ? body.role : ''
+  if (step.foes.some((f) => asksFor(system, body, role, f.defense))) return true
+  return !!step.flee && asksFor(system, body, step.flee.stat, step.flee.dc)
 }
 
 /** Sans MJ, le meneur du MJ automatique peut retirer le jet de la scène ou une attaque du combat. */
@@ -237,9 +265,11 @@ export async function POST(req: NextRequest) {
     const creation = body.type === 'rolls' && body.creation === true
     const auto = AUTO_ASKS.find((a) => a === body.auto)
     const doc = await roomDoc(liveblocks, roomId)
+    // Le dé, le seuil et les règles du système de la table sont scellés avec la demande.
+    const system = roomSystem(doc, body.system)
     if (access.role !== 'gm' && !creation) {
       const state = auto ? autoState(doc) : null
-      if (!auto || !state || !autoAskFits(auto, state, body)) return fail('gm only', 403)
+      if (!auto || !state || !autoAskFits(auto, state, body, system)) return fail('gm only', 403)
     }
     if (creation) {
       const self = account ? body.targetId === account.id : String(body.targetId).startsWith('guest_')
@@ -252,14 +282,6 @@ export async function POST(req: NextRequest) {
     if (typeof targetId !== 'string' || !targetId || targetId.length > 200) return fail('bad target', 400)
     if (!targetName) return fail('bad target name', 400)
 
-    // Le dé et le seuil du système sont scellés avec la demande. Les tests et
-    // les combats des aventures toutes prêtes sont écrits pour le d20 du
-    // narratif (caractéristiques, difficultés, défenses) : ils en gardent les
-    // règles, quel que soit le système de la table. Une campagne de l'atelier
-    // est écrite pour la table qui la joue.
-    const adventure = doc?.autoGm?.adventure
-    const premade = (auto === 'scene' || auto === 'combat') && typeof adventure === 'string' && !isCustomAdventureId(adventure)
-    const system = premade ? gameSystem('narratif') : roomSystem(doc, body.system)
     let request: GmRequest
     if (body.type === 'rolls') {
       const { dice, levelUp } = body
@@ -286,7 +308,7 @@ export async function POST(req: NextRequest) {
       const rolls: RollsRequest = { ...sealed, ...(auto ? { auto } : {}), createdAt: Date.now(), seal: sealCheck(roomId, sealed) }
       request = rolls
     } else {
-      const made = askCheck(roomId, system, { targetId, targetName, stat, mod, dc, showDc, reason })
+      const made = askCheck(roomId, system, { targetId, targetName, stat, mod, dc, showDc, reason, adv: body.adv, die: body.die })
       if (typeof made === 'string') return fail(made, 400)
       request = auto ? { ...made, auto } : made
     }
@@ -314,21 +336,20 @@ export async function POST(req: NextRequest) {
   // vérifier, on s'en tient donc à l'accès à la table.
   const isTarget = (check: SealedRequest) =>
     account ? check.targetId === account.id : check.targetId.startsWith('guest_')
-  // Les faces posées doivent exister sur les dés demandés.
+  // Les faces posées doivent exister sur les dés demandés, dans l'ordre.
   const fits = (check: SealedRequest, results: unknown): results is number[] => {
-    const dice = check.type === 'rolls' ? check.dice : (check.dice ?? CHECK_DICE)
-    const count = check.type === 'rolls' ? check.count : 1
+    const dice = check.type === 'rolls' ? Array<number>(check.count).fill(check.dice) : checkDiceList(check)
     return (
       Array.isArray(results) &&
-      results.length === count &&
-      results.every((v) => isInt(v, 1, dice))
+      results.length === dice.length &&
+      results.every((v, i) => isInt(v, 1, dice[i]!))
     )
   }
 
   if (action !== 'roll') return fail('bad action', 400)
   const gesture = parseDiceThrow(body.throw)
   const sent = body.results
-  if (!Array.isArray(sent) || sent.length < 1 || sent.length > ROLLS_MAX) return fail('bad results', 400)
+  if (!Array.isArray(sent) || sent.length < 1 || sent.length > SENT_MAX) return fail('bad results', 400)
 
   // Écrits dans le rappel de `mutateStorage` : on les déclare ainsi pour que
   // TypeScript ne les croie pas toujours nuls après l'appel.
@@ -374,22 +395,25 @@ export async function POST(req: NextRequest) {
           },
         }
       } else {
-        const result = sent[0] ?? 1
-        const total = result + check.mod
+        // Les dés qui explosent sont relancés ici, au hasard du serveur.
+        const ev = evaluate(check, sent, (sides) => randomInt(1, sides + 1))
         unsigned = {
           ...base,
           dice: check.dice ?? CHECK_DICE,
-          result,
+          result: ev.result,
           check: {
             stat: check.stat,
             mod: check.mod,
-            total,
+            total: ev.total,
             dc: check.dc,
             showDc: check.showDc,
-            // Sous un seuil : réussi si le dé fait au plus le seuil.
-            success: check.under ? total <= check.dc : total >= check.dc,
+            success: ev.success,
             ...(check.under ? { under: true } : {}),
             ...(check.reason ? { reason: check.reason } : {}),
+            ...(check.roll ? { roll: check.roll } : {}),
+            ...(sent.length > 1 ? { faces: sent } : {}),
+            ...(ev.extra ? { extra: ev.extra } : {}),
+            ...(ev.tier ? { tier: ev.tier } : {}),
           },
         }
       }

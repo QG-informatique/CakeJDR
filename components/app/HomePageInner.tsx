@@ -30,6 +30,7 @@ import { useT } from '@/lib/useT'
 import { canEditSheet, useGameSystem, useRoomSettings } from '@/lib/roomSettings'
 import { heroCheckKey, heroCheckOf, type HeroCheck } from '@/lib/heroChecks'
 import { LEVEL_UP_TARGETS, type RollsOutcome } from '@/lib/checks'
+import { checkDiceList } from '@/lib/checkRules'
 import { DICE_MAX_ROLL_MS, DICE_REVEAL_DELAY_MS } from '@/lib/dicePayload'
 import { isDiceType, POOL_MAX, poolLabel, sortDice } from '@/lib/dicePool'
 import { applyLevelUp } from '@/lib/levelUp'
@@ -801,7 +802,7 @@ export default function HomePageInner() {
     return pending ? rollCheck(pending.id, sent, Boolean(pending.auto)) : rollDice(sent)
   }
   const pendingDice = pending
-    ? pending.type === 'rolls' ? Array.from({ length: pending.count }, () => pending.dice) : [pending.dice ?? 20]
+    ? pending.type === 'rolls' ? Array.from({ length: pending.count }, () => pending.dice) : checkDiceList(pending)
     : null
   const levelUpWaits = pending?.type === 'rolls' && pending.levelUp && viewedConnectionId !== null
 

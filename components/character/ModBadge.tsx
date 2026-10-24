@@ -10,6 +10,7 @@ import { signedMod, withStat, checkStatLabel, type CheckStat } from '@/lib/check
 import { statMod } from '@/lib/modifiers'
 import type { Character } from '@/types/character'
 import { GAME_SYSTEMS, type GameSystem } from '@/lib/gameSystems'
+import { checkRules } from '@/lib/checkRules'
 
 type Props = {
   character: Character
@@ -28,6 +29,7 @@ const ModBadge: FC<Props> = ({ character, stat, className = '', system = GAME_SY
   const [at, setAt] = useState<{ x: number; y: number; below: boolean } | null>(null)
   const { value, total, parts } = statMod(character, stat, system.modRule)
   const statName = t(checkStatLabel(stat, system))
+  const rules = checkRules(system)
 
   const show = () => {
     const r = ref.current?.getBoundingClientRect()
@@ -70,8 +72,15 @@ const ModBadge: FC<Props> = ({ character, stat, className = '', system = GAME_SY
         className={`cursor-help rounded px-0.5 tabular-nums underline decoration-dotted decoration-from-font underline-offset-2 ${className}`}
       >
         {/* Sous un seuil, une caractéristique pas encore remplie n'a pas de seuil ;
-            au d100, le seuil est un pourcentage. */}
-        {system.rollUnder ? (value ? `${total}${system.checkDie === 100 ? ' %' : ''}` : '—') : signedMod(total)}
+            au d100, le seuil est un pourcentage. Une réserve compte ses dés,
+            un dé par caractéristique se nomme. */}
+        {rules.mode === 'under'
+          ? (value ? `${total}${rules.die === 100 ? ' %' : ''}` : '—')
+          : rules.mode === 'pool'
+            ? `${Math.max(0, total)} D${rules.die}`
+            : rules.statDie
+              ? (value ? `D${total}` : '—')
+              : signedMod(total)}
       </button>
       {at && typeof document !== 'undefined' && createPortal(
         <div
