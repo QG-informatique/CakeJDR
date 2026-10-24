@@ -230,7 +230,7 @@
 - [x] Phase H : écrire la campagne du dragon du pack n° 2, avec ses pistes — « La Flamme sous la montagne » (`lib/autoGm/dragonCampaign.ts`)
 - [ ] Faire relire par Quentin la campagne « La Flamme sous la montagne » (textes, difficulté des jets, cinq fins)
 - [ ] Jouer une partie entière de « La Flamme sous la montagne » à plusieurs et corriger l'estimation de durée (1 h 15 annoncée)
-- [ ] Vérifier qu'un jet du MJ automatique (DD de 11 à 15) reste juste en Fantasy 5E et en Enquête d100 (le DD devient-il un seuil en % ?)
+- [x] Vérifier qu'un jet du MJ automatique (DD de 11 à 15) reste juste en Fantasy 5E et en Enquête d100 (le DD devient-il un seuil en % ?) (2026-10-24)
 - [x] Phase H : proposer « Partie libre » ou une campagne toute prête à la création d'une table
 - [x] Phase H : à la création d'une table, choisir « MJ humain » ou « MJ automatique »
 - [x] Phase H : à la création d'une table en MJ automatique, choisir la campagne (la démo ou « La Flamme sous la montagne ») et arriver directement au début de l'aventure
@@ -255,7 +255,7 @@
 - [x] Phase J : créer l'éditeur de campagne (scènes reliées, images, boutons de choix), rangé dans le compte du MJ (tables en base, avec accord)
 - [x] Phase J : à la création d'une table en MJ automatique, choisir une campagne toute prête ou une campagne créée dans l'éditeur, jouée par le MJ automatique
 - [x] Phase J : exporter et importer une campagne en fichier, puis permettre le partage entre MJ
-- [ ] Ajouter à l'éditeur de campagne les étapes combat et tirage au hasard (aujourd'hui gardées seulement si elles viennent d'un fichier importé)
+- [x] Ajouter à l'éditeur de campagne les étapes combat et tirage au hasard (aujourd'hui gardées seulement si elles viennent d'un fichier importé) (2026-10-24)
 - [ ] Supprimer de Cloudinary les images d'une campagne quand le MJ la supprime ou change d'image (aujourd'hui protégées, donc jamais nettoyées)
 - [ ] Tester l'atelier avec un second compte : lien de partage, « Copier dans mon atelier », table créée avec le système et la campagne d'un autre MJ
 - [ ] Tester « Charger une de mes campagnes » dans le panneau MJ sur une table sans aventure en cours, en MJ humain puis en MJ automatique
@@ -422,29 +422,30 @@
 - [x] Atelier, systèmes de jeu : pouvoir ajouter et enlever chaque élément (caractéristiques, ressources, compétences, attaques, et toute autre liste), y compris ceux du modèle de départ — plus les règles des tests : dé, au-dessus ou sous un seuil, modificateur, niveaux (2026-10-24)
 - [ ] Tester à une table un système de l'atelier avec une caractéristique ajoutée et un dé changé : test du MJ, bulle du modificateur, résultat dans le chat, montée de niveau
 - [x] Comparer l'atelier aux systèmes officiels connus et lister ce qui manque (2026-10-24) : déjà possible, D&D 5E et Call of Cthulhu dans les grandes lignes (d20 + modificateur ou d100 sous le seuil, PV, sorts et santé mentale en ressources) ; ce qui manque est listé dessous
-- [ ] Atelier : permettre un test à plusieurs dés additionnés (2d6 de Powered by the Apocalypse, 3d6 de GURPS), au lieu d'un seul dé
-- [ ] Atelier : permettre les réserves de dés qui comptent les réussites (Vampire, Shadowrun : autant de d10 que la caractéristique, réussite à 6 ou plus)
-- [ ] Atelier : permettre des paliers de réussite (6- / 7-9 / 10+ de Powered by the Apocalypse, réussite difficile ou extrême de Call of Cthulhu, critique à ±10 de Pathfinder 2)
-- [ ] Atelier : permettre l'avantage et le désavantage (deux dés, on garde le meilleur ou le pire) dans les tests du MJ (D&D 5E, dés bonus et malus de Call of Cthulhu)
-- [ ] Atelier : permettre les dés qui explosent et un dé par caractéristique (Savage Worlds : Force d8, Agilité d6, plus le dé joker)
-- [ ] Atelier : permettre de tester une compétence (valeur en % de Call of Cthulhu et Warhammer, compétence liée à une caractéristique + bonus de maîtrise de D&D 5E), pas seulement une caractéristique
-- [ ] Atelier : ajouter des états sur la fiche (empoisonné, à terre, effrayé…), à cocher par le MJ
-- [ ] Atelier : laisser le système fixer la valeur de départ et le maximum des caractéristiques (3 à 18, 1 à 5, 0 à 100), aujourd'hui libres
-- [ ] Atelier, campagnes : lier une campagne à un système de jeu, pour que ses tests proposent les caractéristiques de ce système (aujourd'hui seulement celles des systèmes tout prêts)
+- [x] Atelier : permettre un test à plusieurs dés additionnés (2d6 de Powered by the Apocalypse, 3d6 de GURPS), au lieu d'un seul dé (2026-10-24)
+- [x] Atelier : permettre les réserves de dés qui comptent les réussites (Vampire, Shadowrun : autant de d10 que la caractéristique, réussite à 6 ou plus) (2026-10-24)
+- [x] Atelier : permettre des paliers de réussite (6- / 7-9 / 10+ de Powered by the Apocalypse, réussite difficile ou extrême de Call of Cthulhu, critique à ±10 de Pathfinder 2) (2026-10-24)
+- [x] Atelier : permettre l'avantage et le désavantage (deux dés, on garde le meilleur ou le pire) dans les tests du MJ (D&D 5E, dés bonus et malus de Call of Cthulhu) (2026-10-24)
+- [x] Atelier : permettre les dés qui explosent et un dé par caractéristique (Savage Worlds : Force d8, Agilité d6, plus le dé joker) (2026-10-24)
+- [x] Atelier : permettre de tester une compétence (valeur en % de Call of Cthulhu et Warhammer, compétence liée à une caractéristique + bonus de maîtrise de D&D 5E), pas seulement une caractéristique (2026-10-24)
+- [x] Atelier : ajouter des états sur la fiche (empoisonné, à terre, effrayé…), à cocher par le MJ (2026-10-24)
+- [x] Atelier : laisser le système fixer la valeur de départ et le maximum des caractéristiques (3 à 18, 1 à 5, 0 à 100), aujourd'hui libres (2026-10-24)
+- [x] Atelier, campagnes : lier une campagne à un système de jeu, pour que ses tests proposent les caractéristiques de ce système (aujourd'hui seulement celles des systèmes tout prêts) (2026-10-24)
 - [x] Atelier, campagnes : vérifier qu'avec les options actuelles le MJ automatique peut faire tourner une campagne créée par un joueur de bout en bout (2026-10-24) : oui pour le récit, les votes, les jets d'une caractéristique, les fins, la carte, la rencontre montrée en grand, la musique et l'XP (gagnée à chaque scène et à la fin) ; ce qui manque est listé dessous
-- [ ] Atelier, campagnes : ajouter les combats au tour par tour (ennemis, PV, défense, attaque, dégâts, fuite)
-- [ ] Atelier, campagnes : ajouter les épreuves en plusieurs jets (réussites demandées, essais, issue moyenne)
-- [ ] Atelier, campagnes : ajouter le butin, les dégâts et les soins à l'arrivée dans une scène
-- [ ] Atelier, campagnes : ajouter les choix et les tirages qui dépendent d'un indice déjà trouvé (« seulement si », « sauf si »)
-- [ ] Atelier, campagnes : ajouter les pions posés sur le plateau, le genre d'action d'un jet (bonus d'historique) et le petit détail d'un choix
-- [ ] Atelier, campagnes : proposer le tirage au hasard dans l'éditeur (il ne vient aujourd'hui que d'un fichier importé)
+- [x] Atelier, campagnes : ajouter les combats au tour par tour (ennemis, PV, défense, attaque, dégâts, fuite) (2026-10-24)
+- [x] Atelier, campagnes : ajouter les épreuves en plusieurs jets (réussites demandées, essais, issue moyenne) (2026-10-24)
+- [x] Atelier, campagnes : ajouter le butin, les dégâts et les soins à l'arrivée dans une scène (2026-10-24)
+- [x] Atelier, campagnes : ajouter les choix et les tirages qui dépendent d'un indice déjà trouvé (« seulement si », « sauf si ») (2026-10-24)
+- [x] Atelier, campagnes : ajouter les pions posés sur le plateau, le genre d'action d'un jet (bonus d'historique) et le petit détail d'un choix (2026-10-24)
+- [x] Atelier, campagnes : proposer le tirage au hasard dans l'éditeur (il ne vient aujourd'hui que d'un fichier importé) (2026-10-24)
 - [x] Vérifier que le MJ automatique s'adapte au système choisi pour la table (2026-10-24) : la Fantasy 5E marche en entier (mêmes six caractéristiques, même calcul) ; les tests et les combats des aventures toutes prêtes restent maintenant en d20 narratif sur toute table (le serveur appliquait le dé de la table) ; ce qui casse encore sur une table en d100 ou d'un système de l'atelier qui retire des caractéristiques est listé dessous
-- [ ] MJ automatique, aventures toutes prêtes sur une table en d100 ou d'un système de l'atelier : calculer le bonus des tests et des attaques sur une caractéristique que la fiche n'a pas (Sagesse en d100 donne aujourd'hui −5), par exemple avec une table de correspondance (Sagesse → Pouvoir)
-- [ ] MJ automatique : adapter les actions de combat des classes (`lib/autoGm/combatActions.ts`) aux caractéristiques du système de la table
-- [ ] MJ automatique : adapter la création guidée et les héros tout prêts (caractéristiques du narratif) à un système de l'atelier
+- [x] MJ automatique, aventures toutes prêtes sur une table en d100 ou d'un système de l'atelier : calculer le bonus des tests et des attaques sur une caractéristique que la fiche n'a pas (Sagesse en d100 donne aujourd'hui −5), par exemple avec une table de correspondance (Sagesse → Pouvoir) (2026-10-24)
+- [x] MJ automatique : adapter les actions de combat des classes (`lib/autoGm/combatActions.ts`) aux caractéristiques du système de la table (2026-10-24)
+- [x] MJ automatique : adapter la création guidée et les héros tout prêts (caractéristiques du narratif) à un système de l'atelier (2026-10-24)
 - [ ] Décider avec Quentin : limiter le MJ automatique des aventures toutes prêtes au Narratif et à la Fantasy 5E (le proposer seulement pour ces systèmes à la création de la salle), ou l'adapter à chaque système
 - [x] Mettre à jour « La fournée maudite » (campagne de test, environ 15 min) avec tout ce qui existe maintenant (2026-10-24) : combat des levains et combat de chef contre le Golem (sons de combat d'office), épreuve en plusieurs jets pour l'odeur alléchante, potion de soin et fiole de feu en butin, musique de la boutique et de la cave, XP assez pour monter d'un niveau en gagnant les deux combats, cinquième fin si le Golem gagne
-- [ ] Jouer « La fournée maudite » en entier avec un compte joueur : les deux combats, l'épreuve, la potion et la fiole de feu en combat, la musique de chaque lieu, la montée de niveau à la fin ; régler PV et défense du Golem s'il est trop dur seul
+- [ ] Jouer la nouvelle « La fournée maudite » en entier avec un compte joueur (trois chapitres, trois combats dont la Levain-mère, tirages de la réserve et du couloir, retour au comptoir) : mesurer la durée réelle (environ 30 min annoncées), régler PV et défense de la Levain-mère et du Golem, vérifier la montée de niveau à la fin
+- [ ] Jouer une campagne de l'atelier liée à un système perso à réserve de dés ou à plusieurs dés (2d6, d10 qui comptent les réussites) en MJ automatique : tests, combats, épreuves, butin
 - [x] Rendre le thème « Nocturne » vraiment différent d'« Ardoise » : bleu nuit, ciel étoilé, accent or de lune, MJ en violet (2026-10-24)
 - [x] Adoucir le thème clair « Papier & Sauge » : papier écru au lieu de blanc, champs et panneaux assombris (2026-10-24)
 - [x] MJ automatique : retirer les choix cliquables posés sur l'image de scène et le bouton « Fermer pour tous » ; chacun ferme l'image pour lui, les choix se font dans le récit à droite (le bouton reste pour une image montrée à la main par un MJ humain)

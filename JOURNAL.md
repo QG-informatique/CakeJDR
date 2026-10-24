@@ -1,5 +1,13 @@
 # Journal
 
+## 2026-10-24 — MJ automatique sur tous les systèmes, atelier complet, démo d'une demi-heure
+- Tests du MJ automatique traduits dans les règles de la table (d100 réparé : seuil en %, critiques d'après le palier), héros tout prêts et création guidée dans les caractéristiques du système (`lib/autoGm/tableCheck.ts`, `lib/heroCreation.ts`)
+- Atelier, systèmes : plusieurs dés, réserves, explosions, dé joker, avantage, paliers, compétences, états, bornes des caractéristiques (`lib/checkRules.ts`, `lib/customSystem.ts`)
+- Atelier, campagnes : combats, épreuves, tirages, « seulement si / sauf si », pions, butin, dégâts et soins, campagne liée à un système (`components/atelier/CampaignEditor.tsx`)
+- « La fournée maudite » en trois chapitres : réserve et couloir tirés au hasard, retour au comptoir, combat de la Levain-mère avant le Golem, trois combats en tout (`lib/autoGm/cakeDemo.ts`, version anglaise)
+- Estimation de durée : un retour en arrière n'est plus compté pour rien (`lib/autoGm/duration.ts`) ; la démo passe à 20–45 min, environ 30 en moyenne
+Reste ouvert : jouer la nouvelle démo en entier et régler la Levain-mère et le Golem
+
 ## 2026-10-24 — Atelier complet, MJ automatique sur les autres systèmes, « La fournée maudite » remise à niveau
 - Thèmes Nocturne (bleu nuit, étoiles, or de lune) et Papier & Sauge (papier écru) retouchés ; choix et « Fermer pour tous » retirés de l'image de scène
 - Atelier, systèmes : caractéristiques et attaques ajoutables et retirables, règles des tests au choix (dé, sous un seuil, modificateur, niveaux) ; le serveur relit le système de la table (`lib/customSystem.ts`, `app/api/check/route.ts`)

@@ -2,8 +2,8 @@ import type { Adventure, Scene } from './types'
 
 /**
  * Durée d'une aventure, estimée d'après ses scènes : le temps de lire le
- * récit, de voter, de lancer les dés. Les longueurs viennent de la démo, qui
- * se joue en dix à quinze minutes.
+ * récit, de voter, de lancer les dés. Les longueurs viennent de la première
+ * démo, qui se jouait en dix à quinze minutes.
  */
 
 /** Minutes passées dans une scène, hors de ce qui suit. */
@@ -37,19 +37,27 @@ export type Duration ={ min: number; max: number; average: number }
 /**
  * Chemin le plus court, le plus long, et la moyenne en jouant au hasard :
  * chaque option du vote aussi probable, un jet sur deux réussi, les tirages
- * selon leur poids. Une scène déjà sur le chemin compte pour rien (pas de
- * boucle infinie).
+ * selon leur poids. Un choix qui ramène à une scène déjà sur le chemin (le
+ * retour au comptoir d'où l'on repart) est laissé de côté : compté pour
+ * rien, il ferait croire à une partie éclair.
  */
 export function estimateDuration(adventure: Adventure): Duration {
   const memo = new Map<string, Duration>()
   const visiting = new Set<string>()
-  const zero: Duration = { min: 0, max: 0, average: 0 }
+  // Vrai quand le dernier calcul a croisé une scène encore sur le chemin : il
+  // ne vaut que depuis ce chemin, on ne le garde pas en mémoire.
+  let looped = false
 
-  const walk = (id: string): Duration => {
+  /** `null` : la scène ne fait que ramener en arrière. */
+  const walk = (id: string): Duration | null => {
     const known = memo.get(id)
     if (known) return known
     const scene = adventure.scenes[id]
-    if (!scene || visiting.has(id)) return zero
+    if (!scene) return { min: 0, max: 0, average: 0 }
+    if (visiting.has(id)) {
+      looped = true
+      return null
+    }
     visiting.add(id)
     const step = scene.step
     let branches: { next: string; weight: number }[]
@@ -61,8 +69,17 @@ export function estimateDuration(adventure: Adventure): Duration {
       branches = [step.best, step.middle, step.fail].filter((n): n is string => !!n).map((next) => ({ next, weight: 1 }))
     else if (step.kind === 'random') branches = step.outcomes.map((o) => ({ next: o.next, weight: o.weight ?? 1 }))
     else branches = []
-    const after = branches.map((b) => ({ ...walk(b.next), weight: b.weight }))
+    let anyLoop = false
+    const after: (Duration & { weight: number })[] = []
+    for (const b of branches) {
+      looped = false
+      const d = walk(b.next)
+      if (looped) anyLoop = true
+      if (d) after.push({ ...d, weight: b.weight })
+    }
     visiting.delete(id)
+    looped = anyLoop
+    if (branches.length > 0 && after.length === 0) return null
     const own = sceneMinutes(scene)
     const total = after.reduce((sum, b) => sum + b.weight, 0)
     const result: Duration =
@@ -73,11 +90,11 @@ export function estimateDuration(adventure: Adventure): Duration {
             max: own + Math.max(...after.map((b) => b.max)),
             average: own + after.reduce((sum, b) => sum + b.average * b.weight, 0) / total,
           }
-    memo.set(id, result)
+    if (!anyLoop) memo.set(id, result)
     return result
   }
 
-  return walk(adventure.start)
+  return walk(adventure.start) ?? { min: 0, max: 0, average: 0 }
 }
 
 /** « 15 min », « 2 h », « 2 h 30 », arrondi au quart d'heure au-delà d'une heure. */
