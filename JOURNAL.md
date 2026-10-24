@@ -1,5 +1,13 @@
 # Journal
 
+## 2026-10-24 — Atelier complet, MJ automatique sur les autres systèmes, « La fournée maudite » remise à niveau
+- Thèmes Nocturne (bleu nuit, étoiles, or de lune) et Papier & Sauge (papier écru) retouchés ; choix et « Fermer pour tous » retirés de l'image de scène
+- Atelier, systèmes : caractéristiques et attaques ajoutables et retirables, règles des tests au choix (dé, sous un seuil, modificateur, niveaux) ; le serveur relit le système de la table (`lib/customSystem.ts`, `app/api/check/route.ts`)
+- Comparaison avec D&D 5E, Call of Cthulhu, PbtA, GURPS, Vampire, Savage Worlds : ce qui manque est listé au TODO
+- Bilan du MJ automatique : les aventures toutes prêtes gardent le d20 du narratif sur toute table (le serveur appliquait le dé de la table) ; les campagnes de l'atelier gardent celui de leur table ; ce qui casse encore en d100 et ce qui manque aux campagnes est au TODO
+- « La fournée maudite » : deux combats au tour par tour, une épreuve en plusieurs jets, potion et fiole de feu en butin, musique de la boutique et de la cave, une cinquième fin (`lib/autoGm/cakeDemo.ts` et sa version anglaise)
+Reste ouvert : jouer « La fournée maudite » en entier, décider si le MJ automatique se limite au Narratif et à la Fantasy 5E
+
 ## 2026-10-23 — Retours de Quentin notés (atelier, MJ automatique, thèmes)
 - Nouvelle section du TODO : atelier plus complet (ajouter et enlever chaque élément, pouvoir recréer un système officiel), campagnes de l'atelier jouables par le MJ automatique, MJ automatique adapté aux autres systèmes
 - « La fournée maudite » à remettre à niveau (combat, musique, XP), Nocturne à différencier d'Ardoise, Papier & Sauge à rendre moins blanc

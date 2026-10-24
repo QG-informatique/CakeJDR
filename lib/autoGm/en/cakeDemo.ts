@@ -3,7 +3,7 @@ import type { AdventureText } from '../types'
 /** « La fournée maudite » en anglais (`lib/autoGm/cakeDemo.ts`). */
 export const CAKE_DEMO_EN: AdventureText = {
   title: 'The Cursed Batch',
-  pitch: 'A short ten-minute adventure with Cake, the baker mage. The automatic GM tells the story, you choose and you roll the dice.',
+  pitch: 'A short fifteen-minute adventure with Cake, the baker mage. The automatic GM tells the story, you choose, you roll the dice and you fight.',
   scenes: {
     alerte: {
       title: 'The alarm',
@@ -35,6 +35,7 @@ export const CAKE_DEMO_EN: AdventureText = {
       narration: [
         'Mila cracks: "I opened your spellbook… I relit the old cellar oven to make the bread that rises by itself. It went wrong."',
         'She hands you a small pouch: "Blessed salt. Your grandmother used to say it calms the starters. And if we put out the oven, maybe the magic stops."',
+        'She rummages under the counter and adds a pink vial: "A healing potion. Just in case."',
       ],
       clues: {
         sel: "Grandmother's blessed salt calms the starters.",
@@ -57,7 +58,7 @@ export const CAKE_DEMO_EN: AdventureText = {
       clues: { faim: 'The starters only bite because they are hungry.' },
       prompt: 'How do you get past the starters?',
       options: {
-        attaque: 'Attack them with Blazing Batch',
+        attaque: 'Fight them',
         leurre: 'Lure them away with Tempting Scent',
         sel: "Throw Mila's blessed salt at them",
       },
@@ -66,15 +67,15 @@ export const CAKE_DEMO_EN: AdventureText = {
       },
     },
     combat_levains: {
-      title: 'Blazing Batch',
-      narration: ['You conjure a scorching brioche between your hands and aim at the first starter.'],
-      prompt: 'Hit the starters with your spell.',
-      reason: 'Blazing Batch on the starters',
+      title: 'The starters attack',
+      narration: ['Both starters puff up, rear and charge at you, snapping their dough.'],
+      prompt: 'Fight the hungry starters.',
+      foes: { 'levain-1': 'Hungry starter', 'levain-2': 'Greedy starter' },
     },
     leurre: {
       title: 'Tempting Scent',
       narration: ['You snap your fingers: a delicious smell of warm croissant drifts toward the far corner of the cellar.'],
-      prompt: 'Send the scent to the right spot.',
+      prompt: 'Send the scent to the right spot: you need two successes.',
       reason: 'Tempting Scent to lure the starters',
     },
     sel_levains: {
@@ -87,7 +88,10 @@ export const CAKE_DEMO_EN: AdventureText = {
     },
     levains_vaincus: {
       title: 'Starters defeated',
-      narration: ['The brioche bursts into golden sparks. Both starters melt into small lukewarm puddles.'],
+      narration: [
+        'The last starter collapses into a small lukewarm puddle. Nothing moves anymore.',
+        'Between two flour sacks, you find a fire flask from your own supplies: it could come in handy.',
+      ],
       label: 'Head toward the glow',
     },
     levains_contournes: {
@@ -103,6 +107,14 @@ export const CAKE_DEMO_EN: AdventureText = {
       ],
       label: 'Head toward the glow',
     },
+    levains_ko: {
+      title: 'Stuck in dough',
+      narration: [
+        'The starters knock you over and smother you in sticky dough. You end up on the floor in the flour, out of breath.',
+        'Full at last, they fall asleep on top of you. You wriggle free, drink a sip of water and get a little strength back.',
+      ],
+      label: 'Head toward the glow',
+    },
     golem: {
       title: 'The Burnt Crumb Golem',
       narration: [
@@ -115,31 +127,17 @@ export const CAKE_DEMO_EN: AdventureText = {
       show: 'Burnt Crumb Golem',
       prompt: 'What do you do against the Golem?',
       options: {
-        combat: 'Attack it with your rolling pin',
+        combat: 'Attack it head-on',
         parler: 'Talk to it, baker to bread',
         four: 'Sneak to the oven and put it out',
       },
     },
     golem_combat: {
-      title: 'Rolling pin strike',
-      narration: ['You grab your rolling pin and charge at the Golem.'],
-      prompt: 'Hit the Golem in the right spot.',
-      reason: 'Rolling pin strike on the Golem',
-    },
-    golem_riposte: {
-      title: 'The Golem strikes back',
-      narration: ['The rolling pin bounces off the crust. The Golem sweeps you aside with a backhand of burning crumb: you lose 4 HP.'],
-      prompt: "It's coming at you again!",
-      options: {
-        glacage: 'Cover yourself in a Protective Glaze and strike again',
-        fuite: 'Run back upstairs',
-      },
-    },
-    golem_glacage: {
-      title: 'Protective Glaze',
-      narration: ['A shell of icing sugar hardens on your shoulders. You raise your rolling pin one last time.'],
-      prompt: 'The decisive blow.',
-      reason: 'Last strike under the Protective Glaze',
+      title: 'Fighting the Golem',
+      narration: ['The Golem raises its fists of burnt crust. The cellar floor shakes with every step it takes.'],
+      gmNotes: "A boss fight: Mila's potion and the starters' fire flask come in handy here. Fleeing leads back to the shop.",
+      prompt: 'Bring the Golem down.',
+      foes: { golem: 'Burnt Crumb Golem' },
     },
     golem_parler: {
       title: 'Talking to the Golem',
@@ -184,6 +182,14 @@ export const CAKE_DEMO_EN: AdventureText = {
         'Down below, the Golem is still rumbling. You will have to come back, better prepared… To be continued!',
       ],
       end: 'The Golem waits below',
+    },
+    fin_ko: {
+      title: 'Saved by Mila',
+      narration: [
+        'Everything goes dark. When you open your eyes again, Mila is dragging you up the stairs by your apron, and she slams the cellar trapdoor shut.',
+        'Down below, the Golem is still rumbling. Mila hands you a cup of hot chocolate: "We\'ll go back together." To be continued!',
+      ],
+      end: 'The Golem won… this time',
     },
   },
 }

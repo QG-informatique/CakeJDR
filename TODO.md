@@ -431,9 +431,20 @@
 - [ ] Atelier : ajouter des états sur la fiche (empoisonné, à terre, effrayé…), à cocher par le MJ
 - [ ] Atelier : laisser le système fixer la valeur de départ et le maximum des caractéristiques (3 à 18, 1 à 5, 0 à 100), aujourd'hui libres
 - [ ] Atelier, campagnes : lier une campagne à un système de jeu, pour que ses tests proposent les caractéristiques de ce système (aujourd'hui seulement celles des systèmes tout prêts)
-- [ ] Atelier, campagnes : vérifier qu'avec les options actuelles le MJ automatique peut faire tourner une campagne créée par un joueur de bout en bout, et lister les options qui manquent (combats, épreuves en plusieurs jets, butin, XP, musique, images, fins)
-- [ ] Vérifier que le MJ automatique s'adapte au système choisi pour la table (Fantasy 5E, Enquête d100 ou système de l'atelier) et pas seulement au Narratif CakeJDR : jets demandés, caractéristiques, combat, montée de niveau ; noter ce qui casse
-- [ ] Mettre à jour « La fournée maudite » (campagne de test, environ 15 min) avec tout ce qui existe maintenant : combat au tour par tour, musiques d'ambiance, sons de combat, épreuves en plusieurs jets, butin, XP et montée de niveau
+- [x] Atelier, campagnes : vérifier qu'avec les options actuelles le MJ automatique peut faire tourner une campagne créée par un joueur de bout en bout (2026-10-24) : oui pour le récit, les votes, les jets d'une caractéristique, les fins, la carte, la rencontre montrée en grand, la musique et l'XP (gagnée à chaque scène et à la fin) ; ce qui manque est listé dessous
+- [ ] Atelier, campagnes : ajouter les combats au tour par tour (ennemis, PV, défense, attaque, dégâts, fuite)
+- [ ] Atelier, campagnes : ajouter les épreuves en plusieurs jets (réussites demandées, essais, issue moyenne)
+- [ ] Atelier, campagnes : ajouter le butin, les dégâts et les soins à l'arrivée dans une scène
+- [ ] Atelier, campagnes : ajouter les choix et les tirages qui dépendent d'un indice déjà trouvé (« seulement si », « sauf si »)
+- [ ] Atelier, campagnes : ajouter les pions posés sur le plateau, le genre d'action d'un jet (bonus d'historique) et le petit détail d'un choix
+- [ ] Atelier, campagnes : proposer le tirage au hasard dans l'éditeur (il ne vient aujourd'hui que d'un fichier importé)
+- [x] Vérifier que le MJ automatique s'adapte au système choisi pour la table (2026-10-24) : la Fantasy 5E marche en entier (mêmes six caractéristiques, même calcul) ; les tests et les combats des aventures toutes prêtes restent maintenant en d20 narratif sur toute table (le serveur appliquait le dé de la table) ; ce qui casse encore sur une table en d100 ou d'un système de l'atelier qui retire des caractéristiques est listé dessous
+- [ ] MJ automatique, aventures toutes prêtes sur une table en d100 ou d'un système de l'atelier : calculer le bonus des tests et des attaques sur une caractéristique que la fiche n'a pas (Sagesse en d100 donne aujourd'hui −5), par exemple avec une table de correspondance (Sagesse → Pouvoir)
+- [ ] MJ automatique : adapter les actions de combat des classes (`lib/autoGm/combatActions.ts`) aux caractéristiques du système de la table
+- [ ] MJ automatique : adapter la création guidée et les héros tout prêts (caractéristiques du narratif) à un système de l'atelier
+- [ ] Décider avec Quentin : limiter le MJ automatique des aventures toutes prêtes au Narratif et à la Fantasy 5E (le proposer seulement pour ces systèmes à la création de la salle), ou l'adapter à chaque système
+- [x] Mettre à jour « La fournée maudite » (campagne de test, environ 15 min) avec tout ce qui existe maintenant (2026-10-24) : combat des levains et combat de chef contre le Golem (sons de combat d'office), épreuve en plusieurs jets pour l'odeur alléchante, potion de soin et fiole de feu en butin, musique de la boutique et de la cave, XP assez pour monter d'un niveau en gagnant les deux combats, cinquième fin si le Golem gagne
+- [ ] Jouer « La fournée maudite » en entier avec un compte joueur : les deux combats, l'épreuve, la potion et la fiole de feu en combat, la musique de chaque lieu, la montée de niveau à la fin ; régler PV et défense du Golem s'il est trop dur seul
 - [x] Rendre le thème « Nocturne » vraiment différent d'« Ardoise » : bleu nuit, ciel étoilé, accent or de lune, MJ en violet (2026-10-24)
 - [x] Adoucir le thème clair « Papier & Sauge » : papier écru au lieu de blanc, champs et panneaux assombris (2026-10-24)
 - [x] MJ automatique : retirer les choix cliquables posés sur l'image de scène et le bouton « Fermer pour tous » ; chacun ferme l'image pour lui, les choix se font dans le récit à droite (le bouton reste pour une image montrée à la main par un MJ humain)

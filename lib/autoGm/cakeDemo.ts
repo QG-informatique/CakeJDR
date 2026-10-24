@@ -3,9 +3,12 @@ import type { Adventure, ScenePiece } from './types'
 /**
  * La petite aventure de Cake, jouée dans la salle de démonstration.
  *
- * Dix à quinze minutes, avec le set « Cake » du pack n° 2 : Mila donne
- * l'alerte, la cave et ses levains affamés, puis le Golem de Mie Brûlée.
- * Quatre fins, selon les choix et les dés.
+ * Un quart d'heure environ, avec le set « Cake » du pack n° 2 : Mila donne
+ * l'alerte, la cave et ses levains affamés, puis le Golem de Mie Brûlée. Elle
+ * montre ce que sait faire le MJ automatique : votes, jets, une épreuve en
+ * plusieurs jets, deux combats au tour par tour, du butin utilisable en
+ * combat, la musique de chaque lieu et assez d'XP pour monter de niveau.
+ * Cinq fins, selon les choix et les dés.
  */
 
 // Positions reprises de `scripts/install-demo-cake.mjs` : près du centre, le
@@ -22,7 +25,7 @@ const CAVE = 'cave-farine'
 export const CAKE_DEMO: Adventure = {
   id: 'cake-demo',
   title: 'La fournée maudite',
-  pitch: "Une petite aventure de dix minutes avec Cake, le pâtissier mage. Le MJ automatique raconte, tu choisis et tu lances les dés.",
+  pitch: "Une petite aventure d'un quart d'heure avec Cake, le pâtissier mage. Le MJ automatique raconte, tu choisis, tu lances les dés et tu te bats.",
   start: 'alerte',
   scenes: {
     alerte: {
@@ -70,6 +73,7 @@ export const CAKE_DEMO: Adventure = {
       id: 'mila_aveu',
       title: 'Les aveux de Mila',
       gains: ['sel', 'four'],
+      loot: [{ fr: 'Potion de soin', en: 'Healing potion' }],
       clues: [
         { id: 'sel', text: 'Le sel bénit de la grand-mère calme les levains.' },
         { id: 'four', text: "Mila a rallumé le vieux four de la cave : l'éteindre arrêterait peut-être la magie." },
@@ -77,6 +81,7 @@ export const CAKE_DEMO: Adventure = {
       narration: [
         "Mila craque : « J'ai ouvert ton grimoire… J'ai rallumé le vieux four de la cave pour faire le pain qui se lève tout seul. Ça a raté. »",
         "Elle te tend un petit sachet : « Du sel bénit. Ta grand-mère disait que ça calme les levains. Et si on éteint le four, la magie s'arrête peut-être. »",
+        'Elle fouille sous le comptoir et ajoute une fiole rose : « Une potion de soin. Au cas où. »',
       ],
       step: { kind: 'continue', next: 'cave', label: 'Descendre à la cave' },
     },
@@ -105,7 +110,7 @@ export const CAKE_DEMO: Adventure = {
         kind: 'vote',
         prompt: 'Comment passes-tu les levains ?',
         options: [
-          { id: 'attaque', label: 'Les attaquer avec Fournée ardente', next: 'combat_levains' },
+          { id: 'attaque', label: 'Les combattre', next: 'combat_levains' },
           { id: 'leurre', label: 'Les attirer ailleurs avec Odeur alléchante', next: 'leurre', note: 'les levains reniflent déjà dans ta direction' },
           { id: 'sel', label: 'Leur jeter le sel bénit de Mila', next: 'sel_levains', needs: 'sel' },
         ],
@@ -114,17 +119,17 @@ export const CAKE_DEMO: Adventure = {
 
     combat_levains: {
       id: 'combat_levains',
-      title: 'Fournée ardente',
-      narration: ['Tu fais naître une brioche brûlante entre tes mains et tu vises le premier levain.'],
+      title: 'Les levains attaquent',
+      narration: ['Les deux levains se gonflent, se dressent et foncent sur toi en claquant de la pâte.'],
       step: {
-        kind: 'check',
-        prompt: 'Touche les levains avec ton sort.',
-        stat: 'intelligence',
-        dc: 11,
-        reason: 'Fournée ardente sur les levains',
-        action: 'savoir',
-        success: 'levains_vaincus',
-        failure: 'levains_mordent',
+        kind: 'combat',
+        prompt: 'Combats les levains affamés.',
+        foes: [
+          { id: 'levain-1', name: 'Levain affamé', hp: 4, defense: 10, attack: 2, damage: '1d4', piece: levain1.id },
+          { id: 'levain-2', name: 'Levain glouton', hp: 3, defense: 10, attack: 2, damage: '1d4', piece: levain2.id },
+        ],
+        victory: 'levains_vaincus',
+        defeat: 'levains_ko',
       },
     },
 
@@ -133,14 +138,16 @@ export const CAKE_DEMO: Adventure = {
       title: 'Odeur alléchante',
       narration: ["Tu claques des doigts : une délicieuse odeur de croissant chaud flotte vers le coin opposé de la cave."],
       step: {
-        kind: 'check',
-        prompt: "Dirige l'odeur au bon endroit.",
+        kind: 'trial',
+        prompt: "Dirige l'odeur au bon endroit : il faut deux réussites.",
         stat: 'sagesse',
         dc: 10,
         reason: 'Odeur alléchante pour attirer les levains',
         action: 'ruse',
-        success: 'levains_contournes',
-        failure: 'levains_mordent',
+        need: 2,
+        tries: 3,
+        best: 'levains_contournes',
+        fail: 'levains_mordent',
       },
     },
 
@@ -160,7 +167,11 @@ export const CAKE_DEMO: Adventure = {
       id: 'levains_vaincus',
       title: 'Levains vaincus',
       setup: { map: CAVE, pieces: [cake] },
-      narration: ['La brioche explose en étincelles dorées. Les deux levains fondent en petites flaques tièdes.'],
+      loot: [{ fr: 'Fiole de feu', en: 'Fire flask' }],
+      narration: [
+        'Le dernier levain s\'effondre en une petite flaque tiède. Plus rien ne bouge.',
+        'Entre deux sacs de farine, tu retrouves une fiole de feu de ta réserve : elle pourrait servir.',
+      ],
       step: { kind: 'continue', next: 'golem', label: 'Avancer vers la lueur' },
     },
 
@@ -184,6 +195,18 @@ export const CAKE_DEMO: Adventure = {
       step: { kind: 'continue', next: 'golem', label: 'Avancer vers la lueur' },
     },
 
+    levains_ko: {
+      id: 'levains_ko',
+      title: 'Englué',
+      setup: { map: CAVE, pieces: [cake] },
+      heal: 4,
+      narration: [
+        "Les levains te renversent et t'engluent de pâte collante. Te voilà par terre dans la farine, à bout de souffle.",
+        "Repus, ils finissent par s'endormir sur toi. Tu te dégages, tu bois une gorgée d'eau et tu reprends un peu de forces.",
+      ],
+      step: { kind: 'continue', next: 'golem', label: 'Avancer vers la lueur' },
+    },
+
     golem: {
       id: 'golem',
       title: 'Le Golem de Mie Brûlée',
@@ -203,7 +226,7 @@ export const CAKE_DEMO: Adventure = {
         kind: 'vote',
         prompt: 'Que fais-tu face au Golem ?',
         options: [
-          { id: 'combat', label: "L'attaquer avec ton rouleau", next: 'golem_combat' },
+          { id: 'combat', label: "L'attaquer de front", next: 'golem_combat' },
           { id: 'parler', label: 'Lui parler, de pâtissier à pâtisserie', next: 'golem_parler' },
           { id: 'four', label: 'Te glisser jusqu\'au four pour l\'éteindre', next: 'four', needs: 'four' },
         ],
@@ -212,51 +235,17 @@ export const CAKE_DEMO: Adventure = {
 
     golem_combat: {
       id: 'golem_combat',
-      title: 'Coup de rouleau',
+      title: 'Le combat contre le Golem',
       setup: { map: CAVE, pieces: [{ ...cake, x: 0.42, y: 0.36 }, golem] },
-      narration: ['Tu empoignes ton rouleau à pâtisserie et tu fonces sur le Golem.'],
+      narration: ['Le Golem lève ses poings de croûte brûlée. Le sol de la cave tremble à chacun de ses pas.'],
+      gmNotes: 'Un combat de chef : la potion de Mila et la fiole de feu des levains servent ici. Fuir ramène à la boutique.',
       step: {
-        kind: 'check',
-        prompt: 'Frappe le Golem au bon endroit.',
-        stat: 'dexterite',
-        dc: 12,
-        reason: 'Coup de rouleau contre le Golem',
-        action: 'combat',
-        success: 'fin_victoire',
-        failure: 'golem_riposte',
-      },
-    },
-
-    golem_riposte: {
-      id: 'golem_riposte',
-      title: 'Le Golem riposte',
-      damage: 4,
-      narration: [
-        'Le rouleau rebondit sur la croûte. Le Golem te balaie d\'un revers de mie brûlante : tu perds 4 PV.',
-      ],
-      step: {
-        kind: 'vote',
-        prompt: 'Il revient à la charge !',
-        options: [
-          { id: 'glacage', label: "Te couvrir d'un Glaçage protecteur et frapper encore", next: 'golem_glacage' },
-          { id: 'fuite', label: 'Remonter en courant', next: 'fin_fuite' },
-        ],
-      },
-    },
-
-    golem_glacage: {
-      id: 'golem_glacage',
-      title: 'Glaçage protecteur',
-      narration: ['Une coque de sucre glace durcit sur tes épaules. Tu lèves ton rouleau une dernière fois.'],
-      step: {
-        kind: 'check',
-        prompt: 'Le coup décisif.',
-        stat: 'intelligence',
-        dc: 11,
-        reason: 'Dernier coup sous le Glaçage protecteur',
-        action: 'savoir',
-        success: 'fin_victoire',
-        failure: 'fin_fuite',
+        kind: 'combat',
+        prompt: 'Mets le Golem à terre.',
+        foes: [{ id: 'golem', name: 'Golem de Mie Brûlée', hp: 18, defense: 12, attack: 3, damage: '1d6+1', piece: golem.id }],
+        victory: 'fin_victoire',
+        defeat: 'fin_ko',
+        flee: { next: 'fin_fuite', stat: 'dexterite', dc: 11 },
       },
     },
 
@@ -330,12 +319,23 @@ export const CAKE_DEMO: Adventure = {
     fin_fuite: {
       id: 'fin_fuite',
       title: 'Repli stratégique',
-      setup: { map: BOUTIQUE, pieces: [cake, mila] },
+      setup: { map: BOUTIQUE, pieces: [cake, mila], music: 'triste' },
       narration: [
         'Tu remontes quatre à quatre et tu barricades la porte de la cave avec un sac de farine.',
         'En bas, le Golem gronde encore. Il faudra revenir, mieux préparé… À suivre !',
       ],
       step: { kind: 'end', title: 'Le Golem attend en bas' },
+    },
+
+    fin_ko: {
+      id: 'fin_ko',
+      title: 'Sauvé par Mila',
+      setup: { map: BOUTIQUE, pieces: [cake, mila], music: 'triste' },
+      narration: [
+        "Tout devient noir. Quand tu rouvres les yeux, Mila te tire par le tablier en haut de l'escalier et claque la trappe de la cave.",
+        'En bas, le Golem gronde encore. Mila te tend une tasse de chocolat chaud : « On y retournera ensemble. » À suivre !',
+      ],
+      step: { kind: 'end', title: 'Le Golem a gagné… cette fois' },
     },
   },
 }
