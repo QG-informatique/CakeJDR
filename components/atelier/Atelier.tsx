@@ -331,7 +331,7 @@ export default function Atelier() {
                   {draft.kind === 'system' ? (
                     <SystemEditor value={draft.data} onChange={(data) => edit({ ...draft, data })} confirm={ask} />
                   ) : (
-                    <CampaignEditor key={draft.data.id} value={draft.data} onChange={(data) => edit({ ...draft, data })} confirm={ask} />
+                    <CampaignEditor key={draft.data.id} value={draft.data} onChange={(data) => edit({ ...draft, data })} confirm={ask} systems={systems.items} />
                   )}
                 </>
               )}

@@ -6,7 +6,7 @@ import { Bot, ChevronDown, Crown, Hammer, X } from 'lucide-react'
 import type { RoomInfo } from './RoomList'
 import { useT } from '@/lib/useT'
 import { createRoom as createRoomApi } from '@/lib/roomsApi'
-import { DEFAULT_SYSTEM, GAME_SYSTEMS, GAME_SYSTEM_IDS, type GameSystemId } from '@/lib/gameSystems'
+import { DEFAULT_SYSTEM, GAME_SYSTEMS, GAME_SYSTEM_IDS, isGameSystemId, type GameSystemId } from '@/lib/gameSystems'
 import { ADVENTURES, adventureIn } from '@/lib/autoGm'
 import { useLanguage } from '@/components/context/LanguageContext'
 import AdventureDuration from '@/components/autogm/AdventureDuration'
@@ -51,6 +51,15 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
   const myCampaigns = useMyCreations('campaign', open)
   const [customSystem, setCustomSystem] = useState<string | null>(null)
   const [campaign, setCampaign] = useState<string | null>(null)
+  /** Une campagne reliée à un système le choisit au passage ; on peut en changer ensuite. */
+  const pickCampaign = (id: string, linked?: string) => {
+    setCampaign(id)
+    if (!linked) return
+    if (isGameSystemId(linked)) {
+      setSystem(linked)
+      setCustomSystem(null)
+    } else if (mySystems.items.some((c) => c.id === linked)) setCustomSystem(linked)
+  }
   const { lang } = useLanguage()
   const [creating, setCreating] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
@@ -157,7 +166,7 @@ export default function RoomCreateModal({ open, onClose, onCreated }: Props) {
               <>
                 <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-ink/55">{t('roomMyCampaigns')}</p>
                 {myCampaigns.items.map((c) => (
-                  <Choice key={c.id} selected={campaign === c.id} onSelect={() => setCampaign(c.id)}>
+                  <Choice key={c.id} selected={campaign === c.id} onSelect={() => pickCampaign(c.id, c.data.system)}>
                     <span className="font-semibold">{c.name}</span>
                     {c.data.pitch && <span className="text-xs italic text-ink/65">{c.data.pitch}</span>}
                     <AdventureDuration adventure={c.data} />

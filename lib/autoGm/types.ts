@@ -164,6 +164,12 @@ export type Adventure = {
   pitch: string
   start: string
   scenes: Record<string, Scene>
+  /**
+   * Système de jeu pour lequel la campagne est écrite (campagnes de
+   * l'atelier) : un système tout prêt, ou l'identifiant d'un système de
+   * l'atelier. Choisi d'office à la création d'une table avec la campagne.
+   */
+  system?: string
 }
 
 /** Les textes d'une scène dans une autre langue ; le reste (plateau, suites) ne change pas. */
