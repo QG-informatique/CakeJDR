@@ -27,7 +27,7 @@ import {
 } from '@/lib/checks'
 import { gameSystem, levelUpDice, type GameSystem } from '@/lib/gameSystems'
 import { adventureOf } from '@/lib/autoGm'
-import { parseCampaign } from '@/lib/autoGm/custom'
+import { isCustomAdventureId, parseCampaign } from '@/lib/autoGm/custom'
 import { buildSystem, parseCustomSystem } from '@/lib/customSystem'
 import type { Adventure } from '@/lib/autoGm/types'
 
@@ -252,8 +252,14 @@ export async function POST(req: NextRequest) {
     if (typeof targetId !== 'string' || !targetId || targetId.length > 200) return fail('bad target', 400)
     if (!targetName) return fail('bad target name', 400)
 
-    // Le dé et le seuil du système sont scellés avec la demande.
-    const system = roomSystem(doc, body.system)
+    // Le dé et le seuil du système sont scellés avec la demande. Les tests et
+    // les combats des aventures toutes prêtes sont écrits pour le d20 du
+    // narratif (caractéristiques, difficultés, défenses) : ils en gardent les
+    // règles, quel que soit le système de la table. Une campagne de l'atelier
+    // est écrite pour la table qui la joue.
+    const adventure = doc?.autoGm?.adventure
+    const premade = (auto === 'scene' || auto === 'combat') && typeof adventure === 'string' && !isCustomAdventureId(adventure)
+    const system = premade ? gameSystem('narratif') : roomSystem(doc, body.system)
     let request: GmRequest
     if (body.type === 'rolls') {
       const { dice, levelUp } = body
