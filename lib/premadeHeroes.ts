@@ -7,7 +7,9 @@
  * (`lib/gameSystems.ts`) ; Corpulence et Pouvoir ne servent qu'en d100.
  */
 import { libraryUrl } from './library'
-import { isImported, portraitSrc } from './heroCreation'
+import { fromClassicScale, isImported, portraitSrc } from './heroCreation'
+import { NARRATIF, type GameSystem } from './gameSystems'
+import { roleOf } from './statRoles'
 import { defaultCharacter, type Character } from '@/types/character'
 import { HEROES_EN } from './en/heroes'
 
@@ -34,7 +36,11 @@ export type PremadeHero = {
   capacite_raciale?: string
   /** Une ligne pour choisir, sur la carte du héros. */
   hook: string
-  stats: Stats
+  /**
+   * Les six caractéristiques du narratif (et la Corpulence, le Pouvoir du
+   * d100), de 3 à 18 ; un héros créé à la table garde celles de son système.
+   */
+  stats: Partial<Stats> & Record<string, number>
   pv: number
   armes: string
   armure: string
@@ -275,8 +281,25 @@ export function premadeHeroes(lang: 'en' | 'fr'): readonly PremadeHero[] {
   return lang === 'en' ? ENGLISH_HEROES : PREMADE_HEROES
 }
 
-/** Fiche complète, neuve, du héros choisi, au nom de ce joueur. */
-export function heroCharacter(hero: PremadeHero, owner: { pseudo: string; id?: string }): Character {
+/**
+ * Les caractéristiques du héros dans le système de la table : la sienne s'il
+ * l'a, sinon celle qui tient le même rôle, ramenée entre les bornes.
+ */
+function systemStats(hero: PremadeHero, system: GameSystem): Record<string, number> {
+  const out: Record<string, number> = {}
+  for (const field of system.stats) {
+    const own = hero.stats[field.key]
+    const role = roleOf(field)
+    const classic = role ? hero.stats[role] : undefined
+    if (own !== undefined) out[field.key] = own
+    else if (classic !== undefined) out[field.key] = fromClassicScale(system, field.key, classic)
+    else if (field.start !== undefined) out[field.key] = field.start
+  }
+  return out
+}
+
+/** Fiche complète, neuve, du héros choisi, au nom de ce joueur, dans le système de la table. */
+export function heroCharacter(hero: PremadeHero, owner: { pseudo: string; id?: string }, system: GameSystem = NARRATIF): Character {
   const id = () => crypto.randomUUID()
   return {
     ...defaultCharacter,
@@ -290,6 +313,7 @@ export function heroCharacter(hero: PremadeHero, owner: { pseudo: string; id?: s
     age: hero.age,
     capacite_raciale: hero.capacite_raciale ?? '',
     ...hero.stats,
+    ...systemStats(hero, system),
     pv: hero.pv,
     pv_max: hero.pv,
     armes: hero.armes,

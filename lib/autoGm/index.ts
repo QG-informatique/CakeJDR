@@ -132,8 +132,10 @@ export type Voter = {
   pseudo: string
   color: string
   gm: boolean
-  /** Modificateur total par caractéristique, équipement compris. */
+  /** Score ramené au d20 par caractéristique (rôle et clé du système), équipement compris. */
   mods: Record<string, number>
+  /** Ce que la fiche donne à chaque test dans le système de la table (`lib/autoGm/tableCheck.ts`). */
+  tests?: import('./tableCheck').SheetTests
   /** Valeur brute du Charisme, pour départager deux modificateurs égaux. */
   charisma: number
   /** A une fiche nommée : un joueur encore en création n'est pas appelé à lancer. */

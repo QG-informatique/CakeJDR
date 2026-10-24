@@ -12,12 +12,14 @@ import { extractUploadErrorInfo, uploadImageToCloudinary } from '@/lib/uploadIma
 import { BACKGROUND_BONUS, backgrounds, type Background } from '@/lib/backgrounds'
 import {
   assignRolls,
+  classPriorities,
   createdHero,
   heroClasses,
   peoples,
   pooledStats,
   portraitSrc,
   portraitsFor,
+  startStats,
   startingHp,
   statDice,
   statValue,
@@ -31,7 +33,6 @@ import type { PremadeHero } from '@/lib/premadeHeroes'
 type Step = 'name' | 'people' | 'gender' | 'class' | 'background' | 'stats' | 'portrait' | 'ready'
 
 /** Jets mis en commun (narratif et Fantasy 5E) : un par caractéristique. */
-const POOL_SIZE = 6
 
 /** Les dés d'un jet, du plus fort au plus faible ; ceux qui ne comptent pas sont barrés. */
 function Faces({ dice, faces }: { dice: StatDice; faces: readonly number[] }) {
@@ -68,7 +69,9 @@ export default function GuidedHeroCreator({
   const selfId = useSelf((me) => me.id)
   const events = useStorage((root) => root.events)
   const pending = useStorage((root) => root.checks)
-  const pooled = pooledStats(system.id)
+  const pooled = pooledStats(system)
+  // « Valeur de départ » : rien à lancer, la fiche part des valeurs du système.
+  const fixed = startStats(system)
 
   const [step, setStep] = useState<Step>('name')
   const [nom, setNom] = useState('')
@@ -94,10 +97,12 @@ export default function GuidedHeroCreator({
   const [uploadError, setUploadError] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const poolDice = statDice(system.id, 'force')
+  const poolDice = statDice(system, system.stats[0]?.key ?? 'force')
+  // Un jet par caractéristique du système (six au narratif).
+  const POOL_SIZE = system.stats.length
   // Le jet attendu : le prochain des six, ou la prochaine caractéristique.
   const current: { key: string; label: string; dice: StatDice } | undefined =
-    step !== 'stats'
+    step !== 'stats' || fixed
       ? undefined
       : pooled
         ? rolls.length < POOL_SIZE
@@ -105,16 +110,16 @@ export default function GuidedHeroCreator({
           : undefined
         : (() => {
             const s = system.stats.find((x) => !faces[x.key])
-            return s ? { key: s.key, label: t(s.label), dice: statDice(system.id, s.key) } : undefined
+            return s ? { key: s.key, label: t(s.label), dice: statDice(system, s.key) } : undefined
           })()
 
   // Les six jets placés : par le MJ selon la classe, ou par le joueur.
   const order = pooled && rolls.length === POOL_SIZE
-    ? swapped ?? assignRolls(rolls.map((f) => statValue(poolDice, f)), heroClass?.priorites ?? system.stats.map((s) => s.key))
+    ? swapped ?? assignRolls(rolls.map((f) => statValue(poolDice, f)), classPriorities(system, heroClass?.priorites))
     : null
   const statFaces: Record<string, number[]> = order ? Object.fromEntries(order.map((k, i) => [k, rolls[i] ?? []])) : faces
-  const stats = Object.fromEntries(
-    Object.entries(statFaces).map(([key, f]) => [key, statValue(statDice(system.id, key), f)]),
+  const stats = fixed ?? Object.fromEntries(
+    Object.entries(statFaces).map(([key, f]) => [key, statValue(statDice(system, key), f)]),
   )
 
   // La demande est arrivée dans la liste partagée, et c'est la première qui
@@ -225,7 +230,7 @@ export default function GuidedHeroCreator({
     }`
   const highlight = 'bg-[color-mix(in_srgb,var(--c-panel)_80%,var(--c-gm))]'
   const diceRule = (d: StatDice) =>
-    `${d.count} D6${d.keep < d.count ? t('createKeepBest').replace('{n}', String(d.keep)) : ''}${d.bonus ? ` + ${d.bonus}` : ''}`
+    `${d.count} D6${d.keep < d.count ? t('createKeepBest').replace('{n}', String(d.keep)) : ''}${d.bonus ? ` + ${d.bonus}` : ''}${d.times ? ` × ${d.times}` : ''}`
   const statList = (canSwap: boolean) => (
     <ul className="grid grid-cols-2 gap-1 text-xs">
       {system.stats.map((s) => {
@@ -234,8 +239,8 @@ export default function GuidedHeroCreator({
           <>
             <span className="text-ink/70">{t(s.label)}</span>
             <span className="flex items-baseline gap-1.5">
-              {f && <Faces dice={statDice(system.id, s.key)} faces={f} />}
-              <b>{f ? stats[s.key] : '–'}</b>
+              {f && <Faces dice={statDice(system, s.key)} faces={f} />}
+              <b>{stats[s.key] ?? '–'}</b>
             </span>
           </>
         )
@@ -413,7 +418,7 @@ export default function GuidedHeroCreator({
   } else if (step === 'stats') {
     content = (
       <div className="flex flex-col gap-2">
-        {mjLine(pooled ? 'createAskStatsPool' : 'createAskStats')}
+        {mjLine(fixed ? 'createAskStatsFixed' : pooled ? 'createAskStatsPool' : 'createAskStats')}
         {pooled && !order ? (
           // Les jets déjà tombés, avec leurs dés : rien ne se perd en route.
           <ul className="flex flex-col gap-0.5 text-xs">
@@ -494,7 +499,7 @@ export default function GuidedHeroCreator({
             <p className="truncate text-sm font-semibold">{nom}</p>
             <p className="text-xs text-ink/65">
               {people.nom} · {heroClass.nom}
-              {background && ` · ${background.nom}`} · {t('hp')} {startingHp(system.id, heroClass, stats)}
+              {background && ` · ${background.nom}`} · {t('hp')} {startingHp(system, heroClass, stats)}
             </p>
           </div>
         </div>
@@ -502,7 +507,7 @@ export default function GuidedHeroCreator({
         <button
           onClick={() =>
             onDone(
-              createdHero(system.id, {
+              createdHero(system, {
                 nom,
                 people,
                 heroClass,

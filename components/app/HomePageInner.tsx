@@ -602,7 +602,7 @@ export default function HomePageInner() {
   // du joueur, même quand le MJ s'est réservé les fiches.
   const handlePickHero = (hero: PremadeHero) => {
     if (viewedConnectionId !== null) return
-    const char = heroCharacter(hero, { pseudo: profile?.pseudo ?? '', id: profile?.id })
+    const char = heroCharacter(hero, { pseudo: profile?.pseudo ?? '', id: profile?.id }, gameSystem)
     // La fiche vide déjà ouverte est remplacée, pas doublée ; une fiche déjà
     // remplie, faite ailleurs, est gardée à côté.
     const id = perso.nom?.trim() ? char.id : perso.id || char.id

@@ -861,6 +861,7 @@ export const translations = {
     checkStatsGroup: 'Stats',
     checkPoolTarget: 'success on {n}+',
     checkExploding: 'exploding dice',
+    createAskStatsFixed: '“Your abilities start where the rules of this table set them. Have a look, then go on.”',
   },
   fr: {
     addSkill: 'Ajouter une compétence',
@@ -1724,6 +1725,7 @@ export const translations = {
     checkStatsGroup: 'Caractéristiques',
     checkPoolTarget: 'réussite sur {n}+',
     checkExploding: 'les dés explosent',
+    createAskStatsFixed: '« Tes caractéristiques partent des valeurs prévues par les règles de cette table. Jette un œil, puis continue. »',
   },
 } as const
 

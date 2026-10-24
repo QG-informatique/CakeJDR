@@ -30,11 +30,13 @@ import { translations } from '@/lib/translations'
 import { useIsDesktop } from '@/lib/useIsDesktop'
 import { useLanguage } from '@/components/context/LanguageContext'
 import { useGameSystem, useRoomSettings } from '@/lib/roomSettings'
-import { levelUpDice } from '@/lib/gameSystems'
+import { levelUpDice, type GameSystem } from '@/lib/gameSystems'
+import { checkRules, plainD20 } from '@/lib/checkRules'
+import { tableStat } from '@/lib/statRoles'
+import { d20Mods, sheetTests, tableCheck } from '@/lib/autoGm/tableCheck'
 import { levelUpTargets } from '@/lib/levelUp'
 import { XP_PER_LEVEL, sceneXp, xpOf } from '@/lib/xp'
-import { CHECK_STATS, checkStatLabel, withStat } from '@/lib/checks'
-import { statMod } from '@/lib/modifiers'
+import { checkStatLabel, withStat } from '@/lib/checks'
 import { libraryUrl } from '@/lib/library'
 import { actionBonus, backgroundOf } from '@/lib/backgrounds'
 import { useShowImage } from '@/components/canvas/ShownImage'
@@ -130,10 +132,14 @@ const MAX_EVENTS = 2000
 
 type Presence = { connectionId: number; id: string; pseudo: string; color: string; gm: boolean; character?: Character }
 
-function toVoter(p: Presence): Voter {
+function toVoter(p: Presence, system: GameSystem): Voter {
   const c = p.character
-  const mods: Record<string, number> = {}
-  for (const { key } of CHECK_STATS) mods[key] = c ? statMod(c, key).total : 0
+  // Les scores de la fiche dans le système de la table, et leur équivalent au d20 pour choisir qui lance.
+  const tests = sheetTests(c, system)
+  const mods = d20Mods(tests, system)
+  const sheet = c ? combatSheet(c) : {}
+  // La défense d'une fiche d20 se compare au d20 ; ailleurs, elle se recalcule depuis la Dextérité.
+  if (!plainD20(checkRules(system))) delete sheet.defense
   return {
     id: p.id,
     connectionId: p.connectionId,
@@ -142,13 +148,14 @@ function toVoter(p: Presence): Voter {
     color: p.color,
     gm: p.gm,
     mods,
-    charisma: c ? Number(c.charisme) || 0 : 0,
+    tests,
+    charisma: c ? Number(Reflect.get(c, tableStat(system, 'charisme'))) || 0 : 0,
     hero: !!(c?.nom && String(c.nom).trim()),
     historique: c?.historique,
     classe: c?.classe ? String(c.classe) : undefined,
     xp: xpOf(c),
     level: Number(c?.niveau) || 1,
-    ...(c ? combatSheet(c) : {}),
+    ...sheet,
     items: itemCounts(c?.objets),
   }
 }
@@ -265,12 +272,12 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
         }) satisfies Presence),
     ),
   )
-  const me = useMemo(() => (selfKey ? toVoter(JSON.parse(selfKey) as Presence) : null), [selfKey])
+  const me = useMemo(() => (selfKey ? toVoter(JSON.parse(selfKey) as Presence, system) : null), [selfKey, system])
   const voters = useMemo(() => {
-    const list = (JSON.parse(othersKey) as Presence[]).map(toVoter)
+    const list = (JSON.parse(othersKey) as Presence[]).map((p) => toVoter(p, system))
     if (me) list.push(me)
     return list.sort((a, b) => a.connectionId - b.connectionId)
-  }, [othersKey, me])
+  }, [othersKey, me, system])
 
   const leader = voters.find((v) => v.gm) ?? voters[0]
   const isLeader = !!me && leader?.connectionId === me.connectionId
@@ -566,13 +573,14 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
     if (!roller) return
     asked.current = visitId
     const expected = gm.visit
+    // Le test de l'aventure (écrit pour le d20) traduit dans les dés de la table.
+    const asks = tableCheck(system, roller.tests, step.stat, actionBonus(roller.historique, step.action), step.dc)
     postCheck(roomId, {
       action: 'ask',
+      system: system.id,
       targetId: roller.id,
       targetName: roller.name,
-      stat: step.stat,
-      mod: Math.max(-30, Math.min(30, checkMod(roller, step.stat, step.action))),
-      dc: step.dc,
+      ...asks,
       showDc: true,
       auto: 'scene',
       // Le bonus d'historique est dit dans la raison : on voit d'où vient le +2.
@@ -589,7 +597,7 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
       })
     // `trial` change à chaque rendu : le nombre de jets suffit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLeader, gm, ready, step, voters, players, result, pending, roomId, askFailed, dropCheck, setCheck, lang, graceTick, rolls])
+  }, [isLeader, gm, ready, step, voters, players, result, pending, roomId, askFailed, dropCheck, setCheck, lang, graceTick, rolls, system])
 
   useEffect(() => {
     if (!isLeader || !gm || !result || !result.check || !gm.check) return
@@ -683,6 +691,7 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
   )
   useAutoCombat({
     roomId,
+    system,
     isLeader,
     run: gm?.run,
     visit: gm?.visit,

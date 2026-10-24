@@ -213,7 +213,7 @@ const clone = (s: CombatState): CombatState => JSON.parse(JSON.stringify(s)) as 
 
 /**
  * Applique l'action d'un héros. `roll` : le jet d'attaque ou de fuite quand
- * l'action en demande un (réussi ou non, et le d20 brut pour le coup critique).
+ * l'action en demande un (réussi ou non, et critique ou non dans les règles de la table).
  */
 export function resolveAction(
   prev: CombatState,
@@ -221,7 +221,7 @@ export function resolveAction(
   actionId: string,
   foeId: string | undefined,
   rng: Rng,
-  roll?: { success: boolean; die: number },
+  roll?: { success: boolean; crit: boolean },
 ): CombatState {
   const state = clone(prev)
   const lines: CombatLine[] = []
@@ -241,7 +241,7 @@ export function resolveAction(
         lines.push({ k: 'miss', a, f: foe.id, act: action.id })
         break
       }
-      const crit = roll.die === 20
+      const crit = roll.crit
       const dmg = amount(f, action, rng, crit)
       lines.push({ k: crit ? 'crit' : 'hit', a, f: foe.id, n: dmg, act: action.id })
       hurtFoe(state, foe.id, dmg, lines)

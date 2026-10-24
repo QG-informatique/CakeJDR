@@ -25,6 +25,8 @@ import {
 } from '@/lib/autoGm/combat'
 import { actionById, actionName, needsRoll } from '@/lib/autoGm/combatActions'
 import { postCheck } from '@/components/checks/postCheck'
+import { isCrit, tableCheck } from '@/lib/autoGm/tableCheck'
+import type { GameSystem } from '@/lib/gameSystems'
 
 const MAX_EVENTS = 2000
 /** Un jet d'attaque jamais lancé compte comme raté après ce délai, pour ne pas bloquer le combat. */
@@ -48,6 +50,8 @@ export const combatChoice = (round: number, action: string, foe?: string) => `${
 
 type Args = {
   roomId: string
+  /** Système de la table : les jets d'attaque et de fuite sont traduits dans ses dés. */
+  system: GameSystem
   isLeader: boolean
   run?: string
   visit?: number
@@ -74,7 +78,7 @@ type Args = {
  * dans `lib/autoGm/combat.ts`.
  */
 export function useAutoCombat(a: Args) {
-  const { roomId, isLeader, run, visit, step, ready, combat, players, votes, events, pending, go, author, recap, lang } = a
+  const { roomId, system, isLeader, run, visit, step, ready, combat, players, votes, events, pending, go, author, recap, lang } = a
   const fight = step?.kind === 'combat' ? (step as CombatStep) : undefined
   const [tick, setTick] = useState(0)
   const asked = useRef(new Set<string>())
@@ -164,9 +168,12 @@ export function useAutoCombat(a: Args) {
       }
       const flee = action.effect === 'flee' ? fight.flee : undefined
       const roll = attackRoll(f, action, combat)
-      const stat = flee ? flee.stat : roll.stat
-      const mod = flee ? Math.max(-30, Math.min(30, v.mods[flee.stat] ?? 0)) : roll.mod
-      const dc = flee ? flee.dc : (fight.foes.find((d) => d.id === foe?.id)?.defense ?? 10)
+      // Le jet du combat (écrit pour le d20) traduit dans les dés de la table :
+      // la fiche donne la caractéristique, le reste (maîtrise, arme, inspiration) est un bonus.
+      const role = flee ? flee.stat : roll.stat
+      const bonus = flee ? 0 : roll.mod - (v.mods[roll.stat] ?? 0)
+      const base = flee ? flee.dc : (fight.foes.find((d) => d.id === foe?.id)?.defense ?? 10)
+      const asks = tableCheck(system, v.tests, role, bonus, base)
       const foeName = fight.foes.find((d) => d.id === foe?.id)?.name
       inflight.current += 1
       const expected = visit
@@ -174,9 +181,8 @@ export function useAutoCombat(a: Args) {
         action: 'ask',
         targetId: v.id,
         targetName: v.name,
-        stat,
-        mod,
-        dc,
+        system: system.id,
+        ...asks,
         showDc: true,
         auto: 'combat',
         reason: flee || !foeName ? actionName(actionId, lang) : `${actionName(actionId, lang)} → ${foeName}`,
@@ -199,7 +205,7 @@ export function useAutoCombat(a: Args) {
         })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLeader, fight, combat, votes, visit, run, presentKey, roomId, patch, lang])
+  }, [isLeader, fight, combat, votes, visit, run, presentKey, roomId, patch, lang, system])
 
   // Jets d'attaque : appliqués quand le dé s'arrête, ou ratés s'ils ont disparu.
   useEffect(() => {
@@ -210,13 +216,13 @@ export function useAutoCombat(a: Args) {
       const voter = heroes.find((v) => v.id === atk.userId)
       const hero = combat.heroes.find((h) => h.id === atk.userId)
       const f: Fighter = voter ? fighterOf(voter) : { id: atk.userId, name: hero?.name ?? '?', mods: {} }
-      const drop = (roll?: { success: boolean; die: number }) =>
+      const drop = (roll?: { success: boolean; crit: boolean }) =>
         patch(visit, (c) => (c?.attacks.some((x) => x.id === atk.id) ? resolveAction(c, f, atk.action, atk.foe, Math.random, roll) : null), fight.foes)
       const ev = events?.find((e) => e.kind === 'check' && e.requestId === atk.id)
       if (ev?.check) {
         // Le résultat compte quand le dé s'arrête à l'écran, pas avant.
         if (now < ev.ts) wake = Math.min(wake, ev.ts)
-        else drop({ success: ev.check.success, die: ev.check.total - ev.check.mod })
+        else drop({ success: ev.check.success, crit: isCrit(ev.check) })
         continue
       }
       const gone = !voter

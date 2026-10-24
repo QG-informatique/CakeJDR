@@ -9,10 +9,14 @@
  * - Enquête d100 : 3 D6, ou 2 D6 + 6 pour la Corpulence et l'Intelligence
  *   (Basic Roleplaying), un jet par caractéristique.
  *   Les PV y valent (Constitution + Corpulence) / 2.
+ * - un système de l'atelier choisit son tirage (`creation`) : 4D6, 3D6,
+ *   2D6 + 6, 3D6 × 5, ou la valeur de départ de chaque caractéristique ;
+ *   le résultat est ramené entre les bornes de la caractéristique.
  * Ailleurs, les PV de départ sont le dé de vie de la classe plus le
  * modificateur de Constitution.
  */
-import type { GameSystemId } from './gameSystems'
+import type { CreationMethod, GameSystem } from './gameSystems'
+import { roleStat, tableStat, type StatRole } from './statRoles'
 import { libraryUrl, PACK3_HEROES } from './library'
 import type { PremadeHero } from './premadeHeroes'
 import { CLASSES_EN, PEOPLES_EN } from './en/heroes'
@@ -290,27 +294,69 @@ export function portraitSrc(image: string, thumb = false): string {
   return isImported(image) ? image : libraryUrl('portraits', image, thumb)
 }
 
-/** Dés d'une caractéristique : `count` D6, on garde les `keep` meilleurs, plus `bonus`. */
-export type StatDice = { count: number; keep: number; bonus: number }
+/**
+ * Dés d'une caractéristique : `count` D6, on garde les `keep` meilleurs, plus
+ * `bonus`, fois `times`. Une caractéristique bornée par l'atelier (`min`,
+ * `max`) reçoit le résultat ramené entre ses bornes.
+ */
+export type StatDice = { count: number; keep: number; bonus: number; times?: number; min?: number; max?: number }
 
-export function statDice(system: GameSystemId, stat: string): StatDice {
-  if (system === 'd100') {
+/** Tirage des caractéristiques : celui de l'atelier, ou celui du système de départ. */
+export function creationMethod(system: GameSystem): CreationMethod | 'd100' {
+  return system.creation ?? (system.id === 'd100' ? 'd100' : '4d6')
+}
+
+export function statDice(system: GameSystem, stat: string): StatDice {
+  const method = creationMethod(system)
+  const field = system.stats.find((s) => s.key === stat)
+  const bounds = field?.min !== undefined && field.max !== undefined && field.max > field.min ? { min: field.min, max: field.max } : {}
+  if (method === 'd100') {
     return stat === 'corpulence' || stat === 'intelligence' ? { count: 2, keep: 2, bonus: 6 } : { count: 3, keep: 3, bonus: 0 }
   }
-  return { count: 4, keep: 3, bonus: 0 }
+  if (method === '3d6') return { count: 3, keep: 3, bonus: 0, ...bounds }
+  if (method === '2d6+6') return { count: 2, keep: 2, bonus: 6, ...bounds }
+  if (method === '3d6x5') return { count: 3, keep: 3, bonus: 0, times: 5 }
+  return { count: 4, keep: 3, bonus: 0, ...bounds }
 }
 
 export function statValue(dice: StatDice, faces: readonly number[]): number {
   const kept = [...faces].sort((a, b) => b - a).slice(0, dice.keep)
-  return kept.reduce((a, b) => a + b, 0) + dice.bonus
+  const raw = (kept.reduce((a, b) => a + b, 0) + dice.bonus) * (dice.times ?? 1)
+  if (dice.min === undefined || dice.max === undefined) return raw
+  const lo = dice.keep + dice.bonus
+  const hi = 6 * dice.keep + dice.bonus
+  return Math.round(dice.min + ((raw - lo) * (dice.max - dice.min)) / (hi - lo))
 }
 
 /**
- * Six jets mis en commun puis placés par le MJ (narratif et Fantasy 5E). En
- * d100, chaque caractéristique a ses propres dés : un jet par caractéristique.
+ * Un jet par caractéristique, mis en commun puis placés par le MJ (4D6, le
+ * narratif et Fantasy 5E). Avec les autres tirages, chaque caractéristique a
+ * ses propres dés ; avec « valeur de départ », on ne lance rien.
  */
-export function pooledStats(system: GameSystemId): boolean {
-  return system !== 'd100'
+export function pooledStats(system: GameSystem): boolean {
+  return creationMethod(system) === '4d6'
+}
+
+/** Les caractéristiques sans tirage : leur valeur de départ, ou le milieu de leurs bornes. */
+export function startStats(system: GameSystem): Record<string, number> | null {
+  if (creationMethod(system) !== 'start') return null
+  return Object.fromEntries(
+    system.stats.map((s) => [s.key, s.start ?? (s.min !== undefined && s.max !== undefined ? Math.round((s.min + s.max) / 2) : 10)]),
+  )
+}
+
+/**
+ * Les priorités d'une classe (force, dextérité…) dites dans les
+ * caractéristiques du système, puis celles qui n'en tiennent aucune.
+ */
+export function classPriorities(system: GameSystem, priorites: readonly string[] | undefined): string[] {
+  const keys = system.stats.map((s) => s.key)
+  const out: string[] = []
+  for (const p of priorites ?? []) {
+    const key = tableStat(system, p)
+    if (keys.includes(key) && !out.includes(key)) out.push(key)
+  }
+  return [...out, ...keys.filter((k) => !out.includes(k))]
 }
 
 /**
@@ -324,16 +370,38 @@ export function assignRolls(values: readonly number[], priorites: readonly strin
   return order
 }
 
+/**
+ * Une valeur de la fiche ramenée sur 3 à 18 : les bornes de l'atelier, ou le
+ * ×5 du tirage 3D6×5. Sans bornes, telle quelle.
+ */
+export function onClassicScale(system: GameSystem, key: string, value: number): number {
+  const field = system.stats.find((s) => s.key === key)
+  if (creationMethod(system) === '3d6x5') return value / 5
+  if (field?.min === undefined || field.max === undefined || field.max <= field.min) return value
+  return 3 + ((value - field.min) * 15) / (field.max - field.min)
+}
+
+/** Une valeur sur 3 à 18 (héros tout prêt) dite dans les bornes de la caractéristique. */
+export function fromClassicScale(system: GameSystem, key: string, value: number): number {
+  const field = system.stats.find((s) => s.key === key)
+  if (creationMethod(system) === '3d6x5') return value * 5
+  if (field?.min === undefined || field.max === undefined || field.max <= field.min) return value
+  return Math.max(field.min, Math.min(field.max, Math.round(field.min + ((value - 3) * (field.max - field.min)) / 15)))
+}
+
 /** PV de départ, selon le système. */
-export function startingHp(system: GameSystemId, heroClass: HeroClass, stats: Record<string, number>): number {
-  const con = stats.constitution ?? 10
-  if (system === 'd100') return Math.ceil((con + (stats.corpulence ?? 10)) / 2)
-  return Math.max(1, heroClass.hitDie + Math.floor((con - 10) / 2))
+export function startingHp(system: GameSystem, heroClass: HeroClass, stats: Record<string, number>): number {
+  const of = (role: StatRole) => {
+    const key = roleStat(system, role)
+    return stats[key] === undefined ? 10 : onClassicScale(system, key, stats[key])
+  }
+  if (system.id === 'd100') return Math.ceil((of('constitution') + (stats.corpulence ?? 10)) / 2)
+  return Math.max(1, heroClass.hitDie + Math.floor((of('constitution') - 10) / 2))
 }
 
 /** Le héros créé, au format des héros tout prêts. */
 export function createdHero(
-  system: GameSystemId,
+  system: GameSystem,
   draft: {
     nom: string
     people: People
@@ -355,16 +423,8 @@ export function createdHero(
     sexe,
     age: '',
     hook: '',
-    stats: {
-      force: get('force'),
-      dexterite: get('dexterite'),
-      constitution: get('constitution'),
-      intelligence: get('intelligence'),
-      sagesse: get('sagesse'),
-      charisme: get('charisme'),
-      corpulence: get('corpulence'),
-      pouvoir: get('pouvoir'),
-    },
+    // Les caractéristiques du système de la table, telles que tirées.
+    stats: Object.fromEntries(system.stats.map((s) => [s.key, get(s.key)])),
     pv: startingHp(system, heroClass, stats),
     armes: heroClass.armes,
     armure: heroClass.armure,
