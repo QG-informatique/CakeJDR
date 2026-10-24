@@ -37,7 +37,7 @@ import { CHECK_STATS, checkStatLabel, withStat } from '@/lib/checks'
 import { statMod } from '@/lib/modifiers'
 import { libraryUrl } from '@/lib/library'
 import { actionBonus, backgroundOf } from '@/lib/backgrounds'
-import { useShowImage, useStorySlot } from '@/components/canvas/ShownImage'
+import { useShowImage } from '@/components/canvas/ShownImage'
 import { postCheck } from '@/components/checks/postCheck'
 import { getTextColor } from '@/components/chat/LiveAvatarStack'
 import { MUSIC_JOIN_EVENT, useSoundVolume } from '@/lib/sound'
@@ -218,7 +218,6 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
   const system = useGameSystem()
   const showImage = useShowImage()
   const gm = useStorage((root) => root.autoGm)
-  const storySlot = useStorySlot(gm?.scene)
   const events = useStorage((root) => root.events)
   const pending = useStorage((root) => root.checks)
   const [tab, setTab] = useState<Tab>('story')
@@ -1274,10 +1273,6 @@ export default function AutoGmPanel({ adventureId, onEffect, needsHero, onPickHe
         author={title}
         onJump={(next) => go(next, gm.visit, { author: title, text: t('journalJumped').replace('{n}', titleOf(next)) })}
       />
-      {/* Image de la scène ouverte en grand : les choix aussi sous son récit. */}
-      {storySlot &&
-        (step.kind === 'vote' || step.kind === 'continue' || step.kind === 'random') &&
-        createPortal(<div className="ui-panel mt-3 p-3 text-left">{body}</div>, storySlot)}
       {step.kind !== 'end' && me?.gm && (
         <RescueMenu
           visit={gm.visit}

@@ -424,7 +424,8 @@
 - [ ] Atelier, campagnes : vérifier qu'avec les options actuelles le MJ automatique peut faire tourner une campagne créée par un joueur de bout en bout, et lister les options qui manquent (combats, épreuves en plusieurs jets, butin, XP, musique, images, fins)
 - [ ] Vérifier que le MJ automatique s'adapte au système choisi pour la table (Fantasy 5E, Enquête d100 ou système de l'atelier) et pas seulement au Narratif CakeJDR : jets demandés, caractéristiques, combat, montée de niveau ; noter ce qui casse
 - [ ] Mettre à jour « La fournée maudite » (campagne de test, environ 15 min) avec tout ce qui existe maintenant : combat au tour par tour, musiques d'ambiance, sons de combat, épreuves en plusieurs jets, butin, XP et montée de niveau
-- [ ] Rendre le thème « Nocturne » vraiment différent d'« Ardoise » (aujourd'hui trop proches)
-- [ ] Adoucir le thème clair « Papier & Sauge » : fond moins blanc, plus pâle et moins éblouissant sur ordinateur
-- [ ] MJ automatique : retirer les choix cliquables posés sur l'image de scène et le bouton « Fermer pour tous » ; chacun ferme l'image pour lui, les choix se font dans le récit à droite
+- [x] Rendre le thème « Nocturne » vraiment différent d'« Ardoise » : bleu nuit, ciel étoilé, accent or de lune, MJ en violet (2026-10-24)
+- [x] Adoucir le thème clair « Papier & Sauge » : papier écru au lieu de blanc, champs et panneaux assombris (2026-10-24)
+- [x] MJ automatique : retirer les choix cliquables posés sur l'image de scène et le bouton « Fermer pour tous » ; chacun ferme l'image pour lui, les choix se font dans le récit à droite (le bouton reste pour une image montrée à la main par un MJ humain)
+- [ ] Vérifier en partie que l'image de scène n'a plus de choix ni de « Fermer chez tout le monde », et que le vote se fait dans le récit
 - [ ] Garder l'image de scène pour la future narration lue par-dessus : fermer l'image coupe la narration automatique et le joueur lit le récit lui-même

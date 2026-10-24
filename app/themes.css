@@ -76,51 +76,62 @@
   --c-panel-head: rgb(27 31 36 / 0.85);
 }
 
-/* Nocturne : la maquette V2 (octobre 2026) — ardoise bleutée, accent violet,
-   MJ doré, aplats sans transparence. */
+/* Nocturne : ciel de nuit — bleu nuit profond, ciel étoilé derrière des
+   panneaux translucides, accent or de lune, MJ en violet. (Les violets de la
+   maquette V2 ressemblaient trop à Ardoise : refait le 2026-10-24.) */
 [data-theme="nocturne"] {
   color-scheme: dark;
-  --c-page: #171820;
-  --c-ink: #e6e7ef;
-  --c-shade: #0b0d15;
-  --c-surface: #22242f;
-  --c-surface-hover: #2d2f3e;
-  --c-surface-deep: #171820;
-  --c-line: #30323e;
-  --c-line-strong: #4a4d5e;
-  --c-field: #171820;
-  --c-field-ink: #e9e9ef;
-  --c-field-line: #343642;
-  --c-accent: #8b7cf8;
-  --c-accent-hover: #9d90fa;
-  --c-accent-soft: #c4b8fc;
-  --c-on-accent: #101118;
-  --c-gm: #d6a66d;
-  --c-gm-soft: #eee4c9;
-  --c-brand: #8b7cf8;
+  --c-page: #0a0f1f;
+  --c-ink: #e8ecf8;
+  --c-shade: #050814;
+  --c-surface: #141b34;
+  --c-surface-hover: #1e2848;
+  --c-surface-deep: #0b1022;
+  --c-line: #232d4f;
+  --c-line-strong: #36436e;
+  --c-field: #0f1530;
+  --c-field-ink: #eef1fa;
+  --c-field-line: #2b365d;
+  --c-accent: #e9c46a;
+  --c-accent-hover: #f2d388;
+  --c-accent-soft: #f3dc9d;
+  --c-on-accent: #1b1406;
+  --c-gm: #b49cff;
+  --c-gm-soft: #d9ccff;
+  --c-brand: #e9c46a;
   --c-font: var(--font-geist-sans), Arial, Helvetica, sans-serif;
-  --c-backdrop: #171820;
-  --c-panel: #1c1e28;
-  --c-panel-line: #323440;
-  --c-panel-blur: 0px;
-  --c-panel-head: #1c1e28;
+  /* Étoiles fixes (trois tailles de motif pour casser la répétition), halo de
+     lune en haut à droite, nuit plus claire vers l'horizon. */
+  --c-backdrop:
+    radial-gradient(1px 1px at 20px 30px, rgb(255 255 255 / 0.55), transparent 60%) 0 0 / 160px 160px,
+    radial-gradient(1px 1px at 90px 110px, rgb(255 255 255 / 0.4), transparent 60%) 0 0 / 160px 160px,
+    radial-gradient(1.5px 1.5px at 130px 50px, rgb(255 244 214 / 0.6), transparent 60%) 0 0 / 230px 230px,
+    radial-gradient(1px 1px at 60px 180px, rgb(200 210 255 / 0.45), transparent 60%) 0 0 / 230px 230px,
+    radial-gradient(1px 1px at 250px 120px, rgb(255 255 255 / 0.35), transparent 60%) 0 0 / 310px 310px,
+    radial-gradient(circle at 85% 8%, rgb(233 196 106 / 0.16), transparent 22%),
+    linear-gradient(#070b18, #111a3a 75%, #18224a);
+  --c-panel: rgb(16 22 44 / 0.78);
+  --c-panel-line: rgb(180 196 255 / 0.12);
+  --c-panel-blur: 6px;
+  --c-panel-head: rgb(13 18 38 / 0.92);
 }
 
-/* Papier & Sauge : thème clair, papier blanc cassé, texte ardoise, accent
+/* Papier & Sauge : thème clair, papier écru (assombri le 2026-10-24 : le blanc
+   éblouissait sur ordinateur), texte ardoise, accent
    vert sauge, bordures fines (pack de maquettes du 4 octobre 2026). */
 [data-theme="papier-sauge"] {
   color-scheme: light;
-  --c-page: #f3f1ea;
-  --c-ink: #263630;
-  --c-shade: #fffefa;
-  --c-surface: #fffefa;
-  --c-surface-hover: #e4ede4;
-  --c-surface-deep: #ebe8df;
-  --c-line: #d8ddd4;
-  --c-line-strong: #bcc5b9;
-  --c-field: #ffffff;
-  --c-field-ink: #263630;
-  --c-field-line: #d8ddd4;
+  --c-page: #dedacd;
+  --c-ink: #24332d;
+  --c-shade: #ebe7db;
+  --c-surface: #e9e5d9;
+  --c-surface-hover: #d6dfd3;
+  --c-surface-deep: #d5d1c4;
+  --c-line: #c6cabd;
+  --c-line-strong: #aab3a6;
+  --c-field: #f1eee4;
+  --c-field-ink: #24332d;
+  --c-field-line: #c6cabd;
   --c-accent: #376650;
   --c-accent-hover: #2c5442;
   --c-accent-soft: #3f7058;
@@ -129,11 +140,11 @@
   --c-gm-soft: #8a3f2e;
   --c-brand: #a8513c;
   --c-font: var(--font-geist-sans), Arial, Helvetica, sans-serif;
-  --c-backdrop: #f3f1ea;
-  --c-panel: #fffefa;
-  --c-panel-line: #d8ddd4;
+  --c-backdrop: #dedacd;
+  --c-panel: #e9e5d9;
+  --c-panel-line: #c6cabd;
   --c-panel-blur: 0px;
-  --c-panel-head: #fffefa;
+  --c-panel-head: #e4e0d3;
   /* Les couleurs d'état claires (texte rouge, ambre, vert… pensées pour un
      fond sombre) deviennent foncées pour rester lisibles sur le papier. */
   --color-red-200: #991b1b;
