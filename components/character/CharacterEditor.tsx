@@ -11,8 +11,10 @@ import { useT } from '@/lib/useT'
 import { useConfirm } from '@/lib/useConfirm'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { GAME_SYSTEMS, resourceOf, type GameSystem } from '@/lib/gameSystems'
-import type { CheckStat } from '@/lib/checks'
+import { signedMod, type CheckStat } from '@/lib/checks'
+import { testParts } from '@/lib/modifiers'
 import ModBadge from './ModBadge'
+import { isChecked, testText } from './SheetTests'
 import type { TranslationKey } from '@/lib/translations'
 import {
   type Character,
@@ -265,6 +267,7 @@ const setField = (set: CharacterChangeHandler, key: string, value: string) =>
 const StatsSection: FC<SectionProps> = ({ draft, set, system }) => {
   const t = useT()
   return (
+    <>
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
       {system.stats.map((s) => (
         <div key={s.key} className="ui-well flex flex-col gap-2 p-3">
@@ -286,6 +289,40 @@ const StatsSection: FC<SectionProps> = ({ draft, set, system }) => {
         </div>
       ))}
     </div>
+    {/* Compétences testables et états d'un système de l'atelier. */}
+    {(system.skills ?? []).length > 0 && (
+      <>
+        <SectionTitle>{t('checkSkillsGroup')}</SectionTitle>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {(system.skills ?? []).map((k) => (
+            <div key={k.key} className="ui-well flex flex-col gap-2 p-3">
+              <span className="flex items-baseline justify-between gap-2 text-sm font-semibold">
+                <span className="truncate">{t(k.label)}</span>
+                <span className="tabular-nums text-ink/60">{testText(system, testParts(draft, k.key as CheckStat, system).base)}</span>
+              </span>
+              <Field label={t('sheetSkillValue')}>
+                <input inputMode="numeric" value={str(fieldOf(draft, k.key))} onChange={(e) => setField(set, k.key, e.target.value)} className={`${inputClass} text-center`} placeholder="0" />
+              </Field>
+            </div>
+          ))}
+        </div>
+      </>
+    )}
+    {(system.conditions ?? []).length > 0 && (
+      <>
+        <SectionTitle>{t('sheetConditions')}</SectionTitle>
+        <div className="flex flex-wrap gap-2">
+          {(system.conditions ?? []).map((c) => (
+            <label key={c.key} className="ui-well flex items-center gap-2 px-3 py-2 text-sm">
+              <input type="checkbox" checked={isChecked(draft, c.key)} onChange={(e) => set(c.key as keyof Character, e.target.checked as never)} />
+              {t(c.label)}
+              <span className="tabular-nums text-ink/55">{signedMod(c.mod)}</span>
+            </label>
+          ))}
+        </div>
+      </>
+    )}
+    </>
   )
 }
 

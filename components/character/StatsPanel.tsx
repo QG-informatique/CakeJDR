@@ -5,6 +5,7 @@ import type { TranslationKey } from '@/lib/translations'
 import { GAME_SYSTEMS, type GameSystem } from '@/lib/gameSystems'
 import type { CheckStat } from '@/lib/checks'
 import ModBadge from './ModBadge'
+import SheetTests from './SheetTests'
 
 // Couleur de la valeur d'une caractéristique : on lit d'un coup d'œil les
 // points forts (vert, or) et les faiblesses (orange, rouge).
@@ -85,6 +86,7 @@ const StatsPanel: FC<Props> = ({ perso, compact = false, system = GAME_SYSTEMS.n
             ))}
           </div>
         </div>
+        <SheetTests perso={perso} system={system} />
       </div>
     )
   }
@@ -126,6 +128,9 @@ const StatsPanel: FC<Props> = ({ perso, compact = false, system = GAME_SYSTEMS.n
           ))}
         </div>
       </div>
+
+      {/* Compétences testables et états, dans un système de l'atelier */}
+      <SheetTests perso={perso} system={system} />
     </div>
   )
 }

@@ -6,7 +6,12 @@
  * ajoutées), les valeurs tapées à côté, les attaques, les ressources, les
  * types de compétences, les dés proposés et les intitulés d'identité. Il
  * choisit aussi les règles des tests : le dé, au-dessus ou sous un seuil, le
- * calcul du modificateur, et s'il y a des niveaux.
+ * calcul du modificateur, et s'il y a des niveaux ; puis, s'il le veut,
+ * plusieurs dés, une réserve, l'explosion, un dé par caractéristique, les
+ * paliers et l'avantage (`lib/checkRules.ts`). Il ajoute des compétences
+ * testables (`k_…`), des états à cocher (`c_…`), le tirage des
+ * caractéristiques à la création, et pour chaque caractéristique son rôle,
+ * sa valeur de départ et ses bornes.
  *
  * Le système est rangé dans les réglages de la table : le serveur, qui
  * vérifie les tests (`app/api/check/route.ts`), le relit de là. `system.id`
@@ -17,12 +22,15 @@
  */
 import type { TranslationKey } from './translations'
 import { DICE_TYPES } from './dicePayload'
-import { CUSTOM_STAT_KEY } from './checks'
+import { CUSTOM_SKILL_KEY, CUSTOM_STAT_KEY } from './checks'
+import { CHECK_COUNT_MAX, type CheckExtras } from './checkRules'
+import { isStatRole, type StatRole } from './statRoles'
 import {
   GAME_SYSTEMS,
   MOD_RULES,
   isGameSystemId,
   type GameSystem,
+  type CreationMethod,
   type GameSystemId,
   type ModRuleId,
   type SheetField,
@@ -32,19 +40,40 @@ import {
 /** Une ressource ajoutée par le MJ : valeur de départ fixe, couleur de barre au choix. */
 export type CustomResource = { key: string; label: string; maxLabel: string; start: number; color: string }
 
+/** Une caractéristique : son rôle pour les aventures, sa valeur de départ et ses bornes, au choix. */
+export type CustomStat = { key: string; label: string; role?: StatRole; start?: number; min?: number; max?: number }
+
+/** Une compétence testable : sa valeur sur la fiche, plus le modificateur de sa caractéristique. */
+export type CustomSkill = { key: string; label: string; stat?: string }
+
+/** Un état coché sur la fiche, qui change tous les tests de `mod`. */
+export type CustomCondition = { key: string; label: string; mod: number }
+
+export const CREATION_METHODS = ['4d6', '3d6', '2d6+6', '3d6x5', 'start'] as const satisfies readonly CreationMethod[]
+
+export const CUSTOM_CONDITION_KEY = /^c_[a-z0-9_]{1,38}$/
+
 export type CustomSystemData = {
   v: 1
   base: GameSystemId
   name: string
   pitch: string
   /** Caractéristiques : celles gardées du preset, renommées ou non, et celles ajoutées (`s_…`). */
-  stats: { key: string; label: string }[]
+  stats: CustomStat[]
   /** Valeurs tapées sur la fiche : celles du preset et celles ajoutées (`x_…`). */
   basics: { key: string; label: string }[]
   /** Modificateurs d'attaque tapés sur la fiche : ceux du preset et ceux ajoutés (`x_…`). */
   attacks: { key: string; label: string }[]
   /** Règles des tests. */
   rules: CustomRules
+  /** Règles en plus : plusieurs dés, réserve, explosion, paliers, avantage. */
+  check: CheckExtras
+  /** Tirage des caractéristiques à la création ; sans valeur, celui du preset. */
+  creation?: CreationMethod
+  /** Compétences testables (`k_…`). */
+  skills: CustomSkill[]
+  /** États cochés sur la fiche (`c_…`). */
+  conditions: CustomCondition[]
   /** Intitulés des PV, toujours en tête de fiche. */
   hp: { label: string; maxLabel: string }
   /** Ressources en plus des PV. */
@@ -67,7 +96,13 @@ export type CustomRules = {
 
 export const RESOURCE_COLORS = ['bg-sky-500', 'bg-violet-500', 'bg-amber-500', 'bg-emerald-500', 'bg-rose-500', 'bg-slate-500'] as const
 
-export const CUSTOM_LIMITS = { name: 60, pitch: 160, label: 40, stats: 12, basics: 8, attacks: 6, resources: 6, skillTypes: 12 } as const
+export const CUSTOM_LIMITS = { name: 60, pitch: 160, label: 40, stats: 12, basics: 8, attacks: 6, resources: 6, skillTypes: 12, skills: 30, conditions: 12 } as const
+
+/** Bornes des valeurs tapées dans l'atelier. */
+export const STAT_VALUE_RANGE = [-99, 999] as const
+export const CONDITION_MOD_RANGE = 30
+export const PARTIAL_MAX = 20
+export const MARGIN_MAX = 50
 
 /** Le calcul du modificateur d'un preset, parmi ceux de l'atelier. */
 const presetModRule = (s: GameSystem): ModRuleId => (s.rollUnder ? 'x5' : 'd20')
@@ -91,10 +126,14 @@ export function customFromPreset(id: GameSystemId, t: (key: TranslationKey) => s
     base: id,
     name: s.name,
     pitch: t(s.pitch),
-    stats: s.stats.map((f) => ({ key: f.key, label: t(f.label) })),
+    stats: s.stats.map((f) => ({ ...statExtras(f), key: f.key, label: t(f.label) })),
     basics: s.basics.map((f) => ({ key: f.key, label: t(f.label) })),
     attacks: s.attacks.map((f) => ({ key: f.key, label: t(f.label) })),
     rules: presetRules(s),
+    check: { ...s.check },
+    ...(s.creation ? { creation: s.creation } : {}),
+    skills: (s.skills ?? []).map((k) => ({ key: k.key, label: t(k.label), ...(k.stat ? { stat: k.stat } : {}) })),
+    conditions: (s.conditions ?? []).map((c) => ({ key: c.key, label: t(c.label), mod: c.mod })),
     hp: { label: t(hp?.label ?? 'hp'), maxLabel: t(hp?.maxLabel ?? 'hpMax') },
     resources: rest.map((r, i) => ({
       key: r.key,
@@ -111,6 +150,45 @@ export function customFromPreset(id: GameSystemId, t: (key: TranslationKey) => s
 
 const text = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : '')
 const list = (v: unknown, max: number): unknown[] => (Array.isArray(v) ? v.slice(0, max) : [])
+const int = (v: unknown, lo: number, hi: number): number | undefined => {
+  if (v === undefined || v === null || v === '') return undefined
+  const n = Math.round(Number(v))
+  return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : undefined
+}
+
+/** Le rôle, la valeur de départ et les bornes d'une caractéristique, s'ils tiennent debout. */
+function statExtras(f: { role?: unknown; start?: unknown; min?: unknown; max?: unknown }): Omit<CustomStat, 'key' | 'label'> {
+  const [lo, hi] = STAT_VALUE_RANGE
+  const min = int(f.min, lo, hi)
+  const max = int(f.max, lo, hi)
+  const bounded = min !== undefined && max !== undefined && max > min
+  const start = int(f.start, bounded ? min : lo, bounded ? max : hi)
+  return {
+    ...(isStatRole(f.role) ? { role: f.role } : {}),
+    ...(start !== undefined ? { start } : {}),
+    ...(bounded ? { min, max } : {}),
+  }
+}
+
+/** Les règles en plus, gardées seulement quand elles changent quelque chose. */
+function parseCheck(raw: unknown, die: number): CheckExtras {
+  const x = (raw ?? {}) as Record<string, unknown>
+  const out: CheckExtras = {}
+  const count = int(x.count, 1, CHECK_COUNT_MAX)
+  if (count && count > 1) out.count = count
+  const pool = int(x.pool, 0, die)
+  if (pool && pool >= 2) out.pool = pool
+  if (x.explode === true) out.explode = true
+  if (x.statDie === true) out.statDie = true
+  if ((DICE_TYPES as readonly unknown[]).includes(x.wild)) out.wild = x.wild as number
+  const partial = int(x.partial, 0, PARTIAL_MAX)
+  if (partial) out.partial = partial
+  const margin = int(x.margin, 0, MARGIN_MAX)
+  if (margin) out.margin = margin
+  if (x.degrees === true) out.degrees = true
+  if (x.advantage === true) out.advantage = true
+  return out
+}
 
 /**
  * Un système perso venu d'ailleurs (fichier importé, navigateur, base),
@@ -130,8 +208,8 @@ export function parseCustomSystem(raw: unknown): CustomSystemData | null {
   const seen = new Set<string>()
   const unique = <T extends { key: string }>(f: T) => !seen.has(f.key) && !!seen.add(f.key)
 
-  const stats = list(r.stats, CUSTOM_LIMITS.stats)
-    .map(field)
+  const stats: CustomStat[] = list(r.stats, CUSTOM_LIMITS.stats)
+    .map((v) => ({ ...statExtras((v ?? {}) as Record<string, unknown>), ...field(v) }))
     .filter((f) => (base.stats.some((s) => s.key === f.key) || CUSTOM_STAT_KEY.test(f.key)) && unique(f))
   const added = (f: { key: string }) => f.key.startsWith('x_') && KEY.test(f.key)
   const basics = list(r.basics, CUSTOM_LIMITS.basics)
@@ -165,6 +243,18 @@ export function parseCustomSystem(raw: unknown): CustomSystemData | null {
       }
     })
     .filter((x) => KEY.test(x.key) && x.key !== 'pv' && unique(x))
+  const finalStats = stats.length > 0 ? stats : base.stats.map((s) => ({ ...statExtras(s), key: s.key, label: s.label as string }))
+  const skills = list(r.skills, CUSTOM_LIMITS.skills)
+    .map((v) => {
+      const o = (v ?? {}) as Record<string, unknown>
+      const stat = finalStats.some((s) => s.key === o.stat) ? (o.stat as string) : undefined
+      return { ...field(v), ...(stat ? { stat } : {}) }
+    })
+    .filter((k) => CUSTOM_SKILL_KEY.test(k.key) && !!k.label && unique(k))
+  const conditions = list(r.conditions, CUSTOM_LIMITS.conditions)
+    .map((v) => ({ ...field(v), mod: int((v as Record<string, unknown> | null)?.mod, -CONDITION_MOD_RANGE, CONDITION_MOD_RANGE) ?? 0 }))
+    .filter((c) => CUSTOM_CONDITION_KEY.test(c.key) && !!c.label && unique(c))
+  const creation = CREATION_METHODS.find((m) => m === r.creation)
   const identity = (r.identity ?? {}) as Record<string, unknown>
   const dice = list(r.dice, DICE_TYPES.length).filter((d): d is number => (DICE_TYPES as readonly unknown[]).includes(d))
 
@@ -173,10 +263,15 @@ export function parseCustomSystem(raw: unknown): CustomSystemData | null {
     base: r.base,
     name: text(r.name, CUSTOM_LIMITS.name) || base.name,
     pitch: text(r.pitch, CUSTOM_LIMITS.pitch),
-    stats: stats.length > 0 ? stats : base.stats.map((s) => ({ key: s.key, label: s.label })),
+    stats: finalStats,
     basics,
     attacks,
     rules,
+    // Un système d'avant les règles en plus garde celles du preset.
+    check: r.check === undefined ? { ...base.check } : parseCheck(r.check, rules.die),
+    ...(creation ? { creation } : {}),
+    skills,
+    conditions,
     hp: { label: text(hp.label, L) || 'hp', maxLabel: text(hp.maxLabel, L) || 'hpMax' },
     resources,
     identity: { race: text(identity.race, L) || base.identity.race, classe: text(identity.classe, L) || base.identity.classe },
@@ -186,7 +281,7 @@ export function parseCustomSystem(raw: unknown): CustomSystemData | null {
 }
 
 /** Clé de fiche d'une valeur ou d'une ressource ajoutée, tirée de son intitulé. */
-export function newFieldKey(prefix: 'x_' | 'r_' | 's_', label: string, taken: readonly string[]): string {
+export function newFieldKey(prefix: 'x_' | 'r_' | 's_' | 'k_' | 'c_', label: string, taken: readonly string[]): string {
   const slug = label
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
@@ -222,6 +317,7 @@ export function buildSystem(data: CustomSystemData): GameSystem {
     }),
   ]
   const field = (f: { key: string; label: string }): SheetField => ({ key: f.key, label: asKey(f.label) })
+  const stat = (f: CustomStat): SheetField => ({ ...statExtras(f), key: f.key, label: asKey(f.label) })
   const { rules } = data
   // Le calcul du preset garde son nom (règle de la cinquième édition…).
   const modRule = rules.mod === presetModRule(base) ? base.modRule : MOD_RULES[rules.mod]
@@ -229,7 +325,7 @@ export function buildSystem(data: CustomSystemData): GameSystem {
     ...base,
     name: data.name,
     pitch: asKey(data.pitch),
-    stats: data.stats.map(field),
+    stats: data.stats.map(stat),
     modRule,
     basics: data.basics.map(field),
     attacks: data.attacks.map(field),
@@ -239,6 +335,10 @@ export function buildSystem(data: CustomSystemData): GameSystem {
     dice: data.dice,
     checkDie: rules.die,
     rollUnder: rules.under,
+    check: { ...(data.check ?? {}) },
+    skills: (data.skills ?? []).map((k) => ({ key: k.key, label: asKey(k.label), ...(k.stat ? { stat: k.stat } : {}) })),
+    conditions: (data.conditions ?? []).map((c) => ({ key: c.key, label: asKey(c.label), mod: c.mod })),
+    creation: data.creation ?? base.creation,
     ...levelRules(base, data),
   }
 }
