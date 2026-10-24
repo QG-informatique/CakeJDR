@@ -419,8 +419,18 @@
 - [ ] Ajuster la force des dés selon l'avis des joueurs (`THROW_MIN`, `THROW_MAX`, `WILD_CHANCE`, `WILD_BOOST`, écart de départ `SPAWN_GAP` dans `components/dice/DiceBoxTable.tsx`)
 
 ## Retours de Quentin (2026-10-23) — atelier, MJ automatique, thèmes (rien à coder pour l'instant)
-- [ ] Atelier, systèmes de jeu : pouvoir ajouter et enlever chaque élément (caractéristiques, ressources, compétences, attaques, et toute autre liste), y compris ceux du modèle de départ
-- [ ] Comparer l'atelier aux systèmes officiels connus (D&D 5E, Pathfinder, Call of Cthulhu, Warhammer, Vampire, Savage Worlds, Powered by the Apocalypse…) et lister ce qui manque pour qu'un MJ puisse y recréer un système officiel, connu ou inventé (types de dés et réserves de dés, jets sous / au-dessus, compétences, classes, magie, conditions, santé mentale…)
+- [x] Atelier, systèmes de jeu : pouvoir ajouter et enlever chaque élément (caractéristiques, ressources, compétences, attaques, et toute autre liste), y compris ceux du modèle de départ — plus les règles des tests : dé, au-dessus ou sous un seuil, modificateur, niveaux (2026-10-24)
+- [ ] Tester à une table un système de l'atelier avec une caractéristique ajoutée et un dé changé : test du MJ, bulle du modificateur, résultat dans le chat, montée de niveau
+- [x] Comparer l'atelier aux systèmes officiels connus et lister ce qui manque (2026-10-24) : déjà possible, D&D 5E et Call of Cthulhu dans les grandes lignes (d20 + modificateur ou d100 sous le seuil, PV, sorts et santé mentale en ressources) ; ce qui manque est listé dessous
+- [ ] Atelier : permettre un test à plusieurs dés additionnés (2d6 de Powered by the Apocalypse, 3d6 de GURPS), au lieu d'un seul dé
+- [ ] Atelier : permettre les réserves de dés qui comptent les réussites (Vampire, Shadowrun : autant de d10 que la caractéristique, réussite à 6 ou plus)
+- [ ] Atelier : permettre des paliers de réussite (6- / 7-9 / 10+ de Powered by the Apocalypse, réussite difficile ou extrême de Call of Cthulhu, critique à ±10 de Pathfinder 2)
+- [ ] Atelier : permettre l'avantage et le désavantage (deux dés, on garde le meilleur ou le pire) dans les tests du MJ (D&D 5E, dés bonus et malus de Call of Cthulhu)
+- [ ] Atelier : permettre les dés qui explosent et un dé par caractéristique (Savage Worlds : Force d8, Agilité d6, plus le dé joker)
+- [ ] Atelier : permettre de tester une compétence (valeur en % de Call of Cthulhu et Warhammer, compétence liée à une caractéristique + bonus de maîtrise de D&D 5E), pas seulement une caractéristique
+- [ ] Atelier : ajouter des états sur la fiche (empoisonné, à terre, effrayé…), à cocher par le MJ
+- [ ] Atelier : laisser le système fixer la valeur de départ et le maximum des caractéristiques (3 à 18, 1 à 5, 0 à 100), aujourd'hui libres
+- [ ] Atelier, campagnes : lier une campagne à un système de jeu, pour que ses tests proposent les caractéristiques de ce système (aujourd'hui seulement celles des systèmes tout prêts)
 - [ ] Atelier, campagnes : vérifier qu'avec les options actuelles le MJ automatique peut faire tourner une campagne créée par un joueur de bout en bout, et lister les options qui manquent (combats, épreuves en plusieurs jets, butin, XP, musique, images, fins)
 - [ ] Vérifier que le MJ automatique s'adapte au système choisi pour la table (Fantasy 5E, Enquête d100 ou système de l'atelier) et pas seulement au Narratif CakeJDR : jets demandés, caractéristiques, combat, montée de niveau ; noter ce qui casse
 - [ ] Mettre à jour « La fournée maudite » (campagne de test, environ 15 min) avec tout ce qui existe maintenant : combat au tour par tour, musiques d'ambiance, sons de combat, épreuves en plusieurs jets, butin, XP et montée de niveau

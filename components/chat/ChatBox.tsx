@@ -11,6 +11,7 @@ import { useIsDesktop } from '@/lib/useIsDesktop'
 import { debug } from '@/lib/debug'
 import { useDiceVerification } from './useDiceVerification'
 import { checkStatLabel, levelUpLabel, signedMod, withStat } from '@/lib/checks'
+import { useGameSystem } from '@/lib/roomSettings'
 import { poolLabel } from '@/lib/dicePool'
 
 // Longueur maximale d'un message : au-delà, la liste partagée de la table
@@ -85,6 +86,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author, embedded = false }) => {
   const broadcast = useBroadcastEvent()
   const self = useSelf()
   const t = useT()
+  const system = useGameSystem()
   // Sur téléphone le chat a son propre onglet : on ne le replie jamais.
   const isDesktop = useIsDesktop()
   const [collapsed, setCollapsed] = useState(() =>
@@ -256,7 +258,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author, embedded = false }) => {
                     <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 pl-6 text-xs text-ink/60 tabular-nums">
                       {r.results.map((n, i) => (
                         <span key={i}>
-                          {r.levelUp && `${t(levelUpLabel(i, r.targets))} `}
+                          {r.levelUp && `${t(levelUpLabel(i, r.targets, system))} `}
                           <span className="font-bold text-ink">{r.levelUp ? `+${n}` : n}</span>
                         </span>
                       ))}
@@ -273,7 +275,7 @@ const ChatBox: FC<Props> = ({ chatBoxRef, author, embedded = false }) => {
                     <div className="flex items-center gap-2">
                       <Target size={15} className="shrink-0 text-ink/50" />
                       <span className="max-w-[60%] shrink-0 truncate text-ink/75 text-xs font-semibold">{ev.player}</span>
-                      <span className="truncate text-ink/45 text-xs">{withStat(t('checkOf'), t(checkStatLabel(c.stat)))}</span>
+                      <span className="truncate text-ink/45 text-xs">{withStat(t('checkOf'), t(checkStatLabel(c.stat, system)))}</span>
                       <span className={`ml-auto shrink-0 rounded px-1.5 py-0.5 text-[11px] font-bold ${c.success ? 'bg-emerald-500/15 text-emerald-300' : 'bg-red-500/15 text-red-300'}`}>
                         {t(c.success ? 'checkPassed' : 'checkMissed')}
                       </span>

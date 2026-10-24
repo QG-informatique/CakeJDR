@@ -9,7 +9,6 @@ import { useT } from '@/lib/useT'
 import { signedMod, withStat, checkStatLabel, type CheckStat } from '@/lib/checks'
 import { statMod } from '@/lib/modifiers'
 import type { Character } from '@/types/character'
-import type { TranslationKey } from '@/lib/translations'
 import { GAME_SYSTEMS, type GameSystem } from '@/lib/gameSystems'
 
 type Props = {
@@ -27,8 +26,8 @@ const ModBadge: FC<Props> = ({ character, stat, className = '', system = GAME_SY
   const id = useId()
   const ref = useRef<HTMLButtonElement>(null)
   const [at, setAt] = useState<{ x: number; y: number; below: boolean } | null>(null)
-  const { value, total, parts } = statMod(character, stat, system.id)
-  const statName = t(checkStatLabel(stat) as TranslationKey)
+  const { value, total, parts } = statMod(character, stat, system.modRule)
+  const statName = t(checkStatLabel(stat, system))
 
   const show = () => {
     const r = ref.current?.getBoundingClientRect()
@@ -70,8 +69,9 @@ const ModBadge: FC<Props> = ({ character, stat, className = '', system = GAME_SY
         aria-describedby={at ? id : undefined}
         className={`cursor-help rounded px-0.5 tabular-nums underline decoration-dotted decoration-from-font underline-offset-2 ${className}`}
       >
-        {/* En d100, une caractéristique pas encore remplie n'a pas de pourcentage. */}
-        {system.rollUnder ? (value ? `${total} %` : '—') : signedMod(total)}
+        {/* Sous un seuil, une caractéristique pas encore remplie n'a pas de seuil ;
+            au d100, le seuil est un pourcentage. */}
+        {system.rollUnder ? (value ? `${total}${system.checkDie === 100 ? ' %' : ''}` : '—') : signedMod(total)}
       </button>
       {at && typeof document !== 'undefined' && createPortal(
         <div

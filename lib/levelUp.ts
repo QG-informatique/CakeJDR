@@ -1,4 +1,4 @@
-import { LEVEL_UP_TARGETS } from '@/lib/checks'
+import { CUSTOM_STAT_KEY, LEVEL_UP_TARGETS } from '@/lib/checks'
 import { type Character, normalizeCharacter } from '@/types/character'
 import type { GameSystem } from '@/lib/gameSystems'
 import { classOf } from '@/lib/heroCreation'
@@ -37,9 +37,10 @@ export function applyLevelUp(character: Character, gains: number[], targets: rea
       const max = Number(c.pv_max) + gain
       next.pv_max = max
       next.pv = Math.min(Number(c.pv) + gain, max)
-    } else if (key in c) {
+    } else if (key in c || CUSTOM_STAT_KEY.test(key)) {
+      // Une caractéristique ajoutée dans l'atelier peut être encore vide.
       const stats = next as unknown as Record<string, unknown>
-      stats[key] = Number(stats[key]) + gain
+      stats[key] = (Number(stats[key]) || 0) + gain
     }
   })
   return next

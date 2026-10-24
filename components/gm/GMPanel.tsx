@@ -256,7 +256,7 @@ function RequestForm({ initialMode, onLevelByHand, ...props }: {
         ))}
       </div>
       {mode === 'check' ? (
-        <CheckForm key={system.id} {...props} system={system} />
+        <CheckForm key={system.stats.map((s) => s.key).join()} {...props} system={system} />
       ) : mode === 'xp' && levels ? (
         <XpForm {...props} />
       ) : (
@@ -389,7 +389,7 @@ function RollsForm({ targetId, targetName, character, levelUp, onDone, onLevelBy
         <p className="text-[11px] text-ink/50">
           {system.levelUp.length === 1
             ? t('levelUpExplainHitDie')
-            : t('levelUpExplain').replace('{stats}', targets.slice(1).map((k) => t(checkStatLabel(k))).join(', '))}
+            : t('levelUpExplain').replace('{stats}', targets.slice(1).map((k) => t(checkStatLabel(k, system))).join(', '))}
         </p>
       ) : (
         <label className="flex flex-col gap-1">
@@ -420,7 +420,7 @@ function RollsForm({ targetId, targetName, character, levelUp, onDone, onLevelBy
 
 /** Ce que la fiche donne au test : le modificateur, ou le seuil en % d'un test sous un seuil. */
 const modFromSheet = (c: Character, stat: CheckStat, system: GameSystem) => {
-  const n = statMod(c, stat, system.id).total
+  const n = statMod(c, stat, system.modRule).total
   return system.rollUnder
     ? Math.max(CHECK_DC_MIN, Math.min(CHECK_THRESHOLD_MAX, n))
     : Math.max(-CHECK_MOD_RANGE, Math.min(CHECK_MOD_RANGE, n))
@@ -437,10 +437,11 @@ function CheckForm({ targetId, targetName, character, system, onDone }: {
   const t = useT()
   const room = useRoom()
   const under = system.rollUnder
-  const [stat, setStat] = useState<CheckStat>('force')
+  const first = (system.stats[0]?.key ?? 'force') as CheckStat
+  const [stat, setStat] = useState<CheckStat>(first)
   // Sous un seuil (d100), un seul nombre : le seuil, tiré de la fiche.
-  const [mod, setMod] = useState(() => (under ? '0' : String(modFromSheet(character, 'force', system))))
-  const [dc, setDc] = useState(() => (under ? String(modFromSheet(character, 'force', system)) : '10'))
+  const [mod, setMod] = useState(() => (under ? '0' : String(modFromSheet(character, first, system))))
+  const [dc, setDc] = useState(() => (under ? String(modFromSheet(character, first, system)) : '10'))
   const [showDc, setShowDc] = useState(false)
   const [reason, setReason] = useState('')
   const [sending, setSending] = useState(false)
@@ -540,6 +541,7 @@ function CheckForm({ targetId, targetName, character, system, onDone }: {
 function PendingChecks() {
   const t = useT()
   const room = useRoom()
+  const system = useGameSystem()
   const checks = useStorage((root) => root.checks)
   const pending = checks ? Array.from(checks.values()).sort((a, b) => a.createdAt - b.createdAt) : []
   if (pending.length === 0) return null
@@ -581,7 +583,7 @@ function PendingChecks() {
               <span className="min-w-0 flex-1 truncate">
                 <span className="font-semibold">{c.targetName}</span>
                 {' · '}
-                {withStat(t('checkOf'), t(checkStatLabel(c.stat)))} {signedMod(c.mod)}
+                {withStat(t('checkOf'), t(checkStatLabel(c.stat, system)))} {signedMod(c.mod)}
                 {dc != null && ` · ${t('checkPromptDc').replace('{n}', String(dc))}`}
                 {!c.showDc && ' 🔒'}
               </span>

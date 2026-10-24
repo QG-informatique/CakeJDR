@@ -1,4 +1,5 @@
 import { ALL_STATS, NARRATIF, type D100, type GameSystem } from './gameSystems'
+import type { TranslationKey } from './translations'
 
 /**
  * Tests de caractéristique demandés par le MJ.
@@ -15,16 +16,31 @@ export const CHECK_DICE = NARRATIF.checkDie
 /** Caractéristiques du jeu narratif, avec leur intitulé dans `lib/translations.ts`. */
 export const CHECK_STATS = NARRATIF.stats
 
-/** Une caractéristique, de n'importe quel système (`lib/gameSystems.ts`). */
-export type CheckStat = (typeof NARRATIF.stats)[number]['key'] | (typeof D100.stats)[number]['key']
+/**
+ * Une caractéristique, de n'importe quel système (`lib/gameSystems.ts`), ou
+ * ajoutée à un système de l'atelier (`s_…`, `lib/customSystem.ts`).
+ */
+export type CheckStat = (typeof NARRATIF.stats)[number]['key'] | (typeof D100.stats)[number]['key'] | `s_${string}`
+
+/** Clé d'une caractéristique ajoutée dans l'atelier. */
+export const CUSTOM_STAT_KEY = /^s_[a-z0-9_]{1,38}$/
 
 /** Vrai si la caractéristique existe dans ce système. */
 export function isCheckStat(value: unknown, system: GameSystem = NARRATIF): value is CheckStat {
   return system.stats.some((s) => s.key === value)
 }
 
-export function checkStatLabel(stat: string) {
-  return ALL_STATS.find((s) => s.key === stat)?.label ?? 'strength'
+/**
+ * Intitulé d'une caractéristique : celui du système de la table d'abord (un
+ * système de l'atelier les renomme), sinon celui des presets. Une
+ * caractéristique ajoutée, hors de son système, se lit depuis sa clé.
+ * C'est une clé de `lib/translations.ts` ou un texte tapé par le MJ, que
+ * `t()` rend tel quel.
+ */
+export function checkStatLabel(stat: string, system?: GameSystem): TranslationKey {
+  const label = system?.stats.find((s) => s.key === stat)?.label ?? ALL_STATS.find((s) => s.key === stat)?.label
+  if (label) return label
+  return (CUSTOM_STAT_KEY.test(stat) ? stat.slice(2).replace(/_/g, ' ') : 'strength') as TranslationKey
 }
 
 /** Bornes acceptées par le serveur. */
@@ -125,9 +141,9 @@ export type RollsOutcome = {
 }
 
 /** Intitulé d'un dé de montée de niveau dans `lib/translations.ts`. */
-export const levelUpLabel = (i: number, targets: readonly string[] = LEVEL_UP_TARGETS) => {
+export const levelUpLabel = (i: number, targets: readonly string[] = LEVEL_UP_TARGETS, system?: GameSystem): TranslationKey => {
   const key = targets[i] ?? ''
-  return key === 'pv' ? 'hp' : checkStatLabel(key)
+  return key === 'pv' ? 'hp' : checkStatLabel(key, system)
 }
 
 export const signedMod = (n: number) => `${n >= 0 ? '+' : '−'}${Math.abs(n)}`

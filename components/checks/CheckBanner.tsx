@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useStorage } from '@liveblocks/react'
 import { useT } from '@/lib/useT'
 import { checkStatLabel, levelUpLabel, withStat } from '@/lib/checks'
+import { useGameSystem } from '@/lib/roomSettings'
 import type { SessionEvent } from '@/components/app/hooks/useEventLog'
 
 /** Le bandeau suit l'apparition du chiffre sur le dé, puis reste quelques secondes. */
@@ -16,6 +17,7 @@ const SHOW_MS = 6000
  */
 export default function CheckBanner({ isGM }: { isGM: boolean }) {
   const t = useT()
+  const system = useGameSystem()
   const events = useStorage((root) => root.events)
   const last = useMemo(() => {
     if (!events) return null
@@ -48,13 +50,13 @@ export default function CheckBanner({ isGM }: { isGM: boolean }) {
       ? t('levelUpLine').replace('{n}', player)
       : t('rollsLine').replace('{n}', player).replace('{dice}', `${r.results.length} D${last.dice}`)
     detail = r.levelUp
-      ? r.results.map((n, i) => `${t(levelUpLabel(i, r.targets))} +${n}`).join(' · ')
+      ? r.results.map((n, i) => `${t(levelUpLabel(i, r.targets, system))} +${n}`).join(' · ')
       : r.results.join(' · ') + (r.results.length > 1 ? ` = ${last.result}` : '')
     if (r.reason) detail += ` · ${r.reason}`
   } else if (last.check) {
     const c = last.check
     tone = c.success ? 'success' : 'failure'
-    const stat = t(checkStatLabel(c.stat))
+    const stat = t(checkStatLabel(c.stat, system))
     line = withStat(t(c.success ? 'checkSuccessLine' : 'checkFailureLine').replace('{n}', player), stat)
     detail = String(c.total)
     if (c.showDc || isGM) detail += c.under ? ` ${t('checkUnder')} ${c.dc} %` : ` ${t('checkVs')} ${c.dc}`

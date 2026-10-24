@@ -28,6 +28,7 @@ import {
 import { gameSystem, levelUpDice, type GameSystem } from '@/lib/gameSystems'
 import { adventureOf } from '@/lib/autoGm'
 import { parseCampaign } from '@/lib/autoGm/custom'
+import { buildSystem, parseCustomSystem } from '@/lib/customSystem'
 import type { Adventure } from '@/lib/autoGm/types'
 
 /**
@@ -134,10 +135,25 @@ type AutoState = {
   custom?: Adventure | null
 }
 
+type RoomDoc = { autoGm?: AutoState; customAdventure?: unknown; settings?: { system?: unknown; customSystem?: unknown } } | null
+
+async function roomDoc(liveblocks: Liveblocks, roomId: string): Promise<RoomDoc> {
+  return (await liveblocks.getStorageDocument(roomId, 'json').catch(() => null)) as RoomDoc
+}
+
 /** La partie du MJ automatique telle qu'elle est rangée dans la salle, ou rien. */
-async function autoState(liveblocks: Liveblocks, roomId: string): Promise<AutoState | null> {
-  const doc = (await liveblocks.getStorageDocument(roomId, 'json').catch(() => null)) as { autoGm?: AutoState; customAdventure?: unknown } | null
+function autoState(doc: RoomDoc): AutoState | null {
   return doc?.autoGm && typeof doc.autoGm === 'object' ? { ...doc.autoGm, custom: parseCampaign(doc.customAdventure) } : null
+}
+
+/**
+ * Le système de la table, tel que le MJ l'a réglé (`lib/roomSettings.ts`) : un
+ * système de l'atelier y apporte ses caractéristiques et ses règles de test.
+ * Une table sans réglage s'en tient à celui de la demande.
+ */
+function roomSystem(doc: RoomDoc, sent: unknown): GameSystem {
+  const custom = parseCustomSystem(doc?.settings?.customSystem)
+  return custom ? buildSystem(custom) : gameSystem(doc?.settings?.system ?? sent)
 }
 
 /**
@@ -220,8 +236,9 @@ export async function POST(req: NextRequest) {
     // dés de ses caractéristiques (quelques D6, sans montée de niveau).
     const creation = body.type === 'rolls' && body.creation === true
     const auto = AUTO_ASKS.find((a) => a === body.auto)
+    const doc = await roomDoc(liveblocks, roomId)
     if (access.role !== 'gm' && !creation) {
-      const state = auto ? await autoState(liveblocks, roomId) : null
+      const state = auto ? autoState(doc) : null
       if (!auto || !state || !autoAskFits(auto, state, body)) return fail('gm only', 403)
     }
     if (creation) {
@@ -235,8 +252,8 @@ export async function POST(req: NextRequest) {
     if (typeof targetId !== 'string' || !targetId || targetId.length > 200) return fail('bad target', 400)
     if (!targetName) return fail('bad target name', 400)
 
-    // Le système vient du MJ, qui règle la table : on le scelle avec la demande.
-    const system = gameSystem(body.system)
+    // Le dé et le seuil du système sont scellés avec la demande.
+    const system = roomSystem(doc, body.system)
     let request: GmRequest
     if (body.type === 'rolls') {
       const { dice, levelUp } = body
@@ -274,7 +291,7 @@ export async function POST(req: NextRequest) {
   if (typeof id !== 'string' || !id) return fail('missing id', 400)
 
   if (action === 'cancel') {
-    if (access.role !== 'gm' && !autoOwns(await autoState(liveblocks, roomId), id)) return fail('gm only', 403)
+    if (access.role !== 'gm' && !autoOwns(autoState(await roomDoc(liveblocks, roomId)), id)) return fail('gm only', 403)
     try {
       await liveblocks.mutateStorage(roomId, ({ root }) => {
         checksMap(root).delete(id)

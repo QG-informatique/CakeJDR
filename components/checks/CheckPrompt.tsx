@@ -4,6 +4,7 @@ import { useSelf, useStorage } from '@liveblocks/react'
 import { Dices, Target } from 'lucide-react'
 import { useT } from '@/lib/useT'
 import { checkStatLabel, levelUpLabel, signedMod, withStat } from '@/lib/checks'
+import { useGameSystem } from '@/lib/roomSettings'
 
 type Props = {
   onRoll: (id: string) => void
@@ -15,6 +16,7 @@ type Props = {
 /** Carte du joueur visé par une demande du MJ (test ou jets), au-dessus du lanceur de dés. */
 export default function CheckPrompt({ onRoll, disabled, levelUpBlocked = false }: Props) {
   const t = useT()
+  const system = useGameSystem()
   const selfId = useSelf((s) => s.id)
   const checks = useStorage((root) => root.checks)
   const mine = checks && selfId
@@ -40,7 +42,7 @@ export default function CheckPrompt({ onRoll, disabled, levelUpBlocked = false }
           {check.levelUp
             ? t('levelUpPromptHint')
                 .replace('{dice}', dice)
-                .replace('{targets}', Array.from({ length: check.count }, (_, i) => t(levelUpLabel(i, check.targets))).join(', '))
+                .replace('{targets}', Array.from({ length: check.count }, (_, i) => t(levelUpLabel(i, check.targets, system))).join(', '))
             : dice}
           {more}
         </p>
@@ -52,7 +54,7 @@ export default function CheckPrompt({ onRoll, disabled, levelUpBlocked = false }
     )
   }
 
-  const stat = t(checkStatLabel(check.stat))
+  const stat = t(checkStatLabel(check.stat, system))
   return (
     <div className="ui-panel ui-pop absolute bottom-3 left-1/2 z-30 flex w-[min(22rem,calc(100%-1.5rem))] -translate-x-1/2 flex-col gap-2 p-3 shadow-lg animate-fadeIn">
       <div className="flex items-center gap-2">

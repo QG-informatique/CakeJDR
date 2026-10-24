@@ -6,6 +6,7 @@ import type DiceBox from '@3d-dice/dice-box-threejs'
 import type { DiceBoxCollide, DiceBoxDie, DiceBoxPose, DiceBoxVector } from '@3d-dice/dice-box-threejs'
 import { useT } from '@/lib/useT'
 import { LEVEL_UP_TARGETS, levelUpLabel } from '@/lib/checks'
+import { useGameSystem } from '@/lib/roomSettings'
 import { boxRoll } from '@/lib/dicePool'
 import { DICE_MAX_ROLL_MS, type DiceThrow } from '@/lib/dicePayload'
 import { verifyDiceEvent } from '@/components/chat/useDiceVerification'
@@ -236,6 +237,7 @@ export default function DiceBoxTable({ ref, dice, disabled, onThrow, onDone }: P
   const room = useRoom()
   const events = useStorage((root) => root.events)
   const t = useT()
+  const system = useGameSystem()
   const hostId = `dicebox-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`
   const hostRef = useRef<HTMLDivElement>(null)
   const boxRef = useRef<DiceBox | null>(null)
@@ -419,7 +421,7 @@ export default function DiceBoxTable({ ref, dice, disabled, onThrow, onDone }: P
     box.diceList.forEach((d, k) => {
       const i = owners[k] ?? k
       const p = d.position.clone().project(box.camera)
-      placed.set(i, { x: ((p.x + 1) / 2) * w, y: ((1 - p.y) / 2) * h, text: t(levelUpLabel(i, targets)) })
+      placed.set(i, { x: ((p.x + 1) / 2) * w, y: ((1 - p.y) / 2) * h, text: t(levelUpLabel(i, targets, system)) })
     })
     setLabels(Array.from(placed.values()))
   }

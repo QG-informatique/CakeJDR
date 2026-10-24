@@ -8,23 +8,15 @@
 import type { Character } from '@/types/character'
 import type { TranslationKey } from './translations'
 import type { CheckStat } from './checks'
-import { GAME_SYSTEMS, type GameSystemId } from './gameSystems'
+import { NARRATIF } from './gameSystems'
 
-/** Règles de jeu d'une table : celles de son système de jeu (`lib/gameSystems.ts`). */
-export type RuleSystem = GameSystemId
-
+/** Règle de la table (`modRule` de son système, `lib/gameSystems.ts`). */
 type Rule = {
   /** Nom des règles, montré comme origine du modificateur. */
   label: TranslationKey
   /** Comment la règle se lit, en une ligne. */
   detail: TranslationKey
   mod: (value: number) => number
-}
-
-export const RULES: Record<RuleSystem, Rule> = {
-  narratif: GAME_SYSTEMS.narratif.modRule,
-  srd5: GAME_SYSTEMS.srd5.modRule,
-  d100: GAME_SYSTEMS.d100.modRule,
 }
 
 export type ModPart =
@@ -39,11 +31,12 @@ const num = (v: unknown) => {
 }
 
 /** Modificateur d'une caractéristique, avec le détail de ses origines. */
-export function statMod(c: Character, stat: CheckStat, system: RuleSystem = 'narratif'): StatMod {
-  const rule = RULES[system]
-  const value = num(c[stat])
+export function statMod(c: Character, stat: CheckStat, rule: Rule = NARRATIF.modRule): StatMod {
+  // Une caractéristique ajoutée dans l'atelier (`s_…`) n'est pas dans le type de la fiche.
+  const get = (key: string) => Reflect.get(c, key) as unknown
+  const value = num(get(stat))
   const parts: ModPart[] = [{ kind: 'rules', value: rule.mod(value), label: rule.label, detail: rule.detail }]
-  const bonus = num(c[`${stat}_bonus`])
-  if (bonus !== 0) parts.push({ kind: 'equipment', value: bonus, from: String(c[`${stat}_bonus_from`] ?? '').trim() })
+  const bonus = num(get(`${stat}_bonus`))
+  if (bonus !== 0) parts.push({ kind: 'equipment', value: bonus, from: String(get(`${stat}_bonus_from`) ?? '').trim() })
   return { value, total: parts.reduce((sum, p) => sum + p.value, 0), parts }
 }

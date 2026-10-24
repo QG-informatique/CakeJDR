@@ -104,6 +104,19 @@ const ATTACKS = [
 
 const HP = { key: 'pv', max: 'pv_max', label: 'hp', maxLabel: 'hpMax' } as const
 
+/**
+ * Calculs du modificateur, au choix d'un système créé dans l'atelier
+ * (`lib/customSystem.ts`) : le style d20, la valeur × 5 en %, ou la valeur
+ * telle quelle (un bonus tapé, ou un seuil déjà en %).
+ */
+export const MOD_RULES = {
+  d20: { label: 'modRulesBase', detail: 'modRulesBaseDetail', mod: (v: number) => Math.floor((v - 10) / 2) },
+  x5: { label: 'modRulesD100', detail: 'modRulesD100Detail', mod: (v: number) => v * 5 },
+  direct: { label: 'modRulesDirect', detail: 'modRulesDirectDetail', mod: (v: number) => v },
+} as const satisfies Record<string, GameSystem['modRule']>
+
+export type ModRuleId = keyof typeof MOD_RULES
+
 const num = (v: unknown) => Number(v) || 0
 /** d100 : points de magie égaux au Pouvoir, santé mentale de départ à Pouvoir × 5. */
 const MP: SheetResource = { key: 'pm', max: 'pm_max', label: 'magicPoints', maxLabel: 'magicPointsMax', bar: 'bg-sky-500', start: (s) => num(s.pouvoir) }
